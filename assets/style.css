@@ -1,13 +1,13 @@
 /* Belfort Systems — belfort-systems.fr */
 :root {
-  --bg: #f7f6f3;
-  --surface: #ffffff;
-  --ink: #1c1c1a;
-  --muted: #6b6a66;
-  --accent: #2f4a43;
-  --accent-soft: #e8eeec;
-  --line: #e3e1db;
-  --radius: 6px;
+  --bg: #F6F5FC;
+  --surface: #FFFFFF;
+  --ink: #1D2144;
+  --muted: #55536B;
+  --accent: #453C8C;
+  --accent-soft: #E5E2F2;
+  --line: #DAD5EC;
+  --radius: 12px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,7 +15,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--ink);
   line-height: 1.65;
@@ -24,7 +24,7 @@ body {
 }
 
 h1, h2, h3, .display {
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Spectral", Georgia, serif;
   font-weight: 600;
   line-height: 1.15;
 }
@@ -52,7 +52,7 @@ header.site .container {
 }
 
 .brand {
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Spectral", Georgia, serif;
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: 0.02em;
