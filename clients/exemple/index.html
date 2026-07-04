@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Espace client — Belfort Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#f7f6f3; --ink:#1c1c1a; --muted:#6b6a66; --accent:#2f4a43; --line:#e3e1db; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:"Inter",sans-serif; background:var(--bg); color:var(--ink);
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+.lock { background:#fff; border:1px solid var(--line); border-radius:8px;
+  padding:48px 40px; max-width:400px; width:100%; text-align:center; }
+.brand { font-family:"Cormorant Garamond",Georgia,serif; font-size:1.5rem; font-weight:700; }
+.brand span { color:var(--accent); }
+p.hint { color:var(--muted); font-size:0.9rem; margin:14px 0 24px; }
+input { width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:6px;
+  font-size:1rem; margin-bottom:14px; font-family:inherit; }
+input:focus { outline:2px solid var(--accent); border-color:transparent; }
+button { width:100%; padding:12px; background:var(--accent); color:#fff; border:none;
+  border-radius:6px; font-size:0.95rem; cursor:pointer; font-family:inherit; }
+button:hover { opacity:0.9; }
+.err { color:#a33; font-size:0.85rem; margin-top:12px; display:none; }
+</style>
+</head>
+<body>
+<div class="lock">
+  <div class="brand">Belfort <span>Systems</span></div>
+  <p class="hint">Espace privé — saisissez le mot de passe qui vous a été communiqué.</p>
+  <form id="f">
+    <input type="password" id="pw" placeholder="Mot de passe" autofocus autocomplete="current-password">
+    <button type="submit">Accéder</button>
+  </form>
+  <p class="err" id="err">Mot de passe incorrect.</p>
+</div>
+<script id="payload" type="application/octet-stream">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</script>
+<script>
+document.getElementById('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+  try {
+    const raw = Uint8Array.from(atob(document.getElementById('payload').textContent.trim()), c => c.charCodeAt(0));
+    const salt = raw.slice(0, 16), iv = raw.slice(16, 28), ct = raw.slice(28);
+    const pw = new TextEncoder().encode(document.getElementById('pw').value);
+    const km = await crypto.subtle.importKey('raw', pw, 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt, iterations:310000, hash:'SHA-256' },
+      km, { name:'AES-GCM', length:256 }, false, ['decrypt']);
+    const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct);
+    const html = new TextDecoder().decode(pt);
+    document.open(); document.write(html); document.close();
+  } catch (_) {
+    err.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>
