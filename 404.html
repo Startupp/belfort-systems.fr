@@ -1,10 +1,32 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Page introuvable — Belfort Systems</title>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&family=Archivo:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/style.css"></head>
-<body><main><section class="hero container" style="text-align:center">
-<p class="kicker">Erreur 404</p><h1>Page introuvable</h1>
-<p class="lede" style="margin:0 auto">Cette page n'existe pas ou n'est plus disponible.</p>
-<div class="contact-row" style="justify-content:center;margin-top:28px"><a class="btn" href="/">Retour à l'accueil</a></div>
-</section></main></body></html>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2E2760">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="brand" href="/" aria-label="Belfort Systems — accueil"><span class="mark">B</span>Belfort <span>Systems</span></a>
+    <nav class="main"><a class="btn primary" href="/">Accueil</a></nav>
+  </div>
+</header>
+<main>
+  <section class="block" style="min-height:66vh; display:grid; place-items:center; text-align:center">
+    <div class="container">
+      <span class="eyebrow" style="justify-content:center">Erreur 404</span>
+      <h1 style="font-size:clamp(2.4rem,7vw,3.6rem); margin:16px 0 14px">Page introuvable</h1>
+      <p style="color:var(--muted); max-width:460px; margin:0 auto 30px; font-size:1.05rem">Cette page n'existe pas, a été déplacée, ou n'est plus disponible.</p>
+      <a class="btn primary" href="/">Retour à l'accueil <span class="arrow">→</span></a>
+    </div>
+  </section>
+</main>
+</body>
+</html>

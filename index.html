@@ -3,117 +3,393 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Damien Belfort — Technicien Support Informatique | Belfort Systems</title>
-<meta name="description" content="Damien Belfort, IT Support Specialist — 10 ans d'expérience en support informatique N1/N2, gestion de parc et assistance utilisateur. Île-de-France.">
+<title>Belfort Systems — Support & infogérance IT pour PME | Damien Belfort</title>
+<meta name="description" content="Belfort Systems — Damien Belfort, auto-entrepreneur IT en Île-de-France. Support & infogérance, gestion de parc et accompagnement pour les PME. 10 ans d'expérience, un interlocuteur unique.">
+<meta name="author" content="Damien Belfort">
+<meta property="og:title" content="Belfort Systems — Votre informatique, comme un service IT interne">
+<meta property="og:description" content="Support & infogérance, gestion de parc et accompagnement pour les PME. Un interlocuteur unique, réactif et autonome, en Île-de-France.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta name="theme-color" content="#2E2760">
+<script>document.documentElement.className += " js";</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&family=Archivo:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
 
-<header class="site">
+<header class="site" id="top">
   <div class="container">
-    <a class="brand" href="/">Belfort <span>Systems</span></a>
-    <nav class="main">
-      <a href="#competences">Compétences</a>
-      <a href="#parcours">Parcours</a>
-      <a href="#contact">Contact</a>
+    <a class="brand" href="#top" aria-label="Belfort Systems — accueil">
+      <span class="mark">B</span>Belfort <span>Systems</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mainNav">
+      <span></span>
+    </button>
+    <nav class="main" id="mainNav">
+      <a class="navlink" href="#services">Services</a>
+      <a class="navlink" href="#methode">Méthode</a>
+      <a class="navlink" href="#expertise">Expertise</a>
+      <a class="navlink" href="#parcours">Parcours</a>
+      <a class="btn primary" href="mailto:damien.belfort@gmail.com?subject=Demande%20de%20devis%20—%20Belfort%20Systems">Demander un devis</a>
     </nav>
   </div>
 </header>
 
 <main>
-  <section class="hero container">
-    <p class="kicker">Technicien Support Informatique — IT Support Specialist</p>
-    <h1>Damien Belfort</h1>
-    <p class="lede">10 ans d'expérience IT, du support N1/N2 à la gestion des habilitations : assistance utilisateur, gestion de parc, identité &amp; accès, environnements de travail numériques. Basé en Île-de-France.</p>
-    <div class="contact-row" style="margin-top:28px">
-      <a class="btn" href="mailto:damien.belfort@gmail.com">Me contacter</a>
-      <a class="btn ghost" href="#parcours">Voir mon parcours</a>
-    </div>
-  </section>
 
-  <section class="block" id="profil">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="orb a"></div>
+    <div class="orb b"></div>
+    <div class="grid-overlay"></div>
     <div class="container">
-      <h2>Profil</h2>
-      <p style="max-width:640px; color:var(--muted)">Touche-à-tout de l'informatique, j'interviens en totale autonomie sur tous les aspects d'un service IT : planification, interventions, suivi de dossiers, gestion d'inventaire et commande de matériel. « One Man Army » du support, je privilégie les réponses rapides, l'adaptation aux besoins et l'automatisation des tâches quotidiennes.</p>
-    </div>
-  </section>
-
-  <section class="block" id="competences">
-    <div class="container">
-      <h2>Compétences</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Systèmes &amp; environnements</h3>
-          <ul>
-            <li>Windows 11 / 10 et antérieurs (x32/x64)</li>
-            <li>macOS &amp; iOS</li>
-            <li>Office 365, Google Workspace</li>
-          </ul>
+      <div class="hero-copy">
+        <span class="badge-avail reveal"><span class="dot"></span> Auto-entrepreneur · Disponible · Île-de-France</span>
+        <h1 class="reveal d1">Votre informatique, gérée comme un <span class="grad">service IT interne.</span></h1>
+        <p class="lede reveal d2">Belfort Systems accompagne les PME qui n'ont pas de service informatique dédié : un interlocuteur unique, réactif et autonome, pour un parc qui tourne et des équipes sereines.</p>
+        <div class="cta-row reveal d3">
+          <a class="btn primary" href="mailto:damien.belfort@gmail.com?subject=Demande%20de%20devis%20—%20Belfort%20Systems">Demander un devis <span class="arrow">→</span></a>
+          <a class="btn on-dark" href="#services">Découvrir mes services</a>
         </div>
-        <div class="card">
-          <h3>Administration &amp; accès</h3>
-          <ul>
-            <li>SCCM, Active Directory, Azure AD, Intune</li>
-            <li>Habilitations &amp; matrices de droits (IAM)</li>
-            <li>Ticketing : IvantiSM, Salesforce</li>
-            <li>Automatisation : Power Automate</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Matériel &amp; réseau</h3>
-          <ul>
-            <li>Gestion de parc (postes, mobiles)</li>
-            <li>MCO impression (Epson, Xerox) &amp; visioconférence</li>
-            <li>Salles de réunion connectées</li>
-            <li>Équipements réseau — installation &amp; maintenance</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Accompagnement</h3>
-          <ul>
-            <li>Assistance à distance, en présentiel, par téléphone</li>
-            <li>Formations utilisateurs &amp; techniciens (incl. VIP)</li>
-            <li>Création et diffusion de procédures</li>
-          </ul>
+        <div class="stats reveal d3">
+          <div><div class="n">10 ans</div><div class="l">d'expérience terrain</div></div>
+          <div><div class="n">N1 → N2</div><div class="l">support & expertise</div></div>
+          <div><div class="n">100 %</div><div class="l">en autonomie</div></div>
         </div>
       </div>
-      <div class="tags" style="margin-top:20px">
-        <span class="tag">Français</span>
-        <span class="tag">Anglais courant</span>
-        <span class="tag">Service client</span>
-        <span class="tag">Autonomie</span>
-        <span class="tag">Multi-tasking</span>
-        <span class="tag">Expert UX</span>
-        <span class="tag">IA génératives</span>
+
+      <aside class="proof-card reveal d2" aria-label="Projet récent">
+        <div class="pc-top">
+          <div class="pc-logo">CB</div>
+          <div>
+            <div class="t">Château de Breteuil</div>
+            <div class="s">Migration Microsoft 365</div>
+          </div>
+        </div>
+        <div class="pc-row"><span class="chk">✓</span> Messagerie & collaboration dans le cloud</div>
+        <div class="pc-row"><span class="chk">✓</span> Données sensibles conservées sur site</div>
+        <div class="pc-row"><span class="chk">✓</span> Guide d'administration & formation livrés</div>
+        <span class="pc-tag">Projet livré · 2026</span>
+      </aside>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <div class="trust">
+    <div class="container">
+      <span class="label">Ils me font confiance</span>
+      <span class="ref">Château de Breteuil <span class="dotsep"></span> Migration &amp; infogérance Microsoft 365</span>
+    </div>
+  </div>
+
+  <!-- APPROCHE -->
+  <section class="block" id="approche">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">L'approche</span>
+        <h2>Le bon réflexe IT, sans les frais d'un service entier</h2>
+        <p>Beaucoup de PME jonglent avec l'informatique « quand ça casse ». Je remplace ce stress par un accompagnement clair : quelqu'un qui connaît votre parc, répond vite et anticipe.</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar reveal">
+          <div class="ic" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>
+          </div>
+          <h3>Réactivité</h3>
+          <p>Une panne bloque votre équipe : je privilégie les réponses rapides, à distance ou sur place, pour remettre tout le monde au travail.</p>
+        </div>
+        <div class="pillar reveal d1">
+          <div class="ic" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 22h6"/></svg>
+          </div>
+          <h3>Autonomie</h3>
+          <p>« One Man Army » du support : je prends en charge l'ensemble d'un service IT — planification, interventions, suivi — sans vous surcharger.</p>
+        </div>
+        <div class="pillar reveal d2">
+          <div class="ic" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <h3>Proximité</h3>
+          <p>Un seul interlocuteur qui parle votre langue, pas un centre d'appel. Vous savez à qui vous adresser, et le contexte n'est jamais perdu.</p>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- SERVICES -->
+  <section class="block alt" id="services">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Mes services</span>
+        <h2>Trois façons de vous simplifier l'informatique</h2>
+        <p>Un accompagnement modulable, à la mission ou dans la durée, adapté à la taille et au rythme de votre PME.</p>
+      </div>
+      <div class="services">
+        <article class="service reveal">
+          <div class="ic" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18c-4 0-7-3-7-7a7 7 0 0 1 13.6-2.3"/><path d="M15 6c4 0 7 3 7 7a7 7 0 0 1-13.6 2.3"/><path d="m9 18 1.5-3M15 6l-1.5 3"/></svg>
+          </div>
+          <h3>Support &amp; infogérance</h3>
+          <p>Votre informatique au quotidien, prise en charge de bout en bout — comme un service IT interne, sans l'embauche.</p>
+          <ul>
+            <li>Support utilisateurs N1 &amp; N2, à distance ou sur site</li>
+            <li>Assistance téléphonique et prise en main à distance</li>
+            <li>Suivi des demandes et résolution des incidents</li>
+            <li>Assistance VIP et utilisateurs sensibles</li>
+          </ul>
+        </article>
+        <article class="service reveal d1">
+          <div class="ic" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h5"/></svg>
+          </div>
+          <h3>Gestion de parc &amp; équipements</h3>
+          <p>Un parc maîtrisé et à jour : postes, mobiles et périphériques suivis, achetés et maintenus au bon moment.</p>
+          <ul>
+            <li>Postes fixes, portables et mobiles</li>
+            <li>Impression, visioconférence &amp; salles de réunion connectées</li>
+            <li>Achats, inventaire et gestion du cycle de vie</li>
+            <li>Installation &amp; maintenance des équipements réseau</li>
+          </ul>
+        </article>
+        <article class="service reveal d2">
+          <div class="ic" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7l9 4 9-4-9-4Z"/><path d="M3 7v6l9 4 9-4V7"/><path d="M7 17v3a5 5 0 0 0 10 0v-3"/></svg>
+          </div>
+          <h3>Accompagnement &amp; formation</h3>
+          <p>Des équipes qui montent en compétence et des changements bien conduits, pour des outils réellement adoptés.</p>
+          <ul>
+            <li>Formation des utilisateurs et des techniciens</li>
+            <li>Rédaction &amp; diffusion de procédures claires</li>
+            <li>Conduite du changement lors des migrations</li>
+            <li>Bonnes pratiques &amp; sensibilisation</li>
+          </ul>
+        </article>
+      </div>
+      <p class="services-note reveal">Un projet ponctuel ? Je gère aussi les <b>migrations cloud (Microsoft 365, Google Workspace)</b>, la <b>gestion des accès (IAM)</b> et la <b>sauvegarde</b> — comme pour le Château de Breteuil.</p>
+    </div>
+  </section>
+
+  <!-- METHODE -->
+  <section class="block" id="methode">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Ma méthode</span>
+        <h2>Simple, transparent, sans jargon</h2>
+        <p>De la première prise de contact au suivi, vous savez toujours où vous en êtes et ce que vous payez.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="num">1</div>
+          <h3>Échange</h3>
+          <p>On fait le point sur votre parc, vos irritants et vos priorités. Sans engagement.</p>
+          <span class="connector" aria-hidden="true">→</span>
+        </div>
+        <div class="step reveal d1">
+          <div class="num">2</div>
+          <h3>Proposition</h3>
+          <p>Un devis clair : périmètre, délais et budget. Vous validez en toute connaissance de cause.</p>
+          <span class="connector" aria-hidden="true">→</span>
+        </div>
+        <div class="step reveal d2">
+          <div class="num">3</div>
+          <h3>Mise en œuvre</h3>
+          <p>J'interviens en autonomie, en limitant l'impact sur votre activité et vos équipes.</p>
+          <span class="connector" aria-hidden="true">→</span>
+        </div>
+        <div class="step reveal d3">
+          <div class="num">4</div>
+          <h3>Suivi</h3>
+          <p>Documentation, formation et support dans la durée. Vous n'êtes jamais seul après coup.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERTISE -->
+  <section class="block alt" id="expertise">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Expertise technique</span>
+        <h2>Un socle solide, sur tous les fronts</h2>
+        <p>Dix ans à couvrir l'ensemble de la chaîne IT, du poste utilisateur à la gestion des accès.</p>
+      </div>
+      <div class="skillset">
+        <div class="skillgroup reveal">
+          <div class="sg-head">
+            <div class="sg-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+            <h3>Systèmes &amp; Cloud</h3>
+          </div>
+          <div class="chips">
+            <span class="chip">Windows 11 / 10</span><span class="chip">macOS &amp; iOS</span>
+            <span class="chip">Microsoft 365</span><span class="chip">Google Workspace</span>
+            <span class="chip">Azure AD / Entra ID</span><span class="chip">Intune</span>
+            <span class="chip">SCCM</span><span class="chip">Active Directory</span>
+          </div>
+        </div>
+        <div class="skillgroup reveal d1">
+          <div class="sg-head">
+            <div class="sg-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+            <h3>Sécurité &amp; Accès (IAM)</h3>
+          </div>
+          <div class="chips">
+            <span class="chip">Habilitations &amp; matrices de droits</span>
+            <span class="chip">Gestion des identités</span><span class="chip">Revue des accès</span>
+            <span class="chip">Sauvegarde</span><span class="chip">Bonnes pratiques cyber</span>
+          </div>
+        </div>
+        <div class="skillgroup reveal">
+          <div class="sg-head">
+            <div class="sg-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="7" rx="1"/><path d="M8 20h8M9 16v4M15 16v4"/></svg></div>
+            <h3>Support &amp; Exploitation</h3>
+          </div>
+          <div class="chips">
+            <span class="chip">Support N1 / N2</span><span class="chip">Gestion de parc</span>
+            <span class="chip">MCO impression (Epson, Xerox)</span><span class="chip">Visioconférence</span>
+            <span class="chip">Salles de réunion connectées</span><span class="chip">Réseau</span>
+          </div>
+        </div>
+        <div class="skillgroup reveal d1">
+          <div class="sg-head">
+            <div class="sg-ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v12"/><path d="M2 17h20l-2 3H4l-2-3Z"/><path d="m9 9 2 2 4-4"/></svg></div>
+            <h3>Outils &amp; Automatisation</h3>
+          </div>
+          <div class="chips">
+            <span class="chip">Ivanti SM</span><span class="chip">Salesforce</span>
+            <span class="chip">Power Automate</span><span class="chip">IA génératives</span>
+            <span class="chip">Procédures &amp; documentation</span>
+          </div>
+        </div>
+      </div>
+      <div class="chips reveal" style="margin-top:22px; justify-content:center">
+        <span class="chip">Français</span><span class="chip">Anglais courant</span>
+        <span class="chip">Service client</span><span class="chip">Sens de l'UX</span>
+        <span class="chip">Réactivité</span><span class="chip">Polyvalence</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARCOURS -->
   <section class="block" id="parcours">
     <div class="container">
-      <h2>Parcours</h2>
+      <div class="section-head reveal">
+        <span class="eyebrow">Parcours</span>
+        <h2>Dix ans en environnements exigeants</h2>
+        <p>Des sites industriels aux grands groupes, un fil conducteur : être l'IT sur qui on peut compter.</p>
+      </div>
       <ul class="timeline">
-        <li>
-          <p class="date">2024 — 2026</p>
+        <li class="current reveal">
+          <p class="date">2024 — 2026 <span class="tagcur">Poste actuel</span></p>
           <h3>Gestionnaire d'habilitations &amp; Support Expert — GTT (Gaztransport &amp; Technigaz)</h3>
-          <p>Gestion du cycle de vie des habilitations et des matrices de droits (IAM) : attribution, revue et conformité des accès. Support expert N2 orienté expérience utilisateur, MCO des parcs d'impression et de visioconférence, gestion des salles de réunion connectées.</p>
+          <p>Cycle de vie des habilitations et matrices de droits (IAM) : attribution, revue et conformité des accès. Support expert N2 orienté expérience utilisateur, MCO des parcs d'impression et de visioconférence, salles de réunion connectées.</p>
         </li>
-        <li>
-          <p class="date">02/2022 — 2024</p>
+        <li class="reveal">
+          <p class="date">2022 — 2024</p>
           <h3>IT Support Specialist — Epson</h3>
-          <p>CDI. Interlocuteur IT unique du site : support N1/N2, gestion complète du parc, achats et inventaire, assistance VIP — en totale autonomie.</p>
+          <p>Interlocuteur IT unique du site : support N1/N2, gestion complète du parc, achats et inventaire, assistance VIP — en totale autonomie.</p>
         </li>
-        <li>
-          <p class="date">08/2018 — 02/2021</p>
-          <h3>Technicien Informatique — Metaline (SI)</h3>
-          <p>CDI. Prestation chez un client unique (Epson) : support, maintenance et gestion du quotidien IT.</p>
+        <li class="reveal">
+          <p class="date">2018 — 2021</p>
+          <h3>Technicien Informatique — Metaline (prestation Epson)</h3>
+          <p>Support, maintenance et gestion du quotidien IT chez un client unique.</p>
         </li>
-        <li>
-          <p class="date">01/2016 — 07/2018</p>
+        <li class="reveal">
+          <p class="date">2016 — 2018</p>
           <h3>Technicien HelpDesk — KEY Value / COTY</h3>
-          <p>Alternance puis CDD. Support utilisateur et traitement de tickets N1.</p>
+          <p>Support utilisateur et traitement des tickets N1, en alternance puis en CDD.</p>
         </li>
-     
+        <li class="reveal">
+          <p class="date">2016</p>
+          <h3>BAC PRO SEN — Télécom &amp; Réseaux</h3>
+          <p>Lycée Léonard de Vinci, Bagneux.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- CASE STUDY -->
+  <section class="block alt" id="reference">
+    <div class="container">
+      <div class="section-head center reveal">
+        <span class="eyebrow" style="justify-content:center">Étude de cas</span>
+        <h2>Château de Breteuil — Migration Microsoft 365</h2>
+      </div>
+      <div class="case reveal">
+        <div class="case-visual">
+          <div>
+            <div class="cv-badge">CB</div>
+            <p class="cv-kicker" style="margin-top:22px">Domaine patrimonial</p>
+            <h3>Le cloud, sans renoncer à la maîtrise de ses données</h3>
+          </div>
+          <div class="cv-meta">
+            <div><div class="n">5</div><div class="l">livrables remis</div></div>
+            <div><div class="n">M365</div><div class="l">messagerie &amp; collaboration</div></div>
+          </div>
+        </div>
+        <div class="case-body">
+          <h4>Le besoin</h4>
+          <p>Passer aux outils collaboratifs en ligne tout en gardant les données sensibles au château, avec une équipe autonome à l'arrivée.</p>
+          <h4>Ce que j'ai livré</h4>
+          <ul>
+            <li><span class="chk">✓</span> Migration de la messagerie et des outils vers Microsoft 365</li>
+            <li><span class="chk">✓</span> Architecture claire : outils en ligne, données sensibles sur site</li>
+            <li><span class="chk">✓</span> Planning de migration détaillé, étape par étape</li>
+            <li><span class="chk">✓</span> Guide d'administration et formation pour l'autonomie</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="block" id="contact">
+    <div class="container">
+      <div class="cta-band reveal">
+        <div class="orb a"></div>
+        <span class="eyebrow" style="color:var(--lilac); justify-content:center">Parlons-en</span>
+        <h2>Un projet ou juste une question ?</h2>
+        <p>Décrivez-moi votre situation en quelques lignes : je vous réponds rapidement avec une première orientation, sans engagement.</p>
+        <div class="cta-row">
+          <a class="btn light" href="mailto:damien.belfort@gmail.com?subject=Contact%20—%20Belfort%20Systems">damien.belfort@gmail.com</a>
+          <a class="btn on-dark" href="mailto:damien.belfort@gmail.com?subject=Demande%20de%20devis%20—%20Belfort%20Systems">Demander un devis <span class="arrow">→</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="container">
+    <div class="f-top">
+      <div>
+        <a class="brand" href="#top"><span class="mark">B</span>Belfort <span>Systems</span></a>
+        <p class="f-tag">Support &amp; infogérance IT pour les PME. Un interlocuteur unique, réactif et autonome, en Île-de-France.</p>
+      </div>
+      <div class="f-links">
+        <div class="f-col">
+          <h4>Navigation</h4>
+          <a href="#services">Services</a>
+          <a href="#methode">Méthode</a>
+          <a href="#expertise">Expertise</a>
+          <a href="#parcours">Parcours</a>
+        </div>
+        <div class="f-col">
+          <h4>Contact</h4>
+          <a href="mailto:damien.belfort@gmail.com">damien.belfort@gmail.com</a>
+          <span>Île-de-France</span>
+          <span>Auto-entrepreneur</span>
+        </div>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <span>© 2026 Belfort Systems — Damien Belfort</span>
+      <span>belfort-systems.fr</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/app.js" defer></script>
+</body>
+</html>
