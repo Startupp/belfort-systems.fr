@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<title>Achille HACCP</title>
+<meta name="description" content="Outils HACCP — températures, livraisons et scan de codes-barres. Données stockées sur l'appareil.">
+<meta name="robots" content="noindex, nofollow">
+
+<!-- PWA / écran d'accueil -->
+<meta name="theme-color" content="#2E2760">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Achille HACCP">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="appbar">
+    <div class="appbar-inner">
+      <div class="brandrow">
+        <img class="applogo" src="icon-192.png" alt="" width="38" height="38">
+        <div class="brandtxt">
+          <div class="apptitle">Achille <span>HACCP</span></div>
+          <div class="appsub" id="appDate">—</div>
+        </div>
+      </div>
+      <button class="iconbtn" id="btnHelp" aria-label="Ajouter à l'écran d'accueil">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="view" id="view">
+
+    <!-- ACCUEIL -->
+    <section class="page" data-page="home">
+      <p class="hello">Bonjour 👋</p>
+      <h1 class="h-title">Vos outils HACCP</h1>
+      <p class="lead">Relevés, contrôles et traçabilité — hors ligne, directement sur cet appareil.</p>
+
+      <div class="tiles">
+        <button class="tile" data-go="temp">
+          <span class="tile-ic ic-temp" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V5a2 2 0 1 0-4 0v9.76a4 4 0 1 0 4 0Z"/></svg></span>
+          <span class="tile-txt"><b>Températures</b><small id="cntTemp">0 relevé</small></span>
+          <span class="tile-arw">→</span>
+        </button>
+        <button class="tile" data-go="liv">
+          <span class="tile-ic ic-liv" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span>
+          <span class="tile-txt"><b>Livraisons</b><small id="cntLiv">0 contrôle</small></span>
+          <span class="tile-arw">→</span>
+        </button>
+        <button class="tile" data-go="scan">
+          <span class="tile-ic ic-scan" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></span>
+          <span class="tile-txt"><b>Scan codes-barres</b><small id="cntScan">0 code</small></span>
+          <span class="tile-arw">→</span>
+        </button>
+      </div>
+
+      <div class="note">
+        <b>Astuce</b> — Ajoutez cette page à votre écran d'accueil pour l'ouvrir comme une application.
+        <button class="linkbtn" id="btnHelp2">Comment faire ?</button>
+      </div>
+    </section>
+
+    <!-- TEMPÉRATURES -->
+    <section class="page" data-page="temp" hidden>
+      <h2 class="page-h">Températures</h2>
+      <form class="card form" id="formTemp" autocomplete="off">
+        <div class="field">
+          <label for="tZone">Zone / équipement</label>
+          <input id="tZone" list="zones" placeholder="Frigo 1, Congélateur…" required>
+          <datalist id="zones">
+            <option>Frigo 1</option><option>Frigo 2</option><option>Chambre froide positive</option>
+            <option>Congélateur</option><option>Chambre froide négative</option><option>Vitrine réfrigérée</option>
+            <option>Réserve sèche</option>
+          </datalist>
+        </div>
+        <div class="field">
+          <label>Type de froid</label>
+          <div class="seg" id="tType" role="group">
+            <button type="button" data-th="4" class="is-active">Positif ≤ +4°C</button>
+            <button type="button" data-th="-18">Négatif ≤ -18°C</button>
+            <button type="button" data-th="">Autre</button>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="tTemp">Température (°C)</label>
+            <input id="tTemp" type="number" inputmode="decimal" step="0.1" placeholder="ex. 3.5" required>
+          </div>
+          <div class="field">
+            <label for="tSeuil">Seuil (°C)</label>
+            <input id="tSeuil" type="number" inputmode="decimal" step="0.1" value="4">
+          </div>
+        </div>
+        <div class="field">
+          <label for="tDate">Date &amp; heure</label>
+          <input id="tDate" type="datetime-local">
+        </div>
+        <div class="field">
+          <label for="tNote">Note (facultatif)</label>
+          <input id="tNote" placeholder="Observation…">
+        </div>
+        <div class="livebadge" id="tBadge"></div>
+        <button class="btn primary" type="submit">Ajouter le relevé</button>
+      </form>
+
+      <div class="card export-target" id="expTemp">
+        <div class="card-head"><h3>Historique des relevés</h3><span class="pill" id="tCount">0</span></div>
+        <div class="tbl-wrap" id="tblTemp"></div>
+      </div>
+      <div class="exportbar">
+        <button class="btn ghost" data-export="pdf" data-mod="temp">PDF</button>
+        <button class="btn ghost" data-export="jpeg" data-mod="temp">JPEG</button>
+        <button class="btn ghost" data-export="csv" data-mod="temp">CSV</button>
+        <button class="btn danger-ghost" data-clear="temp">Vider</button>
+      </div>
+    </section>
+
+    <!-- LIVRAISONS -->
+    <section class="page" data-page="liv" hidden>
+      <h2 class="page-h">Livraisons</h2>
+      <form class="card form" id="formLiv" autocomplete="off">
+        <div class="field">
+          <label for="lFourn">Fournisseur</label>
+          <input id="lFourn" placeholder="Nom du fournisseur" required>
+        </div>
+        <div class="field">
+          <label for="lProd">Produit</label>
+          <input id="lProd" placeholder="Désignation du produit" required>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="lTemp">Temp. réception (°C)</label>
+            <input id="lTemp" type="number" inputmode="decimal" step="0.1" placeholder="ex. 3">
+          </div>
+          <div class="field">
+            <label for="lDlc">DLC / DDM</label>
+            <input id="lDlc" type="date">
+          </div>
+        </div>
+        <div class="field">
+          <label>Conformité</label>
+          <div class="seg" id="lConf" role="group">
+            <button type="button" data-v="auto" class="is-active">Auto (≤ +4°C)</button>
+            <button type="button" data-v="1">Conforme</button>
+            <button type="button" data-v="0">Non conforme</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="lNote">Note (facultatif)</label>
+          <input id="lNote" placeholder="N° lot, remarque…">
+        </div>
+        <button class="btn primary" type="submit">Enregistrer la livraison</button>
+      </form>
+
+      <div class="card export-target" id="expLiv">
+        <div class="card-head"><h3>Livraisons contrôlées</h3><span class="pill" id="lCount">0</span></div>
+        <div class="tbl-wrap" id="tblLiv"></div>
+      </div>
+      <div class="exportbar">
+        <button class="btn ghost" data-export="pdf" data-mod="liv">PDF</button>
+        <button class="btn ghost" data-export="jpeg" data-mod="liv">JPEG</button>
+        <button class="btn ghost" data-export="csv" data-mod="liv">CSV</button>
+        <button class="btn danger-ghost" data-clear="liv">Vider</button>
+      </div>
+    </section>
+
+    <!-- SCAN -->
+    <section class="page" data-page="scan" hidden>
+      <h2 class="page-h">Scan codes-barres / QR</h2>
+      <div class="card">
+        <div id="reader" class="reader"></div>
+        <div class="scan-actions">
+          <button class="btn primary" id="btnScanStart">Démarrer le scan</button>
+          <button class="btn ghost" id="btnScanStop" hidden>Arrêter</button>
+        </div>
+        <p class="scan-hint" id="scanHint">La caméra s'ouvre ici. Autorisez l'accès quand le navigateur le demande.</p>
+      </div>
+
+      <form class="card form" id="formScan" autocomplete="off">
+        <div class="row2">
+          <div class="field">
+            <label for="sCode">Code (saisie manuelle)</label>
+            <input id="sCode" inputmode="numeric" placeholder="Ex. 3017620422003">
+          </div>
+          <div class="field">
+            <label for="sLabel">Libellé</label>
+            <input id="sLabel" placeholder="Produit (facultatif)">
+          </div>
+        </div>
+        <button class="btn primary" type="submit">Ajouter le code</button>
+      </form>
+
+      <div class="card export-target" id="expScan">
+        <div class="card-head"><h3>Codes enregistrés</h3><span class="pill" id="sCount">0</span></div>
+        <div class="tbl-wrap" id="tblScan"></div>
+      </div>
+      <div class="exportbar">
+        <button class="btn ghost" data-export="pdf" data-mod="scan">PDF</button>
+        <button class="btn ghost" data-export="jpeg" data-mod="scan">JPEG</button>
+        <button class="btn ghost" data-export="csv" data-mod="scan">CSV</button>
+        <button class="btn danger-ghost" data-clear="scan">Vider</button>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar" role="tablist" aria-label="Navigation">
+    <button class="tab is-active" data-go="home" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>
+      <span>Accueil</span>
+    </button>
+    <button class="tab" data-go="temp" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V5a2 2 0 1 0-4 0v9.76a4 4 0 1 0 4 0Z"/></svg>
+      <span>Temp.</span>
+    </button>
+    <button class="tab" data-go="liv" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+      <span>Livraisons</span>
+    </button>
+    <button class="tab" data-go="scan" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
+      <span>Scan</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Feuille d'aide "écran d'accueil" -->
+<div class="sheet-backdrop" id="helpSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Ajouter à l'écran d'accueil">
+    <div class="sheet-grip"></div>
+    <h3>Ajouter à l'écran d'accueil</h3>
+    <div class="steps">
+      <p><b>iPhone / iPad (Safari)</b><br>Touchez <b>Partager</b> <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 16V4"/><path d="m8 8 4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg> puis <b>« Sur l'écran d'accueil »</b>.</p>
+      <p><b>Android (Chrome)</b><br>Menu <b>⋮</b> puis <b>« Ajouter à l'écran d'accueil »</b>.</p>
+    </div>
+    <button class="btn primary" id="closeHelp">Compris</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="vendor/jspdf.umd.min.js" defer></script>
+<script src="vendor/jspdf.plugin.autotable.min.js" defer></script>
+<script src="vendor/html2canvas.min.js" defer></script>
+<script src="vendor/html5-qrcode.min.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>
