@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace client — Belfort Systems</title>
+<meta name="description" content="Accès à votre espace client Belfort Systems.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#2E2760">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/portal.css">
+</head>
+<body>
+<div class="shell">
+  <main class="panel">
+    <a class="brand" href="/"><span class="mark">B</span><b>Belfort <span>Systems</span></b></a>
+    <h1>Espace client</h1>
+    <p class="hint">Saisissez l’identifiant et le mot de passe qui vous ont été communiqués.
+      Vos documents sont chiffrés&nbsp;: seul votre mot de passe permet de les ouvrir.</p>
+
+    <form id="access" autocomplete="on">
+      <div class="field">
+        <label for="space">Identifiant d’espace</label>
+        <input id="space" name="space" type="text" inputmode="latin" autocapitalize="none"
+               spellcheck="false" placeholder="ex. chateau-de-breteuil" required>
+      </div>
+      <div class="field">
+        <label for="pw">Mot de passe</label>
+        <input id="pw" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn" type="submit">Ouvrir mon espace</button>
+      <p class="err" id="err" role="alert"></p>
+    </form>
+
+    <p class="foot">Un souci pour vous connecter&nbsp;?<br>
+      <a href="mailto:damien.belfort@gmail.com?subject=Acc%C3%A8s%20espace%20client">Écrivez-moi</a>
+      · <a href="tel:+33609897443">06 09 89 74 43</a></p>
+  </main>
+</div>
+
+<script>
+document.getElementById('access').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var err = document.getElementById('err');
+  var slug = document.getElementById('space').value.trim().toLowerCase()
+              .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  var pw = document.getElementById('pw').value;
+  if (!slug) { err.textContent = 'Identifiant d’espace manquant.'; return; }
+  // Le mot de passe est confié à la page cliente, qui seule sait le vérifier.
+  try { sessionStorage.setItem('bsv:' + slug, pw); } catch (_) {}
+  location.href = '/clients/' + encodeURIComponent(slug) + '/';
+});
+</script>
+</body>
+</html>
