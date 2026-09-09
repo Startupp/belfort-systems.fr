@@ -1,16 +1,16 @@
 /* Achille HACCP — cache applicatif hors ligne.
-   Les releves restent sur l'appareil : ce cache ne stocke que les fichiers de l'application. */
+   Les relevés restent sur l'appareil : ce cache ne stocke que les fichiers de l'application. */
 var CACHE = 'haccp-v1';
 var SHELL = [
   './', './index.html', './style.css', './app.js', './manifest.webmanifest',
-  './icon-192.png', './icon-512.png',
+  './icon-192.png', './icon-512.png', './icon-180.png',
   './vendor/jspdf.umd.min.js', './vendor/jspdf.plugin.autotable.min.js',
   './vendor/html2canvas.min.js', './vendor/html5-qrcode.min.js'
 ];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) {
-    /* allSettled : un fichier manquant ne fait pas echouer toute l'installation */
+    /* allSettled : un fichier manquant ne fait pas échouer toute l'installation */
     return Promise.allSettled(SHELL.map(function (u) { return c.add(u); }));
   }).then(function () { return self.skipWaiting(); }));
 });
@@ -27,7 +27,7 @@ self.addEventListener('fetch', function (e) {
   var isDoc = req.mode === 'navigate' || (req.headers.get('accept') || '').indexOf('text/html') > -1;
 
   if (isDoc) {
-    /* reseau d'abord pour recevoir les correctifs, cache en secours en cuisine sans reseau */
+    /* réseau d'abord pour recevoir les correctifs, cache en secours en cuisine sans réseau */
     e.respondWith(fetch(req).then(function (r) {
       var copy = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); return r;
     }).catch(function () {
@@ -35,7 +35,7 @@ self.addEventListener('fetch', function (e) {
     }));
     return;
   }
-  /* ressources : cache d'abord, c'est ce qui rend l'app instantanee */
+  /* ressources : cache d'abord, c'est ce qui rend l'app instantanée */
   e.respondWith(caches.match(req).then(function (m) {
     return m || fetch(req).then(function (r) {
       var copy = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); return r;

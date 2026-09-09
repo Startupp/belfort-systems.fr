@@ -1,6 +1,6 @@
 /* Espace client chateau-de-breteuil — cache applicatif */
 var CACHE = 'bsv-chateau-de-breteuil-v1';
-var SHELL = ['./', './manifest.webmanifest', './icon.svg', './icon-maskable.svg', '/favicon.svg'];
+var SHELL = ['./', './manifest.webmanifest', './icon-192.png', './icon-512.png', '/favicon.svg'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) {
@@ -14,7 +14,7 @@ self.addEventListener('activate', function (e) {
   }).then(function () { return self.clients.claim(); }));
 });
 
-/* Pages : reseau d'abord, cache en secours hors ligne. Le contenu reste chiffre au repos. */
+/* Pages : réseau d'abord, cache en secours hors ligne. Le contenu reste chiffré au repos. */
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;

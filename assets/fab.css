@@ -1,5 +1,5 @@
 /* ============================================================
-   Acces espace client — bouton flottant
+   Accès espace client — bouton flottant
    ============================================================ */
 .fab{
   position:fixed; right:20px; bottom:20px; z-index:80;
@@ -25,7 +25,7 @@
 .fab:focus-visible{outline:3px solid var(--lilac);outline-offset:3px}
 .fab:active{transform:translateY(0)}
 
-/* Sur petit ecran le libelle reste visible : pas de survol au doigt */
+/* Sur petit écran le libellé reste visible : pas de survol au doigt */
 @media (max-width:720px){
   .fab{right:14px; bottom:14px; height:50px; padding:0 18px; gap:9px; font-size:14px}
   .fab span{max-width:160px;opacity:1}

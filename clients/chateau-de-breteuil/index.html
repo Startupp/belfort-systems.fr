@@ -25,6 +25,12 @@ button { width:100%; padding:12px; background:var(--accent); color:#fff; border:
 button:hover { opacity:0.9; }
 .err { color:#a33; font-size:0.85rem; margin-top:12px; display:none; }
 </style>
+<meta name="theme-color" content="#6B1524">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/clients/chateau-de-breteuil/icon-180.png">
+<link rel="manifest" href="/clients/chateau-de-breteuil/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Breteuil">
 </head>
 <body>
 <div class="lock" id="lockbox" hidden>
@@ -64,6 +70,12 @@ document.getElementById('f').addEventListener('submit', async (e) => {
   try { await tryUnlock(document.getElementById('pw').value); }
   catch (_) { err.style.display = 'block'; }
 });
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/clients/chateau-de-breteuil/sw.js",
+    { scope: "/clients/chateau-de-breteuil/" }).catch(function () {});
+}
 </script>
 </body>
 </html>

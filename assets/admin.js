@@ -16,7 +16,7 @@
 
   /* ---------- utilitaires ---------- */
   function slugify(s) {
-    return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
             .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
   function esc(s) {
@@ -134,13 +134,10 @@
   function swTpl(slug) {
     return "/* Espace client " + slug + " — cache applicatif */\n" +
 "var CACHE = 'bsv-" + slug + "-v1';\n" +
-"var SHELL = ['./', './manifest.webmanifest', './icon.svg', './icon-maskable.svg',\n" +
+"var SHELL = ['./', './manifest.webmanifest', './icon-192.png', './icon-512.png',\n" +
 "             '/assets/portal.css', '/assets/bsv.js', '/favicon.svg'];\n\n" +
 "self.addEventListener('install', function (e) {\n" +
-"  /* allSettled : un fichier absent ne fait pas echouer toute l'installation */\n" +
-"  e.waitUntil(caches.open(CACHE).then(function (c) {\n" +
-"    return Promise.allSettled(SHELL.map(function (u) { return c.add(u); }));\n" +
-"  }).then(function () { return self.skipWaiting(); }));\n});\n\n" +
+"  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));\n});\n\n" +
 "self.addEventListener('activate', function (e) {\n" +
 "  e.waitUntil(caches.keys().then(function (k) {\n" +
 "    return Promise.all(k.filter(function (n) { return n !== CACHE; }).map(function (n) { return caches.delete(n); }));\n" +

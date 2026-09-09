@@ -260,5 +260,12 @@
 <script src="vendor/html2canvas.min.js" defer></script>
 <script src="vendor/html5-qrcode.min.js" defer></script>
 <script src="app.js" defer></script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
 </body>
 </html>

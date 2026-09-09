@@ -42,30 +42,15 @@
 </div>
 
 <script>
-/* Certains espaces historiques utilisent une cle de session plus courte
-   que leur identifiant d'URL. On depose le mot de passe sous les deux. */
-var ALIAS = { 'chateau-de-breteuil': 'breteuil' };
-
 document.getElementById('access').addEventListener('submit', function (e) {
   e.preventDefault();
   var err = document.getElementById('err');
-  /* NFD separe les accents ; on retire les marques combinantes (U+0300..U+036F)
-     par code, sans echappement regex : le source reste en ASCII pur. */
-  var sansAccents = document.getElementById('space').value.trim()
-        .normalize('NFD').split('').filter(function (c) {
-          var n = c.charCodeAt(0);
-          return n < 0x300 || n > 0x36f;
-        }).join('');
-  var slug = sansAccents.toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-|-$/g, '');
+  var slug = document.getElementById('space').value.trim().toLowerCase()
+              .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   var pw = document.getElementById('pw').value;
   if (!slug) { err.textContent = 'Identifiant d’espace manquant.'; return; }
-  /* Le mot de passe est confie a la page cliente, qui seule sait le verifier. */
-  try {
-    sessionStorage.setItem('bsv:' + slug, pw);
-    if (ALIAS[slug]) sessionStorage.setItem('bsv:' + ALIAS[slug], pw);
-  } catch (_) {}
+  // Le mot de passe est confié à la page cliente, qui seule sait le vérifier.
+  try { sessionStorage.setItem('bsv:' + slug, pw); } catch (_) {}
   location.href = '/clients/' + encodeURIComponent(slug) + '/';
 });
 </script>
