@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /clients/
+Disallow: /admin/
+Disallow: /factures/
+
+Sitemap: https://belfort-systems.fr/sitemap.xml
