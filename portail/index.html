@@ -49,9 +49,15 @@ var ALIAS = { 'chateau-de-breteuil': 'breteuil' };
 document.getElementById('access').addEventListener('submit', function (e) {
   e.preventDefault();
   var err = document.getElementById('err');
-  var slug = document.getElementById('space').value.trim()
-              .normalize('NFD').replace(/[̀-ͯ]/g, '')
-              .toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  /* NFD separe les accents ; on retire les marques combinantes (U+0300..U+036F)
+     par code, sans echappement regex : le source reste en ASCII pur. */
+  var sansAccents = document.getElementById('space').value.trim()
+        .normalize('NFD').split('').filter(function (c) {
+          var n = c.charCodeAt(0);
+          return n < 0x300 || n > 0x36f;
+        }).join('');
+  var slug = sansAccents.toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
               .replace(/^-|-$/g, '');
   var pw = document.getElementById('pw').value;
   if (!slug) { err.textContent = 'Identifiant d’espace manquant.'; return; }
