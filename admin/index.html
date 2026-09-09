@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Console — Belfort Systems</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#2E2760">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/portal.css">
+<style>
+  .shell{align-items:start;padding:32px 20px 80px}
+  .panel{width:min(100%,860px)}
+  .tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:0 0 26px;flex-wrap:wrap}
+  .tab{background:none;border:0;padding:11px 16px;font:inherit;font-weight:600;font-size:14.5px;
+    color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+  .card{border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:12px;
+    display:flex;gap:14px;align-items:center;background:var(--surface)}
+  .card .ic{width:42px;height:42px;border-radius:11px;flex:none;display:grid;place-items:center;
+    color:#fff;font-family:var(--serif);font-size:20px;font-weight:600}
+  .card .meta{flex:1;min-width:0}
+  .card .meta b{display:block;font-size:15.5px}
+  .card .meta small{color:var(--faint);font-size:12.5px;word-break:break-all}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:0 0 22px}
+  .steps li{counter-increment:s;position:relative;padding:0 0 12px 34px;font-size:14.5px;color:var(--muted)}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:0;width:22px;height:22px;
+    border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;
+    display:grid;place-items:center}
+  .note{background:rgba(124,107,214,.09);border-left:3px solid var(--soft);padding:13px 15px;
+    border-radius:0 10px 10px 0;font-size:13.5px;color:var(--muted);margin:0 0 20px}
+  .out{margin-top:18px}
+  .empty{color:var(--faint);font-size:14px;text-align:center;padding:26px 0}
+  h2{font-size:19px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 20px}
+</style>
+</head>
+<body>
+<div class="shell">
+<main class="panel">
+  <a class="brand" href="/"><span class="mark">B</span><b>Belfort <span>Systems</span></b></a>
+  <h1>Console d’administration</h1>
+  <p class="hint">Génération et rotation des accès aux espaces clients.
+    Tout le chiffrement se fait dans <em>ce</em> navigateur&nbsp;: aucun mot de passe n’est transmis ni stocké en ligne.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true"  data-p="spaces">Espaces</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="publish">Publier un document</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="rotate">Changer un mot de passe</button>
+  </div>
+
+  <!-- ============ ESPACES ============ -->
+  <section id="p-spaces">
+    <h2>Vos espaces clients</h2>
+    <p class="sub">Ce registre est enregistré uniquement sur cet appareil. Exportez-le pour le conserver.</p>
+    <div id="list"></div>
+    <div class="row" style="margin:16px 0 28px">
+      <button class="btn ghost sm" id="exp">Exporter le registre</button>
+      <button class="btn ghost sm" id="imp">Importer un registre</button>
+    </div>
+
+    <h2>Créer un espace</h2>
+    <p class="sub">Produit la page d’accueil chiffrée, le manifeste PWA, le service worker et les icônes.</p>
+    <div class="field"><label for="nName">Nom du client</label>
+      <input id="nName" placeholder="Château de Breteuil"></div>
+    <div class="field"><label for="nSlug">Identifiant d’espace (URL)</label>
+      <input id="nSlug" placeholder="chateau-de-breteuil" spellcheck="false"></div>
+    <div class="row">
+      <div class="field"><label for="nColor">Couleur</label>
+        <input id="nColor" type="color" value="#2E2760" style="height:48px;padding:5px"></div>
+      <div class="field"><label for="nPw">Mot de passe du client</label>
+        <input id="nPw" type="text" spellcheck="false" placeholder="au moins 12 caractères"></div>
+    </div>
+    <button class="btn ghost sm" id="gen" style="margin-bottom:14px">Proposer un mot de passe solide</button>
+    <button class="btn" id="create">Générer l’espace</button>
+    <p class="err" id="cErr" role="alert"></p>
+    <div class="out" id="cOut"></div>
+  </section>
+
+  <!-- ============ PUBLIER ============ -->
+  <section id="p-publish" hidden>
+    <h2>Publier un document dans un espace</h2>
+    <p class="sub">Le document est chiffré ici, puis déposé dans le dépôt. Personne ne peut le lire sans le mot de passe du client.</p>
+    <div class="row">
+      <div class="field"><label for="dSlug">Espace</label><input id="dSlug" placeholder="chateau-de-breteuil" spellcheck="false"></div>
+      <div class="field"><label for="dFile">Nom du fichier</label><input id="dFile" placeholder="facture-2026-09.html" spellcheck="false"></div>
+    </div>
+    <div class="field"><label for="dTitle">Titre affiché avant déverrouillage</label>
+      <input id="dTitle" placeholder="Document — Belfort Systems"></div>
+    <div class="field"><label for="dPw">Mot de passe de l’espace</label>
+      <input id="dPw" type="password" autocomplete="off"></div>
+    <div class="field"><label for="dSrc">Contenu HTML complet du document</label>
+      <textarea id="dSrc" placeholder="&lt;!DOCTYPE html&gt;&lt;html&gt;…&lt;/html&gt;"></textarea></div>
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn ghost sm" id="dPick">Charger depuis un fichier…</button>
+      <input type="file" id="dInput" accept=".html,.htm,.txt" hidden>
+    </div>
+    <button class="btn" id="dGo">Chiffrer et générer la page</button>
+    <p class="err" id="dErr" role="alert"></p>
+    <div class="out" id="dOut"></div>
+  </section>
+
+  <!-- ============ ROTATION ============ -->
+  <section id="p-rotate" hidden>
+    <h2>Changer le mot de passe d’un espace</h2>
+    <div class="note"><strong>Comment ça marche&nbsp;:</strong> le contenu est déchiffré ici avec l’ancien
+      mot de passe, puis re-chiffré avec le nouveau. Chargez chacune des pages de l’espace, l’une après l’autre.
+      Tant que les anciennes pages sont en ligne, l’ancien mot de passe continue de fonctionner&nbsp;: remplacez-les toutes.</div>
+    <div class="row">
+      <div class="field"><label for="rOld">Ancien mot de passe</label><input id="rOld" type="password" autocomplete="off"></div>
+      <div class="field"><label for="rNew">Nouveau mot de passe</label><input id="rNew" type="text" spellcheck="false"></div>
+    </div>
+    <div class="field"><label for="rFiles">Pages à re-chiffrer</label>
+      <input type="file" id="rFiles" accept=".html,.htm" multiple></div>
+    <button class="btn" id="rGo">Re-chiffrer les pages</button>
+    <p class="err" id="rErr" role="alert"></p>
+    <div class="out" id="rOut"></div>
+  </section>
+
+  <p class="foot">Cette console ne conserve aucun secret. Elle ne remplace pas un contrôle d’accès serveur&nbsp;:
+    la protection repose entièrement sur la robustesse du mot de passe de chaque espace.</p>
+</main>
+</div>
+
+<script src="/assets/bsv.js"></script>
+<script src="/assets/admin.js"></script>
+</body>
+</html>
