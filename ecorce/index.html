@@ -53,7 +53,7 @@ p{margin:0;color:var(--dim);max-width:46ch}
 .btn.small{min-height:40px;padding:8px 16px;font-size:14px;box-shadow:0 2px 0 var(--amber-deep)}
 .btn.small.ghost{box-shadow:none}
 .btn.danger{background:var(--danger);color:#2a0d05;box-shadow:none}
-.btn[disabled]{background:var(--bark-3);color:#8a7b62;box-shadow:none;cursor:default}
+.btn[disabled]{background:transparent;color:#7d6f59;box-shadow:inset 0 0 0 2px var(--line);cursor:default}
 .btn.wide{width:100%}
 .round{appearance:none;width:44px;height:44px;border-radius:50%;border:0;background:rgba(21,16,12,.72);color:var(--cream);display:grid;place-items:center;padding:0;cursor:pointer;position:relative;flex:none}
 .round.dot::after{content:"";position:absolute;right:2px;top:2px;width:11px;height:11px;border-radius:50%;background:var(--amber);border:2px solid var(--bark)}
@@ -146,6 +146,8 @@ input[type=text]{appearance:none;width:100%;min-height:48px;padding:10px 16px;bo
 #sheet::before{content:"";width:44px;height:5px;border-radius:3px;background:var(--line);margin:9px auto 0;flex:none}
 .sh-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 14px 10px 20px;flex:none}
 .sh-head .round{background:var(--bark-3)}
+.sh-head h2{display:flex;align-items:center;gap:10px;min-width:0;font-size:38px;font-weight:700;color:var(--amber);text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.sh-head h2 .ic{font-size:26px;flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--bark-3);color:var(--amber)}
 #sh-body{overflow-y:auto;overflow-x:hidden;padding:4px 18px 18px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
 #sh-foot{flex:none;padding:14px 18px calc(16px + env(safe-area-inset-bottom,0px));border-radius:26px 26px 0 0;background:var(--bark-3);display:flex;flex-direction:column;gap:10px}
 #sh-foot:empty{display:none}
@@ -195,7 +197,7 @@ input[type=text]{appearance:none;width:100%;min-height:48px;padding:10px 16px;bo
 .worn .tile u{left:5px;top:5px;width:7px;height:7px}
 .tile s{position:absolute;left:8px;bottom:6px;font:700 11px var(--ui);text-decoration:none;color:#2a1a05;background:var(--amber);border-radius:8px;padding:0 5px;line-height:15px}
 .worn .tile s{left:4px;bottom:3px;font-size:9px;padding:0 3px;line-height:13px}
-.chipbtn[disabled]{opacity:.5;cursor:default}
+.chipbtn[disabled],.seg.worlds .chipbtn[disabled]{background:transparent;color:#75684f;box-shadow:inset 0 0 0 1.5px var(--line);cursor:default}
 /* library icons: stroked ones follow the text colour, filled ones too */
 .cmpt .ic{font-size:15px;vertical-align:-3px;margin-right:6px;color:var(--dim)}
 .modeline{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:20px;background:var(--bark-3);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--sc) 55%,transparent)}
@@ -298,7 +300,9 @@ input[type=text]{appearance:none;width:100%;min-height:48px;padding:10px 16px;bo
 .lv .loot i{font-style:normal;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--bark);color:var(--sc2)}
 .lv .state{color:var(--dim);flex:none}
 .lv.sel{box-shadow:inset 0 0 0 2px var(--amber);background:var(--bark-4)}
-.lv[disabled]{opacity:.45;cursor:default}
+.lv[disabled]{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);cursor:default;filter:grayscale(1)}
+.lv[disabled]>*{opacity:.32}
+.lv[disabled] .state{opacity:.7}
 .lv.done .state{color:var(--moss)}
 
 /* team */
@@ -360,6 +364,14 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 #game.shk1{animation:shk1k .22s}
 #game.shk2{animation:shk2k .4s}
 #flash.go{animation:flashk .45s}
+/* crossing the portal: the name of the game entered, large, over a veil that hides the camp changing its colours */
+#swap{position:absolute;inset:0;z-index:30;display:grid;place-items:center;text-align:center;padding:0 24px;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 45%,rgba(10,8,14,.9),rgba(10,8,14,.97))}
+#swap small{display:block;font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+#swap b{display:block;font:700 62px/1 var(--display);color:var(--amber);margin:6px 0 10px;text-shadow:0 0 34px var(--amber-deep)}
+#swap span{display:block;font-size:15px;color:var(--cream)}
+#swap.go{animation:swapk 1.7s ease-out}
+#swap.go b{animation:pop .5s .05s backwards}
+@keyframes swapk{0%{opacity:0}9%,62%{opacity:1}to{opacity:0}}
 .tile.r2,.tile.r3{animation:glowk 2.2s ease-in-out infinite}
 .fresh .tile.r2,.fresh .tile.r3{animation:pop .3s calc(var(--i,0)*28ms) backwards,glowk 2.2s .4s ease-in-out infinite}
 .btn.shine{position:relative;overflow:hidden}
@@ -407,6 +419,7 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 
   <div id="hint" hidden><b id="hint-n"></b><span id="hint-t"></span></div>
   <div id="flash"></div>
+  <div id="swap" aria-hidden="true"><div><small>Tu entres dans le jeu</small><b id="swap-n"></b><span id="swap-t"></span></div></div>
   <div id="toast" aria-live="polite"></div>
 
   <div id="downbox" hidden>
@@ -1162,16 +1175,18 @@ function genFloor(seed, floor) {
   return F;
 }
 // the camp: a safe clearing with places to walk up to, a garden that grows by itself, a dummy to hit and a few locals
+// the camp wears the colours of the game being played: warm gold and green for Classic, violet and blue for Expedition
+const CAMPS = [STRATA[0], Object.assign({}, STRATA[0], { floorA: '#3a3555', floorB: '#464068', wallTop: '#0c0a16', wallFace: '#4b4a88', wallEdge: '#7d86cf', glow: '#a996ff', deco: '#6fa8ff', foe: '#9a7cf0', foe2: '#e6dcff', fog: '#06050d', sky: '#a59bf2', cap: '#3c4f9a' })];
 function genHub() { // the camp: a clearing with the level counter, the mode portal, the wheel, the garden, a practice dummy and a fire
   const W = 17, H = 21, g = new Uint8Array(W * H);
   for (let y = 3; y < 17; y++) for (let x = 3; x < 14; x++) g[y * W + x] = 1;
   const st = (k, label, x, y, ox, oy) => ({ k, label, x: x * T, y: y * T, ox: ox * T, oy: oy * T });
   const stations = [st('levels', 'Niveaux', 8.5, 6.0, 8.5, 4.3), st('garden', 'Jardin', 5.2, 11.6, 4.9, 5.7), st('wheel', 'Roulette', 11.2, 15.2, 12.1, 13.5)];
-  const F = { seed: 7, floor: 0, W, H, g, si: 0, str: STRATA[0], boss: false, rooms: [], enemies: [], byId: new Map(), chests: [], ghost: {}, hub: true, mod: NOMOD, big: false, seals: null, sealMask: 0, stations, blocks: [],
+  const F = { seed: 7, floor: 0, W, H, g, si: 0, str: CAMPS[ME.game], boss: false, rooms: [], enemies: [], byId: new Map(), chests: [], ghost: {}, hub: true, mod: NOMOD, big: false, seals: null, sealMask: 0, stations, blocks: [],
     start: { x: 8.5 * T, y: 10.2 * T }, lift: null, plots: [], critters: [], dmgLog: [], fireX: 8.5 * T, fireY: 13.2 * T, gx: 3.3, gy: 6.1,
     portal: { x: 12.2 * T, y: 5.6 * T }, counter: { x: 8.5 * T, y: 4.5 * T }, wheel: { x: 12.3 * T, y: 13.7 * T },
     npcs: [{ k: 'garden', x: 3.8 * T, y: 11.3 * T, col: '#b8433a', hat: 2, w: 1, lines: ['Marche sur les champignons mûrs pour les cueillir.', 'Le jardin pousse même quand tu n\'es pas là.', 'Les quêtes t\'offrent de nouvelles parcelles.'] },
-      { k: 'levels', x: 8.5 * T, y: 3.75 * T, col: '#3f8f7a', hat: 3, w: 2, lines: ['Approche du comptoir pour choisir un niveau.', 'Le portail, à droite, change de mode de jeu.', 'Un niveau fini s\'ouvre en Difficile.'] },
+      { k: 'levels', x: 8.5 * T, y: 3.75 * T, col: '#3f8f7a', hat: 3, w: 2, lines: ['Approche du comptoir pour choisir un niveau.', 'Le portail, à droite, mène à l\'autre jeu.', 'Un niveau fini s\'ouvre en Difficile.'] },
       { k: 'wheel', x: 11.0 * T, y: 13.7 * T, col: '#8a4fd0', hat: 4, w: 0, lines: ['Trois tours par jour, pas un de plus !', 'Ce que tu vois sur la roue, tu peux le gagner.', 'Finis tes quêtes du jour : je t\'offre un tour.'] }] };
   for (let i = 0, n = plotCount(ME); i < n; i++) F.plots.push({ x: (4.1 + (i % 3) * 1.0) * T, y: (6.8 + ((i / 3) | 0) * 1.0) * T, grown: false, k: 0 });
   const dummy = makeEnemy(0, 5, 11.6 * T, 8.6 * T, 1); dummy.awake = true; F.enemies.push(dummy); F.byId.set(0, dummy);
@@ -1222,6 +1237,7 @@ function sfx(f, d = .08, type = 'square', v = .05, slide = 0) {
 /* ================= music: a small loop written by the game itself, one mood per place ================= */
 const MOODS = {
   camp: { root: 50, scale: [0, 2, 4, 7, 9], bpm: 74, wave: 'triangle', dens: .45 },
+  campx: { root: 47, scale: [0, 3, 5, 7, 10], bpm: 68, wave: 'sine', dens: .42 }, // the expedition camp: lower, cooler
   0: { root: 45, scale: [0, 3, 5, 7, 10], bpm: 86, wave: 'triangle', dens: .55 },
   1: { root: 40, scale: [0, 2, 3, 7, 9], bpm: 78, wave: 'sine', dens: .5 },
   2: { root: 38, scale: [0, 1, 5, 7, 8], bpm: 94, wave: 'triangle', dens: .6 },
@@ -1235,7 +1251,7 @@ function note(f, t, dur, type, vol, att) {
   g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   o.connect(g); g.connect(MUS.bus); o.start(t); o.stop(t + dur + .05);
 }
-function musicKey() { return (G.mode === 'play' || G.mode === 'end') && !F.hub ? F.si + (levelOf(F.floor).boss ? 'b' : '') : 'camp'; }
+function musicKey() { return (G.mode === 'play' || G.mode === 'end') && !F.hub ? F.si + (levelOf(F.floor).boss ? 'b' : '') : ME.game ? 'campx' : 'camp'; }
 function musicStep() {
   if (!AC || AC.state !== 'running') return;
   try {
@@ -1252,11 +1268,12 @@ function musicStep() {
       const s = MUS.step % 8, bar = (MUS.step / 8) | 0;
       if (s === 0) { // a new bar: phrases go A A B A, and change every four bars
         const k = musicKey(); if (k !== MUS.key) { MUS.key = k; MUS.idx = 4; }
-        const r = rng(k.charCodeAt(0) * 977 + ((bar / 4) | 0) * 131 + [0, 0, 1, 0][bar % 4] * 17), m = MOODS[k === 'camp' ? k : k[0]];
+        const r = rng(k.charCodeAt(0) * 977 + ((bar / 4) | 0) * 131 + [0, 0, 1, 0][bar % 4] * 17), m = MOODS[k] || MOODS[k[0]];
         let i = [4, 4, 6, 4][bar % 4]; MUS.bar = [];
         for (let n = 0; n < 8; n++) { const on = r() < (n % 2 ? m.dens * .7 : .5 + m.dens * .5); i = clamp(i + [-2, -1, -1, 1, 1, 2][(r() * 6) | 0], 0, 9); MUS.bar.push(on ? i : -1); }
       }
-      const key = MUS.key, boss = key.length > 1, m = MOODS[key === 'camp' ? key : key[0]], d = 60 / (m.bpm * (boss ? 1.14 : 1)) / 2, t = MUS.next, i = MUS.bar[s];
+      const key = MUS.key, boss = !MOODS[key], m = MOODS[key] || MOODS[key[0]], // a key that is not a mood by itself is a world followed by 'b': its boss
+        d = 60 / (m.bpm * (boss ? 1.14 : 1)) / 2, t = MUS.next, i = MUS.bar[s];
       if (i >= 0) note(hz(m.root + 12 + m.scale[i % 5] + 12 * ((i / 5) | 0)), t, d * 2.6, m.wave, .03, .012);
       if (s === 0 || (s === 4 && bar % 2)) note(hz(m.root - 12 + (s === 4 ? m.scale[3] : 0)), t, d * 3.6, 'sine', .05, .03);
       if (boss && s % 2 === 0) note(hz(m.root - 12), t, d * .8, 'triangle', .035, .008);
@@ -1333,7 +1350,7 @@ function finishRun(kind) { // 'win' | 'dead' | 'quit'
   showResults(kind, unlockedNow); sendPresence(true); lobbyPresence();
 }
 function backToHub() {
-  run = null; P.dance = 0; tuto = null; tutoShow(); G.mode = 'hub'; G.station = 'wait'; F = genHub(); worldChanged(); P.x = F.start.x; P.y = F.start.y; P.down = false; P.face = Math.PI / 2; cam.init = false; P.target = null;
+  run = null; G.train = false; P.dance = 0; tuto = null; tutoShow(); G.mode = 'hub'; G.station = 'wait'; F = genHub(); worldChanged(); P.x = F.start.x; P.y = F.start.y; P.down = false; P.face = Math.PI / 2; cam.init = false; P.target = null;
   clearFx(); allies.length = 0;
   refreshStats(); closeSheet(); showUI(); sendPresence(true); lobbyPresence();
 }
@@ -1446,7 +1463,7 @@ function updatePlayer(dt) {
   }
   const camp = G.mode === 'hub';
   if (G.mode !== 'play' && !camp) { P.target = null; return; }
-  const ad = aimDir(); P.target = ad != null ? null : findTarget();
+  const ad = aimDir(); P.target = ad != null || (camp && !G.train) ? null : findTarget(); // at the camp nothing is struck until the dummy is asked for
   if (manualNow()) { // expedition: nothing strikes by itself. Hold to keep striking; the first blow after a dodge is a heavy one
     const held = input.atk || input.pAtk;
     if (held && P.lunge > 0) { P.lunge = 0; doAttack(LUNGE); }
@@ -1768,14 +1785,23 @@ function tutoStep(dt) {
   tutoShow();
 }
 function toggleMode() {
-  setGame(ME.game ^ 1); refreshStats(); saveGame(false);
+  setGame(ME.game ^ 1); refreshStats(); saveGame(false); G.train = false; swapCard();
   const col = GM().col, x = P.x, y = P.y, face = P.face; F = genHub(); worldChanged(); P.x = x; P.y = y; P.face = face; // the camp now shows the garden of this game
-  toast('Jeu ' + GM().name, col); burst(P.x, P.y, col, 26, 170, 10); ring(P.x, P.y, 40, col, .5); ring(P.x, P.y, 70, '#fff', .7);
+  burst(P.x, P.y, col, 26, 170, 10); ring(P.x, P.y, 40, col, .5); ring(P.x, P.y, 70, '#fff', .7);
   sfx(ME.game ? 520 : 660, .3, 'triangle', .06, ME.game ? 520 : -260); uiShake(1); P.joyT = .6; showUI(); sendPresence(true);
 }
+// the practice dummy: a touch on it (or the strike key next to it) starts the practice, the same again or walking away ends it
+function trainToggle() {
+  const d = F.hub && F.enemies[0]; if (!d) return;
+  G.train = !G.train; F.dmgLog.length = 0; ring(d.x, d.y, 30, G.train ? GM().col : '#b9a888', .4); sfx(G.train ? 620 : 360, .12, 'triangle', .05, G.train ? 260 : -160);
+  if (G.train && !canStrike(d)) toast('Approche du mannequin');
+}
+const TRAIN_NEAR = 120; // how close the strike key (keyboard, gamepad) must be pressed
+function trainNear() { const d = F.hub && F.enemies[0]; if (d && (G.train || hyp(d.x - P.x, d.y - P.y) < TRAIN_NEAR)) trainToggle(); }
 function campUpdate(dt) {
   updatePlayer(dt); updateShots(dt); updateFx(dt); gardenStep(dt); crittersStep(dt);
   const d = F.enemies[0]; if (d && d.flash > 0) d.flash -= dt;
+  if (G.train && d && hyp(d.x - P.x, d.y - P.y) > Math.max(150, ST.range + 70)) G.train = false;
   while (F.dmgLog.length && G.time - F.dmgLog[0][0] > 4) F.dmgLog.shift();
   const pd = hyp(F.portal.x - P.x, F.portal.y - P.y); // walking through the portal switches between the two ways of playing
   if (pd < 20 && !G.inPortal) { G.inPortal = true; toggleMode(); } else if (pd > 46) G.inPortal = false;
@@ -1920,7 +1946,7 @@ function drawOverlay() {
       if (F.portal) { const s = toScreen(F.portal.x, F.portal.y, 84), to = GAMES[ME.game ^ 1], col = to.col; label(to.name, clamp(s[0], 64, view.w - 64), s[1], col, '500 21px "Grenze Gotisch", Georgia, serif'); label('portail vers l\'autre jeu', clamp(s[0], 64, view.w - 64), s[1] + 15, '#b9a888', F1); } }
     if (F.hub && G.mode === 'hub' && !sheetOpen()) {
       const d = F.enemies[0], log = F.dmgLog; let sum = 0; for (const l of log) sum += l[1];
-      if (d) { const s = toScreen(d.x, d.y, 62); label(log.length ? 'Mannequin · ' + Math.round(sum / Math.max(1.2, G.time - log[0][0])) + ' dégâts/s' : 'Mannequin', s[0], s[1], '#f1e4c8', F1); }
+      if (d) { const s = toScreen(d.x, d.y, 62); label(G.train && log.length ? 'Mannequin · ' + Math.round(sum / Math.max(1.2, G.time - log[0][0])) + ' dégâts/s' : 'Mannequin', s[0], s[1], '#f1e4c8', F1); label(G.train ? 'touche-le pour arrêter' : 'touche-le pour t\'entraîner', s[0], s[1] + 14, '#b9a888', F1); }
       for (const n of F.npcs) if (hyp(n.x - P.x, n.y - P.y) < 84) bubble(n.lines[Math.floor(G.time / 5) % n.lines.length], n.x, n.y);
     }
     if (P.down && P.reviveT > 0) { const s = toScreen(P.x, P.y, 8); ctx.strokeStyle = '#8fd3e8'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(s[0], s[1], 26, -Math.PI / 2, -Math.PI / 2 + TAU * P.reviveT / 2); ctx.stroke(); }
@@ -2209,7 +2235,7 @@ function buildWorld() {
   for (const o of [...dynGroup.children]) freeMesh(o);
   dying.length = 0; for (const n of CAMP.npcs) freeModel(n.m); CAMP = { npcs: [], crit: [], plots: [] };
   const S = F.str, si = F.si, kd = S.kind, W = F.W, H = F.H, g = F.g, R = rng((F.seed ^ 0x51ED) >>> 0);
-  scene.background.set(S.fog); scene.fog.color.set(S.fog); hemi.color.set(S.sky);
+  scene.background.set(S.fog); scene.fog.color.set(S.fog); hemi.color.set(S.sky); sun.color.set(F.hub && ME.game ? '#8f9dff' : '#c9d4ff');
   const isF = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] === 1;
   const hg = new Float32Array(W * H);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -2314,7 +2340,7 @@ function buildLift() {
   worldGroup.add(grp); L.m = { grp, r1, r2, beam, prog, lk, gl };
 }
 function buildCamp() {
-  const b = new GB(), gb = new GB(), S = F.str, wood = rgb('#7a5632'), dark = rgb('#4b3622'), steel = [.8, .84, .88]; F.rings = [];
+  const X = ME.game === 1, coin = GM().col, b = new GB(), gb = new GB(), S = F.str, wood = rgb('#7a5632'), dark = rgb('#4b3622'), steel = [.8, .84, .88]; F.rings = [];
   for (const st of F.stations) { const rg = new THREE.Mesh(torus(.52, .035, TAU, 26).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: S.glow })); rg.position.set(st.x * U, .04, st.y * U); worldGroup.add(rg); F.rings.push(rg); }
   { // the level counter: a long desk, and against the bark a board where the five worlds are pinned
     const x = F.counter.x * U, z = F.counter.y * U, zb = 3.12;
@@ -2343,7 +2369,7 @@ function buildCamp() {
     const g = sprite('#cd86ff', 2.8); g.position.set(x, 1.28, z + .15); g.material.opacity = .32; worldGroup.add(g);
   }
   // the garden: its mounds (quests add some), a little fence, and the caps that grow on them
-  const mg = new GB(); mg.add(cyl(.05, .07, .26, 6), mat(0, .13, 0), [.95, .9, .78], true); mg.add(dome(.2, 10, 4), mat(0, .22, 0, 1, .85, 1), (x, y) => rgb('#ffc24a', .75 + (y - .22) * 1.6), true);
+  const mg = new GB(); mg.add(cyl(.05, .07, .26, 6), mat(0, .13, 0), [.95, .9, .78], true); mg.add(dome(.2, 10, 4), mat(0, .22, 0, 1, .85, 1), (x, y) => rgb(coin, .75 + (y - .22) * 1.6), true); // the caps have the colour of what they yield
   for (const [a, e] of [[.6, .5], [2.4, .4], [4.2, .65]]) mg.add(sph(.045, 5, 4), mat(Math.cos(a) * .19 * Math.cos(e), .22 + Math.sin(e) * .17, Math.sin(a) * .19 * Math.cos(e), 1, .6, 1), [1, .96, .82], true);
   const capGeo = mg.build();
   for (const p of F.plots) {
@@ -2354,7 +2380,7 @@ function buildCamp() {
   for (let i = 0; i < 9; i++) b.add(cyl(.035, .045, .34, 5), mat(gx + (i % 2 ? 0 : .05), .17, gy + i * .46), dark);
   for (let i = 1; i < 8; i++) b.add(cyl(.035, .045, .34, 5), mat(gx + i * .46, .17, gy + (i % 2 ? 0 : .05)), dark);
   b.add(box(.04, .04, 3.7), mat(gx + .02, .24, gy + 1.84), wood); b.add(box(3.3, .04, .04), mat(gx + 1.64, .24, gy + .02), wood);
-  b.add(box(.06, .5, .06), mat(gx + 3.5, .25, gy + .1), dark); b.add(box(.5, .26, .05), mat(gx + 3.5, .56, gy + .12), wood); gb.add(octa(.06), mat(gx + 3.5, .56, gy + .16, 1, 1.3, .5), rgb('#ffc24a'));
+  b.add(box(.06, .5, .06), mat(gx + 3.5, .25, gy + .1), dark); b.add(box(.5, .26, .05), mat(gx + 3.5, .56, gy + .12), wood); gb.add(octa(.06), mat(gx + 3.5, .56, gy + .16, 1, 1.3, .5), rgb(coin));
   // a few things lying around so the clearing does not feel bare
   for (const [x, z, k] of [[12.6, 4.2, 1], [13.1, 5.0, .7], [3.9, 15.6, .8], [12.8, 15.4, 1.1]]) b.add(ico(.26 * k), mat(x, .1 * k, z, 1, .75, 1, x, z, 0), rgb(S.wallEdge, .75));
   for (const [x, z] of [[11.2, 4.0], [4.4, 14.6]]) { b.add(cyl(.2, .22, .34, 8), mat(x, .17, z), wood); b.add(cyl(.21, .21, .03, 8), mat(x, .35, z), rgb('#a8743c')); }
@@ -2363,8 +2389,8 @@ function buildCamp() {
   for (let i = 0; i < 5; i++) { const a = i * TAU / 5; b.add(cyl(.06, .07, .6, 5), mat(fx + Math.cos(a) * .12, .16, fz + Math.sin(a) * .12, 1, 1, 1, Math.cos(a) * .9, 0, Math.sin(a) * .9), dark); }
   for (let i = 0; i < 7; i++) { const a = i * TAU / 7; b.add(ico(.11), mat(fx + Math.cos(a) * .42, .05, fz + Math.sin(a) * .42, 1, .7, 1, a, a, 0), [.36, .33, .3]); }
   for (const lx of [-.95, .95]) b.add(cyl(.13, .13, .7, 7), mat(fx + lx, .13, fz + .15, 1, 1, 1, Math.PI / 2, 0, lx > 0 ? .35 : -.35), rgb('#6b5236')); // logs to sit on
-  gb.add(cone(.2, .55, 6), mat(fx, .42, fz), rgb('#ff8a3a')); gb.add(cone(.11, .36, 5), mat(fx + .03, .38, fz + .04), rgb('#ffe08a'));
-  F.fire = sprite('#ff9a3a', 4.2); F.fire.position.set(fx, .6, fz); worldGroup.add(F.fire);
+  gb.add(cone(.2, .55, 6), mat(fx, .42, fz), rgb(X ? '#6f86ff' : '#ff8a3a')); gb.add(cone(.11, .36, 5), mat(fx + .03, .38, fz + .04), rgb(X ? '#dcd4ff' : '#ffe08a')); // a blue flame on the expedition side
+  F.fire = sprite(X ? '#7f8cff' : '#ff9a3a', 4.2); F.fire.position.set(fx, .6, fz); worldGroup.add(F.fire);
   worldGroup.add(shade(new THREE.Mesh(b.build(), M.toon))); worldGroup.add(new THREE.Mesh(gb.build(), M.eye));
   // the locals
   for (const n of F.npcs) CAMP.npcs.push({ n, m: makeGleaner(n.col, n.hat, n.w, -1), face: Math.PI / 2 });
@@ -2621,10 +2647,10 @@ function render3D() {
   cam3.setViewOffset(view.w, view.h, 0, hero ? view.h / 2 - 118 : view.h * .04, view.w, view.h);
   const px = P.x * U, pz = P.y * U;
   lamp.position.set(px + Math.cos(P.face) * .3, 1.05, pz + Math.sin(P.face) * .3);
-  lamp.color.set(lanCol(ST.lan));
+  lamp.color.set(F.hub && ME.game ? '#b3a2ff' : lanCol(ST.lan)); // the expedition camp bathes in violet
   lamp.intensity = P.down ? .5 : 1.35 + Math.sin(t * 9) * .05 + Math.sin(t * 23) * .03 + Math.max(0, P.lanT) * 5;
   scene.fog.far = (F.hub ? 15 : 10.2) + Math.max(0, P.lanT) * 9; scene.fog.near = (F.hub ? 7.5 : 4.4) + Math.max(0, P.lanT) * 5; hemi.intensity = F.hub ? .95 : .62;
-  if (F.fire) { F.fire.material.opacity = .62 + Math.sin(t * 11) * .12 + Math.sin(t * 27) * .06; if (G.frame % 4 === 0) mote(F.fireX + (Math.random() - .5) * 10, F.fireY + (Math.random() - .5) * 8, 14, Math.random() < .5 ? '#ffb24a' : '#ff7a3a', 2.4, .9, 40 + Math.random() * 30); }
+  if (F.fire) { F.fire.material.opacity = .62 + Math.sin(t * 11) * .12 + Math.sin(t * 27) * .06; if (G.frame % 4 === 0) mote(F.fireX + (Math.random() - .5) * 10, F.fireY + (Math.random() - .5) * 8, 14, ME.game ? (Math.random() < .5 ? '#9fb0ff' : '#b79cff') : Math.random() < .5 ? '#ffb24a' : '#ff7a3a', 2.4, .9, 40 + Math.random() * 30); }
   if (F.rings) for (const r of F.rings) { const k = 1 + Math.sin(t * 3 + r.position.x) * .06; r.scale.set(k, 1, k); r.visible = !hero; }
   const sx = Math.round(fx * 2) / 2, sz = Math.round(fz * 2) / 2; sun.position.set(sx - 5, 12, sz - 4.5); sun.target.position.set(sx, 0, sz);
 
@@ -2957,6 +2983,7 @@ function pic(s, k) { const e = document.createElement('span'); e.className = 'pi
 /* ================= what is on screen ================= */
 function resetInput() { input.mx = input.my = 0; input.pmx = input.pmy = 0; input.pAtk = input.pLan = false; input.pAim = null; input.atk = input.lan = false; input.joy = null; input.aimJoy = null; input.aim = null; input.keys.clear(); }
 let freshT = 0, wheelAng = 0, wheelBusy = false, wheelWon = null; // the wheel: its angle, whether it is turning, and the prize just won (shown until dismissed)
+const SHEET_IC = { levels: 'niveaux', bag: 'sac', shop: 'boutique', quests: 'quetes', stats: 'stats', team: 'equipe', garden: 'jardin', wheel: 'roulette', opts: 'reglages', pause: 'pause' };
 let forge = null; // { id, foods }: the object on the workbench and what is ticked to be fused into it
 let multi = null; // ids of the objects ticked for a grouped sale, or null
 let selWorld = 0;
@@ -3061,7 +3088,7 @@ function renderSheet() {
     if (!big) body.push(h('div', { class: 'seg' }, ...DIFFS.map((d, i) => seg(d.name, diff === i, () => { save.diff = i; fixSel(); saveGame(false); renderSheet(); }, i > 0 && !canPlay(1, i, false)))));
     body.push(h('p', { style: 'font-size:13px', text: big ? 'De grands niveaux tout en hauteur. Rien n\'est automatique : tu frappes, tu vises et tu esquives toi-même ; trois sceaux à trouver ouvrent la sortie.'
       : diff === 0 ? 'Ton glaneur frappe seul, tu choisis où te placer. Finis un niveau pour l\'ouvrir en Difficile.' : 'Ennemis : vie × ' + frx(mod.hp) + ', dégâts × ' + frx(mod.dmg) + '. En échange : ' + GM().coin + ' × ' + frx(mod.ecl) + ' et objets de niveau +' + mod.lv + '.' }));
-    body.push(h('div', { class: 'seg worlds' }, ...STRATA.map((S, w) => seg(S.name, selWorld === w, () => { selWorld = w; renderSheet(); }, false, S.glow))));
+    body.push(h('div', { class: 'seg worlds' }, ...STRATA.map((S, w) => seg(S.name, selWorld === w, () => { selWorld = w; let n = (w + 1) * PER_WORLD; while (n > w * PER_WORLD + 1 && !canPlay(n, diff, big)) n--; selLevel = n; renderSheet(); }, !canPlay(w * PER_WORLD + 1, diff, big), S.glow))));
     const list = h('div', { class: 'lvs' }), s0 = selWorld * PER_WORLD;
     for (let n = s0 + 1; n <= s0 + PER_WORLD; n++) {
       const L = LEVELS[n - 1], locked = !canPlay(n, diff, big), done = n < track, loot = h('div', { class: 'loot' });
@@ -3215,7 +3242,7 @@ function renderSheet() {
     body.push(h('p', { style: 'font-size:12px;color:var(--dim)', text: 'Icônes : Lucide (licence ISC) et Game-icons.net (CC BY 3.0, Lorc, Delapouite et contributeurs). 3D : three.js.' + (app ? ' Coop directe : PeerJS.' : '') }));
     if (sheetKind === 'pause') body.push(h('button', { class: 'btn wide ghost', type: 'button', text: 'Quitter le niveau', onclick: () => { closeSheet(); finishRun('quit'); } }));
   }
-  $('sh-title').textContent = title; $('sh-ecl').hidden = !purse; $('sh-ecl-n').textContent = String(ME.ecl); $('sh-gem-n').textContent = String(ME.gem);
+  $('sh-title').replaceChildren(ic(SHEET_IC[sheetKind] || 'etoile'), title); $('sh-ecl').hidden = !purse; $('sh-ecl-n').textContent = String(ME.ecl); $('sh-gem-n').textContent = String(ME.gem);
   $('sh-body').replaceChildren(...body.filter(Boolean)); $('sh-foot').replaceChildren(...foot);
   if (sheetKind === 'garden') gardenLive();
 }
@@ -3259,6 +3286,7 @@ function pickChar(i) {
   const app = window.ecorceApp; if (app && app.invite && Net.lobby && !Net.room) { const c = app.invite; app.invite = null; openSheet('team'); joinParty(c, false); } // opened from an invitation link
 }
 // the whole interface wears the colour of the game being played
+function swapCard() { const el = $('swap'); $('swap-n').textContent = GM().name; $('swap-t').textContent = ME.game ? 'Tout à la main · ton équipement et tes pétales d\'expédition' : 'Frappe automatique · ton équipement et tes éclats'; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
 function applyGame() { const g = GM(), st = document.documentElement.style; st.setProperty('--amber', g.col); st.setProperty('--amber-deep', g.deep); }
 function renderTitle() {
   const list = [];
@@ -3516,6 +3544,7 @@ function aimEnd(e) { const j = input.aimJoy; if (!j || j.id !== e.pointerId) ret
 cv.addEventListener('pointerdown', e => {
   if (!canMove()) return;
   const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  if (G.mode === 'hub') tap = { id: e.pointerId, x, y, t: performance.now() };
   if (G.mode === 'hub' || !manualNow() || x < r.width * .58) { if (!input.joy) { input.joy = { id: e.pointerId, ox: x, oy: y }; try { cv.setPointerCapture(e.pointerId); } catch (_) { } } }
   else if (!input.aimJoy) { aimStart(e); try { cv.setPointerCapture(e.pointerId); } catch (_) { } }
   e.preventDefault();
@@ -3527,7 +3556,14 @@ cv.addEventListener('pointermove', e => {
   if (d > 46) { dx *= 46 / d; dy *= 46 / d; }
   input.mx = dx / 46; input.my = dy / 46;
 });
-function ptrEnd(e) { aimEnd(e); if (input.joy && input.joy.id === e.pointerId) { input.joy = null; input.mx = input.my = 0; } }
+let tap = null; // at the camp: where and when the finger came down, to tell a touch on the dummy from the start of a walk
+function ptrEnd(e) {
+  aimEnd(e); if (input.joy && input.joy.id === e.pointerId) { input.joy = null; input.mx = input.my = 0; }
+  if (tap && tap.id === e.pointerId) {
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, d = F.hub && F.enemies[0], ok = e.type === 'pointerup' && performance.now() - tap.t < 400 && hyp(x - tap.x, y - tap.y) < 12; tap = null;
+    if (ok && d && G.mode === 'hub' && !sheetOpen()) { const s = toScreen(d.x, d.y, 26); if (hyp(x - s[0], y - s[1]) < 46) trainToggle(); }
+  }
+}
 cv.addEventListener('pointerup', ptrEnd); cv.addEventListener('pointercancel', ptrEnd);
 $('game').addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
 function bindBtn(id, down, up, move) {
@@ -3552,7 +3588,8 @@ function padStep() {
   input.pmx = ok ? clamp(dz(ax[0]) + (b(15) ? 1 : 0) - (b(14) ? 1 : 0), -1, 1) : 0; input.pmy = ok ? clamp(dz(ax[1]) + (b(13) ? 1 : 0) - (b(12) ? 1 : 0), -1, 1) : 0;
   const rx = ax[2] || 0, ry = ax[3] || 0; input.pAim = ok && hyp(rx, ry) > .4 ? Math.atan2(ry, rx) : null;
   input.pAtk = ok && manualNow() && (b(0) || b(7) || input.pAim != null); input.pLan = ok && (b(2) || b(5) || (b(1) && !manualNow()));
-  const now = { st: b(9), y: b(3), b: b(1) };
+  const now = { st: b(9), y: b(3), b: b(1), a: b(0) };
+  if (now.a && !padPrev.a && ok && G.mode === 'hub') trainNear();
   if (now.b && !padPrev.b && ok && manualNow()) input.dash = true;
   if (now.st && !padPrev.st) { if (sheetOpen()) closeSheet(); else if (G.mode === 'play') openSheet('pause'); else if (G.mode === 'hub') openSheet('opts'); }
   else if (now.y && !padPrev.y && ok) openSheet('bag');
@@ -3566,7 +3603,7 @@ window.addEventListener('keydown', e => {
   if (k === 'Escape') { if (sheetOpen()) closeSheet(); else if (G.mode === 'play') openSheet('pause'); return; }
   if (!canMove()) return;
   if (G.mode === 'play') { if (k === ' ' || k === 'j') input.atk = true; else if (k === 'e' || k === 'l') input.lan = true; else if (k === 'i') openSheet('bag'); else if (k === 'Shift') input.dash = true; else input.keys.add(k); }
-  else input.keys.add(k);
+  else if ((k === ' ' || k === 'j') && !e.repeat) trainNear(); else input.keys.add(k);
   if (k === ' ' || k.startsWith('Arrow')) e.preventDefault();
 });
 window.addEventListener('keyup', e => {
