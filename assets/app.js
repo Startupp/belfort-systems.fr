@@ -31,6 +31,18 @@
     });
   }
 
+  /* Entrée discrète vers le jeu « Sous l'Écorce », au pied de page */
+  var foot = document.querySelector("footer.site .f-bottom span");
+  if (foot) {
+    var egg = document.createElement("a");
+    egg.className = "egg";
+    egg.href = "/ecorce/";
+    egg.title = "Sous l'Écorce";
+    egg.setAttribute("aria-label", "Sous l'Écorce, un jeu");
+    egg.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 12.6a8.5 7.6 0 0 1 17 0c0 .8-.6 1.3-1.4 1.3H4.9c-.8 0-1.4-.5-1.4-1.3z" fill="currentColor"/><path d="M9.3 14.9h5.4v2.9a2.7 2.7 0 0 1-5.4 0z" fill="currentColor" opacity=".7"/></svg>';
+    foot.insertBefore(egg, foot.firstChild);
+  }
+
   /* Apparition au défilement */
   var reveals = document.querySelectorAll(".reveal");
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
