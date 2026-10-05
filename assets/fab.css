@@ -35,3 +35,20 @@
   .fab,.fab span{transition:none}
   .fab:hover,.fab:focus-visible{transform:none}
 }
+
+/* ============================================================
+   Sous l'Écorce — entrée discrète vers le jeu, au pied de page
+   ============================================================ */
+.egg{
+  display:inline-flex; vertical-align:middle;
+  padding:8px; margin:-8px 2px -8px -8px;
+  color:inherit; opacity:.5;
+  transition:opacity .25s, color .25s, transform .25s;
+}
+.egg svg{width:16px;height:16px}
+.egg:hover,.egg:focus-visible{opacity:1; color:#ffc24a; transform:translateY(-2px) rotate(-8deg)}
+.egg:focus-visible{outline:2px solid #ffc24a; outline-offset:-4px; border-radius:8px}
+@media (prefers-reduced-motion:reduce){
+  .egg{transition:none}
+  .egg:hover,.egg:focus-visible{transform:none}
+}
