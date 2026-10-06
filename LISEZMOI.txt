@@ -1,0 +1,11 @@
+TinyKnight - zones et visuels promo (6 octobre 2026)
+
+zones/<zone>/            racines, mycelium, braises, givre, abimes.
+  <zone>_*.glb           5 decors + 1 monstre (<zone>_monstre_*) par zone, 30 modeles au total.
+  illustration_<zone>.png  Ambiance de la zone (fond de menu, ecran de chargement, reference de couleurs).
+
+Modeles : GLB, environ 3000 triangles, textures 512 px, materiau non metallique.
+Chaque objet tient dans un cube d'environ 1 unite, axe Y vers le haut : a mettre a l'echelle dans le jeu
+(ex. arche et portail x3, rochers et tonneaux x1, lanterne x0.5). Monstres fixes, a animer en code.
+Chargement Three.js : GLTFLoader.
+
