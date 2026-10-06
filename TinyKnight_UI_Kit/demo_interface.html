@@ -1,0 +1,343 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>TinyKnight UI Kit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Grenze+Gotisch:wght@500;600&display=swap">
+<style>
+/* TinyKnight UI — jetons de thème + composants.
+   Thème par zone : poser data-zone="racines|mycelium|braises|givre|abime" sur <body> ou sur un conteneur.
+   Sans data-zone, c'est le thème du camp. Tous les composants ne lisent que les variables --tk-*. */
+
+:root, [data-zone] {
+  --tk-font-display: "Grenze Gotisch", "Almendra", Georgia, serif;
+  --tk-font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --tk-radius: 22px;
+  --tk-radius-sm: 14px;
+  --tk-good: #8fd16a;
+  --tk-bad: #e8705c;
+  --tk-rare: #5b9bff;
+  --tk-epic: #c77dff;
+  --tk-legend: #ffc247;
+  --tk-gem: #5fe3c8;
+}
+/* Camp (défaut) */
+:root, [data-zone="camp"] {
+  --tk-bg: #14100c; --tk-panel: #2a2119; --tk-panel-2: #3a2e22; --tk-well: #17120d;
+  --tk-line: #4f3f2d; --tk-text: #f3ead8; --tk-muted: #b3a68f;
+  --tk-accent: #ffc247; --tk-accent-2: #ff9d2e; --tk-accent-ink: #2a1d08;
+  --tk-banner: linear-gradient(135deg, #5a3d1c, #2a2119 70%);
+}
+[data-zone="racines"] {
+  --tk-bg: #12110a; --tk-panel: #262317; --tk-panel-2: #353120; --tk-well: #15140c;
+  --tk-line: #4d4a2c; --tk-text: #f2edd6; --tk-muted: #b0aa88;
+  --tk-accent: #a6d85a; --tk-accent-2: #ffc247; --tk-accent-ink: #18200a;
+  --tk-banner: linear-gradient(135deg, #5b4a22, #2f3a1b 60%, #262317);
+}
+[data-zone="mycelium"] {
+  --tk-bg: #0c1516; --tk-panel: #16282a; --tk-panel-2: #1f383b; --tk-well: #0e1b1d;
+  --tk-line: #2f5357; --tk-text: #e6f6f3; --tk-muted: #93b5b1;
+  --tk-accent: #5fe3d0; --tk-accent-2: #b48cff; --tk-accent-ink: #062320;
+  --tk-banner: linear-gradient(135deg, #1d5c5e, #3b2a66 65%, #16282a);
+}
+[data-zone="braises"] {
+  --tk-bg: #150c09; --tk-panel: #2a1712; --tk-panel-2: #3c211a; --tk-well: #190d0a;
+  --tk-line: #5e3122; --tk-text: #f8e8dc; --tk-muted: #c09f8c;
+  --tk-accent: #ff7a2e; --tk-accent-2: #ffd166; --tk-accent-ink: #2b0f02;
+  --tk-banner: linear-gradient(135deg, #8a2f12, #3c1410 60%, #2a1712);
+}
+[data-zone="givre"] {
+  --tk-bg: #0c131a; --tk-panel: #17242f; --tk-panel-2: #213443; --tk-well: #0f1a23;
+  --tk-line: #35526b; --tk-text: #eaf5fc; --tk-muted: #9bb6c9;
+  --tk-accent: #8fd6ff; --tk-accent-2: #ffffff; --tk-accent-ink: #082033;
+  --tk-banner: linear-gradient(135deg, #2c6f96, #1f3d5c 60%, #17242f);
+}
+[data-zone="abime"] {
+  --tk-bg: #0b0814; --tk-panel: #1a1429; --tk-panel-2: #271d3d; --tk-well: #100c1c;
+  --tk-line: #3e2f61; --tk-text: #efe8fb; --tk-muted: #a898c6;
+  --tk-accent: #c77dff; --tk-accent-2: #ff6ad5; --tk-accent-ink: #1c0733;
+  --tk-banner: linear-gradient(135deg, #4a1f86, #2a1040 60%, #1a1429);
+}
+
+/* ---------- base ---------- */
+.tk { font-family: var(--tk-font-body); color: var(--tk-text); font-size: 15px; line-height: 1.35; }
+.tk *, .tk *::before, .tk *::after { box-sizing: border-box; }
+.tk-ic { width: 1.25em; height: 1.25em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tk-title { font-family: var(--tk-font-display); font-weight: 600; color: var(--tk-accent); font-size: 30px; line-height: 1; margin: 0; }
+.tk-label { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--tk-muted); font-weight: 700; }
+.tk-muted { color: var(--tk-muted); }
+.tk-num { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+/* ---------- pastilles : monnaies, joueur ---------- */
+.tk-pill { display: inline-flex; align-items: center; gap: 8px; background: color-mix(in srgb, var(--tk-well) 88%, transparent); border: 1px solid var(--tk-line); border-radius: 999px; padding: 6px 12px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tk-pill .tk-ic { width: 14px; height: 14px; }
+.tk-coin { color: var(--tk-legend); } .tk-gemc { color: var(--tk-gem); }
+.tk-coin .tk-ic, .tk-gemc .tk-ic { fill: currentColor; stroke: none; }
+.tk-pill span { color: var(--tk-text); }
+.tk-iconbtn { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--tk-panel-2); border: 1px solid var(--tk-line); color: var(--tk-text); cursor: pointer; }
+.tk-iconbtn:focus-visible, .tk-btn:focus-visible, .tk-tab:focus-visible, .tk-slot:focus-visible, .tk-nav button:focus-visible { outline: 2px solid var(--tk-accent); outline-offset: 2px; }
+
+/* ---------- HUD de combat ---------- */
+.tk-hud { display: flex; align-items: flex-start; gap: 8px; }
+.tk-hud-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tk-bar { position: relative; height: 20px; border-radius: 999px; background: var(--tk-well); border: 1px solid var(--tk-line); overflow: hidden; }
+.tk-bar > i { position: absolute; inset: 0 auto 0 0; width: var(--v, 100%); background: linear-gradient(180deg, #f08a76, #d95a48); border-radius: 999px; }
+.tk-bar > b { position: relative; display: block; text-align: center; font-size: 12px; line-height: 18px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.tk-bar.xp { height: 6px; } .tk-bar.xp > i { background: linear-gradient(90deg, var(--tk-accent-2), var(--tk-accent)); }
+.tk-level-name { font-family: var(--tk-font-display); font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-skill { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--tk-accent); background: color-mix(in srgb, var(--tk-well) 80%, transparent); color: var(--tk-text); }
+.tk-skill .tk-ic { width: 28px; height: 28px; }
+
+/* ---------- barre de navigation du camp ---------- */
+.tk-nav { display: flex; background: color-mix(in srgb, var(--tk-well) 94%, transparent); border: 1px solid var(--tk-line); border-radius: 28px; padding: 8px 4px; }
+.tk-nav button { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: 0; color: var(--tk-text); font: 600 11px var(--tk-font-body); padding: 4px 0; border-radius: 16px; cursor: pointer; }
+.tk-nav .tk-ic { width: 24px; height: 24px; }
+.tk-nav button[aria-current="page"] { color: var(--tk-accent); }
+
+/* ---------- panneau (feuille qui monte du bas) ---------- */
+.tk-sheet { background: var(--tk-panel); border-radius: var(--tk-radius) var(--tk-radius) 0 0; border-top: 1px solid var(--tk-line); padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+.tk-sheet::before { content: ""; align-self: center; width: 44px; height: 4px; border-radius: 4px; background: var(--tk-line); }
+.tk-sheet-head { display: flex; align-items: center; gap: 10px; }
+.tk-sheet-head > .tk-ic { width: 30px; height: 30px; color: var(--tk-accent); }
+.tk-sheet-head .tk-title { flex: 1; min-width: 0; }
+.tk-sheet-sub { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.tk-card { background: var(--tk-panel-2); border-radius: var(--tk-radius-sm); padding: 12px; }
+.tk-banner { border-radius: var(--tk-radius-sm); padding: 14px; background: var(--tk-banner); background-size: cover; background-position: center; border: 1px solid var(--tk-line); min-height: 64px; display: flex; flex-direction: column; justify-content: flex-end; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+
+/* ---------- chiffres clés et statistiques ---------- */
+.tk-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tk-kpi { background: var(--tk-panel-2); border-radius: var(--tk-radius-sm); padding: 10px 6px; text-align: center; }
+.tk-kpi b { display: flex; justify-content: center; align-items: center; gap: 6px; font-family: var(--tk-font-display); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
+.tk-kpi b .tk-ic { width: 16px; height: 16px; color: var(--tk-muted); }
+.tk-kpi small { color: var(--tk-muted); font-size: 12px; }
+.tk-kpi.vie b { color: var(--tk-bad); } .tk-kpi.pui b { color: var(--tk-accent); }
+.tk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 10px 14px; }
+.tk-stat { display: grid; grid-template-columns: 22px 1fr auto; column-gap: 8px; row-gap: 3px; align-items: center; font-size: 13px; }
+.tk-stat .tk-ic { color: var(--tk-accent); width: 20px; height: 20px; grid-row: span 2; }
+.tk-stat span { grid-column: 2 / 4; white-space: nowrap; }
+.tk-stat b { font-variant-numeric: tabular-nums; min-width: 38px; text-align: right; }
+.tk-stat b { grid-column: 3; grid-row: 2; line-height: 1; }
+.tk-stat .tk-meter { grid-column: 2; grid-row: 2; }
+.tk-meter { height: 5px; border-radius: 4px; background: var(--tk-well); overflow: hidden; }
+.tk-meter > i { display: block; height: 100%; width: var(--v, 0%); min-width: 3px; border-radius: 4px; background: linear-gradient(90deg, var(--tk-accent-2), var(--tk-accent)); }
+
+/* ---------- cases d'objet ---------- */
+.tk-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
+.tk-slot { position: relative; aspect-ratio: 1; border-radius: var(--tk-radius-sm); border: 2px solid var(--tk-line); background: radial-gradient(circle at 50% 35%, var(--tk-panel-2), var(--tk-well)); display: grid; place-items: center; color: var(--tk-muted); padding: 0; cursor: pointer; }
+.tk-slot .tk-ic { width: 55%; height: 55%; }
+.tk-slot img { width: 78%; height: 78%; object-fit: contain; }
+.tk-slot sub { position: absolute; right: 5px; bottom: 3px; font: 700 11px var(--tk-font-body); color: var(--tk-text); }
+.tk-slot.commun { border-color: #a39a86; color: #d8cfba; } .tk-slot.rare { border-color: var(--tk-rare); color: #b9d3ff; }
+.tk-slot.epique { border-color: var(--tk-epic); color: #e3c4ff; } .tk-slot.legendaire { border-color: var(--tk-legend); color: #ffe2a3; box-shadow: 0 0 10px color-mix(in srgb, var(--tk-legend) 40%, transparent); }
+.tk-slot.vide { border-style: dashed; opacity: .55; } .tk-slot[aria-pressed="true"] { outline: 2px solid var(--tk-text); outline-offset: 2px; }
+.tk-slots.six { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.tk-slotcap { text-align: center; font-size: 11px; color: var(--tk-muted); margin-top: 3px; }
+.tk-price { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 4px; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tk-price .tk-ic { width: 12px; height: 12px; fill: var(--tk-legend); stroke: none; }
+
+/* ---------- fiche d'objet et comparaison ---------- */
+.tk-item { display: flex; align-items: center; gap: 10px; }
+.tk-item .tk-slot { width: 52px; flex: none; }
+.tk-item h3 { margin: 0; font-size: 17px; } .tk-item p { margin: 0; font-size: 12px; color: var(--tk-muted); }
+.tk-item > div { flex: 1; min-width: 0; }
+.tk-badge { flex: none; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; background: var(--tk-bad); color: #2a0c06; }
+.tk-badge.mieux { background: var(--tk-good); color: #10220a; }
+.tk-compare { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tk-compare th { white-space: nowrap; text-align: right; padding-left: 10px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--tk-muted); font-weight: 700; padding: 2px 0 4px; }
+.tk-compare th:first-child, .tk-compare td:first-child { text-align: left; white-space: normal; }
+.tk-compare td { padding: 4px 0; text-align: right; font-variant-numeric: tabular-nums; }
+.tk-compare td:nth-child(2) { color: var(--tk-muted); } .tk-compare td:nth-child(3) { font-weight: 700; padding-left: 10px; }
+.tk-compare td:nth-child(4) { width: 46px; } .tk-compare .plus { color: var(--tk-good); } .tk-compare .moins { color: var(--tk-bad); }
+.tk-compare td:first-child { display: flex; align-items: center; gap: 6px; } .tk-compare td .tk-ic { width: 15px; height: 15px; color: var(--tk-muted); }
+
+/* ---------- boutons, onglets ---------- */
+.tk-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.tk-btn { flex: 1; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; border: 1px solid var(--tk-line); background: transparent; color: var(--tk-text); font: 700 15px var(--tk-font-body); padding: 11px 14px; white-space: nowrap; cursor: pointer; }
+.tk-btn.primaire { background: var(--tk-accent); color: var(--tk-accent-ink); border-color: transparent; box-shadow: 0 3px 0 color-mix(in srgb, var(--tk-accent) 60%, #000); }
+.tk-btn.large { flex-basis: 100%; }
+.tk-btn.etroit { flex: none; }
+.tk-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tk-tab { flex: 1; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border-radius: 999px; border: 1px solid var(--tk-line); background: transparent; color: var(--tk-muted); font: 700 12px var(--tk-font-body); padding: 8px 8px; white-space: nowrap; cursor: pointer; }
+.tk-tab .tk-ic { width: 13px; height: 13px; }
+.tk-tab[aria-selected="true"] { background: var(--tk-accent); color: var(--tk-accent-ink); border-color: transparent; }
+.tk-tabs.defile { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.tk-tabs.defile .tk-tab { flex: none; padding-inline: 12px; }
+.tk-tab[disabled] { opacity: .6; cursor: default; }
+
+/* ---------- lignes : niveaux, quêtes ---------- */
+.tk-row { display: flex; align-items: center; gap: 10px; background: var(--tk-panel-2); border-radius: var(--tk-radius-sm); padding: 10px 12px; }
+.tk-row > div { flex: 1; min-width: 0; }
+.tk-row h4 { margin: 0 0 4px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-row.actif { outline: 2px solid var(--tk-accent); }
+.tk-row.fait { opacity: .7; } .tk-row.fait > .tk-ic:last-child { color: var(--tk-good); }
+.tk-row.verrouille { opacity: .55; }
+.tk-disc { width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--tk-well); display: grid; place-items: center; color: var(--tk-accent); font: 700 15px var(--tk-font-body); }
+.tk-disc .tk-ic { width: 18px; height: 18px; }
+.tk-reward { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--tk-accent); margin-top: 4px; }
+.tk-reward span:last-child { color: var(--tk-muted); font-variant-numeric: tabular-nums; }
+.tk-loot { display: flex; gap: 6px; color: var(--tk-muted); } .tk-loot .tk-ic { width: 16px; height: 16px; }
+
+
+/* ---- page de démonstration (thème unique sombre : c'est l'habillage du jeu) ---- */
+/* Layout : sélecteur de zone collant en haut, six écrans de téléphone en grille, puis icônes, palettes et notes. */
+:root { color-scheme: dark; --page: #0d0b09; --ink: #f3ead8; --soft: #a99d88; --rule: #3a2f23; }
+body { background: var(--page); color: var(--ink); font-family: var(--tk-font-body); font-size: 16px; line-height: 1.5; padding-inline: 16px; padding-block: 20px 48px; }
+.wrap { max-width: 1080px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+.top h1 { font-family: var(--tk-font-display); font-weight: 600; font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1; margin: 0 0 6px; color: #ffc247; text-wrap: balance; }
+.top p { margin: 0; color: var(--soft); max-width: 65ch; }
+.zones { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; gap: 6px; flex-wrap: wrap; padding: 8px; margin-inline: -8px; background: color-mix(in srgb, var(--page) 92%, transparent); border-radius: 16px; }
+.zones button { display: inline-flex; align-items: center; gap: 6px; font: 700 14px var(--tk-font-body); color: var(--ink); background: #241c15; border: 1px solid var(--rule); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+.zones button[aria-pressed="true"] { background: var(--c); color: #14100c; border-color: transparent; }
+.zones button:focus-visible { outline: 2px solid #ffc247; outline-offset: 2px; }
+.zones .tk-ic { width: 16px; height: 16px; }
+.screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 22px 18px; align-items: start; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+figcaption { font-size: 13px; color: var(--soft); }
+figcaption b { color: var(--ink); font-family: var(--tk-font-display); font-size: 18px; font-weight: 500; margin-right: 6px; }
+.phone { border-radius: 26px; border: 1px solid var(--tk-line); background: var(--tk-bg); overflow: hidden; display: flex; flex-direction: column; min-height: 520px; }
+.scene { flex: 1; position: relative; background: radial-gradient(120% 70% at 50% 40%, color-mix(in srgb, var(--tk-accent) 22%, transparent), transparent 60%), var(--tk-banner); padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; min-height: 150px; }
+.scene::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0 39px, rgba(0,0,0,.18) 39px 40px), repeating-linear-gradient(90deg, transparent 0 39px, rgba(0,0,0,.18) 39px 40px); pointer-events: none; }
+.scene > * { position: relative; z-index: 1; }
+.me { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.me .tk-disc { background: var(--tk-accent); color: var(--tk-accent-ink); }
+.me { padding: 4px 12px 4px 4px; } .me .tk-disc { width: 30px; height: 30px; } .me div { min-width: 0; line-height: 1.15; } .me b, .me small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .me small { color: var(--tk-muted); font-size: 11px; font-weight: 600; }
+.minimap { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--tk-line); background: color-mix(in srgb, var(--tk-well) 80%, transparent); position: relative; }
+.minimap::before { content: ""; position: absolute; left: 30%; top: 34%; width: 44%; height: 26%; background: var(--tk-muted); opacity: .6; border-radius: 3px; }
+.minimap::after { content: ""; position: absolute; left: 46%; top: 42%; width: 7px; height: 7px; border-radius: 50%; background: var(--tk-text); }
+.rowx { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+.grow { flex: 1; min-width: 0; }
+section h2 { font-family: var(--tk-font-display); font-weight: 500; font-size: 1.5rem; margin: 6px 0 4px; }
+section > p { margin: 0 0 12px; color: var(--soft); max-width: 65ch; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.gallery div { background: #1c1610; border: 1px solid var(--rule); border-radius: 12px; padding: 12px 6px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--soft); min-width: 0; }
+.gallery span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gallery .tk-ic { width: 28px; height: 28px; color: #ffc247; }
+.pal { display: flex; flex-direction: column; gap: 8px; }
+.pal > div { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pal b { width: 86px; font-family: var(--tk-font-display); font-weight: 500; font-size: 18px; }
+.sw { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--rule); }
+.sw i { width: 38px; height: 30px; display: block; }
+.tw { overflow-x: auto; } table.doc { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.doc th, table.doc td { text-align: left; padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.doc th { color: var(--soft); font-weight: 600; } code { font-family: ui-monospace, Menlo, monospace; font-size: .86em; color: #ffc247; }
+pre { margin: 0; background: #1c1610; border: 1px solid var(--rule); border-radius: 12px; padding: 14px; overflow-x: auto; font: 13px/1.55 ui-monospace, Menlo, monospace; }
+</style>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none"><symbol id="tk-niveaux" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></symbol><symbol id="tk-inventaire" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/><path d="M9 5V4a3 3 0 0 1 6 0v1"/><path d="M9 20v-5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v5"/><path d="M9 10h6"/></symbol><symbol id="tk-boutique" viewBox="0 0 24 24"><path d="M4 10l1.5-5h13L20 10"/><path d="M4 10a2.67 2.67 0 0 0 5.33 0 2.67 2.67 0 0 0 5.34 0A2.67 2.67 0 0 0 20 10"/><path d="M6 13v7h12v-7"/><path d="M10 20v-4h4v4"/></symbol><symbol id="tk-quetes" viewBox="0 0 24 24"><path d="M6 4h11v13a3 3 0 0 0 3 3H9a3 3 0 0 1-3-3z"/><path d="M6 4a2 2 0 0 0-2 2v1h2"/><path d="M10 9h4M10 13h4"/></symbol><symbol id="tk-equipe" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M18 14.3a5 5 0 0 1 3 4.7v1"/></symbol><symbol id="tk-reglages" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol><symbol id="tk-fermer" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol><symbol id="tk-retour" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol><symbol id="tk-suivant" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol><symbol id="tk-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol><symbol id="tk-entrer" viewBox="0 0 24 24"><path d="M7 6l5 5 5-5M7 13l5 5 5-5"/></symbol><symbol id="tk-valide" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol><symbol id="tk-verrou" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol><symbol id="tk-atelier" viewBox="0 0 24 24"><path d="M14 4l6 6-2 2-6-6z"/><path d="M13.5 8.5L4 18l2 2 9.5-9.500"/></symbol><symbol id="tk-statistiques" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/></symbol><symbol id="tk-vendre" viewBox="0 0 24 24"><path d="M4 4h8l8 8-8 8-8-8z"/><circle cx="8.5" cy="8.5" r="1.2"/></symbol><symbol id="tk-equiper" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="tk-drapeau" viewBox="0 0 24 24"><path d="M6 21V4"/><path d="M6 5h11l-2 3.5 2 3.5H6"/></symbol><symbol id="tk-coffre" viewBox="0 0 24 24"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v9H4z"/><path d="M4 12h16"/><path d="M11 11h2v3h-2z"/></symbol><symbol id="tk-roulette" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 4v6.5M12 13.5V20M4 12h6.5M13.5 12H20"/><path d="M6.300 6.300l4.600 4.600M13.100 13.100l4.600 4.600M17.700 6.300l-4.600 4.600M10.900 13.100l-4.600 4.600"/></symbol><symbol id="tk-jardin" viewBox="0 0 24 24"><path d="M12 20v-8"/><path d="M12 12c0-4-3-6-7-6 0 4 3 6 7 6z"/><path d="M12 14c0-3 2.5-5 7-5 0 3.5-2.500 5-7 5z"/><path d="M6 20h12"/></symbol><symbol id="tk-portail" viewBox="0 0 24 24"><path d="M5 20V11a7 7 0 0 1 14 0v9"/><path d="M9 20v-8a3 3 0 0 1 6 0v8"/><path d="M3 20h18"/></symbol><symbol id="tk-sort" viewBox="0 0 24 24"><path d="M11 3l1.800 5.200L18 10l-5.200 1.800L11 17l-1.800-5.200L4 10l5.200-1.800z"/><path d="M18 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></symbol><symbol id="tk-crane" viewBox="0 0 24 24"><path d="M6 11a6 6 0 0 1 12 0c0 2.500-1 4-2 5v3H8v-3c-1-1-2-2.500-2-5z"/><circle cx="9.5" cy="11.5" r="1.200"/><circle cx="14.5" cy="11.5" r="1.200"/><path d="M11 19v-2M13 19v-2"/></symbol><symbol id="tk-vie" viewBox="0 0 24 24"><path d="M12 20s-7-4.500-7-10a4 4 0 0 1 7-2.600A4 4 0 0 1 19 10c0 5.500-7 10-7 10z"/></symbol><symbol id="tk-degats" viewBox="0 0 24 24"><path d="M20 4l-1 5-8 8-4-4 8-8z"/><path d="M6 12l6 6"/><path d="M8.500 15.500L4 20"/></symbol><symbol id="tk-puissance" viewBox="0 0 24 24"><path d="M12 3.500l2.600 5.300 5.900.900-4.300 4.100 1 5.800L12 16.900l-5.200 2.700 1-5.800L3.500 9.700l5.900-.9z"/></symbol><symbol id="tk-critique" viewBox="0 0 24 24"><circle cx="13" cy="12" r="7"/><circle cx="13" cy="12" r="3"/><path d="M2 12h11"/><path d="M5 9l-3 3 3 3"/></symbol><symbol id="tk-cadence" viewBox="0 0 24 24"><path d="M5 19A14 14 0 0 1 19 5"/><path d="M9 20A11 11 0 0 1 20 9"/><path d="M15 5h4v4"/></symbol><symbol id="tk-vitesse" viewBox="0 0 24 24"><path d="M4 15c5 1 9 0 12-3 2-2 3-5 4-8-3 1-6 1-9 3-4 3-6 5-7 8z"/><path d="M8 15.500c0 2-1 3.500-3 4.500"/><path d="M12 14.500c0 2-.5 3.500-2 5"/></symbol><symbol id="tk-portee" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="tk-vie_par_ennemi" viewBox="0 0 24 24"><path d="M12 20s-7-4.500-7-10a4 4 0 0 1 7-2.600A4 4 0 0 1 19 10c0 5.500-7 10-7 10z"/><path d="M12 10v5M9.500 12.500h5"/></symbol><symbol id="tk-eclats_trouves" viewBox="0 0 24 24"><ellipse cx="9" cy="8" rx="5" ry="2.500"/><path d="M4 8v3c0 1.400 2.200 2.500 5 2.500"/><ellipse cx="15" cy="14" rx="5" ry="2.500"/><path d="M10 14v3c0 1.400 2.200 2.500 5 2.500s5-1.100 5-2.500v-3"/></symbol><symbol id="tk-armure" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></symbol><symbol id="tk-eclat" viewBox="0 0 24 24"><path d="M12 3l8 9-8 9-8-9z" fill="currentColor" stroke="none"/></symbol><symbol id="tk-gemme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" stroke="none"/></symbol><symbol id="tk-arme" viewBox="0 0 24 24"><path d="M12 3l2 3v8h-4V6z"/><path d="M8 14h8"/><path d="M12 14v5"/><circle cx="12" cy="20" r="1"/></symbol><symbol id="tk-chapeau" viewBox="0 0 24 24"><path d="M12 3c-4 3-6 8-6 14v3h12v-3c0-6-2-11-6-14z"/><path d="M9 20v-4a3 3 0 0 1 6 0v4"/></symbol><symbol id="tk-manteau" viewBox="0 0 24 24"><path d="M8 4L3 7l2 4 2-1v10h10V10l2 1 2-4-5-3a4 3 0 0 1-8 0z"/></symbol><symbol id="tk-lanterne" viewBox="0 0 24 24"><path d="M9 3h6M12 3v2"/><path d="M8 5h8l1 3H7z"/><path d="M8 8v9h8V8"/><path d="M7 17h10l-1 3H8z"/><path d="M12 14.500c1.500-1 1.500-2.500 0-4-1.500 1.500-1.500 3 0 4z"/></symbol><symbol id="tk-bottes" viewBox="0 0 24 24"><path d="M8 3h6v9l5 3a2 2 0 0 1 1 1.700V19H6v-5l2-2z"/><path d="M6 19v2h14v-2"/></symbol><symbol id="tk-talisman" viewBox="0 0 24 24"><path d="M6 3c0 4 3 6 6 7 3-1 6-3 6-7"/><path d="M12 10l4 5-4 6-4-6z"/></symbol><symbol id="tk-zone_racines" viewBox="0 0 24 24"><path d="M9 3h6M12 3v18"/><path d="M12 10c0 4-2 5-5 6-1 .3-2 1.500-2 4"/><path d="M12 10c0 4 2 5 5 6 1 .3 2 1.500 2 4"/></symbol><symbol id="tk-zone_mycelium" viewBox="0 0 24 24"><path d="M4 12a8 7 0 0 1 16 0z"/><path d="M10 12v6a2 2 0 0 0 4 0v-6"/><circle cx="9" cy="8.5" r=".8"/><circle cx="14" cy="8" r=".8"/></symbol><symbol id="tk-zone_braises" viewBox="0 0 24 24"><path d="M12 21c-4 0-6-3-6-6 0-3 2-4 3-7 1 1.500 2 2 2.500 1.500C12 8 11 6 12 3c4 3 6 7 6 12 0 3-2 6-6 6z"/><path d="M12 21c-1.500 0-2.500-1.200-2.500-2.700 0-1.500 1.200-2.300 2.500-4.300 1.300 2 2.500 2.800 2.500 4.300 0 1.500-1 2.700-2.500 2.700z"/></symbol><symbol id="tk-zone_givre" viewBox="0 0 24 24"><path d="M12 3v18M4.200 7.500l15.600 9M19.800 7.500l-15.600 9"/><path d="M9.500 4.500L12 7l2.500-2.500M9.500 19.500L12 17l2.500 2.500"/></symbol><symbol id="tk-zone_abime" viewBox="0 0 24 24"><path d="M11 12a1 1 0 1 0 2 0 3 3 0 1 0-6 0 5 5 0 1 0 10 0 7 7 0 1 0-14 0 9 9 0 0 0 9 9"/></symbol></svg>
+
+<div class="wrap">
+  <div class="top">
+    <h1>TinyKnight · kit d'interface</h1>
+    <p>Les écrans du jeu redessinés avec les mêmes composants, déclinés pour le camp et les cinq zones. Changez de zone pour voir tout l'habillage suivre.</p>
+  </div>
+
+  <div class="zones" id="zones" role="group" aria-label="Thème de zone"></div>
+
+  <div class="screens tk" id="stage" data-zone="camp"></div>
+
+  <section>
+    <h2>Icônes d'interface</h2>
+    <p>Un fichier SVG par icône, au trait, dans la couleur du texte. Elles se recolorent toutes seules avec le thème.</p>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section>
+    <h2>Palettes des zones</h2>
+    <p>Fond, panneau, panneau clair, filet, texte, accent, accent secondaire.</p>
+    <div class="pal" id="pal"></div>
+  </section>
+
+  <section>
+    <h2>Utilisation</h2>
+    <pre>&lt;link rel="stylesheet" href="tinyknight_ui.css"&gt;
+&lt;body class="tk" data-zone="mycelium"&gt;   &lt;!-- camp, racines, mycelium, braises, givre, abime --&gt;
+
+&lt;!-- coller une fois le contenu de tinyknight_icones.svg en haut du body, puis : --&gt;
+&lt;svg class="tk-ic"&gt;&lt;use href="#tk-inventaire"/&gt;&lt;/svg&gt;
+
+&lt;!-- icône d'objet rendue depuis le modèle 3D --&gt;
+&lt;button class="tk-slot rare"&gt;&lt;img src="icones_objets/equipements/ambre_epee.png" alt="Épée d'ambre"&gt;&lt;sub&gt;2&lt;/sub&gt;&lt;/button&gt;
+
+&lt;!-- bannière de zone en fond d'en-tête --&gt;
+&lt;div class="tk-banner" style="background-image:url(bannieres_zones/banniere_mycelium.jpg)"&gt;…&lt;/div&gt;</pre>
+  </section>
+
+  <section>
+    <h2>Corrigé par rapport aux captures</h2>
+    <div class="tw"><table class="doc">
+      <tr><th>Constat sur les captures</th><th>Dans le kit</th></tr>
+      <tr><td>Le titre « Inventaire », la pastille de monnaies et la croix se chevauchent</td><td>Le titre et la croix sur une ligne, les monnaies sur la ligne suivante</td></tr>
+      <tr><td>Le bouton « Équiper » est un rond trop étroit, son texte déborde</td><td>« Équiper » en pleine largeur ; Retour, Atelier et Vendre sur la ligne du dessous</td></tr>
+      <tr><td>« Coups par seconde » et « Éclats trouvés » passent sur deux lignes</td><td>Libellé sur sa propre ligne, valeur au bout de la jauge</td></tr>
+      <tr><td>Les onglets de zone ont des tailles inégales et un cadenas au-dessus du texte</td><td>Onglets qui défilent sur le côté, icône de zone ou cadenas à gauche du nom</td></tr>
+    </table></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var ICONS = ["niveaux", "inventaire", "boutique", "quetes", "equipe", "reglages", "fermer", "retour", "suivant", "pause", "entrer", "valide", "verrou", "atelier", "statistiques", "vendre", "equiper", "drapeau", "coffre", "roulette", "jardin", "portail", "sort", "crane", "vie", "degats", "puissance", "critique", "cadence", "vitesse", "portee", "vie_par_ennemi", "eclats_trouves", "armure", "eclat", "gemme", "arme", "chapeau", "manteau", "lanterne", "bottes", "talisman", "zone_racines", "zone_mycelium", "zone_braises", "zone_givre", "zone_abime"];
+  var ic = function(n){ return '<svg class="tk-ic" aria-hidden="true"><use href="#tk-'+n+'"/></svg>'; };
+  var wallet = '<span class="tk-pill"><span class="tk-coin">'+ic('eclat')+'</span><span>561</span><span class="tk-gemc">'+ic('gemme')+'</span><span>11</span></span>';
+  var ZONES = [['camp','Camp','portail','#ffc247'],['racines','Racines','zone_racines','#a6d85a'],['mycelium','Mycélium','zone_mycelium','#5fe3d0'],['braises','Braises','zone_braises','#ff7a2e'],['givre','Givre','zone_givre','#8fd6ff'],['abime','Abîme','zone_abime','#c77dff']];
+  var NAMES = {camp:'Le Camp', racines:'Le Puits aux sporules', mycelium:'La Voûte filandreuse', braises:'Le Foyer éteint', givre:'La Galerie figée', abime:'Le Dernier palier'};
+  var slot = function(icon, cls, n){ return '<button type="button" class="tk-slot '+(cls||'')+'">'+ic(icon)+(n?'<sub>'+n+'</sub>':'')+'</button>'; };
+  var stat = function(icon, label, val, pct){ return '<div class="tk-stat">'+ic(icon)+'<span>'+label+'</span><b>'+val+'</b><div class="tk-meter"><i style="--v:'+pct+'%"></i></div></div>'; };
+  function screens(zone){
+    var zname = NAMES[zone], zi = Math.max(1, ZONES.findIndex(function(z){return z[0]===zone;}));
+    var hud = '<figure><div class="phone"><div class="scene">'+
+      '<div class="tk-hud"><div class="tk-hud-left"><div class="tk-bar" style="--v:78%"><i></i><b>101 / 129</b></div><div class="tk-bar xp" style="--v:40%"><i></i></div><div class="tk-level-name">3 · '+zname+'</div></div>'+
+      '<span class="tk-pill"><span class="tk-coin">'+ic('eclat')+'</span><span>561</span></span><button type="button" class="tk-iconbtn" aria-label="Sac">'+ic('inventaire')+'</button><button type="button" class="tk-iconbtn" aria-label="Pause">'+ic('pause')+'</button></div>'+
+      '<div class="rowx"><div class="minimap" aria-hidden="true"></div><button type="button" class="tk-skill" aria-label="Lanterne">'+ic('lanterne')+'</button></div>'+
+      '</div></div><figcaption><b>Combat</b>Vie, niveau, monnaie, sac, pause, sort.</figcaption></figure>';
+    var camp = '<figure><div class="phone"><div class="scene">'+
+      '<div class="tk-hud"><div class="tk-pill me"><span class="tk-disc">'+ic('chapeau')+'</span><div><b>Glaneur</b><small>Classique · niv. 3</small></div></div>'+wallet+'<button type="button" class="tk-iconbtn" aria-label="Réglages">'+ic('reglages')+'</button></div>'+
+      '<nav class="tk-nav" aria-label="Camp"><button type="button" aria-current="page">'+ic('niveaux')+'Niveaux</button><button type="button">'+ic('inventaire')+'Inventaire</button><button type="button">'+ic('boutique')+'Boutique</button><button type="button">'+ic('quetes')+'Quêtes</button><button type="button">'+ic('equipe')+'Équipe</button></nav>'+
+      '</div></div><figcaption><b>Camp</b>Carte du joueur, monnaies, barre de navigation.</figcaption></figure>';
+    var inv = '<figure><div class="phone"><div class="tk-sheet grow">'+
+      '<div class="tk-sheet-head">'+ic('inventaire')+'<h3 class="tk-title">Inventaire</h3><button type="button" class="tk-iconbtn" aria-label="Fermer">'+ic('fermer')+'</button></div><div class="tk-sheet-sub"><span class="tk-label">Sac · 7 sur 14</span>'+wallet+'</div>'+
+      '<div class="tk-kpis"><div class="tk-kpi vie"><b>'+ic('vie')+'129</b><small>Vie</small></div><div class="tk-kpi"><b>'+ic('degats')+'16</b><small>Dégâts</small></div><div class="tk-kpi pui"><b>'+ic('puissance')+'62</b><small>Puissance</small></div></div>'+
+      '<div class="tk-card tk-stats">'+stat('critique','Critique','8 %',14)+stat('cadence','Cadence','+0 %',0)+stat('vitesse','Vitesse','+6 %',12)+stat('portee','Portée','1,4',28)+stat('vie_par_ennemi','Vie par ennemi','0',0)+stat('eclats_trouves','Éclats trouvés','+0 %',0)+'</div>'+
+      '<div class="tk-slots six">'+slot('arme','rare',2)+slot('chapeau','commun',1)+slot('manteau','commun',2)+slot('lanterne','vide')+slot('bottes','commun',1)+slot('talisman','commun',2)+'</div>'+
+      '<div class="tk-card"><div class="tk-item">'+slot('arme','commun')+'<div><h3>Épée émoussée</h3><p>Commun · Arme · niveau 2</p></div><span class="tk-badge">Moins bien −6</span></div>'+
+      '<table class="tk-compare"><tr><th>Face à : Sabre de mousse</th><th>Équipé</th><th>Celui-ci</th><th></th></tr>'+
+      '<tr><td>'+ic('degats')+'Dégâts</td><td>16</td><td>13,4</td><td class="moins">−2,6</td></tr><tr><td>'+ic('cadence')+'Coups / s</td><td>1,3</td><td>1,3</td><td class="plus">+0,1</td></tr><tr><td>'+ic('portee')+'Portée</td><td>1,4</td><td>1,3</td><td class="moins">−0,1</td></tr><tr><td>'+ic('vitesse')+'Vitesse</td><td>6 %</td><td>0 %</td><td class="moins">−6</td></tr></table></div>'+
+      '<div class="tk-actions"><button type="button" class="tk-btn primaire large">'+ic('equiper')+'Équiper</button><button type="button" class="tk-btn etroit" aria-label="Retour">'+ic('retour')+'</button><button type="button" class="tk-btn">'+ic('atelier')+'Atelier</button><button type="button" class="tk-btn" aria-label="Vendre pour 10 éclats">Vendre <span class="tk-coin">'+ic('eclat')+'</span>10</button></div>'+
+      '</div></div><figcaption><b>Inventaire</b>Chiffres clés, statistiques, équipement, comparaison.</figcaption></figure>';
+    var shopItem = function(icon, cls, price){ return '<div>'+slot(icon, cls, 3)+'<div class="tk-price">'+ic('eclat')+price+'</div></div>'; };
+    var shop = '<figure><div class="phone"><div class="scene"></div><div class="tk-sheet">'+
+      '<div class="tk-sheet-head">'+ic('boutique')+'<h3 class="tk-title">Boutique</h3><button type="button" class="tk-iconbtn" aria-label="Fermer">'+ic('fermer')+'</button></div><div class="tk-sheet-sub"><span class="tk-label">Étal · 4 objets</span>'+wallet+'</div>'+
+      '<div class="tk-muted">L\'étal change chaque fois que tu débloques un niveau.</div>'+
+      '<div class="tk-slots" style="grid-template-columns:repeat(4,1fr)">'+shopItem('talisman','commun',60)+shopItem('manteau','rare',115)+shopItem('arme','rare',115)+shopItem('bottes','epique',240)+'</div>'+
+      '<div class="tk-row"><span class="tk-disc">'+ic('roulette')+'</span><div><h4>La Roulette</h4><div class="tk-muted" style="font-size:12px">Un objet au hasard, au camp.</div></div>'+ic('suivant')+'</div>'+
+      '</div></div><figcaption><b>Boutique</b>Étal, raretés, prix, renvoi vers la Roulette.</figcaption></figure>';
+    var tabs = ZONES.slice(1).map(function(z, i){ var open = i < zi; return '<button type="button" class="tk-tab" aria-selected="'+(z[0]===zone || (zone==='camp' && i===0))+'"'+(open?'':' disabled')+'>'+ic(open ? z[2] : 'verrou')+z[1]+'</button>'; }).join('');
+    var loot = '<div class="tk-loot">'+ic('arme')+ic('chapeau')+ic('manteau')+ic('bottes')+ic('talisman')+'</div>';
+    var lv = '<figure><div class="phone"><div class="tk-sheet grow">'+
+      '<div class="tk-sheet-head">'+ic('niveaux')+'<h3 class="tk-title">Niveaux</h3><button type="button" class="tk-iconbtn" aria-label="Fermer">'+ic('fermer')+'</button></div>'+
+      '<div class="tk-banner"><span class="tk-label" style="color:var(--tk-text)">Zone '+zi+' sur 5</span><b style="font-family:var(--tk-font-display);font-size:22px">'+(zone==='camp'?'Racines':ZONES[zi][1])+'</b></div>'+
+      '<div class="tk-tabs"><button type="button" class="tk-tab" aria-selected="true">Normal</button><button type="button" class="tk-tab" aria-selected="false">Difficile</button><button type="button" class="tk-tab" aria-selected="false" disabled>'+ic('verrou')+'Cauchemar</button></div>'+
+      '<div class="tk-tabs defile">'+tabs+'</div>'+
+      '<div class="tk-row fait"><span class="tk-disc">1</span><div><h4>Le Sentier moussu</h4>'+loot+'</div>'+ic('valide')+'</div>'+
+      '<div class="tk-row fait"><span class="tk-disc">2</span><div><h4>Les Racines nouées</h4>'+loot+'</div>'+ic('valide')+'</div>'+
+      '<div class="tk-row actif"><span class="tk-disc">3</span><div><h4>'+(zone==='camp'?NAMES.racines:zname)+'</h4>'+loot+'</div>'+ic('suivant')+'</div>'+
+      '<div class="tk-row verrouille"><span class="tk-disc">'+ic('verrou')+'</span><div><h4>Niveau 4</h4><div class="tk-muted" style="font-size:12px">Termine le niveau 3</div></div></div>'+
+      '<div class="tk-actions"><button type="button" class="tk-btn primaire">'+ic('entrer')+'Entrer</button></div>'+
+      '</div></div><figcaption><b>Niveaux</b>Bannière de zone, difficulté, zones, liste.</figcaption></figure>';
+    var quest = function(cls, icon, title, reward, prog, pct){ return '<div class="tk-row '+cls+'"><span class="tk-disc">'+ic(icon)+'</span><div><h4>'+title+'</h4>'+(pct==null?'':'<div class="tk-meter"><i style="--v:'+pct+'%"></i></div>')+'<div class="tk-reward"><span>'+reward+'</span><span>'+prog+'</span></div></div></div>'; };
+    var q = '<figure><div class="phone"><div class="tk-sheet grow">'+
+      '<div class="tk-sheet-head">'+ic('quetes')+'<h3 class="tk-title">Quêtes</h3><button type="button" class="tk-iconbtn" aria-label="Fermer">'+ic('fermer')+'</button></div>'+
+      '<div class="tk-sheet-sub"><span class="tk-label">Du jour · 3 sur 3</span>'+wallet+'</div>'+
+      quest('fait','valide','Vaincs 30 créatures','120 éclats · 1 gemme','30 / 30',100)+quest('fait','valide','Les trois quêtes du jour','Un tour de roulette','3 / 3',100)+
+      '<div class="rowx" style="align-items:center"><span class="tk-label">Aventure · 3 sur 24</span><button type="button" class="tk-btn etroit" style="padding:7px 12px;font-size:13px">'+ic('statistiques')+'Statistiques</button></div>'+
+      quest('actif','drapeau','Termine les 3 premiers niveaux','+1 objet à l\'étal','2 / 3',66)+quest('verrouille','verrou','Lance la roulette','120 éclats','',null)+quest('verrouille','verrou','Fusionne un objet à l\'atelier','2 gemmes','',null)+
+      '</div></div><figcaption><b>Quêtes</b>Progression, récompenses, états fait et verrouillé.</figcaption></figure>';
+    return hud + camp + inv + shop + lv + q;
+  }
+  var stage = document.getElementById('stage'), zbar = document.getElementById('zones');
+  function setZone(z){ stage.setAttribute('data-zone', z); stage.innerHTML = screens(z); [].forEach.call(zbar.children, function(b){ b.setAttribute('aria-pressed', b.dataset.z === z ? 'true' : 'false'); }); try { localStorage.setItem('tk-zone', z); } catch(e){} }
+  ZONES.forEach(function(z){ var b = document.createElement('button'); b.type = 'button'; b.id = 'zone-' + z[0]; b.dataset.z = z[0]; b.style.setProperty('--c', z[3]); b.innerHTML = ic(z[2]) + z[1]; b.addEventListener('click', function(){ setZone(z[0]); }); zbar.appendChild(b); });
+  var start = 'camp'; try { start = localStorage.getItem('tk-zone') || 'camp'; } catch(e){}
+  if (!ZONES.some(function(z){ return z[0] === start; })) start = 'camp';
+  setZone(start);
+  document.getElementById('gallery').innerHTML = ICONS.map(function(n){ return '<div>' + ic(n) + '<span>' + n + '</span></div>'; }).join('');
+  var pal = document.getElementById('pal');
+  ZONES.forEach(function(z){ var row = document.createElement('div'); row.setAttribute('data-zone', z[0]); row.innerHTML = '<b>' + z[1] + '</b><span class="sw">' + ['bg','panel','panel-2','line','text','accent','accent-2'].map(function(k){ return '<i style="background:var(--tk-' + k + ')" title="--tk-' + k + '"></i>'; }).join('') + '</span>'; pal.appendChild(row); });
+})();
+</script>
+</body></html>

@@ -1,0 +1,11 @@
+TinyKnight - kit d'interface (6 octobre 2026)
+
+tinyknight_ui.css        Jetons de theme (camp + 5 zones) et composants : HUD, barre de navigation, panneaux,
+                         statistiques, cases d'objet, comparaison, boutons, onglets, lignes de niveau et de quete.
+                         Theme : data-zone="camp|racines|mycelium|braises|givre|abime" sur <body> ou un conteneur.
+tinyknight_icones.svg    Les 47 icones en un seul fichier (symboles #tk-<nom>), a coller une fois dans la page.
+icones_interface/        Les memes icones, un fichier SVG par icone.
+demo_interface.html      Les six ecrans montes avec ces composants ; le HTML des ecrans sert de modele.
+
+Polices : Grenze Gotisch (titres) et Figtree (texte), sur Google Fonts.
+Les images (icones d'objets en PNG, bannieres de zone) sont dans TinyKnight_UI_images.zip.
