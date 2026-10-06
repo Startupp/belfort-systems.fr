@@ -1,0 +1,17 @@
+TinyKnight - zones et visuels promo (6 octobre 2026)
+
+zones/<zone>/            racines, mycelium, braises, givre, abimes.
+  <zone>_*.glb           5 decors + 1 monstre (<zone>_monstre_*) par zone, 30 modeles au total.
+  illustration_<zone>.png  Ambiance de la zone (fond de menu, ecran de chargement, reference de couleurs).
+  concepts/              Image d'origine de chaque modele.
+apercu_zones.jpg         Rendu de chaque modele (face + 3/4).
+
+promo/                   6 illustrations originales, sans texte ni logo.
+promo/playstore/         icone_512x512.png et banniere_1024x500.png (formats exiges par le Play Store).
+promo/pubs/              Formats publicitaires courants : 1200x628, 1920x1080, 1080x1080, 1080x1350, 1080x1920.
+
+Modeles : GLB, environ 3000 triangles, textures 512 px, materiau non metallique.
+Chaque objet tient dans un cube d'environ 1 unite, axe Y vers le haut : a mettre a l'echelle dans le jeu
+(ex. arche et portail x3, rochers et tonneaux x1, lanterne x0.5). Monstres fixes, a animer en code.
+Chargement Three.js : GLTFLoader.
+Les captures d'ecran du Play Store doivent montrer le vrai jeu : ces illustrations ne les remplacent pas.
