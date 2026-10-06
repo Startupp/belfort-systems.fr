@@ -385,6 +385,14 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 #swap.go{animation:swapk 1.7s ease-out}
 #swap.go b{animation:pop .5s .05s backwards}
 @keyframes swapk{0%{opacity:0}9%,62%{opacity:1}to{opacity:0}}
+/* the card that opens a level: the illustration of its zone, then it fades away. It lets every touch through */
+#zcard{position:absolute;left:50%;top:27%;z-index:29;width:min(84vw,430px);aspect-ratio:16/9;transform:translate(-50%,-50%);border-radius:var(--r);overflow:hidden;pointer-events:none;opacity:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px 18px;background:var(--zc,none) center 45%/cover no-repeat,var(--bark-2);box-shadow:inset 0 0 0 2px var(--line),0 18px 50px rgba(0,0,0,.6);text-shadow:0 1px 4px rgba(0,0,0,.85)}
+#zcard::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.72),rgba(0,0,0,0) 62%)}
+#zcard small,#zcard b{position:relative} #zcard small{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cream);opacity:.88}
+#zcard b{font:500 27px/1.1 var(--display);color:#fff;margin-top:2px}
+#zcard.go{animation:zcardk 2.7s ease-out}
+@keyframes zcardk{0%{opacity:0;transform:translate(-50%,-46%) scale(.96)}12%,68%{opacity:1;transform:translate(-50%,-50%) scale(1)}to{opacity:0;transform:translate(-50%,-53%) scale(1)}}
+@media (prefers-reduced-motion:reduce){#zcard.go{animation:zcardr 2.4s linear}@keyframes zcardr{0%,80%{opacity:1}to{opacity:0}}}
 .tile.r2,.tile.r3{animation:glowk 2.2s ease-in-out infinite}
 .fresh .tile.r2,.fresh .tile.r3{animation:pop .3s calc(var(--i,0)*28ms) backwards,glowk 2.2s .4s ease-in-out infinite}
 .btn.shine{position:relative;overflow:hidden}
@@ -445,7 +453,8 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 .bar i{background:linear-gradient(90deg,var(--accent2),var(--amber))}
 .stat small{display:block;font-size:10.5px;color:var(--dim);line-height:1.2}
 /* levels: the banner of the zone, and the zones as tabs that slide sideways, each with its mark */
-.banner{position:relative;overflow:hidden;min-height:68px;padding:12px 14px;display:flex;flex-direction:column;justify-content:flex-end;background:var(--bz,var(--banner));box-shadow:inset 0 0 0 1px var(--line);text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.banner{position:relative;overflow:hidden;min-height:68px;padding:12px 14px;display:flex;flex-direction:column;justify-content:flex-end;background:var(--art,none),var(--bz,var(--banner));box-shadow:inset 0 0 0 1px var(--line);text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.banner[data-art]{min-height:100px} /* a zone banner: room for its illustration (Damien's, behind the name, once it has arrived) */
 .banner small{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cream);opacity:.85}
 .banner b{font:500 25px/1.1 var(--display);color:#fff}
 .banner .ic{position:absolute;right:10px;top:50%;font-size:64px;transform:translateY(-50%) rotate(-8deg);color:#fff;opacity:.16}
@@ -505,6 +514,7 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
   <div id="flash"></div>
   <div id="pop" hidden aria-hidden="true"><div id="pop-card"><span id="pop-ic"></span><b id="pop-t"></b><small id="pop-s"></small></div><i id="pop-orb"></i></div>
   <div id="swap" aria-hidden="true"><div><small>Tu entres dans le jeu</small><b id="swap-n"></b><span id="swap-t"></span></div></div>
+  <div id="zcard" role="status"><small id="zc-z"></small><b id="zc-n"></b></div>
   <div id="toast" aria-live="polite"></div>
 
   <div id="downbox" hidden>
@@ -790,12 +800,22 @@ function h(tag, attrs, ...kids) {
 /* ================= game data ================= */
 const T = 32;
 const CLOAKS = ['#e8a23a', '#5fc0a0', '#dc6f7c', '#8da2f0'];
+// The look of each world. fog, sky, gnd, sun: the dark far away, the light from above and from below, the sun; tex: the tint laid on
+// Damien's textures of the cubes (TinyKnight_Textures_Zones), when they are there. They follow the illustrations of the zones
+// (TinyKnight_Zones_Promo): golden light in the Racines, teal glow in the Mycélium, red dark in the Braises, pale cold in the Givre,
+// violet in the Abîme. air: what floats (count, colours, rising speed in pixels a second — below zero it falls, size in tiles);
+// shaft: the colour of the light that falls from above in some chambers. All of it is for the eye only.
 const STRATA = [
-  { name: 'Racines', floorA: '#4a3a2a', floorB: '#57452f', wallTop: '#120d09', wallFace: '#6b5236', wallEdge: '#8a6e45', glow: '#ffc24a', deco: '#7d9c48', foe: '#c2603f', foe2: '#f0d9a8', fog: '#070504', sky: '#93a2c8', cap: '#5f7a3a', kind: 0 },
-  { name: 'Mycélium', floorA: '#2c3247', floorB: '#353c54', wallTop: '#0c0f18', wallFace: '#42517a', wallEdge: '#6079a8', glow: '#7fe3d2', deco: '#b58cff', foe: '#4bb0a6', foe2: '#e6d8ff', fog: '#04060b', sky: '#8f9be0', cap: '#4a4f86', kind: 1 },
-  { name: 'Braises', floorA: '#43302a', floorB: '#4f3830', wallTop: '#120a08', wallFace: '#74402f', wallEdge: '#a85a3c', glow: '#ff8a4a', deco: '#ffcf5a', foe: '#e0672f', foe2: '#ffe2a8', fog: '#090403', sky: '#c8a08a', cap: '#3a2a27', kind: 2 },
-  { name: 'Givre', floorA: '#2f3b47', floorB: '#3a4856', wallTop: '#0b1016', wallFace: '#5a7388', wallEdge: '#9cc4dc', glow: '#bfeaff', deco: '#e8f6ff', foe: '#6f9fd0', foe2: '#eaf6ff', fog: '#04070a', sky: '#b8d4f0', cap: '#a9c2d2', kind: 2 },
-  { name: 'Abîme', floorA: '#2a2233', floorB: '#33293f', wallTop: '#09070d', wallFace: '#4a3566', wallEdge: '#7a5aa8', glow: '#ff7ad9', deco: '#9a6bff', foe: '#8a4fd0', foe2: '#ffd0f2', fog: '#050308', sky: '#a890d8', cap: '#2f2740', kind: 1 },
+  { name: 'Racines', floorA: '#4a3a2a', floorB: '#57452f', wallTop: '#120d09', wallFace: '#6b5236', wallEdge: '#8a6e45', glow: '#ffc24a', deco: '#7d9c48', foe: '#c2603f', foe2: '#f0d9a8', fog: '#120b05', sky: '#d6b47c', gnd: '#2b1d10', sun: '#ffdca6', tex: '#aaa69c', cap: '#5f7a3a', kind: 0,
+    air: { n: 44, col: ['#ffd27a', '#ffe8b0'], v: [2, 6], r: .1 }, shaft: '#ffd98a' },
+  { name: 'Mycélium', floorA: '#2c3247', floorB: '#353c54', wallTop: '#0c0f18', wallFace: '#42517a', wallEdge: '#6079a8', glow: '#7fe3d2', deco: '#b58cff', foe: '#4bb0a6', foe2: '#e6d8ff', fog: '#03121a', sky: '#86dcd4', gnd: '#101a30', sun: '#a6ecff', tex: '#b4cbcc', cap: '#4a4f86', kind: 1,
+    air: { n: 60, col: ['#7fe3d2', '#b58cff', '#d2fff6'], v: [-2, 4], r: .13 } },
+  { name: 'Braises', floorA: '#43302a', floorB: '#4f3830', wallTop: '#120a08', wallFace: '#74402f', wallEdge: '#a85a3c', glow: '#ff8a4a', deco: '#ffcf5a', foe: '#e0672f', foe2: '#ffe2a8', fog: '#1a0703', sky: '#ff9d66', gnd: '#2a0d06', sun: '#ffb47e', tex: '#c4aaa0', cap: '#3a2a27', kind: 2,
+    air: { n: 64, col: ['#ff8a3a', '#ffcf5a', '#ff5a2a'], v: [14, 30], r: .075 } },
+  { name: 'Givre', floorA: '#2f3b47', floorB: '#3a4856', wallTop: '#0b1016', wallFace: '#5a7388', wallEdge: '#9cc4dc', glow: '#bfeaff', deco: '#e8f6ff', foe: '#6f9fd0', foe2: '#eaf6ff', fog: '#1f3043', sky: '#e2f3ff', gnd: '#4a6178', sun: '#eef8ff', tex: '#a9b8c6', cap: '#a9c2d2', kind: 2,
+    air: { n: 70, col: ['#ffffff', '#e2f2ff'], v: [-11, -6], r: .09 }, shaft: '#e6f5ff' },
+  { name: 'Abîme', floorA: '#2a2233', floorB: '#33293f', wallTop: '#09070d', wallFace: '#4a3566', wallEdge: '#7a5aa8', glow: '#ff7ad9', deco: '#9a6bff', foe: '#8a4fd0', foe2: '#ffd0f2', fog: '#120826', sky: '#b896ff', gnd: '#1a0c2a', sun: '#cdb0ff', tex: '#c0b4d6', cap: '#2f2740', kind: 2,
+    air: { n: 48, col: ['#c77dff', '#ff7ad9'], v: [3, 9], r: .1 } },
 ];
 const PER_WORLD = 6; // five worlds of six levels; the sixth is the boss
 const strIdxOf = f => (((f - 1) / PER_WORLD) | 0) % STRATA.length;
@@ -1485,7 +1505,8 @@ function genFloor(seed, floor) {
 }
 // the camp: a safe clearing with places to walk up to, a garden that grows by itself, a dummy to hit and a few locals
 // the camp wears the colours of the game being played: warm gold and green for Classic, violet and blue for Expedition
-const CAMPS = [STRATA[0], Object.assign({}, STRATA[0], { floorA: '#3a3555', floorB: '#464068', wallTop: '#0c0a16', wallFace: '#4b4a88', wallEdge: '#7d86cf', glow: '#a996ff', deco: '#6fa8ff', foe: '#9a7cf0', foe2: '#e6dcff', fog: '#06050d', sky: '#a59bf2', cap: '#3c4f9a' })];
+const CAMPS = [STRATA[0], Object.assign({}, STRATA[0], { floorA: '#3a3555', floorB: '#464068', wallTop: '#0c0a16', wallFace: '#4b4a88', wallEdge: '#7d86cf', glow: '#a996ff', deco: '#6fa8ff', foe: '#9a7cf0', foe2: '#e6dcff', fog: '#06050d', sky: '#a59bf2', gnd: '#1c1830', sun: '#8f9dff', tex: '#9d93d6', cap: '#3c4f9a',
+  air: { n: 40, col: ['#a996ff', '#9fb0ff'], v: [2, 6], r: .1 } })];
 function genHub() { // the camp: a clearing with the level counter, the mode portal, the wheel, the garden, a practice dummy and a fire
   const W = 17, H = 21, g = new Uint8Array(W * H);
   for (let y = 3; y < 17; y++) for (let x = 3; x < 14; x++) g[y * W + x] = 1;
@@ -1659,7 +1680,7 @@ function startRun(seed, floor) {
   Net.nhUntil = performance.now() + 1500; F.quietUntil = performance.now() + 1500;
   cam.init = false; G.mode = 'play'; G.paused = false;
   hudLabel();
-  closeSheet(); showUI(); toast(levelOf(floor).name + (run.big ? ' · Expédition' : run.diff ? ' · ' + DIFFS[run.diff].name : ''));
+  closeSheet(); showUI(); levelCard(levelOf(floor).name + (run.big ? ' · Expédition' : run.diff ? ' · ' + DIFFS[run.diff].name : ''));
   try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => { }); } catch (e) { }
   updateHud(true); sendPresence(true); lobbyPresence(); tutoStart();
 }
@@ -2548,7 +2569,7 @@ function canvasTex(size, draw, repeat) {
   const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size);
   const t = new THREE.CanvasTexture(c); if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
-function floorTex(si) { // four tile variants in one texture, so neighbours do not repeat
+function floorTex(si) { // four tile variants in one texture, so that neighbours differ
   return canvasTex(256, (x, s) => {
     const R = rng(77 + si * 13), kd = STRATA[si].kind;
     for (let v = 0; v < 4; v++) {
@@ -2562,7 +2583,7 @@ function floorTex(si) { // four tile variants in one texture, so neighbours do n
       x.strokeStyle = 'rgba(0,0,0,.34)'; x.lineWidth = 5; x.strokeRect(ox + 1, oy + 1, 126, 126);
       x.strokeStyle = 'rgba(255,255,255,.16)'; x.lineWidth = 2; x.beginPath(); x.moveTo(ox + 6, oy + 122); x.lineTo(ox + 6, oy + 6); x.lineTo(ox + 122, oy + 6); x.stroke();
     }
-  });
+  }, true);
 }
 function wallTex(si) {
   return canvasTex(128, (x) => {
@@ -2591,8 +2612,12 @@ function initGL() {
   gradTex = new THREE.DataTexture(new Uint8Array([64, 128, 196, 255]), 4, 1, THREE.LuminanceFormat); gradTex.minFilter = gradTex.magFilter = THREE.NearestFilter; gradTex.needsUpdate = true;
   glowTex = canvasTex(64, (x) => { const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.35, 'rgba(255,255,255,.4)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); });
   M.toon = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex });
-  M.floor = []; M.wall = [];
-  for (let i = 0; i < STRATA.length; i++) { M.floor.push(new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex, map: floorTex(i) })); M.wall.push(new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex, map: wallTex(i) })); }
+  // the cubes of each world: floor, wall sides, wall tops. Their shading is in the vertices (grey), their colour in the material:
+  // the game's own textures and colours meanwhile, Damien's textures once they are there (zoneMats), without building anything again.
+  // The cubes are mapped by their place in the world, one texture to two tiles; the game's own textures keep their size of one tile.
+  const cube = map => { const m = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex, map }); m.userData.own = map; return m; };
+  M.floor = []; M.wall = []; M.top = [];
+  for (let i = 0; i < STRATA.length; i++) { const wt = wallTex(i); wt.repeat.set(2, 2); M.floor.push(cube(floorTex(i))); M.wall.push(cube(wt)); M.top.push(cube(null)); }
   M.glow = new THREE.MeshBasicMaterial({ vertexColors: true });              // lit things that still sink into the dark
   M.eye = new THREE.MeshBasicMaterial({ vertexColors: true, fog: false });   // things that stay visible in the dark
   M.outline = new THREE.MeshBasicMaterial({ color: '#0b0705', side: THREE.BackSide });
@@ -2626,12 +2651,12 @@ function withOutline(mesh, k = 1.07) {
 
 /* ---------- the level: floor, walls, growth ---------- */
 function buildWorld() {
-  const shared = new Set([M.toon, M.glow, M.eye, M.outline, ...M.floor, ...M.wall]);
+  const shared = new Set([M.toon, M.glow, M.eye, M.outline, ...M.floor, ...M.wall, ...M.top]);
   for (const o of [...worldGroup.children]) { worldGroup.remove(o); o.traverse(c => { if (c.isSprite) c.material.dispose(); else if (c.isMesh) { c.geometry.dispose(); if (!shared.has(c.material)) c.material.dispose(); } }); }
   for (const o of [...dynGroup.children]) freeMesh(o);
   dying.length = 0; for (const n of CAMP.npcs) freeModel(n.m); CAMP = { npcs: [], crit: [], plots: [] }; propsClear(); const backWalls = [];
   const S = F.str, si = F.si, kd = S.kind, W = F.W, H = F.H, g = F.g, R = rng((F.seed ^ 0x51ED) >>> 0);
-  scene.background.set(S.fog); scene.fog.color.set(S.fog); hemi.color.set(S.sky); sun.color.set(F.hub && ME.game ? '#8f9dff' : '#c9d4ff');
+  scene.background.set(S.fog); scene.fog.color.set(S.fog); hemi.color.set(S.sky); hemi.groundColor.set(S.gnd); sun.color.set(S.sun);
   const isF = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] === 1;
   const hg = new Float32Array(W * H);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -2640,39 +2665,42 @@ function buildWorld() {
     if (near) hg[y * W + x] = isF(x, y - 1) ? .34 : 1.3 + R() * .75; // walls in front of the camera stay low, so they never hide the room
   }
   const hAt = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : hg[y * W + x];
-  const fb = new GB(), wb = new GB(), pb = new GB(), gb = new GB(), glows = [];
-  const fA = rgb(S.floorA), fB = rgb(S.floorB), wF = rgb(S.wallFace), wE = rgb(S.wallEdge), capC = rgb(S.cap);
-  const mul = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+  const fb = new GB(), wb = new GB(), tb = new GB(), pb = new GB(), gb = new GB(), glows = [];
+  const grey = k => [k, k, k];
   const ao = (gx, gy) => { let n = 0; if (!isF(gx - 1, gy - 1)) n++; if (!isF(gx, gy - 1)) n++; if (!isF(gx - 1, gy)) n++; if (!isF(gx, gy)) n++; return 1 - n * .2; };
+  // the floor's shade: darker in the corners against the walls, and a little lighter or darker from one tile corner to the next.
+  // Each corner has one value for the four tiles around it, so the shade flows across the floor without drawing the grid
+  const nk = (gx, gy) => { let h = Math.imul(gx * 73856093 ^ gy * 19349663 ^ F.seed, 0x27d4eb2d); h ^= h >>> 15; return .88 + (h >>> 0) / 4294967296 * .24; };
+  const q = (gx, gy) => grey(nk(gx, gy) * ao(gx, gy));
+  // texture coordinates come from the place in the world (half a unit a tile, v growing up the screen): seamless textures stay seamless
+  const flat = (b, x, y, hh, ca, cb, cc, cd) => b.quad([x, hh, y + 1], [x + 1, hh, y + 1], [x + 1, hh, y], [x, hh, y], [0, 1, 0], ca, cb, cc, cd, x / 2, -(y + 1) / 2, (x + 1) / 2, -y / 2);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (isF(x, y)) {
-      const c = R() < .36 ? fB : fA, k = .9 + R() * .2, v = (R() * 4) | 0, u0 = (v % 2) * .5 + .004, v0 = (v >> 1) * .5 + .004;
-      fb.quad([x, 0, y + 1], [x + 1, 0, y + 1], [x + 1, 0, y], [x, 0, y], [0, 1, 0], mul(c, k * ao(x, y + 1)), mul(c, k * ao(x + 1, y + 1)), mul(c, k * ao(x + 1, y)), mul(c, k * ao(x, y)), u0, v0, u0 + .492, v0 + .492);
-      continue;
-    }
+    if (isF(x, y)) { flat(fb, x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
     const hh = hg[y * W + x]; if (!hh) continue;
-    const low = hh < 1, top = mul(capC, (low ? .8 : .62) + R() * .3);
-    wb.quad([x, hh, y + 1], [x + 1, hh, y + 1], [x + 1, hh, y], [x, hh, y], [0, 1, 0], top, top, top, top, .02, .02, .03, .03);
+    const low = hh < 1, top = grey((low ? .8 : .62) + R() * .3);
+    flat(tb, x, y, hh, top, top, top, top);
     const side = (nh, a, b, n) => { // a, b: the two bottom corners (x, z), counter-clockwise seen from outside
-      if (nh >= hh - .01) return; const y0 = Math.max(0, nh), cb = mul(wF, low ? .55 : .42 + .3 * y0), ct = mul(wF, low ? .85 : 1.05);
-      wb.quad([a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], hh, b[1]], [a[0], hh, a[1]], n, cb, cb, ct, ct, 0, y0, 1, hh);
-      const y1 = hh - (low ? .07 : .12 + R() * .06), ox = n[0] * .025, oz = n[2] * .025, mc = mul(capC, 1.2);
-      if (y1 > y0) wb.quad([a[0] + ox, y1, a[1] + oz], [b[0] + ox, y1, b[1] + oz], [b[0] + ox, hh + .012, b[1] + oz], [a[0] + ox, hh + .012, a[1] + oz], n, mc, mc, mc, mc, .02, .02, .03, .03);
+      if (nh >= hh - .01) return; const y0 = Math.max(0, nh), cb = grey(low ? .55 : .42 + .3 * y0), ct = grey(low ? .85 : 1.05), ua = (n[2] ? a[0] : a[1]) / 2, ub = (n[2] ? b[0] : b[1]) / 2;
+      wb.quad([a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], hh, b[1]], [a[0], hh, a[1]], n, cb, cb, ct, ct, ua, y0 / 2, ub, hh / 2);
+      // the lip of the top, hanging over the side (moss, snow, ash…)
+      const y1 = hh - (low ? .07 : .12 + R() * .06), ox = n[0] * .025, oz = n[2] * .025, mc = grey(1.2);
+      if (y1 > y0) tb.quad([a[0] + ox, y1, a[1] + oz], [b[0] + ox, y1, b[1] + oz], [b[0] + ox, hh + .012, b[1] + oz], [a[0] + ox, hh + .012, a[1] + oz], n, mc, mc, mc, mc, ua, y1 / 2, ub, (hh + .012) / 2);
     };
     side(hAt(x, y + 1), [x, y + 1], [x + 1, y + 1], [0, 0, 1]); side(hAt(x, y - 1), [x + 1, y], [x, y], [0, 0, -1]);
     side(hAt(x + 1, y), [x + 1, y + 1], [x + 1, y], [1, 0, 0]); side(hAt(x - 1, y), [x, y], [x, y + 1], [-1, 0, 0]);
     // growth on and around the walls
     const front = isF(x, y + 1) && !low; if (front) backWalls.push([x, y, hh]);
     if (front && R() < .5) decoFace(pb, gb, glows, kd, x, y, hh, R);
+    if (front && !F.hub) zoneFace(pb, gb, glows, x, y, hh, R);
     if (!low && R() < (front ? .45 : .14)) decoTop(pb, gb, glows, kd, x + .2 + R() * .6, hh, y + .25 + R() * .55, R);
     if (low && R() < .3) decoSmall(pb, kd, x + .2 + R() * .6, hh, y + .3 + R() * .4, R);
   }
   for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (isF(x, y) && !isF(x, y - 1) && R() < .16) decoSmall(pb, kd, x + .15 + R() * .7, 0, y + .14 + R() * .12, R);
   const addW = (b, m, rs) => { if (b.empty) return; const o = new THREE.Mesh(b.build(), m); o.castShadow = rs !== 2; o.receiveShadow = rs > 0; o.matrixAutoUpdate = false; worldGroup.add(o); };
-  addW(fb, M.floor[si], 2); addW(wb, M.wall[si], 1); addW(pb, M.toon, 1); if (!gb.empty) { const o = new THREE.Mesh(gb.build(), M.glow); worldGroup.add(o); }
+  zoneMats(); zoneTexWant(si); addW(fb, M.floor[si], 2); addW(wb, M.wall[si], 1); addW(tb, M.top[si], 1); addW(pb, M.toon, 1); if (!gb.empty) { const o = new THREE.Mesh(gb.build(), M.glow); worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
   buildLift(); for (const c of F.chests) buildChest(c); if (F.seals) for (const q of F.seals) buildSeal(q);
-  if (F.hub) buildCamp();
+  if (F.hub) buildCamp(); else buildShafts(R);
   F.props = propsPlan(backWalls); motes.length = 0; modelsWant(); propsBuild();
 }
 function mushroom(pb, gb, x, y, z, s, capCol, glowCap, R) {
@@ -2712,6 +2740,37 @@ function decoSmall(pb, si, x, y, z, R) {
   if (si === 0) { if (k < .4) pb.add(ico(.08 + R() * .07), mat(x, y + .04, z, 1, .7, 1, R(), R(), R()), rgb(S.wallEdge, .7)); else if (k < .7) mushroom(pb, pb, x, y, z, .45 + R() * .3, rgb(S.foe, .9), false, R); else tuft(rgb(S.deco, .7 + R() * .3), 4, .22); }
   else if (si === 1) { const c = rgb(k < .5 ? S.glow : S.deco, .5); mushroom(pb, pb, x, y, z, .4 + R() * .3, c, false, R); if (k > .6) mushroom(pb, pb, x + .16, y, z + .05, .28, c, false, R); }
   else { if (k < .55) pb.add(ico(.09 + R() * .08), mat(x, y + .04, z, 1, .7, 1, R(), R(), R()), [.18, .12, .11]); else tuft([.2, .14, .12], 3, .3); }
+}
+// what the illustration of each zone shows on the walls that face the camera: lanterns hung on the roots (Racines), icicles
+// along the top (Givre), pale roots hanging down (Abîme). The lanterns hang well above the ground: down there, only loot shines
+function zoneFace(pb, gb, glows, x, y, hh, R) {
+  const si = F.si, z = y + 1.04;
+  if (si === 0 && R() < .13) {
+    const px = x + .25 + R() * .5, len = .22 + R() * .22, py = hh - len - .1;
+    pb.add(cyl(.012, .012, len, 4), mat(px, hh - len / 2, z), [.16, .11, .07]); pb.add(box(.15, .04, .15), mat(px, py + .1, z), [.2, .14, .08]); pb.add(box(.15, .04, .15), mat(px, py - .1, z), [.2, .14, .08]);
+    gb.add(box(.12, .16, .12), mat(px, py, z), rgb('#ffcf6a')); glows.push([px, py, z + .12, '#ffc24a', .95]);
+  } else if (si === 3 && R() < .6) {
+    for (let i = 0, n = 2 + ((R() * 4) | 0); i < n; i++) { const len = .12 + R() * .3; pb.add(cone(.03 + R() * .025, len, 4), mat(x + .08 + R() * .84, hh - .06 - len / 2, z - .01, 1, 1, 1, Math.PI, 0, 0), [.78 + R() * .1, .9, 1]); }
+  } else if (si === 4 && R() < .35) {
+    for (let i = 0, n = 1 + ((R() * 3) | 0); i < n; i++) { const len = hh * (.35 + R() * .45), px = x + .12 + R() * .76, rr = .025 + R() * .03; pb.add(cyl(rr, rr * .4, len, 5), mat(px, hh - len / 2 + .04, z, 1, 1, 1, 0, 0, (R() - .5) * .3), [.78, .72, .9]); }
+  }
+}
+// Light falling from above into a few chambers (Racines, Givre): wide, slanted, faint, and gone before it reaches the floor,
+// so that it never passes for the beam of a loot or of the exit. For the eye only.
+function shaftGeo() {
+  const hh = 6, g = new THREE.CylinderGeometry(.7, 1.3, hh, 16, 4, true); g.translate(0, hh / 2, 0);
+  const p = g.attributes.position, c = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) { const k = Math.max(0, p.getY(i) / hh - .12) / .88; c[i * 3] = c[i * 3 + 1] = c[i * 3 + 2] = k * k * (1 - k * .35); }
+  g.setAttribute('color', new THREE.BufferAttribute(c, 3)); return g;
+}
+function buildShafts(R) {
+  F.shafts = []; const col = F.str.shaft; if (!col) return;
+  const rooms = F.rooms.filter(r => r.kind !== 'start');
+  for (let i = rooms.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = rooms[i]; rooms[i] = rooms[j]; rooms[j] = t; }
+  for (const r of rooms.slice(0, F.big ? 5 : 3)) {
+    const m = new THREE.Mesh(shaftGeo(), addMat(col, { vertexColors: true, opacity: .24 })); m.position.set(r.cx + .5, 0, r.cy + .5); m.rotation.set(0, 0, (R() < .5 ? 1 : -1) * (.28 + R() * .14)); // slanted sideways: a band of light across the screen, as in the illustrations
+    m.renderOrder = 3; m.userData.k = R() * 6; worldGroup.add(m); F.shafts.push(m);
+  }
 }
 function beamGeo(rb, rt, hh) { // open cylinder, bright at the base and fading upward (additive)
   const g = new THREE.CylinderGeometry(rt, rb, hh, 18, 1, true); g.translate(0, hh / 2, 0);
@@ -2983,7 +3042,7 @@ function enemyGeo(type, si) {
   return GEO[key] = { body: b.empty ? null : b.build(), glow: gl.empty ? null : gl.build(), crown };
 }
 function makeEnemyMesh(e) {
-  const gq = enemyGeo(e.type, F.si), root = new THREE.Group(), m = { root, body: null, glow: null, crown: null, spr: null, mat: null, mdl: false, roll: 0, y: 0 };
+  const gq = enemyGeo(e.type, F.si), root = new THREE.Group(), m = { root, body: null, glow: null, crown: null, spr: null, mat: null, mdl: false, anim: null, fly: true, roll: 0, y: 0 };
   if (!monsterBody(e, m)) { // Damien's model when it is there; otherwise the shape built by code
     if (gq.body) { m.mat = M.toon.clone(); m.body = withOutline(shade(new THREE.Mesh(gq.body, m.mat)), e.type === 9 ? 1.04 : 1.08); root.add(m.body); }
     if (gq.glow) { m.glow = new THREE.Mesh(gq.glow, M.eye); (e.type === 1 ? root : (m.body || root)).add(m.glow); }
@@ -3030,6 +3089,11 @@ function initPools() {
   POOL.ret = pool(() => new THREE.Mesh(new THREE.RingGeometry(.86, 1, 4, 1).rotateX(-Math.PI / 2), addMat('#ffc24a', { opacity: .9 })));
 }
 const PCAP = 560, motes = [];
+// one speck of the air of a world, somewhere around the view: what rises starts low, what falls starts high (start: anywhere)
+function airMote(A, start) {
+  const v = A.v[0] + Math.random() * (A.v[1] - A.v[0]);
+  return { x: cam.x + (Math.random() - .5) * 420, y: cam.y + (Math.random() - .5) * 560, h: start ? 6 + Math.random() * 60 : v < 0 ? 71 : 2, s: Math.random() * 9, v, c: A.col[(Math.random() * A.col.length) | 0] };
+}
 let pGeo, pMat, pPts;
 function initParticles() {
   pGeo = new THREE.BufferGeometry();
@@ -3088,16 +3152,18 @@ function render3D() {
   POOL.line.begin(); POOL.disc.begin();
   for (const e of F.enemies) {
     const near = !e.dead && Math.abs(e.x - P.x) < 400 && Math.abs(e.y - P.y) < 620;
-    if (!near) { if (e.m) { if (e.dead) { dying.push({ root: e.m.root, t: .14 }); if (e.m.mat) e.m.mat.emissive.setRGB(1, 1, 1); } else freeMesh(e.m.root); e.m = null; } continue; }
-    const m = e.m || (e.m = makeEnemyMesh(e)), r = m.root, id = e.id;
+    if (!near) { if (e.m) { if (e.dead) { const a = e.m.anim; if (a) e.m.body.rotation.x = 0; dying.push({ root: e.m.root, t: a ? MOB_DIE : .14, anim: a, mat: e.m.mat }); if (e.m.mat) e.m.mat.emissive.setRGB(1, 1, 1); } else freeMesh(e.m.root); e.m = null; } continue; }
+    const m = e.m || (e.m = makeEnemyMesh(e)), r = m.root, id = e.id, an = m.anim;
+    // a model that has its animations moves by itself: the code only adds what the animations cannot (height, roll, shudder)
     let y = 0, sxz = 1, sy = 1, wob = 0;
-    if (e.type === 0) { if (e.st === 2) { const k = Math.abs(Math.sin(t * 7.5 + id)); y = k * .38; sy = 1 + k * .18; } else { sy = 1 + Math.sin(t * 3 + id) * .05; } sxz = 1 / Math.sqrt(sy); }
+    if (an) monsterPose(e, m, dt);
+    if (e.type === 0) { if (!an) { if (e.st === 2) { const k = Math.abs(Math.sin(t * 7.5 + id)); y = k * .38; sy = 1 + k * .18; } else sy = 1 + Math.sin(t * 3 + id) * .05; sxz = 1 / Math.sqrt(sy); } }
     else if (e.type === 1) { if (e.st === 1) wob = Math.sin(t * 60) * .04; m.roll = m.mdl && e.st !== 2 ? m.roll * .85 : m.roll + dt * (e.st === 2 ? 22 : e.st === 1 ? 0 : 2.5); m.body.rotation.x = m.roll; } // a model only rolls while it charges
-    else if (e.type === 2) { const k = e.st === 1 ? 1.22 : 1 + Math.sin(t * 2.5 + id) * .04; sy = k; sxz = k; }
-    else if (e.type === 3) { y = .15 + Math.sin(t * 4 + id) * .1; sy = 1 + Math.sin(t * 16 + id) * .12; m.spr.material.opacity = .55 + Math.sin(t * 12 + id) * .2; }
-    else if (e.type === 4) { if (e.st === 1) { y = .32; wob = Math.sin(t * 40) * .025; } else if (e.st === 2) { sy = .78; sxz = 1.12; } else sy = 1 + Math.sin(t * 2 + id) * .02; }
+    else if (e.type === 2) { if (!an) { const k = e.st === 1 ? 1.22 : 1 + Math.sin(t * 2.5 + id) * .04; sy = k; sxz = k; } }
+    else if (e.type === 3) { y = m.fly ? .15 + Math.sin(t * 4 + id) * .1 : 0; if (!an) sy = 1 + Math.sin(t * 16 + id) * .12; m.spr.material.opacity = .55 + Math.sin(t * 12 + id) * .2; }
+    else if (e.type === 4) { if (e.st === 1) { y = .32; wob = Math.sin(t * 40) * .025; } else if (e.st === 2 && !an) { sy = .78; sxz = 1.12; } else if (!an) sy = 1 + Math.sin(t * 2 + id) * .02; }
     else if (e.type === 5) { r.rotation.z = e.flash > 0 ? Math.sin(t * 55) * .14 : r.rotation.z * .8; }
-    else { const k = 1 + Math.sin(t * 3) * .035; sy = k; sxz = 1 / k; if (e.st === 1 || e.st === 8) wob = Math.sin(t * 50) * .05; if (m.crown) m.crown.rotation.y += dt * (e.sub ? 2 : .7); m.spr.material.opacity = e.sub ? .5 : .28; m.spr.material.color.set(e.sub ? '#ff5a3c' : S.glow); }
+    else { const k = an ? 1 : 1 + Math.sin(t * 3) * .035; sy = k; sxz = 1 / k; if (e.st === 1 || e.st === 8) wob = Math.sin(t * 50) * .05; if (m.crown) m.crown.rotation.y += dt * (e.sub ? 2 : .7); m.spr.material.opacity = e.sub ? .5 : .28; m.spr.material.color.set(e.sub ? '#ff5a3c' : S.glow); }
     m.y += (y - m.y) * .4;
     const big = e.type === 9 ? 1.2 : 1; r.position.set(e.x * U + wob, m.y, e.y * U); r.scale.set(sxz * big, sy * big, sxz * big);
     if (e.type !== 3) r.rotation.y = Math.PI / 2 - e.ang;
@@ -3110,7 +3176,7 @@ function render3D() {
     }
   }
   POOL.line.end(); POOL.disc.end();
-  for (let i = dying.length - 1; i >= 0; i--) { const d = dying[i]; d.t -= dt; const k = 1 + (.14 - d.t) * 3.5; d.root.scale.set(k, Math.max(.05, d.t / .14), k); if (d.t <= 0) { freeMesh(d.root); dying.splice(i, 1); } }
+  for (let i = dying.length - 1; i >= 0; i--) { const d = dying[i]; d.t -= dt; if (d.anim) monsterDie(d, dt); else { const k = 1 + (.14 - d.t) * 3.5; d.root.scale.set(k, Math.max(.05, d.t / .14), k); } if (d.t <= 0) { freeMesh(d.root); dying.splice(i, 1); } }
 
   // target marker
   POOL.ret.begin(); const tg = P.target;
@@ -3159,13 +3225,15 @@ function render3D() {
   }
   if (F.seals) for (const q of F.seals) if (q.m) { const m = q.m; m.grp.visible = !q.got; if (q.got) continue; m.gem.rotation.y = t * 1.6; m.gem.position.y = .78 + Math.sin(t * 2.2 + q.id) * .08; m.beam.rotation.y = -t * .5; m.beam.material.opacity = .36 + Math.sin(t * 3 + q.id) * .1; m.gl.material.opacity = .6 + Math.sin(t * 4 + q.id) * .15; }
 
-  // particles: sparks from the game, plus drifting motes for atmosphere
-  while (motes.length < 40) motes.push({ x: cam.x + (Math.random() - .5) * 420, y: cam.y + (Math.random() - .5) * 560, h: 6 + Math.random() * 50, s: Math.random() * 9, v: 3 + Math.random() * 7 });
+  if (F.shafts) for (const s of F.shafts) s.material.opacity = .24 + Math.sin(t * .6 + s.userData.k) * .05;
+  // particles: sparks from the game, plus what floats in the air of each world (golden dust, spores, embers, snow, sparks)
+  const A = S.air;
+  while (motes.length < A.n) motes.push(airMote(A, true));
   const pa = pGeo.attributes.position.array, ca = pGeo.attributes.pcolor.array, sa = pGeo.attributes.psize.array, aa = pGeo.attributes.palpha.array; let n = 0;
-  const gc = C(S.glow);
   for (const m of motes) {
-    m.h += m.v * dt; m.x += Math.sin(t * .7 + m.s) * 6 * dt; if (m.h > 70 || Math.abs(m.x - cam.x) > 230 || Math.abs(m.y - cam.y) > 300) { m.x = cam.x + (Math.random() - .5) * 420; m.y = cam.y + (Math.random() - .5) * 560; m.h = 2; }
-    pa[n * 3] = m.x * U; pa[n * 3 + 1] = m.h * U; pa[n * 3 + 2] = m.y * U; ca[n * 3] = gc.r; ca[n * 3 + 1] = gc.g; ca[n * 3 + 2] = gc.b; sa[n] = .11; aa[n] = (.25 + Math.sin(t * 2 + m.s * 3) * .2) * Math.min(1, m.h / 10); n++;
+    m.h += m.v * dt; m.x += Math.sin(t * .7 + m.s) * 6 * dt; if (m.h > 72 || m.h < 1 || Math.abs(m.x - cam.x) > 230 || Math.abs(m.y - cam.y) > 300) Object.assign(m, airMote(A, false));
+    const c = C(m.c); pa[n * 3] = m.x * U; pa[n * 3 + 1] = m.h * U; pa[n * 3 + 2] = m.y * U; ca[n * 3] = c.r; ca[n * 3 + 1] = c.g; ca[n * 3 + 2] = c.b; sa[n] = A.r;
+    aa[n] = (.3 + Math.sin(t * 2 + m.s * 3) * .2) * Math.min(1, m.h / 10, (72 - m.h) / 10); n++; // they fade out before the ground: down there, only loot shines
   }
   for (const p of parts) {
     if (n >= PCAP) break; const c = C(p.col);
@@ -3193,7 +3261,7 @@ function modelsStart() {
   MDL.dir = cfg.dir; MDL.txt = !!cfg.txt; MDL.step = 'wait'; MDL.why = ''; let at = 'le lecteur de modèles';
   new Promise(ok => ok(window.THREE.GLTFLoader ? 0 : window.ecorceLecteur ? window.ecorceLecteur() : cfg.js ? loadScript(cfg.js) : Promise.reject(new Error('il manque à la page'))))
     .then(() => { if (!window.THREE.GLTFLoader) throw new Error('il ne s\'est pas lancé'); at = 'la liste des modèles'; return fetch(cfg.dir + 'liste.json'); }).then(r => { if (!r.ok) throw new Error('réponse ' + r.status); return r.json(); })
-    .then(list => { MDL.list = list; MDL.loader = new THREE.GLTFLoader(); at = 'le chevalier'; return modelRead('chevalier'); })
+    .then(list => { MDL.list = list; if (F) zoneTexWant(F.si); MDL.loader = new THREE.GLTFLoader(); at = 'le chevalier'; return modelRead('chevalier'); })
     .then(g => { for (const c of g.animations) MDL.clips[c.name] = c; MDL.hero = g.scene; MDL.on = true; MDL.step = 'on'; modelsWant(); })
     .catch(e => { MDL.step = 'fail'; MDL.why = at + ' — ' + whyOf(e); MDL.loader = null; console.warn('modèles indisponibles :', at, e); });
 }
@@ -3215,12 +3283,19 @@ function modelRead(name) {
         if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals(); // faceted models come without normals (tools/modeles.mjs): one per face
         // the files store whole numbers that the graphics card reads as fractions; three.js r128 measures boxes in whole numbers.
         // The true box and sphere are set here, once: sizes are right from then on, and what is off screen is no longer drawn.
-        const p = o.geometry.attributes.position, k = p.normalized ? 1 / (p.array instanceof Int16Array ? 32767 : p.array instanceof Uint16Array ? 65535 : p.array instanceof Int8Array ? 127 : 255) : 1;
+        const p = o.geometry.attributes.position, k = whole(p);
         o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; b.min.multiplyScalar(k); b.max.multiplyScalar(k); o.geometry.boundingSphere = b.getBoundingSphere(new THREE.Sphere());
+        // a creature with poses moves within a little more than its box: the box keeps its size, the sphere (what is on screen) grows
+        let d = 0; for (const t of o.geometry.morphAttributes.position || []) for (const v of t.array) d = Math.max(d, Math.abs(v) * whole(t));
+        o.geometry.boundingSphere.radius += d * 1.8; // poses come one or two at a time: the largest one, with room to spare
       });
+      // the poses of a creature, as plain numbers: for each animation, its length, its key times, and the weight of each pose at each key
+      for (const c of g.animations) { const tr = c.tracks.find(t => t.name.endsWith('.morphTargetInfluences')); if (tr) (g.poses || (g.poses = {}))[c.name] = { d: c.duration, t: tr.times, v: tr.values, n: tr.values.length / tr.times.length }; }
       MDL.cache[name] = g; return g;
     });
 }
+// what one step of a stored whole number is worth (the files keep positions and poses as normalized integers)
+const whole = a => a.normalized ? 1 / (a.array instanceof Int16Array ? 32767 : a.array instanceof Uint16Array ? 65535 : a.array instanceof Int8Array ? 127 : 255) : 1;
 // a model by its name in liste.json: asked once, kept; null when it does not exist or cannot be read
 function modelLoad(name) {
   if (!MDL.loader || !MDL.list || !(name in MDL.list)) return Promise.resolve(null);
@@ -3243,19 +3318,24 @@ function modelLight(sh) {
   if (sh.fragmentShader.includes(a)) sh.fragmentShader = sh.fragmentShader.replace(a, 'gl_FragColor = vec4( ( outgoingLight - totalEmissiveRadiance ) * ' + MODEL_LIT + ' + diffuseColor.rgb * ' + MODEL_OWN + ' + totalEmissiveRadiance, diffuseColor.a );');
 }
 function modelMat(map, skin) { const m = new THREE.MeshToonMaterial({ map, gradientMap: gradTex, skinning: !!skin }); m.onBeforeCompile = modelLight; m.customProgramCacheKey = () => 'modele'; return m; }
-// the single mesh of a static model (creature, weapon), with its box: { geo, map, box }
+// the single mesh of a model (creature, weapon, scenery), with its box; a creature also brings its poses and its family
 function modelPart(name) {
   const g = modelGet(name); if (!g) return null; let m = null; g.scene.traverse(o => { if (o.isMesh && !m) m = o; }); if (!m) return null;
-  const b = m.geometry.boundingBox; return { geo: m.geometry, map: m.material.map, min: b.min.toArray(), max: b.max.toArray() };
+  const b = m.geometry.boundingBox; return { geo: m.geometry, map: m.material.map, min: b.min.toArray(), max: b.max.toArray(), poses: g.poses || null, fam: g.scene.userData.famille || '' };
 }
-// a part as a mesh centred on its own middle and one unit long on its longest side (the files keep compact numbers, not sizes)
+// a part as a mesh centred on its own middle and one unit long on its longest side (the files keep compact numbers, not sizes).
+// A part with poses is drawn in facets worked out on screen, so that each pose keeps its own light; its outline takes the same poses.
 function unitMesh(part, material, outline) {
-  const a = part.min, b = part.max, sx = b[0] - a[0], sy = b[1] - a[1], sz = b[2] - a[2], s = 1 / Math.max(sx, sy, sz), g = new THREE.Group();
+  const a = part.min, b = part.max, sx = b[0] - a[0], sy = b[1] - a[1], sz = b[2] - a[2], s = 1 / Math.max(sx, sy, sz), g = new THREE.Group(), morph = !!part.poses;
+  if (morph) { material.morphTargets = true; material.flatShading = true; }
   const mesh = shade(new THREE.Mesh(part.geo, material)); mesh.scale.setScalar(s); mesh.position.set(-(a[0] + b[0]) / 2 * s, -(a[1] + b[1]) / 2 * s, -(a[2] + b[2]) / 2 * s);
+  g.userData.size = [sx * s, sy * s, sz * s]; g.userData.mesh = mesh;
   // the dark outline: the same shape, slightly larger, seen from inside (as withOutline does, but from the true box)
-  if (save.gfx === 0 || !outline) { g.add(mesh); g.userData.size = [sx * s, sy * s, sz * s]; return g; } // light graphics: no outline, half the triangles
-  const o = new THREE.Mesh(part.geo, M.outline); o.scale.setScalar(outline); o.position.set((a[0] + b[0]) / 2 * (1 - outline), (a[1] + b[1]) / 2 * (1 - outline), (a[2] + b[2]) / 2 * (1 - outline)); mesh.add(o);
-  g.add(mesh); g.userData.size = [sx * s, sy * s, sz * s]; return g;
+  if (save.gfx === 0 || !outline) { g.add(mesh); return g; } // light graphics: no outline, half the triangles
+  if (morph && !M.outlineM) { M.outlineM = M.outline.clone(); M.outlineM.morphTargets = true; }
+  const o = new THREE.Mesh(part.geo, morph ? M.outlineM : M.outline); o.scale.setScalar(outline); o.position.set((a[0] + b[0]) / 2 * (1 - outline), (a[1] + b[1]) / 2 * (1 - outline), (a[2] + b[2]) / 2 * (1 - outline)); mesh.add(o);
+  if (morph) o.morphTargetInfluences = mesh.morphTargetInfluences; // one set of weights for both
+  g.add(mesh); return g;
 }
 
 /* ---------- which model for what ---------- */
@@ -3385,9 +3465,67 @@ function monsterBody(e, m) {
   const name = monName(e.type, F.si), part = name && modelPart(name); if (!part) return false;
   m.mat = modelMat(part.map); const pivot = unitMesh(part, m.mat, 1.05), z = pivot.userData.size;
   const s = EN[e.type].r * U * (e.type === 9 ? 2.5 : e.type === 3 ? 3.4 : 2.7) / Math.max(z[0], z[2]); // a little wider than the circle that can be hit
+  // only what has wings floats: a lantern-bearer on its feet walks, even as a will-o'-the-wisp
+  m.fly = !part.poses || /volant|flottant/.test(part.fam);
   // the body turns around its own middle (kind 1 rolls); the pivot lifts that middle to half its height above the ground
-  pivot.scale.setScalar(s); pivot.position.y = z[1] * s / 2 + (e.type === 3 ? .12 : 0); m.root.add(pivot); m.body = pivot; m.mdl = true;
+  pivot.scale.setScalar(s); pivot.position.y = z[1] * s / 2 + (e.type === 3 && m.fly ? .12 : 0); m.root.add(pivot); m.body = pivot; m.mdl = true;
+  if (part.poses && MOB_CLIPS.every(k => part.poses[k])) m.anim = { P: part.poses, w: pivot.userData.mesh.morphTargetInfluences, walk: 0, wt: Math.random() * 2, ph: Math.random() * 3, lx: e.x, ly: e.y, v: 0,
+    st: e.st, stT: 0, shots: e.shots, act: null, near: 0, hit: 1, flash: 0 };
   return true;
+}
+
+/* ---------- creatures in motion (TinyKnight_Monstres_Animes) ----------
+   Each creature model holds nine or ten poses, and five animations that mix them: repos (loops), marche (loops), attaque
+   (élan, then frappe at about a third of a second, back by 0.7 s), touche, mort (ends flat). The game says what the creature
+   does, the animations follow — on every screen of a team alike: they read only what travels (position, state, blows, hits). */
+const MOB_ELAN = .22, MOB_HIT = .34, MOB_CLIPS = ['repos', 'marche', 'attaque', 'touche', 'mort']; // the drawn-back pose and the blow, in every attack animation
+// add the weights of an animation at a time in it, times w, into out
+function poseAt(c, time, w, out) {
+  if (!c || w <= 0) return; const t = c.t, n = c.n, v = c.v; let i = 0; time = clamp(time, 0, c.d);
+  while (i < t.length - 2 && time > t[i + 1]) i++;
+  const f = t.length > 1 ? clamp((time - t[i]) / Math.max(1e-4, t[i + 1] - t[i]), 0, 1) : 0, j = Math.min(i + 1, t.length - 1);
+  for (let k = 0; k < n; k++) out[k] += w * (v[i * n + k] * (1 - f) + v[j * n + k] * f);
+}
+// How long the windup of each kind lasts in the game (b_game.js, aiUpdate): the creature draws back over it and holds the élan,
+// and the blow comes when the game strikes. Kind 1 then charges, 2 spits, 4 slams, the boss does one of four things.
+const WIND = { 1: .55, 2: .38, 4: .75, 9: .55 };
+function monsterPose(e, m, dt) {
+  const a = m.anim, P0 = a.P, out = a.w; if (!out) return;
+  // what the creature does: its speed (from how far it went), a change of state, a new blow, a new hit
+  const sp = hyp(e.x - a.lx, e.y - a.ly) / Math.max(dt, 1e-3); a.lx = e.x; a.ly = e.y; a.v += (Math.min(sp, 400) - a.v) * Math.min(1, dt * 10);
+  if (e.st !== a.st) { a.st = e.st; a.stT = 0; } else a.stT += dt;
+  const blow = e.shots !== a.shots; a.shots = e.shots;
+  if (e.flash > a.flash + .01) a.hit = 0; a.flash = e.flash; a.hit = Math.min(1, a.hit + dt / P0.touche.d);
+  const att = P0.attaque, wind = WIND[e.type], st = e.st, charge = (e.type === 1 || e.type === 9) && st === 2;
+  // the attack: drawn back over the windup and held there, the blow at the instant the game strikes (a charge holds it), then it goes back
+  if (wind && (st === 1 || st === 8 || (e.type === 9 && st === 7))) a.act = { t: Math.min(1, a.stT / (st === 8 ? .8 : wind)) * MOB_ELAN, run: 0 };
+  else if (blow || (charge && !(a.act && a.act.run))) a.act = { t: MOB_HIT, run: 1 };
+  else if (a.act && a.act.run) { a.act.t += dt * (charge ? .15 : 1); if (a.act.t >= att.d) a.act = null; }
+  else if (a.act) { a.act.run = 1; a.act.t = MOB_HIT; } // the windup ended without a blow (it lost sight of its target): back to rest
+  // the others have no windup: they bite when they touch someone
+  if (!wind && !a.act && (a.near -= dt) <= 0) { let close = hyp(P.x - e.x, P.y - e.y) < e.r + P.r + 12 && !P.down; for (const o of allies) if (!close && o.live && hyp(o.x - e.x, o.y - e.y) < e.r + 22) close = true;
+    if (close) { a.act = { t: 0, run: 1 }; a.near = .9 + Math.random() * .3; } }
+  // moving or standing: the step follows the distance covered
+  const walk = clamp(a.v / 22, 0, 1); a.walk += (walk - a.walk) * Math.min(1, dt * 8);
+  a.wt += dt * clamp(a.v / Math.max(20, EN[e.type].spd), .7, 2.4) * (e.type === 3 ? 1.4 : 1);
+  const wAct = a.act ? (a.act.run ? Math.min(1, (att.d - a.act.t) * 6) : Math.min(1, a.stT * 8 + .3)) : 0, wHit = a.hit < 1 ? Math.min(1, a.hit * 10, (1 - a.hit) * 4) * .9 : 0;
+  const rest = (1 - wAct) * (1 - wHit);
+  out.fill(0);
+  poseAt(P0.repos, (G.time + a.ph) % P0.repos.d, rest * (1 - a.walk), out);
+  poseAt(P0.marche, a.wt % P0.marche.d, rest * a.walk, out);
+  if (wAct > 0) poseAt(att, a.act.t, wAct * (1 - wHit), out);
+  if (wHit > 0) poseAt(P0.touche, a.hit * P0.touche.d, wHit, out);
+}
+// a creature falls: its last poses melt into the death animation, which ends flat; then it sinks away
+const MOB_DIE = 1.15;
+function monsterDie(d, dt) {
+  const a = d.anim, out = a.w, k = MOB_DIE - d.t, P0 = a.P;
+  if (!a.last) a.last = Float32Array.from(out);
+  out.fill(0); poseAt(P0.mort, Math.min(k, P0.mort.d), 1, out);
+  const f = Math.min(1, k / .12); for (let i = 0; i < out.length; i++) out[i] = out[i] * f + a.last[i] * (1 - f);
+  const g = Math.max(0, 1 - k * 5); if (d.mat) d.mat.emissive.setRGB(g, g, g); // the white of the blow fades out
+  if (!d.s0) { d.s0 = d.root.scale.x; d.y0 = d.root.position.y; }
+  const s = clamp(d.t / .3, 0, 1); d.root.scale.setScalar(d.s0 * (.3 + .7 * s)); d.root.position.y = d.y0 - (1 - s) * .15;
 }
 
 /* ---------- the scenery of each world (zones/) ----------
@@ -3440,6 +3578,45 @@ function propsBuild() {
     if (p.glow) { const sp = sprite('#ffc76a', 1.5); sp.position.set(p.x, z[1] * p.s * .42, p.z); sp.material.opacity = .42; propGroup.add(sp); } // the camp's lanterns are lit
   }
 }
+
+/* ---------- the zones: Damien's textures for the cubes and his illustrations ----------
+   TinyKnight_Textures_Zones: for each world, a floor, a wall side and a wall top, seamless, laid on the cubes once they arrive
+   (zoneMats; until then the game's own textures and colours). TinyKnight_Zones_Promo: one illustration per world, behind the
+   banner of the Levels menu and on the card that opens a level. tools/modeles.mjs makes them light (t_<zone>_<sorte>, i_<zone>). */
+// a picture next to the models, read as a plain <img>: the file itself, or in Claude the data: link written in a text file (build.mjs)
+function picRead(cfg, name) {
+  return (cfg.txt ? fetch(cfg.dir + name + '.txt').then(r => { if (!r.ok) throw new Error('réponse ' + r.status); return r.text(); }) : Promise.resolve(new URL(cfg.dir + name + '.jpg', location.href).href))
+    .then(src => new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ko(new Error('image illisible')); im.src = src; }));
+}
+const ZT = []; // ZT[world] = { ok, sol, mur, dessus }: asked once, kept
+function zoneTexWant(si) {
+  const cfg = window.ecorceModeles, z = ZONES[si % 5], parts = ['sol', 'mur', 'dessus'];
+  if (!cfg || !MDL.list || ZT[si] || !parts.every(s => ('t_' + z + '_' + s) in MDL.list)) return;
+  const Z = ZT[si] = { ok: false };
+  Promise.all(parts.map(s => picRead(cfg, 't_' + z + '_' + s).then(im => {
+    const t = new THREE.Texture(im); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(4, R3.capabilities.getMaxAnisotropy()); t.needsUpdate = true; Z[s] = t;
+  }))).then(() => { Z.ok = true; if (F && F.si === si) zoneMats(); }, e => { MDL.lost++; MDL.why = 't_' + z + ' — ' + whyOf(e); });
+}
+// the cubes of the world being played: Damien's textures under the tint of the world (S.tex) when they are there, the game's own meanwhile
+function zoneMats() {
+  const si = F.si, S = F.str, Z = ZT[si], on = !!(Z && Z.ok);
+  const fit = (m, tex, col) => { const map = on ? tex : m.userData.own; if (m.map !== map) { m.map = map; m.needsUpdate = true; } m.color.set(on ? S.tex : col); };
+  fit(M.floor[si], on && Z.sol, S.floorA); fit(M.wall[si], on && Z.mur, S.wallFace); fit(M.top[si], on && Z.dessus, S.cap);
+}
+// the illustration of a world as a CSS background once it has arrived; null meanwhile (it is asked the first time), and on a page without models.
+// What already shows a banner of that world (data-art) gets it as soon as it is there.
+const ART = {};
+function zoneArt(w) {
+  const cfg = window.ecorceModeles, k = w % 5, z = ZONES[k]; if (!cfg) return null;
+  let a = ART[z];
+  if (!a) {
+    a = ART[z] = { url: null }; if (MDL.list && !(('i_' + z) in MDL.list)) return null;
+    picRead(cfg, 'i_' + z).then(im => { a.url = 'url("' + im.src + '")'; for (const el of document.querySelectorAll('[data-art="' + k + '"]')) el.style.setProperty('--art', artLayer(a.url)); }, () => { });
+  }
+  return a.url;
+}
+// the illustration under a shade that keeps the name written over it readable
+const artLayer = art => 'linear-gradient(to top,rgba(0,0,0,.66),rgba(0,0,0,.05) 72%),' + art + ' center 45%/cover no-repeat';
 
 /* ---------- Damien's particle effects (e3_vfx.js) ---------- */
 let VFX = null;
@@ -4119,7 +4296,8 @@ function renderSheet() {
     title = 'Niveaux';
     const big = ME.game === 1, diff = big ? 0 : save.diff, mod = big ? EXPE : DIFFS[diff], track = ME[big ? 'unx' : TRACKS[diff]], frx = v => String(v).replace('.', ',');
     const seg = (lab, on, fn, off, icn) => h('button', { class: 'chipbtn grow', type: 'button', 'aria-pressed': String(on), disabled: !!off, onclick: fn }, off ? ic('cadenas') : icn ? ic(icn) : null, lab);
-    body.push(h('div', { class: 'banner z' + selWorld }, ic('z' + selWorld), h('small', { text: 'Zone ' + (selWorld + 1) + ' sur ' + STRATA.length + (big ? ' · Expédition' : '') }), h('b', { text: STRATA[selWorld].name })));
+    const art = zoneArt(selWorld); // the illustration of the zone, behind its name (it comes in as soon as it has arrived)
+    body.push(h('div', { class: 'banner z' + selWorld, 'data-art': selWorld, style: art ? '--art:' + artLayer(art) : '' }, ic('z' + selWorld), h('small', { text: 'Zone ' + (selWorld + 1) + ' sur ' + STRATA.length + (big ? ' · Expédition' : '') }), h('b', { text: STRATA[selWorld].name })));
     if (!big) body.push(h('div', { class: 'seg' }, ...DIFFS.map((d, i) => seg(d.name, diff === i, () => { save.diff = i; fixSel(); saveGame(false); renderSheet(); }, i > 0 && !canPlay(1, i, false)))));
     body.push(h('p', { style: 'font-size:13px', text: big ? 'De grands niveaux tout en hauteur. Rien n\'est automatique : tu frappes, tu vises et tu esquives toi-même ; trois sceaux à trouver ouvrent la sortie.'
       : diff === 0 ? 'Ton chevalier frappe seul, tu choisis où te placer. Finis un niveau pour l\'ouvrir en Difficile.' : 'Ennemis : vie × ' + frx(mod.hp) + ', dégâts × ' + frx(mod.dmg) + '. En échange : ' + GM().coin + ' × ' + frx(mod.ecl) + ' et objets de rang +' + mod.lv + '.' }));
@@ -4366,6 +4544,13 @@ function applyTheme() {
   if (!first) { root.classList.add('theming'); clearTimeout(applyTheme.t); applyTheme.t = setTimeout(() => root.classList.remove('theming'), 650); } // the colours glide from one theme to the next
 }
 // the coin wears the colour of the game being played; everything else follows the theme
+// the card that opens a level: the illustration of its zone, the zone and the level. Without the illustration (not arrived yet,
+// or a page without it), the name of the level passes in the usual line at the top
+function levelCard(label) {
+  const art = zoneArt(F.si), el = $('zcard'); if (!art) { toast(label); return; }
+  el.style.setProperty('--zc', art); $('zc-z').textContent = 'Zone ' + (F.si + 1) + ' · ' + STRATA[F.si].name; $('zc-n').textContent = label;
+  el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+}
 function swapCard() { const el = $('swap'); $('swap-n').textContent = GM().name; $('swap-t').textContent = ME.game ? 'Tout à la main · ton équipement et tes pétales d\'expédition' : 'Frappe automatique · ton équipement et tes éclats'; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
 const icUrl = n => { const d = ICON_LIB[n]; return 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + d[0] + ' ' + d[0] + '">' + d[1] + '</svg>') + '")'; };
 function applyGame() { const g = GM(), st = document.documentElement.style; st.setProperty('--coin', g.col); st.setProperty('--coin-deep', g.deep); st.setProperty('--coin-ic', icUrl(g.ic)); st.setProperty('--gem-ic', icUrl('gemme')); }
