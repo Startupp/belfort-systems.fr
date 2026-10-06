@@ -1,0 +1,15 @@
+TinyKnight - textures de zone pour les cubes (6 octobre 2026)
+
+Par zone (racines, mycelium, braises, givre, abimes), trois textures 512 x 512 qui se repetent sans raccord :
+  <zone>_sol.png      dessus des cubes de sol
+  <zone>_mur.png      faces laterales des cubes de mur
+  <zone>_dessus.png   dessus des cubes de mur
+Chaque texture existe aussi en .jpg (5 a 8 fois plus leger, a preferer sur mobile).
+apercu_<zone>.jpg     Les trois textures repetees cote a cote, pour juger les raccords.
+
+Three.js :
+  const t = new THREE.TextureLoader().load('racines/racines_sol.jpg');
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  // une texture par cube : repeat (1,1). Pour un motif plus gros, etaler une texture sur 2 x 2 cubes
+  // en decalant les UV selon la position du cube (offset = position % 2 / 2, repeat = 0.5).
+Cube de mur : tableau de 6 materiaux, [mur, mur, dessus, sol ou rien, mur, mur] dans l'ordre +X, -X, +Y, -Y, +Z, -Z.
