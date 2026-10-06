@@ -1,7 +1,7 @@
 {
-  "name": "Sous l'Écorce",
-  "short_name": "Sous l'Écorce",
-  "description": "Exploration et butin sous l'écorce d'un arbre géant : 30 niveaux, deux jeux, jouable à plusieurs.",
+  "name": "TinKnight",
+  "short_name": "TinKnight",
+  "description": "Un petit chevalier de fer-blanc sous l'écorce d'un arbre géant : épées, dagues et arbalètes, 30 niveaux, deux jeux, seul ou à plusieurs.",
   "lang": "fr",
   "id": "./",
   "start_url": "./",
