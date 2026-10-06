@@ -1,0 +1,17 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Monstres animés</title>
+<style>body{margin:0;background:#14100c;color:#f3ead8;font:15px system-ui,sans-serif}#bar{display:flex;flex-wrap:wrap;gap:6px;padding:10px}select,button{font:inherit;padding:8px 12px;border-radius:999px;border:1px solid #4f3f2d;background:#2a2119;color:inherit}button[aria-pressed=true]{background:#ffc247;color:#2a1d08}canvas{display:block;width:100%;height:70vh}</style></head><body>
+<div id="bar"><select id="m" aria-label="Monstre"></select></div><canvas id="c"></canvas>
+<!-- À ouvrir depuis un serveur web (pas en double-cliquant), avec three.js accessible : adapter les chemins de l'importmap. -->
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.170.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three'; import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'; import {chargerMonstre} from './tinyknight_monstres.js'; import LISTE from './liste.js';
+const cv=document.getElementById('c'),r=new THREE.WebGLRenderer({canvas:cv,antialias:true});r.setClearColor(0x14100c);const s=new THREE.Scene();s.add(new THREE.AmbientLight(0xffffff,1.6));const d=new THREE.DirectionalLight(0xffffff,2);d.position.set(2,4,3);s.add(d);
+const sol=new THREE.Mesh(new THREE.CircleGeometry(2.2,32),new THREE.MeshBasicMaterial({color:0x2a2119}));sol.rotation.x=-Math.PI/2;s.add(sol);
+const cam=new THREE.PerspectiveCamera(40,1,0.1,50);cam.position.set(1.8,1.5,2.4);cam.lookAt(0,0.4,0);
+const sel=document.getElementById('m'),bar=document.getElementById('bar');let m=null;const L=new GLTFLoader();
+LISTE.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f.replace('.glb','');sel.appendChild(o);});
+['repos','marche','attaque','touche','mort'].forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>m&&m.jouer(n);bar.appendChild(b);});
+async function charger(){if(m)s.remove(m.objet);m=await chargerMonstre(THREE,L,sel.value);const b=new THREE.Box3().setFromObject(m.objet);m.objet.position.y-=b.min.y;s.add(m.objet);}
+sel.onchange=charger;await charger();let t0=performance.now();
+(function f(t){const dt=Math.min(0.05,(t-t0)/1000);t0=t;const w=cv.clientWidth,h=cv.clientHeight;if(cv.width!==w||cv.height!==h){r.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}if(m)m.maj(dt);r.render(s,cam);requestAnimationFrame(f);})(t0);
+</script></body></html>

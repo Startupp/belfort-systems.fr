@@ -1,0 +1,21 @@
+TinyKnight - monstres animes, premiere version (6 octobre 2026)
+
+Les 26 monstres, chacun avec 5 animations integrees au fichier GLB :
+  repos (boucle), marche (boucle), attaque, touche, mort.
+
+bipedes/      champignons, pomme de pin, taupe, vesse, lanternier            (7)
+quadrupedes/  bogues, souches, crapauds, salamandre, herisson, araignees, scarabees   (12)
+volants/      chauve-souris, gland volant                                   (2)  repos = vol sur place, marche = vol vers l'avant
+rampants/     limaces, chenille                                             (3)
+flottants/    feux follets                                                  (2)
+
+tinyknight_monstres.js   chargerMonstre(THREE, loader, url) -> { objet, jouer(nom), maj(dt) }.
+                         attaque et touche reviennent seules au repos ou a la marche ; mort reste sur la derniere image.
+demo.html, liste.js      Visionneuse (a ouvrir depuis un serveur web).
+apercu/                  Planches : pour chaque monstre, repos x2, marche x3, attaque (elan, frappe), touche, mort.
+
+Technique : les monstres n'ont pas de squelette. Les animations sont des morph targets (9 a 10 poses par monstre),
+lues par AnimationMixer comme n'importe quel clip. Les fichiers remplacent ceux des packs precedents (meme maillage,
+memes textures) ; environ 1,3 Mo chacun.
+Le deplacement reste a faire par le jeu : les clips animent le corps sur place.
+Les monstres regardent vers +Z. Les volants n'ont pas d'altitude : les placer a la hauteur voulue.
