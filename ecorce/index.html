@@ -391,6 +391,10 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 #zcard small,#zcard b{position:relative} #zcard small{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cream);opacity:.88}
 #zcard b{font:500 27px/1.1 var(--display);color:#fff;margin-top:2px}
 #zcard.go{animation:zcardk 2.7s ease-out}
+/* the creative mode: a tag above the bottom bar, so that nobody takes it for the real game (hidden under a menu); its grids of buttons */
+#crea-tag{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translateX(-50%);z-index:40;pointer-events:none;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink);background:var(--amber);box-shadow:0 2px 10px rgba(0,0,0,.5);white-space:nowrap}
+.crea-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px} .crea-grid .btn{justify-content:flex-start;text-align:left;font-size:13px;min-height:44px}
+.crea-lvs{display:flex;flex-direction:column;gap:6px} .crea-w{display:grid;grid-template-columns:92px repeat(6,1fr);gap:4px;align-items:center} .crea-wn{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--cream)} .crea-w .chipbtn{padding:6px 0;justify-content:center;min-height:36px}
 @keyframes zcardk{0%{opacity:0;transform:translate(-50%,-46%) scale(.96)}12%,68%{opacity:1;transform:translate(-50%,-50%) scale(1)}to{opacity:0;transform:translate(-50%,-53%) scale(1)}}
 @media (prefers-reduced-motion:reduce){#zcard.go{animation:zcardr 2.4s linear}@keyframes zcardr{0%,80%{opacity:1}to{opacity:0}}}
 .tile.r2,.tile.r3{animation:glowk 2.2s ease-in-out infinite}
@@ -515,6 +519,7 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
   <div id="pop" hidden aria-hidden="true"><div id="pop-card"><span id="pop-ic"></span><b id="pop-t"></b><small id="pop-s"></small></div><i id="pop-orb"></i></div>
   <div id="swap" aria-hidden="true"><div><small>Tu entres dans le jeu</small><b id="swap-n"></b><span id="swap-t"></span></div></div>
   <div id="zcard" role="status"><small id="zc-z"></small><b id="zc-n"></b></div>
+  <div id="crea-tag" aria-hidden="true" hidden>Créatif · rien n'est enregistré</div>
   <div id="toast" aria-live="polite"></div>
 
   <div id="downbox" hidden>
@@ -1199,14 +1204,18 @@ try { let raw = localStorage.getItem(SAVE_KEY); for (const k of OLD_KEYS) if (!r
 let ME = save.chars[save.cur]; // the character being played
 function setSave(s) { save = s; ME = save.chars[save.cur]; }
 let saveDirty = false, cloudDoc = null, cloudBusy = false, cloudAgain = false;
+// The creative mode (h_creatif.js): while it is on, nothing is written anywhere — this device, the Claude account, the online
+// service. Leaving it reloads the page, and the real save comes back as it was. shown: its entry is visible in the settings
+const CREA = { on: false, shown: false, god: false, hit: false, mode: 0, taps: [] };
 function persistLocal() {
+  if (CREA.on) return;
   if (DEV.state === 'wait') { saveDirty = true; return; } // the seal is not ready yet: what is stored stays as it is for a moment
   try { localStorage.setItem(SAVE_KEY, sealed(JSON.stringify(save))); if (DEV.state === 'off') localStorage.setItem(SAVE_FREE, '1'); } catch (e) { }
   saveDirty = false;
   if (DEV.state === 'on' && !DEV.sealed) { DEV.sealed = true; DEV.rec.sealed = true; idb('readwrite', st => st.put(DEV.rec, 'device')).catch(() => { }); }
 }
 function pushCloud() {
-  if (!cloudDoc || DEV.state === 'wait') return;
+  if (!cloudDoc || DEV.state === 'wait' || CREA.on) return;
   if (cloudBusy) { cloudAgain = true; return; }
   cloudBusy = true;
   cloudDoc.set(JSON.parse(JSON.stringify(save))).catch(e => { if (!e || e.code !== 'unavailable') cloudDoc = null; })
@@ -1712,7 +1721,7 @@ const FINISH = .35, CHAIN_GAP = .9; // every third blow of an unbroken series is
 function coopScale() { let n = 1; for (const a of allies) if (a.live) n++; return 1 + .6 * (n - 1); }
 function damageEnemy(e, dmg, ax, ay, kb) {
   if (e.dead) return;
-  const crit = Math.random() < ST.crit; if (crit) dmg *= CRIT_MUL;
+  const crit = Math.random() < ST.crit; if (crit) dmg *= CRIT_MUL; if (CREA.hit) dmg *= 20; // creative mode: blows that end everything
   const scaled = dmg / coopScale();
   if (e.type === 5) F.dmgLog.push([G.time, scaled]); // the camp dummy only counts
   else myD[e.id] = Math.round(((myD[e.id] || 0) + scaled) * 10) / 10;
@@ -1783,6 +1792,7 @@ function doLantern() {
   G.shake = 5; sfx(180, .35, 'sine', .09, 500);
 }
 function hurt(dmg) {
+  if (CREA.god) return; // creative mode: invincible
   if (P.dodgeT > 0 && !P.down && G.mode === 'play') { if (!P.dodged) { P.dodged = true; floatText(P.x, P.y, 'Esquivé !', '#fff6d8'); sfx(980, .08, 'sine', .04, 300); } return; }
   if (P.inv > 0 || P.down || G.mode !== 'play') return;
   dmg = Math.max(1, Math.round(dmg));
@@ -4051,7 +4061,7 @@ function srvTick() {
 // a real change was just saved: do not wait for the next round (the service wants a few seconds between two saves)
 function srvSoon() { if (SRV.state === 'on') SRV.next = Math.min(SRV.next, Math.max(Date.now() + 400, SRV.last + SRV_SOON)); }
 async function srvPush() {
-  if (SRV.busy || SRV.state !== 'on' || SRV.pending) return;
+  if (SRV.busy || SRV.state !== 'on' || SRV.pending || CREA.on) return; // the creative mode sends nothing
   const copy = JSON.parse(JSON.stringify(save)); delete copy.sv; const txt = JSON.stringify(copy);
   if (txt === SRV.sent) { SRV.next = Date.now() + SRV_EVERY; return; }
   SRV.busy = true; let wait = SRV_EVERY; const v = (save.sv | 0) + 1;
@@ -4127,6 +4137,70 @@ function srvCard() {
   return [h('div', { class: 'qc', style: '--i:0;align-items:flex-start' }, h('span', { class: 'num' }, ic('nuage')), h('div', { class: 'grow' }, ...kids))];
 }
 
+/* ================= the creative mode: to check everything without playing for hours =================
+   Hidden: its entry shows in the settings after five taps on their title (within three seconds), or when the page is opened
+   with ?creatif; it then stays visible on this device. While it is on (CREA, a_core.js), nothing is saved nor sent anywhere,
+   a tag says so at the top of the screen, and the team is closed to it. Leaving it reloads the page: the real save comes back. */
+try { CREA.shown = /[?&]creatif\b/.test(location.search) || localStorage.getItem('tk-creatif') === '1'; } catch (e) { }
+const CREA_MODES = ['Normal', 'Difficile', 'Cauchemar', 'Expédition'];
+function creaTap() {
+  const t = performance.now(); CREA.taps = CREA.taps.filter(x => t - x < 3000); CREA.taps.push(t);
+  if (CREA.taps.length < 5 || CREA.shown) return;
+  CREA.shown = true; try { localStorage.setItem('tk-creatif', '1'); } catch (e) { }
+  toast('Mode créatif : il est maintenant dans les réglages', 'var(--amber)'); renderSheet();
+}
+function creaStart() {
+  if (Net.room) return; if (CREA.on) { openSheet('crea'); return; }
+  saveGame(true); // what was played until now is written first, as it is
+  CREA.on = true; openSheet('crea');
+}
+// the entry in the settings (and in the pause menu)
+function creaCard() {
+  if (!CREA.shown) return null;
+  return h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('sort')), h('div', { class: 'grow' }, h('b', { text: 'Mode créatif' }),
+    h('span', { class: 'meta', style: 'display:block', text: Net.room ? 'Quitte d\'abord l\'équipe : ce mode se joue seul.' : CREA.on ? 'En cours : rien n\'est enregistré.' : 'Tout ouvrir, tout essayer. Rien n\'y est enregistré : ta vraie partie revient en le quittant.' })),
+    h('button', { class: 'btn small', type: 'button', disabled: !!Net.room, text: CREA.on ? 'Ouvrir' : 'Entrer', onclick: creaStart }));
+}
+const creaBtn = (icn, label, fn) => h('button', { class: 'btn line', type: 'button', onclick: fn }, ic(icn), label);
+function creaBody(kids, foot) {
+  const playing = G.mode === 'play' && run && !F.hub;
+  kids.push(h('p', { style: 'font-size:13px', text: 'Rien de ce qui se passe ici n\'est enregistré ni envoyé. En quittant ce mode, le jeu se recharge et reprend ta vraie partie là où elle était.' }));
+  if (playing) kids.push(h('div', { class: 'eyebrow', text: 'Dans ce niveau' }), h('div', { class: 'crea-grid' },
+    creaBtn('c_kills', 'Vaincre toutes les créatures', creaKillAll), creaBtn('boss', 'Une créature de chaque sorte', creaZoo), creaBtn('coffre', 'Révéler les coffres', creaChests),
+    creaBtn('portail', F.seals ? 'Réunir les sceaux' : 'Ouvrir la sortie', creaOpen), creaBtn('aller', 'Aller à la sortie', creaGoExit), creaBtn('trophee', 'Finir le niveau', () => { closeSheet(); finishRun('win'); })));
+  kids.push(toggleRow('bouclier', 'Invincible', CREA.god, () => { CREA.god = !CREA.god; renderSheet(); }),
+    toggleRow('epee', 'Coups dévastateurs (dégâts × 20)', CREA.hit, () => { CREA.hit = !CREA.hit; renderSheet(); }));
+  // every level of every world, in the chosen game and difficulty
+  kids.push(h('div', { class: 'eyebrow', text: 'Aller à un niveau' }), h('div', { class: 'seg' }, ...CREA_MODES.map((n, i) => h('button', { class: 'chipbtn grow', type: 'button', 'aria-pressed': String(CREA.mode === i), onclick: () => { CREA.mode = i; renderSheet(); } }, n))));
+  kids.push(h('div', { class: 'crea-lvs' }, ...STRATA.map((S, w) => h('div', { class: 'crea-w' }, h('span', { class: 'crea-wn' }, ic('z' + w), S.name),
+    ...Array.from({ length: PER_WORLD }, (_, i) => { const n = w * PER_WORLD + i + 1; return h('button', { class: 'chipbtn', type: 'button', 'aria-label': 'Niveau ' + n + ' · ' + LEVELS[n - 1].name, title: LEVELS[n - 1].name, onclick: () => creaGo(n) }, LEVELS[n - 1].boss ? ic('etoile') : String(n)); })))));
+  kids.push(h('div', { class: 'eyebrow', text: 'Ton chevalier' }), h('div', { class: 'crea-grid' },
+    creaBtn('cadenas', 'Tout débloquer (niveaux, mondes, thèmes)', () => { for (const k of ['unlocked', 'un1', 'un2', 'unx']) ME[k] = NLV + 1; toast('Tout est ouvert'); showUI(); renderSheet(); }),
+    creaBtn(GM().ic, '+ 10 000 ' + GM().coin, () => { ME.ecl += 10000; showUI(); renderSheet(); }),
+    creaBtn('gemme', '+ 500 gemmes', () => { ME.gem += 500; renderSheet(); }),
+    creaBtn('sac', 'Toutes les armes dans le sac', creaWeapons)));
+  foot.push(h('button', { class: 'btn wide', type: 'button', onclick: () => location.reload() }, ic('retour'), 'Quitter le mode créatif'));
+}
+function creaGo(n) {
+  const big = CREA.mode === 3, diff = big ? 0 : CREA.mode;
+  for (const k of ['unlocked', 'un1', 'un2', 'unx']) ME[k] = Math.max(ME[k], n); // the level and the ones before it are open, as if played
+  Net.ignoreSeed = null; startRun(newSeed(diff, big), n);
+}
+function creaKillAll() { for (const e of F.enemies) if (!e.dead && e.type !== 5) kill(e); closeSheet(); }
+function creaChests() { for (const c of F.chests) if (c.hidden && !c.shown) { c.found = true; c.shown = true; } toast(F.chests.length + (F.chests.length > 1 ? ' coffres' : ' coffre') + ' dans ce niveau'); closeSheet(); }
+function creaOpen() { if (F.seals) F.sealMask = (1 << F.seals.length) - 1; else for (const e of F.enemies) if (e.guard && !e.dead) kill(e); if (F.lift) F.lift.open = true; closeSheet(); }
+function creaGoExit() { const L = F.lift; if (!L) return; P.x = L.x; P.y = L.y + 46; P.target = null; cam.init = false; closeSheet(); }
+// one creature of each kind around the knight, to see them all move (they wear the models of the world being played)
+function creaZoo() {
+  [0, 1, 2, 3, 4].forEach((type, i) => { const a = i / 5 * TAU - Math.PI / 2; for (const r of [80, 60, 40]) { const x = P.x + Math.cos(a) * r, y = P.y + Math.sin(a) * r; if (!hitsWall(x, y, 12)) { summon(type, x, y); break; } } });
+  closeSheet();
+}
+function creaWeapons() {
+  const lvl = Math.max(1, Math.min(NLV, progOf(ME))), need = ME.bag.length + WEAPONS.length - bagCap(); if (need > 0) ME.cap += need;
+  for (let k = 0; k < WEAPONS.length; k++) ME.bag.push(makeItem(0, k, lvl));
+  G.newLoot = true; toast(WEAPONS.length + ' armes dans le sac'); showUI(); renderSheet();
+}
+
 /* ================= icons ================= */
 // icons come from open libraries (see tools/icones.mjs); the game keeps its own names for them
 function ic(name) { const s = document.createElement('span'), d = ICON_LIB[name] || ICON_LIB.info; s.className = 'ic'; s.innerHTML = '<svg viewBox="0 0 ' + d[0] + ' ' + d[0] + '" aria-hidden="true">' + d[1] + '</svg>'; return s; }
@@ -4193,7 +4267,7 @@ function pic(s, k) { const e = document.createElement('span'); e.className = 'pi
 /* ================= what is on screen ================= */
 function resetInput() { input.mx = input.my = 0; input.pmx = input.pmy = 0; input.pAtk = input.pLan = false; input.pAim = null; input.atk = input.lan = false; input.joy = null; input.aimJoy = null; input.aim = null; input.keys.clear(); }
 let freshT = 0, wheelAng = 0, wheelBusy = false, wheelWon = null; // the wheel: its angle, whether it is turning, and the prize just won (shown until dismissed)
-const SHEET_IC = { levels: 'niveaux', bag: 'sac', shop: 'boutique', quests: 'quetes', stats: 'stats', team: 'equipe', garden: 'jardin', wheel: 'roulette', opts: 'reglages', pause: 'pause' };
+const SHEET_IC = { levels: 'niveaux', bag: 'sac', shop: 'boutique', quests: 'quetes', stats: 'stats', team: 'equipe', garden: 'jardin', wheel: 'roulette', opts: 'reglages', pause: 'pause', crea: 'sort' };
 let forge = null; // { id, foods }: the object on the workbench and what is ticked to be fused into it
 let multi = null; // ids of the objects ticked for a grouped sale, or null
 let selWorld = 0;
@@ -4211,7 +4285,7 @@ function showUI() {
   const m = G.mode, sh = sheetOpen(); applyTheme();
   $('scr-title').hidden = m !== 'title'; $('camp-top').hidden = m !== 'hub'; $('tabs').hidden = m !== 'hub' || sh;
   $('hud').hidden = m !== 'play' || sh; $('pad').hidden = m !== 'play' || sh; $('scr-end').hidden = m !== 'end';
-  $('sheet').hidden = !sh; $('veil').hidden = !sh;
+  $('sheet').hidden = !sh; $('veil').hidden = !sh; $('crea-tag').hidden = !CREA.on || sh || (m !== 'hub' && m !== 'play');
   if (m !== 'play') $('downbox').hidden = true;
   if (m === 'hub') { $('who-ava').style.setProperty('--c', CLOAKS[ME.col]); $('who-name').textContent = ME.name || 'Chevalier'; $('who-sub').textContent = GM().name + ' · niveau ' + Math.min(NLV, progOf(ME)); $('camp-ecl').textContent = String(ME.ecl); $('tabs').children[1].classList.toggle('dot', G.newLoot); campPurse(); }
   if (m === 'title') renderTitle();
@@ -4441,6 +4515,7 @@ function renderSheet() {
     else body.push(h('p', { text: 'Termine un niveau pour enregistrer ton premier temps.' }));
     foot.push(h('button', { class: 'btn wide ghost', type: 'button', onclick: () => openSheet('quests') }, ic('retour'), 'Retour aux quêtes'));
   } else if (sheetKind === 'team') { title = 'Équipe'; teamBody(body); }
+  else if (sheetKind === 'crea') { title = 'Mode créatif'; creaBody(body, foot); }
   else if (sheetKind === 'opts' || sheetKind === 'pause') {
     title = sheetKind === 'pause' ? 'Pause' : 'Réglages';
     if (sheetKind === 'pause') body.push(h('p', { text: Net.room ? 'En équipe, le niveau continue pendant ta pause.' : 'Le niveau t\'attend.' }), h('button', { class: 'btn wide shine', type: 'button', text: 'Reprendre', onclick: closeSheet }));
@@ -4461,6 +4536,7 @@ function renderSheet() {
     if (app && !app.installed()) body.push(h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('installer')), h('div', { class: 'grow' }, h('b', { text: 'Installer comme une application' }),
       h('span', { class: 'meta', style: 'display:block', text: app.canAsk() ? 'Plein écran, icône sur l\'écran d\'accueil, jouable hors connexion.' : app.ios ? 'Sur iPhone : bouton Partager de Safari, puis « Sur l\'écran d\'accueil ».' : 'Dans le menu du navigateur : « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».' })),
       app.canAsk() ? h('button', { class: 'btn small', type: 'button', text: 'Installer', onclick: () => app.install().then(ok => { if (ok) toast('Application installée'); renderSheet(); }) }) : null));
+    body.push(creaCard()); // hidden until revealed (h_creatif.js)
     if (window.ecorceApp) body.push(h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('appareil')), h('div', { class: 'grow' }, h('b', { text: DEV.id ? 'Cet appareil · ' + devCode(DEV.id) : 'Cet appareil' }),
       h('span', { class: 'meta', style: 'display:block', text: DEV.state === 'on' ? 'Sauvegarde scellée : elle ne marche que sur cet appareil et ne se modifie pas à la main.' : DEV.state === 'off' ? 'Ce navigateur ne permet pas de sceller la sauvegarde.' : 'Vérification de la sauvegarde…' }))), ...srvCard());
     const hp = (a, b) => [h('b', { text: a }), h('span', { text: b })];
@@ -4593,6 +4669,7 @@ function teamSig() { return JSON.stringify([Net.state, Net.joining, Net.err, Net
 function teamBody(kids) {
   lastTeamSig = teamSig();
   const inTeam = !!Net.room, lead = Net.lead;
+  if (CREA.on) { kids.push(h('p', { text: 'Le mode créatif se joue seul. Quitte-le (dans les réglages) pour jouer en équipe.' })); return; }
   if (Net.state !== 'on') { kids.push(h('p', { text: Net.state === 'wait' ? 'Connexion au salon…' : 'La coop se lance quand cette page est ouverte dans Claude par toi et les personnes que tu y invites. Seul, tout le reste du jeu fonctionne.' })); return; }
   if (Net.joining) { kids.push(h('p', { text: 'Connexion à l\'équipe…' })); return; }
   if (inTeam) {
@@ -4944,6 +5021,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { res
 for (const [id, icn, key] of [['b-atk', 'epee', 'A'], ['b-lan', 'lanterne', 'X'], ['b-dash', 'esquive', 'B']]) $(id).append(ic(icn), h('i', { class: 'key', text: key })); $('b-bag').append(ic('sac')); $('b-pause').append(ic('pause')); $('b-opts').append(ic('reglages')); $('b-close').append(ic('fermer'));
 for (const [k, name, lab] of [['levels', 'niveaux', 'Niveaux'], ['bag', 'sac', 'Inventaire'], ['shop', 'boutique', 'Boutique'], ['quests', 'quetes', 'Quêtes'], ['team', 'equipe', 'Équipe']]) $('tabs').append(h('button', { class: 'tab', type: 'button', onclick: () => openSheet(k) }, ic(name), lab));
 $('b-close').addEventListener('click', closeSheet); $('veil').addEventListener('click', closeSheet);
+$('sh-title').addEventListener('click', () => { if (sheetKind === 'opts' || sheetKind === 'pause') creaTap(); }); // five taps: the creative mode
 $('b-bag').addEventListener('click', () => openSheet('bag')); $('b-pause').addEventListener('click', () => openSheet('pause'));
 $('b-opts').addEventListener('click', () => openSheet('opts')); $('b-who').addEventListener('click', () => openSheet('chars'));
 $('b-giveup').addEventListener('click', () => finishRun('dead'));
