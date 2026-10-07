@@ -1,0 +1,79 @@
+# Index
+
+Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
+
+| Dossier | Fichiers | Poids |
+|---|---:|---:|
+| `ASSETS - CONCEPTS - ARTS` | 2 | 0.0 Mo |
+| `01_concepts/decors_pack1/abimes` | 6 | 5.2 Mo |
+| `01_concepts/decors_pack1/braises` | 6 | 5.1 Mo |
+| `01_concepts/decors_pack1/givre` | 6 | 5.0 Mo |
+| `01_concepts/decors_pack1/mycelium` | 6 | 5.2 Mo |
+| `01_concepts/decors_pack1/racines` | 6 | 5.3 Mo |
+| `01_concepts/serie_1` | 12 | 6.2 Mo |
+| `01_concepts/serie_3` | 6 | 4.0 Mo |
+| `02_modeles_3d/chevaliers` | 4 | 3.8 Mo |
+| `02_modeles_3d/chevaliers/pack1_clips_separes` | 10 | 30.6 Mo |
+| `02_modeles_3d/creatures` | 10 | 2.6 Mo |
+| `02_modeles_3d/creatures/pack1_statiques` | 26 | 8.2 Mo |
+| `02_modeles_3d/creatures/pack2_animes/bipedes` | 7 | 8.6 Mo |
+| `02_modeles_3d/creatures/pack2_animes/flottants` | 2 | 2.5 Mo |
+| `02_modeles_3d/creatures/pack2_animes/quadrupedes` | 12 | 15.0 Mo |
+| `02_modeles_3d/creatures/pack2_animes/rampants` | 3 | 4.1 Mo |
+| `02_modeles_3d/creatures/pack2_animes/volants` | 2 | 2.5 Mo |
+| `02_modeles_3d/decors/abimes` | 2 | 0.2 Mo |
+| `02_modeles_3d/decors/abimes/pack1` | 5 | 1.5 Mo |
+| `02_modeles_3d/decors/braises` | 2 | 0.2 Mo |
+| `02_modeles_3d/decors/braises/pack1` | 5 | 1.6 Mo |
+| `02_modeles_3d/decors/canopee` | 4 | 0.5 Mo |
+| `02_modeles_3d/decors/givre` | 2 | 0.3 Mo |
+| `02_modeles_3d/decors/givre/pack1` | 5 | 1.6 Mo |
+| `02_modeles_3d/decors/marais` | 2 | 0.3 Mo |
+| `02_modeles_3d/decors/mine` | 4 | 0.5 Mo |
+| `02_modeles_3d/decors/mycelium` | 2 | 0.2 Mo |
+| `02_modeles_3d/decors/mycelium/pack1` | 5 | 1.7 Mo |
+| `02_modeles_3d/decors/racines` | 2 | 0.3 Mo |
+| `02_modeles_3d/decors/racines/pack1` | 5 | 1.6 Mo |
+| `02_modeles_3d/decors/ruche` | 4 | 0.5 Mo |
+| `02_modeles_3d/equipements/ambre` | 7 | 2.0 Mo |
+| `02_modeles_3d/equipements/champignon` | 7 | 2.6 Mo |
+| `02_modeles_3d/equipements/ecorce` | 7 | 2.2 Mo |
+| `02_modeles_3d/equipements/legendaire` | 2 | 0.6 Mo |
+| `02_modeles_3d/equipements/ronce` | 7 | 2.2 Mo |
+| `02_modeles_3d/pnj` | 4 | 1.0 Mo |
+| `03_textures/abime` | 12 | 2.9 Mo |
+| `03_textures/braises` | 12 | 3.4 Mo |
+| `03_textures/givre` | 12 | 3.0 Mo |
+| `03_textures/mycelium` | 12 | 3.1 Mo |
+| `03_textures/racines` | 12 | 3.3 Mo |
+| `04_herbes/abimes` | 5 | 0.4 Mo |
+| `04_herbes/braises` | 5 | 0.4 Mo |
+| `04_herbes/canopee` | 5 | 0.5 Mo |
+| `04_herbes/givre` | 5 | 0.4 Mo |
+| `04_herbes/mine` | 5 | 0.4 Mo |
+| `04_herbes/mycelium` | 5 | 0.5 Mo |
+| `04_herbes/racines` | 5 | 0.4 Mo |
+| `04_herbes/ruche` | 5 | 0.4 Mo |
+| `05_interface/fonds` | 2 | 0.4 Mo |
+| `05_interface/icones_chevalier` | 18 | 2.3 Mo |
+| `05_interface/icones_interface` | 47 | 0.0 Mo |
+| `05_interface/icones_objets/arbaletes` | 5 | 0.4 Mo |
+| `05_interface/icones_objets/canons` | 10 | 0.8 Mo |
+| `05_interface/icones_objets/epees` | 15 | 0.6 Mo |
+| `05_interface/illustrations_zones` | 5 | 6.3 Mo |
+| `05_interface/kit` | 4 | 0.1 Mo |
+| `06_promo` | 6 | 7.8 Mo |
+| `06_promo/playstore` | 2 | 1.0 Mo |
+| `06_promo/pubs` | 5 | 1.7 Mo |
+| `07_outils/monstres_animes` | 4 | 0.0 Mo |
+| `07_outils/validations` | 1 | 0.4 Mo |
+| `_alternatives/textures_v1/abimes` | 7 | 1.1 Mo |
+| `_alternatives/textures_v1/braises` | 7 | 1.6 Mo |
+| `_alternatives/textures_v1/givre` | 7 | 1.1 Mo |
+| `_alternatives/textures_v1/mycelium` | 7 | 1.6 Mo |
+| `_alternatives/textures_v1/racines` | 7 | 1.2 Mo |
+| `_apercus` | 6 | 0.5 Mo |
+| `_apercus/pack2_monstres_animes` | 6 | 0.7 Mo |
+| `_journal` | 2 | 0.0 Mo |
+| `_journal/pack_zones_promo` | 3 | 0.2 Mo |
+| `_journal/textures` | 1 | 0.0 Mo |
