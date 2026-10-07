@@ -566,6 +566,9 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 .hudx-panel.at0{bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))}.hudx-panel.at1{bottom:auto;top:24vh;max-height:44vh}.hudx-panel small{color:var(--dim);font-size:12.5px}
 .hudx-txt{display:flex;align-items:center;gap:8px;font-size:13px}.hudx-txt span{flex:none;width:130px}.hudx-txt .adm-search{flex:1 1 0;min-width:0;width:auto;min-height:40px;padding:6px 12px;user-select:text;-webkit-user-select:text}.hudx-panel .seg.slide{flex-wrap:nowrap;overflow-x:auto}.hudx-panel .seg.slide .chipbtn{flex:none}
 .hudx-col{display:flex;align-items:center;gap:10px;font-size:13.5px}.hudx-col input[type=color]{flex:none;width:44px;height:34px;border:0;padding:0;background:none;border-radius:8px}
+.fil-body{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}.fil-row{display:flex;flex-direction:column;gap:8px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bark-4)}.fil-row.on{box-shadow:inset 0 0 0 2px var(--amber)}
+.fil-name{min-width:0;display:flex;flex-direction:column}.fil-name b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fil-name small{color:var(--dim);font-size:12px}
+.fil-img{max-width:100%;max-height:260px;object-fit:contain;align-self:center;border-radius:8px;background:var(--well)}.fil-model{display:flex;flex-direction:column;align-items:center;gap:6px}.fil-view{width:240px;height:240px;border-radius:12px;background:var(--well)}.fil-model small{color:var(--dim);font-size:12px;text-align:center}
 /* the administration, full screen: the settings side by side when there is room; on a touch screen a slider moves only once its row is touched */
 #sheet.full{top:0;max-width:none;max-height:none;border-radius:0}
 #sheet.full::before{display:none}
@@ -5370,7 +5373,7 @@ function admHudCard() {
 }
 // what the editor of models will hold next (ROADMAP, step 24)
 function admSoon() {
-  const L = [['Arènes de boss', 'leur taille et leur plan (24e)'], ['Armes', 'ajouter, retirer, importer, exporter, avec aperçu (24f)'], ['Décors', '(24f)'], ['Textures', '(24f)'], ['Chevaliers', '(24f)'], ['Créatures', '(24f)'], ['Sorts', 'avec le sort de l\'Expédition (étape 10)']];
+  const L = [['Arènes de boss', 'leur taille et leur plan (24e)'], ['Animations', 'voir et régler celles de chaque créature et du chevalier (24h)'], ['Armes', 'ajouter, retirer, importer, exporter, avec aperçu (24f)'], ['Décors', '(24f)'], ['Textures', '(24f)'], ['Chevaliers', '(24f)'], ['Créatures', '(24f)'], ['Sorts', 'avec le sort de l\'Expédition (étape 10)']];
   return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'Bientôt' }), h('small', { text: 'Les bibliothèques du jeu, dans cet éditeur.' }))),
     h('div', { class: 'adm-list' }, ...L.map(([n, t]) => h('div', { class: 'adm-row', style: 'opacity:.6' }, h('b', { text: n }), h('small', { text: t })))));
 }
@@ -5402,7 +5405,7 @@ function admBody(kids, foot) {
     const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
     search.addEventListener('input', () => { ADM.q = search.value; admFilter(); });
     kids.push(search);
-  } else kids.push(admCampCard(), admHudCard());
+  } else kids.push(admCampCard(), admHudCard(), admFilesCard());
   for (const [id, name, phrase] of TUNE_FAM) {
     if (id === 'hud' || (id === 'niv') !== mod) continue; // the draw of each level goes with the maps, every other family with the variables; the screen has its own editor (k_hud.js)
     const badge = h('span', { class: 'adm-badge', hidden: true }), list = h('div', { class: 'adm-list' }), sec = h('section', { class: 'adm-fam' });
@@ -7237,6 +7240,99 @@ function hudColours() {
       const inp = h('input', { type: 'color', value: hudHex(TU[key]), 'aria-label': n });
       inp.addEventListener('input', () => { tuneSet({ [key]: parseInt(inp.value.slice(1), 16) }); hudApply(); }); inp.addEventListener('change', () => admSaveTrial());
       return h('label', { class: 'hudx-col' }, inp, h('span', { class: 'grow', text: n }), TU[key] !== d.def ? h('button', { class: 'chipbtn', type: 'button', onclick: () => { hudSet({ [key]: d.def }); hudUI(); } }, 'Défaut') : null); }).filter(Boolean)];
+}
+
+/* ================= the files sent to the service (24f) =================
+   In the editor of models, « Fichiers importés »: send a model (.glb) or a picture (.png, .jpg, .webp) to the save service, which keeps
+   it in its own database (Cloudflare D1), cut in pieces. A file is named by the SHA-256 print of what it holds: the same file is never
+   kept twice, and its address never changes (browsers and Cloudflare keep it). Each file can be seen (a model turns, with the list of
+   its animations and poses), and taken away. Tying a file to the game (a creature, a weapon, a knight…) comes with the libraries. */
+const FIL = { list: null, total: 0, max: 0, busy: false, msg: '', prog: 0, open: null, ask: null, info: {}, r: null, scene: null, cam: null, obj: null, raf: 0 };
+const filUrl = id => SRV.url + '/fichier/' + id;
+const filSize = n => n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round(n / 1024)) + ' ko';
+const FIL_TYPES = { glb: 'model/gltf-binary', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' };
+async function filCall(op, more) {
+  const r = await fetch(SRV.url + '/admin/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ op, mdp: ADM.mdp }, more)) });
+  const o = await r.json().catch(() => null); if (!o || !o.ok) throw new Error((o && o.pourquoi) || 'Le service ne répond pas.'); return o;
+}
+const filRedraw = () => { if (sheetKind === 'adm' && ADM.view === 'mod') renderSheet(); };
+async function filList() {
+  try { const o = await filCall('fichiers'); FIL.list = o.fichiers; FIL.total = o.total; FIL.max = o.max; }
+  catch (e) { FIL.list = []; FIL.msg = String(e.message || e); }
+  filRedraw();
+}
+// a piece of bytes as base64, a slice at a time (a whole megabyte at once would overflow the arguments of fromCharCode)
+function filB64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 32768) s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return btoa(s); }
+async function filSend(file) {
+  if (FIL.busy || !file) return;
+  const ext = (file.name.split('.').pop() || '').toLowerCase(), type = FIL_TYPES[ext];
+  if (!type) { FIL.msg = 'Seuls les modèles .glb et les images .png, .jpg, .webp sont acceptés.'; filRedraw(); return; }
+  FIL.busy = true; FIL.prog = 0; FIL.msg = 'Lecture de ' + file.name + '…'; filRedraw();
+  try {
+    const buf = new Uint8Array(await file.arrayBuffer()), id = [...new Uint8Array(await crypto.subtle.digest('SHA-256', buf))].map(x => x.toString(16).padStart(2, '0')).join('');
+    const o = await filCall('fichier-debut', { id, nom: file.name, type, taille: buf.length });
+    if (!o.deja) {
+      const M = o.morceau, nb = Math.ceil(buf.length / M);
+      for (let i = 0; i < nb; i++) { await filCall('fichier-morceau', { id, n: i, data: filB64(buf.subarray(i * M, (i + 1) * M)) }); FIL.prog = (i + 1) / nb; FIL.msg = 'Envoi de ' + file.name + ' : ' + Math.round(FIL.prog * 100) + ' %'; const p = $('fil-prog'); if (p) { p.style.transform = 'scaleX(' + FIL.prog + ')'; const t = $('fil-msg'); if (t) t.textContent = FIL.msg; } }
+      await filCall('fichier-fin', { id });
+    }
+    FIL.msg = o.deja ? file.name + ' était déjà là.' : file.name + ' est envoyé (' + filSize(buf.length) + ').'; FIL.open = id;
+  } catch (e) { FIL.msg = 'Envoi interrompu : ' + (e.message || e); }
+  FIL.busy = false; await filList();
+}
+async function filRemove(id) {
+  if (FIL.ask !== id) { FIL.ask = id; filRedraw(); setTimeout(() => { if (FIL.ask === id) { FIL.ask = null; filRedraw(); } }, 5000); return; }
+  FIL.ask = null; try { await filCall('fichier-retirer', { id }); if (FIL.open === id) { FIL.open = null; filStop(); } FIL.msg = 'Fichier retiré.'; } catch (e) { FIL.msg = String(e.message || e); }
+  await filList();
+}
+/* ---------- seeing a model: it turns in a little view of its own, with what it holds (animations, poses, triangles) ---------- */
+function filView(f) {
+  if (f.type.startsWith('image/')) return h('img', { class: 'fil-img', src: filUrl(f.id), alt: f.nom });
+  const box = h('div', { class: 'fil-view', id: 'fil-view' }), info = FIL.info[f.id];
+  setTimeout(() => filShow(f), 0);
+  return h('div', { class: 'fil-model' }, box, h('small', { id: 'fil-info', text: info || (USE3D && window.THREE && window.THREE.GLTFLoader ? 'Chargement du modèle…' : 'L\'aperçu demande la 3D (les modèles du jeu doivent être chargés).') }));
+}
+function filShow(f) {
+  const box = $('fil-view'); if (!box || !USE3D || !window.THREE || !THREE.GLTFLoader) return;
+  if (!FIL.r) { try { FIL.r = new THREE.WebGLRenderer({ alpha: true, antialias: true }); FIL.r.setClearColor(0, 0); FIL.r.setSize(240, 240); FIL.scene = new THREE.Scene(); FIL.scene.add(new THREE.HemisphereLight('#fff6e0', '#3a2a1c', 1.2)); const d = new THREE.DirectionalLight('#fff', .8); d.position.set(2, 3, 2); FIL.scene.add(d); FIL.cam = new THREE.PerspectiveCamera(30, 1, .01, 100); } catch (e) { FIL.r = null; return; } }
+  box.append(FIL.r.domElement);
+  if (FIL.obj && FIL.obj.userData.id === f.id) { filLoop(); return; }
+  if (FIL.obj) { FIL.scene.remove(FIL.obj); FIL.obj = null; }
+  new THREE.GLTFLoader().load(filUrl(f.id), g => {
+    const o = g.scene; o.userData.id = f.id; let tris = 0, morph = 0;
+    o.traverse(m => { if (m.isMesh) { const gg = m.geometry; tris += (gg.index ? gg.index.count : gg.attributes.position.count) / 3; if (gg.morphAttributes && gg.morphAttributes.position) morph = Math.max(morph, gg.morphAttributes.position.length); } });
+    o.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(o, true), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3()), r = Math.max(sz.x, sz.y, sz.z) || 1;
+    o.position.sub(c); const piv = new THREE.Group(); piv.add(o); piv.userData.id = f.id; FIL.obj = piv; FIL.scene.add(piv);
+    FIL.cam.position.set(r * .95, r * .7, r * 1.3); FIL.cam.lookAt(0, 0, 0); // the whole model in view, three-quarters, a little from above
+    if (g.animations.length) { FIL.mix = new THREE.AnimationMixer(o); FIL.mix.clipAction(g.animations[0]).play(); } else FIL.mix = null;
+    FIL.info[f.id] = Math.round(tris) + ' triangles · ' + (g.animations.length ? g.animations.length + ' animation' + (g.animations.length > 1 ? 's' : '') + ' : ' + g.animations.map(a => a.name + ' (' + a.duration.toFixed(2).replace('.', ',') + ' s)').join(', ') : 'aucune animation') + (morph ? ' · ' + morph + ' poses' : '') + ' · ' + sz.x.toFixed(2).replace('.', ',') + ' × ' + sz.y.toFixed(2).replace('.', ',') + ' × ' + sz.z.toFixed(2).replace('.', ',') + ' unités';
+    const t = $('fil-info'); if (t) t.textContent = FIL.info[f.id];
+    filLoop();
+  }, undefined, () => { const t = $('fil-info'); if (t) t.textContent = 'Ce modèle ne se lit pas.'; });
+}
+function filLoop() {
+  cancelAnimationFrame(FIL.raf); let last = performance.now();
+  const step = t => { if (!FIL.r || !FIL.r.domElement.isConnected) return; const dt = Math.min(.05, (t - last) / 1000); last = t; if (FIL.obj) FIL.obj.rotation.y += dt * .8; if (FIL.mix) FIL.mix.update(dt); FIL.r.render(FIL.scene, FIL.cam); FIL.raf = requestAnimationFrame(step); };
+  FIL.raf = requestAnimationFrame(step);
+}
+function filStop() { cancelAnimationFrame(FIL.raf); }
+// the card in the editor of models
+function admFilesCard() {
+  if (FIL.list === null && !FIL.busy) { FIL.list = []; FIL.busy = false; filList(); }
+  const input = h('input', { type: 'file', accept: '.glb,.png,.jpg,.jpeg,.webp', hidden: true }); input.addEventListener('change', () => { const f = input.files && input.files[0]; if (f) filSend(f); });
+  const L = FIL.list || [];
+  return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'Fichiers importés' }),
+    h('small', { text: 'Modèles (.glb) et images envoyés au service, pour les bibliothèques du jeu. ' + L.length + (L.length > 1 ? ' fichiers' : ' fichier') + ', ' + filSize(FIL.total || 0) + (FIL.max ? ' (' + filSize(FIL.max) + ' au plus par fichier)' : '') + '.' }))),
+    h('div', { class: 'fil-body' },
+      h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap;align-items:center' }, h('button', { class: 'btn small', type: 'button', disabled: FIL.busy, onclick: () => input.click() }, ic('plus'), FIL.busy ? 'Envoi…' : 'Envoyer un fichier'), input),
+      FIL.busy ? h('div', { class: 'bar thin' }, h('i', { id: 'fil-prog', style: 'transform:scaleX(' + FIL.prog + ')' })) : null,
+      FIL.msg ? h('small', { id: 'fil-msg', class: 'adm-msg', text: FIL.msg }) : null,
+      ...L.map(f => h('div', { class: 'fil-row' + (FIL.open === f.id ? ' on' : '') },
+        h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:8px' },
+          h('span', { class: 'grow fil-name' }, h('b', { text: f.nom }), h('small', { text: (f.type.startsWith('image/') ? 'Image' : 'Modèle 3D') + ' · ' + filSize(f.taille) + ' · ' + new Date(f.quand).toLocaleDateString('fr-FR') })),
+          h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(FIL.open === f.id), onclick: () => { FIL.open = FIL.open === f.id ? null : f.id; if (!FIL.open) filStop(); filRedraw(); } }, ic('loupe'), 'Voir'),
+          h('button', { class: 'chipbtn' + (FIL.ask === f.id ? ' danger' : ''), type: 'button', 'aria-label': 'Retirer ' + f.nom, onclick: () => filRemove(f.id) }, ic('poubelle'), FIL.ask === f.id ? 'Sûr ?' : null)),
+        FIL.open === f.id ? filView(f) : null))));
 }
 
 </script>
