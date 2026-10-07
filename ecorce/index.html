@@ -2155,14 +2155,16 @@ let save = defaultSave();
 try { let raw = localStorage.getItem(SAVE_KEY); for (const k of OLD_KEYS) if (!raw) raw = localStorage.getItem(k); if (raw) save = normSave(JSON.parse(raw)); } catch (e) { }
 let ME = save.chars[save.cur]; // the character being played
 function setSave(s) { save = s; ME = save.chars[save.cur]; }
-let saveDirty = false, cloudDoc = null, cloudBusy = false, cloudAgain = false;
+let saveDirty = false, saveFails = 0, cloudDoc = null, cloudBusy = false, cloudAgain = false;
 // The creative mode (h_creatif.js): while it is on, nothing is written anywhere — this device, the Claude account, the online
 // service. Leaving it reloads the page, and the real save comes back as it was. shown: its entry is visible in the settings
 const CREA = { on: false, shown: false, god: false, hit: false, calm: false, mode: 0, taps: [] };
 function persistLocal() {
   if (CREA.on) return;
   if (DEV.state === 'wait') { saveDirty = true; return; } // the seal is not ready yet: what is stored stays as it is for a moment
-  try { localStorage.setItem(SAVE_KEY, sealed(JSON.stringify(save))); if (DEV.state === 'off') localStorage.setItem(SAVE_FREE, '1'); } catch (e) { }
+  // a write that fails (storage full or refused) is not a save: it stays to be done, and the player is told once it fails again
+  try { localStorage.setItem(SAVE_KEY, sealed(JSON.stringify(save))); if (DEV.state === 'off') localStorage.setItem(SAVE_FREE, '1'); saveFails = 0; }
+  catch (e) { saveDirty = true; if (++saveFails === 2 && window.ecorceApp && typeof toast === 'function') toast('Ton appareil n\'arrive plus à enregistrer la partie'); return; }
   saveDirty = false;
   if (DEV.state === 'on' && !DEV.sealed) { DEV.sealed = true; DEV.rec.sealed = true; idb('readwrite', st => st.put(DEV.rec, 'device')).catch(() => { }); }
 }
@@ -2345,7 +2347,11 @@ function floorDecor(F, rooms) {
   for (const d of F.decor) F.blocks.push({ x: d.x, y: d.y, r: d.r });
 }
 function genFloor(seed, floor) {
-  const made = typeof planFor === 'function' && planFor(seed, floor); if (made) return planToFloor(made, seed, floor); // a level made by hand in the editor (j_editeur.js)
+  const made = typeof planFor === 'function' && planFor(seed, floor); // a level made by hand in the editor (j_editeur.js)
+  if (made) { // a plan that cannot be read, or that nobody could finish, never stops the game: the draw takes its place (the same for the whole team: same plan, same answer)
+    try { const F0 = planToFloor(made, seed, floor); return ED.on ? F0 : planCheck(F0); } // in the editor the plan is shown as it is, finished or not
+    catch (e) { const why = e && e.plan ? e.message : 'données illisibles'; console.warn('carte du niveau ' + floor + ' : ' + why + ' ; niveau tiré au sort', e); if (ADM.shown) toast('Carte du niveau ' + floor + ' : ' + why + '. Niveau tiré au sort à la place.'); }
+  }
   const R = rng((seed ^ Math.imul(floor + 7, 0x9E3779B1)) >>> 0);
   const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
   const si = strIdxOf(floor), boss = isBossFloor(floor), big = seedBig(seed), mod = seedMod(seed), O = lvlOpt(floor);
@@ -2481,7 +2487,7 @@ function genFloor(seed, floor) {
 // the camp wears the colours of the game being played: warm gold and green for Classic, violet and blue for Expedition
 const CAMPS = [STRATA[0], Object.assign({}, STRATA[0], { floorA: '#3a3555', floorB: '#464068', wallTop: '#0c0a16', wallFace: '#4b4a88', wallEdge: '#7d86cf', glow: '#a996ff', deco: '#6fa8ff', foe: '#9a7cf0', foe2: '#e6dcff', fog: '#06050d', sky: '#a59bf2', gnd: '#1c1830', sun: '#8f9dff', tex: '#9d93d6', cap: '#3c4f9a',
   air: { n: 40, col: ['#a996ff', '#9fb0ff'], v: [2, 6], r: .1 } })];
-function genHub() { // the camp: a clearing with the level counter, the mode portal, the wheel, a practice dummy and a fire
+function genHub(plain) { // the camp: a clearing with the level counter, the mode portal, the wheel, a practice dummy and a fire (plain: as the game makes it, without the plan of the editor)
   const W = 17, H = 21, g = new Uint8Array(W * H);
   for (let y = 3; y < 17; y++) for (let x = 3; x < 14; x++) g[y * W + x] = 1;
   const st = (k, label, x, y, ox, oy) => ({ k, label, x: x * T, y: y * T, ox: ox * T, oy: oy * T });
@@ -2506,8 +2512,8 @@ function genHub() { // the camp: a clearing with the level counter, the mode por
     { t: 'snail', x: 7.5 * T, y: 15.6 * T, tx: 7.5 * T, ty: 15.6 * T, w: 2, spd: 5, zone: [4, 14.6, 9.6, 16.4], a: 0 },
     { t: 'bird', x: 7.2 * T, y: 12.6 * T, tx: 7.2 * T, ty: 12.6 * T, w: 1, spd: 30, zone: [5, 11.6, 10.4, 14.6], a: 0 }, { t: 'bird', x: 9.8 * T, y: 12.2 * T, tx: 9.8 * T, ty: 12.2 * T, w: 2, spd: 30, zone: [5, 11.6, 10.4, 14.6], a: 0 },
     { t: 'bird', x: 10.2 * T, y: 7.4 * T, tx: 10.2 * T, ty: 7.4 * T, w: 3, spd: 30, zone: [8.6, 6.8, 12.6, 10.4], a: 0 });
-  let cp = null; try { cp = planOf('camp'); } catch (e) { } // the camp made over in the level editor (j_editeur.js), once that file is read
-  if (cp) campApply(F, cp);
+  let cp = null; if (!plain) try { cp = planOf('camp'); } catch (e) { } // the camp made over in the level editor (j_editeur.js), once that file is read
+  if (cp) { try { campApply(F, cp); } catch (e) { console.warn('carte du camp illisible, camp d\'origine : ' + (e && e.message)); return genHub(true); } } // a plan that cannot be read used to stop the whole page at its start, for everyone
   return F;
 }
 // what stops feet in the camp, worked out from where everything stands (the level editor moves them)
@@ -2588,7 +2594,8 @@ function note(f, t, dur, type, vol, att) {
   g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   o.connect(g); g.connect(MUS.bus); o.start(t); o.stop(t + dur + .05);
 }
-function musicKey() { return (G.mode === 'play' || G.mode === 'end') && !F.hub ? F.si + (levelOf(F.floor).boss ? 'b' : '') : ME.game ? 'campx' : 'camp'; }
+// a world of the series 3 has no mood of its own yet: it plays the mood of the world whose kit it borrows (without this, levels 31 to 60 had no music, and an error at every image)
+function musicKey() { return (G.mode === 'play' || G.mode === 'end') && !F.hub ? kitOf(F.si) + (levelOf(F.floor).boss ? 'b' : '') : ME.game ? 'campx' : 'camp'; }
 function musicStep() {
   if (!AC || AC.state !== 'running') return;
   try {
@@ -2662,7 +2669,7 @@ function refreshStats() {
   ST = calcStats(); P.mhp = ST.hp;
   P.hp = run ? clamp(Math.round(P.mhp * ratio), P.hp > 0 ? 1 : 0, P.mhp) : P.mhp;
 }
-function clearFx() { shots = []; eshots = []; pickups = []; parts = []; texts = []; rings = []; }
+function clearFx() { shots = []; eshots = []; pickups = []; parts = []; texts = []; rings = []; if (VFX) VFX.clear(); } // Damien's effects too: those of a level used to end in the next one
 // enter one of the two games: the character puts on what belongs to it (see GAMES in a_core.js)
 function setGame(g) { if (ME.game === g) return; swapGame(ME); G.newLoot = false; applyGame(); }
 function startRun(seed, floor) {
@@ -2677,9 +2684,18 @@ function startRun(seed, floor) {
   cam.init = false; G.mode = 'play'; G.paused = false;
   hudLabel();
   closeSheet(); showUI(); levelCard(levelOf(floor).name + (run.big ? ' · Expédition' : run.diff ? ' · ' + DIFFS[run.diff].name : ''));
-  try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => { }); } catch (e) { }
+  wakeOn();
   updateHud(true); sendPresence(true); lobbyPresence(); tutoStart();
 }
+// the screen stays on during a level only: the lock is kept, and given back on the results screen and at the camp (it used to be asked at every level and never released)
+const WAKE = { lock: null, busy: false };
+function wakeOn() {
+  try {
+    if (!navigator.wakeLock || WAKE.lock || WAKE.busy) return; WAKE.busy = true;
+    navigator.wakeLock.request('screen').then(l => { WAKE.busy = false; WAKE.lock = l; l.addEventListener('release', () => { if (WAKE.lock === l) WAKE.lock = null; }); if (G.mode !== 'play') wakeOff(); }, () => { WAKE.busy = false; });
+  } catch (e) { WAKE.busy = false; }
+}
+function wakeOff() { const l = WAKE.lock; WAKE.lock = null; try { if (l) l.release().catch(() => { }); } catch (e) { } }
 function hudLabel() { $('hud-floor').textContent = run.floor + ' · ' + (F.seals ? 'Sceaux ' + F.seals.filter(q => q.got).length + ' / ' + F.seals.length : levelOf(run.floor).name + (run.diff ? ' ' + '★'.repeat(run.diff) : '')); }
 function finishRun(kind) { // 'win' | 'dead' | 'quit'
   if (!run || G.mode !== 'play') return;
@@ -2692,14 +2708,14 @@ function finishRun(kind) { // 'win' | 'dead' | 'quit'
   // what a full bag left on the floor is not lost: it is sold on the way out, and the results screen lets you swap any of it for an object of the bag (16g)
   run.leftItems = [];
   if (win) { let left = 0; for (const p of pickups) if (p.kind === 'i') { left += itemScrap(p.item); run.leftItems.push(p.item); } if (left) { ME.ecl += left; run.stats.ecl += left; run.stats.left = left; } }
-  Net.ignoreSeed = run.seed; G.mode = 'end'; G.paused = false; P.down = false;
+  Net.ignoreSeed = run.seed; G.mode = 'end'; G.paused = false; P.down = false; wakeOff();
   saveGame(true); sfx(win ? 520 : 140, .3, 'triangle', .06, win ? 400 : -60);
   endPick = -1; showResults(kind, unlockedNow); sendPresence(true); lobbyPresence();
 }
 function backToHub() {
   if (ME && ME.game === 1 && !expeOpen()) { setGame(0); refreshStats(); } // the Expedition is closed: back to the Classic game, its own things kept
   run = null; G.train = false; P.dance = 0; tuto = null; tutoShow(); G.mode = 'hub'; G.station = 'wait'; F = genHub(); worldChanged(); P.x = F.start.x; P.y = F.start.y; P.down = false; P.face = Math.PI / 2; cam.init = false; P.target = null;
-  clearFx(); allies.length = 0;
+  clearFx(); allies.length = 0; wakeOff();
   refreshStats(); closeSheet(); showUI(); sendPresence(true); lobbyPresence();
 }
 
@@ -3107,6 +3123,7 @@ function updateLift(dt) {
     if (L.prog >= 1) { L.prog = 0; run.target = Math.max(run.target, run.floor + 1); }
   } else L.prog = Math.max(0, L.prog - dt * 2);
 }
+const shakeFade = dt => { if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 28); };
 function updateFx(dt) {
   const fr = Math.pow(.02, dt);
   for (const p of parts) {
@@ -3116,7 +3133,7 @@ function updateFx(dt) {
   parts = parts.filter(p => p.life > 0); if (parts.length > 420) parts.splice(0, parts.length - 420);
   for (const t of texts) { t.life -= dt; } texts = texts.filter(t => t.life > 0);
   for (const r of rings) r.life -= dt; rings = rings.filter(r => r.life > 0);
-  if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 28);
+  shakeFade(dt);
 }
 let aloneT = 0, teamT = 0;
 function coopChecks(dt) {
@@ -3207,8 +3224,8 @@ function update(dt) {
     sendPresence(); if (saveDirty && G.frame % 300 === 0) persistLocal(); return;
   }
   if (G.mode === 'edit') { edStep(dt); return; } // the level editor (j_editeur.js)
-  if (G.mode !== 'play') { sendPresence(); return; }
-  if (G.paused && !Net.room) return;
+  if (G.mode !== 'play') { shakeFade(dt); sendPresence(); return; } // the results screen: nothing moves, but the shake dies down
+  if (G.paused && !Net.room) { shakeFade(dt); return; } // paused alone: the image used to tremble for as long as the pause lasted
   if (G.stop > 0) { G.stop -= dt; if (!Net.room) dt *= .12; }
   if (run.target > run.floor) { celeStep(dt); if (G.mode === 'play') { updateShots(dt); updatePickups(dt); updateFx(dt); sendPresence(); } return; }
   if (!G.paused) { updatePlayer(dt); tutoStep(dt); run.time += dt; if (G.frame % 90 === 0) questTick(); } else P.moving = false;
@@ -3264,7 +3281,7 @@ function label(txt, x, y, col, font) {
   const hw = ctx.measureText(txt).width / 2 + 6; if (hw * 2 < view.w) x = clamp(x, hw, view.w - hw);
   ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillText(txt, x + 1, y + 1); ctx.fillStyle = col; ctx.fillText(txt, x, y);
 }
-function bubble(txt, wx, wy) { // a speech bubble over someone's head
+function speechBubble(txt, wx, wy) { // a speech bubble over someone's head (it was called bubble, like the knight's badge of d_ui.js, which replaced it: the people of the camp had gone silent)
   ctx.font = '600 12px Figtree, system-ui, sans-serif'; ctx.textAlign = 'center';
   const words = txt.split(' '), lines = []; let cur = '';
   for (const w of words) { if (ctx.measureText(cur + ' ' + w).width > 150 && cur) { lines.push(cur); cur = w; } else cur = cur ? cur + ' ' + w : w; } lines.push(cur);
@@ -3344,7 +3361,7 @@ function drawOverlay() {
     if (F.hub && G.mode === 'hub' && !sheetOpen() && !lobbyOn()) { // the names of the camp's places: only when one walks there (the administrator's camp)
       const d = F.enemies[0], log = F.dmgLog; let sum = 0; for (const l of log) sum += l[1];
       if (d) { const s = toScreen(d.x, d.y, 62); label(G.train && log.length ? 'Mannequin · ' + Math.round(sum / Math.max(1.2, G.time - log[0][0])) + ' dégâts/s' : 'Mannequin', s[0], s[1], '#f1e4c8', F1); label(G.train ? 'touche-le pour arrêter' : 'touche-le pour t\'entraîner', s[0], s[1] + 14, '#b9a888', F1); }
-      for (const n of F.npcs) if (!n.off && hyp(n.x - P.x, n.y - P.y) < 84) bubble(n.lines[Math.floor(G.time / 5) % n.lines.length], n.x, n.y);
+      for (const n of F.npcs) if (!n.off && hyp(n.x - P.x, n.y - P.y) < 84) speechBubble(n.lines[Math.floor(G.time / 5) % n.lines.length], n.x, n.y);
     }
     if (P.down && P.reviveT > 0) { const s = toScreen(P.x, P.y, 8); ctx.strokeStyle = '#8fd3e8'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(s[0], s[1], 26, -Math.PI / 2, -Math.PI / 2 + TAU * P.reviveT / 2); ctx.stroke(); }
     for (const t of texts) {
@@ -5564,7 +5581,10 @@ function admMapState(k) {
 }
 const ADM_MAP_TXT = { none: 'Tiré au sort pour tous les joueurs.', mine: 'Fait à la main sur cet appareil seulement : les joueurs ne le voient pas encore.', pub: 'Publié : tous les joueurs ont cette carte.', both: 'Publié, et modifié ici depuis : les joueurs ont encore l\'ancienne version.' };
 async function admMapPub(k, plan) {
-  if (ADM.busy) return; ADM.busy = true; ADM.msg = ''; renderSheet();
+  if (ADM.busy) return;
+  const why = plan && planProblem(k, plan); // a map nobody could finish is not published: it would be replaced by the draw for every player
+  if (why) { ADM.msg = 'Cette carte ne peut pas être publiée : ' + why + '. Corrige-la dans l\'éditeur, puis publie.'; ADM.mapAsk = null; renderSheet(); return; }
+  ADM.busy = true; ADM.msg = ''; renderSheet();
   try {
     const r = await fetch(SRV.url + '/admin/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'cartes', mdp: ADM.mdp, cartes: { [k]: plan } }) });
     const o = await r.json().catch(() => null);
@@ -5835,7 +5855,7 @@ let sheetKind = null, sel = null, selLevel = 0, creating = false, draft = { name
 const sheetOpen = () => sheetKind !== null;
 function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 function setNum(id, v) { const el = $(id), t = String(v); if (el.textContent !== t) { el.textContent = t; bump(el.parentElement); } }
-function campPurse() { if (G.mode !== 'hub') return; setNum('camp-ecl', ME.ecl); $('camp-gem').textContent = String(ME.gem); $('tabs').children[3].classList.toggle('dot', questBadge() > 0); }
+function campPurse() { if (G.mode !== 'hub') return; setNum('camp-ecl', ME.ecl); $('camp-gem').textContent = String(ME.gem); $('tabs').querySelector('[data-k="quests"]').classList.toggle('dot', questBadge() > 0); } // the dot of a quest to claim, on the Quêtes bubble (it lit the Roulette one, fourth in the row since that bubble was added)
 // juice: a shake of the whole screen (1 light, 2 strong) and a red flash when hurt
 function uiShake(n) { const g = $('game'); g.classList.remove('shk1', 'shk2'); void g.offsetWidth; g.classList.add(n > 1 ? 'shk2' : 'shk1'); }
 function uiFlash() { const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
@@ -6102,7 +6122,7 @@ function renderSheet() {
       h('button', { class: 'btn wide ghost', type: 'button', onclick: () => { if (pause) { closeSheet(); finishRun('quit'); } else { saveGame(true); closeSheet(); G.mode = 'title'; G.home = true; resetInput(); showUI(); } } }, ic('retour'), pause ? 'Quitter le niveau' : 'Quitter le jeu'),
       h('button', { class: 'btn wide line', type: 'button', disabled: CREA.on, onclick: () => { saveGame(true); if (typeof srvSoon === 'function') srvSoon(); toast(SRV.state === 'on' ? 'Partie sauvegardée, et envoyée en ligne' : 'Partie sauvegardée sur cet appareil'); } }, ic('ok'), CREA.on ? 'Rien n\'est sauvegardé en mode créatif' : 'Sauvegarder maintenant'),
       h('p', { style: 'font-size:12px;color:var(--dim);margin:0', text: 'Le jeu sauvegarde aussi tout seul, à chaque gain.' })));
-    if (USE3D) body.push(toggleRow('ombre', 'Graphismes soignés (ombres)', save.gfx !== 0, () => { save.gfx = save.gfx !== 0 ? 0 : 1; glQuality(); saveGame(false); renderSheet(); }));
+    if (USE3D) body.push(toggleRow('ombre', 'Graphismes soignés (ombres)', save.gfx !== 0, () => { save.gfx = save.gfx !== 0 ? 0 : 1; if (save.gfx) G.noDegrade = true; glQuality(); saveGame(false); renderSheet(); })); // turned back on by hand: the choice holds for the session (the game used to cut them again five seconds later)
     const display = () => { resize(); if (USE3D) glQuality(); saveGame(false); renderSheet(); };
     body.push(h('div', { class: 'choice' }, h('span', { class: 'row', style: 'flex-wrap:nowrap' }, ic('ombre'), 'Thème'),
       h('div', { class: 'seg slide', id: 'theme-seg' }, ...THEME_NAMES.map((n, i) => { const open = themeOpen(i);
@@ -6555,7 +6575,9 @@ function netFrame(dt) {
   Net.amHost = !hostP || (performance.now() >= Net.nhUntil && Net.me !== null && Net.me < hostP.v.peer);
   if (!Net.amHost && playing) { const hs = hostP.s; if (Array.isArray(hs.e) && hs.k !== Net.lastHK) { Net.lastHK = hs.k; applySnapshot(hs.e); } }
   if (playing && cleared > run.target) run.target = cleared; // a teammate took the lift: the level is cleared for everyone
-  if (lead && lead.sd !== Net.ignoreSeed) {
+  // a teammate is never followed where this game does not go: the Expedition while it is closed, a level beyond the worlds that are open
+  // (a copy of the game kept in cache from before, or a modified one, could ask for both, and the knight would have changed game)
+  if (lead && lead.sd !== Net.ignoreSeed && (!seedBig(lead.sd) || expeOpen()) && lead.fl >= 1 && lead.fl <= NLV) {
     if (G.mode === 'hub') startRun(lead.sd, lead.fl);
     // two teammates started at the same instant: the one with the smaller label wins, the other follows
     else if (playing && lead.sd !== run.seed && performance.now() - run.t0 < 5000 && Net.me !== null && lead.peer < Net.me) startRun(lead.sd, lead.fl);
@@ -6756,7 +6778,7 @@ window.addEventListener('keyup', e => {
   if (k === ' ' || k === 'j') input.atk = false; else if (k === 'e' || k === 'l') input.lan = false; else input.keys.delete(k);
 });
 window.addEventListener('blur', resetInput);
-document.addEventListener('visibilitychange', () => { if (document.hidden) { resetInput(); if (saveDirty) persistLocal(); } });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { resetInput(); if (saveDirty) persistLocal(); } else if (G.mode === 'play') wakeOn(); }); // the browser drops the screen lock when the page hides: it is asked again on the way back
 
 // static buttons
 for (const [id, icn, key] of [['b-atk', 'epee', 'A'], ['b-lan', 'lanterne', 'X'], ['b-dash', 'esquive', 'B']]) $(id).append(ic(icn), h('i', { class: 'key', text: key })); $('b-bag').append(ic('sac')); $('b-pause').append(ic('pause')); $('b-opts').append(ic('reglages')); $('b-close').append(ic('fermer'));
@@ -6776,10 +6798,13 @@ function frame(ts) {
   lastTs = ts;
   if (USE3D && save.gfx !== 0 && G.mode === 'play' && !G.noDegrade && dt < 1) { // slow device: drop shadows and resolution once
     if (++perfN > 0) perfT += dt;
-    if (perfN >= 150) { if (perfT / perfN > .034) { save.gfx = 0; glQuality(); saveGame(false); toast('Graphismes allégés pour rester fluide'); } perfN = -30; perfT = 0; }
+    // with the frames limited to 30 or 45 a second (45 gives 30 on a 60 Hz screen), an image of 33 ms is what was asked for, not a slow device
+    if (perfN >= 150) { if (perfT / perfN > (cap && cap < 60 ? .045 : .034)) { save.gfx = 0; glQuality(); saveGame(false); toast('Graphismes allégés pour rester fluide'); } perfN = -30; perfT = 0; }
   }
   dt = clamp(dt, 0, .05);
-  try { padStep(); navKeep(); update(dt); render(); musicStep(); } catch (err) { console.error(err); }
+  // the image is drawn even when a step of the game fails: a bug shows as a frozen creature, not as a frozen screen with no way out
+  try { padStep(); navKeep(); update(dt); } catch (err) { console.error(err); }
+  try { render(); musicStep(); } catch (err) { console.error(err); }
   requestAnimationFrame(frame);
 }
 resize();
@@ -6868,6 +6893,27 @@ function planToFloor(p, seed, floor) {
   if (p.big && p.seals) F0.seals = p.seals.map((q, id) => ({ id, x: q[0], y: q[1], got: false }));
   F0.wallProps = wpFrom(p.wp); texFromPlan(F0, p); blocFromPlan(F0, p);
   return F0;
+}
+// A plan the game cannot play is refused when a level starts (genFloor then falls back to the draw) and when it is published: a way in and a way
+// out on the ground, creatures the game knows, and the way out and its guards within reach of the way in — a guard walled in would keep the way
+// out shut for ever, for everyone. Not checked inside the editor: a map being made may well be unfinished.
+const planErr = m => Object.assign(new Error(m), { plan: true });
+function planCheck(F0) {
+  const W = F0.W, H = F0.H, g = F0.g, tile = (x, y) => Number.isFinite(x) && Number.isFinite(y) && x >= 0 && y >= 0 && x < W * T && y < H * T ? Math.floor(y / T) * W + Math.floor(x / T) : -1;
+  if (!(W > 0 && H > 0)) throw planErr('taille de la carte');
+  const a = tile(F0.start.x, F0.start.y); if (a < 0 || g[a] !== 1) throw planErr('entrée hors du sol');
+  if (!F0.lift || g[tile(F0.lift.x, F0.lift.y)] !== 1) throw planErr('sortie absente ou hors du sol');
+  for (const e of F0.enemies) { if (![0, 1, 2, 3, 4, 9].includes(e.type)) throw planErr('créature inconnue'); if (tile(e.x, e.y) < 0) throw planErr('créature hors de la carte'); }
+  const seen = new Uint8Array(W * H), q = [a]; seen[a] = 1;
+  for (let k = 0; k < q.length; k++) { const i = q[k], x = i % W; for (const j of [i - W, i + W, x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1]) if (j >= 0 && j < W * H && g[j] === 1 && !seen[j]) { seen[j] = 1; q.push(j); } }
+  if (!seen[tile(F0.lift.x, F0.lift.y)]) throw planErr('sortie hors d\'atteinte depuis l\'entrée');
+  for (const e of F0.enemies) if (e.guard && !seen[tile(e.x, e.y)]) throw planErr('un garde de la sortie est hors d\'atteinte');
+  return F0;
+}
+// what stops a plan from being published, in plain words (null: the game can play it)
+function planProblem(k, plan) {
+  try { if (k === 'camp') campApply(genHub(true), plan); else planCheck(planToFloor(plan, 8, +k)); return null; }
+  catch (e) { return e && e.plan ? e.message : 'données illisibles'; }
 }
 /* ---------- the camp made over: its tiles, surfaces and heights, its scenery, and where its places and people stand ---------- */
 const xy = o => [r1(o.x), r1(o.y)];
@@ -7498,7 +7544,7 @@ cv.addEventListener('pointerdown', edDown, true); cv.addEventListener('pointermo
 cv.addEventListener('pointerup', edUp, true); cv.addEventListener('pointercancel', edUp, true); cv.addEventListener('wheel', edWheel, { passive: false });
 
 // a camp made over before this file was read: the camp on show is drawn again with it
-if (planOf('camp') && F && F.hub && G.mode !== 'play') { F = genHub(); try { worldChanged(); } catch (e) { } }
+try { if (planOf('camp') && F && F.hub && G.mode !== 'play') { F = genHub(); worldChanged(); } } catch (e) { console.warn(e); } // nothing here may stop the files that follow
 
 /* ================= the editor of the screen of play (22f) =================
    Opened from the editor of models (Réglages > Éditeur de modèles > L'interface). Each piece of the screen — in a level and at the
@@ -7940,6 +7986,8 @@ function roleAdmCard() {
       done.length ? h('small', { text: 'Déjà décidées : ' + done.map(p => p.titre + ' (' + (p.etat === 'acceptee' ? 'acceptée' : 'refusée') + ')').join(', ') }) : null));
 }
 async function roleDecide(p, decision) {
+  const why = decision === 'accepter' && planProblem(p.cle, p.plan); // the preview shows the ground only: what the game cannot play is said here, before anything is published
+  if (why) { ROLE.msg = '« ' + p.titre + ' » ne peut pas être publiée : ' + why + '. Ouvre-la dans l\'éditeur pour la corriger, ou refuse-la.'; renderSheet(); return; }
   try { await admJCall('proposition', { n: p.n, decision, reponse: ROLE.reply[p.n] || '' }); ROLE.msg = decision === 'accepter' ? '« ' + p.titre + ' » est publiée pour tous les joueurs.' : '« ' + p.titre + ' » est refusée.'; if (decision === 'accepter') srvMaps(); }
   catch (e) { ROLE.msg = String(e.message || e); }
   ROLE.open = null; await roleAdmLoad();
@@ -8004,11 +8052,19 @@ function blocKit() {
   if (!sols.length || !murs.length) return null;
   return { mode, z: want, sols: sols.map(p => 'b_' + want + '_' + p), murs: murs.map(p => 'b_' + want + '_' + p), pilier: has('pilier') ? 'b_' + want + '_pilier' : null, orn: has('ornement_mur') ? 'b_' + want + '_ornement_mur' : null };
 }
-// whether the world can be built in blocks now; when a piece is missing it is asked for, and the world is built again when it comes
+// One rebuild of the world for all the pieces that arrive together. A piece is asked for once, and the world is built again once, at the next
+// image, when the last one is there. (Each call used to hang one more callback on every missing piece, and each of them rebuilt the world: 11 to 129
+// rebuilds in a row at the first entry in a zone, measured on the logic alone.)
+let worldDue = 0; const PIECE_ASK = {};
+function worldSoon() { if (!worldDue) worldDue = requestAnimationFrame(() => { worldDue = 0; if (F && USE3D) worldChanged(); }); }
+function pieceAsk(n, ready) { if (PIECE_ASK[n]) return; PIECE_ASK[n] = 1; const done = g => { PIECE_ASK[n] = 0; if (g && F && ready()) worldSoon(); }; modelLoad(n).then(done, () => done(null)); }
+// the pieces a kit needs now: its accents (pillar, ornament), what the editor painted, and the floors and walls only when the walls themselves are in blocks
+const blocNames = K => [...(K.mode === 2 ? [...K.sols, ...K.murs] : []), K.pilier, K.orn, ...(F.bpal || [])].filter(Boolean).map(blocUse);
+// whether the world can be built in blocks now; when a piece is missing it is asked for, and the world is built again when the last one comes
 function blocsReady(K) {
   if (!K) return false;
-  const names = [...K.sols, ...K.murs, K.pilier, K.orn, ...(F.bpal || [])].filter(Boolean); let ok = true;
-  for (const n0 of names) { const n = blocUse(n0); if (!MDL.cache[n]) { ok = false; modelLoad(n).then(g => { if (g && F && blocKit() && blocsReady(blocKit())) worldChanged(); }); } }
+  let ok = true;
+  for (const n of blocNames(K)) if (!MDL.cache[n]) { ok = false; pieceAsk(n, () => { const K2 = blocKit(); return !!K2 && blocNames(K2).every(k => MDL.cache[k]); }); }
   return ok;
 }
 // one tile's piece: what the editor painted there, else a variant drawn from the place (always the same for that tile)
@@ -8080,7 +8136,7 @@ function herbsBuild(isF) {
   const dens = TU.herbe == null ? .6 : +TU.herbe; if (!USE3D || !MDL.on || !(dens > 0)) return 0;
   const z = herbZone(); if (!z) return 0;
   const names = HERB_PIECES.map(p => 'h_' + z + '_' + p[0]).filter(n => n in MDL.list); let ready = true;
-  for (const n of names) if (!MDL.cache[n]) { ready = false; modelLoad(n).then(g => { if (g && F && herbZone() === z && names.every(k => MDL.cache[k])) worldChanged(); }); }
+  for (const n of names) if (!MDL.cache[n]) { ready = false; pieceAsk(n, () => herbZone() === z && names.every(k => MDL.cache[k])); }
   if (!ready || !names.length) return 0;
   if (!_bm) blocMatrix({ min: [0, 0, 0], max: [1, 1, 1] }, 0, 0, 0, 0, false, new THREE.Matrix4()); // makes the shared helpers
   const W = F.W, H = F.H, CH = 24, lists = {}, R = rng((F.seed ^ 0x6E4B) >>> 0), m = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
