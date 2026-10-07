@@ -181,9 +181,39 @@ p{margin:0;color:var(--dim);max-width:46ch}
 .char-del .ic{font-size:17px}
 .char.ask{padding:0 14px;gap:10px} .char.ask p{flex:1;color:var(--cream);font-weight:700}
 .char.new{appearance:none;border:0;width:100%;justify-content:center;gap:8px;min-height:56px;background:transparent;box-shadow:inset 0 0 0 2px var(--line);color:var(--cream);font:700 15px var(--ui);cursor:pointer}
-.form{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:26px;background:var(--bark-2)}
 label{font-size:12px;font-weight:700;color:var(--dim);letter-spacing:.04em;display:block;margin-bottom:5px}
 input[type=text]{appearance:none;width:100%;min-height:48px;padding:10px 16px;border-radius:999px;border:0;background:var(--bark-4);color:var(--cream);font:600 16px var(--ui);user-select:text;-webkit-user-select:text}
+/* creating a knight, in three steps (#scr-create): the picture of Damien behind, translucent panels in front, nothing to scroll in 360 x 640 */
+#scr-create{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:linear-gradient(to bottom,var(--well),var(--bark))}
+#create-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;animation:homein .6s both}
+#create-bg[hidden]{display:none}
+#scr-create::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,color-mix(in srgb,var(--well) 82%,transparent) 0,color-mix(in srgb,var(--well) 45%,transparent) 30%,color-mix(in srgb,var(--well) 60%,transparent) 100%)}
+.cre-in{position:relative;z-index:1;height:100%;max-width:520px;margin-inline:auto;padding:12px 14px calc(env(safe-area-inset-bottom) + 12px);display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.cre-head{display:flex;align-items:center;gap:10px;flex:none}
+.cre-head .n{font:700 14px var(--ui);padding:5px 12px;border-radius:999px;background:var(--amber);color:var(--ink);font-variant-numeric:tabular-nums}
+.cre-head h2{flex:1;min-width:0;font-size:26px;text-shadow:0 2px 10px rgba(0,0,0,.9)}
+.cre-dots{display:flex;gap:5px} .cre-dots i{width:8px;height:8px;border-radius:50%;background:var(--line)} .cre-dots i.on{background:var(--amber)}
+#cre-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
+.cre-panel{border-radius:var(--r);background:color-mix(in srgb,var(--bark-2) 90%,transparent);padding:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.char.cre-card{animation:none;background:color-mix(in srgb,var(--bark-3) 92%,transparent);box-shadow:inset 0 0 0 2px var(--amber),0 6px 18px rgba(0,0,0,.35);flex:none}
+.char.cre-card .char-main{cursor:default}
+.icons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.io{appearance:none;border:0;padding:3px;border-radius:50%;background:transparent;aspect-ratio:1;cursor:pointer;display:grid;place-items:center}
+.io .ico{width:100%;height:100%;border-radius:50%;background-color:var(--c);background-image:var(--img,none);background-size:cover;background-position:center}
+.io[aria-pressed=true]{box-shadow:0 0 0 2px var(--bark-2),0 0 0 4px var(--cream)}
+#cre-demo{display:block;width:100%;height:176px;border-radius:var(--r-sm);box-shadow:inset 0 0 0 2px var(--line)}
+.cre-wn{font-size:14px;color:var(--cream)}
+.gjs{display:flex;flex-direction:column;gap:5px}
+.gj{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px}
+.gj em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--dim)}
+.gj i{display:block;height:8px;border-radius:4px;background:var(--bark-4);overflow:hidden}
+.gj u{display:block;height:100%;border-radius:4px;background:var(--amber);transition:width .35s}
+#cre-tip{font-size:13px;line-height:1.35;color:var(--cream)}
+.rec{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px} .rec span{color:var(--dim);font-weight:700;font-size:13px} .rec b{display:flex;align-items:center;gap:8px;min-width:0}
+.rec .dot{width:16px;height:16px;border-radius:50%;background:var(--c);display:inline-block}
+.cre-foot{display:flex;gap:10px;flex:none;margin-top:auto}
+.cre-foot .btn{flex:1}
+.cre-back{appearance:none;border:0;border-radius:999px;min-height:50px;padding:0 22px;font:700 16px var(--ui);cursor:pointer;background:color-mix(in srgb,var(--bark-2) 90%,transparent);color:var(--cream);box-shadow:inset 0 0 0 2px var(--line)}
 .swatches{display:flex;gap:10px}
 .sw{appearance:none;width:42px;height:42px;border-radius:50%;border:0;padding:0;cursor:pointer;background:var(--c)}
 .sw[aria-pressed=true]{box-shadow:0 0 0 3px var(--bark-2),0 0 0 6px var(--cream)}
@@ -522,6 +552,10 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 .btn .ic{font-size:19px}
 .gemslot{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--r-sm);background:var(--bark-2);border:1px solid var(--line)}.gemslot>.tile{width:64px;flex:none}.gemslot .price{flex:none}
 #sh-more{position:sticky;bottom:4px;align-self:flex-end;flex:none;margin-top:-56px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--amber);color:var(--ink);border:0;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer;z-index:2}#sh-more[hidden]{display:none}#sh-more svg{width:22px;height:22px;transform:rotate(90deg);transition:transform .2s}#sh-more.up svg{transform:rotate(-90deg)}
+.adm-lvtools{display:flex;flex-direction:column;gap:8px;padding:10px 0 14px;border-bottom:1px solid var(--line)}.adm-lvtools small{color:var(--dim);font-size:12px}.adm-plan{width:100%;border-radius:var(--r-sm);background:var(--well)}.adm-lvs .chipbtn.mod{box-shadow:inset 0 0 0 2px var(--amber)}.adm-seg{flex-wrap:wrap}
+.opt-acts{display:flex;flex-direction:column;gap:8px}
+#ed{position:fixed;inset:0;pointer-events:none;z-index:30;display:flex;flex-direction:column;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}#ed[hidden]{display:none}#ed>*{pointer-events:auto}#ed .ed-top{display:flex;align-items:center;gap:8px;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px}#ed .ed-top small{display:block;color:var(--dim);font-size:11px}#ed .ed-redo svg{transform:scaleX(-1)}#ed .ed-tip{align-self:center;margin-top:6px;font-size:12px;color:var(--cream);background:var(--well);padding:5px 10px;border-radius:999px;opacity:.9}#ed .ed-fill{flex:1;pointer-events:none}#ed .ed-name{min-width:0}#ed .ed-name b,#ed .ed-name small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#ed .ed-sub{margin-top:6px;background:var(--bark-2);border-radius:var(--r-sm);padding:6px;overflow-x:auto;flex-wrap:nowrap}#ed .ed-sel{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:40vh;overflow-y:auto}#ed .ed-sel .toggle{padding:6px 10px}#ed .ed-tools{display:flex;gap:6px;overflow-x:auto;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;margin-top:8px}#ed .ed-tools .chipbtn{flex:none}#ed-giz{position:fixed;inset:0;pointer-events:none}#ed-giz .ed-ring{position:absolute;left:0;top:0;border:2px solid var(--amber);border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.35)}#ed-giz .ed-h{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--amber);border:2px solid var(--ink);pointer-events:auto;touch-action:none;cursor:grab}#ed-giz .ed-grow{background:var(--accent2)}
+#ed .ed-pal .ed-pb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;min-width:76px}#ed .ed-pb img{width:48px;height:48px;object-fit:contain}#ed .ed-pb span{font-size:11px}#ed .ed-prevbox{align-self:flex-end;width:96px;height:96px;margin-top:6px;border-radius:var(--r-sm);background:var(--bark-2);border:1px solid var(--line);overflow:hidden}#ed .ed-prevbox canvas{width:96px;height:96px}
 </style>
 <script src="three.min.js"></script>
 
@@ -594,6 +628,15 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
     </div>
     <div class="chars" id="chars"></div>
     <div id="newchar"></div>
+  </section>
+
+  <section id="scr-create" hidden>
+    <img id="create-bg" alt="" hidden>
+    <div class="cre-in">
+      <div class="cre-head"><span class="n" id="cre-n">1 / 3</span><h2 id="cre-t"></h2><span class="cre-dots" id="cre-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+      <div id="cre-body"></div>
+      <div class="cre-foot"><button class="back cre-back" id="cre-back" type="button">Retour</button><button class="btn shine" id="cre-next" type="button">Suivant</button></div>
+    </div>
   </section>
 
   <div id="veil" hidden></div>
@@ -851,6 +894,7 @@ const TUNE_FAM = [
   ['gem', 'Gemmes', 'Où l\'on gagne des gemmes et ce que coûtent leurs usages.'],
   ['rou', 'Roulette', 'Les tours de roulette de chaque jour.'],
   ['que', 'Quêtes du jour', 'Ce que rapportent les trois quêtes de chaque jour.'],
+  ['niv', 'Niveaux', 'Le tirage de chaque niveau : choisis un niveau, règle-le, regarde son plan et essaie-le.'],
 ];
 const EN_NAMES = [[0, 'du Sporule'], [1, 'du Ronceux'], [2, 'du Cracheur'], [3, 'du Follet'], [4, 'du Gardien'], [9, 'du boss']];
 const RAR_LINES = [['DROP', 'une créature ordinaire'], ['RICH', 'un gardien ou un coffre ordinaire'], ['BOSS', 'un boss ou un coffre doré'], ['SHOP', 'l\'étal']];
@@ -959,6 +1003,22 @@ const TUNE_DEF = [
   ['dailyStep', 'que', 'Hausse d\'une quête à la suivante', 'La deuxième quête rapporte cette part de plus, la troisième deux fois cette part.', .5, 0, 3, 'n'],
   ['dailyGem', 'que', 'Gemmes de la troisième quête', 'Les gemmes ajoutées à la troisième quête du jour.', 1, 0, 20, 'n'],
 ];
+// the draw of each level (20a): the same lines for each of the 30 levels, shown one level at a time by the panel (d[8].lv = its number).
+// Their defaults are the table LVL of a_core.js; a level that is not changed is drawn as before.
+const LVL_SHAPES = ['Variées', 'Grottes', 'Salles à piliers', 'Salles rondes', 'Salles jumelles', 'Longues cavernes'];
+const LVL_FOES = ['Sporules', 'Ronceux', 'Cracheurs', 'Follets'];
+for (let n = 1; n <= 30; n++) {
+  const p = 'LVL.' + (n - 1) + '.', m = { lv: n };
+  TUNE_DEF.push(
+    ['L' + n + 'size', 'niv', 'Taille du niveau', 'Multiplie le nombre de salles sur le chemin de l\'entrée à la sortie.', p + 'size', .4, 2, 'x', m],
+    ['L' + n + 'sides', 'niv', 'Salles de côté', 'Multiplie le nombre de salles à l\'écart du chemin (0 = aucune).', p + 'sides', 0, 2, 'x', m],
+    ['L' + n + 'shape', 'niv', 'Forme des salles', 'Le genre de salles que le tirage creuse ; « Variées » les mélange.', p + 'shape', 0, 5, 'choice', Object.assign({ choices: LVL_SHAPES }, m)],
+    ['L' + n + 'crowd', 'niv', 'Nombre de créatures', 'Multiplie les créatures de chaque salle.', p + 'crowd', 0, 3, 'x', m],
+    ...LVL_FOES.map((f, t) => ['L' + n + 'm' + t, 'niv', f, 'Leur part dans le mélange des créatures de ce niveau (0 = aucun).', p + 'mix.' + t, 0, 8, 'n', m]),
+    ['L' + n + 'chests', 'niv', 'Coffres', 'Multiplie les chances de coffres (salles de côté, enfouis, terriers).', p + 'chests', 0, 3, 'x', m],
+    ['L' + n + 'decor', 'niv', 'Décors au sol', 'Multiplie les décors posés dans chaque salle (0 = aucun).', p + 'decor', 0, 3, 'x', m],
+    ['L' + n + 'light', 'niv', 'Lumière', 'Plus ou moins de lumière du ciel dans ce niveau.', p + 'light', .3, 2, 'x', m]);
+}
 const TUNE_BY = {};
 for (const d of TUNE_DEF) { TUNE_BY[d[0]] = d; if (typeof d[4] === 'number') TU[d[0]] = d[4]; }
 let TUNE_OBJ = null; // the tables of the game that some lines live in, given by tuneInit once they exist
@@ -986,11 +1046,12 @@ const tuneDiff = () => { const o = {}; for (const d of TUNE_DEF) if (TU[d[0]] !=
 // save service widens its limits as much (rule 12 kept by itself). Never below 1: a setting that lowers a gain changes nothing there.
 function tuneFactors() {
   const r = k => TU[k] / (TUNE_BY[k].def || 1), most = (...ks) => Math.max(1, ...ks.map(r));
-  const crowd = most('spawnMax', 'spawnTop', 'spawnWorld', 'spawnSide') * most('d0more', 'd1more', 'd2more', 'd3more', 'd0guard', 'd1guard', 'd2guard', 'd3guard') * most('espd'); // more creatures, or faster ones: more of everything
+  const lv = k => Math.max(1, ...Array.from({ length: 30 }, (_, i) => TU['L' + (i + 1) + k] || 1)); // the largest of the 30 levels
+  const crowd = lv('crowd') * lv('size') * lv('sides') * most('spawnMax', 'spawnTop', 'spawnWorld', 'spawnSide') * most('d0more', 'd1more', 'd2more', 'd3more', 'd0guard', 'd1guard', 'd2guard', 'd3guard') * most('espd'); // more creatures, or faster ones: more of everything
   return {
-    pieces: most('en0ecl', 'en1ecl', 'en2ecl', 'en3ecl', 'en4ecl', 'en9ecl', 'd0ecl', 'd1ecl', 'd2ecl', 'd3ecl', 'chestCoins', 'chestGold', 'dailyCoins', 'dailyStep', 'chestSide', 'chestBuried', 'chestBurrow') * crowd,
-    gemmes: most('gemBoss', 'gemElite', 'gemChest', 'd0gem', 'd1gem', 'd2gem', 'd3gem', 'dailyGem', 'spinGem', 'spinsDay', 'chestSide', 'chestBuried', 'chestBurrow') * crowd,
-    objets: most('itemFoe', 'itemElite', 'itemBoss', 'itemChest', 'chestSide', 'chestBuried', 'chestBurrow', 'spinsDay', 'shopSize') * crowd,
+    pieces: most('en0ecl', 'en1ecl', 'en2ecl', 'en3ecl', 'en4ecl', 'en9ecl', 'd0ecl', 'd1ecl', 'd2ecl', 'd3ecl', 'chestCoins', 'chestGold', 'dailyCoins', 'dailyStep', 'chestSide', 'chestBuried', 'chestBurrow') * lv('chests') * crowd,
+    gemmes: most('gemBoss', 'gemElite', 'gemChest', 'd0gem', 'd1gem', 'd2gem', 'd3gem', 'dailyGem', 'spinGem', 'spinsDay', 'chestSide', 'chestBuried', 'chestBurrow') * lv('chests') * crowd,
+    objets: most('itemFoe', 'itemElite', 'itemBoss', 'itemChest', 'chestSide', 'chestBuried', 'chestBurrow', 'spinsDay', 'shopSize') * lv('chests') * crowd,
     revente: most('sell'),
     valeur: most('rar1', 'rar2', 'rar3') * (1 + Math.max(0, TU.itemSpread - TUNE_BY.itemSpread.def)),
     itemLin: TU.itemLin, lootLin: TU.lootLin,
@@ -1223,6 +1284,14 @@ const NLV = LEVELS.length;
 // the Colibri set is sold at the stall only, in its gem place (16g): nothing drops it
 const SHOP_ONLY = [[1, 8], [2, 8], [3, 8]];
 for (const L of LEVELS) L.pool = L.pool.filter(e => !SHOP_ONLY.some(x => x[0] === e[0] && x[1] === e[1]));
+/* the options of the draw of each level (20a), set in the admin panel (family Niveaux). The defaults give the draw of before:
+   size × the number of chambers on the way, sides × the side chambers, shape (0 = mixed, 1 caves, 2 pillared halls, 3 round chambers,
+   4 twin chambers, 5 long caverns), crowd × the creatures of each chamber, mix = the weights of Sporule, Ronceux, Cracheur, Follet
+   (the world's own by default; the very first level has its gentle one), chests × the chances of a chest, decor × the scenery pieces,
+   light × the light of the sky. A boss level keeps its arena: only its decor and light apply. */
+const MIX_WORLD = [[2, 2, 1, 0], [1, 1, 2, 2], [1, 1, 2, 2], [0, 2, 2, 2], [0, 1, 2, 3]], MIX_FIRST = [3, 1, 0, 0];
+const LVL = LEVELS.map((L, i) => ({ size: 1, sides: 1, shape: 0, crowd: 1, mix: (i === 0 ? MIX_FIRST : MIX_WORLD[strIdxOf(i + 1)]).slice(), chests: 1, decor: 1, light: 1 }));
+const lvlOpt = floor => LVL[clamp(floor, 1, NLV) - 1];
 const levelOf = f => LEVELS[(f - 1) % NLV];
 const RAR = [{ name: 'Commun', col: '#d9d2c0' }, { name: 'Rare', col: '#62adff' }, { name: 'Épique', col: '#cd86ff' }, { name: 'Panoplie', col: '#5fe08a' }];
 const RAR_MUL = [1, 1.1, 1.2, 1.15]; // what quality adds to the main figure of an object. Kept modest: the bonuses it carries do the rest
@@ -1243,7 +1312,7 @@ const AFF = {
   range: { roll: (l, q) => Math.round(5 + q * 7), txt: v => '+' + v + ' % de portée' },
 };
 const W_DROP = [58, 30, 7, 5], W_RICH = [34, 40, 14, 12], W_BOSS = [0, 42, 30, 28], W_SHOP = [0, 60, 28, 12];
-tuneInit({ EN, DIFFS, EXPE, RAR_MUL, W_DROP, W_RICH, W_BOSS, W_SHOP }); // the settings that live in these tables take their defaults from them (a_tune.js)
+tuneInit({ EN, DIFFS, EXPE, RAR_MUL, W_DROP, W_RICH, W_BOSS, W_SHOP, LVL }); // the settings that live in these tables take their defaults from them (a_tune.js)
 const pick = a => a[(Math.random() * a.length) | 0];
 let uidN = 0;
 // one precise object of the catalog, at a given level
@@ -1601,7 +1670,7 @@ function floorDecor(F, rooms) {
   // only where the eight tiles around are open floor: whatever stands there can always be walked around, and never plugs a passage or a burrow
   const open9 = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const i = (y + dy) * W + x + dx; if (g[i] !== 1 || F.secret.has(i)) return false; } return true; };
   for (const room of rooms) {
-    let want = room.kind === 'start' ? 1 : 1 + (R() < .6 ? 1 : 0);
+    let want = Math.round((room.kind === 'start' ? 1 : 1 + (R() < .6 ? 1 : 0)) * lvlOpt(F.floor).decor);
     for (let t = 0; t < 40 && want; t++) {
       const x = room.x0 + 1 + ((R() * (room.x1 - room.x0 - 1)) | 0), y = room.y0 + 1 + ((R() * (room.y1 - room.y0 - 1)) | 0); if (!open9(x, y)) continue;
       const px = (x + .5) * T + (R() - .5) * 8, py = (y + .5) * T + (R() - .5) * 8;
@@ -1613,10 +1682,11 @@ function floorDecor(F, rooms) {
   for (const d of F.decor) F.blocks.push({ x: d.x, y: d.y, r: d.r });
 }
 function genFloor(seed, floor) {
+  const made = typeof planFor === 'function' && planFor(seed, floor); if (made) return planToFloor(made, seed, floor); // a level made by hand in the editor (j_editeur.js)
   const R = rng((seed ^ Math.imul(floor + 7, 0x9E3779B1)) >>> 0);
   const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
-  const si = strIdxOf(floor), boss = isBossFloor(floor), big = seedBig(seed), mod = seedMod(seed);
-  const COLS = big ? 2 : 3, ROWS = big ? 9 : 4, CW = big ? 16 : 14, CH = 13;
+  const si = strIdxOf(floor), boss = isBossFloor(floor), big = seedBig(seed), mod = seedMod(seed), O = lvlOpt(floor);
+  const COLS = big ? 2 : 3, ROWS = Math.max(2, Math.round((big ? 9 : 4) * O.size)), CW = big ? 16 : 14, CH = 13; // the size of the level stretches its height
   const W = boss ? 26 : COLS * CW + 2, H = boss ? 38 : ROWS * CH + 2;
   const g = new Uint8Array(W * H), keep = new Set();
   const inb = (x, y) => x > 0 && y > 0 && x < W - 1 && y < H - 1;
@@ -1650,7 +1720,8 @@ function genFloor(seed, floor) {
   const mk = (c, r, kind) => {
     const x0 = 1 + c * CW, y0 = 1 + r * CH, cx = x0 + CW / 2 + (R() - .5) * 2, cy = y0 + CH / 2 + (R() - .5) * 1.6;
     const room = { c, r, kind, cx: Math.floor(cx), cy: Math.floor(cy), x0, y0, x1: x0 + CW - 1, y1: y0 + CH - 1 };
-    const shape = kind === 'start' ? 0 : kind === 'side' ? (R() < .6 ? 0 : 4) : ri(0, 4), rocks = [];
+    let shape = kind === 'start' ? 0 : kind === 'side' ? (R() < .6 ? 0 : 4) : ri(0, 4); const rocks = [];
+    if (O.shape && kind !== 'start') shape = O.shape - 1; // a shape chosen for this level (the dice are thrown all the same: the rest of the draw does not move)
     if (shape === 0) { const n = ri(3, 4); for (let i = 0; i < n; i++) disc(cx + (R() - .5) * mrx * 1.1, cy + (R() - .5) * mry * 1.1, 2.4 + R() * (mrx - 2.5), 2.2 + R() * (mry - 2.3)); } // cave: overlapping blobs
     else if (shape === 1) { // hall: a rounded room held up by pillars
       const rx = mrx - R(), ry = mry - R() * .8; rect(cx - rx, cy - ry + 1, rx * 2, ry * 2 - 2); rect(cx - rx + 1, cy - ry, rx * 2 - 2, ry * 2);
@@ -1667,7 +1738,7 @@ function genFloor(seed, floor) {
     const amp = (R() - .5) * 5, wob = 1 + R() * 1.5, ph = R() * TAU, wide = R() < .35 ? 1.75 : 1.2, steps = Math.ceil(len * 2);
     for (let i = 0; i <= steps; i++) { const t = i / steps, o = Math.sin(t * Math.PI) * (amp + Math.sin(t * TAU * wob + ph) * 1.2), rr = wide + (R() < .08 ? .7 : 0); const px = ax + (bx - ax) * t + nx * o, py = ay + (by - ay) * t + ny * o; disc(px, py, rr, rr); for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) keep.delete((Math.floor(py) + dy) * W + Math.floor(px) + dx); }
   };
-  const LMIN = big ? 12 : 6, LMAX = big ? 15 : 7;
+  const LMAX = Math.max(2, Math.min(COLS * ROWS, Math.round((big ? 15 : 7) * O.size))), LMIN = Math.max(2, Math.min(LMAX, Math.round((big ? 12 : 6) * O.size)));
   let c = ri(0, COLS - 1), r = 0, prev = mk(c, r, 'start'), len = 1;
   for (; ;) {
     const opts = [];
@@ -1682,7 +1753,7 @@ function genFloor(seed, floor) {
   prev.kind = 'lift';
   // side chambers: dead ends worth the detour; now and then one closes a loop
   let sides = 0;
-  for (let i = 0; i < COLS * ROWS && sides < (big ? 4 : 2); i++) {
+  for (let i = 0, top = Math.round((big ? 4 : 2) * O.sides); i < COLS * ROWS && sides < top; i++) {
     if (cell[i]) continue;
     const cc = i % COLS, rr = (i / COLS) | 0, nb = [];
     if (cc > 0 && cell[i - 1]) nb.push(cell[i - 1]); if (cc < COLS - 1 && cell[i + 1]) nb.push(cell[i + 1]);
@@ -1704,7 +1775,7 @@ function genFloor(seed, floor) {
   // crannies: a one-tile burrow dug into the rock from the edge of a chamber, with a golden chest at its end.
   // The map does not draw a burrow until you stand at its mouth (F.secret): it has to be spotted in the wall.
   const lonely = (x, y, own) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const j = (y + dy) * W + x + dx; if (g[j] === 1 && !own.has(j)) return false; } return true; };
-  for (let tries = 0, made = 0, want = (big ? 1 : 0) + (R() < TU.chestBurrow ? 1 : 0); tries < 90 && made < want; tries++) {
+  for (let tries = 0, made = 0, want = (big ? 1 : 0) + (R() < TU.chestBurrow * O.chests ? 1 : 0); tries < 90 && made < want; tries++) {
     const room = F.rooms[ri(0, F.rooms.length - 1)]; if (room.kind === 'start') continue;
     let d = [[1, 0], [-1, 0], [0, 1], [0, -1]][ri(0, 3)], x = room.cx, y = room.cy;
     while (inb(x, y) && g[y * W + x] === 1) { x += d[0]; y += d[1]; }
@@ -1720,7 +1791,7 @@ function genFloor(seed, floor) {
     for (const [px, py] of path) { g[py * W + px] = 1; F.secret.add(py * W + px); }
     const e = path[path.length - 1]; F.chests.push({ id: F.chests.length, x: (e[0] + .5) * T, y: (e[1] + .5) * T, opened: false, hidden: true, gold: true }); made++;
   }
-  const pools = [[0, 0, 1, 1, 2], [0, 1, 2, 2, 3, 3], [1, 2, 3, 3, 2, 0], [1, 1, 2, 3, 3, 2], [1, 2, 2, 3, 3, 3]], pool = floor === 1 ? [0, 0, 0, 1] : pools[si];
+  const pool = []; O.mix.forEach((w, t) => { for (let k = 0; k < Math.round(w); k++) pool.push(t); }); if (!pool.length) pool.push(0); // the creatures of this level, by weight
   const main = F.rooms.filter(q => q.kind === 'n'), side = F.rooms.filter(q => q.kind === 'side');
   if (big) { // three seals open the way out: the side chambers hold them first, then chambers spread along the way
     const pickR = side.slice(0, 2); for (const k of [.3, .6, .85, .45]) { const q = main[Math.min(main.length - 1, Math.floor(main.length * k))]; if (pickR.length < 3 && q && !pickR.includes(q)) pickR.push(q); }
@@ -1730,13 +1801,14 @@ function genFloor(seed, floor) {
     const px = (room.cx + .5) * T, py = (room.cy + .5) * T;
     if (room.kind === 'start') { F.start = { x: px, y: py }; continue; }
     if (room.kind === 'lift') F.lift = { x: px, y: py, open: false, prog: 0 };
-    if (room.kind === 'side' && R() < TU.chestSide) { const at = room.seal ? spot(room, 2.5) : [px, py]; F.chests.push({ id: F.chests.length, x: at[0], y: at[1], opened: false, hidden: false, gold: false }); }
-    else if (room.kind === 'n' && R() < TU.chestBuried) { const at = spot(room, 3); F.chests.push({ id: F.chests.length, x: at[0], y: at[1], opened: false, hidden: true, gold: false }); } // buried: it only shows when you walk close
+    if (room.kind === 'side' && R() < TU.chestSide * O.chests) { const at = room.seal ? spot(room, 2.5) : [px, py]; F.chests.push({ id: F.chests.length, x: at[0], y: at[1], opened: false, hidden: false, gold: false }); }
+    else if (room.kind === 'n' && R() < TU.chestBuried * O.chests) { const at = spot(room, 3); F.chests.push({ id: F.chests.length, x: at[0], y: at[1], opened: false, hidden: true, gold: false }); } // buried: it only shows when you walk close
     let n = Math.max(0, Math.min(TU.spawnTop, ri(Math.min(TU.spawnMin, TU.spawnMax), TU.spawnMax) + ((floor / PER_WORLD) | 0) * TU.spawnWorld + (room.kind === 'side' ? TU.spawnSide : 0)) - (big ? TU.spawnExpe : 0) + mod.more);
     const guards = room.kind === 'lift' && !big;
     if (guards && floor >= TU.guardFrom) { addEnemy(4, px + (R() < .5 ? -40 : 40), py - 30, true); n = Math.max(2, n - 2); }
     if (room.seal && floor >= 2) { addEnemy(4, px + (R() < .5 ? -36 : 36), py + 26, false); n = Math.max(2, n - 1); }
     else if (room.kind === 'n' && si >= 2 && R() < TU.guardRoom * mod.guard) { const at = spot(room, 2); addEnemy(4, at[0], at[1], false); n--; }
+    n = Math.max(0, Math.round(n * O.crowd)); // the crowd of this level, set in the admin panel (guards apart)
     for (let k = 0; k < n; k++) { const at = spot(room, 1.6); addEnemy(pool[(R() * pool.length) | 0], at[0] + (R() - .5) * 14, at[1] + (R() - .5) * 14, guards); }
   }
   floorDecor(F, F.rooms);
@@ -1758,9 +1830,6 @@ function genHub() { // the camp: a clearing with the level counter, the mode por
       { k: 'levels', x: 8.5 * T, y: 3.75 * T, col: '#3f8f7a', hat: 3, w: 2, lines: ['Approche du comptoir pour choisir un niveau.', 'Le portail, à droite, mène à l\'autre jeu.', 'Un niveau fini s\'ouvre en Difficile.'] },
       { k: 'wheel', x: 11.0 * T, y: 13.7 * T, col: '#8a4fd0', hat: 4, w: 0, lines: ['Trois tours par jour, pas un de plus !', 'Ce que tu vois sur la roue, tu peux le gagner.', 'Finis tes quêtes du jour : je t\'offre un tour.'] }] };
   const dummy = makeEnemy(0, 5, 11.6 * T, 8.6 * T, 1); dummy.awake = true; F.enemies.push(dummy); F.byId.set(0, dummy);
-  F.blocks.push({ x: dummy.x, y: dummy.y, r: 12 }, { x: F.fireX, y: F.fireY, r: 16 }, { x: F.wheel.x, y: F.wheel.y, r: 16 }, { x: F.portal.x - 20, y: F.portal.y, r: 6 }, { x: F.portal.x + 20, y: F.portal.y, r: 6 });
-  for (const n of F.npcs) F.blocks.push({ x: n.x, y: n.y, r: 10 });
-  for (const dx of [-26, 0, 26]) F.blocks.push({ x: F.counter.x + dx, y: F.counter.y, r: 15 });
   // the camp is dressed with the Racines kit: an arch of vines behind the counter, a palisade at the back of the empty corner,
   // lanterns, barrels and mossy rocks along the edges (n: model, s: longest side in tiles, r: obstacle in pixels, 0 = set by hand below)
   const dec = (n, x, y, s, r, rot, glow) => F.decor.push({ n, x: x * T, y: y * T, s, r, rot: rot || 0, glow: !!glow });
@@ -1769,15 +1838,32 @@ function genHub() { // the camp: a clearing with the level counter, the mode por
   dec('lanterne', 6.6, 4.3, .75, 7, .5, true); dec('lanterne', 10.4, 4.3, .75, 7, -.5, true); dec('lanterne', 3.5, 12.7, .75, 7, 1.2, true); dec('lanterne', 13.3, 15.5, .75, 7, 2.4, true);
   dec('tonneau', 11.4, 3.7, .8, 10, .4); dec('tonneau', 13.25, 12.1, .85, 11, 1.1); dec('tonneau', 13.45, 11.2, .72, 9, 2.6);
   dec('rocher', 13.2, 4.3, .95, 13, .8); dec('rocher', 3.5, 14.4, 1, 14, 2.2); dec('rocher', 3.7, 16.2, .75, 10, 4.1);
-  for (const d of F.decor) if (d.r) F.blocks.push({ x: d.x, y: d.y, r: d.r });
-  for (let x = 3.45; x < 6.75; x += .4) F.blocks.push({ x: x * T, y: 6.12 * T, r: 6 }); // the palisade
-  for (const dx of [-.78, .78]) F.blocks.push({ x: (8.5 + dx) * T, y: 3.25 * T, r: 7 }); // the feet of the arch
+  hubBlocks(F);
   F.critters.push({ t: 'hedge', x: 4.8 * T, y: 7.2 * T, tx: 4.8 * T, ty: 7.2 * T, w: 1, spd: 22, zone: [3.6, 6.4, 7.2, 10.6], a: 0 },
     { t: 'snail', x: 7.5 * T, y: 15.6 * T, tx: 7.5 * T, ty: 15.6 * T, w: 2, spd: 5, zone: [4, 14.6, 9.6, 16.4], a: 0 },
     { t: 'bird', x: 7.2 * T, y: 12.6 * T, tx: 7.2 * T, ty: 12.6 * T, w: 1, spd: 30, zone: [5, 11.6, 10.4, 14.6], a: 0 }, { t: 'bird', x: 9.8 * T, y: 12.2 * T, tx: 9.8 * T, ty: 12.2 * T, w: 2, spd: 30, zone: [5, 11.6, 10.4, 14.6], a: 0 },
     { t: 'bird', x: 10.2 * T, y: 7.4 * T, tx: 10.2 * T, ty: 7.4 * T, w: 3, spd: 30, zone: [8.6, 6.8, 12.6, 10.4], a: 0 });
+  let cp = null; try { cp = PLANS.camp; } catch (e) { } // the camp made over in the level editor (j_editeur.js), once that file is read
+  if (cp) campApply(F, cp);
   return F;
 }
+// what stops feet in the camp, worked out from where everything stands (the level editor moves them)
+function hubBlocks(F) {
+  const d0 = F.enemies[0]; F.blocks = [{ x: d0.x, y: d0.y, r: 12 }, { x: F.fireX, y: F.fireY, r: 16 }, { x: F.wheel.x, y: F.wheel.y, r: 16 }, { x: F.portal.x - 20, y: F.portal.y, r: 6 }, { x: F.portal.x + 20, y: F.portal.y, r: 6 }];
+  for (const n of F.npcs) F.blocks.push({ x: n.x, y: n.y, r: 10 });
+  for (const dx of [-26, 0, 26]) F.blocks.push({ x: F.counter.x + dx, y: F.counter.y, r: 15 });
+  for (const d of F.decor) {
+    if (d.r) F.blocks.push({ x: d.x, y: d.y, r: d.r });
+    else if (d.n === 'barriere') for (const k of [-.4, 0, .4]) F.blocks.push({ x: d.x + Math.cos(d.rot) * k * T, y: d.y - Math.sin(d.rot) * k * T, r: 6 }); // a length of palisade
+    else if (d.n === 'arche') for (const k of [-.78, .78]) F.blocks.push({ x: d.x + Math.cos(d.rot) * k * T, y: d.y - Math.sin(d.rot) * k * T, r: 7 }); // the feet of the arch
+  }
+}
+// the places where you walk up to a menu follow the counter and the wheel
+function hubStations(F) {
+  const st = (k, label, x, y, ox, oy) => ({ k, label, x, y, ox, oy });
+  F.stations = [st('levels', 'Niveaux', F.counter.x, F.counter.y + 1.5 * T, F.counter.x, F.counter.y - .2 * T), st('wheel', 'Roulette', F.wheel.x - 1.1 * T, F.wheel.y + 1.5 * T, F.wheel.x - .2 * T, F.wheel.y - .2 * T)];
+}
+
 function makeEnemy(id, type, x, y, floor, k) {
   const d = EN[type], hp = Math.round(d.hp * hpMul(floor) * (k || 1));
   return { id, type, x, y, tx: x, ty: y, r: d.r, hpMax: hp, hp, awake: false, dead: false, guard: false,
@@ -2446,6 +2532,7 @@ function update(dt) {
     if (performance.now() - teamT > 500) { teamT = performance.now(); if (sheetKind === 'team' && teamSig() !== lastTeamSig) renderSheet(); }
     sendPresence(); if (saveDirty && G.frame % 300 === 0) persistLocal(); return;
   }
+  if (G.mode === 'edit') { edStep(dt); return; } // the level editor (j_editeur.js)
   if (G.mode !== 'play') { sendPresence(); return; }
   if (G.paused && !Net.room) return;
   if (G.stop > 0) { G.stop -= dt; if (!Net.room) dt *= .12; }
@@ -2719,7 +2806,7 @@ function swing2D(x, y, a, t, w) {
 function render() {
   camStep(); if (G.mode === 'play') miniStep();
   if (USE3D) { render3D(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); } else render2D();
-  drawOverlay(); popStep();
+  drawOverlay(); popStep(); if (G.mode === 'edit') edFrame();
 }
 
 /* ================= HUD ================= */
@@ -2874,6 +2961,7 @@ function withOutline(mesh, k = 1.07) {
 }
 
 /* ---------- the level: floor, walls, growth ---------- */
+const WALL_H = [0, .34, 1.3, 2.2, 3.2]; // the heights the level editor offers: (drawn), low, normal, high, very high
 function buildWorld() {
   const shared = new Set([M.toon, M.glow, M.eye, M.outline, ...M.floor, ...M.wall, ...M.top]);
   for (const o of [...worldGroup.children]) { worldGroup.remove(o); o.traverse(c => { if (c.isSprite) c.material.dispose(); else if (c.isMesh) { c.geometry.dispose(); if (!shared.has(c.material)) c.material.dispose(); } }); }
@@ -2887,9 +2975,13 @@ function buildWorld() {
     if (isF(x, y)) continue;
     let near = false; for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) if (isF(x + dx, y + dy)) { near = true; break; }
     if (near) hg[y * W + x] = isF(x, y - 1) ? .34 : 1.3 + R() * .75; // walls in front of the camera stay low, so they never hide the room
+    const wh = F.wh && F.wh[y * W + x]; if (near && wh) hg[y * W + x] = WALL_H[wh]; // a height chosen in the level editor
   }
   const hAt = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : hg[y * W + x];
-  const fb = new GB(), wb = new GB(), tb = new GB(), pb = new GB(), gb = new GB(), glows = [];
+  // one builder of floor, wall sides and wall tops per zone: the level editor can paint any tile with the textures of another zone (F.surf)
+  const FB = [], WB = [], TB = [], zoneAt = (x, y) => { const s = F.surf && F.surf[y * W + x]; return s != null && s < 5 ? s : si; };
+  const pick = (A, x, y) => { const z = zoneAt(x, y); return A[z] || (A[z] = new GB()); };
+  const pb = new GB(), gb = new GB(), glows = [];
   const grey = k => [k, k, k];
   const ao = (gx, gy) => { let n = 0; if (!isF(gx - 1, gy - 1)) n++; if (!isF(gx, gy - 1)) n++; if (!isF(gx - 1, gy)) n++; if (!isF(gx, gy)) n++; return 1 - n * .2; };
   // the floor's shade: darker in the corners against the walls, and a little lighter or darker from one tile corner to the next.
@@ -2899,8 +2991,9 @@ function buildWorld() {
   // texture coordinates come from the place in the world (half a unit a tile, v growing up the screen): seamless textures stay seamless
   const flat = (b, x, y, hh, ca, cb, cc, cd) => b.quad([x, hh, y + 1], [x + 1, hh, y + 1], [x + 1, hh, y], [x, hh, y], [0, 1, 0], ca, cb, cc, cd, x / 2, -(y + 1) / 2, (x + 1) / 2, -y / 2);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (isF(x, y)) { flat(fb, x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
+    if (isF(x, y)) { flat(pick(FB, x, y), x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
     const hh = hg[y * W + x]; if (!hh) continue;
+    const wb = pick(WB, x, y), tb = pick(TB, x, y);
     const low = hh < 1, top = grey((low ? .8 : .62) + R() * .3);
     flat(tb, x, y, hh, top, top, top, top);
     const side = (nh, a, b, n) => { // a, b: the two bottom corners (x, z), counter-clockwise seen from outside
@@ -2921,7 +3014,7 @@ function buildWorld() {
   }
   for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (isF(x, y) && !isF(x, y - 1) && R() < .16) decoSmall(pb, kd, x + .15 + R() * .7, 0, y + .14 + R() * .12, R);
   const addW = (b, m, rs) => { if (b.empty) return; const o = new THREE.Mesh(b.build(), m); o.castShadow = rs !== 2; o.receiveShadow = rs > 0; o.matrixAutoUpdate = false; worldGroup.add(o); };
-  zoneMats(); zoneTexWant(si); addW(fb, M.floor[si], 2); addW(wb, M.wall[si], 1); addW(tb, M.top[si], 1); addW(pb, M.toon, 1); if (!gb.empty) { const o = new THREE.Mesh(gb.build(), M.glow); worldGroup.add(o); }
+  zoneMats(); for (let z = 0; z < 5; z++) if (FB[z] || WB[z] || TB[z]) { zoneTexWant(z); if (FB[z]) addW(FB[z], M.floor[z], 2); if (WB[z]) addW(WB[z], M.wall[z], 1); if (TB[z]) addW(TB[z], M.top[z], 1); } addW(pb, M.toon, 1); if (!gb.empty) { const o = new THREE.Mesh(gb.build(), M.glow); worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
   buildLift(); for (const c of F.chests) buildChest(c); if (F.seals) for (const q of F.seals) buildSeal(q);
   if (F.hub) buildCamp(); else buildShafts(R);
@@ -3329,7 +3422,7 @@ function render3D() {
   const S = F.str, sh = G.shake * U * .5;
   const fx = cam.x * U + (Math.random() - .5) * sh, fz = cam.y * U + (Math.random() - .5) * sh;
   // camera: fixed tilt, follows the player; the hub frames the character near the top, under the title
-  const hero = G.mode === 'title', vh0 = viewHalf(), wide = clamp(view.w / 2 / TILE_PX, HALF_MIN, HALF_MAX) / HALF_MIN; halfW += ((hero ? 3.0 * wide : P.dance ? 2.5 * wide : vh0) - halfW) * (P.dance ? .07 : .12);
+  const hero = G.mode === 'title', vh0 = viewHalf(), wide = clamp(view.w / 2 / TILE_PX, HALF_MIN, HALF_MAX) / HALF_MIN; halfW += ((G.mode === 'edit' ? ED.half : hero ? 3.0 * wide : P.dance ? 2.5 * wide : vh0) - halfW) * (P.dance ? .07 : .12);
   cam3.aspect = view.w / view.h; cam3.fov = 2 * Math.atan(halfW / CAM_D / cam3.aspect) * 180 / Math.PI;
   cam3.position.set(fx, Math.sin(CAM_PITCH) * CAM_D, fz + Math.cos(CAM_PITCH) * CAM_D); cam3.lookAt(fx, 0, fz);
   cam3.setViewOffset(view.w, view.h, 0, hero ? view.h / 2 - 118 : view.h * .04, view.w, view.h);
@@ -3337,7 +3430,7 @@ function render3D() {
   lamp.position.set(px + Math.cos(P.face) * .3, 1.05, pz + Math.sin(P.face) * .3);
   lamp.color.set(F.hub && ME.game ? '#b3a2ff' : lanCol(ST.lan)); // the expedition camp bathes in violet
   lamp.intensity = P.down ? .5 : 1.35 + Math.sin(t * 9) * .05 + Math.sin(t * 23) * .03 + Math.max(0, P.lanT) * 5;
-  scene.fog.far = (F.hub ? 15 : 10.2) + Math.max(0, P.lanT) * 9; scene.fog.near = (F.hub ? 7.5 : 4.4) + Math.max(0, P.lanT) * 5; hemi.intensity = F.hub ? .95 : .62;
+  scene.fog.far = G.mode === 'edit' ? 60 : (F.hub ? 15 : 10.2) + Math.max(0, P.lanT) * 9; scene.fog.near = G.mode === 'edit' ? 40 : (F.hub ? 7.5 : 4.4) + Math.max(0, P.lanT) * 5; hemi.intensity = F.hub ? .95 : .62 * lvlOpt(F.floor).light;
   if (F.fire) { F.fire.material.opacity = .62 + Math.sin(t * 11) * .12 + Math.sin(t * 27) * .06; if (G.frame % 4 === 0) mote(F.fireX + (Math.random() - .5) * 10, F.fireY + (Math.random() - .5) * 8, 14, ME.game ? (Math.random() < .5 ? '#9fb0ff' : '#b79cff') : Math.random() < .5 ? '#ffb24a' : '#ff7a3a', 2.4, .9, 40 + Math.random() * 30); }
   if (F.rings) for (const r of F.rings) { const k = 1 + Math.sin(t * 3 + r.position.x) * .06; r.scale.set(k, 1, k); r.visible = !hero; }
   if (VFX) { VFX.setViewport(R3.domElement.height, cam3.fov); VFX.update(dt); }
@@ -3347,6 +3440,7 @@ function render3D() {
   const mk = MDL.hero ? '|m' : '', key = CLOAKS[ME.col] + '|' + ST.kind + '|' + ST.lan + mk;
   if (!PM || PM.key !== key) { freeModel(PM); PM = makeGleaner(CLOAKS[ME.col], KNIGHT, ST.kind, ST.lan); }
   poseGleaner(PM, P.x, P.y, P.face, P.walk, P.moving, P.down, P.swingT, ST.kind, P.dashT > 0, P.inv > 0 && !P.down && G.mode === 'play' && ((t * 14) | 0) % 2 === 1, P.hurtT, P);
+  PM.root.visible = G.mode !== 'edit'; // in the editor the camera looks where the knight would stand: he is not there
   reachRing(hero);
   // allies
   for (const a of allies) {
@@ -3765,7 +3859,7 @@ function propsPlan(spots) {
     const d = list[out.length % list.length];
     out.push({ name: zone + d[0], x: x + .5, y: hh, z: y + .5, s: d[1] * (.9 + R() * .2), rot: (R() - .5) * .9, m: null });
   }
-  for (const d of F.decor) out.push({ name: zone + d.n, kind: d.n, x: d.x * U, y: 0, z: d.y * U, s: d.s, rot: d.rot, m: null, floor: true, glow: d.glow });
+  for (const d of F.decor) out.push({ name: (d.z == null ? zone : 'd_' + ZONES[d.z] + '_') + d.n, kind: d.n, x: d.x * U, y: 0, z: d.y * U, s: d.s, rot: d.rot, m: null, floor: true, glow: d.glow });
   return out;
 }
 function propsClear() { // the shapes of the models are shared and kept: only what was made for this level goes
@@ -3811,13 +3905,16 @@ function zoneTexWant(si) {
   const Z = ZT[si] = { ok: false };
   Promise.all(parts.map(s => picRead(cfg, 't_' + z + '_' + s).then(im => {
     const t = new THREE.Texture(im); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(4, R3.capabilities.getMaxAnisotropy()); t.needsUpdate = true; Z[s] = t;
-  }))).then(() => { Z.ok = true; if (F && F.si === si) zoneMats(); }, e => { MDL.lost++; MDL.why = 't_' + z + ' — ' + whyOf(e); });
+  }))).then(() => { Z.ok = true; if (F) zoneMats(); }, e => { MDL.lost++; MDL.why = 't_' + z + ' — ' + whyOf(e); });
 }
 // the cubes of the world being played: Damien's textures under the tint of the world (S.tex) when they are there, the game's own meanwhile
+// (each of the five zones: a level made in the editor can wear the textures of several)
 function zoneMats() {
-  const si = F.si, S = F.str, Z = ZT[si], on = !!(Z && Z.ok);
-  const fit = (m, tex, col) => { const map = on ? tex : m.userData.own; if (m.map !== map) { m.map = map; m.needsUpdate = true; } m.color.set(on ? S.tex : col); };
-  fit(M.floor[si], on && Z.sol, S.floorA); fit(M.wall[si], on && Z.mur, S.wallFace); fit(M.top[si], on && Z.dessus, S.cap);
+  for (let si = 0; si < 5; si++) {
+    const S = si === F.si ? F.str : STRATA[si], Z = ZT[si], on = !!(Z && Z.ok);
+    const fit = (m, tex, col) => { const map = on ? tex : m.userData.own; if (m.map !== map) { m.map = map; m.needsUpdate = true; } m.color.set(on ? S.tex : col); };
+    fit(M.floor[si], on && Z.sol, S.floorA); fit(M.wall[si], on && Z.mur, S.wallFace); fit(M.top[si], on && Z.dessus, S.cap);
+  }
 }
 // the illustration of a world as a CSS background once it has arrived; null meanwhile (it is asked the first time), and on a page without models.
 // What already shows a banner of that world (data-art) gets it as soon as it is there.
@@ -3837,10 +3934,17 @@ function homeArt() {
   const cfg = window.ecorceModeles; if (homeAsked || !cfg || (MDL.list && !('f_accueil' in MDL.list))) return; homeAsked = true;
   picRead(cfg, 'f_accueil').then(im => { const el = $('home-bg'); el.src = im.src; el.hidden = false; }, () => { });
 }
+// the picture behind the three steps of the creation of a knight (TinyKnight_UI_Kit/fonds, f_creation): asked like the home screen's
+let createAsked = false;
+function createArt() {
+  const cfg = window.ecorceModeles; if (createAsked || !cfg || (MDL.list && !('f_creation' in MDL.list))) return; createAsked = true;
+  picRead(cfg, 'f_creation').then(im => { const el = $('create-bg'); el.src = im.src; el.hidden = false; }, () => { });
+}
 // the icon of a knight (k_<theme>.png, 128 px): as a CSS image once it has arrived, null meanwhile (the round of the cloak shows instead).
 // What already shows it (data-ico) gets it as soon as it is there.
 const ICO_ART = {};
 function iconArt(n) {
+  if (!ICONS.includes(n)) return null; // only Damien's nine icons exist as files: anything else keeps the cloak colour
   const cfg = window.ecorceModeles; if (!cfg) return null;
   let a = ICO_ART[n];
   if (!a) {
@@ -4402,6 +4506,7 @@ function creaCard() {
 const creaBtn = (icn, label, fn) => h('button', { class: 'btn line', type: 'button', onclick: fn }, ic(icn), label);
 function creaBody(kids, foot) {
   const playing = G.mode === 'play' && run && !F.hub;
+  if (ED.floor && !ED.on) kids.push(h('button', { class: 'btn wide', type: 'button', onclick: edBack }, ic('forge'), 'Retour à l\'éditeur · niveau ' + ED.floor));
   kids.push(h('p', { style: 'font-size:13px', text: 'Rien de ce qui se passe ici n\'est enregistré ni envoyé. En quittant ce mode, le jeu se recharge et reprend ta vraie partie là où elle était.' }));
   if (playing) kids.push(h('div', { class: 'eyebrow', text: 'Dans ce niveau' }), h('div', { class: 'crea-grid' },
     creaBtn('c_kills', 'Vaincre toutes les créatures', creaKillAll), creaBtn('boss', 'Une créature de chaque sorte', creaZoo), creaBtn('coffre', 'Révéler les coffres', creaChests),
@@ -4430,7 +4535,8 @@ function creaOpen() { if (F.seals) F.sealMask = (1 << F.seals.length) - 1; else 
 function creaGoExit() { const L = F.lift; if (!L) return; P.x = L.x; P.y = L.y + 46; P.target = null; cam.init = false; closeSheet(); }
 // one creature of each kind around the knight, to see them all move (they wear the models of the world being played)
 function creaZoo() {
-  [0, 1, 2, 3, 4].forEach((type, i) => { const a = i / 5 * TAU - Math.PI / 2; for (const r of [80, 60, 40]) { const x = P.x + Math.cos(a) * r, y = P.y + Math.sin(a) * r; if (!hitsWall(x, y, 12)) { summon(type, x, y); break; } } });
+  // each kind takes the first free place around the knight, turning further round when a wall is in the way: none is left out
+  [0, 1, 2, 3, 4].forEach((type, i) => { find: for (let k = 0; k < 20; k++) { const a = (i / 5 + k * .05) * TAU - Math.PI / 2; for (const r of [80, 60, 40, 100, 30]) { const x = P.x + Math.cos(a) * r, y = P.y + Math.sin(a) * r; if (!hitsWall(x, y, 12)) { summon(type, x, y); break find; } } } });
   closeSheet();
 }
 function creaWeapons() {
@@ -4446,7 +4552,7 @@ function creaWeapons() {
    never in localStorage. Changes are made through tuneSet (a_tune.js): they apply at once, on this device only, and a local
    trial (tk-reglages-essai) remembers them until they are published (19d).
    Nothing here touches the save (save, ME, saveGame, persistLocal): the settings are a device matter, like CREA. */
-const ADM = { shown: false, mdp: '', busy: false, msg: '', q: '', open: {}, ask: false, local: false, rows: [], fams: [] };
+const ADM = { shown: false, mdp: '', busy: false, msg: '', q: '', open: {}, ask: false, local: false, rows: [], fams: [], lv: 1, seed: 0 };
 const ADM_TRIAL = 'tk-reglages-essai';
 const admKey = (f) => { try { return f(); } catch (e) { return null; } };
 function admRead(k, store) { return admKey(() => (store === 's' ? sessionStorage : localStorage).getItem(k)); }
@@ -4493,7 +4599,7 @@ async function admEnter(mdp) {
 function admOut() { ADM.mdp = ''; admKey(() => sessionStorage.removeItem('tk-admin-mdp')); ADM.msg = ''; renderSheet(); }
 
 // ---- units: the stored value is the one of the code; only the display and the typing convert
-const ADM_UNIT = { pct: { k: 100, suf: ' %' }, cs: { k: 1 / 32, suf: ' cases/s' }, c: { k: 1 / 32, suf: ' cases' }, s: { k: 1, suf: ' s' }, x: { k: 1, pre: '× ' }, n: { k: 1 } };
+const ADM_UNIT = { pct: { k: 100, suf: ' %' }, cs: { k: 1 / 32, suf: ' cases/s' }, c: { k: 1 / 32, suf: ' cases' }, s: { k: 1, suf: ' s' }, x: { k: 1, pre: '× ' }, n: { k: 1 }, choice: { k: 1 } };
 const admShow = (d, v) => v * ADM_UNIT[d[7]].k;
 const admStore = (d, v) => v / ADM_UNIT[d[7]].k;
 const admNice = (x) => { const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return p * (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10); };
@@ -4507,11 +4613,23 @@ function admFmt(d, v) {
   const x = admShow(d, v), dec = Math.max(2, admDec(admStep(d)));
   return String(parseFloat(x.toFixed(Math.min(dec, 4)))).replace('.', ',');
 }
-const admFull = (d, v) => { const u = ADM_UNIT[d[7]]; return (u.pre || '') + admFmt(d, v) + (u.suf || ''); };
+const admFull = (d, v) => { if (d[7] === 'choice') return d[8].choices[v] || ''; const u = ADM_UNIT[d[7]]; return (u.pre || '') + admFmt(d, v) + (u.suf || ''); };
 const admFold = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 // ---- one setting
+// a setting with named choices (the shape of the chambers): a row of buttons instead of a slider
+function admChoice(d) {
+  const def = h('button', { class: 'btn small line adm-def', type: 'button' }), seg = h('div', { class: 'seg adm-seg' });
+  const btns = d[8].choices.map((c, i) => h('button', { class: 'chipbtn', type: 'button', text: c, onclick: () => { tuneSet({ [d[0]]: i }); admSaveTrial(); R.sync(); admPlan(); } }));
+  seg.append(...btns);
+  const row = h('div', { class: 'adm-row' }, h('b', { text: d[2] }), h('small', { text: d[3] }), seg, def);
+  const R = { d, row, name: admFold(d[2]), fam: d[1] };
+  R.sync = () => { const v = TU[d[0]]; btns.forEach((b, i) => b.setAttribute('aria-pressed', String(i === v))); const mod = v !== d.def; def.hidden = !mod; row.classList.toggle('mod', mod); def.textContent = 'Défaut (' + admFull(d, d.def) + ')'; admCount(d[1]); };
+  def.addEventListener('click', () => { tuneSet({ [d[0]]: d.def }); admSaveTrial(); R.sync(); admPlan(); });
+  R.sync(); ADM.rows.push(R); return row;
+}
 function admRow(d) {
+  if (d[7] === 'choice') return admChoice(d);
   const u = ADM_UNIT[d[7]], step = admStep(d), dec = admDec(step);
   const lo = admShow(d, d[5]), hi = admShow(d, d[6]);
   const range = h('input', { type: 'range', class: 'adm-range', min: String(lo), max: String(hi), step: String(step), 'aria-label': d[2] });
@@ -4529,17 +4647,17 @@ function admRow(d) {
     admCount(d[1]);
   };
   const put = (shown) => { // shown: the number as displayed ; stored back in the unit of the code
-    if (!isFinite(shown)) return; tuneSet({ [d[0]]: admStore(d, shown) }); admSaveTrial();
+    if (!isFinite(shown)) return; tuneSet({ [d[0]]: admStore(d, shown) }); admSaveTrial(); if (d[1] === 'niv') admPlan();
   };
   range.addEventListener('input', () => { put(parseFloat(parseFloat(range.value).toFixed(dec))); R.sync(true); num.value = admFmt(d, TU[d[0]]); });
   num.addEventListener('change', () => { const t = parseFloat(num.value.replace(',', '.').replace(/[^0-9.\-]/g, '')); if (isFinite(t)) put(t); R.sync(); num.value = admFmt(d, TU[d[0]]); });
   num.addEventListener('keydown', (e) => { if (e.key === 'Enter') num.blur(); });
-  def.addEventListener('click', () => { tuneSet({ [d[0]]: d.def }); admSaveTrial(); R.sync(); });
+  def.addEventListener('click', () => { tuneSet({ [d[0]]: d.def }); admSaveTrial(); R.sync(); if (d[1] === 'niv') admPlan(); });
   R.sync(); ADM.rows.push(R); return row;
 }
 function admCount(f) {
   const F = ADM.fams.find(x => x.id === f); if (!F) return;
-  const n = ADM.rows.filter(r => r.fam === f && TU[r.d[0]] !== r.d.def).length;
+  const n = TUNE_DEF.filter(d => d[1] === f && TU[d[0]] !== d.def).length; // all the lines of the family, shown or not (the levels show one at a time)
   F.badge.textContent = n ? n + (n > 1 ? ' modifiés' : ' modifié') : ''; F.badge.hidden = !n;
 }
 // the search: hides what does not match, never rebuilds (the finger would lose the cursor, the keyboard its focus)
@@ -4553,6 +4671,47 @@ function admFilter() {
   }
 }
 
+// ---- the draw of each level (20a): pick a level, see its plan drawn with the settings in force, draw another one, try it
+const admLvKeys = n => TUNE_DEF.filter(d => d[8] && d[8].lv === n);
+function admLevelTools() {
+  if (!ADM.seed) ADM.seed = newSeed(0, false);
+  const L = LEVELS[ADM.lv - 1];
+  const lvs = h('div', { class: 'seg slide adm-lvs' }, ...LEVELS.map((x, i) => { const n = i + 1, mod = admLvKeys(n).some(d => TU[d[0]] !== d.def);
+    return h('button', { class: 'chipbtn' + (mod ? ' mod' : ''), type: 'button', 'aria-pressed': String(ADM.lv === n), 'aria-label': 'Niveau ' + n + ' · ' + x.name, title: x.name, onclick: () => { ADM.lv = n; renderSheet(); } }, x.boss ? ic('etoile') : String(n)); }));
+  const plan = h('canvas', { id: 'adm-plan', class: 'adm-plan', width: 1, height: 1, 'aria-label': 'Plan du niveau ' + ADM.lv });
+  setTimeout(admPlan, 0);
+  return h('div', { class: 'adm-lvtools' }, h('b', { text: 'Niveau ' + ADM.lv + ' · ' + L.name }), h('small', { text: PLANS[ADM.lv] ? 'Ce niveau est fait à la main sur cet appareil : il remplace le tirage ici (les réglages de tirage ne s\'appliquent plus à son plan).' : L.boss ? 'Niveau de boss : son arène ne se tire pas ; seuls ses décors et sa lumière se règlent.' : 'Le plan ci-dessous suit les réglages en vigueur. Un niveau non modifié se tire comme avant.' }),
+    lvs, plan, h('small', { id: 'adm-plan-n' }),
+    h('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px' },
+      h('button', { class: 'btn small line', type: 'button', onclick: () => { ADM.seed = newSeed(0, false); admPlan(); } }, ic('recommencer'), 'Autre tirage'),
+      h('button', { class: 'btn small', type: 'button', disabled: !!Net.room, onclick: admTry }, ic('aller'), 'Essayer ce plan'),
+      h('button', { class: 'btn small line', type: 'button', disabled: !!Net.room, onclick: () => edStart('camp') }, ic('forge'), 'Modifier le camp'),
+      PLANS.camp ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => { delete PLANS.camp; plansKeep(); renderSheet(); } }, ic('recommencer'), 'Camp d\'origine') : null,
+      L.boss ? null : h('button', { class: 'btn small', type: 'button', disabled: !!Net.room, onclick: () => edStart(ADM.lv, ADM.seed) }, ic('forge'), PLANS[ADM.lv] ? 'Modifier le niveau fait à la main' : 'Modifier ce plan à la main'),
+      PLANS[ADM.lv] ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => { delete PLANS[ADM.lv]; plansKeep(); renderSheet(); } }, ic('recommencer'), 'Revenir au tirage') : null,
+      h('button', { class: 'btn small ghost', type: 'button', onclick: () => { const m = {}; for (const d of admLvKeys(ADM.lv)) m[d[0]] = d.def; tuneSet(m); admSaveTrial(); renderSheet(); } }, 'Niveau par défaut')),
+    h('small', { text: 'Essayer se fait en mode créatif : rien n\'est enregistré, et le quitter rend ta vraie partie.' }));
+}
+// the plan of the level for the seed in hand: floor, start, way out, creatures, chests, scenery
+function admPlan() {
+  const cv = $('adm-plan'); if (!cv) return;
+  const F0 = genFloor(ADM.seed, ADM.lv), css = getComputedStyle(document.documentElement), col = k => css.getPropertyValue(k).trim() || '#888';
+  const s = Math.max(2, Math.floor((cv.clientWidth || 300) / F0.W)); cv.width = F0.W * s; cv.height = F0.H * s;
+  const c = cv.getContext('2d'); c.fillStyle = col('--well'); c.fillRect(0, 0, cv.width, cv.height);
+  c.fillStyle = col('--bark-4'); for (let y = 0; y < F0.H; y++) for (let x = 0; x < F0.W; x++) if (F0.g[y * F0.W + x] === 1) c.fillRect(x * s, y * s, s, s);
+  const dot = (p, r, k) => { c.fillStyle = col(k); c.beginPath(); c.arc(p.x / T * s, p.y / T * s, r * s, 0, TAU); c.fill(); };
+  for (const d of F0.decor) dot(d, .45, '--line');
+  for (const ch of F0.chests) dot(ch, .7, ch.gold ? '--coin' : '--amber');
+  for (const e of F0.enemies) dot(e, e.type === 4 || e.type === 9 ? .8 : .45, '--danger');
+  dot(F0.start, .9, '--accent2'); if (F0.lift) dot(F0.lift, .9, '--cream');
+  const n = $('adm-plan-n'); if (n) n.textContent = F0.rooms.length + ' salles · ' + F0.enemies.length + ' créatures · ' + F0.chests.length + (F0.chests.length > 1 ? ' coffres' : ' coffre') + ' · ' + F0.decor.length + ' décors — vert : entrée, clair : sortie, rouge : créatures, doré : coffres';
+}
+function admTry() {
+  if (Net.room) return;
+  if (!CREA.on) { saveGame(true); CREA.on = true; } // from here nothing is saved: the real game comes back when the creative mode is left
+  for (const k of ['unlocked', 'un1', 'un2', 'unx']) ME[k] = Math.max(ME[k], ADM.lv);
+  closeSheet(); Net.ignoreSeed = null; startRun(ADM.seed, ADM.lv);
+}
 // ---- the panel
 function admBody(kids, foot) {
   ADM.rows = []; ADM.fams = [];
@@ -4575,7 +4734,8 @@ function admBody(kids, foot) {
     const badge = h('span', { class: 'adm-badge', hidden: true }), list = h('div', { class: 'adm-list' }), sec = h('section', { class: 'adm-fam' });
     const head = h('button', { class: 'adm-head', type: 'button', 'aria-expanded': 'false' }, h('span', { class: 'grow' }, h('b', { text: name }), h('small', { text: phrase })), badge, h('i', { class: 'adm-chev', 'aria-hidden': 'true' }));
     head.addEventListener('click', () => { ADM.open[id] = !ADM.open[id]; admFilter(); });
-    for (const d of TUNE_DEF) if (d[1] === id) list.append(admRow(d));
+    if (id === 'niv') list.append(admLevelTools());
+    for (const d of TUNE_DEF) if (d[1] === id && (!d[8] || !d[8].lv || d[8].lv === ADM.lv)) list.append(admRow(d));
     sec.append(head, list); kids.push(sec); ADM.fams.push({ id, sec, head, list, badge });
   }
   for (const F of ADM.fams) admCount(F.id);
@@ -4629,7 +4789,7 @@ async function admPublish() {
 
 /* ================= icons ================= */
 // icons come from open libraries (see tools/icones.mjs); the game keeps its own names for them
-function ic(name) { const s = document.createElement('span'), d = ICON_LIB[name] || ICON_LIB.info; s.className = 'ic'; s.innerHTML = '<svg viewBox="0 0 ' + d[0] + ' ' + d[0] + '" aria-hidden="true">' + d[1] + '</svg>'; return s; }
+function ic(name) { const s = document.createElement('span'), d = ICON_LIB[name] || ICON_LIB.etoile; s.className = 'ic'; s.innerHTML = '<svg viewBox="0 0 ' + d[0] + ' ' + d[0] + '" aria-hidden="true">' + d[1] + '</svg>'; return s; }
 
 /* ================= a picture for every object: the weapons from their models, the rest drawn from its look ================= */
 const PIC = {};
@@ -4700,7 +4860,7 @@ let multi = null; // ids of the objects ticked for a grouped sale, or null
 let selWorld = 0;
 // the level list opens on the furthest level the character can enter, in the mode and difficulty last chosen
 function fixSel() { if (!ME.game && save.diff > 0 && !canPlay(1, save.diff, false)) save.diff = 0; const big = ME.game === 1, diff = big ? 0 : save.diff; let n = Math.min(NLV, ME[big ? 'unx' : TRACKS[diff]]); while (n > 1 && !canPlay(n, diff, big)) n--; selLevel = n; selWorld = ((n - 1) / PER_WORLD) | 0; }
-let sheetKind = null, sel = null, selLevel = 0, creating = false, draft = { name: '', col: 1, kind: 0 }, askDel = -1;
+let sheetKind = null, sel = null, selLevel = 0, creating = false, draft = { name: '', col: 1, ico: 'mycelium', kind: 0 }, askDel = -1;
 const sheetOpen = () => sheetKind !== null;
 function bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
 function setNum(id, v) { const el = $(id), t = String(v); if (el.textContent !== t) { el.textContent = t; bump(el.parentElement); } }
@@ -4710,7 +4870,7 @@ function uiShake(n) { const g = $('game'); g.classList.remove('shk1', 'shk2'); v
 function uiFlash() { const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
 function showUI() {
   const m = G.mode, sh = sheetOpen(); applyTheme(); if (m !== 'title') G.home = false;
-  $('scr-title').hidden = m !== 'title' || G.home; homeSync(); $('camp-top').hidden = m !== 'hub'; $('tabs').hidden = m !== 'hub' || sh;
+  if (m !== 'title') creating = false; $('scr-title').hidden = m !== 'title' || G.home || creating; $('scr-create').hidden = m !== 'title' || G.home || !creating; homeSync(); $('camp-top').hidden = m !== 'hub'; $('tabs').hidden = m !== 'hub' || sh;
   $('hud').hidden = m !== 'play' || sh; $('pad').hidden = m !== 'play' || sh; $('scr-end').hidden = m !== 'end';
   $('sheet').hidden = !sh; $('veil').hidden = !sh; $('crea-tag').hidden = !CREA.on || sh || (m !== 'hub' && m !== 'play'); admTag();
   if (m !== 'play') $('downbox').hidden = true;
@@ -4957,7 +5117,14 @@ function renderSheet() {
   else if (sheetKind === 'adm') { title = 'Administration'; admBody(body, foot); }
   else if (sheetKind === 'opts' || sheetKind === 'pause') {
     title = sheetKind === 'pause' ? 'Pause' : 'Réglages';
-    if (sheetKind === 'pause') body.push(h('p', { text: Net.room ? 'En équipe, le niveau continue pendant ta pause.' : 'Le niveau t\'attend.' }), h('button', { class: 'btn wide shine', type: 'button', text: 'Reprendre', onclick: closeSheet }));
+    // in the order they are used: close, leave, save; then the settings, the help; the admin menus last
+    const pause = sheetKind === 'pause';
+    if (pause) body.push(h('p', { text: Net.room ? 'En équipe, le niveau continue pendant ta pause.' : 'Le niveau t\'attend.' }));
+    body.push(h('div', { class: 'opt-acts' },
+      h('button', { class: 'btn wide shine', type: 'button', onclick: closeSheet }, ic(pause ? 'aller' : 'fermer'), pause ? 'Reprendre' : 'Fermer le menu'),
+      h('button', { class: 'btn wide ghost', type: 'button', onclick: () => { if (pause) { closeSheet(); finishRun('quit'); } else { saveGame(true); closeSheet(); G.mode = 'title'; G.home = true; resetInput(); showUI(); } } }, ic('retour'), pause ? 'Quitter le niveau' : 'Quitter le jeu'),
+      h('button', { class: 'btn wide line', type: 'button', disabled: CREA.on, onclick: () => { saveGame(true); if (typeof srvSoon === 'function') srvSoon(); toast(SRV.state === 'on' ? 'Partie sauvegardée, et envoyée en ligne' : 'Partie sauvegardée sur cet appareil'); } }, ic('ok'), CREA.on ? 'Rien n\'est sauvegardé en mode créatif' : 'Sauvegarder maintenant'),
+      h('p', { style: 'font-size:12px;color:var(--dim);margin:0', text: 'Le jeu sauvegarde aussi tout seul, à chaque gain.' })));
     if (USE3D) body.push(toggleRow('ombre', 'Graphismes soignés (ombres)', save.gfx !== 0, () => { save.gfx = save.gfx !== 0 ? 0 : 1; glQuality(); saveGame(false); renderSheet(); }));
     const display = () => { resize(); if (USE3D) glQuality(); saveGame(false); renderSheet(); };
     body.push(h('div', { class: 'choice' }, h('span', { class: 'row', style: 'flex-wrap:nowrap' }, ic('ombre'), 'Thème'),
@@ -4975,8 +5142,6 @@ function renderSheet() {
     if (app && !app.installed()) body.push(h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('installer')), h('div', { class: 'grow' }, h('b', { text: 'Installer comme une application' }),
       h('span', { class: 'meta', style: 'display:block', text: app.canAsk() ? 'Plein écran, icône sur l\'écran d\'accueil, jouable hors connexion.' : app.ios ? 'Sur iPhone : bouton Partager de Safari, puis « Sur l\'écran d\'accueil ».' : 'Dans le menu du navigateur : « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».' })),
       app.canAsk() ? h('button', { class: 'btn small', type: 'button', text: 'Installer', onclick: () => app.install().then(ok => { if (ok) toast('Application installée'); renderSheet(); }) }) : null));
-    body.push(creaCard()); // hidden until revealed (h_creatif.js)
-    if (sheetKind === 'opts') body.push(admCard()); // hidden unless ?admin (i_admin.js)
     if (window.ecorceApp) body.push(h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('appareil')), h('div', { class: 'grow' }, h('b', { text: DEV.id ? 'Cet appareil · ' + devCode(DEV.id) : 'Cet appareil' }),
       h('span', { class: 'meta', style: 'display:block', text: DEV.state === 'on' ? 'Sauvegarde scellée : elle ne marche que sur cet appareil et ne se modifie pas à la main.' : DEV.state === 'off' ? 'Ce navigateur ne permet pas de sceller la sauvegarde.' : 'Vérification de la sauvegarde…' }))), ...srvCard());
     const hp = (a, b) => [h('b', { text: a }), h('span', { text: b })];
@@ -4989,7 +5154,8 @@ function renderSheet() {
       ...hp('Manette', 'stick gauche : bouger · X : lanterne · Y : inventaire · Start : pause ou réglages. Dans les menus : stick ou croix pour choisir, A pour valider, B pour revenir ; au camp, LB et RB passent d\'un menu à l\'autre. En expédition : stick droit pour viser, A maintenu pour frapper, B pour esquiver, B puis A pour le coup d\'élan. Les touches s\'affichent sur les boutons'),
       ...hp('Clavier', 'flèches ou ZQSD, Espace, E, I, Maj pour esquiver ; dans les menus : flèches, Entrée, Échap')));
     body.push(h('p', { style: 'font-size:12px;color:var(--dim)', text: 'Icônes : le kit d\'interface du jeu, Lucide (licence ISC) et Game-icons.net (CC BY 3.0, Lorc, Delapouite et contributeurs). 3D : three.js.' + (app ? ' Coop directe : PeerJS.' : '') }));
-    if (sheetKind === 'pause') body.push(h('button', { class: 'btn wide ghost', type: 'button', text: 'Quitter le niveau', onclick: () => { closeSheet(); finishRun('quit'); } }));
+    body.push(creaCard()); // the admin menus last: hidden until revealed (h_creatif.js), and unless ?admin (i_admin.js)
+    if (!pause) body.push(admCard());
   }
   $('sh-title').replaceChildren(ic(SHEET_IC[sheetKind] || 'etoile'), title); $('sh-lab').textContent = purse ? lab : ''; $('sh-ecl').hidden = !purse || G.mode === 'hub'; $('sh-ecl-n').textContent = String(ME.ecl); $('sh-gem-n').textContent = String(ME.gem);
   $('sh-body').replaceChildren(...body.filter(Boolean), h('button', { id: 'sh-more', class: 'more', type: 'button', hidden: true, onclick: shMoreGo }, ic('aller'))); $('sh-foot').replaceChildren(...foot);
@@ -5030,7 +5196,7 @@ G.home = !(window.ecorceApp && window.ecorceApp.invite) && !/[?&]creatif\b/.test
 const quitApp = () => { const C = window.Capacitor, ex = C && C.Plugins && C.Plugins.App && C.Plugins.App.exitApp; return ex ? () => ex.call(C.Plugins.App) : !C && window.matchMedia && matchMedia('(display-mode: standalone)').matches ? () => window.close() : null; };
 function homeSync() {
   if (G.home && G.mode === 'title' && DEV.note) { G.home = false; showUI(); return; } // a note about the save is written on the characters screen: no home in front of it
-  const on = G.mode === 'title' && G.home, el = $('scr-home'); if (el.hidden === on) el.hidden = !on; $('scr-title').hidden = G.mode !== 'title' || G.home; if (!on) return;
+  const on = G.mode === 'title' && G.home, el = $('scr-home'); if (el.hidden === on) el.hidden = !on; $('scr-title').hidden = G.mode !== 'title' || G.home || creating; if (!on) return;
   homeArt();
   const set = (id, hid) => { const b = $(id); if (b.hidden !== hid) b.hidden = hid; };
   set('home-load', !(window.ecorceApp && SRV.state !== 'off')); set('home-quit', !quitApp());
@@ -5085,14 +5251,19 @@ function applyGame() { const g = GM(), st = document.documentElement.style; st.s
 const stageOf = c => clamp(Math.ceil(Math.max(c.unlocked, c.unx) / PER_WORLD), 1, 6);
 const ornCol = t => t < 6 ? STRATA[t - 1].glow : 'var(--amber)'; // the colour of the world of that tier (the same as its level buttons); the last tier is gold
 function gauge(g, n) { return h('span', { class: 'pg', style: '--g:' + GAMES[g].col }, h('em', { text: GAMES[g].name + ' ' + Math.min(NLV, n) + ' / ' + NLV }), h('i', null, h('u', { style: 'width:' + Math.round(Math.min(NLV, n) / NLV * 100) + '%' }))); }
+// the bubble of a knight: its icon (the round of the cloak until the picture arrives), the ornament of its tier, its weapon
+function bubble(col, ico, t, wk) {
+  const art = iconArt(ico);
+  return h('span', { class: 'bub orn-' + t, style: '--c:' + CLOAKS[col] + ';--oc:' + ornCol(t) },
+    h('span', { class: 'ico', 'data-ico': ico, style: art ? '--img:' + art : null }), h('span', { class: 'orn' }), wk != null ? h('span', { class: 'wp' }, pic(0, wk)) : null);
+}
 function charCard(c, i) {
-  const t = stageOf(c), art = iconArt(c.ico), name = c.name || 'Chevalier', wp = (c.game ? c.alt : c).eq[0], cls = 'char' + (i === save.cur ? ' cur' : '');
+  const t = stageOf(c), name = c.name || 'Chevalier', wp = (c.game ? c.alt : c).eq[0], cls = 'char' + (i === save.cur ? ' cur' : '');
   if (askDel === i) return h('div', { class: cls + ' ask', style: '--i:' + i }, h('p', { text: 'Supprimer ' + name + ' ?' }),
     h('button', { class: 'btn small danger', type: 'button', text: 'Supprimer', onclick: () => { save.chars.splice(i, 1); save.cur = clamp(save.cur > i ? save.cur - 1 : save.cur, 0, save.chars.length - 1); ME = save.chars[save.cur]; applyGame(); askDel = -1; saveGame(true); refreshStats(); renderTitle(); } }),
     h('button', { class: 'btn small ghost', type: 'button', text: 'Garder', onclick: () => { askDel = -1; renderTitle(); } }));
   return h('div', { class: cls, style: '--i:' + i }, h('button', { class: 'char-main', type: 'button', 'aria-label': 'Jouer avec ' + name, onclick: () => pickChar(i) },
-    h('span', { class: 'bub orn-' + t, style: '--c:' + CLOAKS[c.col] + ';--oc:' + ornCol(t) },
-      h('span', { class: 'ico', 'data-ico': c.ico, style: art ? '--img:' + art : null }), h('span', { class: 'orn' }), wp ? h('span', { class: 'wp' }, pic(0, wp.k)) : null),
+    bubble(c.col, c.ico, t, wp && wp.k),
     h('span', { class: 'txt' }, h('b', { text: name }), gauge(0, c.unlocked), gauge(1, c.unx), c.mod ? h('small', { text: 'Modifiée hors du jeu' }) : null)),
     save.chars.length > 1 ? h('button', { class: 'char-del', type: 'button', 'aria-label': 'Supprimer ' + name, onclick: () => { askDel = i; renderTitle(); } }, ic('poubelle')) : null);
 }
@@ -5100,14 +5271,137 @@ function renderTitle() {
   const list = save.chars.map(charCard);
   if (DEV.note) list.unshift(h('p', { class: 'note', style: 'color:var(--danger)', text: DEV.note }));
   $('chars').replaceChildren(...list);
-  const box = $('newchar');
-  if (!creating) { box.replaceChildren(...(save.chars.length < MAX_CHARS ? [h('button', { class: 'char new', type: 'button', style: '--i:' + save.chars.length, onclick: () => { creating = true; draft = { name: '', col: (save.chars.length) % 4, kind: STARTERS[0] }; renderTitle(); } }, ic('plus'), 'Nouveau chevalier')] : [])); return; }
-  const inp = h('input', { type: 'text', id: 'nick', maxlength: '12', autocomplete: 'off', spellcheck: 'false', placeholder: 'Son nom' }); inp.value = draft.name; inp.addEventListener('input', e => { draft.name = e.target.value.slice(0, 12); });
-  box.replaceChildren(h('div', { class: 'form' }, h('h3', { text: 'Nouveau chevalier' }), h('div', null, h('label', { for: 'nick', text: 'Nom' }), inp),
-    h('div', null, h('label', { text: 'Couleur' }), h('div', { class: 'swatches' }, ...CLOAKS.map((c, i) => h('button', { class: 'sw', type: 'button', style: '--c:' + c, 'aria-pressed': String(draft.col === i), 'aria-label': 'Couleur ' + (i + 1), onclick: () => { draft.col = i; renderTitle(); } })))),
-    h('div', null, h('label', { text: 'Arme de départ' }), h('div', { class: 'opts3' }, ...STARTERS.map(k => h('button', { class: 'opt', type: 'button', 'aria-pressed': String(draft.kind === k), onclick: () => { draft.kind = k; renderTitle(); } }, pic(0, k), FAMS[WEAPONS[k].fam])))),
-    h('p', { text: WEAPONS[draft.kind].name + ' : ' + WEAPONS[draft.kind].desc + '. Les autres armes se trouvent en jouant.' }),
-    h('div', { class: 'row' }, h('button', { class: 'btn grow', type: 'button', text: 'Créer et jouer', onclick: () => { save.chars.push(newChar(cleanName(draft.name), draft.col, draft.kind)); creating = false; pickChar(save.chars.length - 1); } }), h('button', { class: 'btn ghost', type: 'button', text: 'Annuler', onclick: () => { creating = false; renderTitle(); } }))));
+  $('newchar').replaceChildren(...(save.chars.length < MAX_CHARS ? [h('button', { class: 'char new', type: 'button', style: '--i:' + save.chars.length, onclick: createOpen }, ic('plus'), 'Nouveau chevalier')] : []));
+}
+
+/* ================= creating a knight, in three steps ================= */
+// 1 name and look (cloak, icon: the card of the knight follows live), 2 the first weapon shown in action (a 2D demonstration in a canvas, three gauges,
+// a sentence), 3 the summary and Create, which does what the old form did (newChar, then pickChar). Back from step 1 cancels. Picture behind: f_creation (createArt).
+// The screen is #scr-create: navRoot gives it to the gamepad and the keyboard (B = Retour).
+const ICON_NAMES = { abime: 'Abîme', ambre: 'Ambre', braises: 'Braises', champignon: 'Champignon', ecorce: 'Écorce', givre: 'Givre', mycelium: 'Mycélium', ronce: 'Ronce', rose: 'Rose' };
+const CLOAK_NAMES = ['dorée', 'verte', 'rose', 'bleue'];
+const CRE_TITLES = ['Nom et apparence', 'Arme de départ', 'Récapitulatif'];
+const FAM_TIP = ['Elle frappe en arc devant toi et touche plusieurs ennemis d\'un coup. Un bon départ pour apprendre.',
+  'Deux lames qui tournent : beaucoup de petits coups, tout autour de toi.',
+  'Très rapide mais très courte : il faut coller l\'ennemi. Ses coups portent juste plus souvent.',
+  'Elle tire de loin, une cible à la fois. Longue à recharger : place bien chaque carreau.'];
+let cstep = 1;
+function createOpen() { creating = true; cstep = 1; const col = save.chars.length % 4; draft = { name: '', col, ico: ICON_OF_COL[col], kind: STARTERS[0] }; NAV.key = ''; showUI(); createRender(); }
+function createGo(n) { if (n < 1) { creating = false; NAV.key = ''; showUI(); return; } cstep = Math.min(3, n); createRender(); }
+function createDone() {
+  if (save.chars.length >= MAX_CHARS) { creating = false; showUI(); return; }
+  save.chars.push(newChar(cleanName(draft.name), draft.col, draft.kind, draft.ico)); creating = false; pickChar(save.chars.length - 1);
+}
+$('cre-back').addEventListener('click', () => createGo(cstep - 1));
+$('cre-next').addEventListener('click', () => cstep < 3 ? createGo(cstep + 1) : createDone());
+// the card of the future knight: the one of the characters screen, with a first tier ornament and no progress yet
+const createCard = () => h('div', { class: 'char cre-card' }, h('div', { class: 'char-main' }, bubble(draft.col, draft.ico, 1, draft.kind), h('span', { class: 'txt' }, h('b', { text: cleanName(draft.name) }), gauge(0, 1), gauge(1, 1))));
+function createRender() {
+  createArt();
+  $('cre-n').textContent = cstep + ' / 3'; $('cre-t').textContent = CRE_TITLES[cstep - 1];
+  [...$('cre-dots').children].forEach((d, i) => d.classList.toggle('on', i < cstep));
+  $('cre-next').textContent = cstep === 3 ? 'Créer' : 'Suivant';
+  $('cre-body').replaceChildren(...[createStep1, createStep2, createStep3][cstep - 1]());
+  if (cstep === 2) { createSync(); demoStart(); }
+}
+function createSync() { // what follows the choices in place (nothing is redrawn, so the field and the marker stay where they are)
+  if (cstep === 1) {
+    $('cre-card').replaceChildren(createCard());
+    document.querySelectorAll('#cre-body .sw').forEach((b, i) => b.setAttribute('aria-pressed', String(draft.col === i)));
+    const g = $('cre-icons'); g.style.setProperty('--c', CLOAKS[draft.col]); g.querySelectorAll('.io').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.ico === draft.ico)));
+  } else if (cstep === 2) {
+    const w = WEAPONS[draft.kind];
+    document.querySelectorAll('#cre-body .opt').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.k === draft.kind)));
+    $('cre-wn').textContent = w.name + ' · ' + w.desc; $('cre-tip').textContent = FAM_TIP[w.fam];
+    for (const [i, name, v] of weaponGauges(w)) { const e = $('cre-g' + i), pc = Math.round(v * 100); e.firstElementChild.nextElementSibling.firstElementChild.style.width = Math.max(6, pc) + '%'; e.setAttribute('aria-label', name + ' : ' + pc + ' sur 100'); }
+    if (DEMO.still) demoStill();
+  }
+}
+function createStep1() {
+  const inp = h('input', { type: 'text', id: 'nick', maxlength: '12', autocomplete: 'off', spellcheck: 'false', placeholder: 'Son nom' }); inp.value = draft.name;
+  inp.addEventListener('input', e => { draft.name = e.target.value.slice(0, 12); createSync(); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); createGo(2); } });
+  return [h('div', { id: 'cre-card' }, createCard()),
+    h('div', { class: 'cre-panel' },
+      h('div', null, h('label', { for: 'nick', text: 'Nom' }), inp),
+      h('div', null, h('label', { text: 'Cape' }), h('div', { class: 'swatches' }, ...CLOAKS.map((c, i) => h('button', { class: 'sw', type: 'button', style: '--c:' + c, 'aria-pressed': String(draft.col === i), 'aria-label': 'Cape ' + CLOAK_NAMES[i], onclick: () => { draft.col = i; createSync(); } })))),
+      h('div', null, h('label', { text: 'Icône' }), h('div', { class: 'icons', id: 'cre-icons', style: '--c:' + CLOAKS[draft.col] }, ...ICONS.map(n => { const art = iconArt(n); return h('button', { class: 'io', type: 'button', 'data-ico': n, 'aria-pressed': String(draft.ico === n), 'aria-label': 'Icône ' + ICON_NAMES[n], onclick: () => { draft.ico = n; createSync(); } }, h('span', { class: 'ico', 'data-ico': n, style: art ? '--img:' + art : null })); }))))];
+}
+// the gauges: each weapon against the best of the whole catalogue, from WEAPONS alone (reach, blows per second, damage of a blow)
+function weaponGauges(w) {
+  const mx = f => Math.max(...WEAPONS.map(f));
+  return [[0, 'Portée', w.range / mx(x => x.range)], [1, 'Cadence', (1 / w.cd) / mx(x => 1 / x.cd)], [2, 'Dégâts', w.dmg / mx(x => x.dmg)]];
+}
+function createStep2() {
+  return [h('div', { class: 'cre-panel' },
+    h('div', { class: 'opts3' }, ...STARTERS.map(k => h('button', { class: 'opt', type: 'button', 'data-k': k, 'aria-pressed': String(draft.kind === k), onclick: () => { draft.kind = k; createSync(); } }, pic(0, k), FAMS[WEAPONS[k].fam]))),
+    h('b', { id: 'cre-wn', class: 'cre-wn' }),
+    h('canvas', { id: 'cre-demo', role: 'img', 'aria-label': 'Démonstration : la portée et la cadence de l\'arme' }),
+    h('div', { class: 'gjs' }, ...['Portée', 'Cadence', 'Dégâts'].map((n, i) => h('div', { class: 'gj', id: 'cre-g' + i, role: 'img' }, h('em', { text: n }), h('i', null, h('u'))))),
+    h('p', { id: 'cre-tip' }))];
+}
+function createStep3() {
+  const w = WEAPONS[draft.kind], row = (k, ...v) => h('div', { class: 'rec' }, h('span', { text: k }), h('b', null, ...v));
+  return [createCard(), h('div', { class: 'cre-panel' },
+    row('Nom', cleanName(draft.name)), row('Cape', h('i', { class: 'dot', style: '--c:' + CLOAKS[draft.col] }), CLOAK_NAMES[draft.col]), row('Icône', ICON_NAMES[draft.ico]),
+    row('Arme', w.name), h('p', { text: FAMS[w.fam] + ' : ' + w.desc + '. Les autres armes se trouvent en jouant.' }))];
+}
+/* the demonstration: a knight seen from above (a round of its cloak) strikes a target at the reach of the weapon, at its pace.
+   Same scale for every weapon, so reaches compare. A blade sweeps an arc (twin blades: two, close together), a crossbow shoots a bolt.
+   The ring round the knight fills in one cooldown. Colours come from the theme's variables. The loop stops as soon as step 2 is not on screen. */
+const DEMO = { raf: 0, t0: 0, frames: 0, hue: null, still: false };
+const demoVisible = () => creating && cstep === 2 && !$('scr-create').hidden && !document.hidden;
+function demoStart() {
+  DEMO.still = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (DEMO.still) { requestAnimationFrame(demoStill); return; }
+  if (DEMO.raf || !demoVisible()) return; DEMO.t0 = performance.now(); DEMO.raf = requestAnimationFrame(demoTick);
+}
+function demoTick(now) { DEMO.raf = 0; if (!demoVisible()) return; demoFrame((now - DEMO.t0) / 1000); DEMO.raf = requestAnimationFrame(demoTick); }
+function demoStill() { const w = WEAPONS[draft.kind]; demoFrame(w.proj ? .3 : Math.min(.2, w.cd * .45) * .8); }
+document.addEventListener('visibilitychange', demoStart);
+function demoFrame(t) {
+  const cv = $('cre-demo'); if (!cv) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), cw = cv.clientWidth, ch = cv.clientHeight; if (!cw || !ch) return;
+  if (cv.width !== Math.round(cw * dpr) || cv.height !== Math.round(ch * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); }
+  if (!DEMO.hue || DEMO.frames % 60 === 0) { const st = getComputedStyle(document.documentElement), g = n => st.getPropertyValue(n).trim(); DEMO.hue = { well: g('--well'), line: g('--line'), cream: g('--cream'), dim: g('--dim'), amber: g('--amber'), danger: g('--danger'), dark: g('--bark-4'), font: getComputedStyle(document.body).fontFamily }; }
+  DEMO.frames++;
+  const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); drawDemo(x, cw, ch, t, WEAPONS[draft.kind], DEMO.hue, CLOAKS[draft.col]);
+}
+function drawDemo(x, W, H, t, w, c, cloak) {
+  const KX = 34, cy = H / 2 - 8, s = Math.min(2.1, (W - KX - 30) / 100), R = w.range * s, cd = w.cd, u = ((t % cd) + cd) % cd, TX = KX + R, tr = 10;
+  const sd = Math.min(.2, cd * .45), twin = w.fam === 1;
+  const sweeps = w.proj ? [] : twin ? [{ at: 0, dir: 1, r: R }, { at: cd * .5, dir: -1, r: R * .86 }] : [{ at: 0, dir: 1, r: R }];
+  const tf = w.proj ? Math.max(.05, (R - 16) / (w.spd * s)) : 0; // flight of the bolt
+  const hits = w.proj ? [tf] : sweeps.map(q => q.at + sd * .5);
+  x.clearRect(0, 0, W, H); x.fillStyle = c.well; x.fillRect(0, 0, W, H);
+  x.fillStyle = c.line; x.globalAlpha = .55; for (let gx = 12; gx < W; gx += 22) for (let gy = 10; gy < H; gy += 22) x.fillRect(gx, gy, 2, 2); x.globalAlpha = 1;
+  // the reach, as a ruler under the scene
+  const ry = H - 12; x.strokeStyle = c.dim; x.lineWidth = 1.5; x.beginPath(); x.moveTo(KX, ry); x.lineTo(TX, ry); x.moveTo(KX, ry - 4); x.lineTo(KX, ry + 4); x.moveTo(TX, ry - 4); x.lineTo(TX, ry + 4); x.stroke();
+  x.fillStyle = c.dim; x.font = '600 11px ' + c.font; x.textBaseline = 'middle'; x.fillText('portée', TX + 9, ry);
+  // the target, pushed back and lit when hit
+  let f = 0; for (const th of hits) { const d = u - th; if (d >= 0 && d < .2) f = Math.max(f, 1 - d / .2); }
+  const tx = TX + f * 4;
+  x.fillStyle = c.dark; x.beginPath(); x.arc(tx, cy, tr, 0, 6.2832); x.fill();
+  if (f) { x.globalAlpha = f; x.fillStyle = c.amber; x.beginPath(); x.arc(tx, cy, tr, 0, 6.2832); x.fill(); x.strokeStyle = c.cream; x.lineWidth = 2; for (let i = 0; i < 5; i++) { const a = -1 + i * .5, r0 = tr + 3 + (1 - f) * 6; x.beginPath(); x.moveTo(tx + Math.cos(a + 3.14) * r0, cy + Math.sin(a + 3.14) * r0 * 1.0); x.lineTo(tx + Math.cos(a + 3.14) * (r0 + 6), cy + Math.sin(a + 3.14) * (r0 + 6)); x.stroke(); } x.globalAlpha = 1; }
+  x.strokeStyle = c.danger; x.lineWidth = 2.5; x.beginPath(); x.arc(tx, cy, tr, 0, 6.2832); x.stroke();
+  // blows
+  for (const q of sweeps) {
+    const p = (u - q.at) / sd; if (p < 0) continue;
+    const e = 1 - Math.pow(1 - Math.min(1, p), 2), half = w.arc / 2, a0 = q.dir > 0 ? -half : half, a1 = a0 + q.dir * w.arc * e, fade = p <= 1 ? 1 : Math.max(0, 1 - (p - 1) * sd / .25); if (fade <= 0) continue;
+    x.globalAlpha = .28 * fade; x.fillStyle = c.amber; x.beginPath(); x.moveTo(KX, cy); x.arc(KX, cy, q.r, a0, a1, q.dir < 0); x.closePath(); x.fill();
+    x.globalAlpha = fade; x.strokeStyle = c.amber; x.lineWidth = 3; x.beginPath(); x.arc(KX, cy, q.r, a0, a1, q.dir < 0); x.stroke();
+    x.strokeStyle = c.cream; x.lineWidth = 3; x.beginPath(); x.moveTo(KX + Math.cos(a1) * 12, cy + Math.sin(a1) * 12); x.lineTo(KX + Math.cos(a1) * q.r, cy + Math.sin(a1) * q.r); x.stroke(); x.globalAlpha = 1;
+  }
+  if (w.proj) { // the bolt, from the knight to the target
+    const bx = KX + 16 + w.spd * s * u;
+    if (bx < TX - tr + 2) { x.strokeStyle = c.cream; x.lineWidth = 3; x.beginPath(); x.moveTo(bx - 14, cy); x.lineTo(bx, cy); x.stroke(); x.fillStyle = c.amber; x.beginPath(); x.moveTo(bx + 6, cy); x.lineTo(bx - 1, cy - 4); x.lineTo(bx - 1, cy + 4); x.fill(); }
+    x.strokeStyle = c.cream; x.lineWidth = 3; x.beginPath(); x.moveTo(KX + 12, cy - 10); x.quadraticCurveTo(KX + (u < .12 ? 8 : 15), cy, KX + 12, cy + 10); x.stroke();
+  }
+  // the knight: a round of its cloak, a nose to show where it looks, and a ring that fills in one cooldown
+  x.strokeStyle = c.line; x.lineWidth = 3; x.beginPath(); x.arc(KX, cy, 18, 0, 6.2832); x.stroke();
+  x.strokeStyle = c.amber; x.beginPath(); x.arc(KX, cy, 18, -1.5708, -1.5708 + 6.2832 * (u / cd)); x.stroke();
+  x.fillStyle = cloak; x.beginPath(); x.arc(KX, cy, 11, 0, 6.2832); x.fill(); x.strokeStyle = c.cream; x.lineWidth = 2; x.stroke();
+  x.fillStyle = c.cream; x.beginPath(); x.moveTo(KX + 14, cy); x.lineTo(KX + 7, cy - 4); x.lineTo(KX + 7, cy + 4); x.fill();
 }
 
 /* ================= team ================= */
@@ -5381,7 +5675,7 @@ bindBtn('b-dash', () => { input.dash = true; });
 /* Menus without touching the screen (gamepad, or the arrow keys): a marker moves from button to button in the direction asked,
    A (or Enter) presses the marked one, B (or Escape) goes back. It works on whatever is in front: a sheet, the results, the title. */
 const NAV = { el: null, key: '', idx: 0, dir: '', at: 0 };
-const navRoot = () => !$('scr-end').hidden ? $('scr-end') : sheetOpen() ? $('sheet') : G.mode === 'title' ? (G.home ? $('scr-home') : $('scr-title')) : null;
+const navRoot = () => !$('scr-end').hidden ? $('scr-end') : sheetOpen() ? $('sheet') : G.mode === 'title' ? (G.home ? $('scr-home') : creating ? $('scr-create') : $('scr-title')) : null;
 const navItems = root => [...root.querySelectorAll('button:not([disabled]), input')].filter(e => e.offsetParent !== null);
 const navKey = e => e.id || e.getAttribute('aria-label') || e.textContent.trim().slice(0, 40);
 function navMark(e) {
@@ -5509,6 +5803,338 @@ if (!window.THREE) { // first host unreachable: try the second one, and switch t
 applyGame(); refreshStats(); worldChanged(); devStart(); srvStart(); $('sh-body').addEventListener('scroll', shMore, { passive: true }); addEventListener('resize', shMore); admStart(); initNet(); showUI();
 requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(frame); });
 window.__game = { G, P, Net, input, get F() { return F; }, get run() { return run; }, get save() { return save; }, get ME() { return ME; }, get ST() { return ST; }, get gl() { return USE3D; }, startRun, makeItem, rollFrom, newSeed, refreshStats, openSheet, closeSheet, backToHub, pickChar, setGame, toggleMode, DEV, SRV, saveGame, srvMoveOut, srvMoveIn, MDL };
+
+/* ================= the level editor (20b) =================
+   Opened from the admin panel (family Niveaux > « Modifier à la main »). It starts from the plan on show (a draw, or a level
+   already made by hand) and changes it in place, in the game's own view: free camera (drag to move, pinch or wheel to zoom),
+   tools to dig and fill the rock, to put creatures, chests, scenery, the way in and the way out, a selection with handles
+   (move; turn and grow for a piece of scenery), undo and redo, and « Essayer », which plays it at once in creative mode.
+   While it is open the game is in creative mode: nothing is saved nor sent. A level made by hand is kept on this device
+   (PLANS, tk-plans-essai) and replaces the draw of that level here only; publishing it for everyone is step 20e.
+   A plan is plain data: { v, floor, big, W, H, g (the tiles, one character each), rooms, start, lift, foes, chests, decor, seals }. */
+const PLANS = {}; // level number → plan made by hand, in force on this device
+try { if (localStorage.getItem('tk-admin') === '1') Object.assign(PLANS, JSON.parse(localStorage.getItem('tk-plans-essai') || '{}')); } catch (e) { }
+const plansKeep = () => { try { localStorage.setItem('tk-plans-essai', JSON.stringify(PLANS)); } catch (e) { } };
+const r1 = v => Math.round(v * 10) / 10;
+function floorToPlan(F0) {
+  let g = '', s = '', hw = ''; for (let i = 0; i < F0.g.length; i++) { g += F0.g[i] ? '1' : '0'; s += F0.surf && F0.surf[i] < 5 ? String(F0.surf[i]) : '.'; hw += F0.wh && F0.wh[i] ? String(F0.wh[i]) : '.'; }
+  return { v: 1, floor: F0.floor, big: !!F0.big, W: F0.W, H: F0.H, g, s, h: hw,
+    rooms: F0.rooms.map(r => [r.cx, r.cy, r.kind, r.x0, r.y0, r.x1, r.y1]),
+    start: [r1(F0.start.x), r1(F0.start.y)], lift: F0.lift ? [r1(F0.lift.x), r1(F0.lift.y)] : null,
+    foes: F0.enemies.filter(e => !e.summon).map(e => [e.type, r1(e.x), r1(e.y), e.guard ? 1 : 0]),
+    chests: F0.chests.map(c => [r1(c.x), r1(c.y), c.hidden ? 1 : 0, c.gold ? 1 : 0]),
+    decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z]),
+    seals: F0.seals ? F0.seals.map(q => [r1(q.x), r1(q.y)]) : null };
+}
+// the level the game plays from a plan: the same fields as a draw (genFloor), its creatures made for this level and difficulty
+function planToFloor(p, seed, floor) {
+  const W = p.W | 0, H = p.H | 0, g = new Uint8Array(W * H), mod = seedMod(seed), si = strIdxOf(floor);
+  for (let i = 0; i < W * H; i++) g[i] = p.g.charCodeAt(i) === 49 ? 1 : 0;
+  const surf = new Uint8Array(W * H).fill(255), wh = new Uint8Array(W * H); // the zone each tile wears (255 = the level's own), the height of each wall (0 = drawn)
+  for (let i = 0; i < W * H; i++) { const a = p.s ? p.s.charCodeAt(i) - 48 : -1, b = p.h ? p.h.charCodeAt(i) - 48 : 0; if (a >= 0 && a < 5) surf[i] = a; if (b > 0 && b < 5) wh[i] = b; }
+  const F0 = { seed, floor, W, H, g, surf, wh, si, str: STRATA[si], boss: false, big: !!p.big, mod, rooms: [], enemies: [], byId: new Map(), chests: [], seals: null, sealMask: 0, ghost: {}, nextSummon: 1000, secret: new Set(), blocks: [], decor: [], made: true };
+  F0.rooms = (p.rooms || []).map(r => ({ cx: r[0], cy: r[1], kind: r[2], x0: r[3], y0: r[4], x1: r[5], y1: r[6] }));
+  F0.start = { x: p.start[0], y: p.start[1] }; F0.lift = p.lift ? { x: p.lift[0], y: p.lift[1], open: false, prog: 0 } : null;
+  (p.foes || []).forEach((f, id) => { const e = makeEnemy(id, clamp(f[0] | 0, 0, 9), f[1], f[2], floor, mod.hp); e.guard = !!f[3]; F0.enemies.push(e); F0.byId.set(id, e); });
+  F0.chests = (p.chests || []).map((c, id) => ({ id, x: c[0], y: c[1], opened: false, hidden: !!c[2], gold: !!c[3] }));
+  F0.decor = (p.decor || []).map(d => ({ n: d[0], x: d[1], y: d[2], s: d[3], rot: d[4], r: d[5], z: d[6] >= 0 && d[6] < 5 ? d[6] : null }));
+  for (const d of F0.decor) F0.blocks.push({ x: d.x, y: d.y, r: d.r });
+  if (p.big && p.seals) F0.seals = p.seals.map((q, id) => ({ id, x: q[0], y: q[1], got: false }));
+  return F0;
+}
+/* ---------- the camp made over: its tiles, surfaces and heights, its scenery, and where its places and people stand ---------- */
+const xy = o => [r1(o.x), r1(o.y)];
+function campToPlan(F0) {
+  const p = floorToPlan(F0);
+  return { v: 1, camp: true, W: p.W, H: p.H, g: p.g, s: p.s, h: p.h, decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z, d.glow ? 1 : 0]),
+    start: xy(F0.start), counter: xy(F0.counter), portal: xy(F0.portal), wheel: xy(F0.wheel), fire: [r1(F0.fireX), r1(F0.fireY)], dummy: xy(F0.enemies[0]), npcs: F0.npcs.map(xy) };
+}
+function campApply(F0, p) {
+  if (!p || !p.camp || !p.g) return;
+  const W = p.W | 0, H = p.H | 0; F0.W = W; F0.H = H; F0.g = new Uint8Array(W * H); F0.surf = new Uint8Array(W * H).fill(255); F0.wh = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) { F0.g[i] = p.g.charCodeAt(i) === 49 ? 1 : 0; const a = p.s ? p.s.charCodeAt(i) - 48 : -1, b = p.h ? p.h.charCodeAt(i) - 48 : 0; if (a >= 0 && a < 5) F0.surf[i] = a; if (b > 0 && b < 5) F0.wh[i] = b; }
+  const at = (o, v) => { if (Array.isArray(v)) { o.x = v[0]; o.y = v[1]; } };
+  at(F0.start, p.start); at(F0.counter, p.counter); at(F0.portal, p.portal); at(F0.wheel, p.wheel);
+  if (Array.isArray(p.fire)) { F0.fireX = p.fire[0]; F0.fireY = p.fire[1]; }
+  const d0 = F0.enemies[0]; at(d0, p.dummy); d0.tx = d0.x; d0.ty = d0.y;
+  if (Array.isArray(p.npcs)) F0.npcs.forEach((n, i) => at(n, p.npcs[i]));
+  if (Array.isArray(p.decor)) F0.decor = p.decor.map(d => ({ n: d[0], x: d[1], y: d[2], s: d[3], rot: d[4], r: d[5], z: d[6] >= 0 && d[6] < 5 ? d[6] : null, glow: !!d[7] }));
+  hubStations(F0); hubBlocks(F0);
+}
+const planFor = (seed, floor) => { const p = PLANS[floor]; return p && !p.big === !seedBig(seed) && !isBossFloor(floor) ? p : null; };
+
+/* ---------------- the editor itself ---------------- */
+const ED = { on: false, floor: 1, seed: 0, tool: 'sel', crea: 0, deco: 0, dz: null, zone: 0, wh: 2, sel: null, undo: [], redo: [], half: 9, ptrs: new Map(), drag: null, pinch: 0, busy: false };
+// [tool, name in the bar, icon, what a touch on the map does]
+const ED_TOOLS = [
+  ['sel', 'Choisir', 'cible', 'Touche un élément pour le choisir, puis tire-le pour le déplacer. Glisse ailleurs pour déplacer la vue.'],
+  ['sol', 'Creuser', 'aller', 'Glisse sur la roche pour ouvrir du sol.'],
+  ['mur', 'Boucher', 'cadenas', 'Glisse sur le sol pour remettre de la roche.'],
+  ['peint', 'Peindre', 'ombre', 'Glisse sur le sol ou les murs pour leur donner les textures de la zone choisie.'],
+  ['haut', 'Hauteur', 'niveaux', 'Glisse sur les murs pour leur donner la hauteur choisie.'],
+  ['crea', 'Créature', 'c_kills', 'Touche le sol pour poser la créature choisie.'],
+  ['coffre', 'Coffre', 'coffre', 'Touche le sol pour poser un coffre.'],
+  ['decor', 'Décor', 'plus', 'Touche le sol pour poser le décor choisi.'],
+  ['entree', 'Entrée', 'drapeau', 'Touche le sol pour y mettre l\'entrée du niveau.'],
+  ['sortie', 'Sortie', 'portail', 'Touche le sol pour y mettre la sortie.'],
+  ['gomme', 'Retirer', 'fermer', 'Touche un élément pour le retirer.'],
+];
+const ED_FOES = [[0, 'Sporule'], [1, 'Ronceux'], [2, 'Cracheur'], [3, 'Follet'], [4, 'Gardien']];
+const ED_HEIGHTS = ['Comme tiré', 'Basse', 'Normale', 'Haute', 'Très haute'];
+const edZone = () => ED.camp ? 0 : strIdxOf(ED.floor) % 5; // the zone of what is being edited (the camp wears the Racines kit)
+const edDecor = () => { const z = ED.dz == null ? edZone() : ED.dz; return ED.camp && z === 0 ? [...DECOR[0], ['arche', 2.5, 0], ['barriere', .86, 0]] : DECOR[z]; };
+const edStamp = () => JSON.stringify(ED.camp ? campToPlan(F) : floorToPlan(F));
+function edPush() { ED.undo.push(edStamp()); if (ED.undo.length > 60) ED.undo.shift(); ED.redo.length = 0; }
+function edLoad(txt) { const p = JSON.parse(txt); if (ED.camp) { F = genHub(); campApply(F, p); } else F = planToFloor(p, ED.seed, ED.floor); ED.sel = null; worldChanged(); edUI(); }
+function edUndo() { if (!ED.undo.length) return; ED.redo.push(edStamp()); edLoad(ED.undo.pop()); }
+function edRedo() { if (!ED.redo.length) return; ED.undo.push(edStamp()); edLoad(ED.redo.pop()); }
+function edSaveDraft() { if (ED.camp) PLANS.camp = campToPlan(F); else PLANS[ED.floor] = floorToPlan(F); plansKeep(); } // every change is kept at once: the level made by hand is in force here
+
+// open the editor on a level: the plan on show in the admin panel (or the one already made by hand)
+function edStart(floor, seed) {
+  if (Net.room) return;
+  if (floor === 'camp') return edCamp();
+  if (!CREA.on) { saveGame(true); CREA.on = true; } // the editor works in creative mode: nothing it does reaches the save
+  closeSheet(); run = null; ED.on = true; ED.camp = false; ED.floor = floor; ED.seed = seed; ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
+  F = genFloor(seed, floor); worldChanged();
+  P.x = F.start.x; P.y = F.start.y; cam.init = false; ED.half = F.big ? 11 : 13;
+  G.mode = 'edit'; G.paused = false; showUI(); edUI();
+}
+// the camp: the same editor, with its places and people to move instead of creatures, chests and a way out
+function edCamp() {
+  if (!CREA.on) { saveGame(true); CREA.on = true; }
+  closeSheet(); run = null; ED.on = true; ED.camp = true; ED.floor = 0; ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
+  F = genHub(); worldChanged(); P.x = F.start.x; P.y = F.start.y; cam.init = false; ED.half = 9;
+  G.mode = 'edit'; G.paused = false; showUI(); edUI();
+}
+function edStop() { ED.on = false; ED.camp = false; edUI(); backToHub(); }
+// play it at once, as it is now, in creative mode; « Retour à l'éditeur » in the creative panel brings it back
+function edTry() { edSaveDraft(); ED.on = false; edUI(); Net.ignoreSeed = null; for (const k of ['unlocked', 'un1', 'un2', 'unx']) ME[k] = Math.max(ME[k], ED.floor); startRun(ED.seed, ED.floor); }
+function edBack() { if (!ED.floor) return; closeSheet(); edStart(ED.floor, ED.seed); }
+function edStep(dt) { P.moving = false; updateFx(dt); } // the level stands still: only the camera moves (P is where it looks)
+
+// from the screen to the ground, in logic pixels
+function edWorld(sx, sy) {
+  if (!USE3D) return [sx / view.zoom + camX, sy / view.zoom + camY];
+  const ray = ED.ray || (ED.ray = new THREE.Raycaster()), ndc = ED.ndc || (ED.ndc = new THREE.Vector2());
+  ndc.set(sx / view.w * 2 - 1, -(sy / view.h) * 2 + 1); ray.setFromCamera(ndc, cam3);
+  const o = ray.ray.origin, d = ray.ray.direction; if (Math.abs(d.y) < 1e-6) return [P.x, P.y];
+  const k = -o.y / d.y; return [(o.x + d.x * k) / U, (o.z + d.z * k) / U];
+}
+const edTile = (x, y) => { const tx = Math.floor(x / T), ty = Math.floor(y / T); return tx > 0 && ty > 0 && tx < F.W - 1 && ty < F.H - 1 ? ty * F.W + tx : -1; };
+const edFloorAt = (x, y) => { const i = edTile(x, y); return i >= 0 && F.g[i] === 1; };
+// everything that can be picked, with where it stands
+function edThings() {
+  if (ED.camp) { // the fire is two numbers in the camp: a little object stands for it while it is moved
+    const fire = ED.fireO && ED.fireO.x === F.fireX && ED.fireO.y === F.fireY ? ED.fireO : (ED.fireO = { x: F.fireX, y: F.fireY });
+    return [{ k: 'start', o: F.start }, { k: 'counter', o: F.counter }, { k: 'portal', o: F.portal }, { k: 'wheel', o: F.wheel }, { k: 'fire', o: fire }, { k: 'dummy', o: F.enemies[0] },
+      ...F.npcs.map(n => ({ k: 'npc', o: n })), ...F.decor.map(d => ({ k: 'decor', o: d }))];
+  }
+  const out = [{ k: 'start', o: F.start }];
+  if (F.lift) out.push({ k: 'lift', o: F.lift });
+  for (const e of F.enemies) if (!e.summon) out.push({ k: 'foe', o: e });
+  for (const c of F.chests) out.push({ k: 'chest', o: c });
+  for (const d of F.decor) out.push({ k: 'decor', o: d });
+  if (F.seals) for (const q of F.seals) out.push({ k: 'seal', o: q });
+  return out;
+}
+function edHit(sx, sy) { // the nearest thing under the finger, on screen
+  let best = null, bd = 34;
+  for (const t of edThings()) { const s = toScreen(t.o.x, t.o.y, 0), d = hyp(s[0] - sx, s[1] - sy); if (d < bd) { bd = d; best = t; } }
+  return best;
+}
+function edPaint(x, y, open) { // a brush of one tile and its neighbours; the border always stays rock
+  let changed = false;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (dx && dy) continue; const i = edTile(x + dx * T, y + dy * T); if (i >= 0 && F.g[i] !== (open ? 1 : 0)) { F.g[i] = open ? 1 : 0; changed = true; } }
+  return changed;
+}
+function edSurf(x, y, kind) { // paint the zone or the height of the tiles under the brush (a tile and its four neighbours)
+  if (!F.surf) F.surf = new Uint8Array(F.W * F.H).fill(255); if (!F.wh) F.wh = new Uint8Array(F.W * F.H);
+  let changed = false;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (dx && dy) continue; const tx = Math.floor(x / T) + dx, ty = Math.floor(y / T) + dy; if (tx < 0 || ty < 0 || tx >= F.W || ty >= F.H) continue; const i = ty * F.W + tx;
+    if (kind === 'peint') { const v = ED.zone === edZone() ? 255 : ED.zone; if (F.surf[i] !== v) { F.surf[i] = v; changed = true; } }
+    else if (F.g[i] !== 1 && F.wh[i] !== ED.wh) { F.wh[i] = ED.wh; changed = true; } }
+  return changed;
+}
+function edPlace(x, y) {
+  if (!edFloorAt(x, y)) { toast('Pose-le sur du sol'); return; }
+  edPush();
+  if (ED.tool === 'crea') { const id = F.enemies.reduce((a, e) => Math.max(a, e.id + 1), 0), e = makeEnemy(id, ED_FOES[ED.crea][0], x, y, ED.floor, F.mod.hp); F.enemies.push(e); F.byId.set(id, e); ED.sel = { k: 'foe', o: e }; }
+  else if (ED.tool === 'coffre') { const c = { id: F.chests.length, x, y, opened: false, hidden: false, gold: false }; F.chests.push(c); ED.sel = { k: 'chest', o: c }; }
+  else if (ED.tool === 'decor') { const d0 = edDecor()[ED.deco % edDecor().length], d = { n: d0[0], x, y, s: d0[1], rot: 0, r: d0[2], z: ED.dz == null || ED.dz === edZone() ? null : ED.dz }; F.decor.push(d); ED.sel = { k: 'decor', o: d }; }
+  else if (ED.tool === 'entree') { F.start.x = x; F.start.y = y; ED.sel = { k: 'start', o: F.start }; }
+  else if (ED.tool === 'sortie') { if (!F.lift) F.lift = { x, y, open: false, prog: 0 }; else { F.lift.x = x; F.lift.y = y; } ED.sel = { k: 'lift', o: F.lift }; }
+  edChanged(true);
+}
+function edRemove(t) {
+  if (!t || (ED.camp && t.k !== 'decor')) { if (t) toast('Les lieux et les habitants du camp se déplacent, ils ne se retirent pas'); return; }
+  if (t.k === 'start' || t.k === 'lift' || t.k === 'seal') { if (t) toast('L\'entrée et la sortie se déplacent, elles ne se retirent pas'); return; }
+  edPush();
+  if (t.k === 'foe') { F.enemies = F.enemies.filter(e => e !== t.o); F.byId.delete(t.o.id); }
+  else if (t.k === 'chest') { F.chests = F.chests.filter(c => c !== t.o); F.chests.forEach((c, i) => c.id = i); }
+  else if (t.k === 'decor') F.decor = F.decor.filter(d => d !== t.o);
+  if (ED.sel && ED.sel.o === t.o) ED.sel = null;
+  edChanged(true);
+}
+// after a change: obstacles follow the scenery, the 3D is rebuilt when the change touches what it built, the draft is kept
+function edChanged(rebuild) {
+  if (ED.camp) { if (ED.fireO) { F.fireX = ED.fireO.x; F.fireY = ED.fireO.y; } hubStations(F); hubBlocks(F); }
+  else F.blocks = F.decor.map(d => ({ x: d.x, y: d.y, r: d.r }));
+  if (rebuild) worldChanged();
+  edSaveDraft(); edUI();
+}
+
+/* ---------------- touches, mouse and wheel ---------------- */
+function edDown(e) {
+  if (!ED.on || G.mode !== 'edit') return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
+  ED.ptrs.set(e.pointerId, [sx, sy]); try { cv.setPointerCapture(e.pointerId); } catch (_) { }
+  if (ED.ptrs.size === 2) { const [a, b] = [...ED.ptrs.values()]; ED.pinch = hyp(a[0] - b[0], a[1] - b[1]); ED.drag = null; return; }
+  const [wx, wy] = edWorld(sx, sy), t = ED.tool;
+  if (t === 'sel') {
+    const hit = edHit(sx, sy);
+    if (hit) { ED.sel = hit; edPush(); ED.drag = { kind: 'move', moved: false }; edUI(); }
+    else { ED.drag = { kind: 'pan', sx, sy, px: P.x, py: P.y }; if (ED.sel) { ED.sel = null; edUI(); } }
+  } else if (t === 'peint' || t === 'haut') { edPush(); ED.drag = { kind: 'surf', tool: t, any: edSurf(wx, wy, t) }; }
+  else if (t === 'sol' || t === 'mur') { edPush(); ED.drag = { kind: 'paint', open: t === 'sol', any: edPaint(wx, wy, t === 'sol') }; if (!USE3D) worldChanged(); }
+  else if (t === 'gomme') edRemove(edHit(sx, sy));
+  else edPlace(wx, wy);
+}
+function edMove(e) {
+  if (!ED.on || !ED.ptrs.has(e.pointerId)) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top; ED.ptrs.set(e.pointerId, [sx, sy]);
+  if (ED.ptrs.size === 2) { const [a, b] = [...ED.ptrs.values()], d = hyp(a[0] - b[0], a[1] - b[1]); if (ED.pinch) ED.half = clamp(ED.half * ED.pinch / d, 4, 32); ED.pinch = d; return; }
+  const D = ED.drag; if (!D) return;
+  const [wx, wy] = edWorld(sx, sy);
+  if (D.kind === 'pan') { const w0 = edWorld(D.sx, D.sy); P.x = clamp(D.px - (wx - w0[0]) * .9, 0, F.W * T); P.y = clamp(D.py - (wy - w0[1]) * .9, 0, F.H * T); cam.x = P.x; cam.y = P.y; }
+  else if (D.kind === 'move' && ED.sel) { if (edFloorAt(wx, wy)) { ED.sel.o.x = wx; ED.sel.o.y = wy; if (ED.sel.o.tx !== undefined) { ED.sel.o.tx = wx; ED.sel.o.ty = wy; } D.moved = true; edGizmo(); } }
+  else if (D.kind === 'paint') { if (edPaint(wx, wy, D.open)) { D.any = true; if (!USE3D) worldChanged(); } }
+  else if (D.kind === 'surf') { if (edSurf(wx, wy, D.tool)) D.any = true; }
+  else if (D.kind === 'turn' && ED.sel) { const s = toScreen(ED.sel.o.x, ED.sel.o.y, 0); ED.sel.o.rot = Math.atan2(sy - s[1], sx - s[0]) - D.a0; D.moved = true; edGizmo(); }
+  else if (D.kind === 'grow' && ED.sel) { const s = toScreen(ED.sel.o.x, ED.sel.o.y, 0), d = hyp(sx - s[0], sy - s[1]); ED.sel.o.s = clamp(D.s0 * d / D.d0, .3, 3); D.moved = true; edGizmo(); }
+}
+function edUp(e) {
+  if (!ED.on || !ED.ptrs.has(e.pointerId)) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  ED.ptrs.delete(e.pointerId); if (ED.ptrs.size < 2) ED.pinch = 0;
+  const D = ED.drag; ED.drag = null; if (!D) return;
+  if (D.kind === 'move' || D.kind === 'turn' || D.kind === 'grow') { if (D.moved) edChanged(ED.camp || (ED.sel && ED.sel.k !== 'foe' && ED.sel.k !== 'chest')); else ED.undo.pop(); }
+  else if (D.kind === 'paint' || D.kind === 'surf') { if (D.any) edChanged(true); else ED.undo.pop(); }
+}
+function edWheel(e) { if (!ED.on || G.mode !== 'edit') return; e.preventDefault(); ED.half = clamp(ED.half * (e.deltaY > 0 ? 1.12 : 1 / 1.12), 4, 32); }
+// the handles of a piece of scenery: turn (the dot above) and grow (the dot at the side), drawn over the view and dragged
+function edHandle(kind, e) {
+  if (!ED.sel) return; e.preventDefault(); e.stopPropagation();
+  const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top, s = toScreen(ED.sel.o.x, ED.sel.o.y, 0);
+  edPush(); ED.ptrs.set(e.pointerId, [sx, sy]); try { cv.setPointerCapture(e.pointerId); } catch (_) { }
+  ED.drag = kind === 'turn' ? { kind, a0: Math.atan2(sy - s[1], sx - s[0]) - (ED.sel.o.rot || 0), moved: false } : { kind, s0: ED.sel.o.s, d0: Math.max(12, hyp(sx - s[0], sy - s[1])), moved: false };
+}
+
+/* ---------------- what is drawn over the view: the bar of tools, the selection and its handles ---------------- */
+function edUI() {
+  let root = $('ed'); const show = ED.on && G.mode === 'edit';
+  if (!root) { root = h('div', { id: 'ed', hidden: true }); document.body.append(root); }
+  root.hidden = !show; if (!show) return;
+  const T0 = ED_TOOLS.find(t => t[0] === ED.tool), L = ED.camp ? { name: 'Le camp, pour les deux jeux' } : LEVELS[ED.floor - 1];
+  const top = h('div', { class: 'ed-top' }, h('button', { class: 'btn small line', type: 'button', 'aria-label': 'Quitter l\'éditeur', onclick: edStop }, ic('retour')),
+    h('div', { class: 'grow ed-name' }, h('b', { text: ED.camp ? 'Le camp' : 'Niveau ' + ED.floor }), h('small', { text: L.name })),
+    h('button', { class: 'btn small line', type: 'button', disabled: !ED.undo.length, 'aria-label': 'Annuler', onclick: edUndo }, ic('retour')),
+    h('button', { class: 'btn small line ed-redo', type: 'button', disabled: !ED.redo.length, 'aria-label': 'Refaire', onclick: edRedo }, ic('retour')),
+    h('button', { class: 'btn small', type: 'button', onclick: ED.camp ? edStop : edTry }, ic('aller'), ED.camp ? 'Terminer' : 'Essayer'));
+  const tools = h('div', { class: 'ed-tools' }, ...ED_TOOLS.filter(t => !ED.camp || !['crea', 'coffre', 'sortie'].includes(t[0])).map(t => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.tool === t[0]), onclick: () => { ED.tool = t[0]; if (t[0] !== 'sel') ED.sel = null; edUI(); } }, ic(t[2]), t[1])));
+  const kids = [top, h('div', { class: 'ed-tip', text: T0[3] }), h('div', { class: 'ed-fill' })]; // the map stays free in the middle; everything else sits at the bottom
+  if (ED.tool === 'crea') kids.push(h('div', { class: 'seg ed-sub ed-pal' }, ...ED_FOES.map((f, i) => edPalBtn(monName(f[0], strIdxOf(ED.floor)), f[1], ED.crea === i, () => { ED.crea = i; edUI(); }))));
+  const zones = (cur, fn) => h('div', { class: 'seg ed-sub' }, ...STRATA.map((S, z) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(cur === z), onclick: () => fn(z) }, ic('z' + z), S.name)));
+  if (ED.tool === 'peint') kids.push(zones(ED.zone, z => { ED.zone = z; edUI(); }));
+  if (ED.tool === 'haut') kids.push(h('div', { class: 'seg ed-sub' }, ...ED_HEIGHTS.map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.wh === i), onclick: () => { ED.wh = i; edUI(); } }, n))));
+  if (ED.tool === 'decor') { const dz = ED.dz == null ? edZone() : ED.dz;
+    kids.push(zones(dz, z => { ED.dz = z; ED.deco = 0; edUI(); }), h('div', { class: 'seg ed-sub ed-pal' }, ...edDecor().map((d, i) => edPalBtn('d_' + ZONES[dz] + '_' + d[0], edDecorName(d[0]), ED.deco === i, () => { ED.deco = i; edUI(); })))); }
+  if (ED.tool === 'crea' || ED.tool === 'decor') kids.push(h('div', { id: 'ed-prevbox', class: 'ed-prevbox' }));
+  const sel = ED.sel;
+  if (sel) kids.push(edSelPanel(sel));
+  kids.push(tools, h('div', { id: 'ed-giz' }));
+  root.replaceChildren(...kids); edGizmo();
+}
+/* ---------------- previews: each model of the palette seen three-quarters, and the chosen one turning ----------------
+   A small renderer of its own (its canvas is the turning preview); a thumbnail is drawn once per model and kept. Without
+   the 3D (or before a model has arrived) the palette shows its names only. */
+const PREV = { r: null, scene: null, cam: null, cache: {}, cur: null, name: '', spin: 0 };
+function prevInit() {
+  if (PREV.r) return true; if (!USE3D || !window.THREE) return false;
+  try {
+    const c = document.createElement('canvas'); c.width = c.height = 128; c.className = 'ed-prev';
+    PREV.r = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true, preserveDrawingBuffer: true }); PREV.r.setClearColor(0x000000, 0);
+    PREV.scene = new THREE.Scene(); PREV.scene.add(new THREE.HemisphereLight('#fff6e0', '#3a2a1c', 1.15));
+    const d = new THREE.DirectionalLight('#ffffff', .7); d.position.set(2, 3, 2); PREV.scene.add(d);
+    PREV.cam = new THREE.PerspectiveCamera(28, 1, .1, 20); PREV.cam.position.set(1.7, 1.25, 2.3); PREV.cam.lookAt(0, -.02, 0);
+    return true;
+  } catch (e) { PREV.r = null; return false; }
+}
+function prevModel(name) { const part = modelPart(name); if (!part) return null; const g = unitMesh(part, modelMat(part.map), 0); g.userData.mat = g.userData.mesh.material; return g; }
+function prevFree(g) { if (!g) return; PREV.scene.remove(g); g.userData.mat.dispose(); }
+// the thumbnail of a model, as a data: link (null while it cannot be drawn)
+function previewOf(name) {
+  if (name in PREV.cache) return PREV.cache[name];
+  if (!prevInit() || !name) return null;
+  PREV.cache[name] = null;
+  modelLoad(name).then(() => { const g = prevModel(name); if (!g) return; const c = PREV.cur; if (c) c.visible = false; PREV.scene.add(g); g.rotation.y = -.5; PREV.r.render(PREV.scene, PREV.cam);
+    PREV.cache[name] = PREV.r.domElement.toDataURL(); prevFree(g); if (c) c.visible = true; for (const im of document.querySelectorAll('img[data-prev="' + name + '"]')) im.src = PREV.cache[name]; });
+  return null;
+}
+// a button of the palette: its thumbnail (as soon as it is drawn) and its name
+function edPalBtn(model, label, on, fn) {
+  const src = previewOf(model);
+  return h('button', { class: 'chipbtn ed-pb', type: 'button', 'aria-pressed': String(on), onclick: fn }, h('img', { alt: '', 'data-prev': model || '', src: src || 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' }), h('span', { text: label }));
+}
+// the chosen model of the palette, turning in a corner while the tool is in hand
+function edPrevStep() {
+  const want = ED.on && G.mode === 'edit' && (ED.tool === 'crea' || ED.tool === 'decor') ? (ED.tool === 'crea' ? monName(ED_FOES[ED.crea][0], strIdxOf(ED.floor)) : 'd_' + ZONES[ED.dz == null ? edZone() : ED.dz] + '_' + edDecor()[ED.deco % edDecor().length][0]) : '';
+  const box = $('ed-prevbox'); if (!want || !box || !prevInit()) return;
+  if (PREV.name !== want) { prevFree(PREV.cur); PREV.cur = null; PREV.name = want; modelLoad(want).then(() => { if (PREV.name === want && !PREV.cur) { PREV.cur = prevModel(want); if (PREV.cur) PREV.scene.add(PREV.cur); } }); }
+  if (PREV.r.domElement.parentNode !== box) box.append(PREV.r.domElement);
+  if (PREV.cur) { PREV.spin += .02; PREV.cur.rotation.y = PREV.spin; PREV.r.render(PREV.scene, PREV.cam); }
+}
+const ED_PLACES = { counter: 'Le comptoir des niveaux', portal: 'Le portail', wheel: 'La roue', fire: 'Le feu de camp', dummy: 'Le mannequin', npc: 'Un habitant' };
+const ED_DECOR_NAMES = { tonneau: 'Tonneau', rocher: 'Rocher', lanterne: 'Lanterne', cocon: 'Cocon', tremplin: 'Tremplin', grappe: 'Grappe', brasero: 'Brasero', tonneau_explosif: 'Tonneau explosif', rocher_lave: 'Rocher de lave', cristaux: 'Cristaux', rocher_enneige: 'Rocher enneigé', autel: 'Autel', cristal: 'Cristal', arche: 'Arche de lianes', barriere: 'Palissade' };
+const edDecorName = n => ED_DECOR_NAMES[n] || n;
+function edSelPanel(sel) {
+  const o = sel.o, row = [];
+  let name = ED_PLACES[sel.k] ? ED_PLACES[sel.k] : sel.k === 'start' ? (ED.camp ? 'L\'arrivée au camp' : 'L\'entrée') : sel.k === 'lift' ? 'La sortie' : sel.k === 'seal' ? 'Un sceau' : sel.k === 'chest' ? (o.gold ? 'Coffre doré' : 'Coffre') : sel.k === 'decor' ? edDecorName(o.n) : EN[o.type].name;
+  if (sel.k === 'foe') {
+    row.push(h('div', { class: 'seg' }, ...ED_FOES.map(f => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(o.type === f[0]), onclick: () => { edPush(); const e = makeEnemy(o.id, f[0], o.x, o.y, ED.floor, F.mod.hp); e.guard = o.guard; Object.assign(o, e); edChanged(false); } }, f[1]))));
+    row.push(toggleRow('bouclier', 'Garde la sortie (se réveille quand on l\'ouvre)', !!o.guard, () => { edPush(); o.guard = !o.guard; edChanged(false); }));
+  } else if (sel.k === 'chest') {
+    row.push(toggleRow('cible', 'Enfoui (se révèle quand on le voit)', !!o.hidden, () => { edPush(); o.hidden = !o.hidden; edChanged(false); }),
+      toggleRow('etoile', 'Doré (objet et gemme assurés)', !!o.gold, () => { edPush(); o.gold = !o.gold; edChanged(false); }));
+  } else if (sel.k === 'decor') row.push(h('small', { text: 'Tire le point du haut pour le tourner, celui de droite pour l\'agrandir.' }));
+  return h('div', { class: 'ed-sel' }, h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center' }, h('b', { class: 'grow', text: name }),
+    sel.k === 'start' || sel.k === 'lift' || sel.k === 'seal' || ED_PLACES[sel.k] ? null : h('button', { class: 'btn small line', type: 'button', onclick: () => edRemove(sel) }, ic('fermer'), 'Retirer'),
+    h('button', { class: 'btn small ghost', type: 'button', 'aria-label': 'Fermer', onclick: () => { ED.sel = null; edUI(); } }, ic('fermer'))), ...row);
+}
+// the ring around the selection and, for scenery, its two handles; placed every frame (the camera moves)
+function edGizmo() {
+  const box = $('ed-giz'); if (!box) return;
+  const s = ED.sel; if (!s || !ED.on) { box.replaceChildren(); return; }
+  const p = toScreen(s.o.x, s.o.y, 0), x = p[0], y = p[1];
+  if (!box.firstChild) {
+    const ring = h('div', { class: 'ed-ring' }), kids = [ring];
+    if (s.k === 'decor') { const tn = h('div', { class: 'ed-h ed-turn', 'aria-label': 'Tourner' }), gr = h('div', { class: 'ed-h ed-grow', 'aria-label': 'Agrandir' });
+      tn.addEventListener('pointerdown', e => edHandle('turn', e)); gr.addEventListener('pointerdown', e => edHandle('grow', e)); kids.push(tn, gr); }
+    box.replaceChildren(...kids);
+  }
+  const [ring, tn, gr] = box.children, rr = s.k === 'decor' ? Math.max(22, (s.o.s || 1) * 26) : 22;
+  ring.style.transform = 'translate(' + (x - rr) + 'px,' + (y - rr) + 'px)'; ring.style.width = ring.style.height = rr * 2 + 'px';
+  if (tn) { const a = (s.o.rot || 0) - Math.PI / 2; tn.style.transform = 'translate(' + (x + Math.cos(a) * (rr + 18) - 13) + 'px,' + (y + Math.sin(a) * (rr + 18) - 13) + 'px)'; }
+  if (gr) gr.style.transform = 'translate(' + (x + rr + 14 - 13) + 'px,' + (y - 13) + 'px)';
+}
+function edFrame() { if (ED.on && G.mode === 'edit') { edGizmo(); edPrevStep(); } }
+cv.addEventListener('pointerdown', edDown, true); cv.addEventListener('pointermove', edMove, true);
+cv.addEventListener('pointerup', edUp, true); cv.addEventListener('pointercancel', edUp, true); cv.addEventListener('wheel', edWheel, { passive: false });
+
+// a camp made over before this file was read: the camp on show is drawn again with it
+if (PLANS.camp && F && F.hub && G.mode !== 'play') { F = genHub(); try { worldChanged(); } catch (e) { } }
 
 </script>
 </body>
