@@ -76,7 +76,7 @@ Kit de volume par zone, cinq pièces nommées `d_<zone>_<pièce>` :
 | `butte` | Relief bas et large | Au sol, taille 1,3 à 1,8 |
 | `repere` | Pièce maîtresse de la zone | Une par salle, taille 2 |
 
-17 pièces livrées. Format : 1200 triangles, texture 512, 55 à 105 ko, face avant vers +Z.
+16 pièces livrées. Format : 1200 triangles, texture 512, 55 à 105 ko, face avant vers +Z.
 
 | Zone | massif | cime | pied | butte | repere |
 |---|---|---|---|---|---|
@@ -118,9 +118,11 @@ Les images des pièces en échec existent déjà (identifiants dans le journal d
 5. Textures de sol et de mur pour Canopée, Mine, Ruche, Marais (le moteur leur prête aujourd'hui celles d'autres zones).
 6. Attaques des monstres : la bibliothèque est écrite (`07_outils/attaques_monstres/`), rien n'est codé.
 7. Demandes anciennes non commencées : créateurs (personnage, armes, textures, monstres), éditeur d'animation par os, effets propres à chaque monstre.
+8. Mettre à jour la liste `lots` de `07_outils/dashboard/dashboard.json` : les packs 4 à 7 y sont absents ou encore notés « à valider », alors qu'ils sont dans le dépôt.
 
 ## 7. Repères utiles
 
 - Formats attendus par le jeu : chevalier < 1 Mo et 24 os ; créatures `m_<nom>` < 300 ko, texture 512, 5 clips par poses ; décors `d_<zone>_<nom>` < 200 ko et ≤ 4000 triangles ; noms en minuscules sans accent.
 - Pages publiées : Dashboard Créateur (artifact `RDuib9rwA7HYBLZnE2qCqU`), Kit d'interface (`32Hr6YhR88AFGKLStNG43t`), Ambiances (`BoRzLWScCFm6d48zfKJEa5`), Sorts (`Cu3nkNbVkeaq1YTyti4wik`).
+- La feuille de route et la fiche des formats du jeu sont dans un autre dépôt, `Startupp/tinknight` (branche `main-fuebt2`, fichiers `ROADMAP.md` et `FORMATS.md`), auquel la session d'assets n'avait pas accès.
 - Les blocs cubiques des packs 4 à 6 restent dans le dépôt. Ils servent encore de piliers ou d'ornements, pas de sols ni de murs.
