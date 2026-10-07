@@ -616,7 +616,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 #crea-wheel .cw-p.sel,#crea-wheel .cw-p:focus-visible,#crea-wheel .cw-c:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
 #crea-wheel .cw-p:active,#crea-wheel .cw-c:active{filter:brightness(1.25)}
 @media (prefers-reduced-motion:no-preference){#crea-wheel .cw-p{animation:cwIn .16s ease-out both}@keyframes cwIn{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}}}
-#ed .ed-layers{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin-top:6px;display:flex;flex-direction:column;gap:6px;font-size:13px}#ed .ed-layers .chipbtn{flex:none;padding:4px 8px;font-size:12px}
+#ed .ed-tex{max-height:30vh;overflow:auto}.tex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px}.tex-zone{grid-column:1/-1;font-size:11px;color:var(--ink-3,#b9a98a);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}.tex-it{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:2px solid transparent;border-radius:8px;padding:2px;color:inherit;cursor:pointer}.tex-it[aria-pressed=true]{border-color:var(--gold,#ffc24a)}.tex-it small{font-size:10px;line-height:1.1;text-align:center}.adm-lib{max-height:50vh;overflow:auto}.adm-lib .tex-it:first-child{display:none}.tex-img{width:56px;height:56px;border-radius:6px;object-fit:cover;background:#0006;display:block}.tex-none{display:grid;place-items:center;font-size:20px}#ed .ed-layers{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin-top:6px;display:flex;flex-direction:column;gap:6px;font-size:13px}#ed .ed-layers .chipbtn{flex:none;padding:4px 8px;font-size:12px}
 </style>
 <script src="three.min.js"></script>
 
@@ -3517,7 +3517,7 @@ function withOutline(mesh, k = 1.07) {
 /* ---------- the level: floor, walls, growth ---------- */
 const WALL_H = [0, .34, 1.3, 2.2, 3.2]; // the heights the level editor offers: (drawn), low, normal, high, very high
 function buildWorld() {
-  const shared = new Set([M.toon, M.glow, M.eye, M.outline, ...M.floor, ...M.wall, ...M.top]);
+  const shared = new Set([M.toon, M.glow, M.eye, M.outline, ...M.floor, ...M.wall, ...M.top, ...Object.values(LT).map(l => l.mat)]);
   for (const o of [...worldGroup.children]) { worldGroup.remove(o); o.traverse(c => { if (c.isSprite) c.material.dispose(); else if (c.isMesh) { c.geometry.dispose(); if (!shared.has(c.material)) c.material.dispose(); } }); }
   for (const o of [...dynGroup.children]) freeMesh(o); if (F.enemies) for (const e of F.enemies) e.m = null; // the creatures get their meshes again (the editor rebuilds the world under creatures already drawn)
   dying.length = 0; for (const n of CAMP.npcs) freeModel(n.m); CAMP = { npcs: [], crit: [] }; propsClear(); const backWalls = [];
@@ -3535,9 +3535,14 @@ function buildWorld() {
   // one builder of floor, wall sides and wall tops per zone (the level editor can paint any tile with the textures of another zone, F.surf)
   // and per piece of CHUNK × CHUNK tiles: each piece is a mesh of its own, and three.js leaves out those the camera does not see,
   // so a bigger map costs nothing more where the knight stands (24e)
-  const CHUNK = 24, FB = {}, WB = {}, TB = {}, PB = {}, GBs = {}, zoneAt = (x, y) => { const s = F.surf && F.surf[y * W + x]; return s != null && s < 5 ? s : si; };
+  const CHUNK = 24, FB = {}, WB = {}, TB = {}, PB = {}, GBs = {};
   const ck = (x, y) => ((y / CHUNK) | 0) * 4096 + ((x / CHUNK) | 0);
-  const pick = (A, x, y) => { const k = zoneAt(x, y) + ':' + ck(x, y); return A[k] || (A[k] = new GB()); };
+  // what each tile wears (30b): a texture of the library painted on that tile, else the zone painted there, else the map's own
+  // texture of the library, else the textures of the level's zone. A key: the zone number, or L<texture>
+  const TX = F.tx || {}, TP = F.tpal || [], lay = { sol: F.ts, mur: F.tw, dessus: F.tt };
+  const wear = (kind, x, y) => { const i = y * W + x, a = lay[kind] && lay[kind][i]; if (a != null && a < 255 && TP[a]) return 'L' + TP[a];
+    const s = F.surf && F.surf[i]; return s != null && s < 5 ? s : TX[kind] ? 'L' + TX[kind] : si; };
+  const pick = (A, x, y, kind) => { const k = wear(kind, x, y) + ':' + ck(x, y); return A[k] || (A[k] = new GB()); };
   const at = (A, x, y) => { const k = ck(x, y); return A[k] || (A[k] = new GB()); };
   const glows = [];
   const grey = k => [k, k, k];
@@ -3549,9 +3554,9 @@ function buildWorld() {
   // texture coordinates come from the place in the world (half a unit a tile, v growing up the screen): seamless textures stay seamless
   const flat = (b, x, y, hh, ca, cb, cc, cd) => b.quad([x, hh, y + 1], [x + 1, hh, y + 1], [x + 1, hh, y], [x, hh, y], [0, 1, 0], ca, cb, cc, cd, x / 2, -(y + 1) / 2, (x + 1) / 2, -y / 2);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (isF(x, y)) { flat(pick(FB, x, y), x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
+    if (isF(x, y)) { flat(pick(FB, x, y, 'sol'), x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
     const hh = hg[y * W + x]; if (!hh) continue;
-    const wb = pick(WB, x, y), tb = pick(TB, x, y), pb = at(PB, x, y), gb = at(GBs, x, y);
+    const wb = pick(WB, x, y, 'mur'), tb = pick(TB, x, y, 'dessus'), pb = at(PB, x, y), gb = at(GBs, x, y);
     const low = hh < 1, top = grey((low ? .8 : .62) + R() * .3);
     flat(tb, x, y, hh, top, top, top, top);
     const side = (nh, a, b, n) => { // a, b: the two bottom corners (x, z), counter-clockwise seen from outside
@@ -3573,12 +3578,12 @@ function buildWorld() {
   for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (isF(x, y) && !isF(x, y - 1) && R() < .16) decoSmall(at(PB, x, y), kd, x + .15 + R() * .7, 0, y + .14 + R() * .12, R);
   const addW = (b, m, rs) => { if (b.empty) return; const o = new THREE.Mesh(b.build(), m); o.castShadow = rs !== 2; o.receiveShadow = rs > 0; o.matrixAutoUpdate = false; worldGroup.add(o); };
   const n0 = worldGroup.children.length;
-  zoneMats(); const zk = k => +k.split(':')[0];
-  for (const k in FB) { zoneTexWant(zk(k)); addW(FB[k], M.floor[zk(k)], 2); } for (const k in WB) { zoneTexWant(zk(k)); addW(WB[k], M.wall[zk(k)], 1); } for (const k in TB) addW(TB[k], M.top[zk(k)], 1);
+  zoneMats(); const mt = (A, k) => { const w = k.split(':')[0]; if (w[0] === 'L') return libMat(w.slice(1)) || A[si]; zoneTexWant(+w); return A[+w]; };
+  for (const k in FB) addW(FB[k], mt(M.floor, k), 2); for (const k in WB) addW(WB[k], mt(M.wall, k), 1); for (const k in TB) addW(TB[k], mt(M.top, k), 1);
   for (const k in PB) addW(PB[k], M.toon, 1); for (const k in GBs) if (!GBs[k].empty) { const o = new THREE.Mesh(GBs[k].build(), M.glow); o.matrixAutoUpdate = false; worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
   // each thing built belongs to a layer of the level editor (sol, murs, niveau, pnj), which can show or hide it
-  for (let i = n0; i < worldGroup.children.length; i++) { const o = worldGroup.children[i]; o.userData.layer = M.floor.includes(o.material) ? 'sol' : 'murs'; }
+  for (let i = n0; i < worldGroup.children.length; i++) { const o = worldGroup.children[i]; o.userData.layer = M.floor.includes(o.material) || (o.material.userData.lib && texInfo(o.material.userData.lib).kind === 'sol') ? 'sol' : 'murs'; }
   const n1 = worldGroup.children.length;
   buildLift(); for (const c of F.chests) buildChest(c); if (F.seals) for (const q of F.seals) buildSeal(q);
   for (let i = n1; i < worldGroup.children.length; i++) worldGroup.children[i].userData.layer = 'niveau';
@@ -4486,6 +4491,40 @@ function zoneMats() {
     const fit = (m, tex, col) => { const map = on ? tex : m.userData.own; if (m.map !== map) { m.map = map; m.needsUpdate = true; } m.color.set(on ? S.tex : col); };
     fit(M.floor[si], on && Z.sol, S.floorA); fit(M.wall[si], on && Z.mur, S.wallFace); fit(M.top[si], on && Z.dessus, S.cap);
   }
+}
+/* ---------- the library of textures (30a) ----------
+   Every texture of the cubes the game knows: the first ones (t_<zone>_<sol|mur|dessus>) and the v2 ones (t2_<zone>_<sorte>, three floors,
+   two walls, a top for each zone). A map chooses its own (30b): a floor, a wall and a top for the whole map, and any tile can wear
+   another. A texture of the library is asked the first time a map wears it, then kept; meanwhile the game's own look of its zone. */
+const TEX_KIND = { sol: 'Sols', mur: 'Murs', dessus: 'Dessus de murs' };
+const TEX_VAR = { naturel: 'naturel', chemin: 'chemin', dalles: 'dalles', habille: 'habillé' };
+function texInfo(id) {
+  let m = /^t_([a-z]+)_(sol|mur|dessus)$/.exec(id), v = 1, sub = '';
+  if (!m) { m = /^t2_([a-z]+)_(sol|mur|dessus)(?:_([a-z]+))?$/.exec(id); if (!m) return null; v = 2; sub = m[3] || ''; }
+  const z = ZONES.indexOf(m[1]); if (z < 0) return null;
+  const kind = m[2], what = kind === 'sol' ? 'Sol' : kind === 'mur' ? 'Mur' : 'Dessus';
+  return { id, z, kind, v, sub, name: STRATA[z].name + ' — ' + what + (sub ? ' ' + (TEX_VAR[sub] || sub) : '') + (v === 1 ? ' (première série)' : '') };
+}
+// the whole library, sorted: by kind (floors, walls, tops), then by zone, the newest series first
+function texLib(kind) {
+  if (!MDL.list) return [];
+  const K = ['sol', 'mur', 'dessus'];
+  return Object.keys(MDL.list).map(texInfo).filter(t => t && (!kind || t.kind === kind)).sort((a, b) => K.indexOf(a.kind) - K.indexOf(b.kind) || a.z - b.z || b.v - a.v || a.id.localeCompare(b.id));
+}
+// the address of a texture's picture, for a thumbnail (an <img>); '' on a page without models
+function texUrl(id) { const cfg = window.ecorceModeles; return cfg && !cfg.txt ? new URL(cfg.dir + id + '.jpg', location.href).href : ''; }
+const LT = {}; // id → { mat, ok }: one material per texture of the library worn by a map, kept
+function libMat(id) {
+  let L = LT[id]; if (L) return L.mat; const t = texInfo(id); if (!t) return null;
+  const own = (t.kind === 'sol' ? M.floor : t.kind === 'mur' ? M.wall : M.top)[t.z], S = STRATA[t.z];
+  const mat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: own.gradientMap, map: own.userData.own });
+  mat.color.set(t.kind === 'sol' ? S.floorA : t.kind === 'mur' ? S.wallFace : S.cap); mat.userData.lib = id;
+  L = LT[id] = { mat, ok: false }; const cfg = window.ecorceModeles;
+  if (cfg && MDL.list && id in MDL.list) picRead(cfg, id).then(im => {
+    const tx = new THREE.Texture(im); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = Math.min(4, R3.capabilities.getMaxAnisotropy()); tx.needsUpdate = true;
+    mat.map = tx; mat.color.set(S.tex); mat.needsUpdate = true; L.ok = true;
+  }, e => { MDL.lost++; MDL.why = id + ' — ' + whyOf(e); });
+  return mat;
 }
 // the illustration of a world as a CSS background once it has arrived; null meanwhile (it is asked the first time), and on a page without models.
 // What already shows a banner of that world (data-art) gets it as soon as it is there.
@@ -5441,9 +5480,28 @@ function admHudCard() {
       h('button', { class: 'btn small', type: 'button', onclick: () => hudEditStart('play') }, ic('epee'), 'L\'écran de jeu'),
       h('button', { class: 'btn small line', type: 'button', onclick: () => hudEditStart('hub') }, ic('zcamp'), 'L\'écran du camp')));
 }
+// the library of the game (30a): every texture, sorted, in thumbnails; which maps wear the one chosen. More shelves to come (icons, scenery)
+const ADM_LIB = { k: 'sol', sel: null };
+function texUsedBy(id) {
+  const out = [], all = Object.assign({}, PLANS_PUB, PLANS);
+  for (const k in all) { const p = all[k]; if (!p) continue; const tx = p.tx || {}; if (tx.sol === id || tx.mur === id || tx.dessus === id || (Array.isArray(p.pal) && p.pal.includes(id))) out.push(k === 'camp' ? 'le camp' : 'niveau ' + k + (PLANS[k] ? ' (essai sur cet appareil)' : '')); }
+  return out;
+}
+function admLibCard() {
+  const chip = (k, lab) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ADM_LIB.k === k), onclick: () => { ADM_LIB.k = k; ADM_LIB.sel = null; renderSheet(); } }, lab);
+  const lib = texLib(), t = ADM_LIB.sel && texInfo(ADM_LIB.sel), used = t ? texUsedBy(t.id) : [];
+  const body = !lib.length ? [h('p', { style: 'font-size:13px', text: 'La bibliothèque arrive avec les modèles (la vraie 3D) : elle n\'est pas encore là.' })] : [
+    h('div', { class: 'seg' }, chip('sol', 'Sols (' + texLib('sol').length + ')'), chip('mur', 'Murs (' + texLib('mur').length + ')'), chip('dessus', 'Dessus de murs (' + texLib('dessus').length + ')')),
+    t ? h('div', { class: 'row', style: 'gap:10px;align-items:center' }, texThumb(t.id), h('div', { class: 'grow' }, h('b', { text: t.name }), h('small', { style: 'display:block', text: (t.v === 1 ? 'Première série' : 'Série v2') + ' · fichier ' + t.id + '.jpg · ' + (MDL.list[t.id] || '?') + ' ko' }),
+      h('small', { style: 'display:block', text: used.length ? 'Portée par : ' + used.join(', ') : 'Aucune carte faite à la main ne la porte encore. Pour la poser : Éditeur de niveaux, Terrain, Textures.' }))) : h('small', { text: 'Touche une texture pour savoir d\'où elle vient et quelles cartes la portent.' }),
+    h('div', { class: 'adm-lib' }, texPick(ADM_LIB.k, ADM_LIB.sel, id => { ADM_LIB.sel = id; renderSheet(); }, 'Aucune'))];
+  return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'La bibliothèque' }),
+    h('small', { text: 'Toutes les textures du jeu, rangées par sorte puis par zone : les premières et la série v2. Chaque carte choisit les siennes dans l\'éditeur de niveaux.' }))),
+    h('div', { style: 'padding:0 14px 14px;display:flex;flex-direction:column;gap:8px' }, ...body));
+}
 // what the editor of models will hold next (ROADMAP, step 24)
 function admSoon() {
-  const L = [['Arènes de boss', 'leur taille et leur plan (24e)'], ['Animations', 'voir et régler celles de chaque créature et du chevalier (24h)'], ['Armes', 'ajouter, retirer, importer, exporter, avec aperçu (24f)'], ['Décors', '(24f)'], ['Textures', '(24f)'], ['Chevaliers', '(24f)'], ['Créatures', '(24f)'], ['Sorts', 'avec le sort de l\'Expédition (étape 10)']];
+  const L = [['Arènes de boss', 'leur taille et leur plan (24e)'], ['Animations', 'voir et régler celles de chaque créature et du chevalier (24h)'], ['Armes', 'ajouter, retirer, importer, exporter, avec aperçu (24f)'], ['Décors', '(24f)'], ['Chevaliers', '(24f)'], ['Créatures', '(24f)'], ['Sorts', 'avec le sort de l\'Expédition (étape 10)']];
   return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'Bientôt' }), h('small', { text: 'Les bibliothèques du jeu, dans cet éditeur.' }))),
     h('div', { class: 'adm-list' }, ...L.map(([n, t]) => h('div', { class: 'adm-row', style: 'opacity:.6' }, h('b', { text: n }), h('small', { text: t })))));
 }
@@ -5478,7 +5536,7 @@ function admBody(kids, foot) {
     const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
     search.addEventListener('input', () => { ADM.q = search.value; admFilter(); });
     kids.push(search);
-  } else kids.push(roleAdmCard(), admCampCard(), admHudCard(), admFilesCard());
+  } else kids.push(roleAdmCard(), admCampCard(), admLibCard(), admHudCard(), admFilesCard());
   for (const [id, name, phrase] of TUNE_FAM) {
     if (id === 'hud' || (id === 'niv') !== mod) continue; // the draw of each level goes with the maps, every other family with the variables; the screen has its own editor (k_hud.js)
     const badge = h('span', { class: 'adm-badge', hidden: true }), list = h('div', { class: 'adm-list' }), sec = h('section', { class: 'adm-fam' });
@@ -6589,15 +6647,31 @@ const PLANS_PUB = {};
 try { Object.assign(PLANS_PUB, JSON.parse(localStorage.getItem('tk-cartes') || '{}')); } catch (e) { }
 const planOf = k => PLANS[k] || PLANS_PUB[k] || null;
 const r1 = v => Math.round(v * 10) / 10;
+/* the textures of a map (30b): tx = the floor, wall and top of the whole map (ids of the library, or none: the zone's own);
+   pal = the textures painted tile by tile, and ts / tw / tt = one character a tile for the floor, the wall sides and the wall tops
+   ('.' = nothing painted, else the place in pal, from '0') */
+const TEX_LAYERS = ['ts', 'tw', 'tt'], TEX_PAL_MAX = 64;
+function texToPlan(p, F0) {
+  const n = F0.W * F0.H, tx = F0.tx || {}; if (tx.sol || tx.mur || tx.dessus) p.tx = { sol: tx.sol || null, mur: tx.mur || null, dessus: tx.dessus || null };
+  if (!F0.tpal || !F0.tpal.length) return p;
+  let any = false; for (const k of TEX_LAYERS) { const a = F0[k]; if (!a) continue; let s = '', on = false; for (let i = 0; i < n; i++) { const v = a[i]; if (v < 255) { s += String.fromCharCode(48 + v); on = true; } else s += '.'; } if (on) { p[k] = s; any = true; } }
+  if (any) p.pal = F0.tpal.slice(); return p;
+}
+function texFromPlan(F0, p) {
+  const n = F0.W * F0.H, ok = id => typeof id === 'string' && id.length < 60 ? id : null;
+  F0.tx = p.tx && typeof p.tx === 'object' ? { sol: ok(p.tx.sol), mur: ok(p.tx.mur), dessus: ok(p.tx.dessus) } : null;
+  F0.tpal = Array.isArray(p.pal) ? p.pal.slice(0, TEX_PAL_MAX).map(ok) : [];
+  for (const k of TEX_LAYERS) { const a = F0[k] = new Uint8Array(n).fill(255), s = p[k]; if (typeof s !== 'string') continue; for (let i = 0; i < n && i < s.length; i++) { const v = s.charCodeAt(i) - 48; if (v >= 0 && v < F0.tpal.length) a[i] = v; } }
+}
 function floorToPlan(F0) {
   let g = '', s = '', hw = ''; for (let i = 0; i < F0.g.length; i++) { g += F0.g[i] ? '1' : '0'; s += F0.surf && F0.surf[i] < 5 ? String(F0.surf[i]) : '.'; hw += F0.wh && F0.wh[i] ? String(F0.wh[i]) : '.'; }
-  return { v: 1, floor: F0.floor, big: !!F0.big, W: F0.W, H: F0.H, g, s, h: hw,
+  return texToPlan({ v: 1, floor: F0.floor, big: !!F0.big, W: F0.W, H: F0.H, g, s, h: hw,
     rooms: F0.rooms.map(r => [r.cx, r.cy, r.kind, r.x0, r.y0, r.x1, r.y1]),
     start: [r1(F0.start.x), r1(F0.start.y)], lift: F0.lift ? [r1(F0.lift.x), r1(F0.lift.y)] : null,
     foes: F0.enemies.filter(e => !e.summon).map(e => [e.type, r1(e.x), r1(e.y), e.guard ? 1 : 0]),
     chests: F0.chests.map(c => [r1(c.x), r1(c.y), c.hidden ? 1 : 0, c.gold ? 1 : 0]),
     decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z]),
-    seals: F0.seals ? F0.seals.map(q => [r1(q.x), r1(q.y)]) : null, wp: edWallProps(F0) };
+    seals: F0.seals ? F0.seals.map(q => [r1(q.x), r1(q.y)]) : null, wp: edWallProps(F0) }, F0);
 }
 // the scenery up on the walls (tile units: x, height y, z), as the editor or the draw placed it
 const r2 = v => Math.round(v * 100) / 100;
@@ -6617,7 +6691,7 @@ function planToFloor(p, seed, floor) {
   F0.decor = (p.decor || []).map(d => ({ n: d[0], x: d[1], y: d[2], s: d[3], rot: d[4], r: d[5], z: d[6] >= 0 && d[6] < 5 ? d[6] : null }));
   for (const d of F0.decor) F0.blocks.push({ x: d.x, y: d.y, r: d.r });
   if (p.big && p.seals) F0.seals = p.seals.map((q, id) => ({ id, x: q[0], y: q[1], got: false }));
-  F0.wallProps = wpFrom(p.wp);
+  F0.wallProps = wpFrom(p.wp); texFromPlan(F0, p);
   return F0;
 }
 /* ---------- the camp made over: its tiles, surfaces and heights, its scenery, and where its places and people stand ---------- */
@@ -6626,7 +6700,7 @@ function campToPlan(F0) {
   const p = floorToPlan(F0);
   return { v: 1, camp: true, W: p.W, H: p.H, g: p.g, s: p.s, h: p.h, decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z, d.glow ? 1 : 0]),
     start: xy(F0.start), counter: xy(F0.counter), portal: xy(F0.portal), wheel: xy(F0.wheel), fire: [r1(F0.fireX), r1(F0.fireY)], dummy: xy(F0.enemies[0]), npcs: F0.npcs.map(xy),
-    stations: F0.stations.map(s => [s.k, r1(s.x), r1(s.y), r1(s.ox), r1(s.oy)]), wp: edWallProps(F0), off: F0.off || [0, 0] };
+    stations: F0.stations.map(s => [s.k, r1(s.x), r1(s.y), r1(s.ox), r1(s.oy)]), wp: edWallProps(F0), off: F0.off || [0, 0], tx: p.tx, pal: p.pal, ts: p.ts, tw: p.tw, tt: p.tt };
 }
 function campApply(F0, p) {
   if (!p || !p.camp || !p.g) return;
@@ -6641,7 +6715,7 @@ function campApply(F0, p) {
   if (Array.isArray(p.decor)) F0.decor = p.decor.map(d => ({ n: d[0], x: d[1], y: d[2], s: d[3], rot: d[4], r: d[5], z: d[6] >= 0 && d[6] < 5 ? d[6] : null, glow: !!d[7] }));
   hubStations(F0);
   if (Array.isArray(p.stations)) for (const s of p.stations) { const st = F0.stations.find(x => x.k === s[0]); if (st) { st.x = s[1]; st.y = s[2]; st.ox = s[3]; st.oy = s[4]; } } // where you walk to open a menu, moved on its own
-  F0.wallProps = wpFrom(p.wp); hubBlocks(F0);
+  F0.wallProps = wpFrom(p.wp); hubBlocks(F0); texFromPlan(F0, p);
 }
 // the animals of the camp, moved by ox, oy tiles (their spot and the corner they wander in)
 function campShift(F0, ox, oy) { if (!ox && !oy) return; for (const c of F0.critters || []) { c.x += ox * T; c.y += oy * T; c.tx += ox * T; c.ty += oy * T; c.zone = [c.zone[0] + ox, c.zone[1] + oy, c.zone[2] + ox, c.zone[3] + oy]; } }
@@ -6651,7 +6725,7 @@ const planFor = (seed, floor) => { const p = planOf(floor); return p && !p.big =
 // the layers of what is edited: each can be shown or hidden, and locked (then nothing on it can be picked)
 const ED_LAYERS = [['sol', 'Sol'], ['murs', 'Murs'], ['decmur', 'Décors des murs'], ['decsol', 'Décors au sol'], ['niveau', 'Créatures, coffres, entrée, sortie'], ['pnj', 'PNJ et zones d\'interaction']];
 const ED_KIND_LAYER = { start: 'niveau', lift: 'niveau', foe: 'niveau', chest: 'niveau', seal: 'niveau', decor: 'decsol', wprop: 'decmur', counter: 'pnj', portal: 'pnj', wheel: 'pnj', fire: 'pnj', dummy: 'pnj', npc: 'pnj', zone: 'pnj' };
-const ED = { layers: Object.fromEntries(ED_LAYERS.map(l => [l[0], { v: true, l: false }])), layersOpen: false, on: false, floor: 1, seed: 0, tool: 'sel', crea: 0, deco: 0, dz: null, zone: 0, wh: 2, sel: null, undo: [], redo: [], half: 9, yaw: 0, yawV: 0, chain: 0, padPrev: {}, fam: 'terrain', bs: 3, bround: true, bmode: 'libre', anchor: null, ghost: null, lastT: null, pts: false, ptrs: new Map(), drag: null, pinch: 0, busy: false };
+const ED = { layers: Object.fromEntries(ED_LAYERS.map(l => [l[0], { v: true, l: false }])), tk: 'sol', tsol: null, tmur: null, ttop: null, layersOpen: false, on: false, floor: 1, seed: 0, tool: 'sel', crea: 0, deco: 0, dz: null, zone: 0, wh: 2, sel: null, undo: [], redo: [], half: 9, yaw: 0, yawV: 0, chain: 0, padPrev: {}, fam: 'terrain', bs: 3, bround: true, bmode: 'libre', anchor: null, ghost: null, lastT: null, pts: false, ptrs: new Map(), drag: null, pinch: 0, busy: false };
 // [tool, name in the bar, icon, what a touch on the map does]
 const ED_TOOLS = [
   ['sel', 'Choisir', 'cible', 'Touche un élément pour le choisir, puis tire-le pour le déplacer. Glisse ailleurs pour déplacer la vue.'],
@@ -6659,6 +6733,7 @@ const ED_TOOLS = [
   ['mur', 'Boucher', 'cadenas', 'Glisse sur le sol pour remettre de la roche.'],
   ['peint', 'Peindre', 'ombre', 'Glisse sur le sol ou les murs pour leur donner les textures de la zone choisie.'],
   ['haut', 'Hauteur', 'niveaux', 'Glisse sur les murs pour leur donner la hauteur choisie.'],
+  ['tex', 'Textures', 'ombre', 'Choisis une texture de la bibliothèque, puis glisse sur le sol ou les murs pour la poser ; ou mets-la sur toute la carte.'],
   ['crea', 'Créature', 'c_kills', 'Touche le sol pour poser la créature choisie.'],
   ['coffre', 'Coffre', 'coffre', 'Touche le sol pour poser un coffre.'],
   ['decor', 'Décor au sol', 'plus', 'Touche le sol pour poser le décor choisi.'],
@@ -6669,7 +6744,7 @@ const ED_TOOLS = [
   ['taille', 'Taille', 'c_map', 'La taille de la carte, en cases : ce qu\'on ajoute est de la roche, ce qu\'on retire disparaît.'],
 ];
 // the families of the bar: [key, name, icon, tools]
-const ED_FAMS = [['terrain', 'Terrain', 'niveaux', ['sol', 'mur', 'peint', 'haut', 'taille']], ['decors', 'Décors', 'petale', ['decor', 'decmur']], ['niveau', 'Niveau', 'drapeau', ['crea', 'coffre', 'entree', 'sortie']]];
+const ED_FAMS = [['terrain', 'Terrain', 'niveaux', ['sol', 'mur', 'tex', 'peint', 'haut', 'taille']], ['decors', 'Décors', 'petale', ['decor', 'decmur']], ['niveau', 'Niveau', 'drapeau', ['crea', 'coffre', 'entree', 'sortie']]];
 const ED_FOES = [[0, 'Sporule'], [1, 'Ronceux'], [2, 'Cracheur'], [3, 'Follet'], [4, 'Gardien']];
 const ED_HEIGHTS = ['Comme tiré', 'Basse', 'Normale', 'Haute', 'Très haute'];
 const edZone = () => ED.camp ? 0 : strIdxOf(ED.floor) % 5; // the zone of what is being edited (the camp wears the Racines kit)
@@ -6820,7 +6895,7 @@ function edHit(sx, sy) { // the nearest thing under the finger, on screen
 }
 /* ---------- brushes (24c): 1, 3 or 5 tiles, square or round; drawn freely, along a line, as a rectangle, or filling a whole area ----------
    The tools of the ground: sol (dig), mur (fill with rock), peint (the zone a tile wears), haut (the height of a wall). */
-const ED_GROUND = ['sol', 'mur', 'peint', 'haut'];
+const ED_GROUND = ['sol', 'mur', 'peint', 'haut', 'tex'];
 const ED_BMODES = [['libre', 'Libre'], ['ligne', 'Ligne'], ['rect', 'Rectangle'], ['remplir', 'Remplir']];
 // the tiles under the brush around a tile (round: the corners are left out)
 function edFoot(tx, ty, out) {
@@ -6833,8 +6908,18 @@ function edTileOp(kind, i) {
   if (!F.surf) F.surf = new Uint8Array(F.W * F.H).fill(255); if (!F.wh) F.wh = new Uint8Array(F.W * F.H);
   const tx = i % F.W, ty = (i / F.W) | 0;
   if (kind === 'sol' || kind === 'mur') { if (tx < 1 || ty < 1 || tx > F.W - 2 || ty > F.H - 2) return false; const v = kind === 'sol' ? 1 : 0; if (F.g[i] === v) return false; F.g[i] = v; return true; }
-  if (kind === 'peint') { const v = ED.zone === edZone() ? 255 : ED.zone; if (F.surf[i] === v) return false; F.surf[i] = v; return true; }
+  if (kind === 'peint') { const v = ED.zone === edZone() ? 255 : ED.zone, had = texClear(i); if (F.surf[i] === v) return had; F.surf[i] = v; return true; }
+  if (kind === 'tex') return edTexOp(i);
   if (F.g[i] === 1 || F.wh[i] === ED.wh) return false; F.wh[i] = ED.wh; return true;
+}
+// the texture brush (30b): the floor gets the chosen floor; a wall gets the chosen side and top together. None = the map's own again
+function texArr(k) { if (!F[k] || F[k].length !== F.W * F.H) F[k] = new Uint8Array(F.W * F.H).fill(255); return F[k]; }
+function texSlot(id) { if (!id) return 255; if (!F.tpal) F.tpal = []; let n = F.tpal.indexOf(id); if (n < 0) { if (F.tpal.length >= TEX_PAL_MAX) { toast('Une carte porte ' + TEX_PAL_MAX + ' textures différentes au plus'); return -1; } n = F.tpal.push(id) - 1; } return n; }
+function texClear(i) { let had = false; for (const k of TEX_LAYERS) if (F[k] && F[k][i] !== 255) { F[k][i] = 255; had = true; } return had; }
+function edTexOp(i) {
+  const ground = F.g[i] === 1; if (ED.tk === 'sol' ? !ground : ground) return false;
+  let ch = false; for (const [k, id] of ED.tk === 'sol' ? [['ts', ED.tsol]] : [['tw', ED.tmur], ['tt', ED.ttop]]) { const v = texSlot(id); if (v < 0) return ch; const a = texArr(k); if (a[i] !== v) { a[i] = v; ch = true; } }
+  return ch;
 }
 const edTileOf = (x, y) => [clamp(Math.floor(x / T), 0, F.W - 1), clamp(Math.floor(y / T), 0, F.H - 1)];
 // the tiles from a to b, one by one (Bresenham)
@@ -6846,7 +6931,7 @@ function edStroke(kind, mode, a, b) {
   if (mode === 'rect') { const r = (ED.bs - 1) / 2; for (let y = Math.max(0, Math.min(a[1], b[1]) - r); y <= Math.min(F.H - 1, Math.max(a[1], b[1]) + r); y++) for (let x = Math.max(0, Math.min(a[0], b[0]) - r); x <= Math.min(F.W - 1, Math.max(a[0], b[0]) + r); x++) set.add(y * F.W + x); }
   else if (mode === 'remplir') {
     if (!F.surf) F.surf = new Uint8Array(F.W * F.H).fill(255);
-    const i0 = a[1] * F.W + a[0], same = kind === 'peint' ? (i => F.g[i] === 1 && F.surf[i] === F.surf[i0]) : kind === 'haut' ? (i => F.g[i] !== 1 && F.wh && F.wh[i] === F.wh[i0]) : (i => F.g[i] === F.g[i0]);
+    const i0 = a[1] * F.W + a[0], tl = ED.tk === 'sol' ? texArr('ts') : texArr('tw'), same = kind === 'tex' ? (i => F.g[i] === F.g[i0] && tl[i] === tl[i0] && F.surf[i] === F.surf[i0]) : kind === 'peint' ? (i => F.g[i] === 1 && F.surf[i] === F.surf[i0]) : kind === 'haut' ? (i => F.g[i] !== 1 && F.wh && F.wh[i] === F.wh[i0]) : (i => F.g[i] === F.g[i0]);
     if (kind === 'peint' && F.g[i0] !== 1) return set; // a zone is painted on the ground only
     const todo = [i0]; set.add(i0);
     while (todo.length && set.size < 6000) { const i = todo.pop(), x = i % F.W, y = (i / F.W) | 0;
@@ -6861,8 +6946,9 @@ function edResize(dw, dh, left, top) {
   const [lo, hi] = ED_SIZE[ED.camp ? 'camp' : 'lvl'], W0 = F.W, H0 = F.H, W = clamp(W0 + dw, lo, hi), H = clamp(H0 + dh, lo, hi);
   if (W === W0 && H === H0) { toast('La carte est déjà à sa ' + (W0 + dw > hi || H0 + dh > hi ? 'plus grande' : 'plus petite') + ' taille (' + lo + ' à ' + hi + ' cases)'); return; }
   edPush();
-  const ox = left ? W - W0 : 0, oy = top ? H - H0 : 0, g = new Uint8Array(W * H), surf = new Uint8Array(W * H).fill(255), wh = new Uint8Array(W * H);
-  for (let y = 0; y < H0; y++) for (let x = 0; x < W0; x++) { const nx = x + ox, ny = y + oy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const i = y * W0 + x, j = ny * W + nx; g[j] = F.g[i]; if (F.surf) surf[j] = F.surf[i]; if (F.wh) wh[j] = F.wh[i]; }
+  const ox = left ? W - W0 : 0, oy = top ? H - H0 : 0, g = new Uint8Array(W * H), surf = new Uint8Array(W * H).fill(255), wh = new Uint8Array(W * H), tl = TEX_LAYERS.map(() => new Uint8Array(W * H).fill(255));
+  for (let y = 0; y < H0; y++) for (let x = 0; x < W0; x++) { const nx = x + ox, ny = y + oy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const i = y * W0 + x, j = ny * W + nx; g[j] = F.g[i]; if (F.surf) surf[j] = F.surf[i]; if (F.wh) wh[j] = F.wh[i]; TEX_LAYERS.forEach((k, n) => { if (F[k] && F[k].length === W0 * H0) tl[n][j] = F[k][i]; }); }
+  TEX_LAYERS.forEach((k, n) => { F[k] = tl[n]; });
   for (let x = 0; x < W; x++) g[x] = g[(H - 1) * W + x] = 0; for (let y = 0; y < H; y++) g[y * W] = g[y * W + W - 1] = 0; // the border stays rock
   F.W = W; F.H = H; F.g = g; F.surf = surf; F.wh = wh;
   const dx = ox * T, dy = oy * T, inside = o => o.x > T && o.y > T && o.x < (W - 1) * T && o.y < (H - 1) * T, keep = o => { o.x = clamp(o.x, 1.5 * T, (W - 1.5) * T); o.y = clamp(o.y, 1.5 * T, (H - 1.5) * T); };
@@ -7014,7 +7100,7 @@ function edUI() {
   if (famOf) ED.fam = famOf[0][0];
   const tools = h('div', { class: 'ed-tools' }, ...edToolList().filter(t => t[0] === 'sel' || t[0] === 'gomme').map(tb), h('span', { class: 'ed-sep' }),
     ...fams.map(([f, L]) => h('button', { class: 'chipbtn ed-fam', type: 'button', 'aria-pressed': String(!!famOf && famOf[0] === f), onclick: () => { ED.fam = f[0]; if (!L.some(t => t[0] === ED.tool)) { ED.tool = L[0][0]; ED.sel = null; ED.anchor = null; } edUI(); } }, ic(f[2]), ED.camp && f[0] === 'niveau' ? 'Lieux' : f[1])));
-  const kids = [top, h('div', { class: 'ed-tip', text: T0[3] + (ED.tool === 'sel' || ED.tool === 'taille' ? '' : ' Ou vise avec le carré du milieu : « ' + ({ gomme: 'Retirer', sol: 'Creuser', mur: 'Boucher', peint: 'Peindre', haut: 'Hausser' }[ED.tool] || 'Poser') + ' ici ».') })];
+  const kids = [top, h('div', { class: 'ed-tip', text: T0[3] + (ED.tool === 'sel' || ED.tool === 'taille' ? '' : ' Ou vise avec le carré du milieu : « ' + ({ gomme: 'Retirer', sol: 'Creuser', mur: 'Boucher', peint: 'Peindre', haut: 'Hausser', tex: 'Poser la texture' }[ED.tool] || 'Poser') + ' ici ».') })];
   if (ED.layersOpen) kids.push(h('div', { class: 'ed-layers' }, h('b', { text: 'Calques' }), ...ED_LAYERS.filter(l => !ED.camp || l[0] !== 'niveau').map(([k, n]) => { const L = ED.layers[k];
     return h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:6px' }, h('span', { class: 'grow', text: n }),
       h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(L.v), 'aria-label': (L.v ? 'Cacher ' : 'Montrer ') + n, onclick: () => { L.v = !L.v; if (ED.sel && ED_KIND_LAYER[ED.sel.k] === k) ED.sel = null; edUI(); } }, L.v ? 'Visible' : 'Caché'),
@@ -7032,6 +7118,7 @@ function edUI() {
   }
   if (ED.tool === 'taille') kids.push(edSizePanel());
   if (ED.tool === 'peint') kids.push(zones(ED.zone, z => { ED.zone = z; edUI(); }));
+  if (ED.tool === 'tex') kids.push(edTexPanel());
   if (ED.tool === 'haut') kids.push(h('div', { class: 'seg ed-sub' }, ...ED_HEIGHTS.map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.wh === i), onclick: () => { ED.wh = i; edUI(); } }, n))));
   if (ED.tool === 'decmur') { const dz = ED.dz == null ? edZone() : ED.dz;
     kids.push(zones(dz, z => { ED.dz = z; ED.deco = 0; edUI(); }), h('div', { class: 'seg ed-sub ed-pal' }, ...PROPS[dz].map((d, i) => edPalBtn('d_' + ZONES[dz] + '_' + d[0], edDecorName(d[0]), ED.deco === i, () => { ED.deco = i; edUI(); })))); }
@@ -7041,12 +7128,39 @@ function edUI() {
   const sel = ED.sel;
   if (sel) kids.push(edSelPanel(sel));
   // « Poser ici » under the aim, and « À la suite » (24b): the next one a tile further
-  const c = ED_CHAIN[ED.chain], put = { sel: 'Choisir ici', gomme: 'Retirer ici', sol: 'Creuser ici', mur: 'Boucher ici', peint: 'Peindre ici', haut: 'Hausser ici' }[ED.tool] || 'Poser ici';
+  const c = ED_CHAIN[ED.chain], put = { sel: 'Choisir ici', gomme: 'Retirer ici', sol: 'Creuser ici', mur: 'Boucher ici', peint: 'Peindre ici', tex: 'Poser la texture ici', haut: 'Hausser ici' }[ED.tool] || 'Poser ici';
   if (ED.tool !== 'taille') kids.push(h('div', { class: 'row ed-here' },
     ED.tool === 'sel' || ED.tool === 'gomme' ? null : h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(!!c), onclick: () => { ED.chain = (ED.chain + 1) % ED_CHAIN.length; edUI(); } }, ic('aller'), c ? 'À la suite, ' + c[0] : 'À la suite : non'),
     h('button', { class: 'btn small grow', type: 'button', onclick: edHere }, ic('cible'), put)));
   kids.push(tools, h('div', { id: 'ed-giz' })); kids.unshift(h('div', { id: 'ed-aim', 'aria-hidden': 'true' })); // the aim under the panels
   root.replaceChildren(...kids); edGizmo();
+}
+/* ---------------- the textures of the map (30b): the library, sorted, in thumbnails ---------------- */
+// one thumbnail: the picture itself, read the way the game reads it (also inside Claude, where it is a data: link)
+function texThumb(id) {
+  const im = h('img', { alt: '', loading: 'lazy', class: 'tex-img' }), u = texUrl(id);
+  if (u) im.src = u; else { const cfg = window.ecorceModeles; if (cfg) picRead(cfg, id).then(p => { im.src = p.src; }, () => { }); }
+  return im;
+}
+// a row of the library for one kind: « none » (the map's own, or the zone's), then the zones one after the other
+function texPick(kind, cur, fn, none) {
+  const lib = texLib(kind), out = [h('button', { class: 'tex-it', type: 'button', 'aria-pressed': String(!cur), onclick: () => fn(null) }, h('span', { class: 'tex-img tex-none', text: '—' }), h('small', { text: none }))];
+  let z = -1; for (const t of lib) { if (t.z !== z) { z = t.z; out.push(h('div', { class: 'tex-zone', text: STRATA[z].name })); }
+    out.push(h('button', { class: 'tex-it', type: 'button', title: t.name, 'aria-pressed': String(cur === t.id), onclick: () => fn(t.id) }, texThumb(t.id), h('small', { text: (t.sub ? TEX_VAR[t.sub] || t.sub : t.kind === 'dessus' ? 'dessus' : t.kind) + (t.v === 1 ? ' ·1' : '') }))); }
+  return h('div', { class: 'tex-grid' }, ...out);
+}
+const texName = id => { const t = id && texInfo(id); return t ? t.name : 'celle de la zone'; };
+function edTexPanel() {
+  if (!F.tx) F.tx = {}; const wall = ED.tk === 'mur';
+  const chip = (on, lab, fn) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: () => { fn(); edUI(); } }, lab);
+  const all = () => { edPush(); if (wall) { F.tx.mur = ED.tmur; F.tx.dessus = ED.ttop; } else F.tx.sol = ED.tsol; edChanged(true); toast('Toute la carte porte maintenant ' + (wall ? 'ces murs' : 'ce sol') + ' (sauf les cases peintes à la main)'); };
+  const kids = [h('div', { class: 'seg' }, chip(!wall, 'Sols', () => { ED.tk = 'sol'; }), chip(wall, 'Murs et leur dessus', () => { ED.tk = 'mur'; })),
+    h('small', { text: 'Toute la carte : ' + (wall ? 'murs ' + texName(F.tx.mur) + ', dessus ' + texName(F.tx.dessus) : 'sol ' + texName(F.tx.sol)) + '.' })];
+  if (wall) kids.push(h('b', { text: 'Flancs des murs' }), texPick('mur', ED.tmur, id => { ED.tmur = id; edUI(); }, 'Aucune'), h('b', { text: 'Dessus des murs' }), texPick('dessus', ED.ttop, id => { ED.ttop = id; edUI(); }, 'Aucune'));
+  else kids.push(texPick('sol', ED.tsol, id => { ED.tsol = id; edUI(); }, 'Aucune'));
+  kids.push(h('div', { class: 'row', style: 'gap:6px' }, h('button', { class: 'btn small', type: 'button', onclick: all }, 'Mettre sur toute la carte'),
+    h('small', { class: 'grow', text: '« Aucune » au pinceau rend à la case la texture de la carte ; sur toute la carte, celle de la zone du niveau.' })));
+  return h('div', { class: 'ed-layers ed-tex' }, ...kids);
 }
 /* ---------------- previews: each model of the palette seen three-quarters, and the chosen one turning ----------------
    A small renderer of its own (its canvas is the turning preview); a thumbnail is drawn once per model and kept. Without
