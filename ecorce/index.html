@@ -554,8 +554,23 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 #sh-more{position:sticky;bottom:4px;align-self:flex-end;flex:none;margin-top:-56px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--amber);color:var(--ink);border:0;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer;z-index:2}#sh-more[hidden]{display:none}#sh-more svg{width:22px;height:22px;transform:rotate(90deg);transition:transform .2s}#sh-more.up svg{transform:rotate(-90deg)}
 .adm-lvtools{display:flex;flex-direction:column;gap:8px;padding:10px 0 14px;border-bottom:1px solid var(--line)}.adm-lvtools small{color:var(--dim);font-size:12px}.adm-plan{width:100%;border-radius:var(--r-sm);background:var(--well)}.adm-lvs .chipbtn.mod{box-shadow:inset 0 0 0 2px var(--amber)}.adm-seg{flex-wrap:wrap}
 .opt-acts{display:flex;flex-direction:column;gap:8px}
-#ed{position:fixed;inset:0;pointer-events:none;z-index:30;display:flex;flex-direction:column;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}#ed[hidden]{display:none}#ed>*{pointer-events:auto}#ed .ed-top{display:flex;align-items:center;gap:8px;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px}#ed .ed-top small{display:block;color:var(--dim);font-size:11px}#ed .ed-redo svg{transform:scaleX(-1)}#ed .ed-tip{align-self:center;margin-top:6px;font-size:12px;color:var(--cream);background:var(--well);padding:5px 10px;border-radius:999px;opacity:.9}#ed .ed-fill{flex:1;pointer-events:none}#ed .ed-name{min-width:0}#ed .ed-name b,#ed .ed-name small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#ed .ed-sub{margin-top:6px;background:var(--bark-2);border-radius:var(--r-sm);padding:6px;overflow-x:auto;flex-wrap:nowrap}#ed .ed-sel{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:40vh;overflow-y:auto}#ed .ed-sel .toggle{padding:6px 10px}#ed .ed-tools{display:flex;gap:6px;overflow-x:auto;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;margin-top:8px}#ed .ed-tools .chipbtn{flex:none}#ed-giz{position:fixed;inset:0;pointer-events:none}#ed-giz .ed-ring{position:absolute;left:0;top:0;border:2px solid var(--amber);border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.35)}#ed-giz .ed-h{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--amber);border:2px solid var(--ink);pointer-events:auto;touch-action:none;cursor:grab}#ed-giz .ed-grow{background:var(--accent2)}
+#ed{position:fixed;inset:0;pointer-events:none;z-index:30;display:flex;flex-direction:column;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}#ed[hidden]{display:none}#ed>*{pointer-events:auto}#ed .ed-top{display:flex;flex-direction:column;gap:6px;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px}#ed .ed-top small{display:block;color:var(--dim);font-size:11px}#ed .ed-redo svg{transform:scaleX(-1)}#ed .ed-tip{align-self:center;margin-top:6px;font-size:12px;color:var(--cream);background:var(--well);padding:5px 10px;border-radius:999px;opacity:.9}#ed .ed-fill{flex:1;pointer-events:none}#ed .ed-name{min-width:0}#ed .ed-name b,#ed .ed-name small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#ed .ed-sub{margin-top:6px;background:var(--bark-2);border-radius:var(--r-sm);padding:6px;overflow-x:auto;flex-wrap:nowrap}#ed .ed-sel{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:40vh;overflow-y:auto}#ed .ed-sel .toggle{padding:6px 10px}#ed .ed-tools{display:flex;gap:6px;overflow-x:auto;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;margin-top:8px}#ed .ed-tools .chipbtn{flex:none}#ed-giz{position:fixed;inset:0;pointer-events:none}#ed-giz .ed-ring{position:absolute;left:0;top:0;border:2px solid var(--amber);border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.35)}#ed-giz .ed-h{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--amber);border:2px solid var(--ink);pointer-events:auto;touch-action:none;cursor:grab}#ed-giz .ed-grow{background:var(--accent2)}
 #ed .ed-pal .ed-pb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;min-width:76px}#ed .ed-pb img{width:48px;height:48px;object-fit:contain}#ed .ed-pb span{font-size:11px}#ed .ed-prevbox{align-self:flex-end;width:96px;height:96px;margin-top:6px;border-radius:var(--r-sm);background:var(--bark-2);border:1px solid var(--line);overflow:hidden}#ed .ed-prevbox canvas{width:96px;height:96px}
+/* creative wheel: a round button, and a radial wheel over the game (only its buttons catch touches: the stick keeps walking) */
+#crea-btn{position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom) + 104px);z-index:42;width:52px;height:52px;border-radius:50%;border:2px solid var(--amber);background:color-mix(in srgb,var(--well) 80%,transparent);color:var(--amber);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;cursor:pointer;font:700 9px/1 var(--ui);letter-spacing:.02em;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+#crea-btn .ic{font-size:22px;pointer-events:none} #crea-btn span:not(.ic){pointer-events:none}
+#crea-btn.on{background:var(--amber);color:var(--ink)}
+#crea-btn[hidden],#crea-wheel[hidden]{display:none}
+#crea-wheel{position:absolute;inset:0;z-index:41;pointer-events:none;--r:min(35vw,26vh,150px);--p:clamp(54px,min(17vw,11vh),72px)}
+#crea-wheel .cw-c,#crea-wheel .cw-p{position:absolute;pointer-events:auto;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;cursor:pointer;color:var(--cream);border:2px solid var(--line);background:color-mix(in srgb,var(--well) 82%,transparent);box-shadow:0 2px 10px rgba(0,0,0,.5);font:700 10px/1.05 var(--ui);text-align:center}
+#crea-wheel .cw-c{left:50%;top:46%;width:calc(var(--p)*.8);height:calc(var(--p)*.8);transform:translate(-50%,-50%);border-color:var(--amber);color:var(--amber)}
+#crea-wheel .cw-p{left:calc(50% + var(--dx)*var(--r));top:calc(46% + var(--dy)*var(--r));width:var(--p);height:var(--p);transform:translate(-50%,-50%)}
+#crea-wheel .cw-p .ic{font-size:calc(var(--p)*.42);pointer-events:none} #crea-wheel .cw-p span:not(.ic){pointer-events:none;max-width:calc(var(--p) - 6px);overflow-wrap:anywhere}
+#crea-wheel .cw-p[aria-pressed="true"]{background:var(--amber);color:var(--ink);border-color:var(--amber)}
+#crea-wheel .cw-p.sel,#crea-wheel .cw-p:focus-visible,#crea-wheel .cw-c:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
+#crea-wheel .cw-p:active,#crea-wheel .cw-c:active{filter:brightness(1.25)}
+@media (prefers-reduced-motion:no-preference){#crea-wheel .cw-p{animation:cwIn .16s ease-out both}@keyframes cwIn{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}}}
+#ed .ed-layers{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin-top:6px;display:flex;flex-direction:column;gap:6px;font-size:13px}#ed .ed-layers .chipbtn{flex:none;padding:4px 8px;font-size:12px}
 </style>
 <script src="three.min.js"></script>
 
@@ -598,6 +613,8 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
   <div id="swap" aria-hidden="true"><div><small>Tu entres dans le jeu</small><b id="swap-n"></b><span id="swap-t"></span></div></div>
   <div id="zcard" role="status"><small id="zc-z"></small><b id="zc-n"></b></div>
   <div id="crea-tag" aria-hidden="true" hidden>Créatif · rien n'est enregistré</div>
+  <button id="crea-btn" type="button" aria-label="Roue d'actions du mode créatif" aria-expanded="false" hidden></button>
+  <div id="crea-wheel" role="group" aria-label="Actions du mode créatif" hidden></div>
   <div id="adm-tag" aria-hidden="true" hidden>Réglages d'essai</div>
   <div id="toast" aria-live="polite"></div>
 
@@ -1496,7 +1513,7 @@ function setSave(s) { save = s; ME = save.chars[save.cur]; }
 let saveDirty = false, cloudDoc = null, cloudBusy = false, cloudAgain = false;
 // The creative mode (h_creatif.js): while it is on, nothing is written anywhere — this device, the Claude account, the online
 // service. Leaving it reloads the page, and the real save comes back as it was. shown: its entry is visible in the settings
-const CREA = { on: false, shown: false, god: false, hit: false, mode: 0, taps: [] };
+const CREA = { on: false, shown: false, god: false, hit: false, calm: false, mode: 0, taps: [] };
 function persistLocal() {
   if (CREA.on) return;
   if (DEV.state === 'wait') { saveDirty = true; return; } // the seal is not ready yet: what is stored stays as it is for a moment
@@ -2183,7 +2200,7 @@ function enemyEvent(e) {
 }
 function targets() {
   const out = [];
-  if (!P.down && G.mode === 'play') out.push(P);
+  if (!P.down && G.mode === 'play' && !CREA.calm) out.push(P); // creative mode, "the creatures ignore you": the knight is nobody's target
   for (const a of allies) if (a.s === 1 && a.live) out.push(a);
   return out;
 }
@@ -2306,7 +2323,7 @@ function updateEnemies(dt) {
     e.hp = e.hpMax - totalDamage(e.id);
     if (e.hp <= 0) { kill(e); continue; }
     if (e.type === 9) e.sub = e.hp < e.hpMax * .5 ? 1 : 0;
-    if (e.awake && !P.down) {
+    if (e.awake && !P.down && !CREA.calm) {
       const d = hyp(e.x - P.x, e.y - P.y);
       if (d < e.r + P.r + 1) hurt(EN[e.type].dmg * dm * ((e.type === 1 || e.type === 9) && e.st === 2 ? 1.5 : e.type === 4 ? .5 : 1));
     }
@@ -3014,10 +3031,18 @@ function buildWorld() {
   }
   for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (isF(x, y) && !isF(x, y - 1) && R() < .16) decoSmall(pb, kd, x + .15 + R() * .7, 0, y + .14 + R() * .12, R);
   const addW = (b, m, rs) => { if (b.empty) return; const o = new THREE.Mesh(b.build(), m); o.castShadow = rs !== 2; o.receiveShadow = rs > 0; o.matrixAutoUpdate = false; worldGroup.add(o); };
+  const n0 = worldGroup.children.length;
   zoneMats(); for (let z = 0; z < 5; z++) if (FB[z] || WB[z] || TB[z]) { zoneTexWant(z); if (FB[z]) addW(FB[z], M.floor[z], 2); if (WB[z]) addW(WB[z], M.wall[z], 1); if (TB[z]) addW(TB[z], M.top[z], 1); } addW(pb, M.toon, 1); if (!gb.empty) { const o = new THREE.Mesh(gb.build(), M.glow); worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
+  // each thing built belongs to a layer of the level editor (sol, murs, niveau, pnj), which can show or hide it
+  for (let i = n0; i < worldGroup.children.length; i++) { const o = worldGroup.children[i]; o.userData.layer = M.floor.includes(o.material) ? 'sol' : 'murs'; }
+  const n1 = worldGroup.children.length;
   buildLift(); for (const c of F.chests) buildChest(c); if (F.seals) for (const q of F.seals) buildSeal(q);
+  for (let i = n1; i < worldGroup.children.length; i++) worldGroup.children[i].userData.layer = 'niveau';
+  const n2 = worldGroup.children.length;
   if (F.hub) buildCamp(); else buildShafts(R);
+  for (let i = n2; i < worldGroup.children.length; i++) worldGroup.children[i].userData.layer = F.hub ? 'pnj' : 'murs';
+  F.hg = hg; // the height of each wall, for the editor (scenery is put on top of a wall)
   F.props = propsPlan(backWalls); motes.length = 0; modelsWant(); propsBuild();
 }
 function mushroom(pb, gb, x, y, z, s, capCol, glowCap, R) {
@@ -3853,6 +3878,7 @@ let propGroup = null;
 // spots: [x, y, wall height] of the high walls that face the camera. Chosen once per level, the same for every player (the seed decides)
 function propsPlan(spots) {
   const R = rng((F.seed ^ 0x9A0B17) >>> 0), zone = 'd_' + ZONES[F.si % 5] + '_', list = PROPS[F.si % 5], want = F.hub ? 4 : F.big ? 9 : 5, out = [];
+  if (F.wallProps) { for (const p of F.wallProps) out.push(Object.assign({}, p, { m: null })); spots.length = 0; } // the scenery of the walls was set in the level editor
   for (let i = spots.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = spots[i]; spots[i] = spots[j]; spots[j] = t; }
   for (const [x, y, hh] of spots) {
     if (out.length >= want) break; if (out.some(p => Math.abs(p.x - x - .5) + Math.abs(p.z - y - .5) < 5)) continue;
@@ -4512,6 +4538,7 @@ function creaBody(kids, foot) {
     creaBtn('c_kills', 'Vaincre toutes les créatures', creaKillAll), creaBtn('boss', 'Une créature de chaque sorte', creaZoo), creaBtn('coffre', 'Révéler les coffres', creaChests),
     creaBtn('portail', F.seals ? 'Réunir les sceaux' : 'Ouvrir la sortie', creaOpen), creaBtn('aller', 'Aller à la sortie', creaGoExit), creaBtn('trophee', 'Finir le niveau', () => { closeSheet(); finishRun('win'); })));
   kids.push(toggleRow('bouclier', 'Invincible', CREA.god, () => { CREA.god = !CREA.god; renderSheet(); }),
+    toggleRow('ombre', 'Les créatures t\'ignorent', CREA.calm, () => { CREA.calm = !CREA.calm; renderSheet(); }),
     toggleRow('epee', 'Coups dévastateurs (dégâts × 20)', CREA.hit, () => { CREA.hit = !CREA.hit; renderSheet(); }));
   // every level of every world, in the chosen game and difficulty
   kids.push(h('div', { class: 'eyebrow', text: 'Aller à un niveau' }), h('div', { class: 'seg' }, ...CREA_MODES.map((n, i) => h('button', { class: 'chipbtn grow', type: 'button', 'aria-pressed': String(CREA.mode === i), onclick: () => { CREA.mode = i; renderSheet(); } }, n))));
@@ -4544,6 +4571,53 @@ function creaWeapons() {
   for (let k = 0; k < WEAPONS.length; k++) ME.bag.push(makeItem(0, k, lvl));
   G.newLoot = true; toast(WEAPONS.length + ' armes dans le sac'); showUI(); renderSheet();
 }
+/* ---------- the wheel of actions: the same powers, without a pause and without stopping to walk ----------
+   A round button next to the tag opens a radial wheel over the game; only its own buttons catch touches, so the stick and the keys
+   keep moving the knight. An action runs and the wheel stays; the centre or the button closes it. C, Select / View (pad). */
+const CW = { open: false, sel: -1, sig: '' };
+const creaPlaying = () => G.mode === 'play' && run && !F.hub;
+const creaWheelOk = () => CREA.on && !Net.room && !sheetOpen() && (G.mode === 'play' || G.mode === 'hub');
+function creaActions() {
+  const A = [], tog = (id, icn, name, tip, get, set) => A.push({ id, ic: icn, name, tip, get, fn: () => set(!get()) }), act = (id, icn, name, tip, fn) => A.push({ id, ic: icn, name, tip, fn });
+  tog('god', 'bouclier', 'Invincible', 'Invincible', () => CREA.god, v => { CREA.god = v; });
+  tog('calm', 'ombre', 'Ignoré', 'Les créatures t\'ignorent', () => CREA.calm, v => { CREA.calm = v; });
+  tog('hit', 'epee', 'Dévastateur', 'Coups dévastateurs (dégâts × 20)', () => CREA.hit, v => { CREA.hit = v; });
+  if (creaPlaying()) {
+    act('kill', 'c_kills', 'Tout vaincre', 'Vaincre toutes les créatures', creaKillAll); act('zoo', 'boss', 'Un de chaque', 'Une créature de chaque sorte', creaZoo);
+    act('chests', 'coffre', 'Coffres', 'Révéler les coffres', creaChests);
+    act('open', 'portail', F.seals ? 'Sceaux' : 'Sortie', F.seals ? 'Réunir les sceaux' : 'Ouvrir la sortie', creaOpen); act('exit', 'aller', 'Y aller', 'Aller à la sortie', creaGoExit);
+    act('end', 'trophee', 'Finir', 'Finir le niveau', () => finishRun('win'));
+  }
+  act('more', 'plus', 'Plus…', 'Plus d\'actions : niveaux, monnaie, armes, quitter', () => { CW.open = false; openSheet('crea'); });
+  return A;
+}
+function creaWheelDraw() {
+  const w = $('crea-wheel'), A = CW.items = creaActions(), n = A.length; CW.sig = A.map(a => a.id + a.name).join('|'); if (CW.sel >= n) CW.sel = -1;
+  w.replaceChildren(h('button', { class: 'cw-c', id: 'cw-c', type: 'button', 'aria-label': 'Fermer la roue', onclick: () => creaWheelToggle() }, ic('fermer')),
+    ...A.map((a, i) => { const t = (i / n) * TAU - Math.PI / 2; return h('button', { class: 'cw-p', type: 'button', 'data-i': String(i), title: a.tip, 'aria-label': a.tip, style: '--dx:' + Math.cos(t).toFixed(3) + ';--dy:' + Math.sin(t).toFixed(3), onclick: () => creaDo(i) }, ic(a.ic), h('span', { text: a.name })); }));
+  creaWheelMark();
+}
+function creaWheelMark() { // the state of the switches, and the petal marked by the pad
+  const ps = $('crea-wheel').querySelectorAll('.cw-p'); ps.forEach((p, i) => { const a = CW.items[i]; if (!a) return; if (a.get) { p.setAttribute('aria-pressed', String(!!a.get())); p.classList.toggle('on', !!a.get()); } p.classList.toggle('sel', i === CW.sel); });
+}
+function creaDo(i) { const a = CW.items[i]; if (!a) return; a.fn(); showUI(); if (CW.open) creaWheelMark(); }
+function creaWheelSync() {
+  const ok = creaWheelOk(), w = $('crea-wheel'); $('crea-btn').hidden = !ok; if (!ok) CW.open = false;
+  $('crea-btn').setAttribute('aria-expanded', String(CW.open)); $('crea-btn').classList.toggle('on', CW.open); w.hidden = !CW.open;
+  if (CW.open) { if (creaActions().map(a => a.id + a.name).join('|') !== CW.sig || !w.firstChild) creaWheelDraw(); else creaWheelMark(); }
+}
+function creaWheelToggle() { if (!creaWheelOk()) return false; CW.open = !CW.open; CW.sel = -1; creaWheelSync(); return true; }
+// gamepad, wheel open: the cross or the right stick marks a petal, A runs it, B closes (the left stick keeps walking)
+function creaWheelPad(rx, ry, now, prev) {
+  const n = CW.items.length; if (!n) return;
+  if (Math.hypot(rx, ry) > .5) { CW.sel = Math.round((((Math.atan2(ry, rx) + Math.PI / 2) / TAU) % 1 + 1) % 1 * n) % n; creaWheelMark(); }
+  const step = (now.r && !prev.r) || (now.d && !prev.d) ? 1 : (now.l && !prev.l) || (now.u && !prev.u) ? -1 : 0;
+  if (step) { CW.sel = CW.sel < 0 ? (step > 0 ? 0 : n - 1) : (CW.sel + step + n) % n; creaWheelMark(); }
+  if (now.a && !prev.a && CW.sel >= 0) creaDo(CW.sel);
+  else if (now.b && !prev.b) creaWheelToggle();
+}
+$('crea-btn').append(ic('sort'), h('span', { text: 'Créatif' }));
+$('crea-btn').addEventListener('click', () => creaWheelToggle());
 
 /* ================= the hidden admin panel (step 19c) =================
    Hidden: the entry shows in the settings only when the address holds ?admin, or when this device was already opened as admin
@@ -4872,7 +4946,7 @@ function showUI() {
   const m = G.mode, sh = sheetOpen(); applyTheme(); if (m !== 'title') G.home = false;
   if (m !== 'title') creating = false; $('scr-title').hidden = m !== 'title' || G.home || creating; $('scr-create').hidden = m !== 'title' || G.home || !creating; homeSync(); $('camp-top').hidden = m !== 'hub'; $('tabs').hidden = m !== 'hub' || sh;
   $('hud').hidden = m !== 'play' || sh; $('pad').hidden = m !== 'play' || sh; $('scr-end').hidden = m !== 'end';
-  $('sheet').hidden = !sh; $('veil').hidden = !sh; $('crea-tag').hidden = !CREA.on || sh || (m !== 'hub' && m !== 'play'); admTag();
+  $('sheet').hidden = !sh; $('veil').hidden = !sh; $('crea-tag').hidden = !CREA.on || sh || (m !== 'hub' && m !== 'play'); admTag(); creaWheelSync();
   if (m !== 'play') $('downbox').hidden = true;
   if (m === 'hub') { $('who-ava').style.setProperty('--c', CLOAKS[ME.col]); $('who-name').textContent = ME.name || 'Chevalier'; $('who-sub').textContent = GM().name + ' · ' + Math.min(NLV, progOf(ME)) + ' / ' + NLV; $('camp-ecl').textContent = String(ME.ecl); $('tabs').children[1].classList.toggle('dot', G.newLoot); campPurse(); }
   if (m === 'title') renderTitle();
@@ -5729,10 +5803,11 @@ function padStep() {
   if (!input.pad) $('pad').classList.add('gp'); // each button then shows which key of the gamepad does the same
   input.pad = true;
   const ax = gp.axes, dz = v => Math.abs(v || 0) < .22 ? 0 : v, b = i => !!(gp.buttons[i] && gp.buttons[i].pressed), ok = canMove();
-  input.pmx = ok ? clamp(dz(ax[0]) + (b(15) ? 1 : 0) - (b(14) ? 1 : 0), -1, 1) : 0; input.pmy = ok ? clamp(dz(ax[1]) + (b(13) ? 1 : 0) - (b(12) ? 1 : 0), -1, 1) : 0;
-  const rx = ax[2] || 0, ry = ax[3] || 0; input.pAim = ok && hyp(rx, ry) > .4 ? Math.atan2(ry, rx) : null;
-  input.pAtk = ok && manualNow() && (b(0) || b(7) || input.pAim != null); input.pLan = ok && G.mode === 'play' && (b(2) || b(5) || (b(1) && !manualNow()));
-  const now = { st: b(9), y: b(3), b: b(1), a: b(0), lb: b(4), rb: b(5) }, menu = !!navRoot();
+  const cw = CW.open, dp = cw ? 0 : 1; // the creative wheel is open: the cross and the right stick choose its petals, the left stick still walks
+  input.pmx = ok ? clamp(dz(ax[0]) + dp * ((b(15) ? 1 : 0) - (b(14) ? 1 : 0)), -1, 1) : 0; input.pmy = ok ? clamp(dz(ax[1]) + dp * ((b(13) ? 1 : 0) - (b(12) ? 1 : 0)), -1, 1) : 0;
+  const rx = ax[2] || 0, ry = ax[3] || 0; input.pAim = ok && !cw && hyp(rx, ry) > .4 ? Math.atan2(ry, rx) : null;
+  input.pAtk = ok && !cw && manualNow() && (b(0) || b(7) || input.pAim != null); input.pLan = ok && G.mode === 'play' && (b(2) || b(5) || (b(1) && !manualNow()));
+  const now = { st: b(9), y: b(3), b: b(1), a: b(0), lb: b(4), rb: b(5), sel: b(8), u: b(12), d: b(13), l: b(14), r: b(15) }, menu = !!navRoot();
   if (menu) { // a menu is in front: the stick and the cross move the marker (held: it repeats), A presses, B goes back
     const sx = dz(ax[0]) + (b(15) ? 1 : 0) - (b(14) ? 1 : 0), sy = dz(ax[1]) + (b(13) ? 1 : 0) - (b(12) ? 1 : 0);
     const dir = Math.abs(sx) > .55 || Math.abs(sy) > .55 ? (Math.abs(sx) > Math.abs(sy) ? (sx > 0 ? 'r' : 'l') : (sy > 0 ? 'd' : 'u')) : '', t = performance.now();
@@ -5742,9 +5817,11 @@ function padStep() {
     else if (now.b && !padPrev.b) navBack();
   } else {
     NAV.dir = '';
-    if (now.a && !padPrev.a && ok && G.mode === 'hub') trainNear();
-    if (now.b && !padPrev.b && ok && manualNow()) input.dash = true;
+    if (cw) creaWheelPad(rx, ry, now, padPrev);
+    else if (now.a && !padPrev.a && ok && G.mode === 'hub') trainNear();
+    if (!cw && now.b && !padPrev.b && ok && manualNow()) input.dash = true;
   }
+  if (now.sel && !padPrev.sel && !menu && creaWheelToggle() && CW.open) { CW.sel = 0; creaWheelMark(); } // Select / View: the creative wheel
   if (now.st && !padPrev.st) { NAV.key = ''; if (sheetOpen()) closeSheet(); else if (G.mode === 'play') openSheet('pause'); else if (G.mode === 'hub') openSheet('opts'); }
   else if (now.y && !padPrev.y && (ok || sheetOpen()) && G.mode !== 'title') { NAV.key = ''; if (sheetKind === 'bag') closeSheet(); else openSheet('bag'); }
   else if (now.lb && !padPrev.lb && !manualNow()) navTab(-1); // at the camp, LB and RB go from one menu to the next
@@ -5755,8 +5832,9 @@ window.addEventListener('pointerdown', wakeAudio, { passive: true }); window.add
 window.addEventListener('keydown', e => {
   if (e.target && e.target.tagName === 'INPUT') return;
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-  if (k === 'Escape') { if (!navBack() && G.mode === 'play') openSheet('pause'); return; }
+  if (k === 'Escape') { if (CW.open) { creaWheelToggle(); return; } if (!navBack() && G.mode === 'play') openSheet('pause'); return; }
   if (k.startsWith('Arrow') && navRoot()) { navMove(k === 'ArrowRight' ? 1 : k === 'ArrowLeft' ? -1 : 0, k === 'ArrowDown' ? 1 : k === 'ArrowUp' ? -1 : 0); e.preventDefault(); return; }
+  if (k === 'c' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && creaWheelToggle()) return; // the creative wheel
   if (!canMove()) return;
   if (G.mode === 'play') { if (k === ' ' || k === 'j') input.atk = true; else if (k === 'e' || k === 'l') input.lan = true; else if (k === 'i') openSheet('bag'); else if (k === 'Shift') input.dash = true; else input.keys.add(k); }
   else if ((k === ' ' || k === 'j') && !e.repeat) trainNear(); else input.keys.add(k);
@@ -5824,8 +5902,12 @@ function floorToPlan(F0) {
     foes: F0.enemies.filter(e => !e.summon).map(e => [e.type, r1(e.x), r1(e.y), e.guard ? 1 : 0]),
     chests: F0.chests.map(c => [r1(c.x), r1(c.y), c.hidden ? 1 : 0, c.gold ? 1 : 0]),
     decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z]),
-    seals: F0.seals ? F0.seals.map(q => [r1(q.x), r1(q.y)]) : null };
+    seals: F0.seals ? F0.seals.map(q => [r1(q.x), r1(q.y)]) : null, wp: edWallProps(F0) };
 }
+// the scenery up on the walls (tile units: x, height y, z), as the editor or the draw placed it
+const r2 = v => Math.round(v * 100) / 100;
+function edWallProps(F0) { const l = F0.wallProps || (F0.props || []).filter(p => !p.floor); return l.map(p => [p.name, r2(p.x), r2(p.y), r2(p.z), r2(p.s), r2(p.rot)]); }
+const wpFrom = l => Array.isArray(l) ? l.map(w => ({ name: String(w[0]), x: +w[1], y: +w[2], z: +w[3], s: +w[4], rot: +w[5] })) : null;
 // the level the game plays from a plan: the same fields as a draw (genFloor), its creatures made for this level and difficulty
 function planToFloor(p, seed, floor) {
   const W = p.W | 0, H = p.H | 0, g = new Uint8Array(W * H), mod = seedMod(seed), si = strIdxOf(floor);
@@ -5840,6 +5922,7 @@ function planToFloor(p, seed, floor) {
   F0.decor = (p.decor || []).map(d => ({ n: d[0], x: d[1], y: d[2], s: d[3], rot: d[4], r: d[5], z: d[6] >= 0 && d[6] < 5 ? d[6] : null }));
   for (const d of F0.decor) F0.blocks.push({ x: d.x, y: d.y, r: d.r });
   if (p.big && p.seals) F0.seals = p.seals.map((q, id) => ({ id, x: q[0], y: q[1], got: false }));
+  F0.wallProps = wpFrom(p.wp);
   return F0;
 }
 /* ---------- the camp made over: its tiles, surfaces and heights, its scenery, and where its places and people stand ---------- */
@@ -5847,7 +5930,8 @@ const xy = o => [r1(o.x), r1(o.y)];
 function campToPlan(F0) {
   const p = floorToPlan(F0);
   return { v: 1, camp: true, W: p.W, H: p.H, g: p.g, s: p.s, h: p.h, decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z, d.glow ? 1 : 0]),
-    start: xy(F0.start), counter: xy(F0.counter), portal: xy(F0.portal), wheel: xy(F0.wheel), fire: [r1(F0.fireX), r1(F0.fireY)], dummy: xy(F0.enemies[0]), npcs: F0.npcs.map(xy) };
+    start: xy(F0.start), counter: xy(F0.counter), portal: xy(F0.portal), wheel: xy(F0.wheel), fire: [r1(F0.fireX), r1(F0.fireY)], dummy: xy(F0.enemies[0]), npcs: F0.npcs.map(xy),
+    stations: F0.stations.map(s => [s.k, r1(s.x), r1(s.y), r1(s.ox), r1(s.oy)]), wp: edWallProps(F0) };
 }
 function campApply(F0, p) {
   if (!p || !p.camp || !p.g) return;
@@ -5859,12 +5943,17 @@ function campApply(F0, p) {
   const d0 = F0.enemies[0]; at(d0, p.dummy); d0.tx = d0.x; d0.ty = d0.y;
   if (Array.isArray(p.npcs)) F0.npcs.forEach((n, i) => at(n, p.npcs[i]));
   if (Array.isArray(p.decor)) F0.decor = p.decor.map(d => ({ n: d[0], x: d[1], y: d[2], s: d[3], rot: d[4], r: d[5], z: d[6] >= 0 && d[6] < 5 ? d[6] : null, glow: !!d[7] }));
-  hubStations(F0); hubBlocks(F0);
+  hubStations(F0);
+  if (Array.isArray(p.stations)) for (const s of p.stations) { const st = F0.stations.find(x => x.k === s[0]); if (st) { st.x = s[1]; st.y = s[2]; st.ox = s[3]; st.oy = s[4]; } } // where you walk to open a menu, moved on its own
+  F0.wallProps = wpFrom(p.wp); hubBlocks(F0);
 }
 const planFor = (seed, floor) => { const p = PLANS[floor]; return p && !p.big === !seedBig(seed) && !isBossFloor(floor) ? p : null; };
 
 /* ---------------- the editor itself ---------------- */
-const ED = { on: false, floor: 1, seed: 0, tool: 'sel', crea: 0, deco: 0, dz: null, zone: 0, wh: 2, sel: null, undo: [], redo: [], half: 9, ptrs: new Map(), drag: null, pinch: 0, busy: false };
+// the layers of what is edited: each can be shown or hidden, and locked (then nothing on it can be picked)
+const ED_LAYERS = [['sol', 'Sol'], ['murs', 'Murs'], ['decmur', 'Décors des murs'], ['decsol', 'Décors au sol'], ['niveau', 'Créatures, coffres, entrée, sortie'], ['pnj', 'PNJ et zones d\'interaction']];
+const ED_KIND_LAYER = { start: 'niveau', lift: 'niveau', foe: 'niveau', chest: 'niveau', seal: 'niveau', decor: 'decsol', wprop: 'decmur', counter: 'pnj', portal: 'pnj', wheel: 'pnj', fire: 'pnj', dummy: 'pnj', npc: 'pnj', zone: 'pnj' };
+const ED = { layers: Object.fromEntries(ED_LAYERS.map(l => [l[0], { v: true, l: false }])), layersOpen: false, on: false, floor: 1, seed: 0, tool: 'sel', crea: 0, deco: 0, dz: null, zone: 0, wh: 2, sel: null, undo: [], redo: [], half: 9, ptrs: new Map(), drag: null, pinch: 0, busy: false };
 // [tool, name in the bar, icon, what a touch on the map does]
 const ED_TOOLS = [
   ['sel', 'Choisir', 'cible', 'Touche un élément pour le choisir, puis tire-le pour le déplacer. Glisse ailleurs pour déplacer la vue.'],
@@ -5874,7 +5963,8 @@ const ED_TOOLS = [
   ['haut', 'Hauteur', 'niveaux', 'Glisse sur les murs pour leur donner la hauteur choisie.'],
   ['crea', 'Créature', 'c_kills', 'Touche le sol pour poser la créature choisie.'],
   ['coffre', 'Coffre', 'coffre', 'Touche le sol pour poser un coffre.'],
-  ['decor', 'Décor', 'plus', 'Touche le sol pour poser le décor choisi.'],
+  ['decor', 'Décor au sol', 'plus', 'Touche le sol pour poser le décor choisi.'],
+  ['decmur', 'Décor de mur', 'plus', 'Touche le haut d\'un mur pour y poser le décor choisi.'],
   ['entree', 'Entrée', 'drapeau', 'Touche le sol pour y mettre l\'entrée du niveau.'],
   ['sortie', 'Sortie', 'portail', 'Touche le sol pour y mettre la sortie.'],
   ['gomme', 'Retirer', 'fermer', 'Touche un élément pour le retirer.'],
@@ -5885,7 +5975,7 @@ const edZone = () => ED.camp ? 0 : strIdxOf(ED.floor) % 5; // the zone of what i
 const edDecor = () => { const z = ED.dz == null ? edZone() : ED.dz; return ED.camp && z === 0 ? [...DECOR[0], ['arche', 2.5, 0], ['barriere', .86, 0]] : DECOR[z]; };
 const edStamp = () => JSON.stringify(ED.camp ? campToPlan(F) : floorToPlan(F));
 function edPush() { ED.undo.push(edStamp()); if (ED.undo.length > 60) ED.undo.shift(); ED.redo.length = 0; }
-function edLoad(txt) { const p = JSON.parse(txt); if (ED.camp) { F = genHub(); campApply(F, p); } else F = planToFloor(p, ED.seed, ED.floor); ED.sel = null; worldChanged(); edUI(); }
+function edLoad(txt) { const p = JSON.parse(txt); if (ED.camp) { F = genHub(); campApply(F, p); ED.last = null; edFollow(); } else F = planToFloor(p, ED.seed, ED.floor); ED.sel = null; worldChanged(); edUI(); }
 function edUndo() { if (!ED.undo.length) return; ED.redo.push(edStamp()); edLoad(ED.undo.pop()); }
 function edRedo() { if (!ED.redo.length) return; ED.undo.push(edStamp()); edLoad(ED.redo.pop()); }
 function edSaveDraft() { if (ED.camp) PLANS.camp = campToPlan(F); else PLANS[ED.floor] = floorToPlan(F); plansKeep(); } // every change is kept at once: the level made by hand is in force here
@@ -5896,7 +5986,7 @@ function edStart(floor, seed) {
   if (floor === 'camp') return edCamp();
   if (!CREA.on) { saveGame(true); CREA.on = true; } // the editor works in creative mode: nothing it does reaches the save
   closeSheet(); run = null; ED.on = true; ED.camp = false; ED.floor = floor; ED.seed = seed; ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
-  F = genFloor(seed, floor); worldChanged();
+  F = genFloor(seed, floor); worldChanged(); edTakeWalls();
   P.x = F.start.x; P.y = F.start.y; cam.init = false; ED.half = F.big ? 11 : 13;
   G.mode = 'edit'; G.paused = false; showUI(); edUI();
 }
@@ -5904,8 +5994,25 @@ function edStart(floor, seed) {
 function edCamp() {
   if (!CREA.on) { saveGame(true); CREA.on = true; }
   closeSheet(); run = null; ED.on = true; ED.camp = true; ED.floor = 0; ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
-  F = genHub(); worldChanged(); P.x = F.start.x; P.y = F.start.y; cam.init = false; ED.half = 9;
+  F = genHub(); worldChanged(); edTakeWalls(); ED.last = null; edFollow(); P.x = F.start.x; P.y = F.start.y; cam.init = false; ED.half = 9;
   G.mode = 'edit'; G.paused = false; showUI(); edUI();
+}
+// the scenery the draw put on the walls becomes the editor's own, to move, turn, grow or take away
+// the zone where you walk to open a menu follows its place (counter, wheel) when the place moves, by the same amount
+function edFollow() {
+  const pairs = [['counter', 'levels'], ['wheel', 'wheel']], last = ED.last || {};
+  for (const [pl, k] of pairs) { const o = F[pl], st = F.stations.find(s => s.k === k), l = last[pl];
+    if (l && st && (l[0] !== o.x || l[1] !== o.y)) { const dx = o.x - l[0], dy = o.y - l[1]; st.x += dx; st.y += dy; st.ox += dx; st.oy += dy; } }
+  ED.last = { counter: [F.counter.x, F.counter.y], wheel: [F.wheel.x, F.wheel.y] };
+}
+function edTakeWalls() { if (!F.wallProps && F.props) F.wallProps = F.props.filter(p => !p.floor).map(p => ({ name: p.name, x: p.x, y: p.y, z: p.z, s: p.s, rot: p.rot })); }
+// what each layer shows: hidden layers are not drawn while editing
+function edLayerVis() {
+  const v = k => ED.layers[k].v;
+  if (USE3D && worldGroup) for (const o of worldGroup.children) if (o.userData.layer) o.visible = v(o.userData.layer);
+  for (const p of F.props || []) if (p.m) p.m.visible = v(p.floor ? 'decsol' : 'decmur');
+  for (const e of F.enemies) if (e.m && e.m.root) e.m.root.visible = v(ED.camp ? 'pnj' : 'niveau');
+  if (F.hub && typeof CAMP !== 'undefined') for (const c of CAMP.npcs) if (c.m && c.m.root) c.m.root.visible = v('pnj');
 }
 function edStop() { ED.on = false; ED.camp = false; edUI(); backToHub(); }
 // play it at once, as it is now, in creative mode; « Retour à l'éditeur » in the creative panel brings it back
@@ -5928,7 +6035,7 @@ function edThings() {
   if (ED.camp) { // the fire is two numbers in the camp: a little object stands for it while it is moved
     const fire = ED.fireO && ED.fireO.x === F.fireX && ED.fireO.y === F.fireY ? ED.fireO : (ED.fireO = { x: F.fireX, y: F.fireY });
     return [{ k: 'start', o: F.start }, { k: 'counter', o: F.counter }, { k: 'portal', o: F.portal }, { k: 'wheel', o: F.wheel }, { k: 'fire', o: fire }, { k: 'dummy', o: F.enemies[0] },
-      ...F.npcs.map(n => ({ k: 'npc', o: n })), ...F.decor.map(d => ({ k: 'decor', o: d }))];
+      ...F.npcs.map(n => ({ k: 'npc', o: n })), ...F.stations.map(s => ({ k: 'zone', o: s })), ...F.decor.map(d => ({ k: 'decor', o: d })), ...(F.wallProps || []).map(p => ({ k: 'wprop', o: p }))].filter(edPickable);
   }
   const out = [{ k: 'start', o: F.start }];
   if (F.lift) out.push({ k: 'lift', o: F.lift });
@@ -5936,11 +6043,18 @@ function edThings() {
   for (const c of F.chests) out.push({ k: 'chest', o: c });
   for (const d of F.decor) out.push({ k: 'decor', o: d });
   if (F.seals) for (const q of F.seals) out.push({ k: 'seal', o: q });
-  return out;
+  for (const p of F.wallProps || []) out.push({ k: 'wprop', o: p });
+  return out.filter(edPickable);
 }
+const edPickable = t => { const L = ED.layers[ED_KIND_LAYER[t.k]]; return !L || (L.v && !L.l); };
+const edScr = t => t.k === 'wprop' ? toScreen(t.o.x * T, t.o.z * T, t.o.y * T) : toScreen(t.o.x, t.o.y, 0); // where a thing shows on screen (scenery on a wall stands high)
+// the wall nearest to a point of the ground that has a top to stand on: [tile, x, z, height] in tile units
+function edWallNear(x, y) { let best = null, bd = 2.2; const tx = x / T, ty = y / T; if (!F.hg) return null;
+  for (let j = Math.max(0, (ty | 0) - 3); j <= Math.min(F.H - 1, (ty | 0) + 3); j++) for (let i = Math.max(0, (tx | 0) - 3); i <= Math.min(F.W - 1, (tx | 0) + 3); i++) { const k = j * F.W + i, h0 = F.hg[k]; if (!h0 || F.g[k] === 1) continue; const d = hyp(i + .5 - tx, j + .5 - ty); if (d < bd) { bd = d; best = [k, i + .5, j + .5, h0]; } }
+  return best; }
 function edHit(sx, sy) { // the nearest thing under the finger, on screen
   let best = null, bd = 34;
-  for (const t of edThings()) { const s = toScreen(t.o.x, t.o.y, 0), d = hyp(s[0] - sx, s[1] - sy); if (d < bd) { bd = d; best = t; } }
+  for (const t of edThings()) { const s = edScr(t), d = hyp(s[0] - sx, s[1] - sy); if (d < bd) { bd = d; best = t; } }
   return best;
 }
 function edPaint(x, y, open) { // a brush of one tile and its neighbours; the border always stays rock
@@ -5956,7 +6070,14 @@ function edSurf(x, y, kind) { // paint the zone or the height of the tiles under
     else if (F.g[i] !== 1 && F.wh[i] !== ED.wh) { F.wh[i] = ED.wh; changed = true; } }
   return changed;
 }
+function edPlaceWall(x, y) {
+  const w = edWallNear(x, y); if (!w) { toast('Touche le haut d\'un mur'); return; }
+  const z = ED.dz == null ? edZone() : ED.dz, d0 = PROPS[z][ED.deco % PROPS[z].length];
+  edPush(); if (!F.wallProps) F.wallProps = []; const p = { name: 'd_' + ZONES[z] + '_' + d0[0], x: w[1], y: w[3], z: w[2], s: d0[1], rot: 0 }; F.wallProps.push(p); ED.sel = { k: 'wprop', o: p };
+  edChanged(true);
+}
 function edPlace(x, y) {
+  if (ED.tool === 'decmur') return edPlaceWall(x, y);
   if (!edFloorAt(x, y)) { toast('Pose-le sur du sol'); return; }
   edPush();
   if (ED.tool === 'crea') { const id = F.enemies.reduce((a, e) => Math.max(a, e.id + 1), 0), e = makeEnemy(id, ED_FOES[ED.crea][0], x, y, ED.floor, F.mod.hp); F.enemies.push(e); F.byId.set(id, e); ED.sel = { k: 'foe', o: e }; }
@@ -5967,18 +6088,19 @@ function edPlace(x, y) {
   edChanged(true);
 }
 function edRemove(t) {
-  if (!t || (ED.camp && t.k !== 'decor')) { if (t) toast('Les lieux et les habitants du camp se déplacent, ils ne se retirent pas'); return; }
+  if (!t || (ED.camp && t.k !== 'decor' && t.k !== 'wprop')) { if (t) toast('Les lieux et les habitants du camp se déplacent, ils ne se retirent pas'); return; }
   if (t.k === 'start' || t.k === 'lift' || t.k === 'seal') { if (t) toast('L\'entrée et la sortie se déplacent, elles ne se retirent pas'); return; }
   edPush();
   if (t.k === 'foe') { F.enemies = F.enemies.filter(e => e !== t.o); F.byId.delete(t.o.id); }
   else if (t.k === 'chest') { F.chests = F.chests.filter(c => c !== t.o); F.chests.forEach((c, i) => c.id = i); }
   else if (t.k === 'decor') F.decor = F.decor.filter(d => d !== t.o);
+  else if (t.k === 'wprop') F.wallProps = F.wallProps.filter(p => p !== t.o);
   if (ED.sel && ED.sel.o === t.o) ED.sel = null;
   edChanged(true);
 }
 // after a change: obstacles follow the scenery, the 3D is rebuilt when the change touches what it built, the draft is kept
 function edChanged(rebuild) {
-  if (ED.camp) { if (ED.fireO) { F.fireX = ED.fireO.x; F.fireY = ED.fireO.y; } hubStations(F); hubBlocks(F); }
+  if (ED.camp) { if (ED.fireO) { F.fireX = ED.fireO.x; F.fireY = ED.fireO.y; } edFollow(); hubBlocks(F); }
   else F.blocks = F.decor.map(d => ({ x: d.x, y: d.y, r: d.r }));
   if (rebuild) worldChanged();
   edSaveDraft(); edUI();
@@ -6009,25 +6131,27 @@ function edMove(e) {
   const D = ED.drag; if (!D) return;
   const [wx, wy] = edWorld(sx, sy);
   if (D.kind === 'pan') { const w0 = edWorld(D.sx, D.sy); P.x = clamp(D.px - (wx - w0[0]) * .9, 0, F.W * T); P.y = clamp(D.py - (wy - w0[1]) * .9, 0, F.H * T); cam.x = P.x; cam.y = P.y; }
-  else if (D.kind === 'move' && ED.sel) { if (edFloorAt(wx, wy)) { ED.sel.o.x = wx; ED.sel.o.y = wy; if (ED.sel.o.tx !== undefined) { ED.sel.o.tx = wx; ED.sel.o.ty = wy; } D.moved = true; edGizmo(); } }
+  else if (D.kind === 'move' && ED.sel && ED.sel.k === 'wprop') { const w = edWallNear(wx, wy); if (w) { const o = ED.sel.o; o.x = w[1]; o.z = w[2]; o.y = w[3]; D.moved = true; edGizmo(); } }
+  else if (D.kind === 'move' && ED.sel) { if (edFloorAt(wx, wy)) {
+    ED.sel.o.x = wx; ED.sel.o.y = wy; if (ED.sel.o.tx !== undefined) { ED.sel.o.tx = wx; ED.sel.o.ty = wy; } D.moved = true; edGizmo(); } }
   else if (D.kind === 'paint') { if (edPaint(wx, wy, D.open)) { D.any = true; if (!USE3D) worldChanged(); } }
   else if (D.kind === 'surf') { if (edSurf(wx, wy, D.tool)) D.any = true; }
-  else if (D.kind === 'turn' && ED.sel) { const s = toScreen(ED.sel.o.x, ED.sel.o.y, 0); ED.sel.o.rot = Math.atan2(sy - s[1], sx - s[0]) - D.a0; D.moved = true; edGizmo(); }
-  else if (D.kind === 'grow' && ED.sel) { const s = toScreen(ED.sel.o.x, ED.sel.o.y, 0), d = hyp(sx - s[0], sy - s[1]); ED.sel.o.s = clamp(D.s0 * d / D.d0, .3, 3); D.moved = true; edGizmo(); }
+  else if (D.kind === 'turn' && ED.sel) { const s = edScr(ED.sel); ED.sel.o.rot = Math.atan2(sy - s[1], sx - s[0]) - D.a0; D.moved = true; edGizmo(); }
+  else if (D.kind === 'grow' && ED.sel) { const s = edScr(ED.sel), d = hyp(sx - s[0], sy - s[1]); ED.sel.o.s = clamp(D.s0 * d / D.d0, .3, 3); D.moved = true; edGizmo(); }
 }
 function edUp(e) {
   if (!ED.on || !ED.ptrs.has(e.pointerId)) return;
   e.preventDefault(); e.stopImmediatePropagation();
   ED.ptrs.delete(e.pointerId); if (ED.ptrs.size < 2) ED.pinch = 0;
   const D = ED.drag; ED.drag = null; if (!D) return;
-  if (D.kind === 'move' || D.kind === 'turn' || D.kind === 'grow') { if (D.moved) edChanged(ED.camp || (ED.sel && ED.sel.k !== 'foe' && ED.sel.k !== 'chest')); else ED.undo.pop(); }
+  if (D.kind === 'move' || D.kind === 'turn' || D.kind === 'grow') { if (D.moved) edChanged(ED.camp || (ED.sel && ED.sel.k !== 'foe' && ED.sel.k !== 'chest' && ED.sel.k !== 'zone')); else ED.undo.pop(); }
   else if (D.kind === 'paint' || D.kind === 'surf') { if (D.any) edChanged(true); else ED.undo.pop(); }
 }
 function edWheel(e) { if (!ED.on || G.mode !== 'edit') return; e.preventDefault(); ED.half = clamp(ED.half * (e.deltaY > 0 ? 1.12 : 1 / 1.12), 4, 32); }
 // the handles of a piece of scenery: turn (the dot above) and grow (the dot at the side), drawn over the view and dragged
 function edHandle(kind, e) {
   if (!ED.sel) return; e.preventDefault(); e.stopPropagation();
-  const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top, s = toScreen(ED.sel.o.x, ED.sel.o.y, 0);
+  const r = cv.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top, s = edScr(ED.sel);
   edPush(); ED.ptrs.set(e.pointerId, [sx, sy]); try { cv.setPointerCapture(e.pointerId); } catch (_) { }
   ED.drag = kind === 'turn' ? { kind, a0: Math.atan2(sy - s[1], sx - s[0]) - (ED.sel.o.rot || 0), moved: false } : { kind, s0: ED.sel.o.s, d0: Math.max(12, hyp(sx - s[0], sy - s[1])), moved: false };
 }
@@ -6038,20 +6162,31 @@ function edUI() {
   if (!root) { root = h('div', { id: 'ed', hidden: true }); document.body.append(root); }
   root.hidden = !show; if (!show) return;
   const T0 = ED_TOOLS.find(t => t[0] === ED.tool), L = ED.camp ? { name: 'Le camp, pour les deux jeux' } : LEVELS[ED.floor - 1];
-  const top = h('div', { class: 'ed-top' }, h('button', { class: 'btn small line', type: 'button', 'aria-label': 'Quitter l\'éditeur', onclick: edStop }, ic('retour')),
-    h('div', { class: 'grow ed-name' }, h('b', { text: ED.camp ? 'Le camp' : 'Niveau ' + ED.floor }), h('small', { text: L.name })),
-    h('button', { class: 'btn small line', type: 'button', disabled: !ED.undo.length, 'aria-label': 'Annuler', onclick: edUndo }, ic('retour')),
-    h('button', { class: 'btn small line ed-redo', type: 'button', disabled: !ED.redo.length, 'aria-label': 'Refaire', onclick: edRedo }, ic('retour')),
-    h('button', { class: 'btn small', type: 'button', onclick: ED.camp ? edStop : edTry }, ic('aller'), ED.camp ? 'Terminer' : 'Essayer'));
+  const top = h('div', { class: 'ed-top' },
+    h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:8px' },
+      h('button', { class: 'btn small line', type: 'button', 'aria-label': 'Quitter l\'éditeur', onclick: edStop }, ic('retour')),
+      h('div', { class: 'grow ed-name' }, h('b', { text: ED.camp ? 'Le camp' : 'Niveau ' + ED.floor }), h('small', { text: L.name })),
+      h('button', { class: 'btn small', type: 'button', onclick: ED.camp ? edStop : edTry }, ic('aller'), ED.camp ? 'Terminer' : 'Essayer')),
+    h('div', { class: 'row ed-acts', style: 'flex-wrap:nowrap;gap:6px' },
+      h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.layersOpen), onclick: () => { ED.layersOpen = !ED.layersOpen; edUI(); } }, ic('niveaux'), 'Calques'),
+      h('button', { class: 'chipbtn', type: 'button', disabled: !ED.undo.length, onclick: edUndo }, ic('retour'), 'Annuler'),
+      h('button', { class: 'chipbtn ed-redo', type: 'button', disabled: !ED.redo.length, onclick: edRedo }, ic('retour'), 'Refaire')));
   const tools = h('div', { class: 'ed-tools' }, ...ED_TOOLS.filter(t => !ED.camp || !['crea', 'coffre', 'sortie'].includes(t[0])).map(t => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.tool === t[0]), onclick: () => { ED.tool = t[0]; if (t[0] !== 'sel') ED.sel = null; edUI(); } }, ic(t[2]), t[1])));
-  const kids = [top, h('div', { class: 'ed-tip', text: T0[3] }), h('div', { class: 'ed-fill' })]; // the map stays free in the middle; everything else sits at the bottom
+  const kids = [top, h('div', { class: 'ed-tip', text: T0[3] })];
+  if (ED.layersOpen) kids.push(h('div', { class: 'ed-layers' }, h('b', { text: 'Calques' }), ...ED_LAYERS.filter(l => !ED.camp || l[0] !== 'niveau').map(([k, n]) => { const L = ED.layers[k];
+    return h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:6px' }, h('span', { class: 'grow', text: n }),
+      h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(L.v), 'aria-label': (L.v ? 'Cacher ' : 'Montrer ') + n, onclick: () => { L.v = !L.v; if (ED.sel && ED_KIND_LAYER[ED.sel.k] === k) ED.sel = null; edUI(); } }, L.v ? 'Visible' : 'Caché'),
+      h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(L.l), 'aria-label': (L.l ? 'Déverrouiller ' : 'Verrouiller ') + n, onclick: () => { L.l = !L.l; if (ED.sel && ED_KIND_LAYER[ED.sel.k] === k) ED.sel = null; edUI(); } }, ic('cadenas'), L.l ? 'Verrouillé' : 'Libre')); })));
+  kids.push(h('div', { class: 'ed-fill' })); // the map stays free in the middle; everything else sits at the bottom
   if (ED.tool === 'crea') kids.push(h('div', { class: 'seg ed-sub ed-pal' }, ...ED_FOES.map((f, i) => edPalBtn(monName(f[0], strIdxOf(ED.floor)), f[1], ED.crea === i, () => { ED.crea = i; edUI(); }))));
   const zones = (cur, fn) => h('div', { class: 'seg ed-sub' }, ...STRATA.map((S, z) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(cur === z), onclick: () => fn(z) }, ic('z' + z), S.name)));
   if (ED.tool === 'peint') kids.push(zones(ED.zone, z => { ED.zone = z; edUI(); }));
   if (ED.tool === 'haut') kids.push(h('div', { class: 'seg ed-sub' }, ...ED_HEIGHTS.map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.wh === i), onclick: () => { ED.wh = i; edUI(); } }, n))));
+  if (ED.tool === 'decmur') { const dz = ED.dz == null ? edZone() : ED.dz;
+    kids.push(zones(dz, z => { ED.dz = z; ED.deco = 0; edUI(); }), h('div', { class: 'seg ed-sub ed-pal' }, ...PROPS[dz].map((d, i) => edPalBtn('d_' + ZONES[dz] + '_' + d[0], edDecorName(d[0]), ED.deco === i, () => { ED.deco = i; edUI(); })))); }
   if (ED.tool === 'decor') { const dz = ED.dz == null ? edZone() : ED.dz;
     kids.push(zones(dz, z => { ED.dz = z; ED.deco = 0; edUI(); }), h('div', { class: 'seg ed-sub ed-pal' }, ...edDecor().map((d, i) => edPalBtn('d_' + ZONES[dz] + '_' + d[0], edDecorName(d[0]), ED.deco === i, () => { ED.deco = i; edUI(); })))); }
-  if (ED.tool === 'crea' || ED.tool === 'decor') kids.push(h('div', { id: 'ed-prevbox', class: 'ed-prevbox' }));
+  if (ED.tool === 'crea' || ED.tool === 'decor' || ED.tool === 'decmur') kids.push(h('div', { id: 'ed-prevbox', class: 'ed-prevbox' }));
   const sel = ED.sel;
   if (sel) kids.push(edSelPanel(sel));
   kids.push(tools, h('div', { id: 'ed-giz' }));
@@ -6090,46 +6225,47 @@ function edPalBtn(model, label, on, fn) {
 }
 // the chosen model of the palette, turning in a corner while the tool is in hand
 function edPrevStep() {
-  const want = ED.on && G.mode === 'edit' && (ED.tool === 'crea' || ED.tool === 'decor') ? (ED.tool === 'crea' ? monName(ED_FOES[ED.crea][0], strIdxOf(ED.floor)) : 'd_' + ZONES[ED.dz == null ? edZone() : ED.dz] + '_' + edDecor()[ED.deco % edDecor().length][0]) : '';
+  const want = ED.on && G.mode === 'edit' && ED.tool === 'decmur' ? 'd_' + ZONES[ED.dz == null ? edZone() : ED.dz] + '_' + PROPS[ED.dz == null ? edZone() : ED.dz][ED.deco % 3][0] : ED.on && G.mode === 'edit' && (ED.tool === 'crea' || ED.tool === 'decor') ? (ED.tool === 'crea' ? monName(ED_FOES[ED.crea][0], strIdxOf(ED.floor)) : 'd_' + ZONES[ED.dz == null ? edZone() : ED.dz] + '_' + edDecor()[ED.deco % edDecor().length][0]) : '';
   const box = $('ed-prevbox'); if (!want || !box || !prevInit()) return;
   if (PREV.name !== want) { prevFree(PREV.cur); PREV.cur = null; PREV.name = want; modelLoad(want).then(() => { if (PREV.name === want && !PREV.cur) { PREV.cur = prevModel(want); if (PREV.cur) PREV.scene.add(PREV.cur); } }); }
   if (PREV.r.domElement.parentNode !== box) box.append(PREV.r.domElement);
   if (PREV.cur) { PREV.spin += .02; PREV.cur.rotation.y = PREV.spin; PREV.r.render(PREV.scene, PREV.cam); }
 }
 const ED_PLACES = { counter: 'Le comptoir des niveaux', portal: 'Le portail', wheel: 'La roue', fire: 'Le feu de camp', dummy: 'Le mannequin', npc: 'Un habitant' };
-const ED_DECOR_NAMES = { tonneau: 'Tonneau', rocher: 'Rocher', lanterne: 'Lanterne', cocon: 'Cocon', tremplin: 'Tremplin', grappe: 'Grappe', brasero: 'Brasero', tonneau_explosif: 'Tonneau explosif', rocher_lave: 'Rocher de lave', cristaux: 'Cristaux', rocher_enneige: 'Rocher enneigé', autel: 'Autel', cristal: 'Cristal', arche: 'Arche de lianes', barriere: 'Palissade' };
+const ED_DECOR_NAMES = { tonneau: 'Tonneau', rocher: 'Rocher', lanterne: 'Lanterne', cocon: 'Cocon', tremplin: 'Tremplin', grappe: 'Grappe', brasero: 'Brasero', tonneau_explosif: 'Tonneau explosif', rocher_lave: 'Rocher de lave', cristaux: 'Cristaux', rocher_enneige: 'Rocher enneigé', autel: 'Autel', cristal: 'Cristal', arche: 'Arche de lianes', barriere: 'Palissade', champignon_geant: 'Champignon géant', totem: 'Totem', pilier_charbon: 'Pilier de charbon', tronc_calcine: 'Tronc calciné', arbre_gele: 'Arbre gelé', pilier_glace: 'Pilier de glace', obelisque: 'Obélisque', portail: 'Portail ancien' };
 const edDecorName = n => ED_DECOR_NAMES[n] || n;
 function edSelPanel(sel) {
   const o = sel.o, row = [];
-  let name = ED_PLACES[sel.k] ? ED_PLACES[sel.k] : sel.k === 'start' ? (ED.camp ? 'L\'arrivée au camp' : 'L\'entrée') : sel.k === 'lift' ? 'La sortie' : sel.k === 'seal' ? 'Un sceau' : sel.k === 'chest' ? (o.gold ? 'Coffre doré' : 'Coffre') : sel.k === 'decor' ? edDecorName(o.n) : EN[o.type].name;
+  let name = sel.k === 'wprop' ? edDecorName(sel.o.name.split('_').slice(2).join('_')) + ' (sur un mur)' : sel.k === 'zone' ? 'Zone d\'interaction · ' + sel.o.label : ED_PLACES[sel.k] ? ED_PLACES[sel.k] : sel.k === 'start' ? (ED.camp ? 'L\'arrivée au camp' : 'L\'entrée') : sel.k === 'lift' ? 'La sortie' : sel.k === 'seal' ? 'Un sceau' : sel.k === 'chest' ? (o.gold ? 'Coffre doré' : 'Coffre') : sel.k === 'decor' ? edDecorName(o.n) : EN[o.type].name;
   if (sel.k === 'foe') {
     row.push(h('div', { class: 'seg' }, ...ED_FOES.map(f => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(o.type === f[0]), onclick: () => { edPush(); const e = makeEnemy(o.id, f[0], o.x, o.y, ED.floor, F.mod.hp); e.guard = o.guard; Object.assign(o, e); edChanged(false); } }, f[1]))));
     row.push(toggleRow('bouclier', 'Garde la sortie (se réveille quand on l\'ouvre)', !!o.guard, () => { edPush(); o.guard = !o.guard; edChanged(false); }));
   } else if (sel.k === 'chest') {
     row.push(toggleRow('cible', 'Enfoui (se révèle quand on le voit)', !!o.hidden, () => { edPush(); o.hidden = !o.hidden; edChanged(false); }),
       toggleRow('etoile', 'Doré (objet et gemme assurés)', !!o.gold, () => { edPush(); o.gold = !o.gold; edChanged(false); }));
-  } else if (sel.k === 'decor') row.push(h('small', { text: 'Tire le point du haut pour le tourner, celui de droite pour l\'agrandir.' }));
+  } else if (sel.k === 'zone') row.push(h('small', { text: 'L\'endroit où l\'on marche pour ouvrir ce menu. Il suit son lieu quand on déplace celui-ci.' }));
+  else if (sel.k === 'decor' || sel.k === 'wprop') row.push(h('small', { text: 'Tire le point du haut pour le tourner, celui de droite pour l\'agrandir.' }));
   return h('div', { class: 'ed-sel' }, h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center' }, h('b', { class: 'grow', text: name }),
-    sel.k === 'start' || sel.k === 'lift' || sel.k === 'seal' || ED_PLACES[sel.k] ? null : h('button', { class: 'btn small line', type: 'button', onclick: () => edRemove(sel) }, ic('fermer'), 'Retirer'),
+    sel.k === 'start' || sel.k === 'lift' || sel.k === 'seal' || sel.k === 'zone' || ED_PLACES[sel.k] ? null : h('button', { class: 'btn small line', type: 'button', onclick: () => edRemove(sel) }, ic('fermer'), 'Retirer'),
     h('button', { class: 'btn small ghost', type: 'button', 'aria-label': 'Fermer', onclick: () => { ED.sel = null; edUI(); } }, ic('fermer'))), ...row);
 }
 // the ring around the selection and, for scenery, its two handles; placed every frame (the camera moves)
 function edGizmo() {
   const box = $('ed-giz'); if (!box) return;
   const s = ED.sel; if (!s || !ED.on) { box.replaceChildren(); return; }
-  const p = toScreen(s.o.x, s.o.y, 0), x = p[0], y = p[1];
+  const p = edScr(s), x = p[0], y = p[1];
   if (!box.firstChild) {
     const ring = h('div', { class: 'ed-ring' }), kids = [ring];
-    if (s.k === 'decor') { const tn = h('div', { class: 'ed-h ed-turn', 'aria-label': 'Tourner' }), gr = h('div', { class: 'ed-h ed-grow', 'aria-label': 'Agrandir' });
+    if (s.k === 'decor' || s.k === 'wprop') { const tn = h('div', { class: 'ed-h ed-turn', 'aria-label': 'Tourner' }), gr = h('div', { class: 'ed-h ed-grow', 'aria-label': 'Agrandir' });
       tn.addEventListener('pointerdown', e => edHandle('turn', e)); gr.addEventListener('pointerdown', e => edHandle('grow', e)); kids.push(tn, gr); }
     box.replaceChildren(...kids);
   }
-  const [ring, tn, gr] = box.children, rr = s.k === 'decor' ? Math.max(22, (s.o.s || 1) * 26) : 22;
+  const [ring, tn, gr] = box.children, rr = s.k === 'decor' || s.k === 'wprop' ? Math.max(22, (s.o.s || 1) * 26) : 22;
   ring.style.transform = 'translate(' + (x - rr) + 'px,' + (y - rr) + 'px)'; ring.style.width = ring.style.height = rr * 2 + 'px';
   if (tn) { const a = (s.o.rot || 0) - Math.PI / 2; tn.style.transform = 'translate(' + (x + Math.cos(a) * (rr + 18) - 13) + 'px,' + (y + Math.sin(a) * (rr + 18) - 13) + 'px)'; }
   if (gr) gr.style.transform = 'translate(' + (x + rr + 14 - 13) + 'px,' + (y - 13) + 'px)';
 }
-function edFrame() { if (ED.on && G.mode === 'edit') { edGizmo(); edPrevStep(); } }
+function edFrame() { if (ED.on && G.mode === 'edit') { edGizmo(); edPrevStep(); edLayerVis(); } }
 cv.addEventListener('pointerdown', edDown, true); cv.addEventListener('pointermove', edMove, true);
 cv.addEventListener('pointerup', edUp, true); cv.addEventListener('pointercancel', edUp, true); cv.addEventListener('wheel', edWheel, { passive: false });
 
