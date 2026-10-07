@@ -1,0 +1,42 @@
+<!doctype html><html><body style="margin:0;background:#000"><canvas id=c></canvas>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+// Reproduit le rendu du jeu (sols et murs proceduraux, materiau toon, camera a 56 degres, brouillard depuis le point vise) pour y poser les modeles
+import * as THREE from 'three';import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const q=new URLSearchParams(location.search);const C=await (await fetch(q.get('cfg'))).json();const W=+q.get('w')||1280,H=+q.get('h')||720;
+const cv=document.getElementById('c');cv.width=W;cv.height=H;const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});r.setSize(W,H,false);r.outputColorSpace=THREE.LinearSRGBColorSpace;
+let seed=C.seed||7;const R=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+const rows=C.map,GH=rows.length,GW=rows[0].length,isF=(x,y)=>x>=0&&y>=0&&x<GW&&y<GH&&rows[y][x]!=='#';
+const wh=[];for(let y=0;y<GH;y++){wh.push([]);for(let x=0;x<GW;x++){let h=0;if(!isF(x,y)){let n=false;for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)if(isF(x+a,y+b))n=true;if(n)h=isF(x,y-1)?.34:1.3+R()*.75;}wh[y].push(h);}}
+const hAt=(x,y)=>x>=0&&y>=0&&x<GW&&y<GH?wh[y][x]:0;
+const sc=new THREE.Scene();sc.background=new THREE.Color(C.fog);const focus=new THREE.Vector3(C.focus[0],0,C.focus[1]);
+const grad=new THREE.DataTexture(new Uint8Array([64,64,64,255,128,128,128,255,196,196,196,255,255,255,255,255]),4,1);grad.minFilter=grad.magFilter=THREE.NearestFilter;grad.needsUpdate=true;
+const fogU={uFocus:{value:focus},uFogC:{value:new THREE.Color(C.fog)},uNear:{value:C.fogNear||4.4},uFar:{value:C.fogFar||10.2}};
+const patch=m=>{m.onBeforeCompile=s=>{Object.assign(s.uniforms,fogU);s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform vec3 uFocus;varying float vFd;').replace('#include <project_vertex>','#include <project_vertex>\nvFd=length((modelMatrix*vec4(transformed,1.0)).xyz-uFocus);');
+ s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nuniform vec3 uFogC;uniform float uNear;uniform float uFar;varying float vFd;').replace('#include <dithering_fragment>','#include <dithering_fragment>\ngl_FragColor.rgb=mix(gl_FragColor.rgb,uFogC,min(.97,smoothstep(uNear,uFar,vFd)));');};return m};
+const TL=new THREE.TextureLoader();const tex=async n=>{const t=await TL.loadAsync(n);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.NoColorSpace;t.anisotropy=4;return t};
+class GB{constructor(){this.p=[];this.n=[];this.c=[];this.u=[]}quad(P,N,G,U){for(const i of [0,1,2,0,2,3]){this.p.push(...P[i]);this.n.push(...N);this.c.push(G[i],G[i],G[i]);this.u.push(...U[i]);}}
+ mesh(map){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(this.u,2));
+  return new THREE.Mesh(g,patch(new THREE.MeshToonMaterial({vertexColors:true,gradientMap:grad,map,color:new THREE.Color(C.tint)})));}}
+const fl=new GB(),sd=new GB(),tp=new GB();
+for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){
+ if(isF(x,y)){const ao=(a,b)=>{let k=0;for(const [i,j] of [[a-1,b-1],[a,b-1],[a-1,b],[a,b]])if(hAt(i,j)>0)k++;return 1-.2*Math.min(k,2)};
+  fl.quad([[x,0,y],[x,0,y+1],[x+1,0,y+1],[x+1,0,y]],[0,1,0],[ao(x,y),ao(x,y+1),ao(x+1,y+1),ao(x+1,y)],[[x/2,-y/2],[x/2,-(y+1)/2],[(x+1)/2,-(y+1)/2],[(x+1)/2,-y/2]]);}
+ const h=wh[y][x];if(h>0){const g=.62+R()*.3,L=h<.5?.07:.15;tp.quad([[x-.025,h+.012,y-.025],[x-.025,h+.012,y+1.025],[x+1.025,h+.012,y+1.025],[x+1.025,h+.012,y-.025]],[0,1,0],[g,g,g,g],[[x/2,-y/2],[x/2,-(y+1)/2],[(x+1)/2,-(y+1)/2],[(x+1)/2,-y/2]]);
+  const S=[[0,1,[x,y+1],[x+1,y+1],[0,0,1]],[1,0,[x+1,y+1],[x+1,y],[1,0,0]],[0,-1,[x+1,y],[x,y],[0,0,-1]],[-1,0,[x,y],[x,y+1],[-1,0,0]]];
+  for(const [dx,dy,a,b,n] of S){const h2=hAt(x+dx,y+dy);if(h2>=h)continue;const g0=.42+.3*h2,g1=Math.min(1.05,.42+.3*h);const ua=(n[0]?a[1]:a[0])/2,ub=(n[0]?b[1]:b[0])/2;
+   sd.quad([[a[0],h2,a[1]],[b[0],h2,b[1]],[b[0],h,b[1]],[a[0],h,a[1]]],n,[g0,g0,g1,g1],[[ua,h2/2],[ub,h2/2],[ub,h/2],[ua,h/2]]);
+   const o=.025;tp.quad([[a[0]+n[0]*o,h-L,a[1]+n[2]*o],[b[0]+n[0]*o,h-L,b[1]+n[2]*o],[b[0]+n[0]*o,h+.012,b[1]+n[2]*o],[a[0]+n[0]*o,h+.012,a[1]+n[2]*o]],n,[g*.8,g*.8,g,g],[[ua,0],[ub,0],[ub,L/2],[ua,L/2]]);}}}
+sc.add(fl.mesh(await tex(C.tex.sol)),sd.mesh(await tex(C.tex.mur)),tp.mesh(await tex(C.tex.dessus)));
+sc.add(new THREE.HemisphereLight(C.sky,C.gnd,(C.hemi||.62)*Math.PI));const dl=new THREE.DirectionalLight(C.sun,.5*Math.PI);dl.position.set(focus.x-5,12,focus.z-4.5);dl.target.position.copy(focus);sc.add(dl,dl.target);
+const pl=new THREE.PointLight('#ffb866',1.4*Math.PI,10.5,1.5);pl.position.set(focus.x,1.05,focus.z);sc.add(pl);
+const L=new GLTFLoader();
+for(const p of C.props||[]){try{if(p.wall){p.y=wh[p.wall[1]][p.wall[0]];p.x=p.wall[0]+.5+(p.dx||0);p.z=p.wall[1]+1-(p.dz??.2);}const g=await L.loadAsync(p.f);let me=null;g.scene.traverse(o=>{if(o.isMesh&&!me)me=o});
+  if(p.raw){g.scene.position.set(p.x,p.y||0,p.z);g.scene.rotation.y=p.rot||0;g.scene.scale.setScalar(p.s||1);g.scene.traverse(o=>{if(o.isMesh){const mp=o.material.map;if(mp)mp.colorSpace=THREE.NoColorSpace;o.material=patch(new THREE.MeshToonMaterial({gradientMap:grad,map:mp,color:0x4d4d4d,emissive:0x808080,emissiveMap:mp}));}});
+   if(p.clip){const mx=new THREE.AnimationMixer(g.scene);const a=g.animations.find(x=>x.name===p.clip);if(a){mx.clipAction(a).play();mx.setTime(p.t||0);}}sc.add(g.scene);continue;}
+  const geo=me.geometry.clone();geo.computeBoundingBox();const bb=geo.boundingBox,sz=new THREE.Vector3();bb.getSize(sz);const ctr=new THREE.Vector3();bb.getCenter(ctr);const k=1/Math.max(sz.x,sz.y,sz.z);geo.translate(-ctr.x,-ctr.y,-ctr.z);geo.scale(k,k,k);
+  const mp=me.material.map;if(mp)mp.colorSpace=THREE.NoColorSpace;const m=new THREE.Mesh(geo,patch(new THREE.MeshToonMaterial({gradientMap:grad,map:mp,color:0x4d4d4d,emissive:0x808080,emissiveMap:mp})));
+  m.scale.setScalar(p.s);m.rotation.y=p.rot||0;m.position.set(p.x,(p.y||0)+sz.y*k*p.s/2-.02,p.z);sc.add(m);}catch(e){console.log('ERR',p.f,e.message)}}
+const P=.98,D=20,asp=W/H,halfW=C.halfW||7;const cam=new THREE.PerspectiveCamera(2*Math.atan(halfW/D/asp)*180/Math.PI,asp,2,70);cam.position.set(focus.x,Math.sin(P)*D,focus.z+Math.cos(P)*D);cam.lookAt(focus);
+r.render(sc,cam);document.title='done';
+</script></body></html>

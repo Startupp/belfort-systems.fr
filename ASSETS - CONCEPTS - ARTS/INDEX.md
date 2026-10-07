@@ -4,7 +4,7 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 
 | Dossier | Fichiers | Poids |
 |---|---:|---:|
-| `ASSETS - CONCEPTS - ARTS` | 2 | 0.0 Mo |
+| `ASSETS - CONCEPTS - ARTS` | 3 | 0.0 Mo |
 | `01_concepts/chevaliers` | 1 | 1.0 Mo |
 | `01_concepts/decors_pack1/abimes` | 6 | 5.2 Mo |
 | `01_concepts/decors_pack1/braises` | 6 | 5.1 Mo |
@@ -24,7 +24,7 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `02_modeles_3d/blocs/racines` | 7 | 0.2 Mo |
 | `02_modeles_3d/blocs/racines/lod` | 14 | 0.1 Mo |
 | `02_modeles_3d/chevaliers` | 4 | 3.8 Mo |
-| `02_modeles_3d/chevaliers/champignon` | 1 | 0.4 Mo |
+| `02_modeles_3d/chevaliers/champignon` | 2 | 1.3 Mo |
 | `02_modeles_3d/chevaliers/pack1_clips_separes` | 10 | 30.6 Mo |
 | `02_modeles_3d/creatures` | 10 | 2.6 Mo |
 | `02_modeles_3d/creatures/pack1_statiques` | 26 | 8.2 Mo |
@@ -37,16 +37,20 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `02_modeles_3d/decors/abimes/pack1` | 5 | 1.5 Mo |
 | `02_modeles_3d/decors/braises` | 2 | 0.2 Mo |
 | `02_modeles_3d/decors/braises/pack1` | 5 | 1.6 Mo |
+| `02_modeles_3d/decors/braises/volume` | 4 | 0.3 Mo |
 | `02_modeles_3d/decors/canopee` | 4 | 0.5 Mo |
 | `02_modeles_3d/decors/coffres` | 3 | 0.4 Mo |
 | `02_modeles_3d/decors/givre` | 2 | 0.3 Mo |
 | `02_modeles_3d/decors/givre/pack1` | 5 | 1.6 Mo |
+| `02_modeles_3d/decors/givre/volume` | 4 | 0.4 Mo |
 | `02_modeles_3d/decors/marais` | 2 | 0.3 Mo |
 | `02_modeles_3d/decors/mine` | 4 | 0.5 Mo |
 | `02_modeles_3d/decors/mycelium` | 2 | 0.2 Mo |
 | `02_modeles_3d/decors/mycelium/pack1` | 5 | 1.7 Mo |
+| `02_modeles_3d/decors/mycelium/volume` | 4 | 0.3 Mo |
 | `02_modeles_3d/decors/racines` | 2 | 0.3 Mo |
 | `02_modeles_3d/decors/racines/pack1` | 5 | 1.6 Mo |
+| `02_modeles_3d/decors/racines/volume` | 4 | 0.3 Mo |
 | `02_modeles_3d/decors/ruche` | 4 | 0.5 Mo |
 | `02_modeles_3d/equipements/ambre` | 7 | 2.0 Mo |
 | `02_modeles_3d/equipements/champignon` | 7 | 2.6 Mo |
@@ -87,15 +91,16 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `07_outils/attaques_monstres` | 1 | 0.0 Mo |
 | `07_outils/dashboard` | 3 | 0.0 Mo |
 | `07_outils/monstres_animes` | 4 | 0.0 Mo |
-| `07_outils/pipeline` | 6 | 0.0 Mo |
+| `07_outils/pipeline` | 18 | 0.1 Mo |
+| `07_outils/pipeline/niveaux` | 4 | 0.0 Mo |
 | `07_outils/validations` | 2 | 1.0 Mo |
 | `_alternatives/textures_v1/abimes` | 7 | 1.1 Mo |
 | `_alternatives/textures_v1/braises` | 7 | 1.6 Mo |
 | `_alternatives/textures_v1/givre` | 7 | 1.1 Mo |
 | `_alternatives/textures_v1/mycelium` | 7 | 1.6 Mo |
 | `_alternatives/textures_v1/racines` | 7 | 1.2 Mo |
-| `_apercus` | 10 | 0.7 Mo |
+| `_apercus` | 20 | 1.4 Mo |
 | `_apercus/pack2_monstres_animes` | 6 | 0.7 Mo |
-| `_journal` | 6 | 0.0 Mo |
+| `_journal` | 7 | 0.0 Mo |
 | `_journal/pack_zones_promo` | 3 | 0.2 Mo |
 | `_journal/textures` | 1 | 0.0 Mo |

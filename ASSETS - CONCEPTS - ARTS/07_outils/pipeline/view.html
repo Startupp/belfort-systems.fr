@@ -1,0 +1,16 @@
+<!doctype html><html><body style="margin:0;background:#2a2622"><canvas id=c></canvas>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const q=new URLSearchParams(location.search),items=q.get('f').split(','),cols=+q.get('cols')||4,T=+q.get('t')||256,az=(+q.get('az')||30)*Math.PI/180,D=+q.get('d')||2.9;
+const rows=Math.ceil(items.length/cols),cv=document.getElementById('c');cv.width=cols*T;cv.height=rows*T;
+const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});r.setSize(cols*T,rows*T,false);r.setScissorTest(true);r.outputColorSpace=THREE.SRGBColorSpace;
+const L=new GLTFLoader();let k=0;
+for(const it of items){const [f,clip,tt]=it.split('@');const i=k++;
+ try{const g=await L.loadAsync(f);const sc=new THREE.Scene();sc.background=new THREE.Color(i%2?0x3a342e:0x302b26);sc.add(new THREE.HemisphereLight(0xffffff,0x665544,2.2));const d=new THREE.DirectionalLight(0xffffff,1.6);d.position.set(2,4,3);sc.add(d);
+  sc.add(g.scene);if(clip){const m=new THREE.AnimationMixer(g.scene);const a=g.animations.find(x=>x.name===clip);if(a){m.clipAction(a).play();m.setTime(+tt||0);}else console.log('NOCLIP',f,clip);}
+  sc.add(new THREE.GridHelper(2,4,0x887766,0x554433));sc.add(new THREE.ArrowHelper(new THREE.Vector3(0,0,1),new THREE.Vector3(0,0.01,0),0.9,0xffcc33));
+  const cam=new THREE.PerspectiveCamera(32,1,0.01,50);cam.position.set(Math.sin(az)*D,1.25*D/2.9,Math.cos(az)*D);cam.lookAt(0,0.45,0);
+  r.setViewport((i%cols)*T,(rows-1-Math.floor(i/cols))*T,T,T);r.setScissor((i%cols)*T,(rows-1-Math.floor(i/cols))*T,T,T);r.render(sc,cam);}catch(e){console.log('ERR',f,e.message)}}
+document.title='done';
+</script></body></html>
