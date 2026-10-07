@@ -7883,6 +7883,28 @@ function roleChips(a) {
     ...ROLE_NAMES.map(([r, n]) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(v === r), onclick: async () => { try { await admJCall('role', { id: a.id, role: r, nom: (a.persos[0] || {}).nom || '' }); ADMJ.msg = n + ' : ' + devCode(a.id); } catch (e) { ADMJ.msg = String(e.message || e); } await roleAdmLoad(); renderSheet(); } }, n)));
 }
 
+/* ---------- opened from Damien's dashboard (34d): /ecorce/?admin&outil=<tool> goes straight to that tool ----------
+   The last knight is taken, as with « Administration » on the home screen; the password is asked as usual where it is needed. */
+const OUTILS = {
+  modeles: () => { ADM.view = 'mod'; openSheet('adm'); },
+  variables: () => { ADM.view = 'var'; openSheet('adm'); },
+  joueurs: () => { ADM.view = 'joueurs'; ADM.big = true; openSheet('adm'); },
+  niveaux: () => { ADM.view = 'mod'; ADM.open.niv = true; openSheet('adm'); },
+  editeur: () => edStart(clamp(+(new URLSearchParams(location.search).get('niveau')) || 1, 1, LEVELS.length), newSeed(0, false)),
+  camp: () => edStart('camp'),
+  interface: () => hudEditStart('play'),
+  bibliotheque: () => { ADM.view = 'mod'; openSheet('adm'); setTimeout(() => { const b = [...document.querySelectorAll('.adm-box b')].find(x => x.textContent === 'La bibliothèque'); if (b) b.scrollIntoView({ block: 'start' }); }, 50); },
+};
+function outilOpen(tries) {
+  let k = ''; try { k = new URLSearchParams(location.search).get('outil') || ''; } catch (e) { }
+  const go = OUTILS[k]; if (!go) return;
+  if (!window.__game || G.mode !== 'title') { if ((tries | 0) < 40) setTimeout(() => outilOpen((tries | 0) + 1), 250); return; }
+  if (!save.chars.length) { toast('Crée d\'abord un chevalier : l\'outil s\'ouvrira ensuite depuis l\'accueil (Administration)'); return; }
+  G.home = false; NAV.key = ''; ADM.shown = true; admWrite('tk-admin', '1'); pickChar(clamp(save.cur | 0, 0, save.chars.length - 1)); ADM.msg = '';
+  try { go(); } catch (e) { toast('Cet outil n\'a pas pu s\'ouvrir'); }
+}
+setTimeout(outilOpen, 300);
+
 </script>
 </body>
 </html>
