@@ -1,0 +1,93 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Dashboard Créateur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Grenze+Gotisch:wght@600;700&display=swap">
+<style>
+/* Un établi de bois sombre. Bandeau d'état du jeu, puis trois plans de travail : modules, chantiers, lots d'assets. Toutes les données viennent de dashboard.json. */
+:root{
+  color-scheme:dark;
+  --bois:#17120d; --plan:#221a13; --carte:#2c2219; --creux:#1b1611; --trait:#3e3022;
+  --encre:#f1e4c8; --pale:#b9a888; --ambre:#ffc24a; --ambre-encre:#2a1d08;
+  --ok:#7fd68a; --chantier:#ffb35c; --prevu:#8fb6ff; --panne:#ff7a66;
+  --racines:#8fbf5a; --mycelium:#56d6c9; --braises:#ff8a4c; --givre:#9fd0ff; --abimes:#b68cff; --canopee:#b9e04a; --mine:#e0b25a; --ruche:#ffcf3f; --marais:#7fae8a;
+  --titre:"Grenze Gotisch",Georgia,serif; --texte:Figtree,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{background:var(--bois);color:var(--encre);font:15px/1.5 var(--texte);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:26px 70px;display:flex;flex-direction:column;gap:30px}
+header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:flex-end;justify-content:space-between}
+h1{font:700 clamp(38px,8vw,60px)/.95 var(--titre);color:var(--ambre);margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--pale);max-width:56ch}
+.zones{display:flex;flex-wrap:wrap;gap:6px}
+.zone{font:600 12px var(--texte);padding:4px 10px;border-radius:999px;border:1px solid var(--trait);background:var(--plan);display:flex;gap:6px;align-items:center}
+.zone i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.zone.prop{border-style:dashed;color:var(--pale)}
+.etat{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.etat div{background:var(--plan);border:1px solid var(--trait);border-radius:12px;padding:12px 14px;min-width:0}
+.etat small{display:block;font:700 11px var(--texte);letter-spacing:.08em;text-transform:uppercase;color:var(--pale)}
+.etat b{font:700 24px/1.15 var(--titre);color:var(--ambre);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.etat span{display:block;font-size:12.5px;color:var(--pale)}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+h2{font:700 30px/1 var(--titre);margin:0;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+h2 small{font:400 13px var(--texte);color:var(--pale)}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.module{background:var(--carte);border:1px solid var(--trait);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.module .haut{display:flex;gap:10px;align-items:center}
+.module svg{width:26px;height:26px;flex:none;stroke:var(--ambre);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.module b{font-size:16px;overflow-wrap:anywhere;min-width:0}
+.module p{margin:0;color:var(--pale);font-size:13.5px;flex:1}
+.module .bas{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{font:700 11.5px var(--texte);letter-spacing:.03em;padding:3px 9px;border-radius:999px;border:1.5px solid var(--k);color:var(--k);white-space:nowrap}
+.pill::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--k);margin-right:6px}
+a.ouvrir{font:700 13px var(--texte);border-radius:9px;padding:7px 12px;text-decoration:none;background:var(--ambre);color:var(--ambre-encre);margin-left:auto}
+a:focus-visible{outline:2px solid var(--ambre);outline-offset:2px}
+.ligne{background:var(--plan);border:1px solid var(--trait);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center}
+.ligne b{overflow-wrap:anywhere}
+.ligne p{margin:0;color:var(--pale);font-size:13.5px;grid-column:1/-1}
+.barre{grid-column:1/-1;height:8px;border-radius:99px;background:var(--creux);overflow:hidden}
+.barre i{display:block;height:100%;background:var(--ambre);border-radius:99px}
+.droite{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.droite a{color:var(--ambre);font-weight:600;font-size:13px}
+.pct{font:700 13px var(--texte);font-variant-numeric:tabular-nums;color:var(--pale)}
+.vide{border:1.5px dashed var(--trait);border-radius:12px;padding:18px;color:var(--pale);font-size:14px}
+.msg{font-size:13px;color:var(--pale);min-height:1.2em}
+footer{color:var(--pale);font-size:12.5px;border-top:1px solid var(--trait);padding-top:12px}
+</style></head><body>
+<div class="wrap">
+<header>
+  <div><h1>Dashboard Créateur</h1><p>L'établi de TinKnight : les modules de création, les chantiers en cours et les lots d'assets en attente de validation.</p></div>
+  <div class="zones" id="zones" aria-label="Zones du jeu"></div>
+</header>
+<div class="etat" id="etat" aria-live="polite"></div>
+<section><h2>Modules <small>éditeurs, créateurs, jeu, serveurs</small></h2><div class="grille" id="modules"></div>
+  <div class="msg" id="msg" role="status"></div></section>
+<section><h2>Chantiers <small>avancement des mises à jour</small></h2><div id="chantiers" style="display:flex;flex-direction:column;gap:8px"></div></section>
+<section><h2>Lots d'assets <small>du plus récent au plus ancien</small></h2><div id="lots" style="display:flex;flex-direction:column;gap:8px"></div></section>
+<footer>Cette page lit <code>dashboard.json</code>, posé à côté d'elle, et se rafraîchit toute seule chaque minute. Pour brancher un outil ou mettre à jour un état, il suffit de modifier ce fichier (voir LISEZMOI.md).</footer>
+</div>
+<script>
+const ZONES=[['Racines','racines',1],['Mycélium','mycelium',1],['Braises','braises',1],['Givre','givre',1],['Abîmes','abimes',1],['Canopée','canopee',0],['Mine','mine',0],['Ruche','ruche',0],['Marais','marais',0]];
+document.getElementById('zones').innerHTML=ZONES.map(z=>`<span class="zone ${z[2]?'':'prop'}" style="--c:var(--${z[1]})" title="${z[2]?'dans le jeu':'zone proposée'}"><i></i>${z[0]}</span>`).join('');
+const ICO={'éditeur':'<path d="M14 4l6 6-2 2-6-6z"/><path d="M13.5 8.5L4 18l2 2 9.5-9.5"/>','créateur':'<path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M18 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>','jeu':'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/>','serveur':'<rect x="4" y="4" width="16" height="6" rx="2"/><rect x="4" y="14" width="16" height="6" rx="2"/><path d="M8 7h.01M8 17h.01"/>','lien':'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'};
+const COUL={'en ligne':'ok','fait':'ok','validé':'ok','dans le dépôt':'ok','en chantier':'chantier','en cours':'chantier','à valider':'chantier','prévu':'prevu','à faire':'prevu','en panne':'panne','refusé':'panne'};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pill=e=>`<span class="pill" style="--k:var(--${COUL[e]||'prevu'})">${esc(e||'prévu')}</span>`;
+const url=u=>/^(https:\/\/|\.{0,2}\/)[^\s"'<>]*$/.test(u||'')?u:'';
+const $=id=>document.getElementById(id);
+let S={modules:[],chantiers:[],lots:[],jeu:null,pret:false};
+function dessine(){
+  const j=S.jeu||{};
+  $('etat').innerHTML=[['Version du jeu',j.version,j.version_note],['Étape en cours',j.etape,j.etape_note],['Serveurs',j.serveurs,j.serveurs_note],['Crédits Higgsfield',j.credits,j.credits_note],['Dernier lot',j.dernier_lot,j.dernier_lot_note]].map(x=>`<div><small>${x[0]}</small><b>${esc(x[1]??'–')}</b><span>${esc(x[2]??(x[1]!=null?'':(S.pret?'à renseigner':'chargement…')))}</span></div>`).join('');
+  $('modules').innerHTML=S.modules.length?S.modules.map(m=>`<div class="module"><div class="haut"><svg viewBox="0 0 24 24" aria-hidden="true">${ICO[m.type]||ICO.lien}</svg><b>${esc(m.nom)}</b></div><p>${esc(m.note)}</p><div class="bas">${pill(m.etat)}${url(m.url)?`<a class="ouvrir" href="${esc(m.url)}" target="_blank" rel="noopener">Ouvrir</a>`:''}</div></div>`).join(''):`<div class="vide">${S.pret?'Aucun module pour l\'instant. Ajoute-les dans dashboard.json.':'Chargement des modules…'}</div>`;
+  $('chantiers').innerHTML=S.chantiers.length?S.chantiers.map(c=>{const p=Math.max(0,Math.min(100,+c.progression||0));return `<div class="ligne"><b>${esc(c.titre)}</b><div class="droite"><span class="pct">${p} %</span>${pill(c.etat)}</div><div class="barre" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100" aria-label="${esc(c.titre)}"><i style="width:${p}%"></i></div><p>${esc(c.detail)}</p></div>`}).join(''):`<div class="vide">${S.pret?'Aucun chantier enregistré.':'Chargement des chantiers…'}</div>`;
+  $('lots').innerHTML=S.lots.length?S.lots.map(l=>`<div class="ligne"><b>${esc(l.nom)}</b><div class="droite">${pill(l.etat)}${url(l.lien)?`<a href="${esc(l.lien)}" target="_blank" rel="noopener">Télécharger</a>`:''}</div><p>${esc(l.date)} · ${esc(l.contenu)}</p></div>`).join(''):`<div class="vide">${S.pret?'Aucun lot enregistré.':'Chargement des lots…'}</div>`;
+}
+dessine();
+const tri=(a,b)=>(a.ordre??99)-(b.ordre??99)||String(a.nom||a.titre).localeCompare(String(b.nom||b.titre));
+async function charge(){
+  try{const r=await fetch('dashboard.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();
+    S.modules=(d.modules||[]).slice().sort(tri);S.chantiers=(d.chantiers||[]).slice().sort(tri);S.lots=(d.lots||[]).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));S.jeu=d.jeu||null;S.pret=true;
+    $('msg').textContent=d.mis_a_jour?'Données du '+d.mis_a_jour+' (dashboard.json).':'';dessine()}
+  catch(e){S.pret=true;$('msg').textContent='Lecture de dashboard.json impossible : '+e.message;dessine()}
+}
+charge();setInterval(charge,60000);
+</script></body></html>
