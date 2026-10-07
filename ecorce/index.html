@@ -95,10 +95,18 @@ p{margin:0;color:var(--dim);max-width:46ch}
 .ava::after{content:"";position:absolute;left:14%;top:8%;width:72%;height:30%;border-radius:60% 60% 40% 40%;background:#7fa650;transform:rotate(-8deg)}
 
 /* ---------- camp tab bar ---------- */
-#tabs{position:absolute;left:10px;right:10px;max-width:500px;margin-inline:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:6px;border-radius:30px;background:rgba(23,18,13,.94);background:color-mix(in srgb,var(--well) 94%,transparent)}
+#tabs{position:absolute;left:10px;right:10px;max-width:500px;margin-inline:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:6px;border-radius:30px;background:rgba(23,18,13,.94);background:color-mix(in srgb,var(--well) 94%,transparent)}
 .tab{appearance:none;border:0;background:transparent;border-radius:24px;padding:9px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--dim);cursor:pointer;position:relative;min-width:0}
 .tab .ic{font-size:24px;color:var(--cream)}
 .tab:active{background:var(--bark-3)}
+/* the home screen of a character (27a): the menus are a column of bubbles hanging on the right of the HUD */
+body.lobby #tabs{left:auto;right:calc(10px + env(safe-area-inset-right,0px));top:50%;bottom:auto;transform:translateY(-46%);width:78px;max-width:none;margin:0;grid-template-columns:1fr;gap:8px;padding:0;background:none;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.lobby .tab{padding:0;gap:4px;background:none;color:var(--cream);font-size:11px;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.8)}
+body.lobby .tab .ic{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:26px;background:color-mix(in srgb,var(--bark-2) 88%,transparent);box-shadow:inset 0 0 0 2px var(--line),0 3px 12px rgba(0,0,0,.5)}
+body.lobby .tab:first-child .ic{width:66px;height:66px;font-size:30px;background:var(--amber);color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 35%,transparent),0 4px 16px rgba(0,0,0,.55)}
+body.lobby .tab:active{background:none}body.lobby .tab:active .ic{transform:scale(.92)}
+body.lobby .tab.dot::after{right:8px;top:2px}
+@media (max-height:600px){body.lobby #tabs{gap:4px}body.lobby .tab .ic{width:46px;height:46px;font-size:22px}body.lobby .tab:first-child .ic{width:54px;height:54px}}
 .tab.dot::after{content:"";position:absolute;right:24%;top:7px;width:10px;height:10px;border-radius:50%;background:var(--amber)}
 
 /* ---------- touch pad ---------- */
@@ -2410,6 +2418,12 @@ function makeEnemy(id, type, x, y, floor, k) {
 
 /* ================= state ================= */
 const G = { mode: 'title', paused: false, time: 0, frame: 0, shake: 0, stop: 0, newLoot: false, station: null };
+// 27a (Damien, 7 October): no camp for the players. Out of the levels a character stands on its home screen, its menus a list of
+// bubbles on the HUD; the camp to walk in stays a place of work for the administrator, in creative mode (LOBBY.camp). The Expedition is
+// closed to players and no longer developed: only the administrator, in the camp, reaches it through the portal.
+const LOBBY = { camp: false };
+const lobbyOn = () => G.mode === 'hub' && !LOBBY.camp;
+function expeOpen() { try { return LOBBY.camp && ADM.shown; } catch (e) { return false; } }
 let F = genHub();
 let run = null; // {seed, floor, target, stats}
 const P = { x: 0, y: 0, r: 9, face: Math.PI / 2, hp: 70, mhp: 70, atkCd: 0, swingT: 0, swingA: 0, swN: 0, combo: 0, chain: 0, chainAt: -9, big: false, inv: 0, lanCd: 0, lanT: 0, down: false, walk: 0, reviveT: 0, moving: false, downT: 0, target: null, step: 0, hurtT: 0, joyT: 0, healT: 0, idleT: 0, kick: 0, dance: 0, lunge: 0, dashT: 0, dashCd: 0, ddx: 0, ddy: 0, dodgeT: 0, dodged: false };
@@ -2563,6 +2577,7 @@ function finishRun(kind) { // 'win' | 'dead' | 'quit'
   endPick = -1; showResults(kind, unlockedNow); sendPresence(true); lobbyPresence();
 }
 function backToHub() {
+  if (ME && ME.game === 1 && !expeOpen()) { setGame(0); refreshStats(); } // the Expedition is closed: back to the Classic game, its own things kept
   run = null; G.train = false; P.dance = 0; tuto = null; tutoShow(); G.mode = 'hub'; G.station = 'wait'; F = genHub(); worldChanged(); P.x = F.start.x; P.y = F.start.y; P.down = false; P.face = Math.PI / 2; cam.init = false; P.target = null;
   clearFx(); allies.length = 0;
   refreshStats(); closeSheet(); showUI(); sendPresence(true); lobbyPresence();
@@ -3051,12 +3066,13 @@ function trainToggle() {
 const TRAIN_NEAR = 120; // how close the strike key (keyboard, gamepad) must be pressed
 function trainNear() { const d = F.hub && F.enemies[0]; if (d && (G.train || hyp(d.x - P.x, d.y - P.y) < TRAIN_NEAR)) trainToggle(); }
 function campUpdate(dt) {
+  if (lobbyOn()) { P.moving = false; updateFx(dt); crittersStep(dt); return; } // the home screen: the knight stands, nothing to walk to
   updatePlayer(dt); updateShots(dt); updateFx(dt); crittersStep(dt);
   const d = F.enemies[0]; if (d && d.flash > 0) d.flash -= dt;
   if (G.train && d && hyp(d.x - P.x, d.y - P.y) > Math.max(150, ST.range + 70)) G.train = false;
   while (F.dmgLog.length && G.time - F.dmgLog[0][0] > 4) F.dmgLog.shift();
   const pd = hyp(F.portal.x - P.x, F.portal.y - P.y); // walking through the portal switches between the two ways of playing
-  if (pd < 20 && !G.inPortal) { G.inPortal = true; toggleMode(); } else if (pd > 46) G.inPortal = false;
+  if (pd < 20 && !G.inPortal) { G.inPortal = true; if (expeOpen()) toggleMode(); else toast('L\'Expédition est fermée'); } else if (pd > 46) G.inPortal = false;
   if (G.frame % 120 === 0) campPurse();
   let near = null; for (const st of F.stations) if (hyp(st.x - P.x, st.y - P.y) < 26) near = st.k;
   if (near && G.station !== near && !sheetOpen()) { G.station = near; resetInput(); openSheet(near); }
@@ -3203,9 +3219,9 @@ function drawOverlay() {
     for (const p of pickups) if (p.kind === 'i' && Math.abs(p.x - P.x) < 170 && Math.abs(p.y - P.y) < 260) { const s = toScreen(p.x, p.y, 40); label(p.item.n, s[0], s[1], RAR[p.item.r].col, F1); }
     for (const a of allies) { const s = toScreen(a.x, a.y, 40); label(a.name, s[0], s[1], CLOAKS[a.col], F1); }
     if (Net.room) { const s = toScreen(P.x, P.y, 40); label(ME.name || 'Chevalier', s[0], s[1], '#fff', F1); }
-    if (F.stations && G.mode === 'hub' && !sheetOpen()) { for (const st of F.stations) { const s = toScreen(st.ox, st.oy, st.k === 'levels' ? 74 : st.k === 'wheel' ? 76 : 26); label(st.label, clamp(s[0], 64, view.w - 64), s[1], '#f1e4c8', '500 21px "Grenze Gotisch", Georgia, serif'); }
+    if (F.stations && G.mode === 'hub' && !sheetOpen() && !lobbyOn()) { for (const st of F.stations) { const s = toScreen(st.ox, st.oy, st.k === 'levels' ? 74 : st.k === 'wheel' ? 76 : 26); label(st.label, clamp(s[0], 64, view.w - 64), s[1], '#f1e4c8', '500 21px "Grenze Gotisch", Georgia, serif'); }
       if (F.portal) { const s = toScreen(F.portal.x, F.portal.y, 84), to = GAMES[ME.game ^ 1], col = to.col; label(to.name, clamp(s[0], 64, view.w - 64), s[1], col, '500 21px "Grenze Gotisch", Georgia, serif'); label('portail vers l\'autre jeu', clamp(s[0], 64, view.w - 64), s[1] + 15, '#b9a888', F1); } }
-    if (F.hub && G.mode === 'hub' && !sheetOpen()) {
+    if (F.hub && G.mode === 'hub' && !sheetOpen() && !lobbyOn()) { // the names of the camp's places: only when one walks there (the administrator's camp)
       const d = F.enemies[0], log = F.dmgLog; let sum = 0; for (const l of log) sum += l[1];
       if (d) { const s = toScreen(d.x, d.y, 62); label(G.train && log.length ? 'Mannequin · ' + Math.round(sum / Math.max(1.2, G.time - log[0][0])) + ' dégâts/s' : 'Mannequin', s[0], s[1], '#f1e4c8', F1); label(G.train ? 'touche-le pour arrêter' : 'touche-le pour t\'entraîner', s[0], s[1] + 14, '#b9a888', F1); }
       for (const n of F.npcs) if (hyp(n.x - P.x, n.y - P.y) < 84) bubble(n.lines[Math.floor(G.time / 5) % n.lines.length], n.x, n.y);
@@ -3974,11 +3990,12 @@ function render3D() {
   const S = F.str, sh = G.shake * U * .5;
   const fx = cam.x * U + (Math.random() - .5) * sh, fz = cam.y * U + (Math.random() - .5) * sh;
   // camera: fixed tilt, follows the player; the hub frames the character near the top, under the title
-  const hero = G.mode === 'title', vh0 = viewHalf(), wide = clamp(view.w / 2 / TILE_PX, HALF_MIN, HALF_MAX) / HALF_MIN; halfW += ((G.mode === 'edit' ? ED.half : hero ? 3.0 * wide : P.dance ? 2.5 * wide : vh0) - halfW) * (P.dance ? .07 : .12);
+  const hero = G.mode === 'title' || lobbyOn(), vh0 = viewHalf(), wide = clamp(view.w / 2 / TILE_PX, HALF_MIN, HALF_MAX) / HALF_MIN; const home = lobbyOn(); // the home screen of a character: closer, the knight left of the bubbles
+  halfW += ((G.mode === 'edit' ? ED.half : home ? 1.7 * wide : hero ? 3.0 * wide : P.dance ? 2.5 * wide : vh0) - halfW) * (P.dance ? .07 : .12);
   cam3.aspect = view.w / view.h; cam3.fov = 2 * Math.atan(halfW / CAM_D / cam3.aspect) * 180 / Math.PI;
   const yaw = G.mode === 'edit' ? ED.yawV : 0; // in the editor the camera turns round the point it looks at (24b)
   cam3.position.set(fx + Math.sin(yaw) * Math.cos(CAM_PITCH) * CAM_D, Math.sin(CAM_PITCH) * CAM_D, fz + Math.cos(yaw) * Math.cos(CAM_PITCH) * CAM_D); cam3.lookAt(fx, 0, fz);
-  cam3.setViewOffset(view.w, view.h, 0, hero ? view.h / 2 - 118 : view.h * .04, view.w, view.h);
+  cam3.setViewOffset(view.w, view.h, home ? view.w * .1 : 0, home ? view.h * .02 : hero ? view.h / 2 - 118 : view.h * .04, view.w, view.h);
   const px = P.x * U, pz = P.y * U;
   lamp.position.set(px + Math.cos(P.face) * .3, 1.05, pz + Math.sin(P.face) * .3);
   lamp.color.set(F.hub && ME.game ? '#b3a2ff' : lanCol(ST.lan)); // the expedition camp bathes in violet
@@ -5408,9 +5425,11 @@ function admPlan() {
 // the camp, a map of its own
 function admCampCard() {
   return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'Le camp' }),
-    h('small', { text: planOf('camp') ? 'Fait à la main : il remplace le camp d\'origine, pour les deux jeux.' : 'Ses cases, ses surfaces, ses décors, et la place de chaque lieu et de chaque habitant.' }))),
+    h('small', { text: 'Les joueurs ne vont plus au camp (leurs menus sont des bulles sur leur écran d\'accueil) : c\'est ta zone de travail, en créatif. Son portail mène à l\'Expédition, fermée aux joueurs. ' + (planOf('camp') ? 'Il est fait à la main.' : '') }))),
     h('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px;padding:0 14px 14px' },
       h('button', { class: 'btn small', type: 'button', disabled: !!Net.room, onclick: () => edStart('camp') }, ic('forge'), 'Modifier le camp'),
+      LOBBY.camp ? h('button', { class: 'btn small line', type: 'button', onclick: () => { LOBBY.camp = false; backToHub(); } }, ic('retour'), 'Revenir à l\'accueil')
+        : h('button', { class: 'btn small line', type: 'button', disabled: !!Net.room, onclick: () => { if (!CREA.on) { saveGame(true); CREA.on = true; } LOBBY.camp = true; backToHub(); } }, ic('aller'), 'Aller au camp (créatif)'),
       PLANS.camp ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => { delete PLANS.camp; plansKeep(); renderSheet(); } }, ic('recommencer'), PLANS_PUB.camp ? 'Oublier mes changements' : 'Camp d\'origine') : null),
     h('div', { style: 'padding:0 14px 14px' }, admMapPubRow('camp')));
 }
@@ -5607,6 +5626,7 @@ function uiFlash() { const f = $('flash'); f.classList.remove('go'); void f.offs
 function showUI() {
   const m = G.mode, sh = sheetOpen(); applyTheme(); if (m !== 'title') G.home = false;
   if (m !== 'title') creating = false; $('scr-title').hidden = m !== 'title' || G.home || creating; $('scr-create').hidden = m !== 'title' || G.home || !creating; homeSync(); $('camp-top').hidden = m !== 'hub'; $('tabs').hidden = m !== 'hub' || sh;
+  document.body.classList.toggle('lobby', lobbyOn()); // the home screen of a character: bubbles instead of a camp (27a)
   $('hud').hidden = m !== 'play' || sh; $('pad').hidden = m !== 'play' || sh; $('scr-end').hidden = m !== 'end';
   $('sheet').hidden = !sh; $('veil').hidden = !sh; $('crea-tag').hidden = !CREA.on || sh || (m !== 'hub' && m !== 'play'); admTag(); creaWheelSync();
   if (m !== 'play') $('downbox').hidden = true;
@@ -6375,7 +6395,7 @@ function tutoShow() {
 }
 
 /* ================= input ================= */
-const canMove = () => (G.mode === 'play' && !G.paused) || (G.mode === 'hub' && !sheetOpen());
+const canMove = () => (G.mode === 'play' && !G.paused) || (G.mode === 'hub' && !sheetOpen() && !lobbyOn());
 // right thumb: press to strike; slide to aim by hand
 function aimStart(e) { input.atk = true; input.aimJoy = { id: e.pointerId, ox: e.clientX, oy: e.clientY }; input.aim = null; }
 function aimMove(e) { const j = input.aimJoy; if (!j || j.id !== e.pointerId) return; const dx = e.clientX - j.ox, dy = e.clientY - j.oy; input.aim = hyp(dx, dy) > 14 ? Math.atan2(dy, dx) : null; }
@@ -6461,8 +6481,8 @@ function navKeep() {
   if (!root || !root.contains(NAV.el) && NAV.el.isConnected) { NAV.el.classList.remove('padfocus'); NAV.el = null; if (!root) NAV.key = ''; return; } // the menu is gone: so is the marker
   if (NAV.el.isConnected) return; const items = navItems(root); if (items.length) navCurrent(items); else NAV.el = null;
 }
-const TAB_KEYS = ['levels', 'bag', 'shop', 'quests', 'team'];
-function navTab(d) { if (G.mode !== 'hub') return; const i = TAB_KEYS.indexOf(sheetKind === 'wheel' ? 'shop' : sheetKind); NAV.key = ''; openSheet(TAB_KEYS[i < 0 ? (d > 0 ? 0 : TAB_KEYS.length - 1) : (i + d + TAB_KEYS.length) % TAB_KEYS.length]); }
+const TAB_KEYS = ['levels', 'bag', 'shop', 'wheel', 'quests', 'team'];
+function navTab(d) { if (G.mode !== 'hub') return; const i = TAB_KEYS.indexOf(sheetKind); NAV.key = ''; openSheet(TAB_KEYS[i < 0 ? (d > 0 ? 0 : TAB_KEYS.length - 1) : (i + d + TAB_KEYS.length) % TAB_KEYS.length]); }
 // gamepad: it always moves the character; striking and aiming with it belong to manual play
 let padSeen = false, padPrev = {};
 function padStep() {
@@ -6519,7 +6539,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { res
 
 // static buttons
 for (const [id, icn, key] of [['b-atk', 'epee', 'A'], ['b-lan', 'lanterne', 'X'], ['b-dash', 'esquive', 'B']]) $(id).append(ic(icn), h('i', { class: 'key', text: key })); $('b-bag').append(ic('sac')); $('b-pause').append(ic('pause')); $('b-opts').append(ic('reglages')); $('b-close').append(ic('fermer'));
-for (const [k, name, lab] of [['levels', 'niveaux', 'Niveaux'], ['bag', 'sac', 'Inventaire'], ['shop', 'boutique', 'Boutique'], ['quests', 'quetes', 'Quêtes'], ['team', 'equipe', 'Équipe']]) $('tabs').append(h('button', { class: 'tab', type: 'button', onclick: () => openSheet(k) }, ic(name), lab));
+for (const [k, name, lab] of [['levels', 'niveaux', 'Niveaux'], ['bag', 'sac', 'Inventaire'], ['shop', 'boutique', 'Boutique'], ['wheel', 'roulette', 'Roulette'], ['quests', 'quetes', 'Quêtes'], ['team', 'equipe', 'Équipe']]) $('tabs').append(h('button', { class: 'tab', type: 'button', 'data-k': k, onclick: () => openSheet(k) }, ic(name), lab));
 $('b-close').addEventListener('click', closeSheet); $('veil').addEventListener('click', closeSheet);
 $('sh-title').addEventListener('click', () => { if (sheetKind === 'opts' || sheetKind === 'pause') creaTap(); }); // five taps: the creative mode
 $('b-bag').addEventListener('click', () => openSheet('bag')); $('b-pause').addEventListener('click', () => openSheet('pause'));
@@ -7163,15 +7183,15 @@ const HUD_EL = [
   ['nom', '#hud-floor', 'Le nom du niveau', 'play'], ['bourse', '#hud .hud-r .pill', 'La bourse', 'play'], ['sac', '#b-bag', 'Le bouton Inventaire', 'play'],
   ['pause', '#b-pause', 'Le bouton Pause', 'play'], ['frappe', '#b-atk', 'Le bouton Frapper', 'play'], ['lanterne', '#b-lan', 'Le bouton Lanterne', 'play'],
   ['esquive', '#b-dash', 'Le bouton Esquive', 'play'],
-  ['qui', '#b-who', 'Ton chevalier', 'hub'], ['cbourse', '#camp-top .pill', 'La bourse du camp', 'hub'], ['reglages', '#b-opts', 'Le bouton Réglages', 'hub'], ['onglets', '#tabs', 'Les onglets du camp', 'hub'],
+  ['qui', '#b-who', 'Ton chevalier', 'hub'], ['cbourse', '#camp-top .pill', 'La bourse du camp', 'hub'], ['reglages', '#b-opts', 'Le bouton Réglages', 'hub'], ['onglets', '#tabs', 'Les bulles des menus', 'hub'],
 ];
 // the colours of a theme that can be changed: [css variable, key part, name]
 const HUD_COL = [['--amber', 'acc', 'Couleur principale'], ['--accent2', 'acc2', 'Couleur secondaire'], ['--cream', 'txt', 'Texte'], ['--dim', 'dim', 'Texte discret'],
   ['--bark-2', 'fond', 'Fond des panneaux'], ['--bark-3', 'carte', 'Fond des cartes et des boutons'], ['--line', 'bord', 'Bordures']];
 const HUD_THEME_NAMES = ['Le camp', 'Racines', 'Mycélium', 'Braises', 'Givre', 'Abîme'];
 // the names that can be rewritten: [key, name, default, where]
-const HUD_TXT = [['tab1', 'Onglet Niveaux', 'Niveaux', '#tabs .tab:nth-child(1)'], ['tab2', 'Onglet Inventaire', 'Inventaire', '#tabs .tab:nth-child(2)'], ['tab3', 'Onglet Boutique', 'Boutique', '#tabs .tab:nth-child(3)'],
-  ['tab4', 'Onglet Quêtes', 'Quêtes', '#tabs .tab:nth-child(4)'], ['tab5', 'Onglet Équipe', 'Équipe', '#tabs .tab:nth-child(5)']];
+const HUD_TXT = [['tab1', 'Bulle Niveaux', 'Niveaux', '#tabs .tab[data-k="levels"]'], ['tab2', 'Bulle Inventaire', 'Inventaire', '#tabs .tab[data-k="bag"]'], ['tab3', 'Bulle Boutique', 'Boutique', '#tabs .tab[data-k="shop"]'],
+  ['tab4', 'Bulle Quêtes', 'Quêtes', '#tabs .tab[data-k="quests"]'], ['tab5', 'Bulle Équipe', 'Équipe', '#tabs .tab[data-k="team"]'], ['tab6', 'Bulle Roulette', 'Roulette', '#tabs .tab[data-k="wheel"]']];
 const HUD = { edit: null, sel: null, drag: null, theme: -1, auto: false, at: 1, ver: -1, txtShared: {}, txt: {} };
 const hudHex = v => '#' + (v | 0).toString(16).padStart(6, '0');
 // the colours of the themes as the page draws them, read once from its own style sheet
