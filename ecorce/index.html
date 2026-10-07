@@ -619,7 +619,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 #crea-wheel .cw-p.sel,#crea-wheel .cw-p:focus-visible,#crea-wheel .cw-c:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
 #crea-wheel .cw-p:active,#crea-wheel .cw-c:active{filter:brightness(1.25)}
 @media (prefers-reduced-motion:no-preference){#crea-wheel .cw-p{animation:cwIn .16s ease-out both}@keyframes cwIn{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}}}
-#ed .ed-tex{max-height:30vh;overflow:auto}.tex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px}.tex-zone{grid-column:1/-1;font-size:11px;color:var(--ink-3,#b9a98a);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}.tex-it{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:2px solid transparent;border-radius:8px;padding:2px;color:inherit;cursor:pointer}.tex-it[aria-pressed=true]{border-color:var(--gold,#ffc24a)}.tex-it small{font-size:10px;line-height:1.1;text-align:center}.adm-lib{max-height:50vh;overflow:auto}.adm-lib .tex-it:first-child{display:none}.tex-img{width:56px;height:56px;border-radius:6px;object-fit:cover;background:#0006;display:block}.tex-none{display:grid;place-items:center;font-size:20px}#ed .ed-layers{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin-top:6px;display:flex;flex-direction:column;gap:6px;font-size:13px}#ed .ed-layers .chipbtn{flex:none;padding:4px 8px;font-size:12px}
+#ed .ed-tex{max-height:30vh;overflow:auto}.tex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px}.tex-zone{grid-column:1/-1;font-size:11px;color:var(--ink-3,#b9a98a);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}.tex-it{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:2px solid transparent;border-radius:8px;padding:2px;color:inherit;cursor:pointer}.tex-it[aria-pressed=true]{border-color:var(--gold,#ffc24a)}.tex-it small{font-size:10px;line-height:1.1;text-align:center}.ic[hidden]{display:none!important}.uiic{width:30px;height:30px;object-fit:contain;display:block;flex:none;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}#b-lan .uiic{width:58%;height:58%;margin:auto}.adm-lib{max-height:50vh;overflow:auto}.adm-libm .ed-pb{min-width:0;border-radius:10px;height:auto;white-space:normal;font-size:11px;line-height:1.15;text-align:center}.adm-libm{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}.adm-box .seg .chipbtn{white-space:nowrap}.adm-lib .tex-it:first-child{display:none}.tex-img{width:56px;height:56px;border-radius:6px;object-fit:cover;background:#0006;display:block}.tex-none{display:grid;place-items:center;font-size:20px}#ed .ed-layers{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin-top:6px;display:flex;flex-direction:column;gap:6px;font-size:13px}#ed .ed-layers .chipbtn{flex:none;padding:4px 8px;font-size:12px}
 </style>
 <script src="three.min.js"></script>
 
@@ -1180,6 +1180,11 @@ const TUNE_DEF = [
   ['rezHp', 'vie', 'Vie après avoir été relevé', 'La part de la vie avec laquelle on se relève.', .4, .05, 1, 'pct'],
   ['rezInv', 'vie', 'Protection après avoir été relevé', 'Le temps pendant lequel on ne peut pas être touché après avoir été relevé.', 1.5, 0, 5, 's'],
   ['hpLin', 'dif', 'Vie des créatures : hausse par niveau', 'Chaque niveau ajoute cette part à la vie des créatures (0,22 = +22 % par niveau).', .22, 0, 1, 'n'],
+  ['blocs', 'gen', 'Blocs 3D', '1 = les murs restent continus, les blocs 3D de la zone viennent en touches (piliers aux angles, ornements sur les grands murs) ; 2 = les murs entiers en blocs 3D ; 0 = aucun bloc. L\'éditeur peut poser un bloc sur n\'importe quelle case.', 1, 0, 2, 'n'],
+  ['texV2', 'gen', 'Textures v2 par défaut', '1 = chaque monde porte les textures v2 de sa zone (sol naturel, mur habillé, dessus) ; 0 = les premières textures. Une carte peut choisir les siennes dans l\'éditeur.', 1, 0, 1, 'n'],
+  ['iconesV2', 'gen', 'Icônes peintes', '1 = les icônes peintes de Damien (pack 4) sur les bulles de l\'accueil et le bouton de la lanterne ; 0 = les icônes dessinées d\'avant.', 1, 0, 1, 'n'],
+  ['herbe', 'gen', 'Herbe et vie au sol', 'Combien de touffes, fleurs, cailloux et feuilles en moyenne par case de sol (plus le long des murs) ; 0 = aucune.', .6, 0, 3, 'n'],
+  ['blocsHD', 'gen', 'Blocs détaillés', '0 = une carte pose la version allégée de chaque bloc (100 à 250 triangles : fluide sur téléphone) ; 1 = la pièce entière (500 triangles : plus fin, plus lourd).', 0, 0, 1, 'n'],
   ['mondes', 'gen', 'Mondes ouverts aux joueurs', 'Combien de mondes les joueurs voient et peuvent jouer (6 niveaux chacun). Les mondes 6 à 10 (Marais, Canopée, Corail englouti, Dunes d\'ambre, Mine à rouages) se jouent en essai dans l\'administration avant d\'être ouverts. 5 = les niveaux 1 à 30.', 5, 5, 10, 'n'],
   ['hpLate', 'dif', 'Vie des créatures : surplus au niveau 30', 'Un supplément qui grandit jusqu\'au dernier niveau (0,5 = 1,5 fois plus au niveau 30).', .5, 0, 3, 'n'],
   ['dmgLin', 'dif', 'Dégâts des créatures : hausse par niveau', 'Chaque niveau ajoute cette part aux dégâts des créatures.', .18, 0, 1, 'n'],
@@ -3597,7 +3602,10 @@ function initGL() {
   // The cubes are mapped by their place in the world, one texture to two tiles; the game's own textures keep their size of one tile.
   const cube = map => { const m = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex, map }); m.userData.own = map; return m; };
   M.floor = []; M.wall = []; M.top = [];
-  for (let i = 0; i < STRATA.length; i++) { const wt = wallTex(i); wt.repeat.set(2, 2); M.floor.push(cube(floorTex(i))); M.wall.push(cube(wt)); M.top.push(cube(null)); }
+  // the walls catch the light on their edges (35b, « des reflets ») : a warm rim where the face turns away from the eye
+  const rim = m => { m.onBeforeCompile = sh => { const a = 'gl_FragColor = vec4( outgoingLight, diffuseColor.a );'; sh.fragmentShader = sh.fragmentShader.replace(a, 'outgoingLight += vec3(1.0, .93, .8) * pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.6) * .32 * diffuseColor.rgb * 2.0;\n' + a); }; m.customProgramCacheKey = () => 'mur-reflet'; return m; };
+  M.rim = rim;
+  for (let i = 0; i < STRATA.length; i++) { const wt = wallTex(i); wt.repeat.set(2, 2); M.floor.push(cube(floorTex(i))); M.wall.push(rim(cube(wt))); M.top.push(cube(null)); }
   M.glow = new THREE.MeshBasicMaterial({ vertexColors: true });              // lit things that still sink into the dark
   M.eye = new THREE.MeshBasicMaterial({ vertexColors: true, fog: false });   // things that stay visible in the dark
   M.outline = new THREE.MeshBasicMaterial({ color: '#0b0705', side: THREE.BackSide });
@@ -3633,7 +3641,7 @@ function withOutline(mesh, k = 1.07) {
 const WALL_H = [0, .34, 1.3, 2.2, 3.2]; // the heights the level editor offers: (drawn), low, normal, high, very high
 function buildWorld() {
   const shared = new Set([M.toon, M.glow, M.eye, M.outline, ...M.floor, ...M.wall, ...M.top, ...Object.values(LT).map(l => l.mat)]);
-  for (const o of [...worldGroup.children]) { worldGroup.remove(o); o.traverse(c => { if (c.isSprite) c.material.dispose(); else if (c.isMesh) { c.geometry.dispose(); if (!shared.has(c.material)) c.material.dispose(); } }); }
+  for (const o of [...worldGroup.children]) { worldGroup.remove(o); o.traverse(c => { if (c.isSprite) c.material.dispose(); else if (c.isMesh) { c.geometry.dispose(); if (!shared.has(c.material) && !c.userData.keepMat) c.material.dispose(); } }); }
   for (const o of [...dynGroup.children]) freeMesh(o); if (F.enemies) for (const e of F.enemies) e.m = null; // the creatures get their meshes again (the editor rebuilds the world under creatures already drawn)
   dying.length = 0; for (const n of CAMP.npcs) freeModel(n.m); CAMP = { npcs: [], crit: [] }; propsClear(); const backWalls = [];
   const S = F.str, si = F.si, kd = S.kind, W = F.W, H = F.H, g = F.g, R = rng((F.seed ^ 0x51ED) >>> 0);
@@ -3655,11 +3663,18 @@ function buildWorld() {
   // what each tile wears (30b): a texture of the library painted on that tile, else the zone painted there, else the map's own
   // texture of the library, else the textures of the level's zone. A key: the zone number, or L<texture>
   const TX = F.tx || {}, TP = F.tpal || [], lay = { sol: F.ts, mur: F.tw, dessus: F.tt };
+  // by default (setting « Textures v2 »), a world wears the v2 textures of its zone: the natural floor, the dressed wall, its top (35b)
+  const zk = ZONES[kitOf(si)], d2 = k => TU.texV2 && typeof MDL !== 'undefined' && MDL.list && ('t2_' + zk + '_' + k) in MDL.list ? 't2_' + zk + '_' + k : null;
+  const TXD = { sol: d2('sol_naturel'), mur: d2('mur_habille'), dessus: d2('dessus') };
   const wear = (kind, x, y) => { const i = y * W + x, a = lay[kind] && lay[kind][i]; if (a != null && a < 255 && TP[a]) return 'L' + TP[a];
-    const s = F.surf && F.surf[i]; return s != null && s < 5 ? s : TX[kind] ? 'L' + TX[kind] : kitOf(si); };
+    const s = F.surf && F.surf[i]; return s != null && s < 5 ? s : TX[kind] ? 'L' + TX[kind] : TXD[kind] ? 'L' + TXD[kind] : kitOf(si); };
   const pick = (A, x, y, kind) => { const k = wear(kind, x, y) + ':' + ck(x, y); return A[k] || (A[k] = new GB()); };
+  // a tile painted with a texture (or a zone), or a map that chose its own textures, keeps its cube: the texture shows on it (30b, 35a)
+  const painted = (kind, x, y) => { const i = y * W + x, a = lay[kind] && lay[kind][i]; return (a != null && a < 255 && !!TP[a]) || (F.surf && F.surf[i] < 5); };
+  const blocTile = (x, y) => { const v = F.tb && F.tb[y * W + x]; return v != null && v < 255 && !!(F.bpal && F.bpal[v]); }; // a block painted there by the editor
   const at = (A, x, y) => { const k = ck(x, y); return A[k] || (A[k] = new GB()); };
   const glows = [];
+  const BK = blocKit(), blk0 = blocsReady(BK) ? BK : null; // Damien's 3D blocks instead of the cubes, once they are all there (o_blocs.js)
   const grey = k => [k, k, k];
   const ao = (gx, gy) => { let n = 0; if (!isF(gx - 1, gy - 1)) n++; if (!isF(gx, gy - 1)) n++; if (!isF(gx - 1, gy)) n++; if (!isF(gx, gy)) n++; return 1 - n * .2; };
   // the floor's shade: darker in the corners against the walls, and a little lighter or darker from one tile corner to the next.
@@ -3669,13 +3684,13 @@ function buildWorld() {
   // texture coordinates come from the place in the world (half a unit a tile, v growing up the screen): seamless textures stay seamless
   const flat = (b, x, y, hh, ca, cb, cc, cd) => b.quad([x, hh, y + 1], [x + 1, hh, y + 1], [x + 1, hh, y], [x, hh, y], [0, 1, 0], ca, cb, cc, cd, x / 2, -(y + 1) / 2, (x + 1) / 2, -y / 2);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (isF(x, y)) { flat(pick(FB, x, y, 'sol'), x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
+    if (isF(x, y)) { if (!blk0 || !blocTile(x, y)) flat(pick(FB, x, y, 'sol'), x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
     const hh = hg[y * W + x]; if (!hh) continue;
     const wb = pick(WB, x, y, 'mur'), tb = pick(TB, x, y, 'dessus'), pb = at(PB, x, y), gb = at(GBs, x, y);
-    const low = hh < 1, top = grey((low ? .8 : .62) + R() * .3);
-    flat(tb, x, y, hh, top, top, top, top);
+    const low = hh < 1, top = grey((low ? .8 : .62) + R() * .3), blk = blk0 && (blk0.mode === 2 || blocTile(x, y)) && !painted('mur', x, y) && !painted('dessus', x, y);
+    if (!blk) flat(tb, x, y, hh, top, top, top, top);
     const side = (nh, a, b, n) => { // a, b: the two bottom corners (x, z), counter-clockwise seen from outside
-      if (nh >= hh - .01) return; const y0 = Math.max(0, nh), cb = grey(low ? .55 : .42 + .3 * y0), ct = grey(low ? .85 : 1.05), ua = (n[2] ? a[0] : a[1]) / 2, ub = (n[2] ? b[0] : b[1]) / 2;
+      if (blk || nh >= hh - .01) return; const y0 = Math.max(0, nh), cb = grey(low ? .55 : .42 + .3 * y0), ct = grey(low ? .85 : 1.05), ua = (n[2] ? a[0] : a[1]) / 2, ub = (n[2] ? b[0] : b[1]) / 2;
       wb.quad([a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], hh, b[1]], [a[0], hh, a[1]], n, cb, cb, ct, ct, ua, y0 / 2, ub, hh / 2);
       // the lip of the top, hanging over the side (moss, snow, ash…)
       const y1 = hh - (low ? .07 : .12 + R() * .06), ox = n[0] * .025, oz = n[2] * .025, mc = grey(1.2);
@@ -3695,6 +3710,8 @@ function buildWorld() {
   const n0 = worldGroup.children.length;
   zoneMats(); const mt = (A, k) => { const w = k.split(':')[0]; if (w[0] === 'L') return libMat(w.slice(1)) || A[kitOf(si)]; zoneTexWant(+w); return A[+w]; };
   for (const k in FB) addW(FB[k], mt(M.floor, k), 2); for (const k in WB) addW(WB[k], mt(M.wall, k), 1); for (const k in TB) addW(TB[k], mt(M.top, k), 1);
+  herbsBuild(isF);
+  if (blk0) blocsBuild(blk0, hg, isF, (x, y, ground) => !ground && (painted('mur', x, y) || painted('dessus', x, y)));
   for (const k in PB) addW(PB[k], M.toon, 1); for (const k in GBs) if (!GBs[k].empty) { const o = new THREE.Mesh(GBs[k].build(), M.glow); o.matrixAutoUpdate = false; worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
   // each thing built belongs to a layer of the level editor (sol, murs, niveau, pnj), which can show or hide it
@@ -3706,7 +3723,7 @@ function buildWorld() {
   if (F.hub) buildCamp(); else buildShafts(R);
   for (let i = n2; i < worldGroup.children.length; i++) worldGroup.children[i].userData.layer = F.hub ? 'pnj' : 'murs';
   F.hg = hg; // the height of each wall, for the editor (scenery is put on top of a wall)
-  F.props = propsPlan(backWalls); motes.length = 0; modelsWant(); propsBuild();
+  F.props = propsPlan(backWalls); if (motes.F !== F) { motes.length = 0; motes.F = F; } modelsWant(); propsBuild(); // a world built again for the same level (a model arrived) keeps what floats in its air
 }
 function mushroom(pb, gb, x, y, z, s, capCol, glowCap, R) {
   pb.add(cyl(.05 * s, .07 * s, .3 * s, 5), mat(x, y + .15 * s, z), [.92, .86, .74]);
@@ -4266,7 +4283,7 @@ function modelsStart() {
   MDL.dir = cfg.dir; MDL.txt = !!cfg.txt; MDL.step = 'wait'; MDL.why = ''; let at = 'le lecteur de modèles';
   new Promise(ok => ok(window.THREE.GLTFLoader ? 0 : window.ecorceLecteur ? window.ecorceLecteur() : cfg.js ? loadScript(cfg.js) : Promise.reject(new Error('il manque à la page'))))
     .then(() => { if (!window.THREE.GLTFLoader) throw new Error('il ne s\'est pas lancé'); at = 'la liste des modèles'; return fetch(cfg.dir + 'liste.json'); }).then(r => { if (!r.ok) throw new Error('réponse ' + r.status); return r.json(); })
-    .then(list => { MDL.list = list; if (F) zoneTexWant(F.si); MDL.loader = new THREE.GLTFLoader(); at = 'le chevalier'; return modelRead('chevalier'); })
+    .then(list => { MDL.list = list; if (F) zoneTexWant(F.si); try { uiIconsApply(); } catch (e) { } MDL.loader = new THREE.GLTFLoader(); at = 'le chevalier'; return modelRead('chevalier'); })
     .then(g => { for (const c of g.animations) MDL.clips[c.name] = c; MDL.hero = g.scene; MDL.on = true; MDL.step = 'on'; modelsWant(); })
     .catch(e => { MDL.step = 'fail'; MDL.why = at + ' — ' + whyOf(e); MDL.loader = null; console.warn('modèles indisponibles :', at, e); });
 }
@@ -4555,7 +4572,7 @@ function propsPlan(spots) {
     const d = list[out.length % list.length];
     out.push({ name: zone + d[0], x: x + .5, y: hh, z: y + .5, s: d[1] * (.9 + R() * .2), rot: (R() - .5) * .9, m: null });
   }
-  for (const d of F.decor) out.push({ name: (d.z == null ? zone : 'd_' + ZONES[d.z] + '_') + d.n, kind: d.n, x: d.x * U, y: 0, z: d.y * U, s: d.s, rot: d.rot, m: null, floor: true, glow: d.glow });
+  for (const d of F.decor) out.push({ name: d.n.startsWith('d_') ? d.n : (d.z == null ? zone : 'd_' + ZONES[d.z] + '_') + d.n, kind: d.n, x: d.x * U, y: 0, z: d.y * U, s: d.s, rot: d.rot, m: null, floor: true, glow: d.glow });
   return out;
 }
 function propsClear() { // the shapes of the models are shared and kept: only what was made for this level goes
@@ -4638,7 +4655,7 @@ function libMat(id) {
   let L = LT[id]; if (L) return L.mat; const t = texInfo(id); if (!t) return null;
   const own = (t.kind === 'sol' ? M.floor : t.kind === 'mur' ? M.wall : M.top)[t.z], S = STRATA[t.z];
   const mat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: own.gradientMap, map: own.userData.own });
-  mat.color.set(t.kind === 'sol' ? S.floorA : t.kind === 'mur' ? S.wallFace : S.cap); mat.userData.lib = id;
+  mat.color.set(t.kind === 'sol' ? S.floorA : t.kind === 'mur' ? S.wallFace : S.cap); mat.userData.lib = id; if (t.kind === 'mur' && M.rim) M.rim(mat);
   L = LT[id] = { mat, ok: false }; const cfg = window.ecorceModeles;
   if (cfg && MDL.list && id in MDL.list) picRead(cfg, id).then(im => {
     const tx = new THREE.Texture(im); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = Math.min(4, R3.capabilities.getMaxAnisotropy()); tx.needsUpdate = true;
@@ -4649,12 +4666,14 @@ function libMat(id) {
 // the illustration of a world as a CSS background once it has arrived; null meanwhile (it is asked the first time), and on a page without models.
 // What already shows a banner of that world (data-art) gets it as soon as it is there.
 const ART = {};
+function zoneArtName(w) { const own = typeof WORLD_ZONE !== 'undefined' && WORLD_ZONE[w]; return own && MDL.list && ('i_' + own) in MDL.list ? own : ZONES[kitOf(w)]; }
 function zoneArt(w) {
-  const cfg = window.ecorceModeles, k = kitOf(w), z = ZONES[k]; if (!cfg) return null;
+  const cfg = window.ecorceModeles; if (!cfg) return null;
+  const own = typeof WORLD_ZONE !== 'undefined' && WORLD_ZONE[w], z = own && MDL.list && ('i_' + own) in MDL.list ? own : ZONES[kitOf(w)]; // a new world has its own illustration (pack 4b) when it is there
   let a = ART[z];
   if (!a) {
     a = ART[z] = { url: null }; if (MDL.list && !(('i_' + z) in MDL.list)) return null;
-    picRead(cfg, 'i_' + z).then(im => { a.url = 'url("' + im.src + '")'; for (const el of document.querySelectorAll('[data-art="' + k + '"]')) el.style.setProperty('--art', artLayer(a.url)); }, () => { });
+    picRead(cfg, 'i_' + z).then(im => { a.url = 'url("' + im.src + '")'; for (const el of document.querySelectorAll('[data-art]')) if (el.dataset.art === String(w) || zoneArtName(+el.dataset.art) === z) el.style.setProperty('--art', artLayer(a.url)); }, () => { });
   }
   return a.url;
 }
@@ -4662,7 +4681,8 @@ function zoneArt(w) {
 let homeAsked = false;
 function homeArt() {
   const cfg = window.ecorceModeles; if (homeAsked || !cfg || (MDL.list && !('f_accueil' in MDL.list))) return; homeAsked = true;
-  picRead(cfg, 'f_accueil').then(im => { const el = $('home-bg'); el.src = im.src; el.hidden = false; }, () => { });
+  const wide = innerWidth > innerHeight * 1.1 && MDL.list && 'f_accueil_paysage' in MDL.list; // a wide screen gets the landscape picture (pack 4b)
+  picRead(cfg, wide ? 'f_accueil_paysage' : 'f_accueil').then(im => { const el = $('home-bg'); el.src = im.src; el.hidden = false; }, () => { });
 }
 // the picture behind the three steps of the creation of a knight (TinyKnight_UI_Kit/fonds, f_creation): asked like the home screen's
 let createAsked = false;
@@ -5607,16 +5627,34 @@ function texUsedBy(id) {
   for (const k in all) { const p = all[k]; if (!p) continue; const tx = p.tx || {}; if (tx.sol === id || tx.mur === id || tx.dessus === id || (Array.isArray(p.pal) && p.pal.includes(id))) out.push(k === 'camp' ? 'le camp' : 'niveau ' + k + (PLANS[k] ? ' (essai sur cet appareil)' : '')); }
   return out;
 }
+// the shelves of the library: textures (three), then the models of packs 3 to 5 (35c)
+const libModels = k => !MDL.list ? [] : k === 'blocs' ? blocLib().map(b => [b.id, b.name]) : k === 'herbes' ? Object.keys(MDL.list).filter(n => /^h_/.test(n)).sort().map(n => [n, n.slice(2).replace(/_/g, ' ')])
+  : Object.keys(MDL.list).filter(n => /^d_/.test(n)).sort().map(n => [n, edDecorName(n)]);
+function admLibShelves(chip) {
+  return h('div', { class: 'row', style: 'flex-wrap:wrap;gap:6px' }, chip('sol', 'Sols (' + texLib('sol').length + ')'), chip('mur', 'Murs (' + texLib('mur').length + ')'), chip('dessus', 'Dessus de murs (' + texLib('dessus').length + ')'),
+    chip('blocs', 'Blocs 3D (' + libModels('blocs').length + ')'), chip('herbes', 'Herbes (' + libModels('herbes').length + ')'), chip('decors', 'Décors (' + libModels('decors').length + ')'));
+}
+function admLibModels(chip) {
+  const L = libModels(ADM_LIB.k), sel = ADM_LIB.sel && L.find(x => x[0] === ADM_LIB.sel), used = sel ? texUsedBy(sel[0]).concat(Object.entries(Object.assign({}, PLANS_PUB, PLANS)).filter(([k, p]) => p && ((p.bpal || []).includes(sel[0]) || (p.decor || []).some(d => d[0] === sel[0]))).map(([k]) => k === 'camp' ? 'le camp' : 'niveau ' + k)) : [];
+  const where = { blocs: 'Éditeur de niveaux, Terrain, Blocs 3D', herbes: 'semées toutes seules sur le sol de leur zone (réglage « Herbe et vie au sol »)', decors: 'Éditeur de niveaux, Décors, Décor au sol' }[ADM_LIB.k];
+  return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'La bibliothèque' }),
+    h('small', { text: 'Textures, blocs 3D, herbes et décors du jeu, rangés par sorte puis par zone.' }))),
+    h('div', { style: 'padding:0 14px 14px;display:flex;flex-direction:column;gap:8px' }, admLibShelves(chip),
+      sel ? h('div', null, h('b', { text: sel[1] }), h('small', { style: 'display:block', text: 'fichier ' + sel[0] + '.glb · ' + (MDL.list[sel[0]] || '?') + ' ko' + (MDL.list[sel[0] + '_lo'] ? ' (version allégée pour les cartes : ' + MDL.list[sel[0] + '_lo'] + ' ko)' : '') }),
+        h('small', { style: 'display:block', text: (used.length ? 'Posé par : ' + [...new Set(used)].join(', ') + '. ' : '') + 'Pour le poser : ' + where + '.' })) : h('small', { text: 'Touche un modèle pour savoir d\'où il vient et où il sert.' }),
+      h('div', { class: 'tex-grid adm-lib adm-libm' }, ...L.map(([id, n]) => edPalBtn(id, n, ADM_LIB.sel === id, () => { ADM_LIB.sel = id; renderSheet(); })))));
+}
 function admLibCard() {
   const chip = (k, lab) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ADM_LIB.k === k), onclick: () => { ADM_LIB.k = k; ADM_LIB.sel = null; renderSheet(); } }, lab);
+  if (['blocs', 'herbes', 'decors'].includes(ADM_LIB.k)) return admLibModels(chip);
   const lib = texLib(), t = ADM_LIB.sel && texInfo(ADM_LIB.sel), used = t ? texUsedBy(t.id) : [];
   const body = !lib.length ? [h('p', { style: 'font-size:13px', text: 'La bibliothèque arrive avec les modèles (la vraie 3D) : elle n\'est pas encore là.' })] : [
-    h('div', { class: 'seg' }, chip('sol', 'Sols (' + texLib('sol').length + ')'), chip('mur', 'Murs (' + texLib('mur').length + ')'), chip('dessus', 'Dessus de murs (' + texLib('dessus').length + ')')),
+    admLibShelves(chip),
     t ? h('div', { class: 'row', style: 'gap:10px;align-items:center' }, texThumb(t.id), h('div', { class: 'grow' }, h('b', { text: t.name }), h('small', { style: 'display:block', text: (t.v === 1 ? 'Première série' : 'Série v2') + ' · fichier ' + t.id + '.jpg · ' + (MDL.list[t.id] || '?') + ' ko' }),
       h('small', { style: 'display:block', text: used.length ? 'Portée par : ' + used.join(', ') : 'Aucune carte faite à la main ne la porte encore. Pour la poser : Éditeur de niveaux, Terrain, Textures.' }))) : h('small', { text: 'Touche une texture pour savoir d\'où elle vient et quelles cartes la portent.' }),
     h('div', { class: 'adm-lib' }, texPick(ADM_LIB.k, ADM_LIB.sel, id => { ADM_LIB.sel = id; renderSheet(); }, 'Aucune'))];
   return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'La bibliothèque' }),
-    h('small', { text: 'Toutes les textures du jeu, rangées par sorte puis par zone : les premières et la série v2. Chaque carte choisit les siennes dans l\'éditeur de niveaux.' }))),
+    h('small', { text: 'Textures, blocs 3D, herbes et décors du jeu, rangés par sorte puis par zone. Chaque carte choisit les siens dans l\'éditeur de niveaux.' }))),
     h('div', { style: 'padding:0 14px 14px;display:flex;flex-direction:column;gap:8px' }, ...body));
 }
 // what the editor of models will hold next (ROADMAP, step 24)
@@ -6776,12 +6814,23 @@ const r1 = v => Math.round(v * 10) / 10;
 /* the textures of a map (30b): tx = the floor, wall and top of the whole map (ids of the library, or none: the zone's own);
    pal = the textures painted tile by tile, and ts / tw / tt = one character a tile for the floor, the wall sides and the wall tops
    ('.' = nothing painted, else the place in pal, from '0') */
-const TEX_LAYERS = ['ts', 'tw', 'tt'], TEX_PAL_MAX = 64;
+const TEX_LAYERS = ['ts', 'tw', 'tt'], TEX_PAL_MAX = 64, ED_TILE_LAYERS = ['ts', 'tw', 'tt', 'tb'];
 function texToPlan(p, F0) {
   const n = F0.W * F0.H, tx = F0.tx || {}; if (tx.sol || tx.mur || tx.dessus) p.tx = { sol: tx.sol || null, mur: tx.mur || null, dessus: tx.dessus || null };
   if (!F0.tpal || !F0.tpal.length) return p;
   let any = false; for (const k of TEX_LAYERS) { const a = F0[k]; if (!a) continue; let s = '', on = false; for (let i = 0; i < n; i++) { const v = a[i]; if (v < 255) { s += String.fromCharCode(48 + v); on = true; } else s += '.'; } if (on) { p[k] = s; any = true; } }
   if (any) p.pal = F0.tpal.slice(); return p;
+}
+// the blocks of a map (35c): bk = the kit of its walls ('non' = none, nothing = the game's setting); bpal / tb = a block painted on a tile
+function blocToPlan(p, F0) {
+  if (F0.bk) p.bk = F0.bk; const n = F0.W * F0.H, a = F0.tb;
+  if (a && a.length === n && F0.bpal && F0.bpal.length) { let s = '', on = false; for (let i = 0; i < n; i++) { if (a[i] < 255) { s += String.fromCharCode(48 + a[i]); on = true; } else s += '.'; } if (on) { p.tb = s; p.bpal = F0.bpal.slice(); } }
+  return p;
+}
+function blocFromPlan(F0, p) {
+  const n = F0.W * F0.H, ok = id => typeof id === 'string' && /^[a-z0-9_]{1,60}$/.test(id) ? id : null;
+  F0.bk = ok(p.bk); F0.bpal = Array.isArray(p.bpal) ? p.bpal.slice(0, TEX_PAL_MAX).map(ok) : []; F0.tb = new Uint8Array(n).fill(255);
+  if (typeof p.tb === 'string') for (let i = 0; i < n && i < p.tb.length; i++) { const v = p.tb.charCodeAt(i) - 48; if (v >= 0 && v < F0.bpal.length) F0.tb[i] = v; }
 }
 function texFromPlan(F0, p) {
   const n = F0.W * F0.H, ok = id => typeof id === 'string' && id.length < 60 ? id : null;
@@ -6791,13 +6840,13 @@ function texFromPlan(F0, p) {
 }
 function floorToPlan(F0) {
   let g = '', s = '', hw = ''; for (let i = 0; i < F0.g.length; i++) { g += F0.g[i] ? '1' : '0'; s += F0.surf && F0.surf[i] < 5 ? String(F0.surf[i]) : '.'; hw += F0.wh && F0.wh[i] ? String(F0.wh[i]) : '.'; }
-  return texToPlan({ v: 1, floor: F0.floor, big: !!F0.big, W: F0.W, H: F0.H, g, s, h: hw,
+  return blocToPlan(texToPlan({ v: 1, floor: F0.floor, big: !!F0.big, W: F0.W, H: F0.H, g, s, h: hw,
     rooms: F0.rooms.map(r => [r.cx, r.cy, r.kind, r.x0, r.y0, r.x1, r.y1]),
     start: [r1(F0.start.x), r1(F0.start.y)], lift: F0.lift ? [r1(F0.lift.x), r1(F0.lift.y)] : null,
     foes: F0.enemies.filter(e => !e.summon).map(e => [e.type, r1(e.x), r1(e.y), e.guard ? 1 : 0]),
     chests: F0.chests.map(c => [r1(c.x), r1(c.y), c.hidden ? 1 : 0, c.gold ? 1 : 0]),
     decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z]),
-    seals: F0.seals ? F0.seals.map(q => [r1(q.x), r1(q.y)]) : null, wp: edWallProps(F0) }, F0);
+    seals: F0.seals ? F0.seals.map(q => [r1(q.x), r1(q.y)]) : null, wp: edWallProps(F0) }, F0), F0);
 }
 // the scenery up on the walls (tile units: x, height y, z), as the editor or the draw placed it
 const r2 = v => Math.round(v * 100) / 100;
@@ -6817,7 +6866,7 @@ function planToFloor(p, seed, floor) {
   F0.decor = (p.decor || []).map(d => ({ n: d[0], x: d[1], y: d[2], s: d[3], rot: d[4], r: d[5], z: d[6] >= 0 && d[6] < 5 ? d[6] : null }));
   for (const d of F0.decor) F0.blocks.push({ x: d.x, y: d.y, r: d.r });
   if (p.big && p.seals) F0.seals = p.seals.map((q, id) => ({ id, x: q[0], y: q[1], got: false }));
-  F0.wallProps = wpFrom(p.wp); texFromPlan(F0, p);
+  F0.wallProps = wpFrom(p.wp); texFromPlan(F0, p); blocFromPlan(F0, p);
   return F0;
 }
 /* ---------- the camp made over: its tiles, surfaces and heights, its scenery, and where its places and people stand ---------- */
@@ -6826,7 +6875,7 @@ function campToPlan(F0) {
   const p = floorToPlan(F0);
   return { v: 1, camp: true, W: p.W, H: p.H, g: p.g, s: p.s, h: p.h, decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z, d.glow ? 1 : 0]),
     start: xy(F0.start), counter: xy(F0.counter), portal: xy(F0.portal), wheel: xy(F0.wheel), fire: [r1(F0.fireX), r1(F0.fireY)], dummy: xy(F0.enemies[0]), npcs: F0.npcs.map(xy),
-    stations: F0.stations.map(s => [s.k, r1(s.x), r1(s.y), r1(s.ox), r1(s.oy)]), wp: edWallProps(F0), off: F0.off || [0, 0], gone: [...['counter', 'portal', 'wheel'].filter(k => F0[k].off), ...(F0.fireOff ? ['fire'] : []), ...F0.npcs.map((n, i) => n.off ? 'npc' + i : null).filter(Boolean)], tx: p.tx, pal: p.pal, ts: p.ts, tw: p.tw, tt: p.tt };
+    stations: F0.stations.map(s => [s.k, r1(s.x), r1(s.y), r1(s.ox), r1(s.oy)]), wp: edWallProps(F0), off: F0.off || [0, 0], gone: [...['counter', 'portal', 'wheel'].filter(k => F0[k].off), ...(F0.fireOff ? ['fire'] : []), ...F0.npcs.map((n, i) => n.off ? 'npc' + i : null).filter(Boolean)], tx: p.tx, pal: p.pal, ts: p.ts, tw: p.tw, tt: p.tt, bk: p.bk, bpal: p.bpal, tb: p.tb };
 }
 function campApply(F0, p) {
   if (!p || !p.camp || !p.g) return;
@@ -6842,7 +6891,7 @@ function campApply(F0, p) {
   const gone = Array.isArray(p.gone) ? p.gone : []; for (const k of ['counter', 'portal', 'wheel']) F0[k].off = gone.includes(k); F0.fireOff = gone.includes('fire'); F0.npcs.forEach((n, i) => { n.off = gone.includes('npc' + i); });
   hubStations(F0);
   if (Array.isArray(p.stations)) for (const s of p.stations) { const st = F0.stations.find(x => x.k === s[0]); if (st) { st.x = s[1]; st.y = s[2]; st.ox = s[3]; st.oy = s[4]; } } // where you walk to open a menu, moved on its own
-  F0.wallProps = wpFrom(p.wp); hubBlocks(F0); texFromPlan(F0, p);
+  F0.wallProps = wpFrom(p.wp); hubBlocks(F0); texFromPlan(F0, p); blocFromPlan(F0, p);
 }
 // the animals of the camp, moved by ox, oy tiles (their spot and the corner they wander in)
 function campShift(F0, ox, oy) { if (!ox && !oy) return; for (const c of F0.critters || []) { c.x += ox * T; c.y += oy * T; c.tx += ox * T; c.ty += oy * T; c.zone = [c.zone[0] + ox, c.zone[1] + oy, c.zone[2] + ox, c.zone[3] + oy]; } }
@@ -6860,6 +6909,7 @@ const ED_TOOLS = [
   ['mur', 'Boucher', 'cadenas', 'Glisse sur le sol pour remettre de la roche.'],
   ['peint', 'Peindre', 'ombre', 'Glisse sur le sol ou les murs pour leur donner les textures de la zone choisie.'],
   ['haut', 'Hauteur', 'niveaux', 'Glisse sur les murs pour leur donner la hauteur choisie.'],
+  ['bloc', 'Blocs 3D', 'niveaux', 'Choisis un bloc 3D de la bibliothèque, puis glisse sur les murs (ou sur le sol : une estrade) pour le poser ; ou choisis les blocs des murs de toute la carte.'],
   ['tex', 'Textures', 'ombre', 'Choisis une texture de la bibliothèque, puis glisse sur le sol ou les murs pour la poser ; ou mets-la sur toute la carte.'],
   ['crea', 'Créature', 'c_kills', 'Touche le sol pour poser la créature choisie.'],
   ['coffre', 'Coffre', 'coffre', 'Touche le sol pour poser un coffre.'],
@@ -6871,11 +6921,15 @@ const ED_TOOLS = [
   ['taille', 'Taille', 'c_map', 'La taille de la carte, en cases : ce qu\'on ajoute est de la roche, ce qu\'on retire disparaît.'],
 ];
 // the families of the bar: [key, name, icon, tools]
-const ED_FAMS = [['terrain', 'Terrain', 'niveaux', ['sol', 'mur', 'tex', 'peint', 'haut', 'taille']], ['decors', 'Décors', 'petale', ['decor', 'decmur']], ['niveau', 'Niveau', 'drapeau', ['crea', 'coffre', 'entree', 'sortie']]];
+const ED_FAMS = [['terrain', 'Terrain', 'niveaux', ['sol', 'mur', 'bloc', 'tex', 'peint', 'haut', 'taille']], ['decors', 'Décors', 'petale', ['decor', 'decmur']], ['niveau', 'Niveau', 'drapeau', ['crea', 'coffre', 'entree', 'sortie']]];
 const ED_FOES = [[0, 'Sporule'], [1, 'Ronceux'], [2, 'Cracheur'], [3, 'Follet'], [4, 'Gardien']];
 const ED_HEIGHTS = ['Comme tiré', 'Basse', 'Normale', 'Haute', 'Très haute'];
 const edZone = () => ED.camp ? 0 : kitOf(strIdxOf(ED.floor)); // the zone of what is being edited (the camp wears the Racines kit)
-const edDecor = () => { const z = ED.dz == null ? edZone() : ED.dz; return ED.camp && z === 0 ? [...DECOR[0], ['arche', 2.5, 0], ['barriere', .86, 0]] : DECOR[z]; };
+// the scenery of the library (packs 3 to 5, 35c): the pieces of a zone the draw does not use yet, and (« Autres ») those of the new worlds
+// and the chests; their entries carry the whole name of the model (d_…), one tile wide, a small obstacle
+const decoLib = z => !MDL.list ? [] : Object.keys(MDL.list).filter(k => /^d_/.test(k) && (z < 5 ? k.startsWith('d_' + ZONES[z] + '_') && !DECOR[z].concat(PROPS[z]).some(d => 'd_' + ZONES[z] + '_' + d[0] === k) : !ZONES.some(zz => k.startsWith('d_' + zz + '_')))).sort().map(k => [k, 1, 9]);
+const edDecor = () => { const z = ED.dz == null ? edZone() : ED.dz; return z >= 5 ? decoLib(5) : (ED.camp && z === 0 ? [...DECOR[0], ['arche', 2.5, 0], ['barriere', .86, 0]] : DECOR[z]).concat(decoLib(z)); };
+const decoModel = (n, z) => n.startsWith('d_') ? n : 'd_' + ZONES[z] + '_' + n;
 const edStamp = () => JSON.stringify(ED.camp ? campToPlan(F) : floorToPlan(F));
 function edPush() { ED.undo.push(edStamp()); if (ED.undo.length > 60) ED.undo.shift(); ED.redo.length = 0; }
 function edLoad(txt) { const p = JSON.parse(txt); if (ED.camp) { F = genHub(); campApply(F, p); ED.last = null; edFollow(); } else F = planToFloor(p, ED.seed, ED.floor); ED.sel = null; worldChanged(); edSaveDraft(); edUI(); } // what is kept follows undo and redo too
@@ -7022,7 +7076,7 @@ function edHit(sx, sy) { // the nearest thing under the finger, on screen
 }
 /* ---------- brushes (24c): 1, 3 or 5 tiles, square or round; drawn freely, along a line, as a rectangle, or filling a whole area ----------
    The tools of the ground: sol (dig), mur (fill with rock), peint (the zone a tile wears), haut (the height of a wall). */
-const ED_GROUND = ['sol', 'mur', 'peint', 'haut', 'tex'];
+const ED_GROUND = ['sol', 'mur', 'peint', 'haut', 'tex', 'bloc'];
 const ED_BMODES = [['libre', 'Libre'], ['ligne', 'Ligne'], ['rect', 'Rectangle'], ['remplir', 'Remplir']];
 // the tiles under the brush around a tile (round: the corners are left out)
 function edFoot(tx, ty, out) {
@@ -7037,11 +7091,14 @@ function edTileOp(kind, i) {
   if (kind === 'sol' || kind === 'mur') { if (tx < 1 || ty < 1 || tx > F.W - 2 || ty > F.H - 2) return false; const v = kind === 'sol' ? 1 : 0; if (F.g[i] === v) return false; F.g[i] = v; return true; }
   if (kind === 'peint') { const v = ED.zone === edZone() ? 255 : ED.zone, had = texClear(i); if (F.surf[i] === v) return had; F.surf[i] = v; return true; }
   if (kind === 'tex') return edTexOp(i);
+  if (kind === 'bloc') { const v = ED.bid ? edBlocSlot(ED.bid) : 255; if (v < 0) return false; if (ED.bid && F.g[i] === 1 && !/_sol_/.test(ED.bid)) return false; // on the ground, floor pieces only
+    if (!F.tb || F.tb.length !== F.W * F.H) F.tb = new Uint8Array(F.W * F.H).fill(255); if (F.tb[i] === v) return false; F.tb[i] = v; return true; }
   if (F.g[i] === 1 || F.wh[i] === ED.wh) return false; F.wh[i] = ED.wh; return true;
 }
 // the texture brush (30b): the floor gets the chosen floor; a wall gets the chosen side and top together. None = the map's own again
 function texArr(k) { if (!F[k] || F[k].length !== F.W * F.H) F[k] = new Uint8Array(F.W * F.H).fill(255); return F[k]; }
 function texSlot(id) { if (!id) return 255; if (!F.tpal) F.tpal = []; let n = F.tpal.indexOf(id); if (n < 0) { if (F.tpal.length >= TEX_PAL_MAX) { toast('Une carte porte ' + TEX_PAL_MAX + ' textures différentes au plus'); return -1; } n = F.tpal.push(id) - 1; } return n; }
+function edBlocSlot(id) { if (!F.bpal) F.bpal = []; let n = F.bpal.indexOf(id); if (n < 0) { if (F.bpal.length >= TEX_PAL_MAX) { toast('Une carte porte ' + TEX_PAL_MAX + ' blocs différents au plus'); return -1; } n = F.bpal.push(id) - 1; } return n; }
 function texClear(i) { let had = false; for (const k of TEX_LAYERS) if (F[k] && F[k][i] !== 255) { F[k][i] = 255; had = true; } return had; }
 function edTexOp(i) {
   const ground = F.g[i] === 1; if (ED.tk === 'sol' ? !ground : ground) return false;
@@ -7073,9 +7130,9 @@ function edResize(dw, dh, left, top) {
   const [lo, hi] = ED_SIZE[ED.camp ? 'camp' : 'lvl'], W0 = F.W, H0 = F.H, W = clamp(W0 + dw, lo, hi), H = clamp(H0 + dh, lo, hi);
   if (W === W0 && H === H0) { toast('La carte est déjà à sa ' + (W0 + dw > hi || H0 + dh > hi ? 'plus grande' : 'plus petite') + ' taille (' + lo + ' à ' + hi + ' cases)'); return; }
   edPush();
-  const ox = left ? W - W0 : 0, oy = top ? H - H0 : 0, g = new Uint8Array(W * H), surf = new Uint8Array(W * H).fill(255), wh = new Uint8Array(W * H), tl = TEX_LAYERS.map(() => new Uint8Array(W * H).fill(255));
-  for (let y = 0; y < H0; y++) for (let x = 0; x < W0; x++) { const nx = x + ox, ny = y + oy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const i = y * W0 + x, j = ny * W + nx; g[j] = F.g[i]; if (F.surf) surf[j] = F.surf[i]; if (F.wh) wh[j] = F.wh[i]; TEX_LAYERS.forEach((k, n) => { if (F[k] && F[k].length === W0 * H0) tl[n][j] = F[k][i]; }); }
-  TEX_LAYERS.forEach((k, n) => { F[k] = tl[n]; });
+  const ox = left ? W - W0 : 0, oy = top ? H - H0 : 0, g = new Uint8Array(W * H), surf = new Uint8Array(W * H).fill(255), wh = new Uint8Array(W * H), tl = ED_TILE_LAYERS.map(() => new Uint8Array(W * H).fill(255));
+  for (let y = 0; y < H0; y++) for (let x = 0; x < W0; x++) { const nx = x + ox, ny = y + oy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const i = y * W0 + x, j = ny * W + nx; g[j] = F.g[i]; if (F.surf) surf[j] = F.surf[i]; if (F.wh) wh[j] = F.wh[i]; ED_TILE_LAYERS.forEach((k, n) => { if (F[k] && F[k].length === W0 * H0) tl[n][j] = F[k][i]; }); }
+  ED_TILE_LAYERS.forEach((k, n) => { F[k] = tl[n]; });
   for (let x = 0; x < W; x++) g[x] = g[(H - 1) * W + x] = 0; for (let y = 0; y < H; y++) g[y * W] = g[y * W + W - 1] = 0; // the border stays rock
   F.W = W; F.H = H; F.g = g; F.surf = surf; F.wh = wh;
   const dx = ox * T, dy = oy * T, inside = o => o.x > T && o.y > T && o.x < (W - 1) * T && o.y < (H - 1) * T, keep = o => { o.x = clamp(o.x, 1.5 * T, (W - 1.5) * T); o.y = clamp(o.y, 1.5 * T, (H - 1.5) * T); };
@@ -7122,7 +7179,7 @@ function edPlace(x, y) {
   // a creature or a chest is not picked once put: its panel would hide the map, and the next one goes on at once (24b)
   if (ED.tool === 'crea') { const id = F.enemies.reduce((a, e) => Math.max(a, e.id + 1), 0), e = makeEnemy(id, ED_FOES[ED.crea][0], x, y, ED.floor, F.mod.hp); F.enemies.push(e); F.byId.set(id, e); ED.sel = null; toast(ED_FOES[ED.crea][1] + ' posé · ' + F.enemies.length + (F.enemies.length > 1 ? ' créatures' : ' créature')); }
   else if (ED.tool === 'coffre') { const c = { id: F.chests.length, x, y, opened: false, hidden: false, gold: false }; F.chests.push(c); ED.sel = null; toast('Coffre posé · ' + F.chests.length + (F.chests.length > 1 ? ' coffres' : ' coffre')); }
-  else if (ED.tool === 'decor') { const d0 = edDecor()[ED.deco % edDecor().length], d = { n: d0[0], x, y, s: d0[1], rot: 0, r: d0[2], z: ED.dz == null || ED.dz === edZone() ? null : ED.dz }; F.decor.push(d); ED.sel = { k: 'decor', o: d }; }
+  else if (ED.tool === 'decor') { const d0 = edDecor()[ED.deco % edDecor().length], d = { n: d0[0], x, y, s: d0[1], rot: 0, r: d0[2], z: d0[0].startsWith('d_') || ED.dz == null || ED.dz === edZone() ? null : ED.dz }; F.decor.push(d); ED.sel = { k: 'decor', o: d }; }
   else if (ED.tool === 'entree') { F.start.x = x; F.start.y = y; ED.sel = { k: 'start', o: F.start }; }
   else if (ED.tool === 'sortie') { if (!F.lift) F.lift = { x, y, open: false, prog: 0 }; else { F.lift.x = x; F.lift.y = y; } ED.sel = { k: 'lift', o: F.lift }; }
   edChanged(true); return true;
@@ -7261,11 +7318,13 @@ function edUI() {
   if (ED.tool === 'taille') dock.push(edSizePanel());
   if (ED.tool === 'peint') dock.push(zones(ED.zone, z => { ED.zone = z; edUI(); }));
   if (ED.tool === 'tex') dock.push(edTexPanel());
+  if (ED.tool === 'bloc') dock.push(edBlocPanel());
   if (ED.tool === 'haut') dock.push(h('div', { class: 'seg ed-sub' }, ...ED_HEIGHTS.map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.wh === i), onclick: () => { ED.wh = i; edUI(); } }, n))));
   if (ED.tool === 'decmur') { const dz = ED.dz == null ? edZone() : ED.dz;
     dock.push(zones(dz, z => { ED.dz = z; ED.deco = 0; edUI(); }), h('div', { class: 'seg ed-sub ed-pal' }, ...PROPS[dz].map((d, i) => edPalBtn('d_' + ZONES[dz] + '_' + d[0], edDecorName(d[0]), ED.deco === i, () => { ED.deco = i; edUI(); })))); }
   if (ED.tool === 'decor') { const dz = ED.dz == null ? edZone() : ED.dz;
-    dock.push(zones(dz, z => { ED.dz = z; ED.deco = 0; edUI(); }), h('div', { class: 'seg ed-sub ed-pal' }, ...edDecor().map((d, i) => edPalBtn('d_' + ZONES[dz] + '_' + d[0], edDecorName(d[0]), ED.deco === i, () => { ED.deco = i; edUI(); })))); }
+    const zs = zones(dz, z => { ED.dz = z; ED.deco = 0; edUI(); }); zs.append(h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(dz === 5), onclick: () => { ED.dz = 5; ED.deco = 0; edUI(); } }, ic('plus'), 'Autres (nouveaux mondes, coffres)'));
+    dock.push(zs, h('div', { class: 'seg ed-sub ed-pal' }, ...edDecor().map((d, i) => edPalBtn(decoModel(d[0], dz), edDecorName(d[0]), ED.deco === i, () => { ED.deco = i; edUI(); })))); }
   if (ED.tool === 'crea' || ED.tool === 'decor' || ED.tool === 'decmur') dock.push(h('div', { id: 'ed-prevbox', class: 'ed-prevbox' }));
   const sel = ED.sel;
   if (sel) dock.push(edSelPanel(sel));
@@ -7294,6 +7353,16 @@ function texPick(kind, cur, fn, none) {
   let z = -1; for (const t of lib) { if (t.z !== z) { z = t.z; out.push(h('div', { class: 'tex-zone', text: STRATA[z].name })); }
     out.push(h('button', { class: 'tex-it', type: 'button', title: t.name, 'aria-pressed': String(cur === t.id), onclick: () => fn(t.id) }, texThumb(t.id), h('small', { text: (t.sub ? TEX_VAR[t.sub] || t.sub : t.kind === 'dessus' ? 'dessus' : t.kind) + (t.v === 1 ? ' ·1' : '') }))); }
   return h('div', { class: 'tex-grid' }, ...out);
+}
+// the blocks of the map (35c): the kit of its walls, and the library in thumbnails for the brush
+function edBlocPanel() {
+  const chip = (on, lab, fn) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: () => { edPush(); fn(); edChanged(true); } }, lab);
+  const kits = [...new Set(blocLib().map(b => b.z))];
+  const all = h('div', { class: 'seg' }, chip(!F.bk, 'Comme le réglage du jeu', () => { F.bk = null; }), chip(F.bk === 'non', 'Aucun bloc', () => { F.bk = 'non'; }),
+    ...kits.map(z => chip(F.bk === z, 'Murs en blocs · ' + (STRATA[ZONES.indexOf(z)] || { name: z }).name, () => { F.bk = z; })));
+  const lib = blocLib(); let z0 = null; const pal = [edPalBtn('', 'Aucun (efface)', !ED.bid, () => { ED.bid = null; edUI(); })];
+  for (const b of lib) { if (b.z !== z0) { z0 = b.z; pal.push(h('div', { class: 'tex-zone', text: (STRATA[b.zi] || { name: b.z }).name })); } pal.push(edPalBtn(b.id, (BLOC_NAMES[b.piece] || b.piece), ED.bid === b.id, () => { ED.bid = b.id; edUI(); })); }
+  return h('div', { class: 'ed-layers ed-tex' }, h('b', { text: 'Les murs de toute la carte' }), all, h('b', { text: 'Le pinceau : un bloc par case' }), h('small', { text: 'Sur un mur : ce bloc à la place du mur. Sur le sol : un bloc de sol (une estrade). Une case qui porte une texture garde sa texture.' }), h('div', { class: 'seg ed-pal' }, ...pal));
 }
 const texName = id => { const t = id && texInfo(id); return t ? t.name : 'celle de la zone'; };
 function edTexPanel() {
@@ -7349,7 +7418,7 @@ function edPrevStep() {
 }
 const ED_PLACES = { counter: 'Le comptoir des niveaux', portal: 'Le portail', wheel: 'La roue', fire: 'Le feu de camp', dummy: 'Le mannequin', npc: 'Un habitant' };
 const ED_DECOR_NAMES = { tonneau: 'Tonneau', rocher: 'Rocher', lanterne: 'Lanterne', cocon: 'Cocon', tremplin: 'Tremplin', grappe: 'Grappe', brasero: 'Brasero', tonneau_explosif: 'Tonneau explosif', rocher_lave: 'Rocher de lave', cristaux: 'Cristaux', rocher_enneige: 'Rocher enneigé', autel: 'Autel', cristal: 'Cristal', arche: 'Arche de lianes', barriere: 'Palissade', champignon_geant: 'Champignon géant', totem: 'Totem', pilier_charbon: 'Pilier de charbon', tronc_calcine: 'Tronc calciné', arbre_gele: 'Arbre gelé', pilier_glace: 'Pilier de glace', obelisque: 'Obélisque', portail: 'Portail ancien' };
-const edDecorName = n => ED_DECOR_NAMES[n] || n;
+const edDecorName = n => ED_DECOR_NAMES[n] || (n.startsWith('d_') ? n.slice(2).replace(/_v2$/, ' (v2)').replace(/_/g, ' ').replace(/^./, c => c.toUpperCase()) : n);
 function edSelPanel(sel) {
   const o = sel.o, row = [];
   let name = sel.k === 'wprop' ? edDecorName(sel.o.name.split('_').slice(2).join('_')) + ' (sur un mur)' : sel.k === 'zone' ? 'Zone d\'interaction · ' + sel.o.label : ED_PLACES[sel.k] ? ED_PLACES[sel.k] : sel.k === 'start' ? (ED.camp ? 'L\'arrivée au camp' : 'L\'entrée') : sel.k === 'lift' ? 'La sortie' : sel.k === 'seal' ? 'Un sceau' : sel.k === 'chest' ? (o.gold ? 'Coffre doré' : 'Coffre') : sel.k === 'decor' ? edDecorName(o.n) : EN[o.type].name;
@@ -7904,6 +7973,159 @@ function outilOpen(tries) {
   try { go(); } catch (e) { toast('Cet outil n\'a pas pu s\'ouvrir'); }
 }
 setTimeout(outilOpen, 300);
+
+/* ================= the 3D blocks (35a): Damien's pieces instead of the textured cubes =================
+   Packs 4 and 5 (ASSETS - CONCEPTS - ARTS/02_modeles_3d/blocs/<zone>/): for each zone sol_1, sol_2, mur_1 to mur_3, pilier,
+   ornement_mur, each 1 × 1 on the ground, its origin at the middle of its floor, ~500 triangles, a 256 px texture. A map wears the kit
+   of its zone (or another: plan field bk), and any tile can wear one piece of any kit (the editor's « Blocs » tool: bpal / tb, like
+   the textures). The pieces are drawn in instances, one draw for each piece in each piece of 24 × 24 tiles of the map, so that what the
+   camera does not see is not drawn. Until the pieces of the kit have arrived, the map keeps its cubes; it is built again when they come.
+   Damien's verdict on the first try (7 October): blocks everywhere are too big and do not join; the ground must be one flat surface
+   with grass and scenery, the grid seen only along the walls. So by default (TU.blocs = 1) the walls stay continuous (their v2 textures,
+   a lip, a light on their edges) and the blocks come as accents: pillars on the corners, ornaments on the tall walls facing the camera.
+   TU.blocs = 2 builds the walls in blocks (each turned to face the open ground); 0 = no block at all. Floors are blocks only where the
+   editor paints one (a raised floor). The ground gets its grass (pack 3: 04_herbes), sown by TU.herbe. */
+const BLOC_PIECES = ['sol_1', 'sol_2', 'mur_1', 'mur_2', 'mur_3', 'pilier', 'ornement_mur'];
+const BLOC_KIND = p => p.startsWith('sol') ? 'sol' : p === 'pilier' ? 'pilier' : p === 'ornement_mur' ? 'ornement' : 'mur';
+const BLOC_NAMES = { sol_1: 'Sol 1', sol_2: 'Sol 2', mur_1: 'Mur 1', mur_2: 'Mur 2', mur_3: 'Mur 3', pilier: 'Pilier', ornement_mur: 'Ornement de mur', deco_champignon: 'Champignon (décor)', deco_champignon_v2: 'Champignon v2 (décor)' };
+// every block the game knows, sorted by zone then piece: { id, z (zone name), zi (zone number), piece, kind, name }
+function blocLib(kind) {
+  if (!MDL.list) return [];
+  return Object.keys(MDL.list).map(id => { const m = /^b_([a-z]+)_(.+)$/.exec(id); if (!m || /_lo$/.test(id)) return null; const zi = ZONES.indexOf(m[1]);
+    return { id, z: m[1], zi, piece: m[2], kind: BLOC_KIND(m[2]), name: (zi >= 0 ? STRATA[zi].name : m[1]) + ' — ' + (BLOC_NAMES[m[2]] || m[2].replace(/_/g, ' ')) }; })
+    .filter(b => b && (!kind || b.kind === kind)).sort((a, b) => (a.zi - b.zi) || BLOC_PIECES.indexOf(a.piece) - BLOC_PIECES.indexOf(b.piece) || a.id.localeCompare(b.id));
+}
+// the kit a map wears: its own choice (F.bk: a zone name, or 'non' for the cubes), else its world's, when the setting allows
+function blocKit() {
+  if (!USE3D || !MDL.on || !MDL.list || !F || F.bk === 'non') return null;
+  const mode = F.bk ? 2 : TU.blocs | 0, want = F.bk || ZONES[kitOf(F.si)], tiles = F.tb && F.tb.some(v => v < 255);
+  if (!mode && !tiles) return null;
+  const has = p => ('b_' + want + '_' + p) in MDL.list, sols = ['sol_1', 'sol_2'].filter(has), murs = ['mur_1', 'mur_2', 'mur_3'].filter(has);
+  if (!sols.length || !murs.length) return null;
+  return { mode, z: want, sols: sols.map(p => 'b_' + want + '_' + p), murs: murs.map(p => 'b_' + want + '_' + p), pilier: has('pilier') ? 'b_' + want + '_pilier' : null, orn: has('ornement_mur') ? 'b_' + want + '_ornement_mur' : null };
+}
+// whether the world can be built in blocks now; when a piece is missing it is asked for, and the world is built again when it comes
+function blocsReady(K) {
+  if (!K) return false;
+  const names = [...K.sols, ...K.murs, K.pilier, K.orn, ...(F.bpal || [])].filter(Boolean); let ok = true;
+  for (const n0 of names) { const n = blocUse(n0); if (!MDL.cache[n]) { ok = false; modelLoad(n).then(g => { if (g && F && blocKit() && blocsReady(blocKit())) worldChanged(); }); } }
+  return ok;
+}
+// one tile's piece: what the editor painted there, else a variant drawn from the place (always the same for that tile)
+const blocHash = (x, y) => { let h = Math.imul(x * 73856093 ^ y * 19349663 ^ ((F && F.seed) | 0), 0x27d4eb2d); h ^= h >>> 15; return (h >>> 0) / 4294967296; };
+function blocOf(K, x, y, ground) {
+  const i = y * F.W + x, a = F.tb && F.tb[i]; if (a != null && a < 255 && F.bpal && F.bpal[a] && MDL.cache[blocUse(F.bpal[a])]) return F.bpal[a];
+  const r = blocHash(x, y), l = ground ? K.sols : K.murs; return l[Math.floor(r * l.length) % l.length];
+}
+// the version a map wears: the lightened one (_lo, tools/modeles.mjs), unless the setting « Blocs détaillés » asks for the whole piece
+const blocUse = id => !TU.blocsHD && MDL.list && (id + '_lo') in MDL.list ? id + '_lo' : id;
+const BLOC_GEO = {}; // id worn → { geo, mat, box }: the shape and material of each piece, kept
+function blocShape(id) {
+  const u = blocUse(id); if (BLOC_GEO[u]) return BLOC_GEO[u]; const part = modelPart(u); if (!part) return null;
+  const mat = modelMat(part.map); return BLOC_GEO[u] = { geo: part.geo, mat, min: part.min, max: part.max };
+}
+// the placing of one piece on tile (x, y): fitted to 1 × 1 on the ground, turned by quarter turns, its height h (in tiles) or its own
+let _bm, _bq, _bv, _bs, _bt, _by; // made on first use (the page without the 3D has no THREE)
+function blocMatrix(sh, x, y, rot, h, sink, out) {
+  if (!_bm) { _bm = new THREE.Matrix4(); _bq = new THREE.Quaternion(); _bv = new THREE.Vector3(); _bs = new THREE.Vector3(); _bt = new THREE.Matrix4(); _by = new THREE.Vector3(0, 1, 0); }
+  const a = sh.min, b = sh.max, sx = 1 / Math.max(1e-3, b[0] - a[0]), sz = 1 / Math.max(1e-3, b[2] - a[2]), hy = b[1] - a[1], sy = h ? h / Math.max(1e-3, hy) : (sx + sz) / 2;
+  _bt.makeTranslation(-(a[0] + b[0]) / 2, -a[1], -(a[2] + b[2]) / 2);
+  _bq.setFromAxisAngle(_by, rot * Math.PI / 2); _bs.set(sx, sy, sz); _bv.set(x + .5, sink ? -hy * sy : 0, y + .5);
+  _bm.compose(_bv, _bq, _bs); return out.multiplyMatrices(_bm, _bt);
+}
+// called by buildWorld once its heights are known: the instances, one mesh for each piece in each chunk of the map
+function blocsBuild(K, hg, isF, cube) {
+  const W = F.W, H = F.H, CH = 24, lists = {}; // key piece|chunk → [matrices], and the box of the chunk
+  const put = (id, cx, cy, m, top) => { const k = id + '|' + cx + ',' + cy; const L = lists[k] || (lists[k] = { id, cx, cy, ms: [], top: 0 }); L.ms.push(m.clone()); L.top = Math.max(L.top, top); };
+  const m = new THREE.Matrix4();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const cx = (x / CH) | 0, cy = (y / CH) | 0;
+    if (cube && cube(x, y, isF(x, y))) continue; // painted with a texture: it keeps its cube
+    const i = y * W + x, painted = F.tb && F.tb[i] < 255 && F.bpal && F.bpal[F.tb[i]];
+    if (isF(x, y)) { if (!painted) continue; const id = blocOf(K, x, y, true), sh = blocShape(id); if (sh) put(id, cx, cy, blocMatrix(sh, x, y, 0, 0, true, m), .1); continue; }
+    const hh = hg[i]; if (!hh) continue;
+    const open = [isF(x, y + 1), isF(x + 1, y), isF(x, y - 1), isF(x - 1, y)], face = open.indexOf(true); // the side that looks onto the ground
+    if (painted || K.mode === 2) { // the wall itself in blocks
+      const id = blocOf(K, x, y, false), sh = blocShape(id); if (!sh) continue;
+      if (BLOC_KIND(id.replace(/^b_[a-z]+_/, '')) === 'sol') { put(id, cx, cy, blocMatrix(sh, x, y, 0, hh, false, m), hh); continue; } // a floor piece on a wall: a raised floor
+      put(id, cx, cy, blocMatrix(sh, x, y, face < 0 ? 0 : face, hh, false, m), hh);
+    }
+    // the accents: a pillar on an outer corner now and then, an ornament on a tall wall facing the camera now and then
+    const r = blocHash(x + 7, y + 3), corner = (open[1] || open[3]) && (open[0] || open[2]);
+    if (!K.mode) continue;
+    if (K.pilier && corner && hh > .9 && r < .4) { const sp = blocShape(K.pilier); if (sp) put(K.pilier, cx, cy, blocMatrix(sp, x, y, 0, hh + .25, false, m), hh + .25); }
+    else if (K.orn && open[0] && hh > .9 && r > .82) { const so = blocShape(K.orn); if (so) { blocMatrix(so, x, y, 0, Math.min(hh * .7, 1), false, m); m.premultiply(_bt.makeTranslation(0, 0, .52)); put(K.orn, cx, cy, m, hh); } }
+  }
+  for (const k in lists) {
+    const L = lists[k], sh = blocShape(L.id), g = new THREE.BufferGeometry(); // the piece's own buffers, shared: only the box is the chunk's
+    g.setIndex(sh.geo.index); for (const n in sh.geo.attributes) g.setAttribute(n, sh.geo.attributes[n]);
+    const x0 = L.cx * CH, y0 = L.cy * CH, x1 = Math.min(W, x0 + CH), y1 = Math.min(H, y0 + CH);
+    g.boundingBox = new THREE.Box3(new THREE.Vector3(x0, -1, y0), new THREE.Vector3(x1, L.top + 1, y1)); g.boundingSphere = g.boundingBox.getBoundingSphere(new THREE.Sphere());
+    const o = new THREE.InstancedMesh(g, sh.mat, L.ms.length); L.ms.forEach((mm, i) => o.setMatrixAt(i, mm)); o.instanceMatrix.needsUpdate = true;
+    const floor = BLOC_KIND(L.id.replace(/^b_[a-z]+_/, '')) === 'sol' && L.top < .2;
+    o.castShadow = !floor; o.receiveShadow = true; o.matrixAutoUpdate = false; o.userData.layer = floor ? 'sol' : 'murs'; o.userData.bloc = true; o.userData.keepMat = true;
+    worldGroup.add(o);
+  }
+  return Object.keys(lists).length;
+}
+
+/* ---------- the grass and the life on the ground (pack 3: h_<zone>_<touffe|fleur|caillou|feuille>, 6 triangles each) ----------
+   Sown on the open ground, thicker along the walls (as in the illustrations), one draw for each piece in each chunk. TU.herbe = how many
+   tufts a tile of ground gets on average (0 = none). A world of its own (Canopée, Mine…) wears its own grass when it has some. */
+const WORLD_ZONE = ['racines', 'mycelium', 'braises', 'givre', 'abimes', 'marais', 'canopee', 'corail', 'dunes', 'mine'];
+const HERB_PIECES = [['touffe', .5], ['fleur', .2], ['caillou', .15], ['feuille', .15]];
+const HERB_MAT = {};
+function herbZone() { if (!MDL.list || !F) return null; for (const z of [WORLD_ZONE[F.si], ZONES[kitOf(F.si)]]) if (z && ('h_' + z + '_touffe') in MDL.list) return z; return null; }
+function herbsBuild(isF) {
+  const dens = TU.herbe == null ? .6 : +TU.herbe; if (!USE3D || !MDL.on || !(dens > 0)) return 0;
+  const z = herbZone(); if (!z) return 0;
+  const names = HERB_PIECES.map(p => 'h_' + z + '_' + p[0]).filter(n => n in MDL.list); let ready = true;
+  for (const n of names) if (!MDL.cache[n]) { ready = false; modelLoad(n).then(g => { if (g && F && herbZone() === z && names.every(k => MDL.cache[k])) worldChanged(); }); }
+  if (!ready || !names.length) return 0;
+  if (!_bm) blocMatrix({ min: [0, 0, 0], max: [1, 1, 1] }, 0, 0, 0, 0, false, new THREE.Matrix4()); // makes the shared helpers
+  const W = F.W, H = F.H, CH = 24, lists = {}, R = rng((F.seed ^ 0x6E4B) >>> 0), m = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  const block = new Set((F.blocks || []).map(b => Math.floor(b.y / T) * W + Math.floor(b.x / T))); // not inside the scenery that stops feet
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    if (!isF(x, y) || block.has(y * W + x) || (F.tb && F.tb[y * W + x] < 255)) continue;
+    const edge = !isF(x - 1, y) || !isF(x + 1, y) || !isF(x, y - 1) || !isF(x, y + 1), want = dens * (edge ? 2.2 : .6);
+    let n = Math.floor(want) + (R() < want % 1 ? 1 : 0);
+    while (n-- > 0) {
+      let r = R(), k = 0; while (k < HERB_PIECES.length - 1 && r > HERB_PIECES[k][1]) { r -= HERB_PIECES[k][1]; k++; }
+      const id = 'h_' + z + '_' + HERB_PIECES[k][0], part = modelPart(id); if (!part) continue;
+      const a = part.min, b = part.max, hy = Math.max(1e-3, b[1] - a[1]), s = (.32 + R() * .26) / hy; // 0.32 to 0.58 of a tile high
+      q.setFromAxisAngle(_by, R() * Math.PI * 2); sc.set(s, s, s); v.set(x + .1 + R() * .8, -a[1] * s, y + .1 + R() * .8);
+      m.compose(v, q, sc); m.multiply(_bt.makeTranslation(-(a[0] + b[0]) / 2, 0, -(a[2] + b[2]) / 2));
+      const key = id + '|' + ((x / CH) | 0) + ',' + ((y / CH) | 0); (lists[key] || (lists[key] = { id, cx: (x / CH) | 0, cy: (y / CH) | 0, ms: [] })).ms.push(m.clone());
+    }
+  }
+  let n = 0;
+  for (const k in lists) {
+    const L = lists[k], part = modelPart(L.id), g = new THREE.BufferGeometry();
+    g.setIndex(part.geo.index); for (const a in part.geo.attributes) g.setAttribute(a, part.geo.attributes[a]);
+    const x0 = L.cx * CH, y0 = L.cy * CH; g.boundingBox = new THREE.Box3(new THREE.Vector3(x0, -.2, y0), new THREE.Vector3(Math.min(W, x0 + CH), .6, Math.min(H, y0 + CH))); g.boundingSphere = g.boundingBox.getBoundingSphere(new THREE.Sphere());
+    const mat = HERB_MAT[L.id] || (HERB_MAT[L.id] = (() => { const mm = new THREE.MeshToonMaterial({ map: part.map, gradientMap: gradTex, alphaTest: .5, side: THREE.DoubleSide }); mm.onBeforeCompile = modelLight; mm.customProgramCacheKey = () => 'modele-herbe'; return mm; })());
+    const o = new THREE.InstancedMesh(g, mat, L.ms.length); L.ms.forEach((mm, i) => o.setMatrixAt(i, mm)); o.instanceMatrix.needsUpdate = true;
+    o.receiveShadow = true; o.matrixAutoUpdate = false; o.userData.layer = 'sol'; o.userData.bloc = true; o.userData.keepMat = true; worldGroup.add(o); n += L.ms.length;
+  }
+  return n;
+}
+
+/* ---------- the game icons of pack 4 (05_interface/icones_jeu, ui_<nom>.png) on the bubbles of the home screen and the lantern button ----------
+   Setting « Icônes peintes » (TU.iconesV2): 1 = Damien's painted icons where one fits, 0 = the drawn icons of before. */
+const UI_ICONS = { bag: 'sac', shop: 'pieces', wheel: 'chance', quests: 'parchemin', levels: 'etoile', team: 'bouclier' };
+const UI_PIC = {};
+function uiIconsApply() {
+  const cfg = window.ecorceModeles; if (!cfg || !MDL.list) return;
+  const on = TU.iconesV2 == null ? true : !!TU.iconesV2;
+  const put = (el, n) => {
+    if (!el) return; const old = el.querySelector('.uiic'), ico = el.querySelector('.ic');
+    if (!on || !(('ui_' + n) in MDL.list)) { if (old) old.remove(); if (ico) ico.hidden = false; return; }
+    const show = src => { let im = el.querySelector('.uiic'); if (!im) { im = h('img', { class: 'uiic', alt: '' }); el.prepend(im); } im.src = src; if (ico) ico.hidden = true; };
+    if (UI_PIC[n]) show(UI_PIC[n]); else picRead(cfg, 'ui_' + n, 'png').then(im => { UI_PIC[n] = im.src; show(im.src); }, () => { });
+  };
+  for (const [k, n] of Object.entries(UI_ICONS)) put(document.querySelector('#tabs .tab[data-k="' + k + '"]'), n);
+  put($('b-lan'), 'lanterne');
+}
 
 </script>
 </body>
