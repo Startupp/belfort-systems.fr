@@ -1,0 +1,11 @@
+TinKnight - concepts serie 3 et icones d'objets
+icones_objets/epees/      15 epees, PNG transparents 256 px (bois, ecorce, ronce, champignon, ambre, pierre, os,
+                          ruche, corail, givre, braise, abime, horloge, feuille, legende)
+icones_objets/arbaletes/  5 arbaletes (bois, champignon, ambre a chargeur, ronce, givre)
+icones_objets/canons/     10 canons lents (buche, gland, bombarde, horloge, abime, spores, givre, ruche, corail, os)
+zones_nouvelles_01        propositions de zones : Marais, Ruche, Canopee
+zones_nouvelles_02        propositions de zones : Corail englouti, Dunes d'ambre, Mine a rouages
+familles_marais           4 especes du marais, petit et adulte (dont la grenouille)
+monstres_nouvelles_zones  12 monstres : Ruche, Corail, Dunes
+chevaliers_nouveaux       8 chevaliers : marais, ruche, corail, desert, horloger (canon), canopee (arbalete), os, etoiles (canon)
+Les planches sont des references visuelles (2688 x 1520) ; les icones sont utilisables telles quelles.
