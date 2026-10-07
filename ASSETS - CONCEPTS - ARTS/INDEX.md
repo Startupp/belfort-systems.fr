@@ -16,7 +16,7 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `02_modeles_3d/blocs/abimes` | 7 | 0.2 Mo |
 | `02_modeles_3d/blocs/braises` | 7 | 0.2 Mo |
 | `02_modeles_3d/blocs/givre` | 7 | 0.2 Mo |
-| `02_modeles_3d/blocs/mycelium` | 7 | 0.2 Mo |
+| `02_modeles_3d/blocs/mycelium` | 8 | 0.2 Mo |
 | `02_modeles_3d/blocs/racines` | 7 | 0.2 Mo |
 | `02_modeles_3d/chevaliers` | 4 | 3.8 Mo |
 | `02_modeles_3d/chevaliers/champignon` | 1 | 0.4 Mo |
@@ -74,6 +74,7 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `05_interface/kit` | 4 | 0.1 Mo |
 | `05_interface/logos` | 5 | 4.7 Mo |
 | `05_interface/menus` | 10 | 8.6 Mo |
+| `05_interface/menus/jeu_v2` | 14 | 4.3 Mo |
 | `06_promo` | 6 | 7.8 Mo |
 | `06_promo/playstore` | 2 | 1.0 Mo |
 | `06_promo/pubs` | 5 | 1.7 Mo |
@@ -89,6 +90,6 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `_alternatives/textures_v1/racines` | 7 | 1.2 Mo |
 | `_apercus` | 9 | 0.6 Mo |
 | `_apercus/pack2_monstres_animes` | 6 | 0.7 Mo |
-| `_journal` | 4 | 0.0 Mo |
+| `_journal` | 5 | 0.0 Mo |
 | `_journal/pack_zones_promo` | 3 | 0.2 Mo |
 | `_journal/textures` | 1 | 0.0 Mo |
