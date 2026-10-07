@@ -558,6 +558,14 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 #sh-more{position:sticky;bottom:4px;align-self:flex-end;flex:none;margin-top:-56px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--amber);color:var(--ink);border:0;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer;z-index:2}#sh-more[hidden]{display:none}#sh-more svg{width:22px;height:22px;transform:rotate(90deg);transition:transform .2s}#sh-more.up svg{transform:rotate(-90deg)}
 .adm-lvtools{display:flex;flex-direction:column;gap:8px;padding:10px 0 14px;border-bottom:1px solid var(--line)}.adm-lvtools small{color:var(--dim);font-size:12px}.adm-plan{width:100%;border-radius:var(--r-sm);background:var(--well)}.adm-lvs .chipbtn.mod{box-shadow:inset 0 0 0 2px var(--amber)}.adm-seg{flex-wrap:wrap}
 .adm-cards{display:flex;flex-direction:column;gap:10px}.adm-box .adm-head{padding-bottom:8px}
+/* the editor of the screen (k_hud.js): the real screen shows behind, a frame round each piece, a panel at the bottom (or the top) */
+body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{display:block!important}body.hudx-play #camp-top,body.hudx-play #tabs{display:none!important}
+#hudx{position:fixed;inset:0;z-index:60;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}#hudx[hidden]{display:none}#hudx-catch{position:absolute;inset:0;touch-action:none;cursor:grab}#hudx-boxes{position:absolute;inset:0;pointer-events:none}
+.hudx-b{position:fixed;border:2px dashed var(--cream);border-radius:10px;opacity:.75}.hudx-b.on{border:2px solid var(--amber);opacity:1;box-shadow:0 0 0 3px rgba(0,0,0,.4)}.hudx-b.off{border-color:var(--danger)}
+.hudx-panel{position:absolute;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));max-width:560px;margin-inline:auto;max-height:46vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:var(--r-sm);background:var(--bark-2);border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,0,0,.6)}
+.hudx-panel.at0{bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))}.hudx-panel.at1{bottom:auto;top:24vh;max-height:44vh}.hudx-panel small{color:var(--dim);font-size:12.5px}
+.hudx-txt{display:flex;align-items:center;gap:8px;font-size:13px}.hudx-txt span{flex:none;width:130px}.hudx-txt .adm-search{flex:1 1 0;min-width:0;width:auto;min-height:40px;padding:6px 12px;user-select:text;-webkit-user-select:text}.hudx-panel .seg.slide{flex-wrap:nowrap;overflow-x:auto}.hudx-panel .seg.slide .chipbtn{flex:none}
+.hudx-col{display:flex;align-items:center;gap:10px;font-size:13.5px}.hudx-col input[type=color]{flex:none;width:44px;height:34px;border:0;padding:0;background:none;border-radius:8px}
 /* the administration, full screen: the settings side by side when there is room; on a touch screen a slider moves only once its row is touched */
 #sheet.full{top:0;max-width:none;max-height:none;border-radius:0}
 #sheet.full::before{display:none}
@@ -575,7 +583,7 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
   .adm-row.on{background:color-mix(in srgb,var(--amber) 10%,transparent);box-shadow:inset 0 0 0 2px var(--amber)}
 }
 .opt-acts{display:flex;flex-direction:column;gap:8px}
-#ed{position:fixed;inset:0;pointer-events:none;z-index:30;display:flex;flex-direction:column;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}#ed[hidden]{display:none}#ed>*{pointer-events:auto}#ed .ed-top{display:flex;flex-direction:column;gap:6px;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px}#ed .ed-top small{display:block;color:var(--dim);font-size:11px}#ed .ed-redo svg{transform:scaleX(-1)}#ed .ed-tip{align-self:center;margin-top:6px;font-size:12px;color:var(--cream);background:var(--well);padding:5px 10px;border-radius:999px;opacity:.9}#ed .ed-fill{flex:1;pointer-events:none}#ed .ed-name{min-width:0}#ed .ed-name b,#ed .ed-name small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#ed .ed-sub{margin-top:6px;background:var(--bark-2);border-radius:var(--r-sm);padding:6px;overflow-x:auto;flex-wrap:nowrap}#ed .ed-sel{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:40vh;overflow-y:auto}#ed .ed-sel .toggle{padding:6px 10px}#ed .ed-tools{display:flex;gap:6px;overflow-x:auto;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;margin-top:8px}#ed .ed-tools .chipbtn{flex:none}#ed-giz{position:fixed;inset:0;pointer-events:none}#ed-aim{position:fixed;left:0;top:0;pointer-events:none!important;border:2px solid var(--cream);border-radius:4px;box-shadow:0 0 0 2px rgba(0,0,0,.45),inset 0 0 0 2px rgba(0,0,0,.25)}#ed-aim::before,#ed-aim::after{content:"";position:absolute;left:50%;top:50%;background:var(--cream);transform:translate(-50%,-50%)}#ed-aim::before{width:2px;height:60%}#ed-aim::after{width:60%;height:2px}#ed .ed-here{flex-wrap:nowrap;gap:6px;margin-top:6px;align-items:center}#ed .ed-here .chipbtn{flex:none}#ed .ed-here .chipbtn:not([aria-pressed=true]){background:var(--bark-2)}#ed-giz .ed-ring{position:absolute;left:0;top:0;border:2px solid var(--amber);border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.35)}#ed-giz .ed-h{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--amber);border:2px solid var(--ink);pointer-events:auto;touch-action:none;cursor:grab}#ed-giz .ed-grow{background:var(--accent2)}
+#ed{position:fixed;inset:0;pointer-events:none;z-index:30;display:flex;flex-direction:column;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}#ed[hidden]{display:none}#ed>*{pointer-events:auto}#ed .ed-top{display:flex;flex-direction:column;gap:6px;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px}#ed .ed-top small{display:block;color:var(--dim);font-size:11px}#ed .ed-redo svg{transform:scaleX(-1)}#ed .ed-tip{align-self:center;margin-top:6px;font-size:12px;color:var(--cream);background:var(--well);padding:5px 10px;border-radius:999px;opacity:.9}#ed .ed-fill{flex:1;pointer-events:none}#ed .ed-name{min-width:0}#ed .ed-name b,#ed .ed-name small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#ed .ed-sub{margin-top:6px;background:var(--bark-2);border-radius:var(--r-sm);padding:6px;overflow-x:auto;flex-wrap:nowrap}#ed .ed-sel{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:40vh;overflow-y:auto}#ed .ed-sel .toggle{padding:6px 10px}#ed .ed-tools{display:flex;gap:6px;overflow-x:auto;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;margin-top:8px}#ed .ed-tools .chipbtn{flex:none}#ed .ed-pts{max-height:34vh;overflow-y:auto}#ed .ed-dot{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;color:#15100c;font:700 11px var(--ui)}#ed>:not(#ed-aim):not(#ed-giz):not(.ed-fill){position:relative}#ed .ed-acts{overflow-x:auto;scrollbar-width:none}#ed .ed-acts>*{flex:none}@media (max-width:440px){#ed .ed-acts .ed-lab{display:none}#ed .ed-acts .chipbtn{padding-inline:9px}}#ed .ed-sep{flex:none;width:1px;align-self:stretch;margin:4px 2px;background:var(--line)}#ed .ed-brush .chipbtn{flex:none;padding-inline:10px}#ed-giz{position:fixed;inset:0;pointer-events:none}#ed-aim{position:fixed;left:0;top:0;pointer-events:none!important;border:2px solid var(--cream);border-radius:4px;box-shadow:0 0 0 2px rgba(0,0,0,.45),inset 0 0 0 2px rgba(0,0,0,.25)}#ed-aim::before,#ed-aim::after{content:"";position:absolute;left:50%;top:50%;background:var(--cream);transform:translate(-50%,-50%)}#ed-aim::before{width:2px;height:60%}#ed-aim::after{width:60%;height:2px}#ed .ed-here{flex-wrap:nowrap;gap:6px;margin-top:6px;align-items:center}#ed .ed-here .chipbtn{flex:none}#ed .ed-here .chipbtn:not([aria-pressed=true]){background:var(--bark-2)}#ed-giz .ed-ring{position:absolute;left:0;top:0;border:2px solid var(--amber);border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.35)}#ed-giz .ed-h{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--amber);border:2px solid var(--ink);pointer-events:auto;touch-action:none;cursor:grab}#ed-giz .ed-grow{background:var(--accent2)}
 #ed .ed-pal .ed-pb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;min-width:76px}#ed .ed-pb img{width:48px;height:48px;object-fit:contain}#ed .ed-pb span{font-size:11px}#ed .ed-prevbox{align-self:flex-end;width:96px;height:96px;margin-top:6px;border-radius:var(--r-sm);background:var(--bark-2);border:1px solid var(--line);overflow:hidden}#ed .ed-prevbox canvas{width:96px;height:96px}
 /* creative wheel: a round button, and a radial wheel over the game (only its buttons catch touches: the stick keeps walking) */
 #crea-btn{position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom) + 104px);z-index:42;width:52px;height:52px;border-radius:50%;border:2px solid var(--amber);background:color-mix(in srgb,var(--well) 80%,transparent);color:var(--amber);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;cursor:pointer;font:700 9px/1 var(--ui);letter-spacing:.02em;box-shadow:0 2px 10px rgba(0,0,0,.5)}
@@ -949,6 +957,7 @@ const TUNE_FAM = [
   ['emp', 'Emplacements', 'Combien de places en plus les quêtes peuvent faire gagner.'],
   ['ryt', 'Rythmes', 'Quand se renouvelle ce qui se renouvelle : le jour, l\'étal.'],
   ['niv', 'Niveaux', 'Le tirage de chaque niveau : choisis un niveau, règle-le, regarde son plan et essaie-le.'],
+  ['hud', 'Interface', 'La place, la taille, la transparence de chaque élément de l\'écran de jeu et du camp, et les couleurs de chaque thème (réglés dans l\'Éditeur de modèles, k_hud.js).'],
 ];
 const EN_NAMES = [[0, 'du Sporule', 'Sporule'], [1, 'du Ronceux', 'Ronceux'], [2, 'du Cracheur', 'Cracheur'], [3, 'du Follet', 'Follet'], [4, 'du Gardien', 'Gardien'], [9, 'du boss', 'Boss']];
 const RAR_LINES = [['DROP', 'une créature ordinaire'], ['RICH', 'un gardien ou un coffre ordinaire'], ['BOSS', 'un boss ou un coffre doré'], ['SHOP', 'l\'étal']];
@@ -1291,7 +1300,7 @@ function tuneInit(objs) {
   const fresh = [];
   for (const d of TUNE_DEF) {
     if (d.def !== undefined || !tuneReady(d)) continue;
-    if (typeof d[4] === 'string') { const [o, f] = tunePath(d[4]); d.def = o[f] === undefined ? d[5] : o[f] / ((d[8] && d[8].scale) || 1); TU[d[0]] = d.def; } else d.def = d[4];
+    if (typeof d[4] === 'string') { const [o, f] = tunePath(d[4]); d.def = o[f] === undefined ? d[5] : o[f] / ((d[8] && d[8].scale) || 1); TU[d[0]] = d.def; } else { d.def = d[4]; if (TU[d[0]] === undefined) TU[d[0]] = d.def; } // a line added later (k_hud.js) starts at its default
     fresh.push(d);
   }
   // the first call applies what the service published last time to every line; later calls do it for the lines that have just arrived,
@@ -3497,10 +3506,14 @@ function buildWorld() {
     const wh = F.wh && F.wh[y * W + x]; if (near && wh) hg[y * W + x] = WALL_H[wh]; // a height chosen in the level editor
   }
   const hAt = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : hg[y * W + x];
-  // one builder of floor, wall sides and wall tops per zone: the level editor can paint any tile with the textures of another zone (F.surf)
-  const FB = [], WB = [], TB = [], zoneAt = (x, y) => { const s = F.surf && F.surf[y * W + x]; return s != null && s < 5 ? s : si; };
-  const pick = (A, x, y) => { const z = zoneAt(x, y); return A[z] || (A[z] = new GB()); };
-  const pb = new GB(), gb = new GB(), glows = [];
+  // one builder of floor, wall sides and wall tops per zone (the level editor can paint any tile with the textures of another zone, F.surf)
+  // and per piece of CHUNK × CHUNK tiles: each piece is a mesh of its own, and three.js leaves out those the camera does not see,
+  // so a bigger map costs nothing more where the knight stands (24e)
+  const CHUNK = 24, FB = {}, WB = {}, TB = {}, PB = {}, GBs = {}, zoneAt = (x, y) => { const s = F.surf && F.surf[y * W + x]; return s != null && s < 5 ? s : si; };
+  const ck = (x, y) => ((y / CHUNK) | 0) * 4096 + ((x / CHUNK) | 0);
+  const pick = (A, x, y) => { const k = zoneAt(x, y) + ':' + ck(x, y); return A[k] || (A[k] = new GB()); };
+  const at = (A, x, y) => { const k = ck(x, y); return A[k] || (A[k] = new GB()); };
+  const glows = [];
   const grey = k => [k, k, k];
   const ao = (gx, gy) => { let n = 0; if (!isF(gx - 1, gy - 1)) n++; if (!isF(gx, gy - 1)) n++; if (!isF(gx - 1, gy)) n++; if (!isF(gx, gy)) n++; return 1 - n * .2; };
   // the floor's shade: darker in the corners against the walls, and a little lighter or darker from one tile corner to the next.
@@ -3512,7 +3525,7 @@ function buildWorld() {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     if (isF(x, y)) { flat(pick(FB, x, y), x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
     const hh = hg[y * W + x]; if (!hh) continue;
-    const wb = pick(WB, x, y), tb = pick(TB, x, y);
+    const wb = pick(WB, x, y), tb = pick(TB, x, y), pb = at(PB, x, y), gb = at(GBs, x, y);
     const low = hh < 1, top = grey((low ? .8 : .62) + R() * .3);
     flat(tb, x, y, hh, top, top, top, top);
     const side = (nh, a, b, n) => { // a, b: the two bottom corners (x, z), counter-clockwise seen from outside
@@ -3531,10 +3544,12 @@ function buildWorld() {
     if (!low && R() < (front ? .45 : .14)) decoTop(pb, gb, glows, kd, x + .2 + R() * .6, hh, y + .25 + R() * .55, R);
     if (low && R() < .3) decoSmall(pb, kd, x + .2 + R() * .6, hh, y + .3 + R() * .4, R);
   }
-  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (isF(x, y) && !isF(x, y - 1) && R() < .16) decoSmall(pb, kd, x + .15 + R() * .7, 0, y + .14 + R() * .12, R);
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (isF(x, y) && !isF(x, y - 1) && R() < .16) decoSmall(at(PB, x, y), kd, x + .15 + R() * .7, 0, y + .14 + R() * .12, R);
   const addW = (b, m, rs) => { if (b.empty) return; const o = new THREE.Mesh(b.build(), m); o.castShadow = rs !== 2; o.receiveShadow = rs > 0; o.matrixAutoUpdate = false; worldGroup.add(o); };
   const n0 = worldGroup.children.length;
-  zoneMats(); for (let z = 0; z < 5; z++) if (FB[z] || WB[z] || TB[z]) { zoneTexWant(z); if (FB[z]) addW(FB[z], M.floor[z], 2); if (WB[z]) addW(WB[z], M.wall[z], 1); if (TB[z]) addW(TB[z], M.top[z], 1); } addW(pb, M.toon, 1); if (!gb.empty) { const o = new THREE.Mesh(gb.build(), M.glow); worldGroup.add(o); }
+  zoneMats(); const zk = k => +k.split(':')[0];
+  for (const k in FB) { zoneTexWant(zk(k)); addW(FB[k], M.floor[zk(k)], 2); } for (const k in WB) { zoneTexWant(zk(k)); addW(WB[k], M.wall[zk(k)], 1); } for (const k in TB) addW(TB[k], M.top[zk(k)], 1);
+  for (const k in PB) addW(PB[k], M.toon, 1); for (const k in GBs) if (!GBs[k].empty) { const o = new THREE.Mesh(GBs[k].build(), M.glow); o.matrixAutoUpdate = false; worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
   // each thing built belongs to a layer of the level editor (sol, murs, niveau, pnj), which can show or hide it
   for (let i = n0; i < worldGroup.children.length; i++) { const o = worldGroup.children[i]; o.userData.layer = M.floor.includes(o.material) ? 'sol' : 'murs'; }
@@ -3642,7 +3657,7 @@ function buildCamp() {
   const X = ME.game === 1, coin = GM().col, b = new GB(), gb = new GB(), S = F.str, wood = rgb('#7a5632'), dark = rgb('#4b3622'), steel = [.8, .84, .88]; F.rings = [];
   for (const st of F.stations) { const rg = new THREE.Mesh(torus(.52, .035, TAU, 26).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: S.glow })); rg.position.set(st.x * U, .04, st.y * U); worldGroup.add(rg); F.rings.push(rg); }
   { // the level counter: a long desk, and against the bark a board where the five worlds are pinned
-    const x = F.counter.x * U, z = F.counter.y * U, zb = 3.12;
+    const x = F.counter.x * U, z = F.counter.y * U, zb = z - 1.38; // the board stands behind the desk (against the bark, where the camp puts it)
     b.add(box(2.1, .56, .62), mat(x, .28, z), wood); b.add(box(2.2, .07, .74), mat(x, .6, z), rgb('#a8743c')); for (const px of [-.9, .9]) b.add(box(.12, .5, .5), mat(x + px, .25, z + .08), dark);
     b.add(box(2.2, 1.05, .07), mat(x, 1.45, zb), rgb('#3a2a1c')); b.add(box(2.32, .09, .12), mat(x, 2.0, zb), dark); b.add(box(2.32, .09, .12), mat(x, .9, zb), dark);
     STRATA.forEach((S2, i) => { const py = 1.45 + Math.sin(i * 1.9) * .24; gb.add(octa(.1), mat(x - .8 + i * .4, py, zb + .08, 1, 1.2, .5), rgb(S2.glow)); if (i) { const p0 = 1.45 + Math.sin((i - 1) * 1.9) * .24; b.add(box(.42, .035, .02), mat(x - 1 + i * .4, (py + p0) / 2, zb + .05, 1, 1, 1, 0, 0, Math.atan2(py - p0, .4)), [.82, .74, .56]); } });
@@ -4916,6 +4931,7 @@ async function srvTune() {
     if (!r || !r.ok || !r.reglages || typeof r.reglages !== 'object') return;
     TUNE_SHARED = r.reglages; try { localStorage.setItem('tk-reglages', JSON.stringify(TUNE_SHARED)); } catch (e) { }
     tuneSet(TUNE_SHARED, true); if (typeof admReapply === 'function') admReapply(); // an admin's trial on this device stays on top
+    if (r.textes && typeof hudTexts === 'function') hudTexts(r.textes); // the names of the screen (k_hud.js)
   } catch (e) { } // unreachable: the copy kept on the device stays in force
 }
 const srvSheet = () => { if (sheetOpen() && (sheetKind === 'opts' || sheetKind === 'load')) renderSheet(); homeSync(); };
@@ -5185,7 +5201,7 @@ async function admEnter(mdp) {
 function admOut() { ADM.mdp = ''; admKey(() => sessionStorage.removeItem('tk-admin-mdp')); ADM.msg = ''; renderSheet(); }
 
 // ---- units: the stored value is the one of the code; only the display and the typing convert
-const ADM_UNIT = { pct: { k: 100, suf: ' %' }, cs: { k: 1 / 32, suf: ' cases/s' }, c: { k: 1 / 32, suf: ' cases' }, s: { k: 1, suf: ' s' }, x: { k: 1, pre: '× ' }, n: { k: 1 }, choice: { k: 1 } };
+const ADM_UNIT = { px: { k: 1, suf: ' points' }, col: { k: 1 }, pct: { k: 100, suf: ' %' }, cs: { k: 1 / 32, suf: ' cases/s' }, c: { k: 1 / 32, suf: ' cases' }, s: { k: 1, suf: ' s' }, x: { k: 1, pre: '× ' }, n: { k: 1 }, choice: { k: 1 } };
 const admShow = (d, v) => v * ADM_UNIT[d[7]].k;
 const admStore = (d, v) => v / ADM_UNIT[d[7]].k;
 const admNice = (x) => { const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return p * (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10); };
@@ -5344,6 +5360,14 @@ function admCampCard() {
       h('button', { class: 'btn small', type: 'button', disabled: !!Net.room, onclick: () => edStart('camp') }, ic('forge'), 'Modifier le camp'),
       PLANS.camp ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => { delete PLANS.camp; plansKeep(); renderSheet(); } }, ic('recommencer'), 'Camp d\'origine') : null));
 }
+// the screen of play and of the camp (22f, k_hud.js)
+function admHudCard() {
+  return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'L\'interface' }),
+    h('small', { text: 'La place, la taille et la transparence de chaque élément de l\'écran, les couleurs de chaque thème, le nom des onglets du camp.' }))),
+    h('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px;padding:0 14px 14px' },
+      h('button', { class: 'btn small', type: 'button', onclick: () => hudEditStart('play') }, ic('epee'), 'L\'écran de jeu'),
+      h('button', { class: 'btn small line', type: 'button', onclick: () => hudEditStart('hub') }, ic('zcamp'), 'L\'écran du camp')));
+}
 // what the editor of models will hold next (ROADMAP, step 24)
 function admSoon() {
   const L = [['Arènes de boss', 'leur taille et leur plan (24e)'], ['Armes', 'ajouter, retirer, importer, exporter, avec aperçu (24f)'], ['Décors', '(24f)'], ['Textures', '(24f)'], ['Chevaliers', '(24f)'], ['Créatures', '(24f)'], ['Sorts', 'avec le sort de l\'Expédition (étape 10)']];
@@ -5378,9 +5402,9 @@ function admBody(kids, foot) {
     const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
     search.addEventListener('input', () => { ADM.q = search.value; admFilter(); });
     kids.push(search);
-  } else kids.push(admCampCard());
+  } else kids.push(admCampCard(), admHudCard());
   for (const [id, name, phrase] of TUNE_FAM) {
-    if ((id === 'niv') !== mod) continue; // the draw of each level goes with the maps, every other family with the variables
+    if (id === 'hud' || (id === 'niv') !== mod) continue; // the draw of each level goes with the maps, every other family with the variables; the screen has its own editor (k_hud.js)
     const badge = h('span', { class: 'adm-badge', hidden: true }), list = h('div', { class: 'adm-list' }), sec = h('section', { class: 'adm-fam' });
     const head = h('button', { class: 'adm-head', type: 'button', 'aria-expanded': 'false' }, h('span', { class: 'grow' }, h('b', { text: name }), h('small', { text: phrase })), badge, h('i', { class: 'adm-chev', 'aria-hidden': 'true' }));
     head.addEventListener('click', () => { ADM.open[id] = !ADM.open[id]; admFilter(); });
@@ -5423,18 +5447,19 @@ function admImport(text) {
   ADM.msg = took + (took > 1 ? ' réglages repris' : ' réglage repris') + ', ' + left + (left > 1 ? ' ignorés' : ' ignoré') + '.'; renderSheet();
 }
 // back to what every player has: the trial is forgotten
-function admDrop() { admKey(() => localStorage.removeItem(ADM_TRIAL)); ADM.local = false; ADM.msg = ''; tuneSet(TUNE_SHARED, true); admTag(); renderSheet(); toast('Réglages publiés remis'); }
+function admDrop() { admKey(() => localStorage.removeItem(ADM_TRIAL)); admKey(() => localStorage.removeItem('tk-textes-essai')); HUD.txt = {}; ADM.local = false; ADM.msg = ''; tuneSet(TUNE_SHARED, true); admTag(); renderSheet(); toast('Réglages publiés remis'); }
 // what is in force here goes to the service, for every player at their next launch; the service widens its own limits as much (tuneFactors)
 async function admPublish() {
   if (ADM.busy) return; ADM.busy = true; renderSheet();
   const map = tuneDiff();
   try {
-    const r = await fetch(SRV.url + '/admin/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'reglages', mdp: ADM.mdp, reglages: map, regles: tuneFactors() }) });
+    const r = await fetch(SRV.url + '/admin/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'reglages', mdp: ADM.mdp, reglages: map, regles: tuneFactors(), textes: hudTextsDiff() }) });
     const o = await r.json();
     if (!o || !o.ok) { ADM.msg = (o && o.pourquoi) || 'Publication refusée.'; if (r.status === 403) { ADM.mdp = ''; admKey(() => sessionStorage.removeItem('tk-admin-mdp')); } }
     else if (!o.jeu) ADM.msg = 'Le service n\'est pas encore à jour (il faut le déployer en version 4) : rien n\'a été publié.';
     else {
       TUNE_SHARED = map; admWrite('tk-reglages', JSON.stringify(map)); admKey(() => localStorage.removeItem(ADM_TRIAL)); ADM.local = false; admTag();
+      const tx = hudTextsDiff(); HUD.txt = {}; admKey(() => localStorage.removeItem('tk-textes-essai')); hudTexts(tx); // the names of the tabs went with them
       ADM.msg = o.jeu.combien ? 'Publié : ' + o.jeu.combien + (o.jeu.combien > 1 ? ' réglages changés' : ' réglage changé') + ', pour tous les joueurs à leur prochain lancement.' : 'Publié : les réglages d\'origine, pour tous les joueurs.';
     }
   } catch (e) { ADM.msg = 'Le service ne répond pas : rien n\'a été publié.'; }
@@ -6513,7 +6538,7 @@ function campToPlan(F0) {
   const p = floorToPlan(F0);
   return { v: 1, camp: true, W: p.W, H: p.H, g: p.g, s: p.s, h: p.h, decor: F0.decor.map(d => [d.n, r1(d.x), r1(d.y), r1(d.s * 100) / 100, Math.round(d.rot * 100) / 100, d.r, d.z == null ? -1 : d.z, d.glow ? 1 : 0]),
     start: xy(F0.start), counter: xy(F0.counter), portal: xy(F0.portal), wheel: xy(F0.wheel), fire: [r1(F0.fireX), r1(F0.fireY)], dummy: xy(F0.enemies[0]), npcs: F0.npcs.map(xy),
-    stations: F0.stations.map(s => [s.k, r1(s.x), r1(s.y), r1(s.ox), r1(s.oy)]), wp: edWallProps(F0) };
+    stations: F0.stations.map(s => [s.k, r1(s.x), r1(s.y), r1(s.ox), r1(s.oy)]), wp: edWallProps(F0), off: F0.off || [0, 0] };
 }
 function campApply(F0, p) {
   if (!p || !p.camp || !p.g) return;
@@ -6522,6 +6547,7 @@ function campApply(F0, p) {
   const at = (o, v) => { if (Array.isArray(v)) { o.x = v[0]; o.y = v[1]; } };
   at(F0.start, p.start); at(F0.counter, p.counter); at(F0.portal, p.portal); at(F0.wheel, p.wheel);
   if (Array.isArray(p.fire)) { F0.fireX = p.fire[0]; F0.fireY = p.fire[1]; }
+  { const cur = F0.off || [0, 0], want = Array.isArray(p.off) ? [p.off[0] | 0, p.off[1] | 0] : [0, 0]; campShift(F0, want[0] - cur[0], want[1] - cur[1]); F0.off = want; } // the camp grown to the left or the top: its animals go along (once, even when a plan is put over another)
   const d0 = F0.enemies[0]; at(d0, p.dummy); d0.tx = d0.x; d0.ty = d0.y;
   if (Array.isArray(p.npcs)) F0.npcs.forEach((n, i) => at(n, p.npcs[i]));
   if (Array.isArray(p.decor)) F0.decor = p.decor.map(d => ({ n: d[0], x: d[1], y: d[2], s: d[3], rot: d[4], r: d[5], z: d[6] >= 0 && d[6] < 5 ? d[6] : null, glow: !!d[7] }));
@@ -6529,13 +6555,15 @@ function campApply(F0, p) {
   if (Array.isArray(p.stations)) for (const s of p.stations) { const st = F0.stations.find(x => x.k === s[0]); if (st) { st.x = s[1]; st.y = s[2]; st.ox = s[3]; st.oy = s[4]; } } // where you walk to open a menu, moved on its own
   F0.wallProps = wpFrom(p.wp); hubBlocks(F0);
 }
+// the animals of the camp, moved by ox, oy tiles (their spot and the corner they wander in)
+function campShift(F0, ox, oy) { if (!ox && !oy) return; for (const c of F0.critters || []) { c.x += ox * T; c.y += oy * T; c.tx += ox * T; c.ty += oy * T; c.zone = [c.zone[0] + ox, c.zone[1] + oy, c.zone[2] + ox, c.zone[3] + oy]; } }
 const planFor = (seed, floor) => { const p = PLANS[floor]; return p && !p.big === !seedBig(seed) && !isBossFloor(floor) ? p : null; };
 
 /* ---------------- the editor itself ---------------- */
 // the layers of what is edited: each can be shown or hidden, and locked (then nothing on it can be picked)
 const ED_LAYERS = [['sol', 'Sol'], ['murs', 'Murs'], ['decmur', 'Décors des murs'], ['decsol', 'Décors au sol'], ['niveau', 'Créatures, coffres, entrée, sortie'], ['pnj', 'PNJ et zones d\'interaction']];
 const ED_KIND_LAYER = { start: 'niveau', lift: 'niveau', foe: 'niveau', chest: 'niveau', seal: 'niveau', decor: 'decsol', wprop: 'decmur', counter: 'pnj', portal: 'pnj', wheel: 'pnj', fire: 'pnj', dummy: 'pnj', npc: 'pnj', zone: 'pnj' };
-const ED = { layers: Object.fromEntries(ED_LAYERS.map(l => [l[0], { v: true, l: false }])), layersOpen: false, on: false, floor: 1, seed: 0, tool: 'sel', crea: 0, deco: 0, dz: null, zone: 0, wh: 2, sel: null, undo: [], redo: [], half: 9, yaw: 0, yawV: 0, chain: 0, padPrev: {}, ptrs: new Map(), drag: null, pinch: 0, busy: false };
+const ED = { layers: Object.fromEntries(ED_LAYERS.map(l => [l[0], { v: true, l: false }])), layersOpen: false, on: false, floor: 1, seed: 0, tool: 'sel', crea: 0, deco: 0, dz: null, zone: 0, wh: 2, sel: null, undo: [], redo: [], half: 9, yaw: 0, yawV: 0, chain: 0, padPrev: {}, fam: 'terrain', bs: 3, bround: true, bmode: 'libre', anchor: null, ghost: null, lastT: null, pts: false, ptrs: new Map(), drag: null, pinch: 0, busy: false };
 // [tool, name in the bar, icon, what a touch on the map does]
 const ED_TOOLS = [
   ['sel', 'Choisir', 'cible', 'Touche un élément pour le choisir, puis tire-le pour le déplacer. Glisse ailleurs pour déplacer la vue.'],
@@ -6550,14 +6578,17 @@ const ED_TOOLS = [
   ['entree', 'Entrée', 'drapeau', 'Touche le sol pour y mettre l\'entrée du niveau.'],
   ['sortie', 'Sortie', 'portail', 'Touche le sol pour y mettre la sortie.'],
   ['gomme', 'Retirer', 'fermer', 'Touche un élément pour le retirer.'],
+  ['taille', 'Taille', 'c_map', 'La taille de la carte, en cases : ce qu\'on ajoute est de la roche, ce qu\'on retire disparaît.'],
 ];
+// the families of the bar: [key, name, icon, tools]
+const ED_FAMS = [['terrain', 'Terrain', 'niveaux', ['sol', 'mur', 'peint', 'haut', 'taille']], ['decors', 'Décors', 'petale', ['decor', 'decmur']], ['niveau', 'Niveau', 'drapeau', ['crea', 'coffre', 'entree', 'sortie']]];
 const ED_FOES = [[0, 'Sporule'], [1, 'Ronceux'], [2, 'Cracheur'], [3, 'Follet'], [4, 'Gardien']];
 const ED_HEIGHTS = ['Comme tiré', 'Basse', 'Normale', 'Haute', 'Très haute'];
 const edZone = () => ED.camp ? 0 : strIdxOf(ED.floor) % 5; // the zone of what is being edited (the camp wears the Racines kit)
 const edDecor = () => { const z = ED.dz == null ? edZone() : ED.dz; return ED.camp && z === 0 ? [...DECOR[0], ['arche', 2.5, 0], ['barriere', .86, 0]] : DECOR[z]; };
 const edStamp = () => JSON.stringify(ED.camp ? campToPlan(F) : floorToPlan(F));
 function edPush() { ED.undo.push(edStamp()); if (ED.undo.length > 60) ED.undo.shift(); ED.redo.length = 0; }
-function edLoad(txt) { const p = JSON.parse(txt); if (ED.camp) { F = genHub(); campApply(F, p); ED.last = null; edFollow(); } else F = planToFloor(p, ED.seed, ED.floor); ED.sel = null; worldChanged(); edUI(); }
+function edLoad(txt) { const p = JSON.parse(txt); if (ED.camp) { F = genHub(); campApply(F, p); ED.last = null; edFollow(); } else F = planToFloor(p, ED.seed, ED.floor); ED.sel = null; worldChanged(); edSaveDraft(); edUI(); } // what is kept follows undo and redo too
 function edUndo() { if (!ED.undo.length) return; ED.redo.push(edStamp()); edLoad(ED.undo.pop()); }
 function edRedo() { if (!ED.redo.length) return; ED.undo.push(edStamp()); edLoad(ED.redo.pop()); }
 function edSaveDraft() { if (ED.camp) PLANS.camp = campToPlan(F); else PLANS[ED.floor] = floorToPlan(F); plansKeep(); } // every change is kept at once: the level made by hand is in force here
@@ -6624,10 +6655,15 @@ const ED_CHAIN = [null, ['à droite', 1, 0], ['en bas', 0, 1], ['à gauche', -1,
 function edHere() {
   if (!ED.on || G.mode !== 'edit') return;
   const [x, y] = edAim(), t = ED.tool;
+  if (t === 'taille') return;
   if (t === 'sel') { ED.sel = edNear(P.x, P.y); if (!ED.sel) toast('Rien sous le viseur'); edUI(); return; }
   if (t === 'gomme') { const n = edNear(P.x, P.y); if (n) edRemove(n); else toast('Rien sous le viseur'); return; }
-  if (t === 'sol' || t === 'mur') { edPush(); if (edPaint(x, y, t === 'sol')) edChanged(true); else ED.undo.pop(); }
-  else if (t === 'peint' || t === 'haut') { edPush(); if (edSurf(x, y, t)) edChanged(true); else ED.undo.pop(); }
+  if (ED_GROUND.includes(t)) {
+    const a = edTileOf(x, y), two = ED.bmode === 'ligne' || ED.bmode === 'rect';
+    if (two && !ED.anchor) { ED.anchor = a; toast('Début posé : amène le viseur à l\'autre bout, puis touche encore'); edUI(); return; }
+    edPush(); if (edApply(t, edStroke(t, ED.bmode, two ? ED.anchor : a, a))) edChanged(true); else ED.undo.pop();
+    if (two) { ED.anchor = null; edUI(); }
+  }
   else if (!edPlace(t === 'decmur' ? P.x : x, t === 'decmur' ? P.y : y)) return;
   const c = ED_CHAIN[ED.chain]; if (!c) return;
   const [rx, ry, dx, dy] = edAxes(), sx = Math.abs(rx) > Math.abs(ry) ? [Math.sign(rx), 0] : [0, Math.sign(ry)], sy = Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)]; // a whole tile, along the grid nearest to the screen's direction
@@ -6694,19 +6730,84 @@ function edHit(sx, sy) { // the nearest thing under the finger, on screen
   for (const t of edThings()) { const s = edScr(t), d = hyp(s[0] - sx, s[1] - sy); if (d < bd) { bd = d; best = t; } }
   return best;
 }
-function edPaint(x, y, open) { // a brush of one tile and its neighbours; the border always stays rock
-  let changed = false;
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (dx && dy) continue; const i = edTile(x + dx * T, y + dy * T); if (i >= 0 && F.g[i] !== (open ? 1 : 0)) { F.g[i] = open ? 1 : 0; changed = true; } }
-  return changed;
+/* ---------- brushes (24c): 1, 3 or 5 tiles, square or round; drawn freely, along a line, as a rectangle, or filling a whole area ----------
+   The tools of the ground: sol (dig), mur (fill with rock), peint (the zone a tile wears), haut (the height of a wall). */
+const ED_GROUND = ['sol', 'mur', 'peint', 'haut'];
+const ED_BMODES = [['libre', 'Libre'], ['ligne', 'Ligne'], ['rect', 'Rectangle'], ['remplir', 'Remplir']];
+// the tiles under the brush around a tile (round: the corners are left out)
+function edFoot(tx, ty, out) {
+  const r = (ED.bs - 1) / 2, lim = r * r + r * .8;
+  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (!ED.bround || dx * dx + dy * dy <= lim) { const x = tx + dx, y = ty + dy; if (x >= 0 && y >= 0 && x < F.W && y < F.H) out.add(y * F.W + x); }
+  return out;
 }
-function edSurf(x, y, kind) { // paint the zone or the height of the tiles under the brush (a tile and its four neighbours)
+// what a tool does to one tile; whether it changed it. The border always stays rock
+function edTileOp(kind, i) {
   if (!F.surf) F.surf = new Uint8Array(F.W * F.H).fill(255); if (!F.wh) F.wh = new Uint8Array(F.W * F.H);
-  let changed = false;
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (dx && dy) continue; const tx = Math.floor(x / T) + dx, ty = Math.floor(y / T) + dy; if (tx < 0 || ty < 0 || tx >= F.W || ty >= F.H) continue; const i = ty * F.W + tx;
-    if (kind === 'peint') { const v = ED.zone === edZone() ? 255 : ED.zone; if (F.surf[i] !== v) { F.surf[i] = v; changed = true; } }
-    else if (F.g[i] !== 1 && F.wh[i] !== ED.wh) { F.wh[i] = ED.wh; changed = true; } }
-  return changed;
+  const tx = i % F.W, ty = (i / F.W) | 0;
+  if (kind === 'sol' || kind === 'mur') { if (tx < 1 || ty < 1 || tx > F.W - 2 || ty > F.H - 2) return false; const v = kind === 'sol' ? 1 : 0; if (F.g[i] === v) return false; F.g[i] = v; return true; }
+  if (kind === 'peint') { const v = ED.zone === edZone() ? 255 : ED.zone; if (F.surf[i] === v) return false; F.surf[i] = v; return true; }
+  if (F.g[i] === 1 || F.wh[i] === ED.wh) return false; F.wh[i] = ED.wh; return true;
 }
+const edTileOf = (x, y) => [clamp(Math.floor(x / T), 0, F.W - 1), clamp(Math.floor(y / T), 0, F.H - 1)];
+// the tiles from a to b, one by one (Bresenham)
+function edLine(a, b) { const out = []; let [x, y] = a; const dx = Math.abs(b[0] - x), dy = -Math.abs(b[1] - y), sx = x < b[0] ? 1 : -1, sy = y < b[1] ? 1 : -1; let e = dx + dy;
+  for (let n = 0; n < 2000; n++) { out.push([x, y]); if (x === b[0] && y === b[1]) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x += sx; } if (e2 <= dx) { e += dx; y += sy; } } return out; }
+// the tiles a stroke covers: the brush along a line, a whole rectangle, or the area that looks like the first tile (at most 6 000 tiles)
+function edStroke(kind, mode, a, b) {
+  const set = new Set();
+  if (mode === 'rect') { const r = (ED.bs - 1) / 2; for (let y = Math.max(0, Math.min(a[1], b[1]) - r); y <= Math.min(F.H - 1, Math.max(a[1], b[1]) + r); y++) for (let x = Math.max(0, Math.min(a[0], b[0]) - r); x <= Math.min(F.W - 1, Math.max(a[0], b[0]) + r); x++) set.add(y * F.W + x); }
+  else if (mode === 'remplir') {
+    if (!F.surf) F.surf = new Uint8Array(F.W * F.H).fill(255);
+    const i0 = a[1] * F.W + a[0], same = kind === 'peint' ? (i => F.g[i] === 1 && F.surf[i] === F.surf[i0]) : kind === 'haut' ? (i => F.g[i] !== 1 && F.wh && F.wh[i] === F.wh[i0]) : (i => F.g[i] === F.g[i0]);
+    if (kind === 'peint' && F.g[i0] !== 1) return set; // a zone is painted on the ground only
+    const todo = [i0]; set.add(i0);
+    while (todo.length && set.size < 6000) { const i = todo.pop(), x = i % F.W, y = (i / F.W) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, j = ny * F.W + nx; if (nx < 0 || ny < 0 || nx >= F.W || ny >= F.H || set.has(j) || !same(j)) continue; set.add(j); todo.push(j); } }
+  } else for (const t of (mode === 'ligne' ? edLine(a, b) : [a])) edFoot(t[0], t[1], set);
+  return set;
+}
+/* ---------- the size of the map (24e): bigger maps cost nothing more in play (the world is built in pieces, see buildWorld) ---------- */
+const ED_SIZE = { lvl: [16, 128], camp: [12, 64] };
+// grow or shrink by dw × dh tiles, on the left / top side or the right / bottom one; everything keeps its place on the ground
+function edResize(dw, dh, left, top) {
+  const [lo, hi] = ED_SIZE[ED.camp ? 'camp' : 'lvl'], W0 = F.W, H0 = F.H, W = clamp(W0 + dw, lo, hi), H = clamp(H0 + dh, lo, hi);
+  if (W === W0 && H === H0) { toast('La carte est déjà à sa ' + (W0 + dw > hi || H0 + dh > hi ? 'plus grande' : 'plus petite') + ' taille (' + lo + ' à ' + hi + ' cases)'); return; }
+  edPush();
+  const ox = left ? W - W0 : 0, oy = top ? H - H0 : 0, g = new Uint8Array(W * H), surf = new Uint8Array(W * H).fill(255), wh = new Uint8Array(W * H);
+  for (let y = 0; y < H0; y++) for (let x = 0; x < W0; x++) { const nx = x + ox, ny = y + oy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const i = y * W0 + x, j = ny * W + nx; g[j] = F.g[i]; if (F.surf) surf[j] = F.surf[i]; if (F.wh) wh[j] = F.wh[i]; }
+  for (let x = 0; x < W; x++) g[x] = g[(H - 1) * W + x] = 0; for (let y = 0; y < H; y++) g[y * W] = g[y * W + W - 1] = 0; // the border stays rock
+  F.W = W; F.H = H; F.g = g; F.surf = surf; F.wh = wh;
+  const dx = ox * T, dy = oy * T, inside = o => o.x > T && o.y > T && o.x < (W - 1) * T && o.y < (H - 1) * T, keep = o => { o.x = clamp(o.x, 1.5 * T, (W - 1.5) * T); o.y = clamp(o.y, 1.5 * T, (H - 1.5) * T); };
+  const mv = o => { if (o) { o.x += dx; o.y += dy; } };
+  for (const e of F.enemies) { mv(e); e.tx = e.x; e.ty = e.y; }
+  for (const o of [...F.chests, ...F.decor, ...(F.seals || [])]) mv(o);
+  for (const p of F.wallProps || []) { p.x += ox; p.z += oy; }
+  for (const r of F.rooms || []) { r.cx += ox; r.cy += oy; r.x0 += ox; r.x1 += ox; r.y0 += oy; r.y1 += oy; }
+  mv(F.start); mv(F.lift); keep(F.start); if (F.lift) keep(F.lift);
+  if (ED.camp) { for (const o of [F.counter, F.portal, F.wheel, ...F.npcs]) { mv(o); keep(o); } F.fireX += dx; F.fireY += dy; for (const s of F.stations) { s.x += dx; s.y += dy; s.ox += dx; s.oy += dy; } ED.last = null; ED.fireO = null;
+    campShift(F, ox, oy); F.off = [(F.off ? F.off[0] : 0) + ox, (F.off ? F.off[1] : 0) + oy]; } // the little animals keep their corners; the plan remembers how far the camp moved
+  const lost = F.enemies.filter(e => !inside(e)).length + F.chests.filter(c => !inside(c)).length;
+  if (!ED.camp) { F.enemies = F.enemies.filter(inside); F.byId = new Map(F.enemies.map(e => [e.id, e])); F.chests = F.chests.filter(inside); F.chests.forEach((c, i) => c.id = i); }
+  else { const d0 = F.enemies[0]; keep(d0); d0.tx = d0.x; d0.ty = d0.y; }
+  F.decor = F.decor.filter(inside); if (F.seals) F.seals = F.seals.filter(inside); if (F.wallProps) F.wallProps = F.wallProps.filter(p => p.x > 0 && p.z > 0 && p.x < W && p.z < H);
+  P.x = clamp(P.x + dx, 0, W * T); P.y = clamp(P.y + dy, 0, H * T); cam.x = P.x; cam.y = P.y; ED.sel = null; ED.anchor = null;
+  edChanged(true); if (lost) toast(lost + (lost > 1 ? ' créatures ou coffres retirés' : ' créature ou coffre retiré') + ' (hors de la carte)');
+}
+function edSizePanel() {
+  const [lo, hi] = ED_SIZE[ED.camp ? 'camp' : 'lvl'], side = ED.sideX, sideY = ED.sideY;
+  const step = (lab, n, fn) => h('button', { class: 'chipbtn', type: 'button', onclick: fn }, (n > 0 ? '+' : '−') + Math.abs(n));
+  const line = (name, v, f) => h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:6px' }, h('span', { class: 'grow', text: name + ' : ' + v + ' cases' }), ...[-8, -1, 1, 8].map(n => step(name, n, () => f(n))));
+  return h('div', { class: 'ed-layers ed-size' }, h('b', { text: 'Taille de la carte · ' + F.W + ' × ' + F.H + ' cases (de ' + lo + ' à ' + hi + ')' }),
+    line('Largeur', F.W, n => edResize(n, 0, ED.sideX === 1, false)),
+    h('div', { class: 'seg' }, ...[['À droite', 0], ['À gauche', 1]].map(([t, v]) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String((side | 0) === v), onclick: () => { ED.sideX = v; edUI(); } }, t))),
+    line('Hauteur', F.H, n => edResize(0, n, false, ED.sideY === 1)),
+    h('div', { class: 'seg' }, ...[['En bas', 0], ['En haut', 1]].map(([t, v]) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String((sideY | 0) === v), onclick: () => { ED.sideY = v; edUI(); } }, t))),
+    h('small', { text: 'Une grande carte ne ralentit pas le jeu : seul ce qui est près du chevalier est dessiné et calculé.' }));
+}
+function edApply(kind, set) { let changed = false; for (const i of set) if (edTileOp(kind, i)) changed = true; return changed; }
+// the old way in: the brush at a point of the ground
+function edPaint(x, y, open) { return edApply(open ? 'sol' : 'mur', edStroke(open ? 'sol' : 'mur', 'libre', edTileOf(x, y))); }
+function edSurf(x, y, kind) { return edApply(kind, edStroke(kind, 'libre', edTileOf(x, y))); }
 function edPlaceWall(x, y) {
   const w = edWallNear(x, y); if (!w) { toast('Touche le haut d\'un mur'); return false; }
   const z = ED.dz == null ? edZone() : ED.dz, d0 = PROPS[z][ED.deco % PROPS[z].length];
@@ -6752,12 +6853,17 @@ function edDown(e) {
   ED.ptrs.set(e.pointerId, [sx, sy]); try { cv.setPointerCapture(e.pointerId); } catch (_) { }
   if (ED.ptrs.size === 2) { const [a, b] = [...ED.ptrs.values()]; ED.pinch = hyp(a[0] - b[0], a[1] - b[1]); ED.twist = Math.atan2(b[1] - a[1], b[0] - a[0]); ED.drag = null; return; }
   const [wx, wy] = edWorld(sx, sy), t = ED.tool;
+  if (t === 'taille') { ED.drag = { kind: 'pan', sx, sy, px: P.x, py: P.y }; return; } // the map is only moved under this tool
   if (t === 'sel') {
     const hit = edHit(sx, sy);
     if (hit) { ED.sel = hit; edPush(); ED.drag = { kind: 'move', moved: false }; edUI(); }
     else { ED.drag = { kind: 'pan', sx, sy, px: P.x, py: P.y }; if (ED.sel) { ED.sel = null; edUI(); } }
-  } else if (t === 'peint' || t === 'haut') { edPush(); ED.drag = { kind: 'surf', tool: t, any: edSurf(wx, wy, t) }; }
-  else if (t === 'sol' || t === 'mur') { edPush(); ED.drag = { kind: 'paint', open: t === 'sol', any: edPaint(wx, wy, t === 'sol') }; if (!USE3D) worldChanged(); }
+  } else if (ED_GROUND.includes(t)) {
+    const a = edTileOf(wx, wy);
+    if (ED.bmode === 'libre') { edPush(); ED.lastT = a; ED.drag = { kind: 'paint', tool: t, any: edApply(t, edStroke(t, 'libre', a)) }; if (!USE3D) worldChanged(); }
+    else if (ED.bmode === 'remplir') { edPush(); if (edApply(t, edStroke(t, 'remplir', a))) edChanged(true); else ED.undo.pop(); }
+    else { ED.drag = { kind: 'shape', tool: t }; ED.anchor = a; ED.ghost = a; } // a line or a rectangle: shown while the finger moves, made when it lifts
+  }
   else if (t === 'gomme') edRemove(edHit(sx, sy));
   else edPlace(wx, wy);
 }
@@ -6773,8 +6879,8 @@ function edMove(e) {
   else if (D.kind === 'move' && ED.sel && ED.sel.k === 'wprop') { const w = edWallNear(wx, wy); if (w) { const o = ED.sel.o; o.x = w[1]; o.z = w[2]; o.y = w[3]; D.moved = true; edGizmo(); } }
   else if (D.kind === 'move' && ED.sel) { if (edFloorAt(wx, wy)) {
     ED.sel.o.x = wx; ED.sel.o.y = wy; if (ED.sel.o.tx !== undefined) { ED.sel.o.tx = wx; ED.sel.o.ty = wy; } D.moved = true; edGizmo(); } }
-  else if (D.kind === 'paint') { if (edPaint(wx, wy, D.open)) { D.any = true; if (!USE3D) worldChanged(); } }
-  else if (D.kind === 'surf') { if (edSurf(wx, wy, D.tool)) D.any = true; }
+  else if (D.kind === 'paint') { const b = edTileOf(wx, wy); if (edApply(D.tool, edStroke(D.tool, 'ligne', ED.lastT || b, b))) { D.any = true; if (!USE3D) worldChanged(); } ED.lastT = b; } // from the last tile: no gap when the finger goes fast
+  else if (D.kind === 'shape') ED.ghost = edTileOf(wx, wy);
   else if (D.kind === 'turn' && ED.sel) { const s = edScr(ED.sel); ED.sel.o.rot = Math.atan2(sy - s[1], sx - s[0]) - D.a0; D.moved = true; edGizmo(); }
   else if (D.kind === 'grow' && ED.sel) { const s = edScr(ED.sel), d = hyp(sx - s[0], sy - s[1]); ED.sel.o.s = clamp(D.s0 * d / D.d0, .3, 3); D.moved = true; edGizmo(); }
 }
@@ -6784,7 +6890,8 @@ function edUp(e) {
   ED.ptrs.delete(e.pointerId); if (ED.ptrs.size < 2) { ED.pinch = 0; ED.twist = null; }
   const D = ED.drag; ED.drag = null; if (!D) return;
   if (D.kind === 'move' || D.kind === 'turn' || D.kind === 'grow') { if (D.moved) edChanged(ED.camp || (ED.sel && ED.sel.k !== 'foe' && ED.sel.k !== 'chest' && ED.sel.k !== 'zone')); else ED.undo.pop(); }
-  else if (D.kind === 'paint' || D.kind === 'surf') { if (D.any) edChanged(true); else ED.undo.pop(); }
+  else if (D.kind === 'paint') { if (D.any) edChanged(true); else ED.undo.pop(); ED.lastT = null; }
+  else if (D.kind === 'shape') { edPush(); if (edApply(D.tool, edStroke(D.tool, ED.bmode, ED.anchor, ED.ghost))) edChanged(true); else ED.undo.pop(); ED.anchor = ED.ghost = null; }
 }
 function edWheel(e) { if (!ED.on || G.mode !== 'edit') return; e.preventDefault(); ED.half = clamp(ED.half * (e.deltaY > 0 ? 1.12 : 1 / 1.12), 4, 32); }
 // the handles of a piece of scenery: turn (the dot above) and grow (the dot at the side), drawn over the view and dragged
@@ -6807,20 +6914,35 @@ function edUI() {
       h('div', { class: 'grow ed-name' }, h('b', { text: ED.camp ? 'Le camp' : 'Niveau ' + ED.floor }), h('small', { text: L.name })),
       h('button', { class: 'btn small', type: 'button', onclick: ED.camp ? edStop : edTry }, ic('aller'), ED.camp ? 'Terminer' : 'Essayer')),
     h('div', { class: 'row ed-acts', style: 'flex-wrap:nowrap;gap:6px' },
-      h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.layersOpen), onclick: () => { ED.layersOpen = !ED.layersOpen; edUI(); } }, ic('niveaux'), 'Calques'),
-      h('button', { class: 'chipbtn', type: 'button', disabled: !ED.undo.length, onclick: edUndo }, ic('retour'), 'Annuler'),
-      h('button', { class: 'chipbtn ed-redo', type: 'button', disabled: !ED.redo.length, onclick: edRedo }, ic('retour'), 'Refaire'),
+      h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.layersOpen), onclick: () => { ED.layersOpen = !ED.layersOpen; ED.pts = false; edUI(); } }, ic('niveaux'), 'Calques'),
+      h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.pts), onclick: () => { ED.pts = !ED.pts; ED.layersOpen = false; edUI(); } }, ic('cible'), 'Points'),
+      h('button', { class: 'chipbtn', type: 'button', disabled: !ED.undo.length, onclick: edUndo, 'aria-label': 'Annuler' }, ic('retour'), h('span', { class: 'ed-lab', text: 'Annuler' })),
+      h('button', { class: 'chipbtn ed-redo', type: 'button', disabled: !ED.redo.length, onclick: edRedo, 'aria-label': 'Refaire' }, ic('retour'), h('span', { class: 'ed-lab', text: 'Refaire' })),
       USE3D ? h('button', { class: 'chipbtn', type: 'button', 'aria-label': 'Tourner la vue vers la gauche', onclick: () => edTurn(1) }, ic('recommencer')) : null,
       USE3D ? h('button', { class: 'chipbtn ed-redo', type: 'button', 'aria-label': 'Tourner la vue vers la droite', onclick: () => edTurn(-1) }, ic('recommencer')) : null));
-  const tools = h('div', { class: 'ed-tools' }, ...ED_TOOLS.filter(t => !ED.camp || !['crea', 'coffre', 'sortie'].includes(t[0])).map(t => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.tool === t[0]), onclick: () => { ED.tool = t[0]; if (t[0] !== 'sel') ED.sel = null; edUI(); } }, ic(t[2]), t[1])));
-  const kids = [top, h('div', { class: 'ed-tip', text: T0[3] + (ED.tool === 'sel' ? '' : ' Ou vise avec le carré du milieu : « ' + ({ gomme: 'Retirer', sol: 'Creuser', mur: 'Boucher', peint: 'Peindre', haut: 'Hausser' }[ED.tool] || 'Poser') + ' ici ».') })];
+  // the bar: Choisir and Retirer, then the families of tools (24c); the tools of the family in hand stand just above it
+  const tb = t => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.tool === t[0]), onclick: () => { ED.tool = t[0]; ED.anchor = null; if (t[0] !== 'sel') ED.sel = null; edUI(); } }, ic(t[2]), t[1]);
+  const fams = ED_FAMS.map(f => [f, edToolList().filter(t => f[3].includes(t[0]))]).filter(f => f[1].length), famOf = fams.find(f => f[1].some(t => t[0] === ED.tool));
+  if (famOf) ED.fam = famOf[0][0];
+  const tools = h('div', { class: 'ed-tools' }, ...edToolList().filter(t => t[0] === 'sel' || t[0] === 'gomme').map(tb), h('span', { class: 'ed-sep' }),
+    ...fams.map(([f, L]) => h('button', { class: 'chipbtn ed-fam', type: 'button', 'aria-pressed': String(!!famOf && famOf[0] === f), onclick: () => { ED.fam = f[0]; if (!L.some(t => t[0] === ED.tool)) { ED.tool = L[0][0]; ED.sel = null; ED.anchor = null; } edUI(); } }, ic(f[2]), ED.camp && f[0] === 'niveau' ? 'Lieux' : f[1])));
+  const kids = [top, h('div', { class: 'ed-tip', text: T0[3] + (ED.tool === 'sel' || ED.tool === 'taille' ? '' : ' Ou vise avec le carré du milieu : « ' + ({ gomme: 'Retirer', sol: 'Creuser', mur: 'Boucher', peint: 'Peindre', haut: 'Hausser' }[ED.tool] || 'Poser') + ' ici ».') })];
   if (ED.layersOpen) kids.push(h('div', { class: 'ed-layers' }, h('b', { text: 'Calques' }), ...ED_LAYERS.filter(l => !ED.camp || l[0] !== 'niveau').map(([k, n]) => { const L = ED.layers[k];
     return h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:6px' }, h('span', { class: 'grow', text: n }),
       h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(L.v), 'aria-label': (L.v ? 'Cacher ' : 'Montrer ') + n, onclick: () => { L.v = !L.v; if (ED.sel && ED_KIND_LAYER[ED.sel.k] === k) ED.sel = null; edUI(); } }, L.v ? 'Visible' : 'Caché'),
       h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(L.l), 'aria-label': (L.l ? 'Déverrouiller ' : 'Verrouiller ') + n, onclick: () => { L.l = !L.l; if (ED.sel && ED_KIND_LAYER[ED.sel.k] === k) ED.sel = null; edUI(); } }, ic('cadenas'), L.l ? 'Verrouillé' : 'Libre')); })));
+  if (ED.pts) kids.push(edPointsPanel());
   kids.push(h('div', { class: 'ed-fill' })); // the map stays free in the middle; everything else sits at the bottom
   if (ED.tool === 'crea') kids.push(h('div', { class: 'seg ed-sub ed-pal' }, ...ED_FOES.map((f, i) => edPalBtn(monName(f[0], strIdxOf(ED.floor)), f[1], ED.crea === i, () => { ED.crea = i; edUI(); }))));
   const zones = (cur, fn) => h('div', { class: 'seg ed-sub' }, ...STRATA.map((S, z) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(cur === z), onclick: () => fn(z) }, ic('z' + z), S.name)));
+  if (famOf && famOf[1].length > 1) kids.push(h('div', { class: 'seg ed-sub' }, ...famOf[1].map(tb)));
+  if (ED_GROUND.includes(ED.tool)) { // the brush: size, shape, way of drawing
+    const chip = (on, lab, fn) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: () => { fn(); ED.anchor = null; edUI(); } }, lab);
+    kids.push(h('div', { class: 'seg ed-sub ed-brush' }, ...[1, 3, 5].map(n => chip(ED.bs === n, n + (n > 1 ? ' cases' : ' case'), () => { ED.bs = n; })), h('span', { class: 'ed-sep' }),
+      chip(!ED.bround, 'Carré', () => { ED.bround = false; }), chip(ED.bround, 'Rond', () => { ED.bround = true; }), h('span', { class: 'ed-sep' }),
+      ...ED_BMODES.map(([k, n]) => chip(ED.bmode === k, n, () => { ED.bmode = k; }))));
+  }
+  if (ED.tool === 'taille') kids.push(edSizePanel());
   if (ED.tool === 'peint') kids.push(zones(ED.zone, z => { ED.zone = z; edUI(); }));
   if (ED.tool === 'haut') kids.push(h('div', { class: 'seg ed-sub' }, ...ED_HEIGHTS.map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ED.wh === i), onclick: () => { ED.wh = i; edUI(); } }, n))));
   if (ED.tool === 'decmur') { const dz = ED.dz == null ? edZone() : ED.dz;
@@ -6832,10 +6954,10 @@ function edUI() {
   if (sel) kids.push(edSelPanel(sel));
   // « Poser ici » under the aim, and « À la suite » (24b): the next one a tile further
   const c = ED_CHAIN[ED.chain], put = { sel: 'Choisir ici', gomme: 'Retirer ici', sol: 'Creuser ici', mur: 'Boucher ici', peint: 'Peindre ici', haut: 'Hausser ici' }[ED.tool] || 'Poser ici';
-  kids.push(h('div', { class: 'row ed-here' },
+  if (ED.tool !== 'taille') kids.push(h('div', { class: 'row ed-here' },
     ED.tool === 'sel' || ED.tool === 'gomme' ? null : h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(!!c), onclick: () => { ED.chain = (ED.chain + 1) % ED_CHAIN.length; edUI(); } }, ic('aller'), c ? 'À la suite, ' + c[0] : 'À la suite : non'),
     h('button', { class: 'btn small grow', type: 'button', onclick: edHere }, ic('cible'), put)));
-  kids.push(tools, h('div', { id: 'ed-giz' }), h('div', { id: 'ed-aim', 'aria-hidden': 'true' }));
+  kids.push(tools, h('div', { id: 'ed-giz' })); kids.unshift(h('div', { id: 'ed-aim', 'aria-hidden': 'true' })); // the aim under the panels
   root.replaceChildren(...kids); edGizmo();
 }
 /* ---------------- previews: each model of the palette seen three-quarters, and the chosen one turning ----------------
@@ -6895,6 +7017,31 @@ function edSelPanel(sel) {
     sel.k === 'start' || sel.k === 'lift' || sel.k === 'seal' || sel.k === 'zone' || ED_PLACES[sel.k] ? null : h('button', { class: 'btn small line', type: 'button', onclick: () => edRemove(sel) }, ic('fermer'), 'Retirer'),
     h('button', { class: 'btn small ghost', type: 'button', 'aria-label': 'Fermer', onclick: () => { ED.sel = null; edUI(); } }, ic('fermer'))), ...row);
 }
+/* ---------- points of appearance (24d): where each creature, chest, seal, the way in and the way out stand ----------
+   With « Points », each is marked on the map (a coloured disc, its letter), and listed: « Voir » takes the camera there and picks it. */
+const ED_PTK = { start: ['#5fe0a0', 'E'], lift: ['#f1e4c8', 'S'], foe: ['#ff6b5b', 'C'], chest: ['#ffc24a', 'T'], seal: ['#8fb0ff', '◆'], counter: ['#ffc24a', 'N'], portal: ['#b79cff', 'P'], wheel: ['#b79cff', 'R'], fire: ['#ff9a4a', 'F'], dummy: ['#f1e4c8', 'M'], npc: ['#5fe0a0', 'H'] };
+const edPoints = () => edThings().filter(t => ED_PTK[t.k]);
+const edPtName = t => t.k === 'foe' ? EN[t.o.type].name + (t.o.guard ? ' (garde la sortie)' : '') : t.k === 'chest' ? (t.o.gold ? 'Coffre doré' : 'Coffre') + (t.o.hidden ? ' (enfoui)' : '') : t.k === 'seal' ? 'Sceau' : t.k === 'start' ? (ED.camp ? 'Arrivée' : 'Entrée') : t.k === 'lift' ? 'Sortie' : ED_PLACES[t.k] || t.k;
+function edGoTo(t) { P.x = t.o.x; P.y = t.o.y; ED.tool = 'sel'; ED.sel = t; edUI(); }
+function edPointsPanel() {
+  const L = edPoints(), n = k => L.filter(t => t.k === k).length;
+  const head = ED.camp ? L.length + ' lieux et habitants' : n('foe') + (n('foe') > 1 ? ' créatures' : ' créature') + ' · ' + n('chest') + (n('chest') > 1 ? ' coffres' : ' coffre') + (n('seal') ? ' · ' + n('seal') + ' sceaux' : '');
+  return h('div', { class: 'ed-layers ed-pts' }, h('b', { text: 'Points d\'apparition · ' + head }),
+    ...L.map(t => h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:6px' },
+      h('span', { class: 'ed-dot', style: 'background:' + ED_PTK[t.k][0], text: ED_PTK[t.k][1] }),
+      h('span', { class: 'grow', text: edPtName(t) + ' · case ' + Math.floor(t.o.x / T) + ', ' + Math.floor(t.o.y / T) }),
+      h('button', { class: 'chipbtn', type: 'button', onclick: () => edGoTo(t) }, ic('loupe'), 'Voir'),
+      t.k === 'foe' || t.k === 'chest' ? h('button', { class: 'chipbtn', type: 'button', 'aria-label': 'Retirer ' + edPtName(t), onclick: () => edRemove(t) }, ic('fermer')) : null)));
+}
+// the marks on the map, on the drawing layer
+function edPointsDraw() {
+  if (!ED.pts) return;
+  ctx.font = '700 11px Figtree, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const t of edPoints()) { const s = edScr(t), c = ED_PTK[t.k];
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.beginPath(); ctx.arc(s[0], s[1], 11, 0, TAU); ctx.fill();
+    ctx.fillStyle = c[0]; ctx.beginPath(); ctx.arc(s[0], s[1], 8.5, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#15100c'; ctx.fillText(c[1], s[0], s[1] + .5); }
+}
 // the ring around the selection and, for scenery, its two handles; placed every frame (the camera moves)
 function edGizmo() {
   const box = $('ed-giz'); if (!box) return;
@@ -6911,7 +7058,19 @@ function edGizmo() {
   if (tn) { const a = (s.o.rot || 0) - Math.PI / 2; tn.style.transform = 'translate(' + (x + Math.cos(a) * (rr + 18) - 13) + 'px,' + (y + Math.sin(a) * (rr + 18) - 13) + 'px)'; }
   if (gr) gr.style.transform = 'translate(' + (x + rr + 14 - 13) + 'px,' + (y - 13) + 'px)';
 }
-function edFrame() { if (ED.on && G.mode === 'edit') { edGizmo(); edPrevStep(); edLayerVis(); edAimDraw(); } }
+function edFrame() { if (ED.on && G.mode === 'edit') { edGizmo(); edPrevStep(); edLayerVis(); edAimDraw(); edGhost(); edPointsDraw(); } }
+// on the drawing layer: the tiles the brush would touch (under the aim, or along the line / in the rectangle being drawn)
+function edGhost() {
+  if (!ED_GROUND.includes(ED.tool)) return;
+  const a = ED.anchor, b = a ? (ED.drag && ED.drag.kind === 'shape' ? ED.ghost : edTileOf(P.x, P.y)) : null;
+  if (ED.bmode === 'remplir' && !a) return;
+  const set = a ? edStroke(ED.tool, ED.bmode, a, b || a) : (ED.drag ? null : edFoot(...edTileOf(P.x, P.y), new Set()));
+  if (!set || set.size > 4000) return;
+  const q = (x, y) => toScreen(x * T, y * T, 0).slice();
+  ctx.fillStyle = ED.tool === 'mur' ? 'rgba(20,14,10,.45)' : 'rgba(255,236,190,.28)'; ctx.strokeStyle = 'rgba(255,236,190,.8)'; ctx.lineWidth = 1;
+  for (const i of set) { const x = i % F.W, y = (i / F.W) | 0, p = [q(x, y), q(x + 1, y), q(x + 1, y + 1), q(x, y + 1)];
+    ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]); for (let k = 1; k < 4; k++) ctx.lineTo(p[k][0], p[k][1]); ctx.closePath(); ctx.fill(); if (set.size < 400) ctx.stroke(); }
+}
 // the aim: the tile under the middle of the view, where « Poser ici » acts
 function edAimDraw() {
   const a = $('ed-aim'); if (!a) return;
@@ -6923,6 +7082,162 @@ cv.addEventListener('pointerup', edUp, true); cv.addEventListener('pointercancel
 
 // a camp made over before this file was read: the camp on show is drawn again with it
 if (PLANS.camp && F && F.hub && G.mode !== 'play') { F = genHub(); try { worldChanged(); } catch (e) { } }
+
+/* ================= the editor of the screen of play (22f) =================
+   Opened from the editor of models (Réglages > Éditeur de modèles > L'interface). Each piece of the screen — in a level and at the
+   camp — can be moved with the finger, made bigger or smaller, more or less see-through, or hidden; the five colours of each theme
+   can be changed; the names of the camp's tabs can be rewritten. Everything but the names is a setting like the others (TU, family
+   'hud', hidden from the editor of variables): it is tried on this device, published for every player with the other settings, and
+   never touches a save. The names travel with the settings too (the service keeps them as « textes »). */
+// [key, what is moved, name, where it is seen: 'play' (in a level) or 'hub' (at the camp)]
+const HUD_EL = [
+  ['mini', '#mini', 'La carte', 'play'], ['vie', '#hud .hpbar', 'La barre de vie', 'play'], ['tues', '#hud .xpbar', 'La barre des créatures vaincues', 'play'],
+  ['nom', '#hud-floor', 'Le nom du niveau', 'play'], ['bourse', '#hud .hud-r .pill', 'La bourse', 'play'], ['sac', '#b-bag', 'Le bouton Inventaire', 'play'],
+  ['pause', '#b-pause', 'Le bouton Pause', 'play'], ['frappe', '#b-atk', 'Le bouton Frapper', 'play'], ['lanterne', '#b-lan', 'Le bouton Lanterne', 'play'],
+  ['esquive', '#b-dash', 'Le bouton Esquive', 'play'],
+  ['qui', '#b-who', 'Ton chevalier', 'hub'], ['cbourse', '#camp-top .pill', 'La bourse du camp', 'hub'], ['reglages', '#b-opts', 'Le bouton Réglages', 'hub'], ['onglets', '#tabs', 'Les onglets du camp', 'hub'],
+];
+// the colours of a theme that can be changed: [css variable, key part, name]
+const HUD_COL = [['--amber', 'acc', 'Couleur principale'], ['--accent2', 'acc2', 'Couleur secondaire'], ['--cream', 'txt', 'Texte'], ['--dim', 'dim', 'Texte discret'],
+  ['--bark-2', 'fond', 'Fond des panneaux'], ['--bark-3', 'carte', 'Fond des cartes et des boutons'], ['--line', 'bord', 'Bordures']];
+const HUD_THEME_NAMES = ['Le camp', 'Racines', 'Mycélium', 'Braises', 'Givre', 'Abîme'];
+// the names that can be rewritten: [key, name, default, where]
+const HUD_TXT = [['tab1', 'Onglet Niveaux', 'Niveaux', '#tabs .tab:nth-child(1)'], ['tab2', 'Onglet Inventaire', 'Inventaire', '#tabs .tab:nth-child(2)'], ['tab3', 'Onglet Boutique', 'Boutique', '#tabs .tab:nth-child(3)'],
+  ['tab4', 'Onglet Quêtes', 'Quêtes', '#tabs .tab:nth-child(4)'], ['tab5', 'Onglet Équipe', 'Équipe', '#tabs .tab:nth-child(5)']];
+const HUD = { edit: null, sel: null, drag: null, theme: -1, auto: false, at: 1, ver: -1, txtShared: {}, txt: {} };
+const hudHex = v => '#' + (v | 0).toString(16).padStart(6, '0');
+// the colours of the themes as the page draws them, read once from its own style sheet
+function hudThemeDefaults() {
+  const out = THEMES.map(() => ({}));
+  try { for (const sh of document.styleSheets) for (const r of sh.cssRules || []) { const m = /:root\[data-zone="(\w+)"\]/.exec(r.selectorText || ''); if (!m) continue; const z = THEMES.indexOf(m[1]); if (z < 0) continue;
+    for (const [v] of HUD_COL) { const c = r.style.getPropertyValue(v).trim(); if (/^#[0-9a-f]{6}$/i.test(c)) out[z][v] = parseInt(c.slice(1), 16); } } } catch (e) { }
+  return out;
+}
+// the lines of the settings: five for each piece, seven colours for each theme
+(function hudRows() {
+  for (const [k, , n, w] of HUD_EL) {
+    const where = w === 'play' ? 'en jeu' : 'au camp';
+    tuneAdd(['hud' + k + 'X', 'hud', n + ' : place de gauche à droite', 'Le décalage vers la droite (en points d\'écran) par rapport à sa place d\'origine, ' + where + '.', 0, -600, 600, 'px', { fx: 'hudpos' }]);
+    tuneAdd(['hud' + k + 'Y', 'hud', n + ' : place de haut en bas', 'Le décalage vers le bas (en points d\'écran) par rapport à sa place d\'origine, ' + where + '.', 0, -900, 900, 'px', { fx: 'hudpos' }]);
+    tuneAdd(['hud' + k + 'S', 'hud', n + ' : taille', 'Plus grand ou plus petit que d\'origine.', 1, .5, 2.5, 'x', { fx: 'hudsize' }]);
+    tuneAdd(['hud' + k + 'O', 'hud', n + ' : opacité', 'Plus ou moins transparent.', 1, .15, 1, 'pct', { fx: 'hudop' }]);
+    tuneAdd(['hud' + k + 'V', 'hud', n + ' : visible', 'Montré ou caché.', 1, 0, 1, 'choice', { choices: ['Caché', 'Visible'], fx: 'hudvis' }]);
+  }
+  const def = hudThemeDefaults();
+  THEMES.forEach((z, i) => { for (const [v, p, n] of HUD_COL) if (def[i][v] != null) tuneAdd(['th' + i + p, 'hud', HUD_THEME_NAMES[i] + ' : ' + n.toLowerCase(), 'Une couleur du thème « ' + HUD_THEME_NAMES[i] + ' ».', def[i][v], 0, 16777215, 'col', { fx: 'hudcol' }]); });
+  tuneInit({});
+})();
+Object.assign(FX, {
+  hudpos: v => v ? 'Déplacé de ' + Math.abs(Math.round(v)) + ' points.' : 'À sa place d\'origine.',
+  hudsize: v => 'Taille : ' + Math.round(v * 100) + ' % de l\'origine.',
+  hudop: v => v >= 1 ? 'Pas transparent.' : 'Transparent à ' + Math.round((1 - v) * 100) + ' %.',
+  hudvis: v => v ? 'Montré à l\'écran.' : 'Caché.',
+  hudcol: v => 'Couleur ' + hudHex(v) + '.',
+});
+// the names: those published, then the administrator's trial on this device
+try { HUD.txtShared = JSON.parse(localStorage.getItem('tk-textes') || '{}') || {}; } catch (e) { }
+try { if (localStorage.getItem('tk-admin') === '1') HUD.txt = JSON.parse(localStorage.getItem('tk-textes-essai') || 'null') || {}; } catch (e) { }
+const hudText = k => { const v = k in HUD.txt ? HUD.txt[k] : HUD.txtShared[k]; return typeof v === 'string' && v.trim() ? v : HUD_TXT.find(t => t[0] === k)[2]; };
+// puts everything in force: called whenever the settings change (TUNE_VER), and at once by the editor
+function hudApply() {
+  HUD.ver = TUNE_VER;
+  for (const [k, sel] of HUD_EL) { const el = document.querySelector(sel); if (!el) continue;
+    const x = TU['hud' + k + 'X'], y = TU['hud' + k + 'Y'], s = TU['hud' + k + 'S'], o = TU['hud' + k + 'O'], v = TU['hud' + k + 'V'];
+    el.style.translate = x || y ? x + 'px ' + y + 'px' : ''; el.style.scale = s !== 1 ? String(s) : ''; el.style.opacity = o < 1 ? String(o) : '';
+    el.style.visibility = v ? '' : 'hidden'; }
+  let css = '';
+  THEMES.forEach((z, i) => { let r = ''; for (const [v, p] of HUD_COL) { const d = TUNE_BY['th' + i + p]; if (d && TU[d[0]] !== d.def) r += v + ':' + hudHex(TU[d[0]]) + ';'; } if (r) css += ':root[data-zone="' + z + '"]{' + r + '}'; });
+  let st = document.getElementById('hud-theme'); if (!st) { st = document.createElement('style'); st.id = 'hud-theme'; document.body.append(st); } // after the page's own style, so it wins
+  if (st.textContent !== css) st.textContent = css;
+  for (const [k, , , sel] of HUD_TXT) { const b = document.querySelector(sel); if (b && b.lastChild && b.lastChild.nodeType === 3) b.lastChild.textContent = hudText(k); }
+}
+setInterval(() => { if (HUD.ver !== TUNE_VER) hudApply(); }, 400); // a published setting arrived, or the trial changed
+hudApply();
+// the names published with the settings (srvTune passes them on)
+function hudTexts(map) { if (!map || typeof map !== 'object') return; HUD.txtShared = map; try { localStorage.setItem('tk-textes', JSON.stringify(map)); } catch (e) { } hudApply(); }
+const hudTextsDiff = () => { const o = {}; for (const [k, , d] of HUD_TXT) { const v = hudText(k); if (v !== d) o[k] = v; } return o; };
+
+/* ---------------- the editor ---------------- */
+function hudEditStart(where) {
+  if (Net.room) return;
+  closeSheet(); HUD.edit = where; HUD.sel = null; HUD.theme = -1; HUD.auto = false; document.documentElement.dataset.zone = ''; applyTheme(); // back to the theme in force after the colours
+  document.body.classList.toggle('hudx-play', where === 'play'); document.body.classList.toggle('hudx-hub', where === 'hub');
+  if (where === 'play') { if (!$('hp-txt').textContent) $('hp-txt').textContent = '100 / 100'; if (!$('hud-floor').textContent) $('hud-floor').textContent = 'Niveau 7 · Les Voiles pâles'; $('xp-fill').style.transform = 'scaleX(.4)'; }
+  $('pad').classList.toggle('auto', HUD.auto);
+  hudUI();
+}
+function hudEditStop() {
+  HUD.edit = null; HUD.sel = null; document.body.classList.remove('hudx-play', 'hudx-hub'); document.documentElement.dataset.zone = ''; applyTheme();
+  const r = $('hudx'); if (r) r.hidden = true; showUI(); updateHud(true);
+}
+const hudEls = () => HUD_EL.filter(e => e[3] === HUD.edit);
+// a setting changed in the editor: in force at once, kept in the trial
+function hudSet(map) { tuneSet(map); admSaveTrial(); hudApply(); }
+function hudBoxes() { // a dashed frame round each piece, the chosen one in colour
+  const box = $('hudx-boxes'); if (!box) return;
+  box.replaceChildren(...hudEls().map(([k, sel, n]) => { const el = document.querySelector(sel); if (!el) return null; const r = el.getBoundingClientRect();
+    return h('div', { class: 'hudx-b' + (HUD.sel === k ? ' on' : '') + (TU['hud' + k + 'V'] ? '' : ' off'), style: 'left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px', title: n }); }).filter(Boolean));
+}
+function hudHit(x, y) { const L = hudEls(); for (let i = L.length - 1; i >= 0; i--) { const el = document.querySelector(L[i][1]); if (!el) continue; const r = el.getBoundingClientRect(); if (x >= r.left - 6 && x <= r.right + 6 && y >= r.top - 6 && y <= r.bottom + 6) return L[i][0]; } return null; }
+function hudDown(e) {
+  const k = hudHit(e.clientX, e.clientY); e.preventDefault();
+  if (!k) { if (HUD.sel) { HUD.sel = null; hudUI(); } return; }
+  HUD.sel = k; HUD.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: TU['hud' + k + 'X'], y0: TU['hud' + k + 'Y'], moved: false };
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) { }
+  hudUI();
+}
+function hudMove(e) {
+  const D = HUD.drag; if (!D || D.id !== e.pointerId) return; e.preventDefault();
+  const k = HUD.sel, nx = Math.round(D.x0 + e.clientX - D.x), ny = Math.round(D.y0 + e.clientY - D.y);
+  if (!D.moved && Math.abs(e.clientX - D.x) + Math.abs(e.clientY - D.y) < 4) return; D.moved = true;
+  tuneSet({ ['hud' + k + 'X']: nx, ['hud' + k + 'Y']: ny }); hudApply(); hudBoxes();
+}
+function hudUp(e) { const D = HUD.drag; if (!D || D.id !== e.pointerId) return; HUD.drag = null; if (D.moved) { admSaveTrial(); hudUI(); } }
+function hudUI() {
+  let root = $('hudx');
+  if (!root) { root = h('div', { id: 'hudx', hidden: true }); document.body.append(root); }
+  root.hidden = !HUD.edit; if (!HUD.edit) return;
+  const catcher = h('div', { id: 'hudx-catch' }), boxes = h('div', { id: 'hudx-boxes' });
+  catcher.addEventListener('pointerdown', hudDown); catcher.addEventListener('pointermove', hudMove); catcher.addEventListener('pointerup', hudUp); catcher.addEventListener('pointercancel', hudUp);
+  const chip = (on, lab, fn, icn) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(!!on), onclick: fn }, icn ? ic(icn) : null, lab);
+  const kids = [h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:8px' }, h('b', { class: 'grow', text: HUD.edit === 'play' ? 'L\'écran de jeu' : 'L\'écran du camp' }),
+    h('button', { class: 'btn small ghost', type: 'button', 'aria-label': 'Déplacer ce panneau', title: 'Déplacer ce panneau', onclick: () => { HUD.at = (HUD.at + 1) % 3; hudUI(); } }, ic('descendre')),
+    h('button', { class: 'btn small', type: 'button', onclick: hudEditStop }, ic('ok'), 'Terminer')),
+    h('div', { class: 'seg' }, chip(HUD.edit === 'play' && HUD.theme < 0, 'En jeu', () => hudEditStart('play')), chip(HUD.edit === 'hub' && HUD.theme < 0, 'Au camp', () => hudEditStart('hub')), chip(HUD.theme >= 0, 'Couleurs', () => { HUD.theme = HUD.theme >= 0 ? -1 : THEMES.indexOf(document.documentElement.dataset.zone || 'camp'); if (HUD.theme < 0) HUD.theme = 0; hudUI(); }, 'ombre'))];
+  if (HUD.theme >= 0) kids.push(...hudColours());
+  else if (!HUD.sel) {
+    kids.push(h('small', { text: 'Touche un élément de l\'écran pour le choisir, puis fais-le glisser pour le déplacer.' }));
+    if (HUD.edit === 'play') kids.push(h('div', { class: 'seg' }, chip(!HUD.auto, 'Boutons de l\'Expédition', () => { HUD.auto = false; $('pad').classList.remove('auto'); hudUI(); }), chip(HUD.auto, 'Boutons du Classique', () => { HUD.auto = true; $('pad').classList.add('auto'); hudUI(); })));
+    if (HUD.edit === 'hub') kids.push(...HUD_TXT.map(([k, n, d]) => { const inp = h('input', { class: 'adm-search', type: 'text', value: hudText(k), maxlength: 24, 'aria-label': n, placeholder: d });
+      inp.addEventListener('change', () => { HUD.txt[k] = inp.value.trim() || d; try { localStorage.setItem('tk-textes-essai', JSON.stringify(HUD.txt)); } catch (e) { } ADM.local = true; admTag(); hudApply(); hudBoxes(); });
+      return h('label', { class: 'hudx-txt' }, h('span', { text: n }), inp); }));
+  } else kids.push(...hudSelPanel(HUD.sel));
+  kids.push(h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' },
+    h('button', { class: 'btn small line', type: 'button', onclick: () => { const m = {}; for (const [k] of hudEls()) for (const p of 'XYSOV') m['hud' + k + p] = TUNE_BY['hud' + k + p].def; hudSet(m); hudUI(); } }, ic('recommencer'), 'Tout remettre ici'),
+    h('button', { class: 'btn small line', type: 'button', disabled: ADM.busy || !ADM.mdp, onclick: async () => { await admPublish(); toast(ADM.msg || 'Publié'); hudUI(); } }, ic('nuage'), 'Publier pour tous')));
+  root.replaceChildren(catcher, boxes, h('div', { class: 'hudx-panel at' + HUD.at }, ...kids)); // in the middle at first: the bars are at the top, the buttons at the bottom
+  requestAnimationFrame(hudBoxes);
+}
+function hudSelPanel(k) {
+  const E = HUD_EL.find(e => e[0] === k), out = [h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:8px' }, h('b', { class: 'grow', text: E[2] }),
+    h('button', { class: 'btn small ghost', type: 'button', 'aria-label': 'Fermer', onclick: () => { HUD.sel = null; hudUI(); } }, ic('fermer')))];
+  const slide = (p, name, lo, hi, step, fmt) => { const key = 'hud' + k + p, r = h('input', { type: 'range', class: 'adm-range', min: String(lo), max: String(hi), step: String(step), value: String(TU[key]), 'aria-label': name }), lab = h('span', { class: 'adm-u', text: fmt(TU[key]) });
+    r.addEventListener('input', () => { tuneSet({ [key]: +r.value }); hudApply(); hudBoxes(); lab.textContent = fmt(TU[key]); }); r.addEventListener('change', () => admSaveTrial());
+    return h('div', { class: 'adm-ctl' }, h('span', { style: 'flex:none;width:72px;font-size:13px', text: name }), r, lab); };
+  out.push(slide('S', 'Taille', .5, 2.5, .05, v => Math.round(v * 100) + ' %'), slide('O', 'Opacité', .15, 1, .05, v => Math.round(v * 100) + ' %'));
+  out.push(toggleRow('ombre', 'Visible', !!TU['hud' + k + 'V'], () => { hudSet({ ['hud' + k + 'V']: TU['hud' + k + 'V'] ? 0 : 1 }); hudUI(); }));
+  out.push(h('button', { class: 'btn small line', type: 'button', onclick: () => { const m = {}; for (const p of 'XYSOV') m['hud' + k + p] = TUNE_BY['hud' + k + p].def; hudSet(m); hudUI(); } }, ic('recommencer'), 'Remettre à sa place d\'origine'));
+  return out;
+}
+// the colours of one theme, seen at once on the screen behind
+function hudColours() {
+  const z = HUD.theme; document.documentElement.dataset.zone = THEMES[z];
+  return [h('div', { class: 'seg slide' }, ...HUD_THEME_NAMES.map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(i === z), onclick: () => { HUD.theme = i; hudUI(); } }, n))),
+    ...HUD_COL.map(([v, p, n]) => { const key = 'th' + z + p, d = TUNE_BY[key]; if (!d) return null;
+      const inp = h('input', { type: 'color', value: hudHex(TU[key]), 'aria-label': n });
+      inp.addEventListener('input', () => { tuneSet({ [key]: parseInt(inp.value.slice(1), 16) }); hudApply(); }); inp.addEventListener('change', () => admSaveTrial());
+      return h('label', { class: 'hudx-col' }, inp, h('span', { class: 'grow', text: n }), TU[key] !== d.def ? h('button', { class: 'chipbtn', type: 'button', onclick: () => { hudSet({ [key]: d.def }); hudUI(); } }, 'Défaut') : null); }).filter(Boolean)];
+}
 
 </script>
 </body>
