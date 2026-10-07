@@ -5,6 +5,7 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | Dossier | Fichiers | Poids |
 |---|---:|---:|
 | `ASSETS - CONCEPTS - ARTS` | 2 | 0.0 Mo |
+| `01_concepts/chevaliers` | 1 | 1.0 Mo |
 | `01_concepts/decors_pack1/abimes` | 6 | 5.2 Mo |
 | `01_concepts/decors_pack1/braises` | 6 | 5.1 Mo |
 | `01_concepts/decors_pack1/givre` | 6 | 5.0 Mo |
@@ -12,7 +13,13 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `01_concepts/decors_pack1/racines` | 6 | 5.3 Mo |
 | `01_concepts/serie_1` | 12 | 6.2 Mo |
 | `01_concepts/serie_3` | 6 | 4.0 Mo |
+| `02_modeles_3d/blocs/abimes` | 7 | 0.2 Mo |
+| `02_modeles_3d/blocs/braises` | 7 | 0.2 Mo |
+| `02_modeles_3d/blocs/givre` | 7 | 0.2 Mo |
+| `02_modeles_3d/blocs/mycelium` | 7 | 0.2 Mo |
+| `02_modeles_3d/blocs/racines` | 7 | 0.2 Mo |
 | `02_modeles_3d/chevaliers` | 4 | 3.8 Mo |
+| `02_modeles_3d/chevaliers/champignon` | 1 | 0.4 Mo |
 | `02_modeles_3d/chevaliers/pack1_clips_separes` | 10 | 30.6 Mo |
 | `02_modeles_3d/creatures` | 10 | 2.6 Mo |
 | `02_modeles_3d/creatures/pack1_statiques` | 26 | 8.2 Mo |
@@ -26,6 +33,7 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `02_modeles_3d/decors/braises` | 2 | 0.2 Mo |
 | `02_modeles_3d/decors/braises/pack1` | 5 | 1.6 Mo |
 | `02_modeles_3d/decors/canopee` | 4 | 0.5 Mo |
+| `02_modeles_3d/decors/coffres` | 3 | 0.4 Mo |
 | `02_modeles_3d/decors/givre` | 2 | 0.3 Mo |
 | `02_modeles_3d/decors/givre/pack1` | 5 | 1.6 Mo |
 | `02_modeles_3d/decors/marais` | 2 | 0.3 Mo |
@@ -57,23 +65,30 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `05_interface/fonds` | 2 | 0.4 Mo |
 | `05_interface/icones_chevalier` | 18 | 2.3 Mo |
 | `05_interface/icones_interface` | 47 | 0.0 Mo |
+| `05_interface/icones_jeu` | 32 | 1.8 Mo |
+| `05_interface/icones_jeu/_planches` | 2 | 0.9 Mo |
 | `05_interface/icones_objets/arbaletes` | 5 | 0.4 Mo |
 | `05_interface/icones_objets/canons` | 10 | 0.8 Mo |
 | `05_interface/icones_objets/epees` | 15 | 0.6 Mo |
 | `05_interface/illustrations_zones` | 5 | 6.3 Mo |
 | `05_interface/kit` | 4 | 0.1 Mo |
+| `05_interface/logos` | 5 | 4.7 Mo |
+| `05_interface/menus` | 10 | 8.6 Mo |
 | `06_promo` | 6 | 7.8 Mo |
 | `06_promo/playstore` | 2 | 1.0 Mo |
 | `06_promo/pubs` | 5 | 1.7 Mo |
+| `07_outils/attaques_monstres` | 1 | 0.0 Mo |
+| `07_outils/dashboard` | 3 | 0.0 Mo |
 | `07_outils/monstres_animes` | 4 | 0.0 Mo |
-| `07_outils/validations` | 1 | 0.4 Mo |
+| `07_outils/pipeline` | 5 | 0.0 Mo |
+| `07_outils/validations` | 2 | 1.0 Mo |
 | `_alternatives/textures_v1/abimes` | 7 | 1.1 Mo |
 | `_alternatives/textures_v1/braises` | 7 | 1.6 Mo |
 | `_alternatives/textures_v1/givre` | 7 | 1.1 Mo |
 | `_alternatives/textures_v1/mycelium` | 7 | 1.6 Mo |
 | `_alternatives/textures_v1/racines` | 7 | 1.2 Mo |
-| `_apercus` | 6 | 0.5 Mo |
+| `_apercus` | 9 | 0.6 Mo |
 | `_apercus/pack2_monstres_animes` | 6 | 0.7 Mo |
-| `_journal` | 2 | 0.0 Mo |
+| `_journal` | 4 | 0.0 Mo |
 | `_journal/pack_zones_promo` | 3 | 0.2 Mo |
 | `_journal/textures` | 1 | 0.0 Mo |
