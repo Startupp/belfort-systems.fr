@@ -566,7 +566,13 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 .hudx-panel.at0{bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))}.hudx-panel.at1{bottom:auto;top:24vh;max-height:44vh}.hudx-panel small{color:var(--dim);font-size:12.5px}
 .hudx-txt{display:flex;align-items:center;gap:8px;font-size:13px}.hudx-txt span{flex:none;width:130px}.hudx-txt .adm-search{flex:1 1 0;min-width:0;width:auto;min-height:40px;padding:6px 12px;user-select:text;-webkit-user-select:text}.hudx-panel .seg.slide{flex-wrap:nowrap;overflow-x:auto}.hudx-panel .seg.slide .chipbtn{flex:none}
 .hudx-col{display:flex;align-items:center;gap:10px;font-size:13.5px}.hudx-col input[type=color]{flex:none;width:44px;height:34px;border:0;padding:0;background:none;border-radius:8px}
-.adm-pubrow{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bark-4)}.adm-pubst.mine,.adm-pubst.both{color:var(--amber)}.adm-pubst.pub{color:var(--accent2)}.fil-body{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}.fil-row{display:flex;flex-direction:column;gap:8px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bark-4)}.fil-row.on{box-shadow:inset 0 0 0 2px var(--amber)}
+.adm-pubrow{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bark-4)}.adm-pubst.mine,.adm-pubst.both{color:var(--amber)}.adm-pubst.pub{color:var(--accent2)}.adm-jtabs .chipbtn{justify-content:center}.adm-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}.adm-tile{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:12px;background:var(--bark-3)}.adm-tile b{font:700 19px var(--ui);color:var(--amber)}.adm-tile small{color:var(--dim);font-size:11.5px;line-height:1.2}.adm-tile.bad b{color:var(--danger)}
+.adm-barlist{display:flex;flex-direction:column;gap:6px;padding:0 14px 14px}.adm-bar{display:grid;grid-template-columns:minmax(90px,30%) 1fr auto;align-items:center;gap:8px;font-size:13px}.adm-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.adm-bar i{display:block;height:10px;width:var(--w);min-width:3px;border-radius:5px;background:var(--amber)}.adm-bar b{font-size:13px}
+.adm-player{border-radius:var(--r-sm);background:var(--bark-3);overflow:hidden}.adm-player[hidden]{display:none}.adm-player.bloque{box-shadow:inset 3px 0 0 var(--danger)}.adm-player.on{box-shadow:inset 0 0 0 2px var(--amber)}
+.adm-phead{appearance:none;border:0;background:transparent;color:var(--cream);width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;text-align:left;cursor:pointer;font:inherit}.adm-phead .grow{display:flex;flex-direction:column;min-width:0}.adm-phead b{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.adm-phead small{color:var(--dim);font-size:12px}.adm-player.on .adm-chev{transform:rotate(225deg);margin-bottom:-2px}
+.adm-pcard{display:flex;flex-direction:column;gap:8px;padding:0 12px 12px}.adm-pcard small{color:var(--dim);font-size:12.5px}.adm-perso{display:flex;gap:10px;align-items:center;padding:8px;border-radius:12px;background:var(--bark-4)}.adm-perso .ava{flex:none;width:40px;height:40px;border-radius:50%;background:var(--c);display:grid;place-items:center;overflow:hidden}.adm-perso .ava img{width:100%;height:100%;object-fit:cover}.adm-perso .grow{display:flex;flex-direction:column;min-width:0}.adm-perso b{font-size:13.5px}
+.adm-log{display:flex;flex-direction:column;gap:2px}.adm-logl{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:baseline;padding:6px 8px;border-radius:8px;font-size:12.5px;background:var(--bark-3)}.adm-logl small{color:var(--dim)}.adm-logl.danger b{color:var(--danger)}.adm-logl.calm b{color:var(--dim)}.adm-logl span{overflow-wrap:anywhere}
+.fil-body{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}.fil-row{display:flex;flex-direction:column;gap:8px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bark-4)}.fil-row.on{box-shadow:inset 0 0 0 2px var(--amber)}
 .fil-name{min-width:0;display:flex;flex-direction:column}.fil-name b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fil-name small{color:var(--dim);font-size:12px}
 .fil-img{max-width:100%;max-height:260px;object-fit:contain;align-self:center;border-radius:8px;background:var(--well)}.fil-model{display:flex;flex-direction:column;align-items:center;gap:6px}.fil-view{width:240px;height:240px;border-radius:12px;background:var(--well)}.fil-model small{color:var(--dim);font-size:12px;text-align:center}
 /* the administration, full screen: the settings side by side when there is room; on a touch screen a slider moves only once its row is touched */
@@ -5192,11 +5198,11 @@ function admTag() {
 
 // ---- the entry in the settings
 // two entries (24a): the editor of models (levels, camp, then the libraries) and the editor of variables (every setting)
-const ADM_VIEWS = { mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'] };
+const ADM_VIEWS = { mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'], joueurs: ['Joueurs et sécurité', 'equipe', 'Statistiques, joueurs et leurs personnages, journal de sécurité'] };
 function admCard() {
   if (!ADM.shown) return null;
   const live = !!SRV.url;
-  return h('div', { class: 'adm-cards' }, ...['mod', 'var'].map(v => h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic(ADM_VIEWS[v][1])), h('div', { class: 'grow' }, h('b', { text: ADM_VIEWS[v][0] }),
+  return h('div', { class: 'adm-cards' }, ...['mod', 'var', 'joueurs'].map(v => h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic(ADM_VIEWS[v][1])), h('div', { class: 'grow' }, h('b', { text: ADM_VIEWS[v][0] }),
     h('span', { class: 'meta', style: 'display:block', text: live ? ADM_VIEWS[v][2] : 'Il faut ouvrir le jeu depuis le site' })),
     live ? h('button', { class: 'btn small', type: 'button', text: 'Ouvrir', onclick: () => { ADM.view = v; ADM.msg = ''; openSheet('adm'); } }) : null)));
 }
@@ -5441,10 +5447,11 @@ function admBody(kids, foot) {
       ADM.msg ? h('p', { class: 'adm-msg', role: 'alert', text: ADM.msg }) : null);
     return;
   }
-  const mod = ADM.view === 'mod', other = mod ? 'var' : 'mod';
+  const mod = ADM.view === 'mod';
   kids.push(h('div', { class: 'row adm-switch', style: 'flex-wrap:wrap;align-items:center;gap:8px' },
-    h('p', { class: 'grow', style: 'font-size:13px;margin:0', text: mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
-    h('button', { class: 'btn small line', type: 'button', onclick: () => { ADM.view = other; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, ic(ADM_VIEWS[other][1]), ADM_VIEWS[other][0])));
+    h('p', { class: 'grow', style: 'font-size:13px;margin:0', text: ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
+    ...['mod', 'var', 'joueurs'].filter(v => v !== ADM.view).map(v => h('button', { class: 'btn small line', type: 'button', onclick: () => { ADM.view = v; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, ic(ADM_VIEWS[v][1]), ADM_VIEWS[v][0]))));
+  if (ADM.view === 'joueurs') { admJBody(kids); return; } // m_joueurs.js
   if (!mod) {
     const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
     search.addEventListener('input', () => { ADM.q = search.value; admFilter(); });
@@ -7382,6 +7389,105 @@ function admFilesCard() {
           h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(FIL.open === f.id), onclick: () => { FIL.open = FIL.open === f.id ? null : f.id; if (!FIL.open) filStop(); filRedraw(); } }, ic('loupe'), 'Voir'),
           h('button', { class: 'chipbtn' + (FIL.ask === f.id ? ' danger' : ''), type: 'button', 'aria-label': 'Retirer ' + f.nom, onclick: () => filRemove(f.id) }, ic('poubelle'), FIL.ask === f.id ? 'Sûr ?' : null)),
         FIL.open === f.id ? filView(f) : null))));
+}
+
+/* ================= players, security and figures (25b to 25d) =================
+   The third entry of the administration: what the save service knows. Three tabs: « Statistiques » (devices, characters, who plays,
+   where they are, what they choose), « Joueurs » (every device and its characters, search, and the gestures: block, transfer code,
+   forget), « Sécurité » (the dated log: refused saves, wrong admin passwords, the administrator's own gestures). Read from the service
+   (ops stats, joueurs, journal) with the admin password; nothing here is kept on the device. */
+const ADMJ = { tab: 'stats', stats: null, joueurs: null, journal: null, busy: false, msg: '', q: '', open: null, ask: null, genre: '' };
+const JOUR = 86400000;
+async function admJCall(op, more) {
+  const r = await fetch(SRV.url + '/admin/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ op, mdp: ADM.mdp }, more)) });
+  const o = await r.json().catch(() => null); if (!o || !o.ok) throw new Error((o && o.pourquoi) || 'Le service ne répond pas.'); return o;
+}
+async function admJLoad(what) {
+  ADMJ.busy = true; ADMJ.msg = ''; if (sheetKind === 'adm') renderSheet();
+  try {
+    if (what === 'stats') ADMJ.stats = (await admJCall('stats')).stats;
+    else if (what === 'joueurs') ADMJ.joueurs = (await admJCall('joueurs')).joueurs;
+    else ADMJ.journal = (await admJCall('journal', { combien: 500 })).journal;
+  } catch (e) { ADMJ.msg = String(e.message || e) + (/inconnu|format/.test(String(e.message)) ? ' (le service doit être en version 7)' : ''); }
+  ADMJ.busy = false; if (sheetKind === 'adm' && ADM.view === 'joueurs') renderSheet();
+}
+const admJWhen = t => { if (!t) return '—'; const d = Date.now() - t; return d < 60000 ? 'à l\'instant' : d < 3600000 ? 'il y a ' + Math.round(d / 60000) + ' min' : d < JOUR ? 'il y a ' + Math.round(d / 3600000) + ' h' : d < 30 * JOUR ? 'il y a ' + Math.round(d / JOUR) + ' j' : new Date(t).toLocaleDateString('fr-FR'); };
+const admJDate = t => new Date(t).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+const admJHours = s => s >= 3600 ? (s / 3600).toFixed(1).replace('.', ',') + ' h' : Math.round(s / 60) + ' min';
+function admJBody(kids) {
+  const tab = (k, n, icn) => h('button', { class: 'chipbtn grow', type: 'button', 'aria-pressed': String(ADMJ.tab === k), onclick: () => { ADMJ.tab = k; renderSheet(); } }, ic(icn), n);
+  kids.push(h('div', { class: 'seg adm-jtabs' }, tab('stats', 'Statistiques', 'stats'), tab('joueurs', 'Joueurs', 'equipe'), tab('secu', 'Sécurité', 'bouclier')));
+  const want = ADMJ.tab === 'stats' ? 'stats' : ADMJ.tab === 'joueurs' ? 'joueurs' : 'journal';
+  if (ADMJ[want] === null && !ADMJ.busy && !ADMJ.msg) setTimeout(() => admJLoad(want), 0);
+  kids.push(h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('small', { class: 'grow adm-msg', text: ADMJ.busy ? 'Lecture…' : ADMJ.msg }),
+    h('button', { class: 'btn small line', type: 'button', disabled: ADMJ.busy, onclick: () => admJLoad(want) }, ic('recommencer'), 'Actualiser')));
+  if (ADMJ.tab === 'stats' && ADMJ.stats) kids.push(...admJStats(ADMJ.stats));
+  if (ADMJ.tab === 'joueurs' && ADMJ.joueurs) kids.push(...admJPlayers(ADMJ.joueurs));
+  if (ADMJ.tab === 'secu' && ADMJ.journal) kids.push(...admJSecurity(ADMJ.journal));
+}
+// ---- the figures
+function admJStats(s) {
+  const tile = (n, lab) => h('div', { class: 'adm-tile' }, h('b', { text: String(n) }), h('small', { text: lab }));
+  const bars = (title, map, name) => { const e = Object.entries(map || {}).sort((a, b) => b[1] - a[1]).slice(0, 12), max = Math.max(1, ...e.map(x => x[1]));
+    return h('section', { class: 'adm-fam adm-box adm-bars' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('b', { text: title })),
+      h('div', { class: 'adm-barlist' }, ...e.map(([k, v]) => h('div', { class: 'adm-bar' }, h('span', { text: name ? name(k) : k }), h('i', { style: '--w:' + (v / max * 100).toFixed(1) + '%' }), h('b', { text: String(v) }))))); };
+  const R = s.repartition || {};
+  return [h('div', { class: 'adm-tiles' }, tile(s.appareils, 'appareils'), tile(s.personnages, 'personnages créés'), tile(s.actifs1, 'joueurs aujourd\'hui'), tile(s.actifs7, 'sur 7 jours'), tile(s.actifs30, 'sur 30 jours'),
+      tile(s.nouveaux7, 'nouveaux en 7 jours'), tile(admJHours(s.tempsTotal || 0), 'de jeu en tout (estimé)'), tile(s.normalMax, 'niveau le plus loin (Classique)'), tile(s.expeditionMax, 'le plus loin (Expédition)'),
+      tile(s.vaincus, 'créatures vaincues'), tile(s.niveauxGagnes, 'niveaux gagnés'), tile(s.piecesMoy, 'pièces en moyenne'), tile(s.gemmesMoy, 'gemmes en moyenne'), tile(s.bloques, 'appareils bloqués'), tile((s.journal7 || {}).refus | 0, 'sauvegardes refusées (7 j)')),
+    bars('Progression (niveaux gagnés en Classique)', R.progression), bars('Jeu en cours', R.jeu), bars('Difficulté choisie', R.difficulte, k => (DIFFS[k] || {}).name || k),
+    bars('Icônes', R.icones, k => ICON_NAMES[k] || k), bars('Capes', R.capes, k => 'Cape ' + (CLOAK_NAMES[k] || k)), bars('Armes portées', R.armes)];
+}
+// ---- the players
+function admJPlayers(L) {
+  const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un joueur (nom ou code)', value: ADMJ.q, autocomplete: 'off', 'aria-label': 'Chercher un joueur' });
+  search.addEventListener('input', () => { ADMJ.q = search.value; const q = admFold(ADMJ.q.trim()); for (const r of document.querySelectorAll('.adm-player')) r.hidden = !!q && !admFold(r.dataset.k).includes(q); });
+  const q = admFold(ADMJ.q.trim());
+  return [h('small', { text: L.length + (L.length > 1 ? ' appareils' : ' appareil') + ', ' + (n => n + (n > 1 ? ' personnages' : ' personnage'))(L.reduce((a, x) => a + x.persos.length, 0)) + '. Touche un joueur pour sa fiche.' }), search,
+    ...L.map(a => { const k = (a.nom || '') + ' ' + devCode(a.id) + ' ' + a.persos.map(p => p.nom).join(' '), open = ADMJ.open === a.id;
+      const row = h('div', { class: 'adm-player' + (a.bloque ? ' bloque' : '') + (open ? ' on' : ''), 'data-k': k, hidden: !!q && !admFold(k).includes(q) },
+        h('button', { class: 'adm-phead', type: 'button', onclick: () => { ADMJ.open = open ? null : a.id; renderSheet(); } },
+          h('span', { class: 'grow' }, h('b', { text: (a.persos.map(p => p.nom).join(', ') || 'Sans personnage') }), h('small', { text: devCode(a.id) + ' · vu ' + admJWhen(a.vu) + (a.bloque ? ' · BLOQUÉ' : '') + (a.parti ? ' · partie transférée' : '') + (a.refus ? ' · ' + a.refus + ' refus' : '') })),
+          h('i', { class: 'adm-chev', 'aria-hidden': 'true' })));
+      if (open) row.append(admJCard(a));
+      return row; })];
+}
+function admJCard(a) {
+  const act = (op, lab, icn, cls, confirm) => ADMJ.ask === a.id + op
+    ? h('button', { class: 'btn small danger', type: 'button', onclick: () => admJAct(op, a.id) }, 'Sûr ? Touche encore')
+    : h('button', { class: 'btn small ' + (cls || 'line'), type: 'button', onclick: () => { if (!confirm) return admJAct(op, a.id); ADMJ.ask = a.id + op; renderSheet(); setTimeout(() => { if (ADMJ.ask === a.id + op) { ADMJ.ask = null; renderSheet(); } }, 5000); } }, ic(icn), lab);
+  return h('div', { class: 'adm-pcard' },
+    h('small', { text: 'Appareil ' + devCode(a.id) + ' · arrivé le ' + new Date(a.cree).toLocaleDateString('fr-FR') + ' · dernière sauvegarde ' + admJWhen(a.enregistre) + ' (n° ' + (a.version | 0) + ') · temps de jeu estimé ' + admJHours(a.joue | 0) + ' · difficulté ' + ((DIFFS[a.diff | 0] || {}).name || '—') }),
+    a.motif ? h('small', { class: 'adm-msg', text: 'Dernier refus : ' + a.motif }) : null,
+    ...a.persos.map(p => h('div', { class: 'adm-perso' }, h('span', { class: 'ava', style: '--c:' + CLOAKS[p.cape] }, iconArt(p.ico) ? h('img', { src: iconArt(p.ico), alt: '' }) : null),
+      h('span', { class: 'grow' }, h('b', { text: p.nom + ' · ' + (ICON_NAMES[p.ico] || p.ico) + ', cape ' + (CLOAK_NAMES[p.cape] || '') }),
+        h('small', { text: 'Classique : niveau ' + p.normal + ' (Difficile ' + p.difficile + ', Cauchemar ' + p.cauchemar + ') · Expédition : ' + p.expedition + ' · ' + p.pieces + ' pièces · ' + p.gemmes + ' gemmes · ' + p.vaincus + ' créatures vaincues · ' + (p.armes.join(', ') || 'sans arme') })))),
+    h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' },
+      a.bloque ? act('debloquer', 'Débloquer', 'cadenas') : act('bloquer', 'Bloquer', 'cadenas', 'line', true),
+      a.parti ? null : act('code', 'Code de transfert', 'appareil'),
+      act('oublier', 'Oublier cet appareil', 'poubelle', 'ghost', true)),
+    ADMJ.code && ADMJ.code.id === a.id ? h('p', { class: 'adm-msg', text: 'Code de transfert : ' + ADMJ.code.code + ' (valable ' + ADMJ.code.minutes + ' minutes, une fois). À saisir sur le nouvel appareil : Réglages > J\'ai un code.' }) : null);
+}
+async function admJAct(op, id) {
+  ADMJ.ask = null; ADMJ.busy = true; renderSheet();
+  try { const o = await admJCall(op, { id }); if (op === 'code') ADMJ.code = o.code; if (op === 'oublier') ADMJ.open = null; ADMJ.msg = { bloquer: 'Appareil bloqué : ses sauvegardes sont refusées.', debloquer: 'Appareil débloqué.', oublier: 'Appareil oublié : sa sauvegarde est effacée du service.', code: o.code ? 'Code créé.' : 'Pas de code : cet appareil n\'a pas de sauvegarde, ou il est bloqué.' }[op]; }
+  catch (e) { ADMJ.msg = String(e.message || e); }
+  ADMJ.busy = false; await admJLoad('joueurs'); ADMJ.journal = null; ADMJ.stats = null;
+}
+// ---- the log
+const ADMJ_GENRES = { refus: ['Sauvegarde refusée', 'danger'], mdp: ['Mot de passe faux', 'danger'], bloquer: ['Appareil bloqué', ''], debloquer: ['Appareil débloqué', ''], oublier: ['Appareil oublié', ''], code: ['Code de transfert', ''], transfert: ['Partie transférée', ''], reglages: ['Réglages publiés', 'calm'], cartes: ['Cartes publiées', 'calm'], fichier: ['Fichier', 'calm'] };
+function admJSecurity(J) {
+  const now = Date.now(), n = (g, d) => J.filter(e => e.genre === g && now - e.quand < d).length, sus = {};
+  for (const e of J) if (e.genre === 'refus' && now - e.quand < 7 * JOUR) sus[e.appareil] = (sus[e.appareil] || 0) + 1;
+  const worst = Object.entries(sus).filter(x => x[1] >= 3).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const tile = (v, lab, bad) => h('div', { class: 'adm-tile' + (bad && v ? ' bad' : '') }, h('b', { text: String(v) }), h('small', { text: lab }));
+  const L = J.filter(e => !ADMJ.genre || e.genre === ADMJ.genre).slice(0, 300);
+  return [h('div', { class: 'adm-tiles' }, tile(n('refus', JOUR), 'sauvegardes refusées (24 h)', true), tile(n('refus', 7 * JOUR), 'refusées (7 jours)'), tile(n('mdp', JOUR), 'mots de passe faux (24 h)', true), tile(n('mdp', 7 * JOUR), 'mots de passe faux (7 jours)'), tile(n('bloquer', 30 * JOUR), 'blocages (30 jours)')),
+    worst.length ? h('div', { class: 'adm-pubrow' }, h('b', { text: 'À surveiller (au moins 3 refus en 7 jours)' }), ...worst.map(([id, k]) => h('button', { class: 'btn small line', type: 'button', onclick: () => { ADMJ.tab = 'joueurs'; ADMJ.open = id; ADMJ.q = ''; if (!ADMJ.joueurs) admJLoad('joueurs'); renderSheet(); } }, devCode(id) + ' · ' + k + ' refus'))) : h('small', { text: 'Aucun appareil suspect sur 7 jours.' }),
+    h('div', { class: 'seg slide' }, h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(!ADMJ.genre), onclick: () => { ADMJ.genre = ''; renderSheet(); } }, 'Tout'),
+      ...Object.entries(ADMJ_GENRES).map(([g, [lab]]) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ADMJ.genre === g), onclick: () => { ADMJ.genre = g; renderSheet(); } }, lab))),
+    h('div', { class: 'adm-log' }, ...(L.length ? L.map(e => h('div', { class: 'adm-logl ' + ((ADMJ_GENRES[e.genre] || [])[1] || '') }, h('small', { text: admJDate(e.quand) }), h('b', { text: (ADMJ_GENRES[e.genre] || [e.genre])[0] }),
+      h('span', { text: [e.appareil ? devCode(e.appareil) : '', e.detail].filter(Boolean).join(' · ') }))) : [h('small', { text: 'Rien dans le journal.' })]))];
 }
 
 </script>
