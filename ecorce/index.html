@@ -557,6 +557,21 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 .gemslot{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--r-sm);background:var(--bark-2);border:1px solid var(--line)}.gemslot>.tile{width:64px;flex:none}.gemslot .price{flex:none}
 #sh-more{position:sticky;bottom:4px;align-self:flex-end;flex:none;margin-top:-56px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--amber);color:var(--ink);border:0;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer;z-index:2}#sh-more[hidden]{display:none}#sh-more svg{width:22px;height:22px;transform:rotate(90deg);transition:transform .2s}#sh-more.up svg{transform:rotate(-90deg)}
 .adm-lvtools{display:flex;flex-direction:column;gap:8px;padding:10px 0 14px;border-bottom:1px solid var(--line)}.adm-lvtools small{color:var(--dim);font-size:12px}.adm-plan{width:100%;border-radius:var(--r-sm);background:var(--well)}.adm-lvs .chipbtn.mod{box-shadow:inset 0 0 0 2px var(--amber)}.adm-seg{flex-wrap:wrap}
+/* the administration, full screen: the settings side by side when there is room; on a touch screen a slider moves only once its row is touched */
+#sheet.full{top:0;max-width:none;max-height:none;border-radius:0}
+#sheet.full::before{display:none}
+#sheet.full .sh-head,#sheet.full #sh-body,#sheet.full #sh-foot{width:100%;max-width:1280px;margin-inline:auto}
+@media (min-width:760px){
+  #sheet.full .adm-list,#sheet.full .adm-extra:not([hidden]){display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+  #sheet.full .adm-list>.adm-subtools,#sheet.full .adm-list>.adm-extra,#sheet.full .adm-list>.adm-lvtools,#sheet.full .adm-more{grid-column:1/-1}
+  #sheet.full .adm-row{border-right:1px solid var(--line)}
+  #sheet.full .adm-row:last-child{border-bottom:1px solid var(--line)}
+  #sheet.full .adm-foot{flex-direction:row;align-items:center}#sheet.full .adm-foot>*{flex:1 1 0;min-width:0}#sheet.full .adm-foot>.btn.wide{flex:1.4 1 0}
+}
+@media (pointer:coarse){
+  .adm-row:not(.on) .adm-range{pointer-events:none;opacity:.45}
+  .adm-row.on{background:color-mix(in srgb,var(--amber) 10%,transparent);box-shadow:inset 0 0 0 2px var(--amber)}
+}
 .opt-acts{display:flex;flex-direction:column;gap:8px}
 #ed{position:fixed;inset:0;pointer-events:none;z-index:30;display:flex;flex-direction:column;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}#ed[hidden]{display:none}#ed>*{pointer-events:auto}#ed .ed-top{display:flex;flex-direction:column;gap:6px;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px}#ed .ed-top small{display:block;color:var(--dim);font-size:11px}#ed .ed-redo svg{transform:scaleX(-1)}#ed .ed-tip{align-self:center;margin-top:6px;font-size:12px;color:var(--cream);background:var(--well);padding:5px 10px;border-radius:999px;opacity:.9}#ed .ed-fill{flex:1;pointer-events:none}#ed .ed-name{min-width:0}#ed .ed-name b,#ed .ed-name small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#ed .ed-sub{margin-top:6px;background:var(--bark-2);border-radius:var(--r-sm);padding:6px;overflow-x:auto;flex-wrap:nowrap}#ed .ed-sel{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:40vh;overflow-y:auto}#ed .ed-sel .toggle{padding:6px 10px}#ed .ed-tools{display:flex;gap:6px;overflow-x:auto;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px;margin-top:8px}#ed .ed-tools .chipbtn{flex:none}#ed-giz{position:fixed;inset:0;pointer-events:none}#ed-giz .ed-ring{position:absolute;left:0;top:0;border:2px solid var(--amber);border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.35)}#ed-giz .ed-h{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--amber);border:2px solid var(--ink);pointer-events:auto;touch-action:none;cursor:grab}#ed-giz .ed-grow{background:var(--accent2)}
 #ed .ed-pal .ed-pb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;min-width:76px}#ed .ed-pb img{width:48px;height:48px;object-fit:contain}#ed .ed-pb span{font-size:11px}#ed .ed-prevbox{align-self:flex-end;width:96px;height:96px;margin-top:6px;border-radius:var(--r-sm);background:var(--bark-2);border:1px solid var(--line);overflow:hidden}#ed .ed-prevbox canvas{width:96px;height:96px}
@@ -5219,8 +5234,10 @@ function admRow(d, extra) {
   num.addEventListener('change', () => { const t = parseFloat(num.value.replace(',', '.').replace(/[^0-9.\-]/g, '')); if (isFinite(t)) put(t); R.sync(); num.value = admFmt(d, TU[d[0]]); });
   num.addEventListener('keydown', (e) => { if (e.key === 'Enter') num.blur(); });
   def.addEventListener('click', () => { tuneSet({ [d[0]]: d.def }); admSaveTrial(); R.sync(); if (d[1] === 'niv') admPlan(); admFxAll(); });
+  row.addEventListener('click', () => admUnlock(row)); // on a touch screen the slider stays still until its row is touched (no change by mistake while scrolling)
   R.sync(); ADM.rows.push(R); return row;
 }
+function admUnlock(row) { if (row.classList.contains('on')) return; for (const r of document.querySelectorAll('.adm-row.on')) r.classList.remove('on'); row.classList.add('on'); }
 // the name a row is searched by: its own, and the creature / weapon / quest it belongs to
 const admName = d => admFold(d[2] + (d[8] && d[8].sub ? ' ' + admSubLabel(d[8].sub) : ''));
 // "Effet : …" under each setting: what it does in play, worked out with the values in force (tuneEffect, a_tune.js)
@@ -5336,7 +5353,7 @@ function admBody(kids, foot) {
       ADM.msg ? h('p', { class: 'adm-msg', role: 'alert', text: ADM.msg }) : null);
     return;
   }
-  kids.push(h('p', { style: 'font-size:13px', text: 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' }));
+  kids.push(h('p', { style: 'font-size:13px', text: 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }));
   const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
   search.addEventListener('input', () => { ADM.q = search.value; admFilter(); });
   kids.push(search);
@@ -5572,6 +5589,7 @@ function stat(icon, val, lab, col, sub) { return h('div', { class: 'stat' }, h('
 /* ================= the sheet: one at a time ================= */
 function renderSheet() {
   if (!sheetOpen()) return;
+  $('sheet').classList.toggle('full', sheetKind === 'adm'); // the administration takes the whole screen
   const body = [], foot = []; let title = '', purse = false, lab = ''; // lab: what the menu holds, in a few words, facing the purse
   if (sheetKind === 'levels') {
     title = 'Niveaux';
