@@ -572,7 +572,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 .adm-phead{appearance:none;border:0;background:transparent;color:var(--cream);width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;text-align:left;cursor:pointer;font:inherit}.adm-phead .grow{display:flex;flex-direction:column;min-width:0}.adm-phead b{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.adm-phead small{color:var(--dim);font-size:12px}.adm-player.on .adm-chev{transform:rotate(225deg);margin-bottom:-2px}
 .adm-pcard{display:flex;flex-direction:column;gap:8px;padding:0 12px 12px}.adm-pcard small{color:var(--dim);font-size:12.5px}.adm-perso{display:flex;gap:10px;align-items:center;padding:8px;border-radius:12px;background:var(--bark-4)}.adm-perso .ava{flex:none;width:40px;height:40px;border-radius:50%;background:var(--c);display:grid;place-items:center;overflow:hidden}.adm-perso .ava img{width:100%;height:100%;object-fit:cover}.adm-perso .grow{display:flex;flex-direction:column;min-width:0}.adm-perso b{font-size:13.5px}
 .adm-log{display:flex;flex-direction:column;gap:2px}.adm-logl{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:baseline;padding:6px 8px;border-radius:8px;font-size:12.5px;background:var(--bark-3)}.adm-logl small{color:var(--dim)}.adm-logl.danger b{color:var(--danger)}.adm-logl.calm b{color:var(--dim)}.adm-logl span{overflow-wrap:anywhere}
-.fil-body{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}.fil-row{display:flex;flex-direction:column;gap:8px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bark-4)}.fil-row.on{box-shadow:inset 0 0 0 2px var(--amber)}
+.role-note{border-radius:16px;min-height:72px;resize:vertical;font:500 14px var(--ui)}.role-acceptee{color:var(--accent2)!important}.role-refusee{color:var(--danger)!important}.fil-body{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}.fil-row{display:flex;flex-direction:column;gap:8px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bark-4)}.fil-row.on{box-shadow:inset 0 0 0 2px var(--amber)}
 .fil-name{min-width:0;display:flex;flex-direction:column}.fil-name b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fil-name small{color:var(--dim);font-size:12px}
 .fil-img{max-width:100%;max-height:260px;object-fit:contain;align-self:center;border-radius:8px;background:var(--well)}.fil-model{display:flex;flex-direction:column;align-items:center;gap:6px}.fil-view{width:240px;height:240px;border-radius:12px;background:var(--well)}.fil-model small{color:var(--dim);font-size:12px;text-align:center}
 /* the administration, full screen: the settings side by side when there is room; on a touch screen a slider moves only once its row is touched */
@@ -669,6 +669,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
       <div class="home-btns">
         <button class="btn wide shine" id="home-play" type="button">Jouer</button>
         <button class="btn wide ghost" id="home-load" type="button" hidden>Charger une partie</button>
+        <button class="btn wide line" id="home-adm" type="button" hidden>Administration</button>
         <button class="btn wide ghost" id="home-quit" type="button" hidden>Quitter</button>
       </div>
       <p id="home-foot"></p>
@@ -4962,7 +4963,7 @@ async function srvHello() {
     if (!r || !r.ok) SRV.state = 'down';
     // a service that does not know today's save format would refuse everything and hand back an older save: nothing is sent to it
     else if ((r.format | 0) < SAVE_V) SRV.state = 'old';
-    else { SRV.state = r.bloque ? 'blocked' : r.parti ? 'moved' : 'on'; if ((r.version | 0) > (save.sv | 0)) save.sv = r.version | 0; }
+    else { SRV.state = r.bloque ? 'blocked' : r.parti ? 'moved' : 'on'; if ((r.version | 0) > (save.sv | 0)) save.sv = r.version | 0; if (SRV.state === 'on' && typeof srvRole === 'function') srvRole(); } // the role of this device (n_roles.js)
   } catch (e) { SRV.state = 'down'; }
   SRV.busy = false; SRV.next = Date.now() + (SRV.state === 'on' ? 1200 : SRV.state === 'down' ? SRV_RETRY : SRV_LATER); srvSheet();
 }
@@ -5198,7 +5199,7 @@ function admTag() {
 
 // ---- the entry in the settings
 // two entries (24a): the editor of models (levels, camp, then the libraries) and the editor of variables (every setting)
-const ADM_VIEWS = { mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'], joueurs: ['Joueurs et sécurité', 'equipe', 'Statistiques, joueurs et leurs personnages, journal de sécurité'] };
+const ADM_VIEWS = { mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'], joueurs: ['Joueurs et sécurité', 'equipe', 'Statistiques, joueurs et leurs personnages, journal de sécurité'], prop: ['Éditeur de niveaux', 'forge', 'Créer des cartes et les proposer'] };
 function admCard() {
   if (!ADM.shown) return null;
   const live = !!SRV.url;
@@ -5402,7 +5403,7 @@ function admPlan() {
   for (const ch of F0.chests) dot(ch, .7, ch.gold ? '--coin' : '--amber');
   for (const e of F0.enemies) dot(e, e.type === 4 || e.type === 9 ? .8 : .45, '--danger');
   dot(F0.start, .9, '--accent2'); if (F0.lift) dot(F0.lift, .9, '--cream');
-  const n = $('adm-plan-n'); if (n) n.textContent = F0.rooms.length + ' salles · ' + F0.enemies.length + ' créatures · ' + F0.chests.length + (F0.chests.length > 1 ? ' coffres' : ' coffre') + ' · ' + F0.decor.length + ' décors — vert : entrée, clair : sortie, rouge : créatures, doré : coffres';
+  const n = $('adm-plan-n'); if (n) n.textContent = F0.rooms.length + (F0.rooms.length > 1 ? ' salles · ' : ' salle · ') + F0.enemies.length + (F0.enemies.length > 1 ? ' créatures · ' : ' créature · ') + F0.chests.length + (F0.chests.length > 1 ? ' coffres' : ' coffre') + ' · ' + F0.decor.length + ' décors — vert : entrée, clair : sortie, rouge : créatures, doré : coffres';
 }
 // the camp, a map of its own
 function admCampCard() {
@@ -5437,6 +5438,7 @@ function admTry() {
 function admBody(kids, foot) {
   ADM.rows = []; ADM.fams = [];
   if (!SRV.url) { kids.push(h('p', { text: 'Il faut ouvrir le jeu depuis le site.' })); return; }
+  if (ADM.view === 'prop') { rolePropBody(kids); return; } // an editor of levels, or a player of an open community: no password (n_roles.js)
   if (!ADM.mdp) {
     const pw = h('input', { type: 'password', class: 'adm-pw', autocomplete: 'off', 'aria-label': 'Mot de passe', placeholder: 'Mot de passe' });
     const go = () => { if (pw.value) admEnter(pw.value); };
@@ -5450,13 +5452,14 @@ function admBody(kids, foot) {
   const mod = ADM.view === 'mod';
   kids.push(h('div', { class: 'row adm-switch', style: 'flex-wrap:wrap;align-items:center;gap:8px' },
     h('p', { class: 'grow', style: 'font-size:13px;margin:0', text: ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
-    ...['mod', 'var', 'joueurs'].filter(v => v !== ADM.view).map(v => h('button', { class: 'btn small line', type: 'button', onclick: () => { ADM.view = v; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, ic(ADM_VIEWS[v][1]), ADM_VIEWS[v][0]))));
+    ...['mod', 'var', 'joueurs'].filter(v => v !== ADM.view).map(v => h('button', { class: 'btn small line', type: 'button', onclick: () => { ADM.view = v; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, ic(ADM_VIEWS[v][1]), ADM_VIEWS[v][0])),
+    h('button', { class: 'btn small ghost', type: 'button', onclick: () => closeSheet() }, ic('aller'), 'Aller jouer')));
   if (ADM.view === 'joueurs') { admJBody(kids); return; } // m_joueurs.js
   if (!mod) {
     const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
     search.addEventListener('input', () => { ADM.q = search.value; admFilter(); });
     kids.push(search);
-  } else kids.push(admCampCard(), admHudCard(), admFilesCard());
+  } else kids.push(roleAdmCard(), admCampCard(), admHudCard(), admFilesCard());
   for (const [id, name, phrase] of TUNE_FAM) {
     if (id === 'hud' || (id === 'niv') !== mod) continue; // the draw of each level goes with the maps, every other family with the variables; the screen has its own editor (k_hud.js)
     const badge = h('span', { class: 'adm-badge', hidden: true }), list = h('div', { class: 'adm-list' }), sec = h('section', { class: 'adm-fam' });
@@ -5889,7 +5892,7 @@ function renderSheet() {
       ...hp('Clavier', 'flèches ou ZQSD, Espace, E, I, Maj pour esquiver ; dans les menus : flèches, Entrée, Échap')));
     body.push(h('p', { style: 'font-size:12px;color:var(--dim)', text: 'Icônes : le kit d\'interface du jeu, Lucide (licence ISC) et Game-icons.net (CC BY 3.0, Lorc, Delapouite et contributeurs). 3D : three.js.' + (app ? ' Coop directe : PeerJS.' : '') }));
     body.push(creaCard()); // the admin menus last: hidden until revealed (h_creatif.js), and unless ?admin (i_admin.js)
-    if (!pause) body.push(admCard());
+    if (!pause) body.push(admCard(), roleCard());
   }
   $('sh-title').replaceChildren(ic(sheetKind === 'adm' ? ADM_VIEWS[ADM.view][1] : SHEET_IC[sheetKind] || 'etoile'), title); $('sh-lab').textContent = purse ? lab : ''; $('sh-ecl').hidden = !purse || G.mode === 'hub'; $('sh-ecl-n').textContent = String(ME.ecl); $('sh-gem-n').textContent = String(ME.gem);
   $('sh-body').replaceChildren(...body.filter(Boolean), h('button', { id: 'sh-more', class: 'more', type: 'button', hidden: true, onclick: shMoreGo }, ic('aller'))); $('sh-foot').replaceChildren(...foot);
@@ -5933,13 +5936,19 @@ function homeSync() {
   const on = G.mode === 'title' && G.home, el = $('scr-home'); if (el.hidden === on) el.hidden = !on; $('scr-title').hidden = G.mode !== 'title' || G.home || creating; if (!on) return;
   homeArt();
   const set = (id, hid) => { const b = $(id); if (b.hidden !== hid) b.hidden = hid; };
-  set('home-load', !(window.ecorceApp && SRV.state !== 'off')); set('home-quit', !quitApp());
+  set('home-load', !(window.ecorceApp && SRV.state !== 'off')); set('home-quit', !quitApp()); set('home-adm', !((ADM.shown || roleCanPropose()) && SRV.url)); { const t = ADM.shown ? 'Administration' : 'Éditeur de niveaux', b = $('home-adm'); if (b.textContent !== t) b.textContent = t; } // the administration, straight from the home screen (25g)
   const l = []; if (window.ecorceApp && DEV.id) l.push('Cet appareil · ' + devCode(DEV.id)); if (window.ecorceApp && SRV.state !== 'off') l.push(srvLine());
   const t = l.join('\n'); if ($('home-foot').textContent !== t) $('home-foot').textContent = t;
 }
 $('home-play').addEventListener('click', () => { G.home = false; NAV.key = ''; showUI(); });
 $('home-load').addEventListener('click', () => { SRV.ask = 1; SRV.msg = ''; openSheet('load'); }); // the code typed on the new device: the same entry as in the settings
 $('home-quit').addEventListener('click', () => { const q = quitApp(); if (q) q(); });
+// the administration without going through the characters: the last character is taken (the editors try their work with it), then the panel opens
+$('home-adm').addEventListener('click', () => {
+  G.home = false; NAV.key = '';
+  if (!save.chars.length) { showUI(); toast('Crée d\'abord un chevalier : l\'administration s\'ouvre ensuite depuis l\'accueil'); return; }
+  pickChar(clamp(save.cur | 0, 0, save.chars.length - 1)); ADM.msg = ''; if (!ADM.shown) ADM.view = 'prop'; openSheet('adm');
+});
 setInterval(homeSync, 1000);
 /* ================= title: characters ================= */
 function pickChar(i) {
@@ -6552,7 +6561,7 @@ window.__game = { G, P, Net, input, get F() { return F; }, get run() { return ru
    (PLANS, tk-plans-essai) and replaces the draw of that level here only; publishing it for everyone is step 20e.
    A plan is plain data: { v, floor, big, W, H, g (the tiles, one character each), rooms, start, lift, foes, chests, decor, seals }. */
 const PLANS = {}; // level number → plan made by hand, in force on this device
-try { if (localStorage.getItem('tk-admin') === '1') Object.assign(PLANS, JSON.parse(localStorage.getItem('tk-plans-essai') || '{}')); } catch (e) { }
+try { if (localStorage.getItem('tk-admin') === '1' || localStorage.getItem('tk-editeur') === '1') Object.assign(PLANS, JSON.parse(localStorage.getItem('tk-plans-essai') || '{}')); } catch (e) { }
 const plansKeep = () => { try { localStorage.setItem('tk-plans-essai', JSON.stringify(PLANS)); } catch (e) { } };
 // the maps published for every player (25a): kept on the device, brought up to date at each launch (srvMaps, g_serveur.js).
 // The administrator's own trial on this device comes first, until it is published.
@@ -7406,7 +7415,7 @@ async function admJLoad(what) {
   ADMJ.busy = true; ADMJ.msg = ''; if (sheetKind === 'adm') renderSheet();
   try {
     if (what === 'stats') ADMJ.stats = (await admJCall('stats')).stats;
-    else if (what === 'joueurs') ADMJ.joueurs = (await admJCall('joueurs')).joueurs;
+    else if (what === 'joueurs') { ADMJ.joueurs = (await admJCall('joueurs')).joueurs; await roleAdmLoad(); }
     else ADMJ.journal = (await admJCall('journal', { combien: 500 })).journal;
   } catch (e) { ADMJ.msg = String(e.message || e) + (/inconnu|format/.test(String(e.message)) ? ' (le service doit être en version 7)' : ''); }
   ADMJ.busy = false; if (sheetKind === 'adm' && ADM.view === 'joueurs') renderSheet();
@@ -7458,6 +7467,7 @@ function admJCard(a) {
     : h('button', { class: 'btn small ' + (cls || 'line'), type: 'button', onclick: () => { if (!confirm) return admJAct(op, a.id); ADMJ.ask = a.id + op; renderSheet(); setTimeout(() => { if (ADMJ.ask === a.id + op) { ADMJ.ask = null; renderSheet(); } }, 5000); } }, ic(icn), lab);
   return h('div', { class: 'adm-pcard' },
     h('small', { text: 'Appareil ' + devCode(a.id) + ' · arrivé le ' + new Date(a.cree).toLocaleDateString('fr-FR') + ' · dernière sauvegarde ' + admJWhen(a.enregistre) + ' (n° ' + (a.version | 0) + ') · temps de jeu estimé ' + admJHours(a.joue | 0) + ' · difficulté ' + ((DIFFS[a.diff | 0] || {}).name || '—') }),
+    roleChips(a),
     a.motif ? h('small', { class: 'adm-msg', text: 'Dernier refus : ' + a.motif }) : null,
     ...a.persos.map(p => h('div', { class: 'adm-perso' }, h('span', { class: 'ava', style: '--c:' + CLOAKS[p.cape] }, iconArt(p.ico) ? h('img', { src: iconArt(p.ico), alt: '' }) : null),
       h('span', { class: 'grow' }, h('b', { text: p.nom + ' · ' + (ICON_NAMES[p.ico] || p.ico) + ', cape ' + (CLOAK_NAMES[p.cape] || '') }),
@@ -7475,7 +7485,7 @@ async function admJAct(op, id) {
   ADMJ.busy = false; await admJLoad('joueurs'); ADMJ.journal = null; ADMJ.stats = null;
 }
 // ---- the log
-const ADMJ_GENRES = { refus: ['Sauvegarde refusée', 'danger'], mdp: ['Mot de passe faux', 'danger'], bloquer: ['Appareil bloqué', ''], debloquer: ['Appareil débloqué', ''], oublier: ['Appareil oublié', ''], code: ['Code de transfert', ''], transfert: ['Partie transférée', ''], reglages: ['Réglages publiés', 'calm'], cartes: ['Cartes publiées', 'calm'], fichier: ['Fichier', 'calm'] };
+const ADMJ_GENRES = { refus: ['Sauvegarde refusée', 'danger'], mdp: ['Mot de passe faux', 'danger'], bloquer: ['Appareil bloqué', ''], debloquer: ['Appareil débloqué', ''], oublier: ['Appareil oublié', ''], code: ['Code de transfert', ''], transfert: ['Partie transférée', ''], reglages: ['Réglages publiés', 'calm'], role: ['Rôle', ''], proposition: ['Proposition de carte', 'calm'], cartes: ['Cartes publiées', 'calm'], fichier: ['Fichier', 'calm'] };
 function admJSecurity(J) {
   const now = Date.now(), n = (g, d) => J.filter(e => e.genre === g && now - e.quand < d).length, sus = {};
   for (const e of J) if (e.genre === 'refus' && now - e.quand < 7 * JOUR) sus[e.appareil] = (sus[e.appareil] || 0) + 1;
@@ -7488,6 +7498,109 @@ function admJSecurity(J) {
       ...Object.entries(ADMJ_GENRES).map(([g, [lab]]) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(ADMJ.genre === g), onclick: () => { ADMJ.genre = g; renderSheet(); } }, lab))),
     h('div', { class: 'adm-log' }, ...(L.length ? L.map(e => h('div', { class: 'adm-logl ' + ((ADMJ_GENRES[e.genre] || [])[1] || '') }, h('small', { text: admJDate(e.quand) }), h('b', { text: (ADMJ_GENRES[e.genre] || [e.genre])[0] }),
       h('span', { text: [e.appareil ? devCode(e.appareil) : '', e.detail].filter(Boolean).join(' · ') }))) : [h('small', { text: 'Rien dans le journal.' })]))];
+}
+
+/* ================= roles and proposals of maps (25f) =================
+   A person is a device (its key signs every request). The service tells each device its role at launch (srvRole):
+   - 'editeur' (Éditeur de niveaux): edits the levels and the camp on its own device and PROPOSES them; never publishes;
+   - 'admin' (Administrateur): everything; the service hands it a session key that stands for the password (ADM.mdp);
+   - and when the administrator opens « Propositions de la communauté », every player may propose maps like an editor.
+   The administrator gives roles from the player's card (Joueurs et sécurité), and reads the proposals in the editor of models:
+   load one in the editor to try it, accept it (published for everyone, with its author's name), or refuse it with a word. */
+const ROLE = { role: null, communaute: false, propositions: [], titre: '', note: '', k: null, msg: '', busy: false, list: null, open: null, reply: {} };
+function roleCanPropose() { try { return ROLE.role === 'editeur' || ROLE.role === 'admin' || ROLE.communaute; } catch (e) { return false; } } // asked by the home screen before this file is read
+async function srvRole() {
+  try {
+    const r = await srvCall('/role', {}); if (!r || !r.ok) return;
+    Object.assign(ROLE, { role: r.role, communaute: !!r.communaute, propositions: r.propositions || [] });
+    if (r.role === 'admin' && r.jeton) { ADM.shown = true; admWrite('tk-admin', '1'); if (!ADM.mdp) { ADM.mdp = r.jeton; admWrite('tk-admin-mdp', r.jeton, 's'); } }
+    if (roleCanPropose()) admWrite('tk-editeur', '1');
+    if (sheetKind === 'adm' || sheetKind === 'opts') renderSheet(); homeSync();
+  } catch (e) { }
+}
+// the entry in the settings and on the home screen, for an editor or a player of an open community (the administrator has his own)
+function roleCard() {
+  if (!roleCanPropose() || ADM.shown) return null;
+  return h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('forge')), h('div', { class: 'grow' }, h('b', { text: 'Éditeur de niveaux' }),
+    h('span', { class: 'meta', style: 'display:block', text: ROLE.role === 'editeur' ? 'Tu es éditeur de niveaux : crée des cartes et propose-les.' : 'Les propositions de cartes sont ouvertes à tous : crée la tienne.' })),
+    h('button', { class: 'btn small', type: 'button', text: 'Ouvrir', onclick: () => { ADM.view = 'prop'; openSheet('adm'); } }));
+}
+/* ---------- the editor's own view (no password) ---------- */
+function rolePropBody(kids) {
+  if (!ADM.seed) ADM.seed = newSeed(0, false);
+  const k = ROLE.k || String(ADM.lv), L = k === 'camp' ? { name: 'Le camp' } : LEVELS[(+k) - 1];
+  kids.push(h('p', { style: 'font-size:13px', text: 'Choisis une carte, modifie-la à la main, puis propose-la. ' + (ROLE.role === 'editeur' ? 'Tu es éditeur de niveaux.' : 'Les propositions de la communauté sont ouvertes.') + ' L\'administrateur décide de la publier pour tous ; rien de ce que tu fais ici n\'entre dans ta partie.' }));
+  const lvs = h('div', { class: 'seg slide adm-lvs' }, h('button', { class: 'chipbtn' + (PLANS.camp ? ' mod' : ''), type: 'button', 'aria-pressed': String(k === 'camp'), onclick: () => { ROLE.k = 'camp'; renderSheet(); } }, ic('zcamp')),
+    ...LEVELS.map((x, i) => { const n = String(i + 1); return x.boss ? null : h('button', { class: 'chipbtn' + (PLANS[n] ? ' mod' : ''), type: 'button', 'aria-pressed': String(k === n), title: x.name, onclick: () => { ROLE.k = n; ADM.lv = i + 1; renderSheet(); } }, n); }).filter(Boolean));
+  const mine = PLANS[k], plan = h('canvas', { id: 'adm-plan', class: 'adm-plan', width: 1, height: 1 });
+  if (k !== 'camp') setTimeout(admPlan, 0);
+  kids.push(h('div', { class: 'adm-lvtools' }, h('b', { text: k === 'camp' ? 'Le camp' : 'Niveau ' + k + ' · ' + L.name }), lvs, k === 'camp' ? null : plan, k === 'camp' ? null : h('small', { id: 'adm-plan-n' }),
+    h('small', { text: mine ? 'Ta version de cette carte est gardée sur cet appareil.' : 'Pas encore de version à toi : « Modifier » part de la carte en vigueur.' }),
+    h('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px' },
+      h('button', { class: 'btn small', type: 'button', disabled: !!Net.room, onclick: () => k === 'camp' ? edStart('camp') : edStart(+k, ADM.seed) }, ic('forge'), mine ? 'Continuer ma version' : 'Modifier à la main'),
+      mine ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => { delete PLANS[k]; plansKeep(); renderSheet(); } }, ic('recommencer'), 'Oublier ma version') : null)));
+  if (mine) {
+    const t = h('input', { class: 'adm-search', type: 'text', maxlength: 60, placeholder: 'Le nom de ta carte', value: ROLE.titre, 'aria-label': 'Nom de la carte' }), n = h('textarea', { class: 'adm-search role-note', maxlength: 400, rows: 3, placeholder: 'Un mot pour l\'administrateur (facultatif)', 'aria-label': 'Note' });
+    n.value = ROLE.note; t.addEventListener('input', () => { ROLE.titre = t.value; }); n.addEventListener('input', () => { ROLE.note = n.value; });
+    kids.push(h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('b', { text: 'Proposer cette carte' })),
+      h('div', { class: 'fil-body' }, t, n, h('button', { class: 'btn wide', type: 'button', disabled: ROLE.busy || !ROLE.titre.trim(), onclick: () => rolePropose(k) }, ic('nuage'), ROLE.busy ? 'Envoi…' : 'Envoyer à l\'administrateur'))));
+  }
+  if (ROLE.msg) kids.push(h('p', { class: 'adm-msg', text: ROLE.msg }));
+  const P = ROLE.propositions || [];
+  kids.push(h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'Mes propositions' }), h('small', { text: P.length ? 'Les 30 dernières, et ce qu\'en a dit l\'administrateur.' : 'Aucune pour l\'instant.' })),
+    h('button', { class: 'chipbtn', type: 'button', onclick: async () => { await srvRole(); renderSheet(); } }, ic('recommencer'))),
+    h('div', { class: 'fil-body' }, ...P.map(p => h('div', { class: 'fil-row' }, h('b', { text: (p.cle === 'camp' ? 'Le camp' : 'Niveau ' + p.cle) + ' · ' + p.titre }),
+      h('small', { class: 'role-' + p.etat, text: { attente: 'En attente', acceptee: 'Acceptée et publiée pour tous', refusee: 'Refusée' }[p.etat] + (p.reponse ? ' : « ' + p.reponse + ' »' : '') + ' · ' + new Date(p.quand).toLocaleDateString('fr-FR') }))))));
+}
+async function rolePropose(k) {
+  if (ROLE.busy || !PLANS[k]) return; ROLE.busy = true; ROLE.msg = ''; renderSheet();
+  try { const r = await srvCall('/proposer', { cle: k, plan: PLANS[k], titre: ROLE.titre.trim(), note: ROLE.note.trim(), auteur: cleanName(ME.name) }); ROLE.msg = r && r.ok ? 'Proposition envoyée : l\'administrateur la verra.' : (r && r.pourquoi) || 'Le service n\'a pas répondu.'; if (r && r.ok) { ROLE.titre = ''; ROLE.note = ''; } }
+  catch (e) { ROLE.msg = 'Le service ne répond pas.'; }
+  await srvRole(); ROLE.busy = false; renderSheet(); // the list of « Mes propositions » first, then the button comes back
+}
+/* ---------- the administrator's side: the proposals, in the editor of models ---------- */
+async function roleAdmLoad() {
+  try { const [p, r] = await Promise.all([admJCall('propositions'), admJCall('roles')]); ROLE.list = p.propositions; ROLE.roles = r.roles; ROLE.communaute = r.communaute; ROLE.msg = ''; }
+  catch (e) { ROLE.list = []; ROLE.msg = String(e.message || e); }
+  if (sheetKind === 'adm') renderSheet();
+}
+function rolePlanCanvas(p) { // the plan of a proposal, drawn small: rock, floor, the way in and out, creatures, chests
+  const c = h('canvas', { class: 'adm-plan' }); setTimeout(() => { const s = Math.max(2, Math.floor((c.clientWidth || 300) / p.W)); c.width = p.W * s; c.height = p.H * s; const x = c.getContext('2d'), css = getComputedStyle(document.documentElement), col = k => css.getPropertyValue(k).trim() || '#888';
+    x.fillStyle = col('--well'); x.fillRect(0, 0, c.width, c.height); x.fillStyle = col('--bark-4'); for (let i = 0; i < p.W * p.H; i++) if (p.g.charCodeAt(i) === 49) x.fillRect((i % p.W) * s, ((i / p.W) | 0) * s, s, s);
+    const dot = (q, r, k) => { if (!q) return; x.fillStyle = col(k); x.beginPath(); x.arc(q[0] / T * s, q[1] / T * s, r * s, 0, TAU); x.fill(); };
+    for (const f of p.foes || []) dot([f[1], f[2]], .45, '--danger'); for (const ch of p.chests || []) dot(ch, .7, '--amber'); dot(p.start, .9, '--accent2'); dot(p.lift, .9, '--cream'); }, 0);
+  return c;
+}
+function roleAdmCard() {
+  if (ROLE.list === null) { ROLE.list = []; roleAdmLoad(); }
+  const wait = ROLE.list.filter(p => p.etat === 'attente'), done = ROLE.list.filter(p => p.etat !== 'attente').slice(0, 10);
+  return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'Propositions de cartes' + (wait.length ? ' · ' + wait.length + ' en attente' : '') }),
+    h('small', { text: 'Les cartes proposées par les éditeurs de niveaux (et par tous, si tu l\'ouvres). Rien n\'est publié sans ton accord.' }))),
+    h('div', { class: 'fil-body' },
+      toggleRow('equipe', 'Propositions de la communauté (tous les joueurs)', ROLE.communaute, async () => { try { await admJCall('communaute', { valeur: !ROLE.communaute }); ROLE.communaute = !ROLE.communaute; } catch (e) { ROLE.msg = String(e.message || e); } renderSheet(); }),
+      ROLE.msg ? h('small', { class: 'adm-msg', text: ROLE.msg }) : null,
+      ...wait.map(p => { const open = ROLE.open === p.n, rep = h('input', { class: 'adm-search', type: 'text', maxlength: 400, placeholder: 'Un mot pour l\'auteur (facultatif)', value: ROLE.reply[p.n] || '' }); rep.addEventListener('input', () => { ROLE.reply[p.n] = rep.value; });
+        return h('div', { class: 'fil-row' + (open ? ' on' : '') }, h('button', { class: 'adm-phead', type: 'button', onclick: () => { ROLE.open = open ? null : p.n; renderSheet(); } },
+          h('span', { class: 'grow' }, h('b', { text: (p.cle === 'camp' ? 'Le camp' : 'Niveau ' + p.cle) + ' · ' + p.titre }), h('small', { text: 'par ' + (p.auteur || '?') + ' (' + devCode(p.appareil) + ') · ' + new Date(p.quand).toLocaleDateString('fr-FR') })), h('i', { class: 'adm-chev', 'aria-hidden': 'true' })),
+          open ? h('div', { class: 'adm-pcard' }, p.note ? h('small', { text: '« ' + p.note + ' »' }) : null, p.plan ? rolePlanCanvas(p.plan) : null, rep,
+            h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' },
+              h('button', { class: 'btn small line', type: 'button', onclick: () => { PLANS[p.cle] = p.plan; plansKeep(); if (p.cle === 'camp') edStart('camp'); else { ADM.lv = +p.cle; edStart(+p.cle, ADM.seed || newSeed(0, false)); } } }, ic('forge'), 'Ouvrir dans l\'éditeur'),
+              h('button', { class: 'btn small', type: 'button', onclick: () => roleDecide(p, 'accepter') }, ic('ok'), 'Accepter et publier'),
+              h('button', { class: 'btn small ghost', type: 'button', onclick: () => roleDecide(p, 'refuser') }, ic('fermer'), 'Refuser')),
+            h('small', { text: '« Ouvrir dans l\'éditeur » remplace ta propre version de cette carte sur cet appareil (pas celle des joueurs) : tu peux l\'essayer, la retoucher, puis la publier toi-même.' })) : null); }),
+      done.length ? h('small', { text: 'Déjà décidées : ' + done.map(p => p.titre + ' (' + (p.etat === 'acceptee' ? 'acceptée' : 'refusée') + ')').join(', ') }) : null));
+}
+async function roleDecide(p, decision) {
+  try { await admJCall('proposition', { n: p.n, decision, reponse: ROLE.reply[p.n] || '' }); ROLE.msg = decision === 'accepter' ? '« ' + p.titre + ' » est publiée pour tous les joueurs.' : '« ' + p.titre + ' » est refusée.'; if (decision === 'accepter') srvMaps(); }
+  catch (e) { ROLE.msg = String(e.message || e); }
+  ROLE.open = null; await roleAdmLoad();
+}
+// in a player's card: the role
+const ROLE_NAMES = [[null, 'Joueur'], ['editeur', 'Éditeur de niveaux'], ['admin', 'Administrateur']];
+function roleChips(a) {
+  const cur = (ROLE.roles || []).find(r => r.appareil === a.id), v = cur ? cur.role : null;
+  return h('div', { class: 'row', style: 'gap:6px;flex-wrap:wrap;align-items:center' }, h('small', { text: 'Rôle :' }),
+    ...ROLE_NAMES.map(([r, n]) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(v === r), onclick: async () => { try { await admJCall('role', { id: a.id, role: r, nom: (a.persos[0] || {}).nom || '' }); ADMJ.msg = n + ' : ' + devCode(a.id); } catch (e) { ADMJ.msg = String(e.message || e); } await roleAdmLoad(); renderSheet(); } }, n)));
 }
 
 </script>
