@@ -1177,6 +1177,7 @@ const TUNE_DEF = [
   ['rezHp', 'vie', 'Vie après avoir été relevé', 'La part de la vie avec laquelle on se relève.', .4, .05, 1, 'pct'],
   ['rezInv', 'vie', 'Protection après avoir été relevé', 'Le temps pendant lequel on ne peut pas être touché après avoir été relevé.', 1.5, 0, 5, 's'],
   ['hpLin', 'dif', 'Vie des créatures : hausse par niveau', 'Chaque niveau ajoute cette part à la vie des créatures (0,22 = +22 % par niveau).', .22, 0, 1, 'n'],
+  ['mondes', 'gen', 'Mondes ouverts aux joueurs', 'Combien de mondes les joueurs voient et peuvent jouer (6 niveaux chacun). Les mondes 6 à 10 (Marais, Canopée, Corail englouti, Dunes d\'ambre, Mine à rouages) se jouent en essai dans l\'administration avant d\'être ouverts. 5 = les niveaux 1 à 30.', 5, 5, 10, 'n'],
   ['hpLate', 'dif', 'Vie des créatures : surplus au niveau 30', 'Un supplément qui grandit jusqu\'au dernier niveau (0,5 = 1,5 fois plus au niveau 30).', .5, 0, 3, 'n'],
   ['dmgLin', 'dif', 'Dégâts des créatures : hausse par niveau', 'Chaque niveau ajoute cette part aux dégâts des créatures.', .18, 0, 1, 'n'],
   ['lootLin', 'dif', 'Pièces : hausse par niveau', 'Chaque niveau ajoute cette part aux pièces lâchées, et aux prix qui suivent le niveau.', .25, 0, 1, 'n'],
@@ -1684,7 +1685,21 @@ const STRATA = [
     air: { n: 70, col: ['#ffffff', '#e2f2ff'], v: [-11, -6], r: .09 }, shaft: '#e6f5ff' },
   { name: 'Abîme', floorA: '#2a2233', floorB: '#33293f', wallTop: '#09070d', wallFace: '#4a3566', wallEdge: '#7a5aa8', glow: '#ff7ad9', deco: '#9a6bff', foe: '#8a4fd0', foe2: '#ffd0f2', fog: '#120826', sky: '#b896ff', gnd: '#1a0c2a', sun: '#cdb0ff', tex: '#c0b4d6', cap: '#2f2740', kind: 2,
     air: { n: 48, col: ['#c77dff', '#ff7ad9'], v: [3, 9], r: .1 } },
+  // the five worlds of the series 3 (32, decision AN), levels 31 to 60, closed to players until Damien opens them (setting « mondes »).
+  // kit: the world whose models, textures and creatures they borrow until their own arrive
+  { name: 'Marais', kit: 0, floorA: '#2f3a2a', floorB: '#384532', wallTop: '#0c120a', wallFace: '#4a5a3a', wallEdge: '#6e8a4a', glow: '#c8f07a', deco: '#7da848', foe: '#5a9a4a', foe2: '#e8f0b0', fog: '#0a1a12', sky: '#a8d0a0', gnd: '#142418', sun: '#e0f0c0', tex: '#a4b0a0', cap: '#4a6a32', kind: 0,
+    air: { n: 56, col: ['#c8f07a', '#f0ffd0'], v: [1, 4], r: .09 }, shaft: '#d8f0a8' },
+  { name: 'Canopée', kit: 0, floorA: '#5a4a32', floorB: '#66553a', wallTop: '#1a2410', wallFace: '#5a7a3a', wallEdge: '#8ab05a', glow: '#ffe48a', deco: '#9ad05a', foe: '#c08a3a', foe2: '#fff0c0', fog: '#2a4a5a', sky: '#d0ecff', gnd: '#2a3a20', sun: '#fff4d0', tex: '#b4b0a0', cap: '#6a9a3a', kind: 0,
+    air: { n: 40, col: ['#ffffff', '#d0f0a0'], v: [-3, 2], r: .1 }, shaft: '#fff4c8' },
+  { name: 'Corail englouti', kit: 1, floorA: '#2a4048', floorB: '#304a54', wallTop: '#081418', wallFace: '#4a6a72', wallEdge: '#7ab0b8', glow: '#7ff0e8', deco: '#ff8aa0', foe: '#ff7a6a', foe2: '#d8fff8', fog: '#04202a', sky: '#8ae0e8', gnd: '#0a2a34', sun: '#b0f4ff', tex: '#a8c4c8', cap: '#3a6a6a', kind: 1,
+    air: { n: 70, col: ['#bff8ff', '#ffffff'], v: [4, 10], r: .08 } },
+  { name: 'Dunes d\'ambre', kit: 2, floorA: '#6a5232', floorB: '#76603a', wallTop: '#20160a', wallFace: '#8a6a3a', wallEdge: '#c09a5a', glow: '#ffb84a', deco: '#e0c070', foe: '#c87a3a', foe2: '#fff0c8', fog: '#2a1a08', sky: '#ffd890', gnd: '#3a2810', sun: '#ffe4a8', tex: '#c8b8a0', cap: '#9a7a4a', kind: 2,
+    air: { n: 50, col: ['#ffd890', '#fff0c8'], v: [6, 14], r: .07 }, shaft: '#ffe0a0' },
+  { name: 'Mine à rouages', kit: 4, floorA: '#3a3540', floorB: '#443e4a', wallTop: '#0e0c12', wallFace: '#5a4e5e', wallEdge: '#9a8060', glow: '#ffb060', deco: '#a87aff', foe: '#c8904a', foe2: '#ffe8c8', fog: '#12101a', sky: '#c0a8e0', gnd: '#1a1420', sun: '#ffd8a8', tex: '#b8b0c0', cap: '#4a4050', kind: 2,
+    air: { n: 44, col: ['#ffb060', '#c8a8ff'], v: [2, 7], r: .08 } },
 ];
+// the world whose models, textures, creatures and colours of menus a world wears (the first five wear their own)
+const kitOf = si => si < 5 ? si : (STRATA[si] && STRATA[si].kit) || 0;
 const PER_WORLD = 6; // five worlds of six levels; the sixth is the boss
 const strIdxOf = f => (((f - 1) / PER_WORLD) | 0) % STRATA.length;
 const isBossFloor = f => f % PER_WORLD === 0;
@@ -1694,7 +1709,7 @@ const isBossFloor = f => f % PER_WORLD === 0;
 const hpMul = f => (1 + TU.hpLin * (f - 1)) * (1 + TU.hpLate * (f - 1) / 29);
 const dmgMul = f => 1 + TU.dmgLin * (f - 1);
 const lootMul = f => 1 + TU.lootLin * (f - 1);
-const BOSS_NAMES = ['La Vieille Souche', 'La Reine Mycose', 'Le Cœur de Braise', 'Le Veilleur de Givre', 'L\'Ombre sans fond'], BOSS_FELL = [' est tombée', ' est tombée', ' est tombé', ' est tombé', ' est tombée'];
+const BOSS_NAMES = ['La Vieille Souche', 'La Reine Mycose', 'Le Cœur de Braise', 'Le Veilleur de Givre', 'L\'Ombre sans fond', 'La Mère des Brumes', 'Le Grand Nid', 'Le Colosse de Corail', 'Le Roi Scorpion', 'Le Grand Rouage'], BOSS_FELL = [' est tombée', ' est tombée', ' est tombé', ' est tombé', ' est tombée', ' est tombée', ' est tombé', ' est tombé', ' est tombé', ' est tombé'];
 /* the rules of a run travel inside its seed, so that a whole team plays the same thing:
    bits 0-1 = difficulty of the classic (automatic) mode, bit 2 = expedition (manual, tall levels, seals to find) */
 // Each difficulty has rules of its own, not only figures (17a): more creatures in each room (more) and more guardians (guard),
@@ -1712,7 +1727,7 @@ const newSeed = (diff, big) => ((((Math.random() * 0x7ffffff) | 0) << 3) | (big 
 const TRACKS = ['unlocked', 'un1', 'un2', 'unx']; // how far the character got: normal, hard, nightmare, expedition
 const trackOf = sd => seedBig(sd) ? 'unx' : TRACKS[seedDiff(sd)];
 // a harder difficulty opens level by level, behind the one below it
-const canPlay = (n, diff, big) => big ? n <= ME.unx : diff === 0 ? n <= ME.unlocked : diff === 1 ? n <= ME.un1 && n < ME.unlocked : n <= ME.un2 && n < ME.un1;
+const canPlay = (n, diff, big) => n > NLV ? false : big ? n <= ME.unx : diff === 0 ? n <= ME.unlocked : diff === 1 ? n <= ME.un1 && n < ME.unlocked : n <= ME.un2 && n < ME.un1;
 
 // swing length: TU.swing (enemy time scale and walking speed: TU.espd, TU.walk)
 
@@ -1880,11 +1895,44 @@ const LEVELS = [
   { name: 'Les Jardins inversés', pool: [[0, 15], [0, 9], [0, 11], [1, 4], [3, 5], [4, 5], [5, 5]] },
   { name: 'La Dernière Lueur', pool: [[0, 12], [0, 14], [0, 10], [2, 4], [3, 4], [4, 5], [5, 4], [0, 37]] },
   { name: 'L\'Ombre sans fond', boss: true, pool: [[0, 16], [0, 12], [0, 13], [0, 14], [0, 15], [1, 6], [1, 7], [1, 8], [2, 7], [3, 7], [0, 26], [0, 37]] },
+  // the five worlds of the series 3 (32b): levels 31 to 60, closed to players until they are opened (setting « mondes »)
+  { name: 'Les Eaux dormantes', pool: [[0, 31], [0, 18], [0, 17], [1, 4], [2, 4], [4, 4], [5, 5]] },
+  { name: 'Les Pontons pourris', pool: [[0, 18], [0, 17], [0, 10], [1, 5], [3, 4], [4, 5], [5, 4]] },
+  { name: 'La Roselière', pool: [[0, 17], [0, 10], [0, 9], [2, 5], [3, 5], [4, 4], [1, 4]] },
+  { name: 'Le Bayou des lanternes', pool: [[0, 10], [0, 9], [0, 31], [1, 5], [2, 4], [5, 5], [3, 4]] },
+  { name: 'Les Racines noyées', pool: [[0, 9], [0, 31], [0, 18], [2, 5], [3, 5], [4, 5], [5, 4]] },
+  { name: 'La Mère des Brumes', boss: true, pool: [[0, 31], [0, 18], [0, 17], [0, 16], [1, 6], [1, 7], [2, 6], [2, 7], [3, 6], [3, 7]] },
+  { name: 'Les Premières Branches', pool: [[0, 19], [0, 14], [0, 11], [1, 4], [2, 4], [4, 4], [5, 5]] },
+  { name: 'Le Pont de lianes', pool: [[0, 14], [0, 11], [0, 9], [1, 5], [3, 4], [4, 5], [5, 4]] },
+  { name: 'Les Nids suspendus', pool: [[0, 11], [0, 9], [0, 12], [2, 5], [3, 5], [4, 4], [1, 4]] },
+  { name: 'La Cime venteuse', pool: [[0, 9], [0, 12], [0, 19], [1, 5], [2, 4], [5, 5], [3, 4]] },
+  { name: 'Le Chemin des oiseaux', pool: [[0, 12], [0, 19], [0, 14], [2, 5], [3, 5], [4, 5], [5, 4]] },
+  { name: 'Le Grand Nid', boss: true, pool: [[0, 19], [0, 14], [0, 11], [0, 16], [1, 6], [1, 7], [2, 6], [2, 7], [3, 6], [3, 7]] },
+  { name: 'Le Récif oublié', pool: [[0, 20], [0, 33], [0, 13], [1, 4], [2, 4], [4, 4], [5, 5]] },
+  { name: 'Les Arches noyées', pool: [[0, 33], [0, 13], [0, 10], [1, 5], [3, 4], [4, 5], [5, 4]] },
+  { name: 'Le Jardin de corail', pool: [[0, 13], [0, 10], [0, 15], [2, 5], [3, 5], [4, 4], [1, 4]] },
+  { name: 'La Grotte aux perles', pool: [[0, 10], [0, 15], [0, 20], [1, 5], [2, 4], [5, 5], [3, 4]] },
+  { name: 'Les Ruines englouties', pool: [[0, 15], [0, 20], [0, 33], [2, 5], [3, 5], [4, 5], [5, 4]] },
+  { name: 'Le Colosse de Corail', boss: true, pool: [[0, 20], [0, 33], [0, 13], [0, 16], [1, 6], [1, 7], [2, 6], [2, 7], [3, 6], [3, 7]] },
+  { name: 'Le Seuil des sables', pool: [[0, 23], [0, 34], [0, 10], [1, 4], [2, 4], [4, 4], [5, 5]] },
+  { name: 'Les Ossements', pool: [[0, 34], [0, 10], [0, 8], [1, 5], [3, 4], [4, 5], [5, 4]] },
+  { name: 'La Mer de dunes', pool: [[0, 10], [0, 8], [0, 14], [2, 5], [3, 5], [4, 4], [1, 4]] },
+  { name: 'Les Cristaux d\'ambre', pool: [[0, 8], [0, 14], [0, 23], [1, 5], [2, 4], [5, 5], [3, 4]] },
+  { name: 'Le Tombeau ensablé', pool: [[0, 14], [0, 23], [0, 34], [2, 5], [3, 5], [4, 5], [5, 4]] },
+  { name: 'Le Roi Scorpion', boss: true, pool: [[0, 23], [0, 34], [0, 10], [0, 16], [1, 6], [1, 7], [2, 6], [2, 7], [3, 6], [3, 7]] },
+  { name: 'La Descente', pool: [[0, 24], [0, 35], [0, 30], [1, 4], [2, 4], [4, 4], [5, 5]] },
+  { name: 'Les Rails rouillés', pool: [[0, 35], [0, 30], [0, 12], [1, 5], [3, 4], [4, 5], [5, 4]] },
+  { name: 'La Salle des rouages', pool: [[0, 30], [0, 12], [0, 13], [2, 5], [3, 5], [4, 4], [1, 4]] },
+  { name: 'La Veine de cristal', pool: [[0, 12], [0, 13], [0, 24], [1, 5], [2, 4], [5, 5], [3, 4]] },
+  { name: 'La Grande Forge', pool: [[0, 13], [0, 24], [0, 35], [2, 5], [3, 5], [4, 5], [5, 4]] },
+  { name: 'Le Grand Rouage', boss: true, pool: [[0, 24], [0, 35], [0, 30], [0, 16], [1, 6], [1, 7], [2, 6], [2, 7], [3, 6], [3, 7]] },
 ];
-const NLV = LEVELS.length;
-// the weapons of the series 3 that wait for their worlds (32 : Canopée, Corail englouti, Dunes d'ambre, Mine à rouages ; the Ruche ones
-// have no world): they drop nowhere yet
-const WAIT_WORLD = [[0, 19], [0, 20], [0, 23], [0, 24], [0, 25], [0, 33], [0, 34], [0, 35], [0, 36]];
+// how many levels the players can play: the worlds Damien has opened (setting « mondes », 32b); all of them in creative mode, where
+// nothing is saved. Read like a constant everywhere (NLV), worked out each time
+Object.defineProperty(globalThis, 'NLV', { configurable: true, get: () => { try { if (CREA.on) return LEVELS.length; } catch (e) { } return Math.min(LEVELS.length, clamp((TU.mondes | 0) || 5, 1, STRATA.length) * PER_WORLD); } });
+const nWorlds = () => Math.ceil(NLV / PER_WORLD); // the worlds a player can see
+// the weapons of the series 3 that have no world (the Ruche is not planned, decision AN): they drop nowhere yet
+const WAIT_WORLD = [[0, 25], [0, 36]];
 // the Colibri set is sold at the stall only, in its gem place (16g): nothing drops it
 const SHOP_ONLY = [[1, 8], [2, 8], [3, 8]];
 for (const L of LEVELS) L.pool = L.pool.filter(e => !SHOP_ONLY.some(x => x[0] === e[0] && x[1] === e[1]));
@@ -1893,7 +1941,7 @@ for (const L of LEVELS) L.pool = L.pool.filter(e => !SHOP_ONLY.some(x => x[0] ==
    4 twin chambers, 5 long caverns), crowd × the creatures of each chamber, mix = the weights of Sporule, Ronceux, Cracheur, Follet
    (the world's own by default; the very first level has its gentle one), chests × the chances of a chest, decor × the scenery pieces,
    light × the light of the sky. A boss level keeps its arena: only its decor and light apply. */
-const MIX_WORLD = [[2, 2, 1, 0], [1, 1, 2, 2], [1, 1, 2, 2], [0, 2, 2, 2], [0, 1, 2, 3]], MIX_FIRST = [3, 1, 0, 0];
+const MIX_WORLD = [[2, 2, 1, 0], [1, 1, 2, 2], [1, 1, 2, 2], [0, 2, 2, 2], [0, 1, 2, 3], [1, 2, 2, 1], [1, 1, 2, 3], [0, 2, 2, 2], [0, 2, 1, 3], [0, 1, 2, 3]], MIX_FIRST = [3, 1, 0, 0];
 const LVL = LEVELS.map((L, i) => ({ size: 1, sides: 1, shape: 0, crowd: 1, mix: (i === 0 ? MIX_FIRST : MIX_WORLD[strIdxOf(i + 1)]).slice(), chests: 1, decor: 1, light: 1 }));
 const lvlOpt = floor => LVL[clamp(floor, 1, NLV) - 1];
 const levelOf = f => LEVELS[(f - 1) % NLV];
@@ -2271,7 +2319,7 @@ const DECOR = [
   [['autel', .9, 13], ['cristal', .9, 8], ['rocher', .9, 13]],
 ];
 function floorDecor(F, rooms) {
-  const R = rng((F.seed ^ Math.imul(F.floor + 3, 0x85EBCA6B)) >>> 0), W = F.W, g = F.g, list = DECOR[F.si % 5], off = [[F.start.x, F.start.y, 2.2]];
+  const R = rng((F.seed ^ Math.imul(F.floor + 3, 0x85EBCA6B)) >>> 0), W = F.W, g = F.g, list = DECOR[kitOf(F.si)], off = [[F.start.x, F.start.y, 2.2]];
   if (F.lift) off.push([F.lift.x, F.lift.y, 2.4]); for (const c of F.chests) off.push([c.x, c.y, 1.7]); if (F.seals) for (const q of F.seals) off.push([q.x, q.y, 2]);
   for (const e of F.enemies) off.push([e.x, e.y, 1.1]);
   // only where the eight tiles around are open floor: whatever stands there can always be walked around, and never plugs a passage or a burrow
@@ -3602,7 +3650,7 @@ function buildWorld() {
   // texture of the library, else the textures of the level's zone. A key: the zone number, or L<texture>
   const TX = F.tx || {}, TP = F.tpal || [], lay = { sol: F.ts, mur: F.tw, dessus: F.tt };
   const wear = (kind, x, y) => { const i = y * W + x, a = lay[kind] && lay[kind][i]; if (a != null && a < 255 && TP[a]) return 'L' + TP[a];
-    const s = F.surf && F.surf[i]; return s != null && s < 5 ? s : TX[kind] ? 'L' + TX[kind] : si; };
+    const s = F.surf && F.surf[i]; return s != null && s < 5 ? s : TX[kind] ? 'L' + TX[kind] : kitOf(si); };
   const pick = (A, x, y, kind) => { const k = wear(kind, x, y) + ':' + ck(x, y); return A[k] || (A[k] = new GB()); };
   const at = (A, x, y) => { const k = ck(x, y); return A[k] || (A[k] = new GB()); };
   const glows = [];
@@ -3639,7 +3687,7 @@ function buildWorld() {
   for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (isF(x, y) && !isF(x, y - 1) && R() < .16) decoSmall(at(PB, x, y), kd, x + .15 + R() * .7, 0, y + .14 + R() * .12, R);
   const addW = (b, m, rs) => { if (b.empty) return; const o = new THREE.Mesh(b.build(), m); o.castShadow = rs !== 2; o.receiveShadow = rs > 0; o.matrixAutoUpdate = false; worldGroup.add(o); };
   const n0 = worldGroup.children.length;
-  zoneMats(); const mt = (A, k) => { const w = k.split(':')[0]; if (w[0] === 'L') return libMat(w.slice(1)) || A[si]; zoneTexWant(+w); return A[+w]; };
+  zoneMats(); const mt = (A, k) => { const w = k.split(':')[0]; if (w[0] === 'L') return libMat(w.slice(1)) || A[kitOf(si)]; zoneTexWant(+w); return A[+w]; };
   for (const k in FB) addW(FB[k], mt(M.floor, k), 2); for (const k in WB) addW(WB[k], mt(M.wall, k), 1); for (const k in TB) addW(TB[k], mt(M.top, k), 1);
   for (const k in PB) addW(PB[k], M.toon, 1); for (const k in GBs) if (!GBs[k].empty) { const o = new THREE.Mesh(GBs[k].build(), M.glow); o.matrixAutoUpdate = false; worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
@@ -3752,7 +3800,7 @@ function buildCamp() {
     const x = F.counter.x * U, z = F.counter.y * U, zb = z - 1.38; // the board stands behind the desk (against the bark, where the camp puts it)
     b.add(box(2.1, .56, .62), mat(x, .28, z), wood); b.add(box(2.2, .07, .74), mat(x, .6, z), rgb('#a8743c')); for (const px of [-.9, .9]) b.add(box(.12, .5, .5), mat(x + px, .25, z + .08), dark);
     b.add(box(2.2, 1.05, .07), mat(x, 1.45, zb), rgb('#3a2a1c')); b.add(box(2.32, .09, .12), mat(x, 2.0, zb), dark); b.add(box(2.32, .09, .12), mat(x, .9, zb), dark);
-    STRATA.forEach((S2, i) => { const py = 1.45 + Math.sin(i * 1.9) * .24; gb.add(octa(.1), mat(x - .8 + i * .4, py, zb + .08, 1, 1.2, .5), rgb(S2.glow)); if (i) { const p0 = 1.45 + Math.sin((i - 1) * 1.9) * .24; b.add(box(.42, .035, .02), mat(x - 1 + i * .4, (py + p0) / 2, zb + .05, 1, 1, 1, 0, 0, Math.atan2(py - p0, .4)), [.82, .74, .56]); } });
+    STRATA.slice(0, 5).forEach((S2, i) => { const py = 1.45 + Math.sin(i * 1.9) * .24; gb.add(octa(.1), mat(x - .8 + i * .4, py, zb + .08, 1, 1.2, .5), rgb(S2.glow)); if (i) { const p0 = 1.45 + Math.sin((i - 1) * 1.9) * .24; b.add(box(.42, .035, .02), mat(x - 1 + i * .4, (py + p0) / 2, zb + .05, 1, 1, 1, 0, 0, Math.atan2(py - p0, .4)), [.82, .74, .56]); } });
     b.add(box(.34, .03, .44), mat(x - .62, .65, z, 1, 1, 1, 0, .3, 0), [.92, .86, .7]); b.add(cyl(.05, .06, .16, 6), mat(x + .2, .71, z + .1), [.3, .22, .16]);
     gb.add(octa(.07), mat(x + .72, .76, z, 1, 1.4, 1), rgb('#ffc24a')); const g = sprite('#ffd27a', 2.4); g.position.set(x + .72, .95, z); g.material.opacity = .45; worldGroup.add(g);
   }
@@ -4299,7 +4347,7 @@ const MON = {
   4: ['taupe', 'elite_scarabee', 'scarabee_ecorce', 'elite_scarabee', 'elite_scarabee'],
   9: ['elite_souche', 'elite_champignon', 'elite_limace', 'elite_feu_follet', 'elite_araignee'],
 };
-const monName = (type, si) => MON[type] ? 'm_' + MON[type][si % 5] : null;
+const monName = (type, si) => MON[type] ? 'm_' + MON[type][kitOf(si)] : null;
 // weapons: each one names its model (a_<mdl>, see WEAPONS)
 const weaponModel = kind => 'a_' + WEAPONS[kind].mdl;
 // length of the weapon in the hand, in tiles: swords grow with their reach
@@ -4491,7 +4539,7 @@ const PROPS = [
 let propGroup = null;
 // spots: [x, y, wall height] of the high walls that face the camera. Chosen once per level, the same for every player (the seed decides)
 function propsPlan(spots) {
-  const R = rng((F.seed ^ 0x9A0B17) >>> 0), zone = 'd_' + ZONES[F.si % 5] + '_', list = PROPS[F.si % 5], want = F.hub ? 4 : F.big ? 9 : 5, out = [];
+  const R = rng((F.seed ^ 0x9A0B17) >>> 0), zone = 'd_' + ZONES[kitOf(F.si)] + '_', list = PROPS[kitOf(F.si)], want = F.hub ? 4 : F.big ? 9 : 5, out = [];
   if (F.wallProps) { for (const p of F.wallProps) out.push(Object.assign({}, p, { m: null })); spots.length = 0; } // the scenery of the walls was set in the level editor
   for (let i = spots.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = spots[i]; spots[i] = spots[j]; spots[j] = t; }
   for (const [x, y, hh] of spots) {
@@ -4540,7 +4588,7 @@ function picRead(cfg, name, ext = 'jpg') {
 }
 const ZT = []; // ZT[world] = { ok, sol, mur, dessus }: asked once, kept
 function zoneTexWant(si) {
-  const cfg = window.ecorceModeles, z = ZONES[si % 5], parts = ['sol', 'mur', 'dessus'];
+  const cfg = window.ecorceModeles, z = ZONES[kitOf(si)], parts = ['sol', 'mur', 'dessus'];
   if (!cfg || !MDL.list || ZT[si] || !parts.every(s => ('t_' + z + '_' + s) in MDL.list)) return;
   const Z = ZT[si] = { ok: false };
   Promise.all(parts.map(s => picRead(cfg, 't_' + z + '_' + s).then(im => {
@@ -4594,7 +4642,7 @@ function libMat(id) {
 // What already shows a banner of that world (data-art) gets it as soon as it is there.
 const ART = {};
 function zoneArt(w) {
-  const cfg = window.ecorceModeles, k = w % 5, z = ZONES[k]; if (!cfg) return null;
+  const cfg = window.ecorceModeles, k = kitOf(w), z = ZONES[k]; if (!cfg) return null;
   let a = ART[z];
   if (!a) {
     a = ART[z] = { url: null }; if (MDL.list && !(('i_' + z) in MDL.list)) return null;
@@ -5208,7 +5256,7 @@ function creaBody(kids, foot) {
     toggleRow('epee', 'Coups dévastateurs (dégâts × 20)', CREA.hit, () => { CREA.hit = !CREA.hit; renderSheet(); }));
   // every level of every world, in the chosen game and difficulty
   kids.push(h('div', { class: 'eyebrow', text: 'Aller à un niveau' }), h('div', { class: 'seg' }, ...CREA_MODES.map((n, i) => h('button', { class: 'chipbtn grow', type: 'button', 'aria-pressed': String(CREA.mode === i), onclick: () => { CREA.mode = i; renderSheet(); } }, n))));
-  kids.push(h('div', { class: 'crea-lvs' }, ...STRATA.map((S, w) => h('div', { class: 'crea-w' }, h('span', { class: 'crea-wn' }, ic('z' + w), S.name),
+  kids.push(h('div', { class: 'crea-lvs' }, ...STRATA.map((S, w) => h('div', { class: 'crea-w' }, h('span', { class: 'crea-wn' }, ic('z' + kitOf(w)), S.name),
     ...Array.from({ length: PER_WORLD }, (_, i) => { const n = w * PER_WORLD + i + 1; return h('button', { class: 'chipbtn', type: 'button', 'aria-label': 'Niveau ' + n + ' · ' + LEVELS[n - 1].name, title: LEVELS[n - 1].name, onclick: () => creaGo(n) }, LEVELS[n - 1].boss ? ic('etoile') : String(n)); })))));
   kids.push(h('div', { class: 'eyebrow', text: 'Ton chevalier' }), h('div', { class: 'crea-grid' },
     creaBtn('cadenas', 'Tout débloquer (niveaux, mondes, thèmes)', () => { for (const k of ['unlocked', 'un1', 'un2', 'unx']) ME[k] = NLV + 1; toast('Tout est ouvert'); showUI(); renderSheet(); }),
@@ -5845,12 +5893,12 @@ function renderSheet() {
     const big = ME.game === 1, diff = big ? 0 : save.diff, mod = big ? EXPE : DIFFS[diff], track = ME[big ? 'unx' : TRACKS[diff]], frx = v => String(v).replace('.', ',');
     const seg = (lab, on, fn, off, icn) => h('button', { class: 'chipbtn grow', type: 'button', 'aria-pressed': String(on), disabled: !!off, onclick: fn }, off ? ic('cadenas') : icn ? ic(icn) : null, lab);
     const art = zoneArt(selWorld); // the illustration of the zone, behind its name (it comes in as soon as it has arrived)
-    body.push(h('div', { class: 'banner z' + selWorld, 'data-art': selWorld, style: art ? '--art:' + artLayer(art) : '' }, ic('z' + selWorld), h('small', { text: 'Zone ' + (selWorld + 1) + ' sur ' + STRATA.length + (big ? ' · Expédition' : '') }), h('b', { text: STRATA[selWorld].name })));
+    body.push(h('div', { class: 'banner z' + kitOf(selWorld), 'data-art': selWorld, style: art ? '--art:' + artLayer(art) : '' }, ic('z' + kitOf(selWorld)), h('small', { text: 'Zone ' + (selWorld + 1) + ' sur ' + nWorlds() + (big ? ' · Expédition' : '') }), h('b', { text: STRATA[selWorld].name })));
     if (!big) body.push(h('div', { class: 'seg' }, ...DIFFS.map((d, i) => seg(d.name, diff === i, () => { save.diff = i; fixSel(); saveGame(false); renderSheet(); }, i > 0 && !canPlay(1, i, false)))));
     // one short paragraph under the choice: what this mode is, and what it changes
     body.push(h('p', { style: 'font-size:13px;margin-top:-6px', text: big ? 'De grands niveaux tout en hauteur. Rien n\'est automatique : tu frappes, tu vises et tu esquives toi-même ; ' + fword(TU.sealN) + ' sceau' + (TU.sealN > 1 ? 'x à trouver ouvrent' : ' à trouver ouvre') + ' la sortie.'
       : diff === 0 ? 'Ton chevalier frappe seul, tu choisis où te placer. Finis un niveau pour l\'ouvrir en Difficile.' : mod.help + ' Ennemis : vie × ' + frx(mod.hp) + ', dégâts × ' + frx(mod.dmg) + '. En échange : ' + GM().coin + ' × ' + frx(mod.ecl) + ' et objets de rang +' + mod.lv + '.' }));
-    body.push(h('div', { class: 'seg worlds slide', id: 'world-seg' }, ...STRATA.map((S, w) => seg(S.name, selWorld === w, () => { selWorld = w; let n = (w + 1) * PER_WORLD; while (n > w * PER_WORLD + 1 && !canPlay(n, diff, big)) n--; selLevel = n; renderSheet(); }, !canPlay(w * PER_WORLD + 1, diff, big), 'z' + w))));
+    body.push(h('div', { class: 'seg worlds slide', id: 'world-seg' }, ...STRATA.slice(0, nWorlds()).map((S, w) => seg(S.name, selWorld === w, () => { selWorld = w; let n = (w + 1) * PER_WORLD; while (n > w * PER_WORLD + 1 && !canPlay(n, diff, big)) n--; selLevel = n; renderSheet(); }, !canPlay(w * PER_WORLD + 1, diff, big), 'z' + w))));
     const list = h('div', { class: 'lvs' }), s0 = selWorld * PER_WORLD;
     for (let n = s0 + 1; n <= s0 + PER_WORLD; n++) {
       const L = LEVELS[n - 1], locked = !canPlay(n, diff, big), done = n < track, loot = h('div', { class: 'loot' });
@@ -6108,7 +6156,7 @@ const themeOpen = i => i < 2 || i - 2 <= worldReached();
 function themeNow() {
   if (G.mode === 'title') return THEMES[0];
   const t = save.theme | 0; if (t && themeOpen(t)) return THEMES[t - 1];
-  return THEMES[1 + (F && !F.hub ? F.si % 5 : worldReached())];
+  return THEMES[1 + kitOf(F && !F.hub ? F.si : worldReached())];
 }
 let themeSeen = null; // { id, w }: the furthest world this character had reached the last time it stood at the camp
 function applyTheme() {
@@ -6133,8 +6181,8 @@ function swapCard() { const el = $('swap'); $('swap-n').textContent = GM().name;
 const icUrl = n => { const d = ICON_LIB[n]; return 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + d[0] + ' ' + d[0] + '">' + d[1] + '</svg>') + '")'; };
 function applyGame() { const g = GM(), st = document.documentElement.style; st.setProperty('--coin', g.col); st.setProperty('--coin-deep', g.deep); st.setProperty('--coin-ic', icUrl(g.ic)); st.setProperty('--gem-ic', icUrl('gemme')); }
 // how far a knight has come: the worlds reached in the better of the two games, 1 to 5 (6 = everything done). The ornament of its bubble follows it
-const stageOf = c => clamp(Math.ceil(Math.max(c.unlocked, c.unx) / PER_WORLD), 1, 6);
-const ornCol = t => t < 6 ? STRATA[t - 1].glow : 'var(--amber)'; // the colour of the world of that tier (the same as its level buttons); the last tier is gold
+const stageOf = c => clamp(Math.ceil(Math.max(c.unlocked, c.unx) / PER_WORLD), 1, nWorlds() + 1);
+const ornCol = t => t <= nWorlds() ? STRATA[t - 1].glow : 'var(--amber)'; // the colour of the world of that tier (the same as its level buttons); the last tier is gold
 function gauge(g, n) { return h('span', { class: 'pg', style: '--g:' + GAMES[g].col }, h('em', { text: GAMES[g].name + ' ' + Math.min(NLV, n) + ' / ' + NLV }), h('i', null, h('u', { style: 'width:' + Math.round(Math.min(NLV, n) / NLV * 100) + '%' }))); }
 // the bubble of a knight: its icon (the round of the cloak until the picture arrives), the ornament of its tier, its weapon
 function bubble(col, ico, t, wk) {
@@ -6812,7 +6860,7 @@ const ED_TOOLS = [
 const ED_FAMS = [['terrain', 'Terrain', 'niveaux', ['sol', 'mur', 'tex', 'peint', 'haut', 'taille']], ['decors', 'Décors', 'petale', ['decor', 'decmur']], ['niveau', 'Niveau', 'drapeau', ['crea', 'coffre', 'entree', 'sortie']]];
 const ED_FOES = [[0, 'Sporule'], [1, 'Ronceux'], [2, 'Cracheur'], [3, 'Follet'], [4, 'Gardien']];
 const ED_HEIGHTS = ['Comme tiré', 'Basse', 'Normale', 'Haute', 'Très haute'];
-const edZone = () => ED.camp ? 0 : strIdxOf(ED.floor) % 5; // the zone of what is being edited (the camp wears the Racines kit)
+const edZone = () => ED.camp ? 0 : kitOf(strIdxOf(ED.floor)); // the zone of what is being edited (the camp wears the Racines kit)
 const edDecor = () => { const z = ED.dz == null ? edZone() : ED.dz; return ED.camp && z === 0 ? [...DECOR[0], ['arche', 2.5, 0], ['barriere', .86, 0]] : DECOR[z]; };
 const edStamp = () => JSON.stringify(ED.camp ? campToPlan(F) : floorToPlan(F));
 function edPush() { ED.undo.push(edStamp()); if (ED.undo.length > 60) ED.undo.shift(); ED.redo.length = 0; }
@@ -7173,7 +7221,7 @@ function edUI() {
   if (ED.pts) kids.push(edPointsPanel());
   kids.push(h('div', { class: 'ed-fill' })); // the map stays free in the middle; everything else sits at the bottom
   if (ED.tool === 'crea') kids.push(h('div', { class: 'seg ed-sub ed-pal' }, ...ED_FOES.map((f, i) => edPalBtn(monName(f[0], strIdxOf(ED.floor)), f[1], ED.crea === i, () => { ED.crea = i; edUI(); }))));
-  const zones = (cur, fn) => h('div', { class: 'seg ed-sub' }, ...STRATA.map((S, z) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(cur === z), onclick: () => fn(z) }, ic('z' + z), S.name)));
+  const zones = (cur, fn) => h('div', { class: 'seg ed-sub' }, ...STRATA.slice(0, 5).map((S, z) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(cur === z), onclick: () => fn(z) }, ic('z' + z), S.name)));
   if (famOf && famOf[1].length > 1) kids.push(h('div', { class: 'seg ed-sub' }, ...famOf[1].map(tb)));
   if (ED_GROUND.includes(ED.tool)) { // the brush: size, shape, way of drawing
     const chip = (on, lab, fn) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: () => { fn(); ED.anchor = null; edUI(); } }, lab);
