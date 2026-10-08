@@ -1,6 +1,6 @@
 # Index
 
-Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
+Genere le 2026-10-08 par la reorganisation. Un dossier par ligne.
 
 | Dossier | Fichiers | Poids |
 |---|---:|---:|
@@ -35,22 +35,24 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `02_modeles_3d/creatures/pack2_animes/volants` | 2 | 2.5 Mo |
 | `02_modeles_3d/decors/abimes` | 2 | 0.2 Mo |
 | `02_modeles_3d/decors/abimes/pack1` | 5 | 1.5 Mo |
+| `02_modeles_3d/decors/abimes/volume` | 5 | 0.4 Mo |
 | `02_modeles_3d/decors/braises` | 2 | 0.2 Mo |
 | `02_modeles_3d/decors/braises/pack1` | 5 | 1.6 Mo |
-| `02_modeles_3d/decors/braises/volume` | 4 | 0.3 Mo |
+| `02_modeles_3d/decors/braises/volume` | 5 | 0.4 Mo |
 | `02_modeles_3d/decors/canopee` | 4 | 0.5 Mo |
 | `02_modeles_3d/decors/coffres` | 3 | 0.4 Mo |
 | `02_modeles_3d/decors/givre` | 2 | 0.3 Mo |
 | `02_modeles_3d/decors/givre/pack1` | 5 | 1.6 Mo |
-| `02_modeles_3d/decors/givre/volume` | 4 | 0.4 Mo |
+| `02_modeles_3d/decors/givre/volume` | 5 | 0.4 Mo |
 | `02_modeles_3d/decors/marais` | 2 | 0.3 Mo |
+| `02_modeles_3d/decors/marais/volume` | 5 | 0.5 Mo |
 | `02_modeles_3d/decors/mine` | 4 | 0.5 Mo |
 | `02_modeles_3d/decors/mycelium` | 2 | 0.2 Mo |
 | `02_modeles_3d/decors/mycelium/pack1` | 5 | 1.7 Mo |
-| `02_modeles_3d/decors/mycelium/volume` | 4 | 0.3 Mo |
+| `02_modeles_3d/decors/mycelium/volume` | 5 | 0.4 Mo |
 | `02_modeles_3d/decors/racines` | 2 | 0.3 Mo |
 | `02_modeles_3d/decors/racines/pack1` | 5 | 1.6 Mo |
-| `02_modeles_3d/decors/racines/volume` | 4 | 0.3 Mo |
+| `02_modeles_3d/decors/racines/volume` | 5 | 0.4 Mo |
 | `02_modeles_3d/decors/ruche` | 4 | 0.5 Mo |
 | `02_modeles_3d/equipements/ambre` | 7 | 2.0 Mo |
 | `02_modeles_3d/equipements/champignon` | 7 | 2.6 Mo |
@@ -61,6 +63,7 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `03_textures/abime` | 12 | 2.9 Mo |
 | `03_textures/braises` | 12 | 3.4 Mo |
 | `03_textures/givre` | 12 | 3.0 Mo |
+| `03_textures/marais` | 12 | 3.3 Mo |
 | `03_textures/mycelium` | 12 | 3.1 Mo |
 | `03_textures/racines` | 12 | 3.3 Mo |
 | `04_herbes/abimes` | 5 | 0.4 Mo |
@@ -91,7 +94,7 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `07_outils/attaques_monstres` | 1 | 0.0 Mo |
 | `07_outils/dashboard` | 3 | 0.0 Mo |
 | `07_outils/monstres_animes` | 4 | 0.0 Mo |
-| `07_outils/pipeline` | 18 | 0.1 Mo |
+| `07_outils/pipeline` | 19 | 0.1 Mo |
 | `07_outils/pipeline/niveaux` | 4 | 0.0 Mo |
 | `07_outils/validations` | 2 | 1.0 Mo |
 | `_alternatives/textures_v1/abimes` | 7 | 1.1 Mo |
@@ -99,8 +102,8 @@ Genere le 2026-10-07 par la reorganisation. Un dossier par ligne.
 | `_alternatives/textures_v1/givre` | 7 | 1.1 Mo |
 | `_alternatives/textures_v1/mycelium` | 7 | 1.6 Mo |
 | `_alternatives/textures_v1/racines` | 7 | 1.2 Mo |
-| `_apercus` | 20 | 1.4 Mo |
+| `_apercus` | 22 | 1.9 Mo |
 | `_apercus/pack2_monstres_animes` | 6 | 0.7 Mo |
-| `_journal` | 7 | 0.0 Mo |
+| `_journal` | 8 | 0.0 Mo |
 | `_journal/pack_zones_promo` | 3 | 0.2 Mo |
 | `_journal/textures` | 1 | 0.0 Mo |
