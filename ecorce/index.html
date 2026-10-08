@@ -572,6 +572,8 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 .hpbar{width:158px;height:20px;border-radius:999px;background:var(--well);box-shadow:inset 0 0 0 1px var(--line)}
 .hpbar i{border-radius:999px} .hpbar b{font-size:12px;line-height:20px}
 .xpbar{width:158px;height:6px;border-radius:999px;background:var(--well);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+/* on a narrow phone the purse grows to the left with its figures (four of them at 360 points) and ran over the bar of life: the two bars give way, the name of the level keeps its width */
+.hpbar,.xpbar{max-width:100%}#hud-floor{align-self:flex-start}
 .xpbar i{display:block;height:100%;width:100%;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,var(--accent2),var(--amber));transition:transform .4s}
 /* figures of the inventory: the name on its own line, the gauge then the value */
 .sbar{align-items:flex-start} .sbar .ic{margin-top:1px}
@@ -644,12 +646,12 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
   #b-big{padding:6px 10px;min-height:34px;font-size:12.5px}
   #sheet.dock .adm-switch{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px}#sheet.dock .adm-sub p{display:none}#sheet.dock .adm-sub .btn{width:40px;min-height:40px;padding:0;justify-content:center;font-size:0;border-radius:50%}#sheet.dock .adm-sub .btn .ic{font-size:18px;margin:0}
   #sh-more{width:40px;height:40px;margin-top:-50px;opacity:.94}
-  /* docked on a phone, the foot of the variables is one row that slides sideways, « Publier » first (its three rows left nothing of the settings to see) */
+  /* on a phone, docked or full screen, the foot of the variables is one row that slides sideways, « Publier » first (its three rows took a third of the screen) */
   #sheet.dock #sh-body{gap:10px;padding-bottom:12px}
-  #sheet.dock #sh-foot{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));border-radius:16px 16px 0 0}
-  #sheet.dock .adm-foot{flex-direction:row;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none}#sheet.dock .adm-foot::-webkit-scrollbar{display:none}
-  #sheet.dock .adm-foot>.row{flex:none;flex-wrap:nowrap;gap:6px}
-  #sheet.dock .adm-foot .btn{flex:none;width:auto;min-height:36px;padding:6px 12px;font-size:12.5px;white-space:nowrap}#sheet.dock .adm-foot>.btn.wide{order:-1}
+  #sheet:is(.dock,.full) #sh-foot{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));border-radius:16px 16px 0 0}
+  #sheet:is(.dock,.full) .adm-foot{flex-direction:row;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none}#sheet:is(.dock,.full) .adm-foot::-webkit-scrollbar{display:none}
+  #sheet:is(.dock,.full) .adm-foot>.row{flex:none;flex-wrap:nowrap;gap:6px}
+  #sheet:is(.dock,.full) .adm-foot .btn{flex:none;width:auto;min-height:36px;padding:6px 12px;font-size:12.5px;white-space:nowrap}#sheet:is(.dock,.full) .adm-foot>.btn.wide{order:-1}
 }
 @media (max-width:560px) and (orientation:portrait){#sheet.dock{max-height:46%}}
 @media (max-width:400px){.adm-jtabs .chipbtn .ic{display:none}.adm-tab{font-size:12.5px;gap:5px;padding:6px 4px}
