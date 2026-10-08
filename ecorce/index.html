@@ -1295,6 +1295,7 @@ const TUNE_DEF = [
   ['coopGo', 'che', 'Décompte du départ en équipe', 'Quand tout le monde est prêt sur la page du groupe, le niveau part après ce décompte ; un joueur qui repasse « Pas prêt » l\'arrête.', 3, 1, 10, 's'],
   ['coopAuto', 'che', 'Prêt tout seul en fin de niveau', 'Après un niveau gagné en équipe, chacun est prêt tout seul au bout de ce temps (sauf s\'il attend ou ouvre son inventaire).', 3, 1, 15, 's'],
   ['coopVote', 'che', 'Temps pour répondre à un vote', 'Une pause ou un « Réessayer » proposé en équipe attend les réponses ce temps-là ; qui ne répond pas est compté pour.', 10, 3, 30, 's'],
+  ['vif', 'che', 'Vivacité des animations', '0 = comme avant. 1 = le chevalier tourne vite avec un léger élan, penche et se soulève en courant, encaisse le recul de ses tirs, se ramasse puis s\'étire sur ses coups ; une créature touchée sursaute, et elle éclate en tombant. 2 = plus marqué. Seule l\'image change : rien ne bouge dans les règles du jeu.', 1, 0, 2, 'n'],
   ['sacCommun', 'che', 'Sac commun de l\'équipe', '1 = les membres d\'une équipe peuvent mettre des objets de leur sac dans un sac commun, et y prendre ceux des autres ; 0 = fermé (rien ne se met, rien ne se prend ; ce qui est déjà offert reste dans le sac de celui qui l\'a mis).', 1, 0, 1, 'n'],
   ['lanDmg', 'lan', 'Dégâts de l\'onde sans lanterne', 'L\'onde lancée sans lanterne portée.', 20, 0, 200, 'n'],
   ['lanCd', 'lan', 'Recharge de la lanterne', 'Le temps entre deux ondes, sans bonus (une lanterne rare ou épique le raccourcit un peu).', 9, 2, 30, 's'],
@@ -4500,10 +4501,10 @@ function render3D() {
   POOL.line.begin(); POOL.disc.begin();
   for (const e of F.enemies) {
     const near = !e.dead && Math.abs(e.x - P.x) < 400 && Math.abs(e.y - P.y) < 620;
-    if (!near) { if (e.m) { if (e.dead) { const a = e.m.anim; if (a) e.m.body.rotation.x = 0; dying.push({ root: e.m.root, t: a ? MOB_DIE : .14, anim: a, mat: e.m.mat }); if (e.m.mat) e.m.mat.emissive.setRGB(1, 1, 1); } else freeMesh(e.m.root); e.m = null; } continue; }
+    if (!near) { if (e.m) { if (e.dead) { const a = e.m.anim; if (a) e.m.body.rotation.x = 0; dying.push({ root: e.m.root, t: a ? (TU.vif > 0 ? MOB_POP : MOB_DIE) : .14, anim: a, mat: e.m.mat, T: a && TU.vif > 0 ? MOB_POP : 0, col: F.str.foe2 }); if (e.m.mat) e.m.mat.emissive.setRGB(1, 1, 1); } else freeMesh(e.m.root); e.m = null; } continue; }
     const m = e.m || (e.m = makeEnemyMesh(e)), r = m.root, id = e.id, an = m.anim;
     // a model that has its animations moves by itself: the code only adds what the animations cannot (height, roll, shudder)
-    let y = 0, sxz = 1, sy = 1, wob = 0;
+    let y = 0, sxz = 1, sy = 1, wob = 0, jx = 0, jz = 0;
     if (an) monsterPose(e, m, dt);
     if (e.type === 0) { if (!an) { if (e.st === 2) { const k = Math.abs(Math.sin(t * 7.5 + id)); y = k * .38; sy = 1 + k * .18; } else sy = 1 + Math.sin(t * 3 + id) * .05; sxz = 1 / Math.sqrt(sy); } }
     else if (e.type === 1) { if (e.st === 1) wob = Math.sin(t * 60) * .04; m.roll = m.mdl && (e.st !== 2 || m.legs) ? m.roll * .85 : m.roll + dt * (e.st === 2 ? 22 : e.st === 1 ? 0 : 2.5); m.body.rotation.x = m.roll; } // a model only rolls while it charges, and one on many legs runs
@@ -4512,8 +4513,12 @@ function render3D() {
     else if (e.type === 4) { if (e.st === 1) { y = .32; wob = Math.sin(t * 40) * .025; } else if (e.st === 2 && !an) { sy = .78; sxz = 1.12; } else if (!an) sy = 1 + Math.sin(t * 2 + id) * .02; }
     else if (e.type === 5) { r.rotation.z = e.flash > 0 ? Math.sin(t * 55) * .14 : r.rotation.z * .8; }
     else { const k = an ? 1 : 1 + Math.sin(t * 3) * .035; sy = k; sxz = 1 / k; if (e.st === 1 || e.st === 8) wob = Math.sin(t * 50) * .05; if (m.crown) m.crown.rotation.y += dt * (e.sub ? 2 : .7); m.spr.material.opacity = e.sub ? .5 : .28; m.spr.material.color.set(e.sub ? '#ff5a3c' : S.glow); }
+    if (TU.vif > 0) { // (vif) a hit: the creature jolts away from the knight and is squeezed, then springs back. On the picture only: the game moves nothing here
+      if (e.flash > (m.fl0 || 0) + .01) { m.hk = 1; const a = Math.atan2(e.y - P.y, e.x - P.x); m.hx = Math.cos(a); m.hz = Math.sin(a); } m.fl0 = e.flash;
+      if (m.hk > 0) { m.hk = Math.max(0, m.hk - dt / .24); const u = 1 - m.hk, q = Math.exp(-u * 4.5) * Math.cos(u * 8.5) * Math.min(TU.vif, 2) * (e.type === 9 ? .35 : e.type === 5 ? .6 : 1); sy *= 1 - .2 * q; sxz *= 1 + .12 * q; jx = m.hx * .15 * q; jz = m.hz * .15 * q; }
+    }
     m.y += (y - m.y) * .4;
-    const big = e.type === 9 ? 1.2 : 1; r.position.set(e.x * U + wob, m.y, e.y * U); r.scale.set(sxz * big, sy * big, sxz * big);
+    const big = e.type === 9 ? 1.2 : 1; r.position.set(e.x * U + wob + jx, m.y, e.y * U + jz); r.scale.set(sxz * big, sy * big, sxz * big);
     if (e.type !== 3) r.rotation.y = Math.PI / 2 - e.ang;
     if (m.mat) { const f = e.flash > 0 ? .85 : 0, red = (e.type === 1 && (e.st === 1 || e.st === 2)) ? .45 : (e.type === 9 && e.sub ? .12 : 0); m.mat.emissive.setRGB(f + red, f, f); }
     // telegraphs
@@ -4876,11 +4881,11 @@ function boneHinge(b, deg) { b.quaternion.multiply(_dq.setFromAxisAngle(_ax, deg
 // Where the weapon in his hand points (the knight's frame: x left, y up, z forward), standing and running: a sword low, twin blades crossed
 // then trailing, a dagger held backwards, a crossbow forward, a cannon up on the shoulder. The hand is turned until the weapon points there.
 const AIM = [[[0, -.8, .6], [0, -.9, -.3]], [[.5, .1, .86, -.5, .1, .86], [.25, -.5, -.83, -.25, -.5, -.83]], [[0, -.5, -.85], [.1, -.3, -.95]], [[0, .35, .94], [0, .05, 1]], [[0, .3, .95], [0, .35, .94]]];
-function heroAim(m, fam, sc) {
+function heroAim(m, fam, sc, up) { // (up: the muzzle climbs by that much, the recoil of a shot)
   const an = m.an, wt = an.arm * sc, W = WEAPONS[m.kind]; if (wt < .02 || !m.armed) return; const a = AIM[fam] || AIM[0], mv = an.move;
   for (const [k, hand, o] of [['hand', 'RightHand', 0], ['hand2', 'LeftHand', 3]]) {
     const hd = m[k], b = m.bones[hand]; if (!hd || !b) continue;
-    _tv.set(a[0][o] * (1 - mv) + a[1][o] * mv, a[0][o + 1] * (1 - mv) + a[1][o + 1] * mv, a[0][o + 2] * (1 - mv) + a[1][o + 2] * mv).normalize();
+    _tv.set(a[0][o] * (1 - mv) + a[1][o] * mv, a[0][o + 1] * (1 - mv) + a[1][o + 1] * mv + (up || 0), a[0][o + 2] * (1 - mv) + a[1][o + 2] * mv).normalize();
     m.body.getWorldQuaternion(_hbq); _tv.applyQuaternion(_hbq); // where it should point, in the world
     _av.set(0, W.proj ? 0 : 1, W.proj ? 1 : 0); hd.getWorldQuaternion(_pq); _av.applyQuaternion(_pq); // where it points now
     _ad.setFromUnitVectors(_av, _tv); _tq.identity().slerp(_ad, wt); boneWorld(b, _tq);
@@ -5020,13 +5025,35 @@ function shotTrail(s, foe) {
   else { mote(s.x, s.y, 14, shotLite(s.col), 1.5, .16); if (f % 2 === 0) mote(s.x - s.vx * .012, s.y - s.vy * .012, 14, '#ffffff', .9, .1); }
 }
 // same job as poseGleaner, for the skinned knight: the game says what the character does, the animations follow
+/* ---------- (vif) livelier motions, in the manner of Archero (8 October, Damien's request) ----------
+   TU.vif (0 to 2, 1 by default; 0 = everything as before) scales what the code adds on top of the clips, on the picture only: nothing
+   moves in the rules of the game, so nothing changes in a team either.
+   - the turn: the body goes to where the knight faces in a tenth of a second and passes it by 8 % before settling (it used to snap);
+   - the run: the lean springs (a start throws him forward, a stop sets him back upright past the vertical), each step lifts him, a turn banks him;
+   - a shot packs him back and slides him a little; a blow gathers him then stretches him forward; a hit squeezes him;
+   - a creature that is hit jolts away and is squeezed (e_gl.js); when it falls it hops, swells and bursts in half a second (monsterDie). */
+function heroYaw(an, to, dt, V) {
+  if (!(V > 0) || an.yaw === undefined) { an.yaw = to; an.yv = 0; return to; }
+  const w = 38, z = 1 - .38 * Math.min(1, V) - .12 * Math.max(0, V - 1); // the damping: .62 at 1 (8 % past the mark), .5 at 2
+  for (let i = 0, n = Math.max(1, Math.ceil(dt / .009)), h = dt / n; i < n && dt > 0; i++) { an.yv += (w * w * angDiff(to, an.yaw) - 2 * z * w * an.yv) * h; an.yaw += an.yv * h; }
+  return an.yaw;
+}
+const STRIDE = { lean: 0, hop: 0, bank: 0 };
+function heroStride(m, an, walk, dt, V, off) {
+  const to = off ? 0 : an.move * (.06 + .11 * V), w = 20, z = .55; if (an.ln === undefined) { an.ln = to; an.lnv = 0; }
+  for (let i = 0, n = Math.max(1, Math.ceil(dt / .012)), h = dt / n; i < n && dt > 0; i++) { an.lnv += (w * w * (to - an.ln) - 2 * z * w * an.lnv) * h; an.ln += an.lnv * h; }
+  const C = m.bd.clips.course, ph = walk / 11 * 1.15 / (C ? C.duration : .5) * Math.PI * 2; // the time of the clip of the run, two steps a turn of it
+  STRIDE.lean = an.ln; STRIDE.hop = off ? 0 : Math.abs(Math.sin(ph)) * .05 * V * an.move; STRIDE.bank = clamp(-(an.yv || 0) * .011, -.16, .16) * Math.min(1, V) * (.35 + .65 * an.move);
+  return STRIDE;
+}
 function poseHero(m, x, y, face, walk, moving, down, swingT, kind, dashing, blink, hurtT, ex) {
   const an = m.an, t = G.time, dt = clamp(t - (an.last || t), 0, .05), W = WEAPONS[kind], A = m.act, nw = TU.animArmes, calm = m === PM && lobbyNew(); an.last = t;
   if (m.kind !== kind) { m.kind = kind; m.wName = null; } heroWeapon(m);
   const joy = ex.joyT > 0 ? ex.joyT : 0, lan = ex.lanT > 0 ? ex.lanT / .5 : 0, dance = ex.dance > 0 ? ex.dance : 0;
   // joy and the end-of-level dance have no animation of their own yet: hops, and a spin for the dance
   const jump = dance ? Math.abs(Math.sin(dance * 7)) * .28 : joy ? Math.abs(Math.sin(joy * 10)) * .22 * Math.min(1, joy * 2.5) : 0;
-  m.root.visible = !blink; m.root.position.set(x * U, jump + lan * .05, y * U); m.root.rotation.set(0, Math.PI / 2 - face + (dance ? dance * 5 : joy ? Math.sin(joy * 9) * .5 : 0) + (calm ? CALM.yaw + Math.sin(t * .8) * .07 : 0), 0);
+  const V = calm ? 0 : clamp(+TU.vif || 0, 0, 2), yaw = heroYaw(an, Math.PI / 2 - face, dt, V); // (vif) the turn springs to where he faces
+  m.root.visible = !blink; m.root.position.set(x * U, jump + lan * .05, y * U); m.root.rotation.set(0, yaw + (dance ? dance * 5 : joy ? Math.sin(joy * 9) * .5 : 0) + (calm ? CALM.yaw + Math.sin(t * .8) * .07 : 0), 0);
   // a blow has just started: pick the part of the clip to play, and how long it lasts
   if (swingT > an.lastSw + 1e-3) { if (nw && W.fam < 3 && m.cls === 1 && m.bd === body0()) attacksWant(); const c = ATK[W.fam]; an.alt ^= 1; an.big = !!ex.big; if (nw) { an.sq = an.big ? 2 : t - (an.blowT || -9) > 1.2 + W.cd || an.sq === 2 ? 0 : 1 - (an.sq | 0); an.blowT = t; const c2 = m.cls === 1 && W.fam < 3 && (an.big && ex.lunged && ATK2[W.fam][3] || ATK2[W.fam][an.sq]); an.atkC = c2 && m.bd.clips[c2[0]] ? c2 : W.fam === 2 && an.sq === 1 ? ATK_ALT : c; } else an.atkC = W.fam === 2 && an.alt ? ATK_ALT : c; an.atkD = clamp(W.cd * (an.big ? .9 : .72), .3, .85); an.atk = 0;
     an.armT = t; if (!m.armed) { if (nw) { an.gs = 0; an.gd = 1; an.sw = false; } else heroArm(m, true); } else if (nw && an.gd === 0) an.gs = -1; } // a blow: the weapon is out (at once, or in the short gesture of drawing it: the blow does not wait)
@@ -5063,7 +5090,7 @@ function poseHero(m, x, y, face, walk, moving, down, swingT, kind, dashing, blin
   const tRest = guard ? CA.t : (an.t + an.ph) % D('repos');
   set('repos', rest * (1 - an.move) + 1e-4, tRest);
   set('course', rest * an.move, (walk / 11 * 1.15) % D('course')); // the legs follow the distance covered
-  if (wAtk > 0) { const c = an.atkC, c2 = c.length > 3, v = nw && W.fam < 3 ? BLOW[W.fam][an.sq | 0] : null, e = c2 ? warp(k, c[3]) : v ? warp(k, v[5]) : 1 - (1 - k) * (1 - k); set(c[0], wAtk, v && v[6] && !c2 ? c[2] - (c[2] - c[1]) * e : c[1] + (c[2] - c[1]) * e); } // (ATK2: played forwards, its own easing)
+  if (wAtk > 0) { const c = an.atkC, c2 = c.length > 3, v = nw && W.fam < 3 ? BLOW[W.fam][an.sq | 0] : null, e = c2 ? warp(k, c[3]) : v ? warp(k, v[5]) : 1 - (1 - k) * (1 - k); set(c[0], wAtk, V > 0 && W.proj ? c[2] - (c[2] - c[1]) * .12 * (1 - e) : v && v[6] && !c2 ? c[2] - (c[2] - c[1]) * e : c[1] + (c[2] - c[1]) * e); } // (vif, a shot: the clip stays on its aiming pose instead of raising the weapon after the shot; the code gives the recoil) // (ATK2: played forwards, its own easing)
   if (wHurt > 0) set('touche', wHurt, .15 + (1 - an.hurt) * .5);
   if (wDead > 0) set('mort', wDead, Math.min(D('mort') - .02, an.dead * D('mort')));
   const held = calm && !!CL.repos; // the home screen: the clip is held on a calm instant and laid straight on the bones (the mixer writes a bone only when the clip moves it: what the code adds to a held pose would pile up frame after frame)
@@ -5072,11 +5099,18 @@ function poseHero(m, x, y, face, walk, moving, down, swingT, kind, dashing, blin
   m.held = held || still;
   if (nw) { const hp = m.bones.Hips; if (hp) { hp.position.x -= rx; hp.position.z -= rz; } heroBearing(m, W.fam, walk, (1 - wDead) * (1 - wHurt) * (1 - .85 * wAtk) * (dashing ? .3 : 1), dt, calm); }
   // on top of the animations: the roll of the dodge, the size of a big blow, the lean of a run
-  const ti = m.tilt; ti.rotation.set(dashing ? .75 : an.move * .06 - (ex.kick || 0) * .18, 0, 0); ti.position.set(0, dashing ? .1 : 0, 0);
+  const ti = m.tilt, kick = ex.kick || 0, st = V > 0 ? heroStride(m, an, walk, dt, V, down || dashing) : null; // (vif) the lean, the lift of each step, the bank of a turn, the slide of a shot
+  ti.rotation.set(dashing ? .75 : (st ? st.lean : an.move * .06) - kick * .18, 0, st ? st.bank : 0); ti.position.set(0, (dashing ? .1 : 0) + (st ? st.hop : 0), st ? -kick * kick * .1 * V : 0);
   if (calm) { ti.rotation.z = Math.sin(t * .8 + 1) * .022; ti.position.x = Math.sin(t * .8) * .02; heroCalm(m, t); } // a slow sway and a breath
   else if (guard && !down) heroBreath(m, t, rest * (1 - an.move)); // on his guard he breathes and shifts his weight, or he would be a statue
   if (nw) heroBlow(m, W.fam, k, (1 - wDead) * (1 - wHurt) * Math.max(wAtk, W.proj ? 1 : 0), ex.kick || 0, dashing);
-  const big = an.big && k < 1 ? 1 + Math.sin(k * Math.PI) * .12 : 1, sq = dashing ? .8 : 1; ti.scale.set(big, big * sq, big * (dashing ? 1.25 : 1));
+  if (nw && V > 0 && W.proj && k < 1) heroAim(m, W.fam, (1 - wDead) * (1 - wHurt) * Math.min(1, k * 12, (1 - k) * 4), kick * .3); // (vif) through the whole shot the weapon stays on its target, and the recoil lifts its muzzle
+  const big = an.big && k < 1 ? 1 + Math.sin(k * Math.PI) * .12 : 1, sq = dashing ? .8 : 1; let ex1 = 1, ey1 = 1, ez1 = 1;
+  if (V > 0 && !dashing && !down) { // (vif) he gathers himself before a blow and stretches into it ; a shot packs him back ; a hit squeezes him
+    if (k < 1 && !W.proj) { const g = Math.sin(clamp(k / .2, 0, 1) * Math.PI), r = Math.sin(clamp((k - .16) / .5, 0, 1) * Math.PI); ey1 -= (.06 * g + .03 * r) * V; ex1 += .04 * g * V; ez1 += .1 * r * V; }
+    ez1 -= .08 * V * kick; ey1 += .03 * V * kick; ey1 -= .08 * V * an.hurt; ex1 += .05 * V * an.hurt; ez1 += .05 * V * an.hurt;
+  }
+  ti.scale.set(big * ex1, big * sq * ey1, big * (dashing ? 1.25 : 1) * ez1);
   m.glow.material.opacity = .55 + Math.sin(t * 5 + an.ph) * .08 + lan * .4;
   const hk = ex.healT > 0 ? Math.sin(Math.min(1, ex.healT / .9) * Math.PI) : 0; m.mats[0].emissive.setRGB(hk * .5, hk * .1, hk * .12); // healed: a red glow passes over the knight
 }
@@ -5139,14 +5173,18 @@ function monsterPose(e, m, dt) {
   if (wHit > 0) poseAt(P0.touche, a.hit * P0.touche.d, wHit, out);
 }
 // a creature falls: its last poses melt into the death animation, which ends flat; then it sinks away
-const MOB_DIE = 1.15;
+const MOB_DIE = 1.15, MOB_POP = .55; // (MOB_POP: with TU.vif, it hops, swells and bursts in half a second)
 function monsterDie(d, dt) {
-  const a = d.anim, out = a.w, k = MOB_DIE - d.t, P0 = a.P;
+  const a = d.anim, out = a.w, T = d.T || MOB_DIE, k = T - d.t, P0 = a.P;
   if (!a.last) a.last = Float32Array.from(out);
-  out.fill(0); poseAt(P0.mort, Math.min(k, P0.mort.d), 1, out);
+  out.fill(0); poseAt(P0.mort, Math.min(d.T ? k / (T * .6) * P0.mort.d : k, P0.mort.d), 1, out); // (vif: the whole fall in the first six tenths of the time)
   const f = Math.min(1, k / .12); for (let i = 0; i < out.length; i++) out[i] = out[i] * f + a.last[i] * (1 - f);
-  const g = Math.max(0, 1 - k * 5); if (d.mat) d.mat.emissive.setRGB(g, g, g); // the white of the blow fades out
+  const g = d.T && k > T * .6 ? Math.min(1, (k - T * .6) / (T * .2)) : Math.max(0, 1 - k * 5); if (d.mat) d.mat.emissive.setRGB(g, g, g); // the white of the blow fades out (vif: and comes back as it swells)
   if (!d.s0) { d.s0 = d.root.scale.x; d.y0 = d.root.position.y; }
+  if (d.T) { const u = k / T, V = Math.min(TU.vif, 2), up = u < .6 ? Math.sin(u / .6 * Math.PI) : 0, sw = u < .6 ? 1 + .08 * up : u < .8 ? 1 + (u - .6) / .2 * .3 : 1.3 * Math.max(0, 1 - (u - .8) / .2);
+    d.root.scale.setScalar(d.s0 * sw); d.root.position.y = d.y0 + up * .2 * V;
+    if (u >= .8 && !d.pop) { d.pop = 1; burst(d.root.position.x / U, d.root.position.z / U, d.col || '#fff', 12, 150, 12); } // the burst, once, when it is at its biggest
+    return; }
   const s = clamp(d.t / .3, 0, 1); d.root.scale.setScalar(d.s0 * (.3 + .7 * s)); d.root.position.y = d.y0 - (1 - s) * .15;
 }
 
@@ -10135,6 +10173,10 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 12, d: '8 octobre 2026', t: 'Des mouvements plus vifs', img: 'mouvements_vifs', l: [
+      'Le chevalier tourne vite, penche et se soulève en courant.',
+      'À l\'arbalète et au canon, l\'arme reste pointée sur la cible et recule à chaque tir.',
+      'Une créature touchée sursaute. Vaincue, elle éclate.'] },
     { id: 11, d: '8 octobre 2026', t: 'Le sac commun de l\'équipe', img: 'sac_commun', l: [
       'En équipe, un sac commun : chacun y met des objets de son sac, et les autres peuvent les prendre.',
       'Un objet trop fort pour toi reste grisé : avance encore un peu pour le prendre.',
