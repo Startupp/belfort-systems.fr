@@ -627,6 +627,36 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 #sheet.full::before{display:none}
 #sheet.full .sh-head h2{font-size:clamp(22px,7.4vw,38px)}
 #sheet.full .sh-head,#sheet.full #sh-body,#sheet.full #sh-foot{width:100%;max-width:1280px;margin-inline:auto}
+/* the administration on a phone (36m): the title keeps to its own cell and ends in « … » instead of running under « Agrandir »; the three editors are tabs;
+   the docked panel takes nearly half of a narrow screen (30 % left room for the title and little else); an open player's card is never squeezed */
+#sheet.dock .sh-head h2,#sheet.full .sh-head h2{display:block;overflow:hidden;text-overflow:ellipsis}
+#sheet.dock .sh-head h2 .ic,#sheet.full .sh-head h2 .ic{display:inline-grid;vertical-align:middle;margin-right:10px}
+.adm-switch{display:flex;flex-direction:column;gap:8px;flex:none}
+.adm-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:999px;background:var(--well)}
+.adm-tab{appearance:none;border:0;background:transparent;color:var(--dim);font:700 13px var(--ui);min-height:38px;min-width:0;padding:6px 8px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;white-space:nowrap}
+.adm-tab .ic{font-size:16px;flex:none}.adm-tab.on{background:var(--amber);color:var(--ink);cursor:default}
+.adm-sub{display:flex;align-items:center;gap:10px}.adm-sub p{flex:1 1 0;min-width:0;margin:0;font-size:12.5px;line-height:1.35;color:var(--dim)}.adm-sub .btn{flex:none;min-height:36px;padding:6px 12px;font-size:13px}
+.adm-player{flex:none}
+@media (max-width:560px){
+  #sheet.dock .sh-head,#sheet.full .sh-head{gap:6px 8px;padding-left:16px;padding-right:12px}
+  #sheet.dock .sh-head h2,#sheet.full .sh-head h2{font-size:clamp(17px,5vw,22px)}
+  #sheet.dock .sh-head h2 .ic,#sheet.full .sh-head h2 .ic{width:30px;height:30px;font-size:17px;margin-right:8px}
+  #b-big{padding:6px 10px;min-height:34px;font-size:12.5px}
+  #sheet.dock .adm-switch{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px}#sheet.dock .adm-sub p{display:none}#sheet.dock .adm-sub .btn{width:40px;min-height:40px;padding:0;justify-content:center;font-size:0;border-radius:50%}#sheet.dock .adm-sub .btn .ic{font-size:18px;margin:0}
+  #sh-more{width:40px;height:40px;margin-top:-50px;opacity:.94}
+  /* docked on a phone, the foot of the variables is one row that slides sideways, « Publier » first (its three rows left nothing of the settings to see) */
+  #sheet.dock #sh-body{gap:10px;padding-bottom:12px}
+  #sheet.dock #sh-foot{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));border-radius:16px 16px 0 0}
+  #sheet.dock .adm-foot{flex-direction:row;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none}#sheet.dock .adm-foot::-webkit-scrollbar{display:none}
+  #sheet.dock .adm-foot>.row{flex:none;flex-wrap:nowrap;gap:6px}
+  #sheet.dock .adm-foot .btn{flex:none;width:auto;min-height:36px;padding:6px 12px;font-size:12.5px;white-space:nowrap}#sheet.dock .adm-foot>.btn.wide{order:-1}
+}
+@media (max-width:560px) and (orientation:portrait){#sheet.dock{max-height:46%}}
+@media (max-width:400px){.adm-jtabs .chipbtn .ic{display:none}.adm-tab{font-size:12.5px;gap:5px;padding:6px 4px}
+  /* the bar of the editor of levels on a narrow phone: its name ran under « Annuler » and « Essayer » left the bar */
+  #ed .ed-top>.row:first-child{gap:5px!important}#ed .ed-top>.row:first-child>.btn.small{padding:8px 10px;flex:none}#ed .ed-top>.row:first-child>.chipbtn{padding:8px 9px;flex:none}
+  #ed .ed-top>.row:first-child>.btn.small:last-child .ic{display:none}#ed .ed-top .ed-name{flex:1 1 0;overflow:hidden}
+}
 @media (min-width:760px){
   #sheet.full .adm-list,#sheet.full .adm-extra:not([hidden]){display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
   #sheet.full .adm-list>.adm-subtools,#sheet.full .adm-list>.adm-extra,#sheet.full .adm-list>.adm-lvtools,#sheet.full .adm-more{grid-column:1/-1}
@@ -4685,7 +4715,7 @@ function heroBlow(m, fam, k, wa, kick, dashing) { bearInit();
 function heroBearing(m, fam, walk, sc, dt, calm) { bearInit();
   const an = m.an, mv = an.move, ar = an.arm, tb = BEAR[fam] || BEAR[0], w = [(1 - ar) * (1 - mv), (1 - ar) * mv, ar * (1 - mv), ar * mv], B = m.bones;
   BEAR_TO.fill(0); for (let s = 0; s < 4; s++) if (w[s] > 1e-3) { bearVec(tb[s], BEAR_ONE); for (let i = 0; i < NB; i++) BEAR_TO[i] += w[s] * BEAR_ONE[i]; }
-  if (calm) for (let i = 0; i < 6; i++) BEAR_TO[i * 3 + 1] = 0; // the home screen: no bearing turns the hips, the spine, the neck or the head (see heroCalm)
+  if (calm) BEAR_TO.fill(0); // the home screen: no bearing at all, whatever he carries (a hand on a hilt behind the shoulder or on a strap reads as an odd pose when he just stands there): see heroCalm
   const cur = an.bear || (an.bear = new Float32Array(NB)), k = 1 - Math.exp(-dt * 9);
   for (let i = 0; i < NB; i++) cur[i] += (BEAR_TO[i] - cur[i]) * k;
   if (sc < .01) return;
@@ -4705,7 +4735,9 @@ function heroBearing(m, fam, walk, sc, dt, calm) { bearInit();
    On the home screen he must always face the player: the clip is held on an instant where he stands calm (CALM.t, seconds into the clip), the whole
    body is turned back to three quarters towards the screen (CALM.yaw, radians), the head looks at the player (CALM.head, degrees), and the code adds
    a slow sway and a breath so that he is not a statue. Only the home screen (lobbyNew) asks for it: nothing changes in play. */
-const CALM = { t: .1, yaw: .45, head: -24 };
+// CALM.adj, the quiet stance: the clip of rest stands in a stride, one foot ahead (a fighter on his guard); on the home screen the feet come side by side.
+// [bone, x, y, z] in degrees in the knight's frame, or [bone, 'h', degrees] for a hinge; parents first. The arms are those of the clip: no bearing of a weapon is added there (heroBearing).
+const CALM = { t: .1, yaw: .45, head: -24, adj: [['RightUpLeg', -12, 0, 0], ['LeftUpLeg', 12, 0, 0]] };
 function heroHold(m, clip, time) { // the pose of a clip at an instant, written on the bones
   if (!m.hold) m.hold = clip.tracks.map(tr => { const i = tr.name.lastIndexOf('.'), b = m.bones[tr.name.slice(0, i)]; return b && { o: b[tr.name.slice(i + 1)], ip: tr.createInterpolant() }; }).filter(Boolean);
   for (const h of m.hold) h.o.fromArray(h.ip.evaluate(time));
@@ -4716,6 +4748,7 @@ function heroCalm(m, t) { bearInit();
   if (B.Head) boneAdd(m, B.Head, 3 + br * .6, CALM.head * .6 + sw * 3, 0);
   if (B.Spine01) boneAdd(m, B.Spine01, -br * .7, 0, 0);
   if (B.Spine02) boneAdd(m, B.Spine02, -br * 1.1, 0, 0); // the chest rises with the breath, the arms open a little
+  for (const a of CALM.adj) { const b = B[a[0]]; if (!b) continue; if (a[1] === 'h') boneHinge(b, a[2]); else boneAdd(m, b, a[1], a[2], a[3]); } // the quiet stance (see CALM.adj), parents first
   if (B.RightArm) boneAdd(m, B.RightArm, 0, 0, -br * 1.4);
   if (B.LeftArm) boneAdd(m, B.LeftArm, 0, 0, br * 1.4);
 }
@@ -6129,10 +6162,13 @@ function admBody(kids, foot) {
     return;
   }
   const mod = ADM.view === 'mod';
-  kids.push(h('div', { class: 'row adm-switch', style: 'flex-wrap:wrap;align-items:center;gap:8px' },
-    h('p', { class: 'grow', style: 'font-size:13px;margin:0', text: ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
-    ...['mod', 'var', 'joueurs'].filter(v => v !== ADM.view).map(v => h('button', { class: 'btn small line', type: 'button', onclick: () => { ADM.view = v; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, ic(ADM_VIEWS[v][1]), ADM_VIEWS[v][0])),
-    h('button', { class: 'btn small ghost', type: 'button', onclick: () => closeSheet() }, ic('aller'), 'Aller jouer')));
+  // the three editors are tabs, always in the same order; the open one is marked and is not a button (36m: on a phone the buttons used to squeeze the sentence into a narrow column)
+  const tabs = { mod: 'Modèles', var: 'Variables', joueurs: 'Joueurs' };
+  kids.push(h('div', { class: 'adm-switch' },
+    h('div', { class: 'adm-tabs', role: 'tablist' }, ...['mod', 'var', 'joueurs'].map(v => v === ADM.view ? h('span', { class: 'adm-tab on', role: 'tab', 'aria-selected': 'true' }, ic(ADM_VIEWS[v][1]), tabs[v])
+      : h('button', { class: 'adm-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-label': ADM_VIEWS[v][0], onclick: () => { ADM.view = v; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, ic(ADM_VIEWS[v][1]), tabs[v]))),
+    h('div', { class: 'adm-sub' }, h('p', { text: ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
+      h('button', { class: 'btn small ghost', type: 'button', onclick: () => closeSheet() }, ic('aller'), 'Aller jouer'))));
   if (ADM.view === 'joueurs') { admJBody(kids); return; } // m_joueurs.js
   if (!mod) {
     const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
