@@ -72,6 +72,8 @@ p{margin:0;color:var(--dim);max-width:46ch}
 .btn.wide{width:100%}
 .round{appearance:none;width:44px;height:44px;border-radius:50%;border:0;background:rgba(23,18,13,.8);background:color-mix(in srgb,var(--well) 80%,transparent);color:var(--cream);display:grid;place-items:center;padding:0;cursor:pointer;position:relative;flex:none}
 .round.dot::after{content:"";position:absolute;right:2px;top:2px;width:11px;height:11px;border-radius:50%;background:var(--amber);border:2px solid var(--bark)}
+.round.plein{box-shadow:inset 0 0 0 2px var(--danger)}
+.round.plein::after{content:"";position:absolute;right:2px;top:2px;width:11px;height:11px;border-radius:50%;background:var(--danger);border:2px solid var(--bark)}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;background:rgba(23,18,13,.8);background:color-mix(in srgb,var(--well) 80%,transparent);font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .gem,.jem{width:1.2em;height:1.2em;flex:none;display:inline-block;vertical-align:-.22em;-webkit-mask:var(--coin-ic) center/contain no-repeat;mask:var(--coin-ic) center/contain no-repeat}
 .gem{background:var(--coin)}
@@ -648,7 +650,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
       <button class="round" id="b-opts" type="button" aria-label="Réglages"></button>
     </div>
   </div>
-  <nav id="tabs" hidden aria-label="Camp"></nav>
+  <nav id="tabs" hidden aria-label="Menus"></nav>
 
   <div id="pad" hidden>
     <button class="pb" id="b-dash" type="button" aria-label="Esquive"></button>
@@ -691,7 +693,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
     <div class="hero">
       <div class="eyebrow">Un petit chevalier de fer-blanc sous l'écorce</div>
       <h1>TinKnight</h1>
-      <p>Pars du camp, choisis un niveau, reviens mieux armé. Seul ou à plusieurs.</p>
+      <p>Depuis l'accueil, choisis un niveau, reviens mieux armé. Seul ou à plusieurs.</p>
     </div>
     <div class="chars" id="chars"></div>
     <div id="newchar"></div>
@@ -1999,6 +2001,8 @@ function rollFrom(pool, weights, lvl, slot) {
 }
 const lastRolls = [];
 const makeLoot = (floor, weights, lv) => rollFrom(levelOf(floor).pool, weights, floor + (lv | 0));
+// the level whose loot the knight receives (B2): the one played, but never above what he has reached himself, so that a guest who follows his team higher up gets objects of his own rank
+function lootFloor() { return Math.min(F.floor, progOf(ME)); }
 // everything the character could have met so far in the game being played: used by the merchant and the wheel
 function knownPool() { const seen = new Set(), out = []; for (let n = 0; n < Math.min(NLV, progOf(ME)); n++) for (const e of LEVELS[n].pool) { const key = e[0] * 100 + e[1]; if (!seen.has(key)) { seen.add(key); out.push(e); } } return out; }
 let rescaleOld = false, weapons7 = false; // set while an older save is being read: the scale from before TinKnight, the thirty weapons of format 7 and below
@@ -2041,6 +2045,8 @@ const itemPrice = it => Math.round(TU.shopPrice * (1 + TU.lootLin * (it.l - 1)) 
 const starterWeapon = k => { const it = makeItem(0, k, 1); it.m = WEAPONS[k].dmg; return it; };
 // the bag starts small (TU.bagBase) and can be enlarged at the camp (TU.bagStep places at a time, up to TU.bagTop)
 const bagCap = () => ME.cap + ME.sl.bag; // bought places + places earned through quests
+// one rule for the floor of a level, the shop and the wheel (B13): an object finds no place only when its slot is taken AND the bag is full; with an empty slot it is worn at once
+function noRoomFor(it) { return !!ME.eq[it.s] && ME.bag.length >= bagCap(); }
 const bagCost = c => { const n = Math.max(0, Math.round((c.cap - TU.bagBase) / TU.bagStep)); return Math.round(TU.bagCost / 2 * (n + 1) * (n + 2)); };
 
 /* ================= what quests can enlarge, what the game counts, the daily wheel ================= */
@@ -2065,6 +2071,8 @@ function spinPrizes() {
   out.sort(() => Math.random() - .5); out.splice((Math.random() * 8) | 0, 0, { gem: TU.spinGem }); return out;
 }
 function spinState() { const sp = ME.spin, d = today(); if (sp.day !== d) { sp.day = d; sp.n = 0; } if (!sp.pz || sp.pz.length !== 8) sp.pz = spinPrizes(); return sp; }
+// the prize stays hidden until the click: a full bag stops the wheel only if one of its prizes could find no place (B13)
+function wheelNoRoom() { return spinState().pz.some(z => !z.gem && noRoomFor(z)); }
 
 /* ================= save: one file, several characters ================= */
 const SAVE_KEY = 'sous-l-ecorce-v4', OLD_KEYS = ['sous-l-ecorce-v3', 'sous-l-ecorce-v2', 'sous-l-ecorce-v1'], MAX_CHARS = 4;
@@ -2700,14 +2708,17 @@ function hudLabel() { $('hud-floor').textContent = run.floor + ' · ' + (F.seals
 function finishRun(kind) { // 'win' | 'dead' | 'quit'
   if (!run || G.mode !== 'play') return;
   const win = kind === 'win', f = run.floor; let unlockedNow = 0;
-  if (win) { run.done = true; run.target = f + 1; const tr = trackOf(run.seed), gm = seedMod(run.seed).gem; if (f >= ME[tr]) { ME[tr] = f + 1; unlockedNow = f < NLV ? f + 1 : -1; ME.gem += gm; run.stats.gem += gm; } else if (run.big) { ME.gem += TU.expeReplay; run.stats.gem += TU.expeReplay; }
+  // (B2) a track only moves for the knight's own next level: a guest who followed his team higher up (f above ME[tr]) wins the level without skipping any, and what he picks up is of his own rank (lootFloor)
+  if (win) { run.done = true; run.target = f + 1; const tr = trackOf(run.seed), gm = seedMod(run.seed).gem; if (f === ME[tr]) { ME[tr] = f + 1; unlockedNow = f < NLV ? f + 1 : -1; ME.gem += gm; run.stats.gem += gm; } else if (run.big) { ME.gem += TU.expeReplay; run.stats.gem += TU.expeReplay; }
     const S = ME.stats, bk = tr + ':' + f, old = S.bt[bk]; S.lv++; if (!run.big && run.diff) S.lvH++; // counters, and the best time on this level
     run.best = !old || run.time < old ? (old ? 2 : 1) : 0; if (run.best) S.bt[bk] = Math.round(run.time * 10) / 10;
     P.hp = P.mhp; uiShake(1); if (!save.tuto) save.tuto = true; }
   P.dance = 0; tuto = null; tutoShow();
   // what a full bag left on the floor is not lost: it is sold on the way out, and the results screen lets you swap any of it for an object of the bag (16g)
   run.leftItems = [];
-  if (win) { let left = 0; for (const p of pickups) if (p.kind === 'i') { left += itemScrap(p.item); run.leftItems.push(p.item); } if (left) { ME.ecl += left; run.stats.ecl += left; run.stats.left = left; } }
+  // (after a defeat or a quit as after a win, Damien's decision of 8 October: it used to be lost without a word)
+  let left = 0; for (const p of pickups) if (p.kind === 'i') { left += itemScrap(p.item); run.leftItems.push(p.item); }
+  if (left) { ME.ecl += left; run.stats.ecl += left; run.stats.left = left; }
   Net.ignoreSeed = run.seed; G.mode = 'end'; G.paused = false; P.down = false; wakeOff();
   saveGame(true); sfx(win ? 520 : 140, .3, 'triangle', .06, win ? 400 : -60);
   endPick = -1; showResults(kind, unlockedNow); sendPresence(true); lobbyPresence();
@@ -2976,8 +2987,8 @@ function kill(e) {
   ME.stats.kills++; if (e.type === 4) ME.stats.elite++; else if (boss) ME.stats.boss++;
   const total = Math.ceil(d.ecl * lm * (e.summon ? TU.summonLoot : 1)), n = boss ? 10 : e.type === 4 ? 4 : 2;
   for (let i = 0; i < n; i++) dropPickup(e.x, e.y, 'e', Math.max(1, Math.round(total / n)));
-  if (boss) { for (let i = 0; i < TU.itemBoss; i++) dropPickup(e.x, e.y, 'i', 0, makeLoot(F.floor, W_BOSS, lv)); }
-  else if (!e.summon && Math.random() < (e.type === 4 ? TU.itemElite : TU.itemFoe)) dropPickup(e.x, e.y, 'i', 0, makeLoot(F.floor, e.type === 4 ? W_RICH : W_DROP, lv));
+  if (boss) { for (let i = 0; i < TU.itemBoss; i++) dropPickup(e.x, e.y, 'i', 0, makeLoot(lootFloor(), W_BOSS, lv)); }
+  else if (!e.summon && Math.random() < (e.type === 4 ? TU.itemElite : TU.itemFoe)) dropPickup(e.x, e.y, 'i', 0, makeLoot(lootFloor(), e.type === 4 ? W_RICH : W_DROP, lv));
   if (Math.random() < (boss ? TU.bossOrb : lifeChance())) dropPickup(e.x, e.y, 'h', 1);
   if (boss) { if (TU.gemBoss) gainGem(TU.gemBoss, e.x, e.y); } else if (e.type === 4 && Math.random() < TU.gemElite) gainGem(TU.gemEliteN, e.x, e.y);
   if (ST.leech && !P.down && hyp(e.x - P.x, e.y - P.y) < TU.leechR) P.hp = Math.min(P.mhp, P.hp + ST.leech);
@@ -3052,8 +3063,8 @@ function updatePickups(dt) {
     const life = p.kind === 'h', t0 = life ? .9 : .45; // a life orb takes its time: it hangs, then drifts over
     if (!P.down && p.t > t0) { // everything on the floor flies to you, from anywhere in the level
       const dx = P.x - p.x, dy = P.y - p.y, d = hyp(dx, dy) || 1;
-      const full = p.kind === 'i' && ME.eq[p.item.s] && ME.bag.length >= bagCap();
-      if (full) { if (!p.full) { p.full = 1; toast('Sac plein : l\'objet reste au sol'); } }
+      const full = p.kind === 'i' && noRoomFor(p.item);
+      if (full) { if (!p.full) { p.full = 1; toast('Sac plein : ouvre le sac pour faire de la place'); } }
       else if (p.kind === 'h' && P.hp >= P.mhp) { /* dew waits on the ground until you need it */ }
       else if (d < 16) { p.dead = true; if (p.kind === 'i') takeItem(p.item); else gain(p.kind, p.val); continue; }
       else { const st = Math.min(d, (life ? Math.min(280, 70 + (p.t - t0) * 240) : Math.min(640, 150 + (p.t - t0) * 700)) * dt); p.x += dx / d * st; p.y += dy / d * st; p.vx = p.vy = 0; continue; }
@@ -3073,7 +3084,7 @@ function updatePickups(dt) {
     if (d < 26) {
       c.opened = true; ME.stats.chest++; if (c.hidden) ME.stats.chestH++; const lm = lootMul(F.floor) * F.mod.ecl, lv = F.mod.lv;
       for (let i = 0; i < (c.gold ? TU.chestGold : TU.chestCoins); i++) dropPickup(c.x, c.y, 'e', Math.ceil(TU.chestCoin * lm));
-      if (c.gold || Math.random() < TU.itemChest) dropPickup(c.x, c.y, 'i', 0, makeLoot(F.floor, c.gold ? W_BOSS : W_RICH, lv));
+      if (c.gold || Math.random() < TU.itemChest) dropPickup(c.x, c.y, 'i', 0, makeLoot(lootFloor(), c.gold ? W_BOSS : W_RICH, lv));
       if ((c.gold || Math.random() < TU.gemChest) && TU.gemGold > 0) gainGem(TU.gemGold, c.x, c.y);
       if (P.hp < P.mhp && F.mod.chestHeal) dropPickup(c.x, c.y, 'h', 1); burst(c.x, c.y, c.gold ? '#ffe08a' : F.str.glow, c.gold ? 36 : 22, 150, 10); ring(c.x, c.y, 40, c.gold ? '#ffe08a' : F.str.glow, .4); sfx(600, .25, 'triangle', .06, 600); if (c.gold) G.shake = Math.max(G.shake, 5);
     }
@@ -3502,6 +3513,7 @@ function render() {
 
 /* ================= HUD ================= */
 let hudKey = '', hudGone = -1;
+let hudFull = false; // the bag button wears a mark for as long as the bag is full, in a level (P3)
 function updateHud(force) {
   const hp = Math.ceil(P.hp), key = hp + '/' + P.mhp + '/' + ME.ecl + '/' + G.newLoot + '/' + manualNow();
   $('b-atk').style.setProperty('--ch', clamp(P.lunge / TU.lungeT, 0, 1).toFixed(2)); $('b-atk').classList.toggle('full', P.lunge > 0 && manualNow());
@@ -3509,6 +3521,7 @@ function updateHud(force) {
   $('b-lan').style.setProperty('--cd', clamp(P.lanCd / ST.lanCd, 0, 1).toFixed(2)); $('b-dash').style.setProperty('--cd', clamp(P.dashCd / TU.dashCd, 0, 1).toFixed(2));
   let foes = 0, gone = 0; if (!F.hub) for (const e of F.enemies) if (!e.summon) { foes++; if (e.dead) gone++; }
   if (gone !== hudGone || force) { hudGone = gone; $('xp-fill').style.transform = 'scaleX(' + (foes ? gone / foes : 0) + ')'; }
+  const full = G.mode === 'play' && ME.bag.length >= bagCap(); if (full !== hudFull) { hudFull = full; $('b-bag').classList.toggle('plein', full); }
   if (key === hudKey && !force) return; hudKey = key;
   $('hp-fill').style.transform = 'scaleX(' + clamp(P.hp / P.mhp, 0, 1) + ')';
   $('hp-txt').textContent = hp + ' / ' + P.mhp;
@@ -5107,7 +5120,7 @@ function questTick() {
   const q = questState(); let done = '';
   q.list.forEach((x, i) => { if (!x.got && dailyProg(x) >= x.n) done += 'd' + i; });
   const s = storyNow(); if (s && storyProg(s) >= s[2]) done += 's' + ME.q.story;
-  const g = ME.game; if (done !== questSaid[g]) { const fresh = done.length > questSaid[g].length; questSaid[g] = done; if (fresh) { toast('Quête terminée : récompense au camp', '#7fe3d2'); sfx(880, .18, 'triangle', .05, 440); } }
+  const g = ME.game; if (done !== questSaid[g]) { const fresh = done.length > questSaid[g].length; questSaid[g] = done; if (fresh) { toast('Quête terminée : récompense dans les Quêtes', '#7fe3d2'); sfx(880, .18, 'triangle', .05, 440); } }
 }
 const fmtTime = sec => { sec = Math.max(0, Math.round(sec)); const m = (sec / 60) | 0, s = sec % 60; return m >= 60 ? ((m / 60) | 0) + ' h ' + String(m % 60).padStart(2, '0') : m + ':' + String(s).padStart(2, '0'); };
 // the figures of these tables are settings too (a_tune.js): their defaults are read now that the tables exist
@@ -5241,7 +5254,7 @@ function srvLine() {
     : SRV.state === 'blocked' ? 'Cet appareil a été bloqué : sa progression n\'est plus enregistrée en ligne.'
     : SRV.state === 'moved' ? 'La sauvegarde de cet appareil a été transférée vers un autre : ce que tu joues ici n\'est plus enregistré en ligne.'
     : SRV.bad ? 'Le serveur ne connaît pas cet appareil et n\'accepte pas sa progression déjà avancée : elle reste ici, sans copie en ligne.'
-    : SRV.pending ? 'Le serveur a refusé la dernière progression : la sauvegarde enregistrée revient dès ton retour au camp.'
+    : SRV.pending ? 'Le serveur a refusé la dernière progression : la sauvegarde enregistrée revient dès ton retour à l\'accueil.'
     : SRV.sent ? 'Sauvegarde en ligne à jour (n° ' + (save.sv | 0) + ').' : 'Sauvegarde en ligne : envoi en cours…';
 }
 function srvCard() {
@@ -5268,21 +5281,26 @@ function srvCard() {
    Hidden: its entry shows in the settings after five taps on their title (within three seconds), or when the page is opened
    with ?creatif; it then stays visible on this device. While it is on (CREA, a_core.js), nothing is saved nor sent anywhere,
    a tag says so at the top of the screen, and the team is closed to it. Leaving it reloads the page: the real save comes back. */
+// Administration only (decision D8 of 8 October): the five taps and ?creatif count on a device opened as admin (ADM.shown, i_admin.js: that file is read after this one, so it is
+// asked when they happen, not here). For anyone else they do nothing and show nothing, even if this device once revealed the entry (tk-creatif).
 try { CREA.shown = /[?&]creatif\b/.test(location.search) || localStorage.getItem('tk-creatif') === '1'; } catch (e) { }
 const CREA_MODES = ['Normal', 'Difficile', 'Cauchemar', 'Expédition'];
 function creaTap() {
+  if (!ADM.shown) return; // not the administration: nothing happens, nothing is counted
   const t = performance.now(); CREA.taps = CREA.taps.filter(x => t - x < 3000); CREA.taps.push(t);
   if (CREA.taps.length < 5 || CREA.shown) return;
   CREA.shown = true; try { localStorage.setItem('tk-creatif', '1'); } catch (e) { }
   toast('Mode créatif : il est maintenant dans les réglages', 'var(--amber)'); renderSheet();
 }
 function creaStart() {
+  if (!ADM.shown && !CREA.on) return; // the entry is hidden from everyone but the administration (who is already inside may still open it or leave)
   if (Net.room) return; if (CREA.on) { openSheet('crea'); return; }
   saveGame(true); // what was played until now is written first, as it is
   CREA.on = true; openSheet('crea');
 }
 // the entry in the settings (and in the pause menu)
 function creaCard() {
+  if (!ADM.shown) return null; // hidden from everyone but the administration, whatever ?creatif or an earlier reveal on this device say
   if (!CREA.shown) return null;
   return h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('sort')), h('div', { class: 'grow' }, h('b', { text: 'Mode créatif' }),
     h('span', { class: 'meta', style: 'display:block', text: Net.room ? 'Quitte d\'abord l\'équipe : ce mode se joue seul.' : CREA.on ? 'En cours : rien n\'est enregistré.' : 'Tout ouvrir, tout essayer. Rien n\'y est enregistré : ta vraie partie revient en le quittant.' })),
@@ -5866,7 +5884,7 @@ function showUI() {
   $('hud').hidden = m !== 'play' || sh; $('pad').hidden = m !== 'play' || sh; $('scr-end').hidden = m !== 'end';
   $('sheet').hidden = !sh; $('veil').hidden = !sh; $('crea-tag').hidden = !CREA.on || sh || (m !== 'hub' && m !== 'play'); admTag(); creaWheelSync();
   if (m !== 'play') $('downbox').hidden = true;
-  if (m === 'hub') { $('who-ava').style.setProperty('--c', CLOAKS[ME.col]); $('who-name').textContent = ME.name || 'Chevalier'; $('who-sub').textContent = GM().name + ' · ' + Math.min(NLV, progOf(ME)) + ' / ' + NLV; $('camp-ecl').textContent = String(ME.ecl); $('tabs').children[1].classList.toggle('dot', G.newLoot); campPurse(); }
+  if (m === 'hub') { $('who-ava').style.setProperty('--c', CLOAKS[ME.col]); $('who-name').textContent = ME.name || 'Chevalier'; $('who-sub').textContent = (ME.game ? GM().name + ' · ' : 'Niveau ') + Math.min(NLV, progOf(ME)) + ' / ' + NLV; $('camp-ecl').textContent = String(ME.ecl); $('tabs').children[1].classList.toggle('dot', G.newLoot); campPurse(); }
   if (m === 'title') renderTitle();
 }
 function openSheet(kind) {
@@ -6056,11 +6074,11 @@ function renderSheet() {
     if (ME.sl.shop < SLOT_TOP.shop) body.push(h('p', { style: 'font-size:13px', text: 'Les quêtes d\'aventure ajoutent des places à l\'étal.' }));
     if (full) body.push(h('p', { text: 'Ton sac est plein : vends un objet ou agrandis-le dans l\'inventaire.' }));
     const it = sel && sel.w === 'shop' && stock[sel.i];
-    if (sel && sel.w === 'shopG' && gi && !gi.sold) { const price = gemPrice(gi); foot.push(detail(gi, true), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, backBtn(), h('button', { class: 'btn grow', type: 'button', disabled: ME.gem < price || full, onclick: () => { if (ME.gem < price || ME.bag.length >= bagCap() || gi.sold) return; ME.gem -= price; const got = Object.assign({}, gi); gi.sold = true; delete got.sold; if (!ME.eq[got.s]) ME.eq[got.s] = got; else { ME.bag.push(got); G.newLoot = true; } sel = null; afterGear(620, true); } }, ME.gem < price ? 'Pas assez de gemmes · ' : 'Acheter · ', jem(), String(price)))); }
-    if (it && !it.sold) { const price = itemPrice(it); foot.push(detail(it, true), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, backBtn(), h('button', { class: 'btn grow', type: 'button', disabled: ME.ecl < price || full, onclick: () => { if (ME.ecl < price || ME.bag.length >= bagCap()) return; ME.ecl -= price; const got = Object.assign({}, it); it.sold = true; if (!ME.eq[got.s]) ME.eq[got.s] = got; else { ME.bag.push(got); G.newLoot = true; } sel = null; afterGear(620, true); } }, ME.ecl < price ? 'Trop cher · ' : 'Acheter · ', h('span', { class: 'gem' }), String(price)))); }
+    if (sel && sel.w === 'shopG' && gi && !gi.sold) { const price = gemPrice(gi); foot.push(detail(gi, true), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, backBtn(), h('button', { class: 'btn grow', type: 'button', disabled: ME.gem < price || noRoomFor(gi), onclick: () => { if (ME.gem < price || noRoomFor(gi) || gi.sold) return; ME.gem -= price; const got = Object.assign({}, gi); gi.sold = true; delete got.sold; if (!ME.eq[got.s]) ME.eq[got.s] = got; else { ME.bag.push(got); G.newLoot = true; } sel = null; afterGear(620, true); } }, ME.gem < price ? 'Pas assez de gemmes · ' : 'Acheter · ', jem(), String(price)))); }
+    if (it && !it.sold) { const price = itemPrice(it); foot.push(detail(it, true), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, backBtn(), h('button', { class: 'btn grow', type: 'button', disabled: ME.ecl < price || noRoomFor(it), onclick: () => { if (ME.ecl < price || noRoomFor(it)) return; ME.ecl -= price; const got = Object.assign({}, it); it.sold = true; if (!ME.eq[got.s]) ME.eq[got.s] = got; else { ME.bag.push(got); G.newLoot = true; } sel = null; afterGear(620, true); } }, ME.ecl < price ? 'Trop cher · ' : 'Acheter · ', h('span', { class: 'gem' }), String(price)))); }
   } else if (sheetKind === 'wheel') {
     title = 'Roulette'; purse = true;
-    const sp = spinState(), list = wheelWon ? wheelWon.list : sp.pz, left = TU.spinsDay - sp.n, free = sp.free > 0, cost = free ? 0 : spinCost(ME), full = ME.bag.length >= bagCap();
+    const sp = spinState(), list = wheelWon ? wheelWon.list : sp.pz, left = TU.spinsDay - sp.n, free = sp.free > 0, cost = free ? 0 : spinCost(ME), full = wheelNoRoom();
     const colOf = z => z.gem ? '#7fe3d2' : RAR[z.r].col;
     lab = 'Boutique › Tours ' + Math.max(0, left) + ' sur ' + TU.spinsDay; // a part of the shop: the thread says so
     const wheel = h('div', { class: 'wheel', id: 'wheel', style: 'transform:rotate(' + wheelAng + 'deg);background:conic-gradient(' + list.map((z, i) => 'color-mix(in srgb,' + colOf(z) + ' ' + (i % 2 ? 34 : 24) + '%,var(--bark-2)) ' + i * 45 + 'deg ' + (i + 1) * 45 + 'deg').join(',') + ')' });
@@ -6094,12 +6112,12 @@ function renderSheet() {
     if (st) { const v = storyProg(st); body.push(card(QUEST_IC[st[1]] || 'drapeau', storyTxt(st), v, st[2], [reward(st[3])], v >= st[2] ? 'ready' : '', () => claimed(claimStory()), 4));
       story().slice(ME.q.story + 1, ME.q.story + 3).forEach((nx, j) => body.push(h('div', { class: 'qc next', style: '--i:' + (5 + j) }, h('span', { class: 'num' }, ic('cadenas')), h('div', { class: 'grow' }, h('b', { text: storyTxt(nx) }), h('span', { class: 'rws' }, h('span', { class: 'rw' }, ic(reward(nx[3]).ic), reward(nx[3]).txt))))));
     } else body.push(h('p', { text: 'Tu as terminé toutes les quêtes d\'aventure. Les quêtes du jour continuent.' }));
-    body.push(h('p', { style: 'font-size:13px', text: 'Chaque jeu a ses quêtes. Celles du jour changent chaque jour ; celles d\'aventure ajoutent des places à l\'étal et dans le sac, ou offrent des tours de roulette.' }));
+    body.push(h('p', { style: 'font-size:13px', text: 'Les quêtes du jour changent chaque jour ; celles d\'aventure ajoutent des places à l\'étal et dans le sac, ou offrent des tours de roulette.' }));
   } else if (sheetKind === 'stats') {
     title = 'Ton chevalier';
     const S = ME.stats, tile2 = (icn, v, lab) => h('div', { class: 'st2' }, ic(icn), h('b', { text: String(v) }), h('span', { text: lab }));
     const X = ME.game === 1, G0 = GM();
-    body.push(h('div', { class: 'eyebrow', style: 'margin:0 0 -6px 6px', text: 'Jeu ' + G0.name }));
+    if (X) body.push(h('div', { class: 'eyebrow', style: 'margin:0 0 -6px 6px', text: 'Jeu ' + G0.name }));
     body.push(h('div', { class: 'st2s' }, tile2('c_kills', S.kills, 'créatures vaincues'), tile2('bouclier', S.elite, 'gardiens'), tile2('boss', S.boss, 'boss'), tile2(X ? 'c_map' : 'c_levels', S.lv, X ? 'expéditions' : 'niveaux terminés'), X ? tile2('sceau', S.seal, 'sceaux') : tile2('flamme', S.lvH, 'en Difficile ou plus'),
       tile2('c_chest', S.chest, 'coffres ouverts'), tile2('cible', S.chestH, 'coffres cachés'), tile2('sac', S.items, 'objets ramassés'),
       tile2('c_fuse', S.fuse, 'objets fusionnés'), tile2('recommencer', S.reroll, 'bonus relancés'), tile2('roulette', S.spin, 'tours de roulette'), X ? tile2('c_charge', S.charge, 'coups d\'élan') : null, X ? tile2('c_dash', S.dash, 'esquives') : null));
@@ -6143,13 +6161,12 @@ function renderSheet() {
       h('span', { class: 'meta', style: 'display:block', text: DEV.state === 'on' ? 'Sauvegarde scellée : elle ne marche que sur cet appareil et ne se modifie pas à la main.' : DEV.state === 'off' ? 'Ce navigateur ne permet pas de sceller la sauvegarde.' : 'Vérification de la sauvegarde…' }))), ...srvCard());
     const hp = (a, b) => [h('b', { text: a }), h('span', { text: b })];
     body.push(h('div', { class: 'help' }, ...hp('Se déplacer', 'glisse le pouce n\'importe où'),
-      ...hp('Classique', 'ton chevalier frappe seul dès qu\'un ennemi entre dans le cercle'), ...hp('Expédition', 'maintiens l\'épée pour frapper sans arrêt, glisse-la pour viser ; l\'esquive te rend intouchable un instant, et le coup qui la suit est un coup d\'élan, plus fort'),
-      ...hp(fOrd(TU.chainN) + ' coup', 'dans les deux jeux, le ' + ford(TU.chainN) + ' coup d\'une série sans pause est un grand coup : plus large, plus long, plus fort'),
+      ...hp('Classique', 'ton chevalier frappe seul dès qu\'un ennemi entre dans le cercle'),
+      ...hp(fOrd(TU.chainN) + ' coup', 'le ' + ford(TU.chainN) + ' coup d\'une série sans pause est un grand coup : plus large, plus long, plus fort'),
       ...hp('Armes', 'épées : en arc, plusieurs ennemis à la fois · lames jumelles : tout autour · dagues : courtes, très vives, plus de coups critiques · arbalètes : de loin, une cible, et moitié moins de dégâts sur une carapace (ronceux, gardiens)'),
-      ...hp('Deux jeux', 'Classique et Expédition ont chacun leur équipement, leur sac, leur monnaie, leur étal, leur roulette et leurs quêtes ; seules les gemmes sont communes. Le portail du camp passe de l\'un à l\'autre'),
       ...hp('Butin', 'tout ce qui tombe vient à toi, où que tu sois'), ...hp('Lanterne', 'son onde blesse autour de toi et efface les projectiles'), ...hp('Carte', 'en haut à gauche ; la sortie reste accrochée à son bord'), ...hp('Flèche', 'elle suit le chemin vers la sortie, salle après salle'),
-      ...hp('Manette', 'stick gauche : bouger · X : lanterne · Y : inventaire · Start : pause ou réglages. Dans les menus : stick ou croix pour choisir, A pour valider, B pour revenir ; au camp, LB et RB passent d\'un menu à l\'autre. En expédition : stick droit pour viser, A maintenu pour frapper, B pour esquiver, B puis A pour le coup d\'élan. Les touches s\'affichent sur les boutons'),
-      ...hp('Clavier', 'flèches ou ZQSD, Espace, E, I, Maj pour esquiver ; dans les menus : flèches, Entrée, Échap')));
+      ...hp('Manette', 'stick gauche : bouger · X : lanterne · Y : inventaire · Start : pause ou réglages. Dans les menus : stick ou croix pour choisir, A pour valider, B pour revenir ; sur l\'accueil, LB et RB passent d\'un menu à l\'autre. Les touches s\'affichent sur les boutons'),
+      ...hp('Clavier', 'flèches ou ZQSD, Espace, E, I ; dans les menus : flèches, Entrée, Échap')));
     body.push(h('p', { style: 'font-size:12px;color:var(--dim)', text: 'Icônes : le kit d\'interface du jeu, Lucide (licence ISC) et Game-icons.net (CC BY 3.0, Lorc, Delapouite et contributeurs). 3D : three.js.' + (app ? ' Coop directe : PeerJS.' : '') }));
     body.push(creaCard()); // the admin menus last: hidden until revealed (h_creatif.js), and unless ?admin (i_admin.js)
     if (!pause) body.push(admCard(), roleCard());
@@ -6164,7 +6181,7 @@ let endPick = -1; // on the results screen: the object left on the floor that is
 function showResults(kind, unlockedNow) {
   const s = run.stats, f = run.floor, win = kind === 'win', kids = [];
   if (win) for (let i = 0; i < 16; i++) kids.push(h('i', { class: 'conf', style: '--x:' + Math.round(Math.random() * 100) + '%;--d:' + (Math.random() * .5).toFixed(2) + 's;--c:' + ['#ffc24a', '#62adff', '#cd86ff', '#5fe08a', '#e2674f'][i % 5] }));
-  kids.push(h('div', null, h('div', { class: 'eyebrow', text: 'Niveau ' + f + ' · ' + levelOf(f).name }), h('h2', { text: win ? 'Niveau terminé' : kind === 'dead' ? 'Tu es tombé' : 'Retour au camp' })));
+  kids.push(h('div', null, h('div', { class: 'eyebrow', text: 'Niveau ' + f + ' · ' + levelOf(f).name }), h('h2', { text: win ? 'Niveau terminé' : kind === 'dead' ? 'Tu es tombé' : 'Niveau quitté' })));
   const rb = run.big, rd = run.diff, where = rb ? ' en expédition' : rd ? ' en ' + DIFFS[rd].name : '';
   kids.push(h('p', { text: win ? (unlockedNow < 0 ? 'Tu as terminé les ' + NLV + ' niveaux' + where + '.' : unlockedNow ? 'Nouveau niveau débloqué' + where + ' : ' + LEVELS[unlockedNow - 1].name + '.' : 'Tu peux le refaire autant que tu veux pour son butin.') : 'Tout ce que tu as ramassé reste à toi.' }));
   kids.push(h('div', { class: 'chips', style: 'width:100%' }, stat(GM().ic, '+' + s.ecl, GM().coin, 'var(--amber)'), stat('sac', s.items.length, s.items.length > 1 ? 'objets' : 'objet'), stat('epee', s.kills, 'créatures'), s.gem ? stat('gemme', '+' + s.gem, s.gem > 1 ? 'gemmes' : 'gemme', '#7fe3d2') : null));
@@ -6172,8 +6189,11 @@ function showResults(kind, unlockedNow) {
   const L = run.leftItems || [];
   if (s.left && L.length) { // a full bag: what stayed on the floor was sold, but any of it can still be kept in place of an object of the bag
     const redo = () => showResults(kind, unlockedNow), lg = h('div', { class: 'grid fresh' });
-    L.forEach((it, i) => lg.append(tile(it, { i, up: !ME.eq[it.s] || gainOf(it) > .005, sel: endPick === i, onclick: () => { endPick = endPick === i ? -1 : i; redo(); } })));
-    kids.push(h('p', { style: 'font-size:13px', text: endPick < 0 ? 'Sac plein : ' + (L.length > 1 ? 'ces objets restés au sol ont été vendus' : 'cet objet resté au sol a été vendu') + ' (+' + coins(s.left) + '). Touche-en un pour le garder à la place d\'un objet du sac.' : 'Touche l\'objet du sac à vendre à sa place.' }), lg);
+    const room = ME.bag.length < bagCap(), sold = L.length > 1 ? 'ces objets restés au sol ont été vendus' : 'cet objet resté au sol a été vendu'; // room: after a defeat or a level left, the bag may not be full
+    L.forEach((it, i) => lg.append(tile(it, { i, up: !ME.eq[it.s] || gainOf(it) > .005, sel: endPick === i, onclick: () => {
+      if (ME.bag.length < bagCap()) { const v = itemScrap(it); ME.ecl = Math.max(0, ME.ecl - v); s.ecl -= v; s.left = Math.max(0, s.left - v); ME.bag.push(it); L.splice(i, 1); endPick = -1; G.newLoot = true; saveGame(true); sfx(620, .12, 'triangle', .05, 300); redo(); return; } // room in the bag: the object is simply taken back, and its price with it
+      endPick = endPick === i ? -1 : i; redo(); } })));
+    kids.push(h('p', { style: 'font-size:13px', text: endPick < 0 ? (room ? sold[0].toUpperCase() + sold.slice(1) : 'Sac plein : ' + sold) + ' (+' + coins(s.left) + '). ' + (room ? 'Touche-en un pour le reprendre.' : 'Touche-en un pour le garder à la place d\'un objet du sac.') : 'Touche l\'objet du sac à vendre à sa place.' }), lg);
     if (endPick >= 0) { const bg = h('div', { class: 'grid fresh' }), keep = L[endPick];
       ME.bag.forEach((it, i) => bg.append(tile(it, { i: i + L.length, onclick: () => { // the object of the bag is sold instead: coins follow the difference
         const d = itemScrap(it) - itemScrap(keep); ME.ecl = Math.max(0, ME.ecl + d); s.ecl += d; s.left = Math.max(0, s.left + d); ME.bag[i] = keep; L[endPick] = it; endPick = -1; G.newLoot = true; saveGame(true); sfx(620, .12, 'triangle', .05, 300); redo(); } })));
@@ -6182,13 +6202,16 @@ function showResults(kind, unlockedNow) {
   if (s.items.length) { const g = h('div', { class: 'grid fresh' }); s.items.slice(0, 8).forEach((it, i) => g.append(tile(it, { i: i * 3, onclick: () => { } }))); kids.push(g); }
   const next = win && f < NLV && canPlay(f + 1, rd, rb) ? f + 1 : 0;
   if (next) kids.push(h('button', { class: 'btn wide shine', type: 'button', text: 'Niveau suivant', onclick: () => { Net.ignoreSeed = null; startRun(newSeed(rd, rb), next); } }));
-  kids.push(h('button', { class: 'btn wide' + (next ? ' ghost' : ''), type: 'button', text: 'Retour au camp', onclick: backToHub }));
+  const again = kind === 'dead' && canPlay(f, rd, rb); // a defeat: the same level again in one touch (same difficulty, a new draw, as « Niveau suivant »); not after a win nor after leaving
+  if (again) kids.push(h('button', { id: 'end-retry', class: 'btn wide shine', type: 'button', text: 'Réessayer', onclick: () => { Net.ignoreSeed = null; startRun(newSeed(rd, rb), f); } }));
+  kids.push(h('button', { id: 'end-home', class: 'btn wide' + (next ? ' ghost' : ''), type: 'button', text: 'Retour à l\'accueil', onclick: backToHub }));
+  if (again) kids[kids.length - 1].classList.add('ghost'); // the retry is the main button: the way back steps aside
   $('end-card').replaceChildren(...kids); showUI();
 }
 
 /* ================= home: the first screen (before the characters) ================= */
 // the game opens on it; ?eq=<code> (joining a team) and ?creatif go straight past it. Leaving a level or the camp for the characters never comes back to it.
-G.home = !(window.ecorceApp && window.ecorceApp.invite) && !/[?&]creatif\b/.test(location.search);
+G.home = !(window.ecorceApp && window.ecorceApp.invite) && !(ADM.shown && /[?&]creatif\b/.test(location.search)); // (?creatif only counts on a device opened as admin: for anyone else it is a plain address)
 // Quit only exists in the installed application, and only where it can really close: Capacitor's App plugin, or an installed PWA's window.close()
 const quitApp = () => { const C = window.Capacitor, ex = C && C.Plugins && C.Plugins.App && C.Plugins.App.exitApp; return ex ? () => ex.call(C.Plugins.App) : !C && window.matchMedia && matchMedia('(display-mode: standalone)').matches ? () => window.close() : null; };
 function homeSync() {
@@ -6220,7 +6243,7 @@ function sealAlert() { if (run) { run = null; clearFx(); } closeSheet(); G.mode 
 /* Themes (Damien's interface kit: the camp and one per world, see the :root[data-zone] rules in head.html).
    save.theme: 0 = automatic, 1 = the camp, 2 to 6 = a world. Automatic follows the character: the world of the level being played,
    and at the camp the world it has reached. A world's theme can only be chosen once the character has reached its levels. */
-const THEMES = ['camp', 'racines', 'mycelium', 'braises', 'givre', 'abime'], THEME_NAMES = ['Auto', 'Camp', 'Racines', 'Mycélium', 'Braises', 'Givre', 'Abîme'], THEME_IC = ['ombre', 'zcamp', 'z0', 'z1', 'z2', 'z3', 'z4'];
+const THEMES = ['camp', 'racines', 'mycelium', 'braises', 'givre', 'abime'], THEME_NAMES = ['Auto', 'Accueil', 'Racines', 'Mycélium', 'Braises', 'Givre', 'Abîme'], THEME_IC = ['ombre', 'zcamp', 'z0', 'z1', 'z2', 'z3', 'z4'];
 const worldReached = () => strIdxOf(Math.min(NLV, progOf(ME)));
 const themeOpen = i => i < 2 || i - 2 <= worldReached();
 function themeNow() {
@@ -6253,7 +6276,7 @@ function applyGame() { const g = GM(), st = document.documentElement.style; st.s
 // how far a knight has come: the worlds reached in the better of the two games, 1 to 5 (6 = everything done). The ornament of its bubble follows it
 const stageOf = c => clamp(Math.ceil(Math.max(c.unlocked, c.unx) / PER_WORLD), 1, nWorlds() + 1);
 const ornCol = t => t <= nWorlds() ? STRATA[t - 1].glow : 'var(--amber)'; // the colour of the world of that tier (the same as its level buttons); the last tier is gold
-function gauge(g, n) { return h('span', { class: 'pg', style: '--g:' + GAMES[g].col }, h('em', { text: GAMES[g].name + ' ' + Math.min(NLV, n) + ' / ' + NLV }), h('i', null, h('u', { style: 'width:' + Math.round(Math.min(NLV, n) / NLV * 100) + '%' }))); }
+function gauge(g, n) { return h('span', { class: 'pg', style: '--g:' + GAMES[g].col }, h('em', { text: 'Niveau ' + Math.min(NLV, n) + ' / ' + NLV }), h('i', null, h('u', { style: 'width:' + Math.round(Math.min(NLV, n) / NLV * 100) + '%' }))); }
 // the bubble of a knight: its icon (the round of the cloak until the picture arrives), the ornament of its tier, its weapon
 function bubble(col, ico, t, wk) {
   const art = iconArt(ico);
@@ -6267,7 +6290,7 @@ function charCard(c, i) {
     h('button', { class: 'btn small ghost', type: 'button', text: 'Garder', onclick: () => { askDel = -1; renderTitle(); } }));
   return h('div', { class: cls, style: '--i:' + i }, h('button', { class: 'char-main', type: 'button', 'aria-label': 'Jouer avec ' + name, onclick: () => pickChar(i) },
     bubble(c.col, c.ico, t, wp && wp.k),
-    h('span', { class: 'txt' }, h('b', { text: name }), gauge(0, c.unlocked), gauge(1, c.unx), c.mod ? h('small', { text: 'Modifiée hors du jeu' }) : null)),
+    h('span', { class: 'txt' }, h('b', { text: name }), gauge(0, c.unlocked), c.mod ? h('small', { text: 'Modifiée hors du jeu' }) : null)),
     save.chars.length > 1 ? h('button', { class: 'char-del', type: 'button', 'aria-label': 'Supprimer ' + name, onclick: () => { askDel = i; renderTitle(); } }, ic('poubelle')) : null);
 }
 function renderTitle() {
@@ -6299,7 +6322,7 @@ function createDone() {
 $('cre-back').addEventListener('click', () => createGo(cstep - 1));
 $('cre-next').addEventListener('click', () => cstep < 3 ? createGo(cstep + 1) : createDone());
 // the card of the future knight: the one of the characters screen, with a first tier ornament and no progress yet
-const createCard = () => h('div', { class: 'char cre-card' }, h('div', { class: 'char-main' }, bubble(draft.col, draft.ico, 1, draft.kind), h('span', { class: 'txt' }, h('b', { text: cleanName(draft.name) }), gauge(0, 1), gauge(1, 1))));
+const createCard = () => h('div', { class: 'char cre-card' }, h('div', { class: 'char-main' }, bubble(draft.col, draft.ico, 1, draft.kind), h('span', { class: 'txt' }, h('b', { text: cleanName(draft.name) }), gauge(0, 1))));
 function createRender() {
   createArt();
   $('cre-n').textContent = cstep + ' / 3'; $('cre-t').textContent = CRE_TITLES[cstep - 1];
@@ -6431,10 +6454,10 @@ function teamBody(kids) {
   if (inTeam) {
     kids.push(h('div', { class: 'row between' }, h('div', null, h('div', { class: 'eyebrow', text: 'Code d\'équipe' }), h('div', { class: 'code', text: Net.code.toUpperCase() })), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, Net.room.direct ? h('button', { class: 'btn small', type: 'button', onclick: inviteLink }, ic('inviter'), 'Inviter') : null, h('button', { class: 'btn small ghost', type: 'button', text: 'Quitter', onclick: () => { leaveParty(); renderSheet(); } }))));
     const list = h('div', { class: 'team' }, h('div', { class: 'member', style: '--c:' + CLOAKS[ME.col] }, h('i'), h('span', { text: cleanName(ME.name) }), h('small', { text: 'toi' + (DEV.id ? ' · ' + devCode(DEV.id) : '') })));
-    for (const v of Net.views.values()) list.append(h('div', { class: 'member', style: '--c:' + CLOAKS[v.col] }, h('i'), h('span', { text: v.name }), h('small', { text: (v.s === 0 ? 'au camp' : 'niveau ' + v.fl) + (v.dv ? ' · ' + devCode(v.dv) : '') }), v.fx ? h('small', { style: 'color:var(--danger)', text: 'sauvegarde modifiée' }) : null));
+    for (const v of Net.views.values()) list.append(h('div', { class: 'member', style: '--c:' + CLOAKS[v.col] }, h('i'), h('span', { text: v.name }), h('small', { text: (v.s === 0 ? 'à l\'accueil' : 'niveau ' + v.fl) + (v.dv ? ' · ' + devCode(v.dv) : '') }), v.fx ? h('small', { style: 'color:var(--danger)', text: 'sauvegarde modifiée' }) : null));
     kids.push(list);
     if (lead && lead.sd === Net.ignoreSeed) kids.push(h('button', { class: 'btn wide', type: 'button', text: 'Rejoindre le niveau ' + lead.fl + ' en cours', onclick: () => { Net.ignoreSeed = null; } }));
-    else kids.push(h('p', { text: 'Dès que l\'un de vous entre dans un niveau, toute l\'équipe présente au camp le suit.' }));
+    else kids.push(h('p', { text: 'Dès que l\'un de vous entre dans un niveau, toute l\'équipe présente à l\'accueil le suit.' }));
   } else if (Net.lobby.direct) { // the standalone page: no list of teams, a code passed from hand to hand
     kids.push(h('button', { class: 'btn wide', type: 'button', text: 'Créer une équipe', onclick: () => joinParty(randCode(), true) }));
     const inp = h('input', { type: 'text', id: 'eq-code', class: 'codein', maxlength: '4', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: 'CODE', 'aria-label': 'Code de l\'équipe à rejoindre' }), go = h('button', { class: 'btn', type: 'button', text: 'Rejoindre', onclick: () => joinParty(teamDraft, false) });
@@ -6446,7 +6469,7 @@ function teamBody(kids) {
   } else {
     kids.push(h('button', { class: 'btn wide', type: 'button', text: 'Créer une équipe', onclick: () => joinParty(randCode()) }));
     const teams = lobbyTeams();
-    if (teams.length) { const list = h('div', { class: 'team' }); for (const t of teams) list.append(h('div', { class: 'member' }, h('span', { text: t.names.join(', ') }), h('small', { text: t.fl ? 'niveau ' + t.fl : 'au camp' }), h('button', { class: 'btn small', type: 'button', text: 'Rejoindre', onclick: () => joinParty(t.code) }))); kids.push(h('div', null, h('div', { class: 'eyebrow', style: 'margin:0 0 8px 6px', text: 'Équipes ouvertes' }), list)); }
+    if (teams.length) { const list = h('div', { class: 'team' }); for (const t of teams) list.append(h('div', { class: 'member' }, h('span', { text: t.names.join(', ') }), h('small', { text: t.fl ? 'niveau ' + t.fl : 'à l\'accueil' }), h('button', { class: 'btn small', type: 'button', text: 'Rejoindre', onclick: () => joinParty(t.code) }))); kids.push(h('div', null, h('div', { class: 'eyebrow', style: 'margin:0 0 8px 6px', text: 'Équipes ouvertes' }), list)); }
     else kids.push(h('p', { text: 'Aucune équipe ouverte pour l\'instant. Crée la tienne : les autres la verront ici.' }));
   }
 }
@@ -6608,11 +6631,11 @@ function initNet() {
 const QUEST_IC = { kills: 'c_kills', lv: 'c_levels', chest: 'c_chest', chestH: 'cible', elite: 'bouclier', boss: 'boss', seal: 'sceau', charge: 'c_charge', dash: 'c_dash', lvH: 'flamme', fuse: 'c_fuse', spin: 'roulette', items: 'sac', prog: 'drapeau', reroll: 'recommencer' };
 function spinWheel() {
   const sp = spinState(), free = sp.free > 0, cost = free ? 0 : spinCost(ME);
-  if (wheelBusy || wheelWon || ME.bag.length >= bagCap() || (!free && (sp.n >= TU.spinsDay || ME.ecl < cost))) return;
+  if (wheelBusy || wheelWon || wheelNoRoom() || (!free && (sp.n >= TU.spinsDay || ME.ecl < cost))) return;
   // the prize is decided and given at once (nothing is lost if the page closes); the wheel then turns to it
   const idx = (Math.random() * 8) | 0, list = sp.pz, z = list[idx];
   if (free) sp.free--; else { sp.n++; ME.ecl -= cost; }
-  ME.stats.spin++; if (z.gem) { ME.gem += z.gem; } else { ME.bag.push(z); G.newLoot = true; ME.stats.items++; }
+  ME.stats.spin++; if (z.gem) { ME.gem += z.gem; } else { ME.stats.items++; if (ME.bag.length >= bagCap()) { ME.eq[z.s] = z; refreshStats(); } else { ME.bag.push(z); G.newLoot = true; } } // (a full bag only let through a prize whose slot is empty: it is worn at once, as in the shop)
   sp.pz = null; saveGame(true);
   wheelBusy = true; wheelAng = Math.ceil(wheelAng / 360) * 360 + 360 * 5 + (360 - (idx * 45 + 22.5)) + (Math.random() - .5) * 26;
   const w = $('wheel'), b = $('b-spin'); if (b) b.disabled = true; if (w) { w.classList.add('turn'); w.style.transform = 'rotate(' + wheelAng + 'deg)'; }

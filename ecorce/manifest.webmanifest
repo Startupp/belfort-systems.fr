@@ -1,7 +1,7 @@
 {
   "name": "TinKnight",
   "short_name": "TinKnight",
-  "description": "Un petit chevalier de fer-blanc sous l'écorce d'un arbre géant : épées, dagues et arbalètes, 30 niveaux, deux jeux, seul ou à plusieurs.",
+  "description": "Un petit chevalier de fer-blanc sous l'écorce d'un arbre géant : épées, dagues et arbalètes, seul ou à plusieurs.",
   "lang": "fr",
   "id": "./",
   "start_url": "./",
