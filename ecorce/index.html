@@ -6125,12 +6125,12 @@ function admTag() {
 // ---- the entry in the settings
 // two entries (24a): the editor of models (levels, camp, then the libraries) and the editor of variables (every setting)
 const ADM_VIEWS = { mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'], joueurs: ['Joueurs et sécurité', 'equipe', 'Statistiques, joueurs et leurs personnages, journal de sécurité'], regles: ['Règles d\'import', 'quetes', 'Le style du jeu, les formats, Blender et Blockbench'], prop: ['Éditeur de niveaux', 'forge', 'Créer des cartes et les proposer'] };
-function admCard() {
+function admCard() { // one door in the settings of a device already opened as admin (8 October: the three cards left the player's settings ; the administration has its door on the title screen and its own address)
   if (!ADM.shown) return null;
   const live = !!SRV.url;
-  return h('div', { class: 'adm-cards' }, ...['mod', 'var', 'joueurs'].map(v => h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic(ADM_VIEWS[v][1])), h('div', { class: 'grow' }, h('b', { text: ADM_VIEWS[v][0] }),
-    h('span', { class: 'meta', style: 'display:block', text: live ? ADM_VIEWS[v][2] : 'Il faut ouvrir le jeu depuis le site' })),
-    live ? h('button', { class: 'btn small', type: 'button', text: 'Ouvrir', onclick: () => { ADM.view = v; ADM.msg = ''; openSheet('adm'); } }) : null)));
+  return h('div', { class: 'adm-cards' }, h('div', { class: 'qc adm-door', style: '--i:0' }, h('span', { class: 'num' }, ic('cadenas')), h('div', { class: 'grow' }, h('b', { text: 'Administration' }),
+    h('span', { class: 'meta', style: 'display:block', text: live ? 'Modèles, variables, joueurs, règles d\'import' : 'Il faut ouvrir le jeu depuis le site' })),
+    live ? h('button', { class: 'btn small', type: 'button', text: 'Ouvrir', onclick: () => { ADM.msg = ''; if (!ADM_VIEWS[ADM.view] || ADM.view === 'prop') ADM.view = 'var'; openSheet('adm'); } }) : null));
 }
 
 // ---- the password
@@ -6946,7 +6946,8 @@ function homeSync() {
   const l = []; if (window.ecorceApp && DEV.id) l.push('Cet appareil · ' + devCode(DEV.id)); if (window.ecorceApp && SRV.state !== 'off') l.push(srvLine());
   const t = l.join('\n'); if ($('home-foot').textContent !== t) $('home-foot').textContent = t;
 }
-$('home-play').addEventListener('click', () => { G.home = false; NAV.key = ''; showUI(); }); $('home-notes').addEventListener('click', () => openSheet('notes'));
+// (8 October, the shortest way in) « Jouer » goes on with the last knight ; a first launch goes straight to the creation of a knight ; the list of the knights is behind « Changer de chevalier » (the profile)
+$('home-play').addEventListener('click', () => { G.home = false; NAV.key = ''; const n = save.chars.length; if (!n || DEV.note) { showUI(); return; } if (firstKnight()) { showUI(); createOpen(); return; } pickChar(clamp(save.cur | 0, 0, n - 1)); }); $('home-notes').addEventListener('click', () => openSheet('notes'));
 $('home-load').addEventListener('click', () => { SRV.ask = 1; SRV.msg = ''; openSheet('load'); }); // the code typed on the new device: the same entry as in the settings
 $('home-quit').addEventListener('click', () => { const q = quitApp(); if (q) q(); });
 // the administration without going through the characters: the last character is taken (the editors try their work with it), then the panel opens
@@ -7038,7 +7039,9 @@ const FAM_TIP = ['Elle frappe en arc devant toi et touche plusieurs ennemis d\'u
 let cstep = 1;
 function createOpen() { creating = true; cstep = 1; const col = save.chars.length % 4; draft = { name: '', col, ico: ICON_OF_COL[col], cls: 1, kind: CLASSES[1].starters[0] }; NAV.key = ''; showUI(); createRender(); }
 function createGo(n) { if (n < 1) { creating = false; NAV.key = ''; showUI(); return; } cstep = Math.min(3, n); createRender(); }
+function firstKnight() { const c = save.chars[0]; return save.chars.length === 1 && !!c && c.name === 'Chevalier' && !clsOf(c) && c.unlocked === 1 && c.un1 === 1 && c.un2 === 1 && c.unx === 1 && !(c.ecl > 0) && !(c.bag && c.bag.length); } // the knight of a first launch that nobody has played (defaultSave): « Jouer » opens the creation, and the knight made there takes its place
 function createDone() {
+  if (firstKnight()) save.chars.length = 0;
   if (save.chars.length >= MAX_CHARS) { creating = false; showUI(); return; }
   save.chars.push(newChar(cleanName(draft.name), draft.col, draft.kind, draft.ico, draft.cls)); creating = false; pickChar(save.chars.length - 1);
 }
@@ -10177,6 +10180,10 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 13, d: '8 octobre 2026', t: 'Plus direct', l: [
+      '« Jouer » reprend tout de suite ton dernier chevalier.',
+      'La première fois, tu crées ton chevalier : son nom, sa cape, et s\'il porte les lames ou les armes à distance.',
+      'Pour changer de chevalier : la pastille de ton profil, puis « Changer de chevalier ».'] },
     { id: 12, d: '8 octobre 2026', t: 'Des mouvements plus vifs', img: 'mouvements_vifs', l: [
       'Le chevalier tourne vite, penche et se soulève en courant.',
       'À l\'arbalète et au canon, l\'arme reste pointée sur la cible et recule à chaque tir.',
