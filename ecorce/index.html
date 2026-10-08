@@ -3510,13 +3510,36 @@ function camStep() {
 }
 
 /* ================= overlay: text, bars, arrows, sticks (always 2D, on top) ================= */
-function edgeArrow(wx, wy, col, r) {
+function edgeArrow(wx, wy, col, r, txt, alert) { // (txt: a letter beside the arrow, the initial of a teammate ; alert: a red ring that beats, a teammate who is down)
   let s = toScreen(wx, wy, 0); const sx = s[0], sy = s[1];
   s = toScreen(P.x, P.y, 0); const px = s[0], py = s[1], a = Math.atan2(sy - py, sx - px);
   if (hyp(sx - px, sy - py) < 150) return;
   const d = r > 8 ? 92 : 70, ex = px + Math.cos(a) * d, ey = py + Math.sin(a) * d;
   ctx.save(); ctx.translate(ex, ey); ctx.rotate(a); ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.arc(0, 0, r + 6, 0, TAU); ctx.fill();
+  if (alert) { ctx.strokeStyle = 'rgba(255,106,90,' + (.55 + .45 * Math.sin(G.time * 8)).toFixed(2) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, r + 8, 0, TAU); ctx.stroke(); }
   ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(-r * .6, -r * .7); ctx.lineTo(-r * .2, 0); ctx.lineTo(-r * .6, r * .7); ctx.closePath(); ctx.fill(); ctx.restore();
+  if (txt) { const bx = ex - Math.cos(a) * (r + 15), by = ey - Math.sin(a) * (r + 15); ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.beginPath(); ctx.arc(bx, by, 8.5, 0, TAU); ctx.fill(); ctx.fillStyle = col; ctx.font = '700 10px Figtree, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, bx, by + .5); ctx.textBaseline = 'alphabetic'; }
+}
+/* ---------- a teammate who is down (8 October, Damien's request) ----------
+   Everyone sees how far a fallen teammate is from standing again: a straight bar above him (it used to show on his own screen only, as an arc, so
+   the one who raised him saw nothing). The bar of the others follows the rule of his own screen (b_game.js: someone standing within 34 points, for
+   TU.rezT seconds). His fall and his return are told at once: a ring, a burst, a sound, a word ; a red ring beats under him while he is down. */
+let downLast = 0;
+function coopDown(F1) {
+  const now = G.time, dt = clamp(now - downLast, 0, .05); downLast = now; if (G.mode !== 'play' || !Net.room) return;
+  const rez = !!F.mod.rez, bar = (x, y, k, txt) => { const s = toScreen(x, y, 46), w = 60, hh = 8, x0 = clamp(s[0] - w / 2, 6, view.w - w - 6), y0 = s[1];
+    ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(x0 - 2, y0 - 2, w + 4, hh + 4); ctx.fillStyle = '#8fd3e8'; ctx.fillRect(x0, y0, w * clamp(k, 0, 1), hh); if (txt) label(txt, x0 + w / 2, y0 - 6, '#f1e4c8', F1); };
+  if (P.down && rez) bar(P.x, P.y, P.reviveT / TU.rezT, P.reviveT > 0 ? 'On te relève' : '');
+  for (const a of allies) {
+    const down = !!a.live && a.s === 2, col = grpColor(a.peer);
+    if (down && !a.wasDown && a.seenUp) { ring(a.x, a.y, 44, '#ff6a5a', .8); burst(a.x, a.y, '#ff6a5a', 14, 120, 10); sfx(150, .45, 'sawtooth', .07, -60); G.shake = Math.max(G.shake, 3); toast(a.name + ' est à terre' + (rez ? ' : reste près de lui pour le relever' : ''), '#ff9d8a'); }
+    if (!down && a.wasDown && a.live) { ring(a.x, a.y, 34, '#8fd3e8', .6); toast(a.name + ' est relevé', '#8fd3e8'); }
+    a.wasDown = down; if (!down) { if (a.live && (a.s === 1 || a.s === 3)) a.seenUp = true; a.rz = 0; continue; }
+    const mine = !P.down && hyp(a.x - P.x, a.y - P.y) < 34; let near = mine; for (const o of allies) if (o !== a && o.live && o.s === 1 && hyp(o.x - a.x, o.y - a.y) < 34) near = true;
+    if (!rez) near = false; a.rz = near ? Math.min(TU.rezT, (a.rz || 0) + dt) : Math.max(0, (a.rz || 0) - dt);
+    const pul = .5 + .5 * Math.sin(now * 6), s0 = toScreen(a.x, a.y, 0); ctx.strokeStyle = 'rgba(255,106,90,' + (.35 + .45 * pul).toFixed(2) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(s0[0], s0[1], 26 + pul * 6, 13 + pul * 3, 0, 0, TAU); ctx.stroke();
+    if (rez) bar(a.x, a.y, a.rz / TU.rezT, mine ? 'Tu relèves ' + a.name : near ? 'On relève ' + a.name : a.name + ' est à terre');
+  }
 }
 function label(txt, x, y, col, font) {
   ctx.font = font; ctx.textAlign = 'center';
@@ -3553,7 +3576,7 @@ function miniStep() {
   for (const c of F.chests) if (!c.opened && (!c.hidden || c.shown) && seen(c.x, c.y)) dot(c.x, c.y, 2.4, '#ffd986');
   if (F.seals) for (const q of F.seals) if (!q.got) dot(q.x, q.y, 3.4, '#7fe3d2', true);
   for (const e of F.enemies) if (!e.dead && e.awake) dot(e.x, e.y, e.type === 9 ? 3.8 : 2, '#e2674f');
-  for (const a of allies) dot(a.x, a.y, 3, CLOAKS[a.col], true);
+  for (const a of allies) dot(a.x, a.y, 3, grpColor(a.peer), true); // (the colour of his place in the team, as on his arrow and his name)
   if (F.lift && !(F.boss && !F.lift.open)) dot(F.lift.x, F.lift.y, 4, F.lift.open ? '#ffc24a' : '#8a7b62', true);
   dot(P.x, P.y, 3 + Math.sin(G.time * 6) * .5, '#fff');
   mctx.restore();
@@ -3596,7 +3619,7 @@ function drawOverlay() {
       ctx.fillStyle = '#e2674f'; ctx.fillRect(s[0] - w / 2, s[1], w * clamp(e.hp / e.hpMax, 0, 1), 4);
     }
     for (const p of pickups) if (p.kind === 'i' && Math.abs(p.x - P.x) < 170 && Math.abs(p.y - P.y) < 260) { const s = toScreen(p.x, p.y, 40); label(p.item.n, s[0], s[1], RAR[p.item.r].col, F1); }
-    for (const a of allies) { const s = toScreen(a.x, a.y, 40); label(a.name, s[0], s[1], CLOAKS[a.col], F1); }
+    for (const a of allies) { const s = toScreen(a.x, a.y, 40); label(a.name, s[0], s[1], grpColor(a.peer), F1); }
     if (G.mode === 'play') for (const a of allies) if (a.vp) speechBubble(a.vp[1] === 1 ? 'Je propose une pause' : 'On réessaie le niveau ?', a.x, a.y); // a vote put by a teammate (t_groupe.js)
     if (Net.room) { const s = toScreen(P.x, P.y, 40); label(ME.name || 'Chevalier', s[0], s[1], '#fff', F1); }
     if (F.stations && G.mode === 'hub' && !sheetOpen() && !lobbyOn()) { for (const st of F.stations) { const s = toScreen(st.ox, st.oy, st.k === 'levels' ? 74 : st.k === 'wheel' ? 76 : 26); label(st.label, clamp(s[0], 64, view.w - 64), s[1], '#f1e4c8', '500 21px "Grenze Gotisch", Georgia, serif'); }
@@ -3606,7 +3629,7 @@ function drawOverlay() {
       if (d) { const s = toScreen(d.x, d.y, 62); label(G.train && log.length ? 'Mannequin · ' + Math.round(sum / Math.max(1.2, G.time - log[0][0])) + ' dégâts/s' : 'Mannequin', s[0], s[1], '#f1e4c8', F1); label(G.train ? 'touche-le pour arrêter' : 'touche-le pour t\'entraîner', s[0], s[1] + 14, '#b9a888', F1); }
       for (const n of F.npcs) if (!n.off && hyp(n.x - P.x, n.y - P.y) < 84) speechBubble(n.lines[Math.floor(G.time / 5) % n.lines.length], n.x, n.y);
     }
-    if (P.down && P.reviveT > 0) { const s = toScreen(P.x, P.y, 8); ctx.strokeStyle = '#8fd3e8'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(s[0], s[1], 26, -Math.PI / 2, -Math.PI / 2 + TAU * P.reviveT / 2); ctx.stroke(); }
+    coopDown(F1); // a fallen teammate (or me): the bar of the way back up, seen by everyone
     for (const t of texts) {
       const s = toScreen(t.x, t.y, 30), k = 1 - t.life / .7;
       ctx.globalAlpha = clamp(t.life * 3, 0, 1); label(t.txt, s[0], s[1] - k * 44, t.col, '700 ' + (t.txt.endsWith('!') ? 17 : 14) + 'px Figtree, system-ui, sans-serif');
@@ -3617,7 +3640,7 @@ function drawOverlay() {
   if (G.mode !== 'play' || sheetOpen()) return;
   if (run && run.cele) return;
   exitArrow();
-  for (const a of allies) edgeArrow(a.x, a.y, CLOAKS[a.col], 7);
+  for (const a of allies) edgeArrow(a.x, a.y, grpColor(a.peer), 8, a.s === 2 ? '!' : String(a.name || '?').charAt(0).toUpperCase(), a.s === 2); // each teammate in the colour of his place in the team, with his initial : never the amber of the way out
   const b = F.boss && F.enemies[0];
   if (b && b.awake && !b.dead) {
     const k = view.w >= 700 && view.h >= 560 ? 1.2 : 1, w = Math.min(view.w - 122 * k - 16, 520), x0 = Math.max(122 * k, (view.w - w) / 2), y0 = 92 * k; // to the right of the round map (which is larger on big screens), never wider than a phone
@@ -9670,6 +9693,10 @@ function grpList() {
   for (const v of Net.views.values()) out.push({ peer: v.peer, me: false, gv: !!v.gv, jt: v.gv ? v.jt || 0 : 0, cf: !!v.cf, live: !!v.live, v });
   return out;
 }
+// the colour of each member in a level, by his place in the team (the order of arrival: the same on every screen). Eight colours that tell two knights
+// of the same cloak apart, and none of them the amber of the arrow to the way out. Used for his arrow, his name and his dot on the map (c_render.js)
+function grpCols() { return ['#5fd0ff', '#ff7ad9', '#9be25f', '#c08bff', '#f4f1e6', '#7af0c8', '#ff6a6a', '#6f8cff']; }
+function grpColor(peer) { const i = grpList().sort(grpOrder).findIndex(x => x.peer === peer); return grpCols()[(i < 0 ? 0 : i) % 8]; }
 function grpOrder(a, b) { return (a.jt || 0) - (b.jt || 0) || (a.peer < b.peer ? -1 : a.peer > b.peer ? 1 : 0); }
 // the chef: whoever says so (the oldest if two do), else the first to have joined. Only a player of this version can be chef
 function grpChef() {
@@ -10180,6 +10207,10 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 14, d: '8 octobre 2026', t: 'En équipe : un coéquipier à terre', l: [
+      'Quand tu relèves un coéquipier, tu vois la barre avancer au-dessus de lui.',
+      'Sa chute et son retour sont annoncés, et un anneau rouge bat sous lui tant qu\'il est à terre.',
+      'Chaque coéquipier a sa couleur : sa flèche (avec son initiale), son nom et son point sur la carte. La flèche de la sortie garde la sienne.'] },
     { id: 13, d: '8 octobre 2026', t: 'Plus direct', l: [
       '« Jouer » reprend tout de suite ton dernier chevalier.',
       'La première fois, tu crées ton chevalier : son nom, sa cape, et s\'il porte les lames ou les armes à distance.',
