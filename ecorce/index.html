@@ -4754,6 +4754,16 @@ function heroCalm(m, t) { bearInit();
   if (B.RightArm) boneAdd(m, B.RightArm, 0, 0, -br * 1.4);
   if (B.LeftArm) boneAdd(m, B.LeftArm, 0, 0, br * 1.4);
 }
+// the breath of a knight on his guard: the chest rises, the shoulders follow, the weight goes from one side to the other (w: how much of it shows)
+function heroBreath(m, t, w) { if (w < .02) return; bearInit();
+  const B = m.bones, br = Math.sin(t * 2.1) * w, sw = Math.sin(t * .9) * w; m.body.updateMatrixWorld(true);
+  if (B.Spine) boneAdd(m, B.Spine, 0, sw * 1.5, sw * 1.2);
+  if (B.Spine01) boneAdd(m, B.Spine01, -br * .8, 0, 0);
+  if (B.Spine02) boneAdd(m, B.Spine02, -br * 1.2, sw * 1.5, 0);
+  if (B.Head) boneAdd(m, B.Head, br * .8, -sw * 2.5, 0);
+  if (B.RightArm) boneAdd(m, B.RightArm, 0, 0, -br * 1.2);
+  if (B.LeftArm) boneAdd(m, B.LeftArm, 0, 0, br * 1.2);
+}
 // The blows were recorded with the hips away from where the knight stands (twin blades: half a metre behind, which threw him off the screen):
 // what each clip adds to the hips of the resting pose, sideways and front to back, as read in the clip. It is taken off again, weighted like the clip.
 const ROOT_OFF = {};
@@ -4845,9 +4855,9 @@ function poseHero(m, x, y, face, walk, moving, down, swingT, kind, dashing, blin
   }
   if (an.pop < 1) { an.pop = Math.min(1, an.pop + dt / .1); const s = .5 + .5 * an.pop * (2 - an.pop); for (const k of ['hand', 'hand2']) if (m[k]) m[k].scale.setScalar(s); } // it settles in a blink, not in a jump
   if (an.atk < 1) an.atk = Math.min(1, an.atk + dt / an.atkD);
-  an.move += ((moving && !down ? 1 : 0) - an.move) * .22;
+  an.move += ((moving && !down ? 1 : 0) - an.move) * (1 - Math.exp(-dt * 14.9)); // by the clock, not by the image: a 120 Hz screen used to blend twice as fast as a 60 Hz one (.22 an image at 60)
   if (an.arm === undefined) an.arm = m.armed ? 1 : 0; an.arm += ((m.armed ? 1 : 0) - an.arm) * (1 - Math.exp(-dt * 10)); // how far the weapon is in his hand, eased
-  an.hurt = hurtT > 0 ? Math.min(1, hurtT / .25) : an.hurt * .8;
+  an.hurt = hurtT > 0 ? Math.min(1, hurtT / .25) : an.hurt * Math.exp(-dt * 13.4);
   an.dead = down ? Math.min(1, an.dead + dt / 1.1) : Math.max(0, an.dead - dt * 4);
   an.t += dt * (dashing ? 2.6 : 1);
   // weights: death over everything, then the hit, then the blow, and what is left goes to standing or running
@@ -4857,18 +4867,25 @@ function poseHero(m, x, y, face, walk, moving, down, swingT, kind, dashing, blin
   const ro = nw ? rootOffsets() : null; let rx = 0, rz = 0; // new bearings and gestures, and the hips put back where the knight stands
   const set = (n, w, time) => { const a = A[n]; if (!a || w <= 0) return; a.setEffectiveWeight(w); a.time = time; if (ro && ro[n]) { rx += w * ro[n][0]; rz += w * ro[n][1]; } };
   const D = n => MDL.clips[n] ? MDL.clips[n].duration : 1;
-  set('repos', rest * (1 - an.move) + 1e-4, (an.t + an.ph) % D('repos'));
+  // on his guard (animArmes): while the weapon is out the clip of rest is held on its calm instant, facing where the player aims (played, it looks about, then right behind him,
+  // and the weapon swung away with the body). It plays again once the weapon is back on his back, from that same instant
+  const guard = nw && m.armed && !calm && !!MDL.clips.repos;
+  if (guard) an.gt = 1; else if (an.gt) { an.gt = 0; an.ph = CALM.t - an.t; }
+  const tRest = guard ? CALM.t : (an.t + an.ph) % D('repos');
+  set('repos', rest * (1 - an.move) + 1e-4, tRest);
   set('course', rest * an.move, (walk / 11 * 1.15) % D('course')); // the legs follow the distance covered
   if (wAtk > 0) { const c = an.atkC, v = nw && W.fam < 3 ? BLOW[W.fam][an.sq | 0] : null, e = v ? warp(k, v[5]) : 1 - (1 - k) * (1 - k); set(c[0], wAtk, v && v[6] ? c[2] - (c[2] - c[1]) * e : c[1] + (c[2] - c[1]) * e); }
   if (wHurt > 0) set('touche', wHurt, .15 + (1 - an.hurt) * .5);
   if (wDead > 0) set('mort', wDead, Math.min(D('mort') - .02, an.dead * D('mort')));
   const held = calm && !!MDL.clips.repos; // the home screen: the clip is held on a calm instant and laid straight on the bones (the mixer writes a bone only when the clip moves it: what the code adds to a held pose would pile up frame after frame)
-  if (held) heroHold(m, MDL.clips.repos, CALM.t); else { if (m.held) heroHold(m, MDL.clips.repos, (an.t + an.ph) % D('repos')); m.mixer.update(0); } // (leaving it: a clean pose first, so that nothing added there stays)
-  m.held = held;
+  const still = guard && rest * (1 - an.move) > .999; // on his guard and nothing else moves him: the held clip is no longer written by the mixer either, so the pose is laid on the bones each time, as on the home screen
+  if (held) heroHold(m, MDL.clips.repos, CALM.t); else { if (still) heroHold(m, MDL.clips.repos, CALM.t); else if (m.held) heroHold(m, MDL.clips.repos, tRest); m.mixer.update(0); } // (leaving it: a clean pose first, so that nothing added there stays)
+  m.held = held || still;
   if (nw) { const hp = m.bones.Hips; if (hp) { hp.position.x -= rx; hp.position.z -= rz; } heroBearing(m, W.fam, walk, (1 - wDead) * (1 - wHurt) * (1 - .85 * wAtk) * (dashing ? .3 : 1), dt, calm); }
   // on top of the animations: the roll of the dodge, the size of a big blow, the lean of a run
   const ti = m.tilt; ti.rotation.set(dashing ? .75 : an.move * .06 - (ex.kick || 0) * .18, 0, 0); ti.position.set(0, dashing ? .1 : 0, 0);
   if (calm) { ti.rotation.z = Math.sin(t * .8 + 1) * .022; ti.position.x = Math.sin(t * .8) * .02; heroCalm(m, t); } // a slow sway and a breath
+  else if (guard && !down) heroBreath(m, t, rest * (1 - an.move)); // on his guard he breathes and shifts his weight, or he would be a statue
   if (nw) heroBlow(m, W.fam, k, (1 - wDead) * (1 - wHurt) * Math.max(wAtk, W.proj ? 1 : 0), ex.kick || 0, dashing);
   const big = an.big && k < 1 ? 1 + Math.sin(k * Math.PI) * .12 : 1, sq = dashing ? .8 : 1; ti.scale.set(big, big * sq, big * (dashing ? 1.25 : 1));
   m.glow.material.opacity = .55 + Math.sin(t * 5 + an.ph) * .08 + lan * .4;
