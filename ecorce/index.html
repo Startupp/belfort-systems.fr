@@ -2096,8 +2096,8 @@ function rollFrom(pool, weights, lvl, slot) {
 }
 const lastRolls = [];
 const makeLoot = (floor, weights, lv) => rollFrom(levelOf(floor).pool, weights, floor + (lv | 0));
-// the level whose loot the knight receives (B2): the one played, but never above what he has reached himself, so that a guest who follows his team higher up gets objects of his own rank
-function lootFloor() { return Math.min(F.floor, progOf(ME)); }
+// the level whose loot the knight receives (B2): the one played, but never far above what he has reached himself, so that a guest who follows his team higher up gets objects near his own rank
+function lootFloor() { return Math.min(F.floor, progOf(ME) + 3); } // (B3) up to three levels above his own when he follows his team: the service accepts an object up to seven above its owner, a harder difficulty adds two
 // everything the character could have met so far in the game being played: used by the merchant and the wheel
 function knownPool() { const seen = new Set(), out = []; for (let n = 0; n < Math.min(NLV, progOf(ME)); n++) for (const e of LEVELS[n].pool) { const key = e[0] * 100 + e[1]; if (!seen.has(key)) { seen.add(key); out.push(e); } } return out; }
 let rescaleOld = false, weapons7 = false; // set while an older save is being read: the scale from before TinKnight, the thirty weapons of format 7 and below
@@ -2807,8 +2807,12 @@ function hudLabel() { $('hud-floor').textContent = run.floor + ' · ' + (F.seals
 function finishRun(kind) { // 'win' | 'dead' | 'quit'
   if (!run || G.mode !== 'play') return;
   const win = kind === 'win', f = run.floor; let unlockedNow = 0;
-  // (B2) a track only moves for the knight's own next level: a guest who followed his team higher up (f above ME[tr]) wins the level without skipping any, and what he picks up is of his own rank (lootFloor)
-  if (win) { run.done = true; run.target = f + 1; const tr = trackOf(run.seed), gm = seedMod(run.seed).gem; if (f === ME[tr]) { ME[tr] = f + 1; unlockedNow = f < NLV ? f + 1 : -1; ME.gem += gm; run.stats.gem += gm; } else if (run.big) { ME.gem += TU.expeReplay; run.stats.gem += TU.expeReplay; }
+  // (B2, then B3 on 8 October) a track moves for the knight's own next level. A guest who followed his team higher up (f above ME[tr]) used to win nothing: a friend of rank 1 played
+  // forty minutes in the Braises without a level or an object above his own. He now wins ONE rank each victory, as he would alone (the service lets a knight open one level at a time,
+  // and refuses an object far above its owner: so not the whole way up at once), with the gems of a first victory; what he picks up follows (lootFloor)
+  if (win) { run.done = true; run.target = f + 1; const tr = trackOf(run.seed), gm = seedMod(run.seed).gem; if (f === ME[tr]) { ME[tr] = f + 1; unlockedNow = f < NLV ? f + 1 : -1; ME.gem += gm; run.stats.gem += gm; }
+    else if (f > ME[tr] && (tr === 'unlocked' || tr === 'unx' || ME[tr] < ME.unlocked)) { ME[tr]++; unlockedNow = ME[tr] <= NLV ? ME[tr] : -1; ME.gem += gm; run.stats.gem += gm; } // a harder track never goes ahead of the normal one
+    else if (run.big) { ME.gem += TU.expeReplay; run.stats.gem += TU.expeReplay; }
     const S = ME.stats, bk = tr + ':' + f, old = S.bt[bk]; S.lv++; if (!run.big && run.diff) S.lvH++; // counters, and the best time on this level
     run.best = !old || run.time < old ? (old ? 2 : 1) : 0; if (run.best) S.bt[bk] = Math.round(run.time * 10) / 10;
     P.hp = P.mhp; uiShake(1); if (!save.tuto) save.tuto = true; }
