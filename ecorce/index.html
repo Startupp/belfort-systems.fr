@@ -109,6 +109,19 @@ body.lobby .tab:first-child .ic{width:66px;height:66px;font-size:30px;background
 body.lobby .tab:active{background:none}body.lobby .tab:active .ic{transform:scale(.92)}
 body.lobby .tab.dot::after{right:8px;top:2px}
 @media (max-height:600px){body.lobby #tabs{gap:4px}body.lobby .tab .ic{width:46px;height:46px;font-size:22px}body.lobby .tab:first-child .ic{width:54px;height:54px}}
+/* the new home screen (TU.accueil): the painted workshop behind a transparent 3D canvas, the knight on its pedestal, the six bubbles around him, three on each side.
+   Sizes and places come from lobbyLay (d_ui.js), which knows where the picture, once it covers the screen, puts the pedestal: --lob-b the size of a bubble,
+   --lob-cx the middle of the knight, --lob-hw half of the free space kept for him, --lob-top the height of the middle of the groups. */
+#lobby{position:absolute;inset:0;overflow:hidden;background:radial-gradient(ellipse 62% 34% at 50% 74%,color-mix(in srgb,var(--amber) 24%,transparent),transparent 72%),linear-gradient(to bottom,var(--well),var(--bark))}
+#lobby-bg{position:absolute;left:0;top:0;max-width:none;opacity:0;transition:opacity .7s}
+#lobby-bg.on{opacity:1}
+#lobby::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,color-mix(in srgb,var(--well) 70%,transparent) 0,transparent 18%,transparent 78%,color-mix(in srgb,var(--well) 50%,transparent) 100%)}
+body.lobby.accueil #tabs{--gw:calc(var(--lob-b,58px) + 30px);zoom:1;left:calc(var(--lob-cx,50%) - var(--gw) - var(--lob-hw,110px));right:auto;top:var(--lob-top,50%);bottom:auto;transform:translateY(-50%);width:calc(var(--gw)*2 + var(--lob-hw,110px)*2);max-width:none;margin:0;
+  grid-template-columns:var(--gw) var(--gw);grid-template-rows:repeat(3,auto);grid-auto-flow:column;justify-content:space-between;row-gap:calc(var(--lob-b,58px)*.24);column-gap:0;padding:0;background:none;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.lobby.accueil .tab{width:var(--gw);justify-self:center;padding:0;gap:6px;font-size:clamp(12px,calc(var(--lob-b,58px)*.21),17px);font-weight:700;color:var(--cream);text-shadow:0 0 3px #000,0 1px 3px #000,0 0 9px #000,0 0 15px rgba(0,0,0,.85)}
+body.lobby.accueil .tab .ic,body.lobby.accueil .tab .uiic{width:var(--lob-b,58px);height:var(--lob-b,58px);padding:calc(var(--lob-b,58px)*.15);border-radius:50%;background:color-mix(in srgb,var(--bark-2) 92%,transparent);box-shadow:inset 0 0 0 2px var(--line),0 4px 16px rgba(0,0,0,.55);object-fit:contain;font-size:calc(var(--lob-b,58px)*.46);color:var(--cream)}
+body.lobby.accueil .tab:first-child .ic,body.lobby.accueil .tab:first-child .uiic{width:calc(var(--lob-b,58px)*1.2);height:calc(var(--lob-b,58px)*1.2);background:color-mix(in srgb,var(--bark-2) 96%,transparent);color:var(--amber);box-shadow:inset 0 0 0 3px var(--amber),0 0 0 5px color-mix(in srgb,var(--amber) 30%,transparent),0 6px 22px rgba(0,0,0,.6)}
+body.lobby.accueil .tab.dot::after{right:calc(50% - var(--lob-b,58px)*.52);top:0}
 .tab.dot::after{content:"";position:absolute;right:24%;top:7px;width:10px;height:10px;border-radius:50%;background:var(--amber)}
 
 /* ---------- touch pad ---------- */
@@ -149,9 +162,31 @@ body.lobby .tab.dot::after{right:8px;top:2px}
 /* home: the first screen, in front of the characters. The picture covers; the column stays in the middle, in the empty part of the sky */
 #scr-home{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:linear-gradient(to bottom,var(--well),var(--bark))}
 #scr-home [hidden]{display:none!important} /* .btn is a flex box: the page of Claude has no global rule for the hidden attribute */
-#home-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 70%;animation:homein .6s both}
+/* the carousel: every painting of the game cross-fades behind the title (e2_modeles.js, carStart). The picture that comes covers the one on show, which
+   leaves once it is hidden: no dip to black in the middle of the fade. A slow drift keeps each picture alive unless less motion is asked for. */
+#home-car{position:absolute;inset:0;z-index:0;overflow:hidden}
+.home-sl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 70%;opacity:0;transition:opacity 1.2s ease-in-out}
+.home-sl.on{opacity:1}
+/* an illustration of a world is a wide picture (800 x 448): it covers a wide screen; on a tall one it would be cut to a slice and enlarged four times,
+   so it stands whole in a band in the middle, over a blurred and darkened copy of itself that fills the screen */
+.home-sl.ill img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 46%}
+@media (max-aspect-ratio:1/1){
+  .home-sl.ill .bl{filter:blur(16px) brightness(.62) saturate(1.15);transform:scale(1.15)}
+  .home-sl.ill .fg{inset:auto 0 auto 0;top:56%;height:auto;aspect-ratio:800/448;transform:translateY(-50%);object-fit:cover;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16%,#000 84%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 16%,#000 84%,transparent 100%);box-shadow:none}
+}
+@media (min-aspect-ratio:1001/1000){.home-sl.ill .bl{display:none}}
+#home-bg{transition-duration:.6s}
 @keyframes homein{from{opacity:0}to{opacity:1}}
-#scr-home::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,color-mix(in srgb,var(--well) 70%,transparent) 0,transparent 38%,transparent 68%,color-mix(in srgb,var(--well) 80%,transparent) 100%)}
+@keyframes homekb{from{transform:scale(1)}to{transform:scale(1.07)}}
+@media (prefers-reduced-motion:no-preference){.home-sl.on{animation:homekb 16s ease-out both}}
+@media (prefers-reduced-motion:reduce){.home-sl{transition:none}}
+/* a veil that keeps the title, the button and the dots readable on every picture, the bright ones too (snow, embers) */
+#scr-home::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,color-mix(in srgb,var(--well) 80%,transparent) 0,color-mix(in srgb,var(--well) 52%,transparent) 20%,color-mix(in srgb,var(--well) 16%,transparent) 38%,transparent 50%,transparent 62%,color-mix(in srgb,var(--well) 58%,transparent) 84%,color-mix(in srgb,var(--well) 88%,transparent) 100%)}
+#home-dots{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 56px);z-index:2;display:flex;justify-content:center;padding-inline:10px;pointer-events:none}
+.car-dot{pointer-events:auto;flex:0 1 24px;min-width:14px;height:36px;display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.car-dot::before{content:"";width:8px;height:8px;border-radius:99px;background:rgba(241,228,200,.6);box-shadow:0 0 0 1px rgba(0,0,0,.4),0 1px 4px rgba(0,0,0,.55);transition:width .35s,background .35s}
+.car-dot.on::before{width:22px;background:var(--amber)}
+.home-top .eyebrow{color:var(--cream);opacity:.88;text-shadow:0 1px 4px #000,0 0 12px rgba(0,0,0,.8)}
 .home-in{position:relative;z-index:1;height:100%;width:100%;max-width:360px;margin-inline:auto;padding:max(7vh,28px) 18px calc(env(safe-area-inset-bottom) + 16px);display:flex;flex-direction:column;gap:clamp(22px,5vh,44px)}
 .home-top{display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center}
 .home-top h1{font-size:clamp(46px,9vh,64px)}
@@ -626,6 +661,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 <script src="three.min.js"></script>
 
 <div id="game">
+  <div id="lobby" hidden aria-hidden="true"><img id="lobby-bg" alt="" hidden></div>
   <canvas id="gl" aria-hidden="true"></canvas>
   <canvas id="cv" aria-label="Zone de jeu"></canvas>
 
@@ -676,7 +712,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
   </div>
 
   <section id="scr-home" hidden>
-    <img id="home-bg" alt="" hidden>
+    <div id="home-car" aria-hidden="true"><img id="home-bg" class="home-sl" alt="" hidden></div>
     <div class="home-in">
       <div class="home-top"><div class="eyebrow">Un petit chevalier de fer-blanc sous l'écorce</div><h1>TinKnight</h1></div>
       <div class="home-btns">
@@ -687,6 +723,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
       </div>
       <p id="home-foot"></p>
     </div>
+    <div id="home-dots" role="group" aria-label="Images du jeu" hidden></div>
   </section>
 
   <section id="scr-title">
@@ -1184,6 +1221,10 @@ const TUNE_DEF = [
   ['hpLin', 'dif', 'Vie des créatures : hausse par niveau', 'Chaque niveau ajoute cette part à la vie des créatures (0,22 = +22 % par niveau).', .22, 0, 1, 'n'],
   ['blocs', 'gen', 'Blocs 3D', '1 = les murs restent continus, les blocs 3D de la zone viennent en touches (piliers aux angles, ornements sur les grands murs) ; 2 = les murs entiers en blocs 3D ; 0 = aucun bloc. L\'éditeur peut poser un bloc sur n\'importe quelle case.', 1, 0, 2, 'n'],
   ['texV2', 'gen', 'Textures v2 par défaut', '1 = chaque monde porte les textures v2 de sa zone (sol naturel, mur habillé, dessus) ; 0 = les premières textures. Une carte peut choisir les siennes dans l\'éditeur.', 1, 0, 1, 'n'],
+  ['fond', 'gen', 'Fond peint et effets de zone', '1 = derrière le niveau, un fond peint d\'après l\'illustration de la zone ; dans le niveau, une brume en couches, la lumière et les effets propres à chaque zone ; 0 = le fond uni d\'avant, sans ces ajouts.', 1, 0, 1, 'n'],
+  ['formes', 'gen', 'Reliefs arrondis', '1 = les murs des niveaux sont des reliefs continus et arrondis (talus, crêtes bombées, bords qui retombent sous le sol) ; 0 = les cubes d\'avant. L\'éditeur de cartes, le camp et les murs entièrement en blocs 3D gardent les cubes.', 1, 0, 1, 'n'],
+  ['accueil', 'gen', 'Nouvel écran d\'accueil', '1 = l\'écran d\'accueil du chevalier : le tableau de l\'atelier derrière lui, le chevalier debout sur son socle, les six bulles des menus autour de lui ; 0 = la scène d\'avant (le camp vu de près, les bulles en colonne à droite).', 1, 0, 1, 'n'],
+  ['animArmes', 'gen', 'Gestes du chevalier par arme', '1 = chaque famille d\'arme a sa tenue (repos, marche, course), sa sortie et son rangement, ses coups enchaînés différents, et ses tirs ont leur forme ; 0 = comme avant (mêmes mouvements pour toutes les armes, tirs ronds).', 1, 0, 1, 'n'],
   ['iconesV2', 'gen', 'Icônes peintes', '1 = les icônes peintes de Damien (pack 4) sur les bulles de l\'accueil et le bouton de la lanterne ; 0 = les icônes dessinées d\'avant.', 1, 0, 1, 'n'],
   ['herbe', 'gen', 'Herbe et vie au sol', 'Combien de touffes, fleurs, cailloux et feuilles en moyenne par case de sol (plus le long des murs) ; 0 = aucune.', .6, 0, 3, 'n'],
   ['blocsHD', 'gen', 'Blocs détaillés', '0 = une carte pose la version allégée de chaque bloc (100 à 250 triangles : fluide sur téléphone) ; 1 = la pièce entière (500 triangles : plus fin, plus lourd).', 0, 0, 1, 'n'],
@@ -1684,29 +1725,41 @@ const CLOAKS = ['#e8a23a', '#5fc0a0', '#dc6f7c', '#8da2f0'];
 // (TinyKnight_Zones_Promo): golden light in the Racines, teal glow in the Mycélium, red dark in the Braises, pale cold in the Givre,
 // violet in the Abîme. air: what floats (count, colours, rising speed in pixels a second — below zero it falls, size in tiles);
 // shaft: the colour of the light that falls from above in some chambers. All of it is for the eye only.
+// Optional, read by p_fond.js (setting « fond »): lum { hemi, sun, lamp, fog } (multipliers of the lights and of the fog distance), bg { dim, glow, gl } (the painted
+// backdrop: how dark the illustration is, the colour and the strength of the glow up high), mist { col, col2, a } (the two sheets of mist), shaftA (strength of the shafts), air.a (strength of the specks).
 const STRATA = [
-  { name: 'Racines', floorA: '#4a3a2a', floorB: '#57452f', wallTop: '#120d09', wallFace: '#6b5236', wallEdge: '#8a6e45', glow: '#ffc24a', deco: '#7d9c48', foe: '#c2603f', foe2: '#f0d9a8', fog: '#120b05', sky: '#d6b47c', gnd: '#2b1d10', sun: '#ffdca6', tex: '#aaa69c', cap: '#5f7a3a', kind: 0,
-    air: { n: 44, col: ['#ffd27a', '#ffe8b0'], v: [2, 6], r: .1 }, shaft: '#ffd98a' },
-  { name: 'Mycélium', floorA: '#2c3247', floorB: '#353c54', wallTop: '#0c0f18', wallFace: '#42517a', wallEdge: '#6079a8', glow: '#7fe3d2', deco: '#b58cff', foe: '#4bb0a6', foe2: '#e6d8ff', fog: '#03121a', sky: '#86dcd4', gnd: '#101a30', sun: '#a6ecff', tex: '#b4cbcc', cap: '#4a4f86', kind: 1,
-    air: { n: 60, col: ['#7fe3d2', '#b58cff', '#d2fff6'], v: [-2, 4], r: .13 } },
-  { name: 'Braises', floorA: '#43302a', floorB: '#4f3830', wallTop: '#120a08', wallFace: '#74402f', wallEdge: '#a85a3c', glow: '#ff8a4a', deco: '#ffcf5a', foe: '#e0672f', foe2: '#ffe2a8', fog: '#1a0703', sky: '#ff9d66', gnd: '#2a0d06', sun: '#ffb47e', tex: '#c4aaa0', cap: '#3a2a27', kind: 2,
-    air: { n: 64, col: ['#ff8a3a', '#ffcf5a', '#ff5a2a'], v: [14, 30], r: .075 } },
-  { name: 'Givre', floorA: '#2f3b47', floorB: '#3a4856', wallTop: '#0b1016', wallFace: '#5a7388', wallEdge: '#9cc4dc', glow: '#bfeaff', deco: '#e8f6ff', foe: '#6f9fd0', foe2: '#eaf6ff', fog: '#1f3043', sky: '#e2f3ff', gnd: '#4a6178', sun: '#eef8ff', tex: '#a9b8c6', cap: '#a9c2d2', kind: 2,
-    air: { n: 70, col: ['#ffffff', '#e2f2ff'], v: [-11, -6], r: .09 }, shaft: '#e6f5ff' },
-  { name: 'Abîme', floorA: '#2a2233', floorB: '#33293f', wallTop: '#09070d', wallFace: '#4a3566', wallEdge: '#7a5aa8', glow: '#ff7ad9', deco: '#9a6bff', foe: '#8a4fd0', foe2: '#ffd0f2', fog: '#120826', sky: '#b896ff', gnd: '#1a0c2a', sun: '#cdb0ff', tex: '#c0b4d6', cap: '#2f2740', kind: 2,
-    air: { n: 48, col: ['#c77dff', '#ff7ad9'], v: [3, 9], r: .1 } },
+  { name: 'Racines', floorA: '#4a3a2a', floorB: '#57452f', wallTop: '#120d09', wallFace: '#6b5236', wallEdge: '#8a6e45', glow: '#ffc24a', deco: '#7d9c48', foe: '#c2603f', foe2: '#f0d9a8', fog: '#3a2812', sky: '#e8c280', gnd: '#5a3c1c', sun: '#ffdca6', tex: '#aaa69c', cap: '#5f7a3a', kind: 0,
+    air: { n: 52, col: ['#ffd27a', '#ffe8b0'], v: [2, 6], r: .12, a: 1.5 }, shaft: '#ffd98a', shaftA: 2.8,
+    lum: { hemi: 1.6, sun: 1.35, fog: 1.25 }, bg: { dim: .75, glow: '#ffcf7a', gl: .35 }, mist: { col: '#ffeab0', a: .28 } },
+  { name: 'Mycélium', floorA: '#2c3247', floorB: '#353c54', wallTop: '#0c0f18', wallFace: '#42517a', wallEdge: '#6079a8', glow: '#7fe3d2', deco: '#b58cff', foe: '#4bb0a6', foe2: '#e6d8ff', fog: '#051a2c', sky: '#7fe0e8', gnd: '#3c2a78', sun: '#a6ecff', tex: '#b4cbcc', cap: '#4a4f86', kind: 1,
+    air: { n: 70, col: ['#7fe3d2', '#b58cff', '#d2fff6'], v: [-2, 4], r: .15, a: 1.4 },
+    lum: { hemi: 1, sun: .8, lamp: .95 }, bg: { dim: .85, glow: '#2fb8d8', gl: .2 }, mist: { col: '#4aa8e0', col2: '#9a6aff', a: .22 } },
+  { name: 'Braises', floorA: '#43302a', floorB: '#4f3830', wallTop: '#120a08', wallFace: '#74402f', wallEdge: '#a85a3c', glow: '#ff8a4a', deco: '#ffcf5a', foe: '#e0672f', foe2: '#ffe2a8', fog: '#240a04', sky: '#7a5a4e', gnd: '#ff7a30', sun: '#ff9a60', tex: '#c4aaa0', cap: '#3a2a27', kind: 2,
+    air: { n: 72, col: ['#ff8a3a', '#ffcf5a', '#ff5a2a'], v: [14, 30], r: .09, a: 1.5 },
+    lum: { hemi: 1, sun: .8, lamp: 1.05 }, bg: { dim: .6, glow: '#ff5a22', gl: .24 }, mist: { col: '#ff7a3a', col2: '#c0381a', a: .26 } },
+  { name: 'Givre', floorA: '#2f3b47', floorB: '#3a4856', wallTop: '#0b1016', wallFace: '#5a7388', wallEdge: '#9cc4dc', glow: '#bfeaff', deco: '#e8f6ff', foe: '#6f9fd0', foe2: '#eaf6ff', fog: '#5a7aa0', sky: '#e2f3ff', gnd: '#6f8fb0', sun: '#eef8ff', tex: '#a9b8c6', cap: '#a9c2d2', kind: 2,
+    air: { n: 80, col: ['#ffffff', '#e2f2ff'], v: [-11, -6], r: .11, a: 1.4 }, shaft: '#e6f5ff', shaftA: 1.4,
+    lum: { hemi: 1.25, sun: 1.1, lamp: .9, fog: 1.35 }, bg: { dim: .9, glow: '#58d8d0', gl: .18 }, mist: { col: '#d8ecff', a: .32 } },
+  { name: 'Abîme', floorA: '#2a2233', floorB: '#33293f', wallTop: '#09070d', wallFace: '#4a3566', wallEdge: '#7a5aa8', glow: '#ff7ad9', deco: '#9a6bff', foe: '#8a4fd0', foe2: '#ffd0f2', fog: '#1c0d3a', sky: '#b896ff', gnd: '#4a1a6a', sun: '#cdb0ff', tex: '#c0b4d6', cap: '#2f2740', kind: 2,
+    air: { n: 60, col: ['#c77dff', '#ff7ad9', '#ff4fd0'], v: [3, 9], r: .12, a: 1.5 },
+    lum: { hemi: 1, sun: .9 }, bg: { dim: .8, glow: '#a050ff', gl: .26 }, mist: { col: '#a060ff', col2: '#ff6ad8', a: .22 } },
   // the five worlds of the series 3 (32, decision AN), levels 31 to 60, closed to players until Damien opens them (setting « mondes »).
   // kit: the world whose models, textures and creatures they borrow until their own arrive
-  { name: 'Marais', kit: 0, floorA: '#2f3a2a', floorB: '#384532', wallTop: '#0c120a', wallFace: '#4a5a3a', wallEdge: '#6e8a4a', glow: '#c8f07a', deco: '#7da848', foe: '#5a9a4a', foe2: '#e8f0b0', fog: '#0a1a12', sky: '#a8d0a0', gnd: '#142418', sun: '#e0f0c0', tex: '#a4b0a0', cap: '#4a6a32', kind: 0,
-    air: { n: 56, col: ['#c8f07a', '#f0ffd0'], v: [1, 4], r: .09 }, shaft: '#d8f0a8' },
-  { name: 'Canopée', kit: 0, floorA: '#5a4a32', floorB: '#66553a', wallTop: '#1a2410', wallFace: '#5a7a3a', wallEdge: '#8ab05a', glow: '#ffe48a', deco: '#9ad05a', foe: '#c08a3a', foe2: '#fff0c0', fog: '#2a4a5a', sky: '#d0ecff', gnd: '#2a3a20', sun: '#fff4d0', tex: '#b4b0a0', cap: '#6a9a3a', kind: 0,
-    air: { n: 40, col: ['#ffffff', '#d0f0a0'], v: [-3, 2], r: .1 }, shaft: '#fff4c8' },
-  { name: 'Corail englouti', kit: 1, floorA: '#2a4048', floorB: '#304a54', wallTop: '#081418', wallFace: '#4a6a72', wallEdge: '#7ab0b8', glow: '#7ff0e8', deco: '#ff8aa0', foe: '#ff7a6a', foe2: '#d8fff8', fog: '#04202a', sky: '#8ae0e8', gnd: '#0a2a34', sun: '#b0f4ff', tex: '#a8c4c8', cap: '#3a6a6a', kind: 1,
-    air: { n: 70, col: ['#bff8ff', '#ffffff'], v: [4, 10], r: .08 } },
-  { name: 'Dunes d\'ambre', kit: 2, floorA: '#6a5232', floorB: '#76603a', wallTop: '#20160a', wallFace: '#8a6a3a', wallEdge: '#c09a5a', glow: '#ffb84a', deco: '#e0c070', foe: '#c87a3a', foe2: '#fff0c8', fog: '#2a1a08', sky: '#ffd890', gnd: '#3a2810', sun: '#ffe4a8', tex: '#c8b8a0', cap: '#9a7a4a', kind: 2,
-    air: { n: 50, col: ['#ffd890', '#fff0c8'], v: [6, 14], r: .07 }, shaft: '#ffe0a0' },
-  { name: 'Mine à rouages', kit: 4, floorA: '#3a3540', floorB: '#443e4a', wallTop: '#0e0c12', wallFace: '#5a4e5e', wallEdge: '#9a8060', glow: '#ffb060', deco: '#a87aff', foe: '#c8904a', foe2: '#ffe8c8', fog: '#12101a', sky: '#c0a8e0', gnd: '#1a1420', sun: '#ffd8a8', tex: '#b8b0c0', cap: '#4a4050', kind: 2,
-    air: { n: 44, col: ['#ffb060', '#c8a8ff'], v: [2, 7], r: .08 } },
+  { name: 'Marais', kit: 0, floorA: '#2f3a2a', floorB: '#384532', wallTop: '#0c120a', wallFace: '#4a5a3a', wallEdge: '#6e8a4a', glow: '#c8f07a', deco: '#7da848', foe: '#5a9a4a', foe2: '#e8f0b0', fog: '#1c3230', sky: '#a8d0a0', gnd: '#2a4030', sun: '#e0f0c0', tex: '#a4b0a0', cap: '#4a6a32', kind: 0,
+    air: { n: 62, col: ['#c8f07a', '#f0ffd0'], v: [1, 4], r: .11, a: 1.4 }, shaft: '#d8f0a8',
+    lum: { hemi: 1.3, fog: 1.1 }, bg: { dim: .85, glow: '#b89acb', gl: .22 }, mist: { col: '#b8d4c4', col2: '#7fe8d0', a: .34 } },
+  { name: 'Canopée', kit: 0, floorA: '#5a4a32', floorB: '#66553a', wallTop: '#1a2410', wallFace: '#5a7a3a', wallEdge: '#8ab05a', glow: '#ffe48a', deco: '#9ad05a', foe: '#c08a3a', foe2: '#fff0c0', fog: '#5c8aa8', sky: '#d0ecff', gnd: '#3a5028', sun: '#fff4d0', tex: '#b4b0a0', cap: '#6a9a3a', kind: 0,
+    air: { n: 46, col: ['#ffffff', '#d0f0a0'], v: [-3, 2], r: .11, a: 1.3 }, shaft: '#fff4c8', shaftA: 1.8,
+    lum: { hemi: 1.6, sun: 1.4, fog: 1.4 }, bg: { dim: .85, glow: '#9fd0f0', gl: .12 }, mist: { col: '#f0f8ff', a: .24 } },
+  { name: 'Corail englouti', kit: 1, floorA: '#2a4048', floorB: '#304a54', wallTop: '#081418', wallFace: '#4a6a72', wallEdge: '#7ab0b8', glow: '#7ff0e8', deco: '#ff8aa0', foe: '#ff7a6a', foe2: '#d8fff8', fog: '#06303c', sky: '#8ae0e8', gnd: '#0a3a48', sun: '#b0f4ff', tex: '#a8c4c8', cap: '#3a6a6a', kind: 1,
+    air: { n: 80, col: ['#bff8ff', '#ffffff'], v: [4, 10], r: .1, a: 1.3 },
+    lum: { hemi: 1.15, sun: .9 }, bg: { dim: .85, glow: '#40e0e0', gl: .26 }, mist: { col: '#9ff0f0', col2: '#60d0e8', a: .26 } },
+  { name: 'Dunes d\'ambre', kit: 2, floorA: '#6a5232', floorB: '#76603a', wallTop: '#20160a', wallFace: '#8a6a3a', wallEdge: '#c09a5a', glow: '#ffb84a', deco: '#e0c070', foe: '#c87a3a', foe2: '#fff0c8', fog: '#4a3010', sky: '#ffd890', gnd: '#5a3c18', sun: '#ffe4a8', tex: '#c8b8a0', cap: '#9a7a4a', kind: 2,
+    air: { n: 56, col: ['#ffd890', '#fff0c8'], v: [6, 14], r: .09, a: 1.4 }, shaft: '#ffe0a0', shaftA: 1.5,
+    lum: { hemi: 1.5, sun: 1.3, fog: 1.3 }, bg: { dim: .8, glow: '#ffd890', gl: .3 }, mist: { col: '#ffe0a0', col2: '#e8b060', a: .26 } },
+  { name: 'Mine à rouages', kit: 4, floorA: '#3a3540', floorB: '#443e4a', wallTop: '#0e0c12', wallFace: '#5a4e5e', wallEdge: '#9a8060', glow: '#ffb060', deco: '#a87aff', foe: '#c8904a', foe2: '#ffe8c8', fog: '#1c1610', sky: '#c0a8e0', gnd: '#2a1c18', sun: '#ffd8a8', tex: '#b8b0c0', cap: '#4a4050', kind: 2,
+    air: { n: 52, col: ['#ffb060', '#c8a8ff'], v: [2, 7], r: .1, a: 1.4 },
+    lum: { hemi: 1.1, sun: .8, lamp: 1.1 }, bg: { dim: .8, glow: '#ffb060', gl: .26 }, mist: { col: '#c8a880', col2: '#6a7ad0', a: .2 } },
 ];
 // the world whose models, textures, creatures and colours of menus a world wears (the first five wear their own)
 const kitOf = si => si < 5 ? si : (STRATA[si] && STRATA[si].kit) || 0;
@@ -2864,10 +2917,11 @@ function updatePlayer(dt) {
 }
 
 /* ================= enemies ================= */
-function eProj(x, y, a, spd, dmg, col) { eshots.push({ x, y, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, dmg, life: 8, col }); }
+let eShotTy = 0; // the kind of creature that fires, only for the look of its shots
+function eProj(x, y, a, spd, dmg, col) { eshots.push({ x, y, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, dmg, life: 8, col, ty: eShotTy }); }
 // an "event" is something every client must replay locally: a shot, a slam, a boss volley
 function enemyEvent(e) {
-  const x = e.x, y = e.y, dm = dmgMul(F.floor) * F.mod.dmg, col = F.str.foe2;
+  const x = e.x, y = e.y, dm = dmgMul(F.floor) * F.mod.dmg, col = F.str.foe2; eShotTy = e.type;
   if (e.type === 2) {
     const n = F.floor >= TU.en2from ? TU.en2shots : 1;
     for (let i = 0; i < n; i++) eProj(x, y, e.ang + (i - (n - 1) / 2) * TU.en2fan, TU.en2shotSpd, EN[2].dmg * dm, col);
@@ -3021,7 +3075,7 @@ function boom(s) { // a shell bursting: everything close takes most of the blow
 function updateShots(dt) {
   for (const s of shots) {
     s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt;
-    if (G.frame % 2 === 0) mote(s.x, s.y, 14, s.col || '#ffe9b8', s.aoe ? 3.4 : 2.4, .22);
+    if (TU.animArmes) shotTrail(s, false); else if (G.frame % 2 === 0) mote(s.x, s.y, 14, s.col || '#ffe9b8', s.aoe ? 3.4 : 2.4, .22);
     if (solid(s.x, s.y) || s.life <= 0) { s.life = 0; if (s.aoe && !s.cos) boom(s); else burst(s.x, s.y, '#fff', 4, 60, 14); continue; }
     if (s.cos) continue;
     for (const e of F.enemies) {
@@ -3036,7 +3090,7 @@ function updateShots(dt) {
   shots = shots.filter(s => s.life > 0);
   for (const s of eshots) {
     s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt;
-    if (G.frame % 3 === 0) mote(s.x, s.y, 12, '#ff7a55', 2.6, .22);
+    if (TU.animArmes) shotTrail(s, true); else if (G.frame % 3 === 0) mote(s.x, s.y, 12, '#ff7a55', 2.6, .22);
     if (solid(s.x, s.y)) { s.life = 0; burst(s.x, s.y, '#ff8f7a', 4, 50, 12); continue; }
     if (!P.down && hyp(s.x - P.x, s.y - P.y) < P.r + 4) { if (P.inv <= 0) { hurt(s.dmg); s.life = 0; } }
   }
@@ -3439,7 +3493,14 @@ function drawGleaner2D(x, y, col, face, walk, moving, down) {
   if (!down) { ctx.fillStyle = '#ffd986'; ctx.beginPath(); ctx.arc(lx * 11, -1 + ly * 7, 2.8, 0, TAU); ctx.fill(); }
   ctx.restore();
 }
+// the home screen of a character (TU.accueil) without 3D: the painted workshop is the CSS picture under this canvas, the knight is drawn big on its pedestal
+function renderLobby2D() {
+  const g = lobbyGeo(view.w, view.h), k = lobbyKnight(view.w, view.h) / 40; // the flat knight is about 33 units tall: drawn at two thirds of the 3D knight's height, he is plain enough
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(view.dpr * k, 0, 0, view.dpr * k, g.x * view.dpr, (g.y - 8 * k) * view.dpr); drawGleaner2D(0, 0, CLOAKS[ME.col], Math.PI / 2, 0, false, false);
+}
 function render2D() {
+  if (lobbyNew()) return renderLobby2D();
   const z = view.zoom * view.dpr, vw = view.vw, vh = view.h / view.zoom;
   camX = cam.x - vw / 2; camY = cam.y - (G.mode === 'title' ? 110 / view.zoom : vh * .46);
   const shx = G.shake ? (Math.random() - .5) * G.shake : 0, shy = G.shake ? (Math.random() - .5) * G.shake : 0;
@@ -3611,7 +3672,7 @@ function wallTex(si) {
 /* ---------- boot ---------- */
 function initGL() {
   if (!window.THREE) return false;
-  try { R3 = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true, powerPreference: 'high-performance' }); } catch (e) { return false; }
+  try { R3 = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true, alpha: true, powerPreference: 'high-performance' }); } catch (e) { return false; } // alpha: the home screen's picture shows through the canvas
   // the dark is centred on the lantern: fog measured from the camera's focus point, not from the camera
   const SC = THREE.ShaderChunk;
   SC.fog_pars_vertex = '#ifdef USE_FOG\n\tvarying float fogDepth;\n#endif';
@@ -3653,6 +3714,48 @@ function glQuality() {
   glResize();
 }
 function glResize() { R3.setSize(view.w, view.h, false); }
+/* ---------- the home screen of a character (TU.accueil) ---------- */
+// A painted workshop (f_creation, 720 x 1273: an empty round pedestal in the light of a lantern) fills the screen as a CSS picture under this transparent canvas
+// (lobbyLay, d_ui.js, places it). The knight stands on the pedestal, seen almost from the front, in a warm light of its own. No camp is built for it.
+// LPIC: where the middle of the pedestal's top face lies in the picture's own pixels (x, y), and half its width (rx), measured on the painting.
+const LPIC = { w: 720, h: 1273, x: 359, y: 947, rx: 246 };
+function lobbyNew() { return lobbyOn() && !!TU.accueil; }
+let lobbyBare = false, LS = null; // lobbyBare: the last world was left unbuilt (no camp for the home screen); LS: the soft shadow under the knight
+// where the picture lands: it covers the screen, slid up or down as far as covering allows, to bring the pedestal to 72 % of the height
+function lobbyGeo(W, H) {
+  const s = Math.max(W / LPIC.w, H / LPIC.h), ox = (W - LPIC.w * s) / 2, oy = clamp(.72 * H - LPIC.y * s, H - LPIC.h * s, 0);
+  return { s, w: LPIC.w * s, h: LPIC.h * s, left: ox, top: oy, x: ox + LPIC.x * s, y: oy + LPIC.y * s, rx: LPIC.rx * s };
+}
+// how tall the knight stands on screen, in pixels, sapling and boots included: a little more than the pedestal is wide, between 30 and 56 % of the height
+function lobbyKnight(W, H) { return clamp(lobbyGeo(W, H).rx * 2.15, H * .3, H * .56); }
+function renderLobby() {
+  const W = view.w, H = view.h, g = lobbyGeo(W, H), hk = lobbyKnight(W, H), pitch = .25; lastT3 = G.time;
+  const mk = MDL.hero ? '|m' : '', key = CLOAKS[ME.col] + '|' + ST.kind + '|' + ST.lan + mk;
+  if (!PM || PM.key !== key) { freeModel(PM); PM = makeGleaner(CLOAKS[ME.col], KNIGHT, ST.kind, ST.lan); }
+  const fx = P.x * U, fz = P.y * U;
+  poseGleaner(PM, P.x, P.y, Math.PI / 2, 0, false, false, 0, ST.kind, false, false, 0, P); // standing, facing the player: the animation of rest does the rest
+  // the camera looks at the knight's feet from low and in front (less plunging than in a level), and slides the picture's pedestal under them
+  const ppu = hk / ((PM.sk ? 1.5 : 1.05) * Math.cos(pitch)); // screen pixels for one unit of the world, at the distance of the knight (he is 1.5 units tall, sapling on his head)
+  cam3.aspect = W / H; cam3.fov = 2 * Math.atan(W / 2 / ppu / CAM_D / cam3.aspect) * 180 / Math.PI;
+  cam3.position.set(fx, Math.sin(pitch) * CAM_D, fz + Math.cos(pitch) * CAM_D); cam3.lookAt(fx, 0, fz);
+  cam3.setViewOffset(W, H, W / 2 - g.x, H / 2 - g.y, W, H);
+  if (!LS) { // a soft dark patch where the feet touch the wood
+    const tex = canvasTex(64, (x) => { const r = x.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(16,7,2,.6)'); r.addColorStop(.55, 'rgba(16,7,2,.3)'); r.addColorStop(1, 'rgba(16,7,2,0)'); x.fillStyle = r; x.fillRect(0, 0, 64, 64); });
+    LS = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, fog: false })); scene.add(LS);
+  }
+  LS.position.set(fx, .01, fz); LS.scale.set(1.15, 1, .75);
+  // what the frame changes on the shared scene, put back after it: the lights, the fog and the background; everything else in the scene is left out of the frame
+  const was = { hc: hemi.color.getHex(), hg: hemi.groundColor.getHex(), sc: sun.color.getHex(), si: sun.intensity, fn: scene.fog.near, ff: scene.fog.far, bg: scene.background }, left = [];
+  hemi.color.set('#ffe6c4'); hemi.groundColor.set('#7a5230'); hemi.intensity = 1.1; sun.color.set('#ffd9a4'); sun.intensity = .8;
+  sun.position.set(fx - 2.4, 6.5, fz + 4.8); sun.target.position.set(fx, 0, fz); lamp.position.set(fx + .7, 2.2, fz + 1.4); lamp.color.set('#ffb765'); lamp.intensity = 1.5;
+  scene.fog.near = 100; scene.fog.far = 200; scene.background = null; R3.setClearColor(0x000000, 0); LS.visible = true;
+  for (const o of scene.children) if (!o.isLight && o !== sun.target && o !== PM.root && o !== LS && o.visible) { o.visible = false; left.push(o); }
+  try { R3.render(scene, cam3); } finally {
+    for (const o of left) o.visible = true;
+    LS.visible = false; scene.background = was.bg; scene.fog.near = was.fn; scene.fog.far = was.ff;
+    hemi.color.setHex(was.hc); hemi.groundColor.setHex(was.hg); sun.color.setHex(was.sc); sun.intensity = was.si;
+  }
+}
 const V3 = { v: null };
 function glProject(x, y, hh) {
   const v = V3.v || (V3.v = new THREE.Vector3());
@@ -3675,7 +3778,8 @@ function buildWorld() {
   for (const o of [...dynGroup.children]) freeMesh(o); if (F.enemies) for (const e of F.enemies) e.m = null; // the creatures get their meshes again (the editor rebuilds the world under creatures already drawn)
   dying.length = 0; for (const n of CAMP.npcs) freeModel(n.m); CAMP = { npcs: [], crit: [] }; propsClear(); const backWalls = [];
   const S = F.str, si = F.si, kd = S.kind, W = F.W, H = F.H, g = F.g, R = rng((F.seed ^ 0x51ED) >>> 0);
-  scene.background.set(S.fog); scene.fog.color.set(S.fog); hemi.color.set(S.sky); hemi.groundColor.set(S.gnd); sun.color.set(S.sun);
+  fondSet(S); scene.fog.color.set(S.fog); hemi.color.set(S.sky); hemi.groundColor.set(S.gnd); sun.color.set(S.sun);
+  lobbyBare = F.hub && lobbyNew(); if (lobbyBare) return; // the home screen of a character has no camp to build (render3D builds it if something else needs it)
   const isF = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] === 1;
   const hg = new Float32Array(W * H);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -3710,12 +3814,17 @@ function buildWorld() {
   // the floor's shade: darker in the corners against the walls, and a little lighter or darker from one tile corner to the next.
   // Each corner has one value for the four tiles around it, so the shade flows across the floor without drawing the grid
   const nk = (gx, gy) => { let h = Math.imul(gx * 73856093 ^ gy * 19349663 ^ F.seed, 0x27d4eb2d); h ^= h >>> 15; return .88 + (h >>> 0) / 4294967296 * .24; };
-  const q = (gx, gy) => grey(nk(gx, gy) * ao(gx, gy));
+  const q = (gx, gy) => grey(nk(gx, gy) * (RL ? RL.sol(gx, gy) : ao(gx, gy)));
   // texture coordinates come from the place in the world (half a unit a tile, v growing up the screen): seamless textures stay seamless
   const flat = (b, x, y, hh, ca, cb, cc, cd) => b.quad([x, hh, y + 1], [x + 1, hh, y + 1], [x + 1, hh, y], [x, hh, y], [0, 1, 0], ca, cb, cc, cd, x / 2, -(y + 1) / 2, (x + 1) / 2, -y / 2);
+  // rounded reliefs instead of the cubes (q_formes.js, setting « Reliefs arrondis »): the same heights, one continuous surface.
+  // Its pieces are smaller (12 × 12 tiles) than the cubes' ones: it has more triangles, so less of it is drawn off screen
+  const pickR = (A, x, y, kind) => { const k = wear(kind, x, y) + ':r' + (((y / 12) | 0) * 4096 + ((x / 12) | 0)); return A[k] || (A[k] = new GB()); };
+  const RL = formesOn(BK) ? formesBuild({ W, H, isF, hg, wh: F.wh, seed: F.seed, mur: (x, y) => pickR(WB, x, y, 'mur'), dessus: (x, y) => pickR(TB, x, y, 'dessus') }) : null;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     if (isF(x, y)) { if (!blk0 || !blocTile(x, y)) flat(pick(FB, x, y, 'sol'), x, y, 0, q(x, y + 1), q(x + 1, y + 1), q(x + 1, y), q(x, y)); continue; }
     const hh = hg[y * W + x]; if (!hh) continue;
+    if (RL) { formesDecor(RL, at(PB, x, y), at(GBs, x, y), glows, kd, x, y, hh, R, backWalls, isF); continue; } // no cube: the relief is built, its growth sits on it
     const wb = pick(WB, x, y, 'mur'), tb = pick(TB, x, y, 'dessus'), pb = at(PB, x, y), gb = at(GBs, x, y);
     const low = hh < 1, top = grey((low ? .8 : .62) + R() * .3), blk = blk0 && (blk0.mode === 2 || blocTile(x, y)) && !painted('mur', x, y) && !painted('dessus', x, y);
     if (!blk) flat(tb, x, y, hh, top, top, top, top);
@@ -3740,8 +3849,9 @@ function buildWorld() {
   const n0 = worldGroup.children.length;
   zoneMats(); const mt = (A, k) => { const w = k.split(':')[0]; if (w[0] === 'L') return libMat(w.slice(1)) || A[kitOf(si)]; zoneTexWant(+w); return A[+w]; };
   for (const k in FB) addW(FB[k], mt(M.floor, k), 2); for (const k in WB) addW(WB[k], mt(M.wall, k), 1); for (const k in TB) addW(TB[k], mt(M.top, k), 1);
+  if (RL && TXD.sol) formesChemin(RL, d2('sol_chemin'), (x, y) => isF(x, y) && wear('sol', x, y) === 'L' + TXD.sol && !(blk0 && blocTile(x, y)), q); // the ground varied with a second texture, in patches
   herbsBuild(isF);
-  if (blk0) blocsBuild(blk0, hg, isF, (x, y, ground) => !ground && (painted('mur', x, y) || painted('dessus', x, y)));
+  if (blk0) blocsBuild(blk0, hg, isF, (x, y, ground) => !ground && (painted('mur', x, y) || painted('dessus', x, y)), !!RL);
   for (const k in PB) addW(PB[k], M.toon, 1); for (const k in GBs) if (!GBs[k].empty) { const o = new THREE.Mesh(GBs[k].build(), M.glow); o.matrixAutoUpdate = false; worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
   // each thing built belongs to a layer of the level editor (sol, murs, niveau, pnj), which can show or hide it
@@ -3752,8 +3862,8 @@ function buildWorld() {
   const n2 = worldGroup.children.length;
   if (F.hub) buildCamp(); else buildShafts(R);
   for (let i = n2; i < worldGroup.children.length; i++) worldGroup.children[i].userData.layer = F.hub ? 'pnj' : 'murs';
-  F.hg = hg; // the height of each wall, for the editor (scenery is put on top of a wall)
-  F.props = propsPlan(backWalls); if (motes.F !== F) { motes.length = 0; motes.F = F; } modelsWant(); propsBuild(); // a world built again for the same level (a model arrived) keeps what floats in its air
+  F.hg = hg; F.relief = RL; // the height of each wall, for the editor (scenery is put on top of a wall), and the relief drawn from them (reliefAt)
+  F.props = propsPlan(backWalls); if (RL) formesProps(RL); if (motes.F !== F) { motes.length = 0; motes.F = F; } modelsWant(); propsBuild(); // a world built again for the same level (a model arrived) keeps what floats in its air
 }
 function mushroom(pb, gb, x, y, z, s, capCol, glowCap, R) {
   pb.add(cyl(.05 * s, .07 * s, .3 * s, 5), mat(x, y + .15 * s, z), [.92, .86, .74]);
@@ -4158,6 +4268,8 @@ function initParticles() {
 /* ---------- one frame ---------- */
 let PM = null;
 function render3D() {
+  if (lobbyNew()) return renderLobby();
+  if (lobbyBare) { lobbyBare = false; buildWorld(); } // the world was left unbuilt for the home screen: the title screen, or the camp of the administrator, needs it
   const t = G.time, dt = clamp(t - lastT3, 0, .05); lastT3 = t;
   const S = F.str, sh = G.shake * U * .5;
   const fx = cam.x * U + (Math.random() - .5) * sh, fz = cam.y * U + (Math.random() - .5) * sh;
@@ -4247,8 +4359,9 @@ function render3D() {
   POOL.ring.end();
 
   // projectiles and pickups
+  if (TU.animArmes) drawShots(t); else { shotsOff();
   POOL.shot.begin(); for (const s of shots) { const m = POOL.shot.get(); m.position.set(s.x * U, .45, s.y * U); m.material.color.set(s.col || '#fff6e0'); m.scale.setScalar(s.aoe ? 2.1 : 1.4); } POOL.shot.end();
-  POOL.eshot.begin(); for (const s of eshots) { const m = POOL.eshot.get(); m.position.set(s.x * U, .4, s.y * U); m.scale.setScalar(1 + Math.sin(t * 20 + s.x) * .12); } POOL.eshot.end();
+  POOL.eshot.begin(); for (const s of eshots) { const m = POOL.eshot.get(); m.position.set(s.x * U, .4, s.y * U); m.scale.setScalar(1 + Math.sin(t * 20 + s.x) * .12); } POOL.eshot.end(); }
   POOL.ecl.begin(); POOL.dew.begin(); POOL.item.begin(); const coinCol = GM().col;
   for (const p of pickups) {
     const bob = Math.abs(Math.sin(p.t * 5)) * .1, drop = Math.max(0, .35 - p.t) * 2.2;
@@ -4293,6 +4406,7 @@ function render3D() {
   }
   pGeo.setDrawRange(0, n); pGeo.attributes.position.needsUpdate = pGeo.attributes.pcolor.needsUpdate = pGeo.attributes.psize.needsUpdate = pGeo.attributes.palpha.needsUpdate = true;
   pMat.uniforms.uScale.value = R3.domElement.height / (2 * Math.tan(cam3.fov * Math.PI / 360));
+  fondFrame(t, fx, fz); // the backdrop, the lights of the zone, the mist (p_fond.js)
   R3.render(scene, cam3);
 }
 
@@ -4471,24 +4585,229 @@ function heroArm(m, on) {
     else { hd.position.set(g.pos[0], g.pos[1], g.pos[2] - (side < 0 ? 2.5 : 0)); hd.rotation.set(g.rot[0], g.rot[1], g.rot[2] * side); } // the second blade crosses the first
   }
 }
+// the same change as heroArm, without a jump: the weapon starts from where it is in the world and settles into its new place
+function heroSwap(m, on) { bearInit();
+  const olds = []; for (const k of ['hand', 'hand2']) if (m[k]) { m[k].updateWorldMatrix(true, false); olds.push([m[k], m[k].matrixWorld.clone()]); }
+  heroArm(m, on); m.an.pop = 1;
+  for (const [hd, w0] of olds) {
+    const go = { p: hd.position.clone(), q: hd.quaternion.clone(), s: hd.scale.clone() }, bl = { t: 0, go, p: new THREE.Vector3(), q: new THREE.Quaternion(), s: new THREE.Vector3() };
+    hd.parent.updateWorldMatrix(true, false); _tm.copy(hd.parent.matrixWorld).invert().multiply(w0).decompose(bl.p, bl.q, bl.s);
+    hd.position.copy(bl.p); hd.quaternion.copy(bl.q); hd.scale.copy(bl.s); hd.userData.bl = bl;
+  }
+}
 function freeHero(m) { scene.remove(m.root); m.mixer.stopAllAction(); for (const k of ['hand', 'hand2']) if (m[k]) for (const x of m[k].userData.mats) x.dispose(); for (const x of m.mats) x.dispose(); }
+/* ---------- a bearing for each family of weapons (setting animArmes) ----------
+   The knight has one set of animations, whatever he carries. On top of them each family of weapons adds its own bearing: small
+   rotations of the bones, in degrees, in the knight's own frame [x, y, z]. A bone first turns about its own vertical (y), then
+   leans to the side (z), then tips about the left-right axis (x): a hanging arm swings forward with a negative x, the spine bends
+   forward with a positive x, a positive y turns the body to the left, the left arm moves away from the body with a positive z and
+   the right arm with a negative one. Elbows and knees are hinges: one angle each, about their own axis. Four bearings per family,
+   mixed by what the knight does: [on the back, standing] [on the back, running] [in hand, standing] [in hand, running].
+   T the spine as a whole, H the head, aR / aL the arms, eR / eL the elbows, hp the hips, cr how far the knees bend (0 to 1). */
+const BEAR_BONES = ['Hips', 'Spine02', 'Spine01', 'Spine', 'neck', 'Head', 'RightArm', 'RightForeArm', 'LeftArm', 'LeftForeArm', 'RightUpLeg', 'RightLeg', 'RightFoot', 'LeftUpLeg', 'LeftLeg', 'LeftFoot'];
+const BEAR_HINGE = [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1]; // the bones that bend about their own axis; the others turn in the knight's frame
+const BEAR = [
+  // sword: carried, the right hand rests on the hilt over the shoulder; drawn, the blade hangs low along the body
+  [{ T: [0, -6, 0], H: [0, 8, 0], aR: [112, 0, -30], eR: 50, aL: [-6, 0, 8] }, { T: [8, -4, 0], aR: [95, 0, -30], eR: 60, aL: [-10, 0, 6], cr: .1 },
+   { T: [0, -12, 0], H: [0, 12, 0], aR: [-18, 0, -16], eR: 30, aL: [-5, 0, 20], eL: 20 }, { T: [10, -8, 0], aR: [30, 0, -10], eR: 40, aL: [-15, 0, 14], eL: 30, cr: .1 }],
+  // twin blades: carried, both hands behind the shoulders on the two hilts; drawn, the blades cross in front, and trail behind when he runs
+  [{ aR: [112, 0, -30], eR: 50, aL: [112, 0, 30], eL: 50 }, { T: [14, 0, 0], H: [-10, 0, 0], aR: [80, 0, -20], eR: 40, aL: [80, 0, 20], eL: 40, cr: .15 },
+   { T: [4, 0, 0], aR: [-50, 0, 22], eR: 70, aL: [-50, 0, -22], eL: 70 }, { T: [20, 0, 0], H: [-14, 0, 0], aR: [62, 0, -14], eR: 20, aL: [62, 0, 14], eL: 20, cr: .2 }],
+  // dagger: low, hunched, the hands near the belt; drawn, held back along the forearm
+  [{ T: [14, 0, 0], H: [-10, 0, 0], aR: [30, 0, -18], eR: 55, aL: [30, 0, 18], eL: 55, cr: .4 }, { T: [24, 0, 0], H: [-16, 0, 0], aR: [0, 0, -14], eR: 80, aL: [0, 0, 14], eL: 80, cr: .45 },
+   { T: [18, 0, 0], H: [-12, 0, 0], aR: [-30, 0, -20], eR: 70, aL: [-30, 0, 20], eL: 70, cr: .5 }, { T: [28, 0, 0], H: [-18, 0, 0], aR: [-20, 0, -14], eR: 85, aL: [-20, 0, 14], eL: 85, cr: .5 }],
+  // crossbow: carried, a hand on the strap at the chest; drawn, held in front at the chest, and rested on the shoulder when he stands
+  [{ T: [-2, 0, 0], aR: [-6, 0, -8], eR: 20, aL: [-34, 0, 12], eL: 95 }, { T: [4, 0, 0], aR: [-12, 0, -8], eR: 30, aL: [-34, 0, 12], eL: 95 },
+   { T: [0, -10, 0], H: [0, 8, 0], aR: [-30, 0, -26], eR: 125, aL: [-38, 0, 22], eL: 60 }, { T: [6, 0, 0], aR: [-52, 0, -6], eR: 60, aL: [-58, 0, 14], eL: 72 }],
+  // cannon: carried, both hands on the straps, leaning back under the weight; drawn, on the shoulder, with heavy steps
+  [{ T: [-5, 0, 0], H: [4, 0, 0], aR: [-30, 0, -14], eR: 100, aL: [-30, 0, 14], eL: 100 }, { T: [-4, 0, 0], H: [4, 0, 0], aR: [-30, 0, -14], eR: 100, aL: [-30, 0, 14], eL: 100, cr: .2 },
+   { T: [-4, -8, 0], H: [4, 0, 0], aR: [-24, 0, -32], eR: 130, aL: [-44, 0, 26], eL: 78, cr: .15 }, { T: [-2, -6, 0], H: [3, 0, 0], aR: [-24, 0, -32], eR: 130, aL: [-44, 0, 26], eL: 78, cr: .3 }],
+];
+const NB = BEAR_BONES.length * 3 + 1; // three numbers per bone, then how far the hips drop (cm)
+let _hbq, _pq, _tq, _dq, _ad, _av, _tv, _tm, _eu, _ax; // scratch objects, made at first use: the game also starts without three.js
+function bearInit() { if (_hbq) return; _hbq = new THREE.Quaternion(); _pq = new THREE.Quaternion(); _tq = new THREE.Quaternion(); _dq = new THREE.Quaternion(); _ad = new THREE.Quaternion(); _av = new THREE.Vector3(); _tv = new THREE.Vector3(); _tm = new THREE.Matrix4(); _eu = new THREE.Euler(0, 0, 0, 'XZY'); _ax = new THREE.Vector3(1, 0, 0); }
+// what the arm adds to go for the weapon on the back, by family
+const REACH = [{ aR: [40, 0, -14], eR: 20 }, { aR: [40, 0, -14], eR: 20, aL: [40, 0, 14], eL: 20 }, { aR: [60, 0, -16], eR: 30 }, { aR: [85, 0, -22], eR: 40 }, { aR: [85, 0, -22], eR: 40 }];
+const BEAR_TO = new Float32Array(NB), BEAR_ONE = new Float32Array(NB);
+// one bearing as numbers: the spine shares T between its three bones, the head H between the neck and the head, the knees bend with cr
+function bearVec(p, v) {
+  v.fill(0); const d = (i, a, k) => { if (a) { v[i * 3] += a[0] * k; v[i * 3 + 1] += a[1] * k; v[i * 3 + 2] += a[2] * k; } };
+  d(0, p.hp, 1); d(1, p.T, .3); d(2, p.T, .4); d(3, p.T, .3); d(4, p.H, .4); d(5, p.H, .6); d(6, p.aR, 1); d(8, p.aL, 1);
+  v[21] = p.eR || 0; v[27] = p.eL || 0;
+  const c = p.cr || 0, a = c * 24, b = c * 56; // thigh forward by a, knee back by b, foot flat again
+  v[30] = v[39] = -a; v[33] = v[42] = b; v[36] = v[45] = a - b; v[48] = c * 3.2;
+}
+// turn a bone by the rotation d, given in the world's frame, on top of what the animation made of it
+function boneWorld(b, d) {
+  b.parent.getWorldQuaternion(_pq); _dq.copy(d).premultiply(_tq.copy(_pq).invert()).multiply(_pq); // in the frame of the parent bone
+  b.quaternion.premultiply(_dq); b.updateMatrixWorld(true);
+}
+// the same, with the angle given in the knight's own frame
+function boneAdd(m, b, x, y, z) {
+  const r = Math.PI / 180; _ad.setFromEuler(_eu.set(x * r, y * r, z * r)); m.body.getWorldQuaternion(_hbq);
+  _ad.premultiply(_hbq).multiply(_tq.copy(_hbq).invert()); boneWorld(b, _ad);
+}
+// bend a hinge (elbow, knee) about its own axis
+function boneHinge(b, deg) { b.quaternion.multiply(_dq.setFromAxisAngle(_ax, deg * Math.PI / 180)); b.updateMatrixWorld(true); }
+// Where the weapon in his hand points (the knight's frame: x left, y up, z forward), standing and running: a sword low, twin blades crossed
+// then trailing, a dagger held backwards, a crossbow forward, a cannon up on the shoulder. The hand is turned until the weapon points there.
+const AIM = [[[0, -.8, .6], [0, -.9, -.3]], [[.5, .1, .86, -.5, .1, .86], [.25, -.5, -.83, -.25, -.5, -.83]], [[0, -.5, -.85], [.1, -.3, -.95]], [[0, .35, .94], [0, .05, 1]], [[0, .3, .95], [0, .35, .94]]];
+function heroAim(m, fam, sc) {
+  const an = m.an, wt = an.arm * sc, W = WEAPONS[m.kind]; if (wt < .02 || !m.armed) return; const a = AIM[fam] || AIM[0], mv = an.move;
+  for (const [k, hand, o] of [['hand', 'RightHand', 0], ['hand2', 'LeftHand', 3]]) {
+    const hd = m[k], b = m.bones[hand]; if (!hd || !b) continue;
+    _tv.set(a[0][o] * (1 - mv) + a[1][o] * mv, a[0][o + 1] * (1 - mv) + a[1][o + 1] * mv, a[0][o + 2] * (1 - mv) + a[1][o + 2] * mv).normalize();
+    m.body.getWorldQuaternion(_hbq); _tv.applyQuaternion(_hbq); // where it should point, in the world
+    _av.set(0, W.proj ? 0 : 1, W.proj ? 1 : 0); hd.getWorldQuaternion(_pq); _av.applyQuaternion(_pq); // where it points now
+    _ad.setFromUnitVectors(_av, _tv); _tq.identity().slerp(_ad, wt); boneWorld(b, _tq);
+  }
+}
+// The blows of a series, for each family of blades: a sweep from one side, one back the other way (the clip run backwards for the sword),
+// and the big one that the game marks every third time. Each is [turn of the body, lean forward, lean back first, roll, lunge in tiles, easing of the clip, run backwards, spin].
+const BLOW = [[[24, 4, 0, 0, .05, 0, 0, 0], [-28, 6, 0, -8, .06, 1, 1, 0], [8, 22, 16, 0, .14, 2, 0, 0]],
+  [[28, 6, 0, 0, .05, 0, 0, 0], [-30, 6, 0, 0, .05, 1, 0, 0], [0, 10, 6, 0, .08, 2, 0, 1]],
+  [[14, 12, 0, 0, .08, 0, 0, 0], [-16, 14, 0, 4, .1, 1, 0, 0], [30, 20, 6, 0, .16, 2, 0, 0]]];
+const warp = (k, w) => w === 1 ? 1 - Math.pow(1 - k, 3) : w === 2 ? k * k * (3 - 2 * k) : 1 - (1 - k) * (1 - k);
+// what a blow adds to the body, on top of the clip: the turn, the lean, the lunge, the recoil of a shot, a cannon planting its feet
+function heroBlow(m, fam, k, wa, kick, dashing) { bearInit();
+  const an = m.an, B = m.bones, ti = m.tilt, s = Math.sin(Math.PI * Math.min(1, k)); let ty = 0, tx = 0, tz = 0, kn = 0;
+  if (fam < 3) {
+    if (k < 1 && !dashing) { const v = BLOW[fam][an.sq || 0]; ty = v[0] * s; tx = v[1] * s - v[2] * Math.max(0, 1 - k / .35); tz = v[3] * s; ti.position.z += v[4] * s; if (v[7]) ti.rotation.y += warp(k, 0) * Math.PI * 2; }
+  } else if (kick > .01 || k < 1) { const heavy = fam === 4; tx = -(heavy ? 26 : 13) * kick; ty = (heavy ? -6 : -4) * kick; kn = heavy ? .45 * Math.max(kick, k < 1 ? s : 0) : .15 * kick; }
+  if ((ty || tx || tz) && wa > .01) for (const [b, f] of [['Spine02', .3], ['Spine01', .4], ['Spine', .3]]) if (B[b]) boneAdd(m, B[b], tx * f * wa, ty * f * wa, tz * f * wa);
+  if (kn > .01) { const a = kn * 24 * wa, c = kn * 56 * wa; if (B.RightUpLeg) { boneAdd(m, B.RightUpLeg, -a, 0, 0); boneAdd(m, B.LeftUpLeg, -a, 0, 0); boneHinge(B.RightLeg, c); boneHinge(B.LeftLeg, c); boneHinge(B.RightFoot, a - c); boneHinge(B.LeftFoot, a - c); B.Hips.position.y -= kn * 3.2 * wa; } }
+}
+// the bearing of the family fam, mixed by what the knight does, eased from one to the next, then laid on the bones. sc: how much of it shows
+function heroBearing(m, fam, walk, sc, dt, calm) { bearInit();
+  const an = m.an, mv = an.move, ar = an.arm, tb = BEAR[fam] || BEAR[0], w = [(1 - ar) * (1 - mv), (1 - ar) * mv, ar * (1 - mv), ar * mv], B = m.bones;
+  BEAR_TO.fill(0); for (let s = 0; s < 4; s++) if (w[s] > 1e-3) { bearVec(tb[s], BEAR_ONE); for (let i = 0; i < NB; i++) BEAR_TO[i] += w[s] * BEAR_ONE[i]; }
+  if (calm) for (let i = 0; i < 6; i++) BEAR_TO[i * 3 + 1] = 0; // the home screen: no bearing turns the hips, the spine, the neck or the head (see heroCalm)
+  const cur = an.bear || (an.bear = new Float32Array(NB)), k = 1 - Math.exp(-dt * 9);
+  for (let i = 0; i < NB; i++) cur[i] += (BEAR_TO[i] - cur[i]) * k;
+  if (sc < .01) return;
+  m.body.updateMatrixWorld(true);
+  for (let i = 0; i < BEAR_BONES.length; i++) {
+    const b = B[BEAR_BONES[i]], x = cur[i * 3] * sc, y = cur[i * 3 + 1] * sc, z = cur[i * 3 + 2] * sc; if (!b || (!x && !y && !z)) continue;
+    if (BEAR_HINGE[i]) boneHinge(b, x); else boneAdd(m, b, x, y, z);
+  }
+  if (cur[NB - 1] && B.Hips) B.Hips.position.y -= cur[NB - 1] * sc;
+  if (an.gr > .01) { const r = REACH[fam] || REACH[0]; // the arm goes for the weapon on the back
+    const a = (b, v, k) => { if (v) boneAdd(m, b, v[0] * k, v[1] * k, v[2] * k); };
+    a(B.RightArm, r.aR, an.gr); if (B.RightForeArm) boneHinge(B.RightForeArm, (r.eR || 0) * an.gr); if (r.aL) { a(B.LeftArm, r.aL, an.gr); if (B.LeftForeArm) boneHinge(B.LeftForeArm, (r.eL || 0) * an.gr); } }
+  heroAim(m, fam, sc);
+}
+/* ---------- the home screen of a character: a calm bearing, the knight looks at the player ----------
+   The clip of rest turns the body and the head right round (he looks about, then behind him), and the bearing of a weapon turns the spine a little more.
+   On the home screen he must always face the player: the clip is held on an instant where he stands calm (CALM.t, seconds into the clip), the whole
+   body is turned back to three quarters towards the screen (CALM.yaw, radians), the head looks at the player (CALM.head, degrees), and the code adds
+   a slow sway and a breath so that he is not a statue. Only the home screen (lobbyNew) asks for it: nothing changes in play. */
+const CALM = { t: .1, yaw: .45, head: -24 };
+function heroHold(m, clip, time) { // the pose of a clip at an instant, written on the bones
+  if (!m.hold) m.hold = clip.tracks.map(tr => { const i = tr.name.lastIndexOf('.'), b = m.bones[tr.name.slice(0, i)]; return b && { o: b[tr.name.slice(i + 1)], ip: tr.createInterpolant() }; }).filter(Boolean);
+  for (const h of m.hold) h.o.fromArray(h.ip.evaluate(time));
+}
+function heroCalm(m, t) { bearInit();
+  const B = m.bones, br = Math.sin(t * 1.9), sw = Math.sin(t * .8); m.body.updateMatrixWorld(true);
+  if (B.neck) boneAdd(m, B.neck, 0, CALM.head * .4 + sw * 2, 0);
+  if (B.Head) boneAdd(m, B.Head, 3 + br * .6, CALM.head * .6 + sw * 3, 0);
+  if (B.Spine01) boneAdd(m, B.Spine01, -br * .7, 0, 0);
+  if (B.Spine02) boneAdd(m, B.Spine02, -br * 1.1, 0, 0); // the chest rises with the breath, the arms open a little
+  if (B.RightArm) boneAdd(m, B.RightArm, 0, 0, -br * 1.4);
+  if (B.LeftArm) boneAdd(m, B.LeftArm, 0, 0, br * 1.4);
+}
+// The blows were recorded with the hips away from where the knight stands (twin blades: half a metre behind, which threw him off the screen):
+// what each clip adds to the hips of the resting pose, sideways and front to back, as read in the clip. It is taken off again, weighted like the clip.
+const ROOT_OFF = {};
+function rootOffsets() {
+  if (ROOT_OFF.done || !MDL.clips.repos) return ROOT_OFF; ROOT_OFF.done = true;
+  const at = c => { const t = MDL.clips[c] && MDL.clips[c].tracks.find(t => t.name === 'Hips.position'); return t ? [t.values[0], t.values[2]] : null; }, r = at('repos');
+  if (r) for (const c of ['epee', 'jumelles', 'dague', 'arbalete']) { const v = at(c); if (v) ROOT_OFF[c] = [v[0] - r[0], v[1] - r[1]]; }
+  return ROOT_OFF;
+}
+// ---- shots (animArmes): each weapon and each creature has its own bolt, ball, glob or shard, with its own trail. Geometries are shared, the pooled meshes are only re-dressed
+let SHOTK = null; // built at first use: shared shapes and the two pools of the new shots (the old pools stay as they were for animArmes = 0)
+function shotKit() {
+  if (SHOTK) return SHOTK;
+  const g = { ball: sph(.1, 12, 8), ico: ico(.1, 1), gem: ico(.1, 0), octa: octa(.1), cone: cone(.075, .26, 5).rotateZ(-Math.PI / 2) };
+  // the root is an unscaled group so the glow sprite keeps its round shape whatever the shape is stretched to
+  const mk = rim => () => {
+    const o = new THREE.Group(), m = new THREE.Mesh(g.ball, new THREE.MeshBasicMaterial({ color: '#fff', fog: false })), sp = sprite('#fff', 1);
+    o.add(m, sp); o.userData = { m, sp, ol: null };
+    if (rim) { const ol = new THREE.Mesh(g.ball, new THREE.MeshBasicMaterial({ color: '#000', fog: false, side: THREE.BackSide })); o.add(ol); o.userData.ol = ol; } // the dark (or bright) rim that keeps an enemy shot readable on any ground
+    return o;
+  };
+  return SHOTK = { g, ps: pool(mk(false)), pe: pool(mk(true)), tmp: new THREE.Color() };
+}
+// look of a creature's shot, by creature (0 = the spitter, 1 = the boss) then by world kit: shape, scale, fill, rim, glow, glow size, roll speed, pulse, [trail colour, size, life, rise], trail every n frames
+const SHOT_FOE = [[
+  { g: 'ball', s: [1.4, .95, 1.05], c: '#a6e34f', o: '#18300a', gl: '#7fcc2c', gs: .95, roll: 0, pul: .14, tr: ['#b8f060', 2.2, .4, -9], ev: 3 },    // roots: a slime glob that drips
+  { g: 'ico', s: [1.3, 1.3, 1.3], c: '#f1e6ff', o: '#4a2a7a', gl: '#c7a6ff', gs: .95, roll: 2, pul: .2, tr: ['#e8d8ff', 1.6, .6, 8], ev: 2 },       // mycelium: a puff of spores that sheds specks upward
+  { g: 'octa', s: [1.7, 1.05, 1.05], c: '#ffb02a', o: '#6a1200', gl: '#ff7a18', gs: 1.35, roll: 0, pul: .2, tr: ['#ffc34a', 2, .45, 11], ev: 2 },      // embers: a flickering lozenge that throws sparks
+  { g: 'cone', s: [1.8, 1.3, 1.3], c: '#d8f6ff', o: '#10407a', gl: '#6ab8ff', gs: .8, roll: 7, pul: .05, tr: ['#ffffff', 1.2, .35, -3], ev: 2 },    // frost: a spinning ice shard that glitters
+  { g: 'ball', s: [1.25, 1.25, 1.25], c: '#3a1a5a', o: '#ff4adf', gl: '#b04aff', gs: 1.25, roll: 0, pul: .22, tr: ['#8a3aff', 2.8, .35, 2], ev: 2 }    // abyss: a dark orb with a bright rim
+], [
+  { g: 'cone', s: [2.4, 1.5, 1.5], c: '#9be04a', o: '#14260a', gl: '#c8ff5a', gs: 1.3, roll: 0, pul: .08, tr: ['#8ccf4a', 2.2, .4, 0], ev: 2 },          // roots: a long thorn
+  { g: 'gem', s: [1.6, 1.6, 1.6], c: '#ffd0f0', o: '#6a1a5a', gl: '#ff7ad8', gs: 1.1, roll: 3, pul: .26, tr: ['#ffc2ee', 2, .6, 6], ev: 2 },       // mycelium: a big spore cluster
+  { g: 'ball', s: [1.45, 1.45, 1.45], c: '#ffd23a', o: '#8a1a00', gl: '#ff5a10', gs: 1.6, roll: 0, pul: .16, tr: ['#ff8a2a', 3, .5, 7], ev: 1 },       // embers: a molten glob with a heavy trail
+  { g: 'octa', s: [1.5, 1.5, 1.5], c: '#eaffff', o: '#2a6ac0', gl: '#7ac4ff', gs: 1, roll: 4, pul: .1, tr: ['#d4f4ff', 2, .45, -2], ev: 2 },      // frost: a frozen crystal
+  { g: 'cone', s: [2.3, 1.1, 1.1], c: '#d4ff3a', o: '#1a3a00', gl: '#9aff2a', gs: 1.3, roll: 0, pul: .1, tr: ['#b4ff3a', 2.4, .4, 0], ev: 2 }           // abyss: a venom needle
+]];
+const SHOT_LITE = {}, shotLite = c => SHOT_LITE[c] || (SHOT_LITE[c] = liteHex(c || '#fff6e0')); // a weapon's colour made lighter: a bolt of dark wood must still show on a dark floor
+function liteHex(c) { const n = parseInt(c.slice(1), 16), f = v => Math.round(v + (255 - v) * .5); return c.length !== 7 || isNaN(n) ? c : '#' + ((1 << 24) | (f(n >> 16) << 16) | (f((n >> 8) & 255) << 8) | f(n & 255)).toString(16).slice(1); } // plain numbers: the shot's trail also runs without three.js
+function shotsOff() { if (SHOTK) { SHOTK.ps.begin(); SHOTK.ps.end(); SHOTK.pe.begin(); SHOTK.pe.end(); } }
+function drawShots(t) {
+  const K = shotKit(), ki = kitOf(F.si), wg = F.str && F.str.glow ? C(F.str.glow) : null;
+  POOL.shot.begin(); POOL.shot.end(); POOL.eshot.begin(); POOL.eshot.end();
+  K.ps.begin();
+  for (const s of shots) {
+    const o = K.ps.get(), u = o.userData, ball = s.aoe || s.ball, col = C(shotLite(s.col));
+    o.position.set(s.x * U, .45, s.y * U); o.rotation.set(0, ball ? 0 : -Math.atan2(s.vy, s.vx), 0);
+    u.m.geometry = ball ? K.g.ball : K.g.octa; u.m.scale.set(ball ? 1.9 : 2.7, ball ? 1.9 : .42, ball ? 1.9 : .42);
+    u.m.material.color.copy(ball ? C('#34302c') : col); u.sp.material.color.copy(ball ? C('#ff9a3c') : col); u.sp.scale.set(ball ? 1.2 : .55, ball ? 1.2 : .55, 1);
+  }
+  K.ps.end(); K.pe.begin();
+  for (const s of eshots) {
+    const o = K.pe.get(), u = o.userData, S = SHOT_FOE[s.ty === 9 ? 1 : 0][ki], k = 1 + Math.sin(t * 20 + s.x) * S.pul, sc = S.s;
+    o.position.set(s.x * U, .4, s.y * U); o.rotation.set(S.roll ? t * S.roll + s.x * .13 : 0, -Math.atan2(s.vy, s.vx), 0, 'YXZ');
+    u.m.geometry = u.ol.geometry = K.g[S.g]; u.m.scale.set(sc[0] * k, sc[1] * k, sc[2] * k); u.ol.scale.set(sc[0] * k + .4, sc[1] * k + .4, sc[2] * k + .4);
+    u.m.material.color.copy(C(S.c)); u.ol.material.color.copy(C(S.o)); u.sp.material.color.copy(wg ? K.tmp.copy(C(S.gl)).lerp(wg, .15) : C(S.gl)); u.sp.scale.set(S.gs * k, S.gs * k, 1);
+  }
+  K.pe.end();
+}
+// what a shot leaves behind it: a thin light line for a bolt, a plume of smoke and sparks for a ball, and for a creature's shot what its look says
+function shotTrail(s, foe) {
+  const f = G.frame, r = Math.random;
+  if (foe) { const S = SHOT_FOE[s.ty === 9 ? 1 : 0][kitOf(F.si)], tr = S.tr; if (f % S.ev === 0) mote(s.x + (r() - .5) * 4, s.y + (r() - .5) * 4, 11 + r() * 3, tr[0], tr[1], tr[2], tr[3]); }
+  else if (s.aoe || s.ball) { if (f % 2 === 0) mote(s.x + (r() - .5) * 3, s.y + (r() - .5) * 3, 14 + r() * 4, '#9a8c80', 4.4, .6, 9); mote(s.x, s.y, 14, '#ffb347', 2.6, .16); }
+  else { mote(s.x, s.y, 14, shotLite(s.col), 1.5, .16); if (f % 2 === 0) mote(s.x - s.vx * .012, s.y - s.vy * .012, 14, '#ffffff', .9, .1); }
+}
 // same job as poseGleaner, for the skinned knight: the game says what the character does, the animations follow
 function poseHero(m, x, y, face, walk, moving, down, swingT, kind, dashing, blink, hurtT, ex) {
-  const an = m.an, t = G.time, dt = clamp(t - (an.last || t), 0, .05), W = WEAPONS[kind], A = m.act; an.last = t;
+  const an = m.an, t = G.time, dt = clamp(t - (an.last || t), 0, .05), W = WEAPONS[kind], A = m.act, nw = TU.animArmes, calm = m === PM && lobbyNew(); an.last = t;
   if (m.kind !== kind) { m.kind = kind; m.wName = null; } heroWeapon(m);
   const joy = ex.joyT > 0 ? ex.joyT : 0, lan = ex.lanT > 0 ? ex.lanT / .5 : 0, dance = ex.dance > 0 ? ex.dance : 0;
   // joy and the end-of-level dance have no animation of their own yet: hops, and a spin for the dance
   const jump = dance ? Math.abs(Math.sin(dance * 7)) * .28 : joy ? Math.abs(Math.sin(joy * 10)) * .22 * Math.min(1, joy * 2.5) : 0;
-  m.root.visible = !blink; m.root.position.set(x * U, jump + lan * .05, y * U); m.root.rotation.set(0, Math.PI / 2 - face + (dance ? dance * 5 : joy ? Math.sin(joy * 9) * .5 : 0), 0);
+  m.root.visible = !blink; m.root.position.set(x * U, jump + lan * .05, y * U); m.root.rotation.set(0, Math.PI / 2 - face + (dance ? dance * 5 : joy ? Math.sin(joy * 9) * .5 : 0) + (calm ? CALM.yaw + Math.sin(t * .8) * .07 : 0), 0);
   // a blow has just started: pick the part of the clip to play, and how long it lasts
-  if (swingT > an.lastSw + 1e-3) { const c = ATK[W.fam]; an.alt ^= 1; an.atkC = W.fam === 2 && an.alt ? ATK_ALT : c; an.big = !!ex.big; an.atkD = clamp(W.cd * (an.big ? .9 : .72), .3, .85); an.atk = 0;
-    an.armT = t; if (!m.armed) heroArm(m, true); } // a blow: the weapon is out at once
+  if (swingT > an.lastSw + 1e-3) { const c = ATK[W.fam]; an.alt ^= 1; an.big = !!ex.big; if (nw) { an.sq = an.big ? 2 : t - (an.blowT || -9) > 1.2 + W.cd || an.sq === 2 ? 0 : 1 - (an.sq | 0); an.blowT = t; an.atkC = W.fam === 2 && an.sq === 1 ? ATK_ALT : c; } else an.atkC = W.fam === 2 && an.alt ? ATK_ALT : c; an.atkD = clamp(W.cd * (an.big ? .9 : .72), .3, .85); an.atk = 0;
+    an.armT = t; if (!m.armed) { if (nw) { an.gs = 0; an.gd = 1; an.sw = false; } else heroArm(m, true); } else if (nw && an.gd === 0) an.gs = -1; } // a blow: the weapon is out (at once, or in the short gesture of drawing it: the blow does not wait)
   an.lastSw = swingT;
   // no blow for a moment (a short one when it runs, longer when it stands), or a dodge: back it goes
-  if (m.armed && an.atk >= 1 && (dashing || t - an.armT > W.cd + (moving ? .45 : 1.5))) heroArm(m, false);
+  if (m.armed && an.atk >= 1 && (dashing || t - an.armT > W.cd + (moving ? .45 : 1.5))) { if (nw && !dashing) { if (!(an.gs >= 0)) { an.gs = 0; an.gd = 0; an.sw = false; } } else heroArm(m, false); }
+  if (nw) { // the gesture of drawing the weapon or putting it away: the hand goes for it on the back, the weapon changes hands half-way (after a quarter of a second in all)
+    if (an.gs >= 0) {
+      an.gs += dt / .25; const at = an.gd ? .32 : .5;
+      if (!an.sw && an.gs >= at) { an.sw = true; heroSwap(m, !!an.gd); }
+      if (an.gs >= 1) { an.gs = -1; an.gr = 0; } else { const u = an.gs < at ? an.gs / at : (1 - an.gs) / (1 - at); an.gr = u * u * (3 - 2 * u); }
+    } else an.gr = 0;
+    for (const k of ['hand', 'hand2']) { const hd = m[k], bl = hd && hd.userData.bl; if (!bl) continue; // the weapon settles from where it was to its grip (or its place on the back)
+      bl.t = Math.min(1, bl.t + dt / .13); const e = bl.t * bl.t * (3 - 2 * bl.t); hd.position.lerpVectors(bl.p, bl.go.p, e); hd.quaternion.slerpQuaternions(bl.q, bl.go.q, e); hd.scale.lerpVectors(bl.s, bl.go.s, e); if (bl.t >= 1) delete hd.userData.bl; }
+  }
   if (an.pop < 1) { an.pop = Math.min(1, an.pop + dt / .1); const s = .5 + .5 * an.pop * (2 - an.pop); for (const k of ['hand', 'hand2']) if (m[k]) m[k].scale.setScalar(s); } // it settles in a blink, not in a jump
   if (an.atk < 1) an.atk = Math.min(1, an.atk + dt / an.atkD);
   an.move += ((moving && !down ? 1 : 0) - an.move) * .22;
+  if (an.arm === undefined) an.arm = m.armed ? 1 : 0; an.arm += ((m.armed ? 1 : 0) - an.arm) * (1 - Math.exp(-dt * 10)); // how far the weapon is in his hand, eased
   an.hurt = hurtT > 0 ? Math.min(1, hurtT / .25) : an.hurt * .8;
   an.dead = down ? Math.min(1, an.dead + dt / 1.1) : Math.max(0, an.dead - dt * 4);
   an.t += dt * (dashing ? 2.6 : 1);
@@ -4496,16 +4815,22 @@ function poseHero(m, x, y, face, walk, moving, down, swingT, kind, dashing, blin
   const k = an.atk, wDead = Math.min(1, an.dead * 3), wHurt = (1 - wDead) * an.hurt * .85;
   const wAtk = (1 - wDead) * (1 - wHurt) * (k < 1 ? Math.min(1, k * 9, (1 - k) * 3.2) : 0), rest = Math.max(0, 1 - wDead - wHurt - wAtk);
   for (const n in A) A[n].setEffectiveWeight(0);
-  const set = (n, w, time) => { const a = A[n]; if (!a || w <= 0) return; a.setEffectiveWeight(w); a.time = time; };
+  const ro = nw ? rootOffsets() : null; let rx = 0, rz = 0; // new bearings and gestures, and the hips put back where the knight stands
+  const set = (n, w, time) => { const a = A[n]; if (!a || w <= 0) return; a.setEffectiveWeight(w); a.time = time; if (ro && ro[n]) { rx += w * ro[n][0]; rz += w * ro[n][1]; } };
   const D = n => MDL.clips[n] ? MDL.clips[n].duration : 1;
   set('repos', rest * (1 - an.move) + 1e-4, (an.t + an.ph) % D('repos'));
   set('course', rest * an.move, (walk / 11 * 1.15) % D('course')); // the legs follow the distance covered
-  if (wAtk > 0) { const c = an.atkC, e = 1 - (1 - k) * (1 - k); set(c[0], wAtk, c[1] + (c[2] - c[1]) * e); }
+  if (wAtk > 0) { const c = an.atkC, v = nw && W.fam < 3 ? BLOW[W.fam][an.sq | 0] : null, e = v ? warp(k, v[5]) : 1 - (1 - k) * (1 - k); set(c[0], wAtk, v && v[6] ? c[2] - (c[2] - c[1]) * e : c[1] + (c[2] - c[1]) * e); }
   if (wHurt > 0) set('touche', wHurt, .15 + (1 - an.hurt) * .5);
   if (wDead > 0) set('mort', wDead, Math.min(D('mort') - .02, an.dead * D('mort')));
-  m.mixer.update(0);
+  const held = calm && !!MDL.clips.repos; // the home screen: the clip is held on a calm instant and laid straight on the bones (the mixer writes a bone only when the clip moves it: what the code adds to a held pose would pile up frame after frame)
+  if (held) heroHold(m, MDL.clips.repos, CALM.t); else { if (m.held) heroHold(m, MDL.clips.repos, (an.t + an.ph) % D('repos')); m.mixer.update(0); } // (leaving it: a clean pose first, so that nothing added there stays)
+  m.held = held;
+  if (nw) { const hp = m.bones.Hips; if (hp) { hp.position.x -= rx; hp.position.z -= rz; } heroBearing(m, W.fam, walk, (1 - wDead) * (1 - wHurt) * (1 - .85 * wAtk) * (dashing ? .3 : 1), dt, calm); }
   // on top of the animations: the roll of the dodge, the size of a big blow, the lean of a run
-  const ti = m.tilt; ti.rotation.set(dashing ? .75 : an.move * .06 - (ex.kick || 0) * .18, 0, 0); ti.position.y = dashing ? .1 : 0;
+  const ti = m.tilt; ti.rotation.set(dashing ? .75 : an.move * .06 - (ex.kick || 0) * .18, 0, 0); ti.position.set(0, dashing ? .1 : 0, 0);
+  if (calm) { ti.rotation.z = Math.sin(t * .8 + 1) * .022; ti.position.x = Math.sin(t * .8) * .02; heroCalm(m, t); } // a slow sway and a breath
+  if (nw) heroBlow(m, W.fam, k, (1 - wDead) * (1 - wHurt) * Math.max(wAtk, W.proj ? 1 : 0), ex.kick || 0, dashing);
   const big = an.big && k < 1 ? 1 + Math.sin(k * Math.PI) * .12 : 1, sq = dashing ? .8 : 1; ti.scale.set(big, big * sq, big * (dashing ? 1.25 : 1));
   m.glow.material.opacity = .55 + Math.sin(t * 5 + an.ph) * .08 + lan * .4;
   const hk = ex.healT > 0 ? Math.sin(Math.min(1, ex.healT / .9) * Math.PI) : 0; m.mats[0].emissive.setRGB(hk * .5, hk * .1, hk * .12); // healed: a red glow passes over the knight
@@ -4707,18 +5032,95 @@ function zoneArt(w) {
   }
   return a.url;
 }
-// the home screen's picture (TinyKnight_UI_Kit/fonds, f_accueil): asked once, shown as soon as it is there; the theme's gradient until then, or without it
+// the home screen's picture (TinyKnight_UI_Kit/fonds, f_accueil): asked once, shown as soon as it is there; the theme's gradient until then, or without it.
+// It is the first picture of the title screen's carousel (below).
 let homeAsked = false;
 function homeArt() {
   const cfg = window.ecorceModeles; if (homeAsked || !cfg || (MDL.list && !('f_accueil' in MDL.list))) return; homeAsked = true;
   const wide = innerWidth > innerHeight * 1.1 && MDL.list && 'f_accueil_paysage' in MDL.list; // a wide screen gets the landscape picture (pack 4b)
-  picRead(cfg, wide ? 'f_accueil_paysage' : 'f_accueil').then(im => { const el = $('home-bg'); el.src = im.src; el.hidden = false; }, () => { });
+  const name = CAR.first = wide ? 'f_accueil_paysage' : 'f_accueil';
+  picRead(cfg, name).then(im => { const el = $('home-bg'); el.src = im.src; el.hidden = false; void el.offsetWidth; el.classList.add('on'); CAR.slide[name] = { st: 2, el, im }; }, () => { });
 }
-// the picture behind the three steps of the creation of a knight (TinyKnight_UI_Kit/fonds, f_creation): asked like the home screen's
-let createAsked = false;
+/* ---------- the carousel of the title screen ----------
+   Every painting of the game, one after the other, cross-fading: the title (V2), the illustrations of the worlds (V2), then the first versions (V1).
+   A picture is asked only a moment before its turn, never at launch: the budget of the start (tests/modeles.py) does not count them.
+   A swipe, or a touch on a dot, changes it; it stops when the page is hidden, and it does not turn by itself when the player asks for less motion. */
+const CAR = { first: null, names: [], slide: {}, i: 0, want: -1, z: 1, run: false, listed: false, tm: 0, ld: 0, cl: 0, DWELL: 7000, FADE: 1200, AHEAD: 2200 };
+const carStill = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+function carNames() {
+  const L = MDL.list; if (!L || !CAR.first) return null;
+  const V2 = ['racines', 'mycelium', 'braises', 'givre', 'abimes', 'marais', 'canopee', 'mine'], V1 = ['racines', 'mycelium', 'braises', 'givre', 'abimes']; // the Hive is not a world of the game
+  return [CAR.first, ...V2.map(z => 'i_' + z), 'f_accueil_v1', ...V1.map(z => 'i_' + z + '_v1')].filter((n, k) => k === 0 || n in L);
+}
+function carDots() {
+  const box = $('home-dots'), n = CAR.names.length; box.replaceChildren();
+  for (let k = 0; k < n; k++) { const d = document.createElement('span'); d.className = 'car-dot' + (k === CAR.i ? ' on' : ''); d.setAttribute('role', 'button'); d.setAttribute('aria-label', 'Image ' + (k + 1) + ' sur ' + n); d.addEventListener('click', () => carGo(k)); box.appendChild(d); }
+  box.hidden = n < 2;
+}
+// a picture is asked once (when it is about to show, or when a dot is touched), and kept
+function carAsk(k) {
+  const n = CAR.names[k]; let s = CAR.slide[n]; if (s) return s;
+  s = CAR.slide[n] = { st: 1, el: null, im: null }; // st: 1 on its way, 2 here, 3 lost
+  picRead(window.ecorceModeles, n).then(im => { s.im = im; s.st = 2; if (CAR.want === k) carShow(k); }, () => { s.st = 3; if (CAR.want === k) carStep(1); });
+  return s;
+}
+// a picture that has arrived goes on top of the one on show, which stays below until it is covered
+function carShow(k) {
+  const n = CAR.names[k], s = CAR.slide[n]; if (!s || s.st !== 2) return;
+  if (!s.el) {
+    let el; if (n[0] === 'i') { el = document.createElement('div'); el.className = 'home-sl ill'; for (const c of ['bl', 'fg']) { const im = new Image(); im.alt = ''; im.className = c; im.src = s.im.src; el.appendChild(im); } } // an illustration: the blurred copy behind, the picture whole in front
+    else { el = document.createElement('img'); el.alt = ''; el.className = 'home-sl'; el.src = s.im.src; }
+    s.el = el; $('home-car').appendChild(el); void el.offsetWidth;
+    s.dec = Promise.all([...(el.tagName === 'IMG' ? [el] : el.querySelectorAll('img'))].map(i => i.decode ? i.decode().catch(() => { }) : 0)); // it fades in once it is decoded: no black hole in the fade on a slow device
+  }
+  (s.dec || Promise.resolve()).then(() => {
+    if (CAR.want !== k) return; // another one was asked meanwhile
+    s.el.style.zIndex = ++CAR.z; s.el.classList.add('on'); CAR.i = k; CAR.want = -1;
+    [...$('home-dots').children].forEach((d, j) => d.classList.toggle('on', j === k));
+    clearTimeout(CAR.cl); CAR.cl = setTimeout(() => { const top = CAR.slide[CAR.names[CAR.i]]; for (const x of Object.values(CAR.slide)) if (x.el && x !== top) x.el.classList.remove('on'); }, carStill() ? 60 : CAR.FADE + 150);
+    carTimer();
+  });
+}
+function carGo(k) {
+  const n = CAR.names.length; if (!CAR.run || !n) return; k = (k % n + n) % n;
+  if (k === CAR.i && CAR.want < 0) { carTimer(); return; }
+  CAR.want = k; const s = carAsk(k); if (s.st === 2) carShow(k); else if (s.st === 3) carStep(1);
+}
+function carStep(d) { // the next picture that is not lost, in the direction asked
+  const n = CAR.names.length; let k = CAR.want >= 0 ? CAR.want : CAR.i;
+  for (let t = 0; t < n; t++) { k = (k + d + n) % n; const s = CAR.slide[CAR.names[k]]; if (!s || s.st !== 3) return carGo(k); }
+}
+function carTimer() {
+  clearTimeout(CAR.tm); clearTimeout(CAR.ld);
+  if (!CAR.run || CAR.names.length < 2 || carStill() || document.hidden) return;
+  const next = (CAR.i + 1) % CAR.names.length;
+  CAR.ld = setTimeout(() => { if (CAR.want < 0) carAsk(next); }, CAR.DWELL - CAR.AHEAD); // asked a moment before its turn
+  CAR.tm = setTimeout(() => carStep(1), CAR.DWELL);
+}
+function carSync(on) { // called each second by homeSync
+  if (!on || !CAR.first) { CAR.run = false; clearTimeout(CAR.tm); clearTimeout(CAR.ld); return; }
+  if (!CAR.listed) { const nm = carNames(); if (nm) { CAR.names = nm; CAR.listed = true; carDots(); } }
+  if (!CAR.run && CAR.listed) { CAR.run = true; carTimer(); }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(CAR.tm); clearTimeout(CAR.ld); } else carTimer(); }); // nothing turns while the page is hidden
+{ let x0 = null, y0 = 0; const home = $('scr-home'); // a swipe changes the picture (not one that starts on a button)
+  home.addEventListener('pointerdown', e => { x0 = e.target.closest('button, .car-dot') ? null : e.clientX; y0 = e.clientY; });
+  home.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0, dy = e.clientY - y0; x0 = null; if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.4) carStep(dx < 0 ? 1 : -1); });
+  home.addEventListener('pointercancel', () => { x0 = null; }); }
+// the picture behind the three steps of the creation of a knight (TinyKnight_UI_Kit/fonds, f_creation): asked like the home screen's.
+// The home screen of a knight (lobbyLay, d_ui.js) is painted with the same workshop: the file is read once for both (creationPic).
+let createAsked = false, lobbyAsked = false, creationP = null;
+function creationPic() {
+  const cfg = window.ecorceModeles; if (!cfg || (MDL.list && !('f_creation' in MDL.list))) return null;
+  return creationP || (creationP = picRead(cfg, 'f_creation'));
+}
 function createArt() {
-  const cfg = window.ecorceModeles; if (createAsked || !cfg || (MDL.list && !('f_creation' in MDL.list))) return; createAsked = true;
-  picRead(cfg, 'f_creation').then(im => { const el = $('create-bg'); el.src = im.src; el.hidden = false; }, () => { });
+  const p = createAsked ? null : creationPic(); if (!p) return; createAsked = true;
+  p.then(im => { const el = $('create-bg'); el.src = im.src; el.hidden = false; }, () => { });
+}
+function lobbyArt() { // under the transparent canvas of the home screen; the gradient of #lobby shows until it is there
+  const p = lobbyAsked ? null : creationPic(); if (!p) return; lobbyAsked = true;
+  p.then(im => { const el = $('lobby-bg'); el.src = im.src; el.hidden = false; void el.offsetWidth; el.classList.add('on'); }, () => { });
 }
 // the icon of a knight (k_<theme>.png, 128 px): as a CSS image once it has arrived, null meanwhile (the round of the cloak shows instead).
 // What already shows it (data-ico) gets it as soon as it is there.
@@ -5881,12 +6283,27 @@ function showUI() {
   const m = G.mode, sh = sheetOpen(); applyTheme(); if (m !== 'title') G.home = false;
   if (m !== 'title') creating = false; $('scr-title').hidden = m !== 'title' || G.home || creating; $('scr-create').hidden = m !== 'title' || G.home || !creating; homeSync(); $('camp-top').hidden = m !== 'hub'; $('tabs').hidden = m !== 'hub' || sh;
   document.body.classList.toggle('lobby', lobbyOn()); // the home screen of a character: bubbles instead of a camp (27a)
+  lobbyLay();
   $('hud').hidden = m !== 'play' || sh; $('pad').hidden = m !== 'play' || sh; $('scr-end').hidden = m !== 'end';
   $('sheet').hidden = !sh; $('veil').hidden = !sh; $('crea-tag').hidden = !CREA.on || sh || (m !== 'hub' && m !== 'play'); admTag(); creaWheelSync();
   if (m !== 'play') $('downbox').hidden = true;
   if (m === 'hub') { $('who-ava').style.setProperty('--c', CLOAKS[ME.col]); $('who-name').textContent = ME.name || 'Chevalier'; $('who-sub').textContent = (ME.game ? GM().name + ' · ' : 'Niveau ') + Math.min(NLV, progOf(ME)) + ' / ' + NLV; $('camp-ecl').textContent = String(ME.ecl); $('tabs').children[1].classList.toggle('dot', G.newLoot); campPurse(); }
   if (m === 'title') renderTitle();
 }
+// the home screen of a character (TU.accueil): where the painted workshop lands once it covers the screen (lobbyGeo, e_gl.js), and where the six bubbles stand,
+// three on each side of the knight. They are put by the CSS variables of body.accueil (head.html): --lob-b the size of a bubble, --lob-cx the middle of the
+// knight, --lob-hw half of the room kept for him, --lob-top the height of the middle of the two groups.
+let lobbyKey = '';
+function lobbyLay() {
+  const on = lobbyNew(), box = $('lobby'), W = Math.round(view.w), H = Math.round(view.h), key = on + '|' + W + '|' + H;
+  document.body.classList.toggle('accueil', on); if (box.hidden === on) box.hidden = !on;
+  if (!on) { lobbyKey = ''; return; } lobbyArt(); if (key === lobbyKey) return; lobbyKey = key;
+  const g = lobbyGeo(W, H), kh = lobbyKnight(W, H), b = clamp(Math.min(W, H) * .1, 56, 88), gw = b + 30, im = $('lobby-bg').style, bs = document.body.style;
+  im.width = g.w.toFixed(1) + 'px'; im.height = g.h.toFixed(1) + 'px'; im.left = g.left.toFixed(1) + 'px'; im.top = g.top.toFixed(1) + 'px';
+  bs.setProperty('--lob-b', b.toFixed(1) + 'px'); bs.setProperty('--lob-cx', g.x.toFixed(1) + 'px'); bs.setProperty('--lob-top', (g.y - kh * .5).toFixed(1) + 'px');
+  bs.setProperty('--lob-hw', Math.max(30, Math.min(kh * .3 + b * .35, W / 2 - gw - 6)).toFixed(1) + 'px');
+}
+addEventListener('resize', lobbyLay);
 function openSheet(kind) {
   if (kind === 'chars') { closeSheet(); G.mode = 'title'; G.home = false; creating = false; askDel = -1; resetInput(); showUI(); return; }
   sheetKind = kind; sel = null; multi = null; forge = null; resetInput();
@@ -6161,7 +6578,7 @@ function renderSheet() {
       h('span', { class: 'meta', style: 'display:block', text: DEV.state === 'on' ? 'Sauvegarde scellée : elle ne marche que sur cet appareil et ne se modifie pas à la main.' : DEV.state === 'off' ? 'Ce navigateur ne permet pas de sceller la sauvegarde.' : 'Vérification de la sauvegarde…' }))), ...srvCard());
     const hp = (a, b) => [h('b', { text: a }), h('span', { text: b })];
     body.push(h('div', { class: 'help' }, ...hp('Se déplacer', 'glisse le pouce n\'importe où'),
-      ...hp('Classique', 'ton chevalier frappe seul dès qu\'un ennemi entre dans le cercle'),
+      ...hp('Combat', 'ton chevalier frappe seul dès qu\'un ennemi entre dans le cercle'),
       ...hp(fOrd(TU.chainN) + ' coup', 'le ' + ford(TU.chainN) + ' coup d\'une série sans pause est un grand coup : plus large, plus long, plus fort'),
       ...hp('Armes', 'épées : en arc, plusieurs ennemis à la fois · lames jumelles : tout autour · dagues : courtes, très vives, plus de coups critiques · arbalètes : de loin, une cible, et moitié moins de dégâts sur une carapace (ronceux, gardiens)'),
       ...hp('Butin', 'tout ce qui tombe vient à toi, où que tu sois'), ...hp('Lanterne', 'son onde blesse autour de toi et efface les projectiles'), ...hp('Carte', 'en haut à gauche ; la sortie reste accrochée à son bord'), ...hp('Flèche', 'elle suit le chemin vers la sortie, salle après salle'),
@@ -6216,7 +6633,7 @@ G.home = !(window.ecorceApp && window.ecorceApp.invite) && !(ADM.shown && /[?&]c
 const quitApp = () => { const C = window.Capacitor, ex = C && C.Plugins && C.Plugins.App && C.Plugins.App.exitApp; return ex ? () => ex.call(C.Plugins.App) : !C && window.matchMedia && matchMedia('(display-mode: standalone)').matches ? () => window.close() : null; };
 function homeSync() {
   if (G.home && G.mode === 'title' && DEV.note) { G.home = false; showUI(); return; } // a note about the save is written on the characters screen: no home in front of it
-  const on = G.mode === 'title' && G.home, el = $('scr-home'); if (el.hidden === on) el.hidden = !on; $('scr-title').hidden = G.mode !== 'title' || G.home || creating; if (!on) return;
+  const on = G.mode === 'title' && G.home, el = $('scr-home'); if (el.hidden === on) el.hidden = !on; $('scr-title').hidden = G.mode !== 'title' || G.home || creating; carSync(on); if (!on) return;
   homeArt();
   const set = (id, hid) => { const b = $(id); if (b.hidden !== hid) b.hidden = hid; };
   set('home-load', !(window.ecorceApp && SRV.state !== 'off')); set('home-quit', !quitApp()); set('home-adm', !((ADM.shown || roleCanPropose()) && SRV.url)); { const t = ADM.shown ? 'Administration' : 'Éditeur de niveaux', b = $('home-adm'); if (b.textContent !== t) b.textContent = t; } // the administration, straight from the home screen (25g)
@@ -6232,7 +6649,7 @@ $('home-adm').addEventListener('click', () => {
   if (!save.chars.length) { showUI(); toast('Crée d\'abord un chevalier : l\'administration s\'ouvre ensuite depuis l\'accueil'); return; }
   pickChar(clamp(save.cur | 0, 0, save.chars.length - 1)); ADM.msg = ''; if (!ADM.shown) ADM.view = 'prop'; openSheet('adm');
 });
-setInterval(homeSync, 1000);
+setInterval(() => { homeSync(); lobbyLay(); }, 1000);
 /* ================= title: characters ================= */
 function pickChar(i) {
   save.cur = i; ME = save.chars[i]; applyGame(); saveGame(true); refreshStats(); backToHub();
@@ -6579,7 +6996,7 @@ function netFrame(dt) {
     v.mv = hyp(x - v.x, y - v.y) > 2; const k = Math.min(1, dt * 14); v.x += (x - v.x) * k; v.y += (y - v.y) * k;
     v.face = num(s.a) / 100; v.w = clamp(num(s.w) | 0, 0, WEAPONS.length - 1); v.swingT -= dt;
     v.lan = clamp(((num(s.hl) | 0) & 15) - 1, -1, LAMPS.length - 1);
-    if (num(s.sw, -1) !== v.sw) { v.sw = num(s.sw, -1); v.swingT = TU.swing; const W = WEAPONS[v.w]; if (W.proj) shots.push({ x: v.x, y: v.y, vx: Math.cos(v.face) * W.spd, vy: Math.sin(v.face) * W.spd, dmg: 0, life: W.range / W.spd, kb: 0, cos: true, col: W.look.col, aoe: 0, seen: [] }); }
+    if (num(s.sw, -1) !== v.sw) { v.sw = num(s.sw, -1); v.swingT = TU.swing; const W = WEAPONS[v.w]; if (W.proj) shots.push({ x: v.x, y: v.y, vx: Math.cos(v.face) * W.spd, vy: Math.sin(v.face) * W.spd, dmg: 0, life: W.range / W.spd, kb: 0, cos: true, col: W.look.col, aoe: 0, ball: W.aoe > 0, seen: [] }); }
     allies.push(v);
     if (!inLevel) continue;
     if (F.seals && isInt(s.sl)) F.sealMask |= s.sl & 7;
@@ -8113,7 +8530,7 @@ function blocMatrix(sh, x, y, rot, h, sink, out) {
   _bm.compose(_bv, _bq, _bs); return out.multiplyMatrices(_bm, _bt);
 }
 // called by buildWorld once its heights are known: the instances, one mesh for each piece in each chunk of the map
-function blocsBuild(K, hg, isF, cube) {
+function blocsBuild(K, hg, isF, cube, relief) { // relief: the walls are rounded reliefs (q_formes.js), no accent leans on a cube
   const W = F.W, H = F.H, CH = 24, lists = {}; // key piece|chunk → [matrices], and the box of the chunk
   const put = (id, cx, cy, m, top) => { const k = id + '|' + cx + ',' + cy; const L = lists[k] || (lists[k] = { id, cx, cy, ms: [], top: 0 }); L.ms.push(m.clone()); L.top = Math.max(L.top, top); };
   const m = new THREE.Matrix4();
@@ -8131,7 +8548,7 @@ function blocsBuild(K, hg, isF, cube) {
     }
     // the accents: a pillar on an outer corner now and then, an ornament on a tall wall facing the camera now and then
     const r = blocHash(x + 7, y + 3), corner = (open[1] || open[3]) && (open[0] || open[2]);
-    if (!K.mode) continue;
+    if (!K.mode || relief) continue;
     if (K.pilier && corner && hh > .9 && r < .4) { const sp = blocShape(K.pilier); if (sp) put(K.pilier, cx, cy, blocMatrix(sp, x, y, 0, hh + .25, false, m), hh + .25); }
     else if (K.orn && open[0] && hh > .9 && r > .82) { const so = blocShape(K.orn); if (so) { blocMatrix(so, x, y, 0, Math.min(hh * .7, 1), false, m); m.premultiply(_bt.makeTranslation(0, 0, .52)); put(K.orn, cx, cy, m, hh); } }
   }
@@ -8204,6 +8621,338 @@ function uiIconsApply() {
   };
   for (const [k, n] of Object.entries(UI_ICONS)) put(document.querySelector('#tabs .tab[data-k="' + k + '"]'), n);
   put($('b-lan'), 'lanterne');
+}
+
+/* ================= The backdrop, the mood of each zone, the layered mist (step 36: « un fond derrière le niveau, des effets de zones ») =================
+   Setting « fond » (TUNE, family gen): 1 = painted backdrop, mist and effects (default); 0 = the flat colour of before, without these additions.
+   All of it is for the eye only: nothing here touches the map, the collisions, the creatures or the numbers, and nothing lights up or floats on the
+   floor where one plays (« sur le sol, seul le butin brille »).
+   - The backdrop: the illustration of the zone (i_<zone>), shrunk to 64 x 36 (the blur is the enlargement), darkened towards the fog colour of the
+     world, lighter in the top third (a far glow), faded into the fog colour at the bottom and at the sides, so that it joins the far tiles which the
+     game's own fog brings back to that colour. It hangs in scene.background as a texture, covered to the screen, sliding a little with the camera.
+   - The mood: the lights of each zone (S.lum), the shafts of light (S.shaftA), the breath of what already glows (M.glow), the air a little more visible (S.air.a).
+   - The mist: two broad sheets of soft noise drifting at the height of the walls, clear around the knight. Draw calls added: the backdrop and the two sheets.
+   Optional fields of a world in STRATA: lum { hemi, sun, lamp, fog } (multipliers), bg { dim, glow, gl } (the backdrop), mist { col, col2, a }, shaftA, air.a. */
+var FOND = { col: null, im: {}, tex: {}, cur: null, cz: '', cs: null, cm: -1, mist: null, noise: null, dith: false }; // a var, not a const: the first world is built (end of d_ui.js) before this file has run
+function fondSS(a, b, x) { const k = clamp((x - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); }
+function fondOn() { return !!(TU.fond && F && !F.hub && G.mode !== 'edit'); }
+function fondCol(S) { if (!FOND.col) FOND.col = scene.background && scene.background.isColor ? scene.background : new THREE.Color(S ? S.fog : '#070504'); return FOND.col; }
+// the zone whose illustration hangs behind a world: its own (pack 4b), or the one of the world whose kit it borrows
+function fondZone(si) { try { return zoneArtName(si); } catch (e) { return ZONES[kitOf(si)]; } }
+// the sky is a dark, smooth gradient: a hair of noise per pixel keeps it from showing bands on a phone (once, before the first frame that draws it)
+function fondDither() {
+  if (FOND.dith) return; FOND.dith = true;
+  try { const B = THREE.ShaderLib.background, tag = '#include <encodings_fragment>'; if (B && B.fragmentShader.includes(tag)) B.fragmentShader = B.fragmentShader.replace(tag, tag + '\n\tgl_FragColor.rgb += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - .5) / 128.0;'); } catch (e) { }
+}
+// the illustration of a zone as an <img>, asked once (as the game reads every picture), null until it has arrived or without it
+function fondImage(z) {
+  let a = FOND.im[z]; if (a) return a.el;
+  const cfg = window.ecorceModeles; if (cfg && !MDL.list) return null; // the list of files comes after the page: asked again at a later frame
+  a = FOND.im[z] = { el: null }; if (!cfg || !(('i_' + z) in MDL.list)) return null; // a page without models, or without this picture: the plain colour stays
+  picRead(cfg, 'i_' + z).then(im => { a.el = im; FOND.cs = null; }, () => { });
+  return null;
+}
+// the illustration made into the backdrop of a world: 64 x 36, darkened towards its fog, a glow up high, fading into the fog down below and at the sides
+function fondPaint(im, S) {
+  const W = 64, H = 36, B = Object.assign({ dim: .62, glow: S.sky, gl: .26 }, S.bg), fg = C(S.fog), gc = C(B.glow);
+  let a = im, w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+  while (w > W * 2 && h > H * 2) { w = Math.ceil(w / 2); h = Math.ceil(h / 2); const t = document.createElement('canvas'); t.width = w; t.height = h; t.getContext('2d').drawImage(a, 0, 0, w, h); a = t; } // halved step by step: each step blurs
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); x.drawImage(a, 0, 0, W, H);
+  const d = x.getImageData(0, 0, W, H), p = d.data;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const u = (i + .5) / W, v = (j + .5) / H, o = (j * W + i) * 4, amt = fondSS(.94, .34, v) * fondSS(0, .16, Math.min(u, 1 - u)), gw = Math.exp(-(((u - .5) / .36) ** 2 + ((v - .1) / .24) ** 2)) * B.gl;
+    p[o] = clamp(fg.r + (p[o] / 255 * B.dim - fg.r) * amt + gc.r * gw, 0, 1) * 255; p[o + 1] = clamp(fg.g + (p[o + 1] / 255 * B.dim - fg.g) * amt + gc.g * gw, 0, 1) * 255; p[o + 2] = clamp(fg.b + (p[o + 2] / 255 * B.dim - fg.b) * amt + gc.b * gw, 0, 1) * 255; p[o + 3] = 255;
+  }
+  x.putImageData(d, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.minFilter = t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; t.userData = { fog: S.fog }; return t; // (a texture has no userData in r128: made here, for the tests)
+}
+// what hangs behind the level now: the painted texture when it is on, ready and the level is played; else the flat colour of the world
+function fondPick() {
+  const S = F && F.str; if (!S) return; const col = fondCol(S);
+  const mode = fondOn() ? 1 : 0, z = mode ? fondZone(F.si) : '';
+  if (FOND.cs === S && FOND.cz === z && FOND.cm === mode && FOND.cur) return;
+  FOND.cs = S; FOND.cz = z; FOND.cm = mode; col.set(S.fog); let bg = col;
+  if (mode) {
+    const b = S.bg || {}, k = z + '|' + S.fog + '|' + S.sky + '|' + b.dim + '|' + b.glow + '|' + b.gl, im = fondImage(z);
+    if (!(k in FOND.tex) && im) { try { FOND.tex[k] = fondPaint(im, S); } catch (e) { FOND.tex[k] = null; } }
+    const t = FOND.tex[k]; if (t) { bg = t; fondDither(); } else if (!FOND.im[z]) FOND.cs = null; // the list of files is not there yet: asked again at the next frames
+  }
+  FOND.cur = bg; if (scene.background !== bg) scene.background = bg;
+}
+// buildWorld calls this where it used to write scene.background.set(S.fog): the plain colour always, the painted backdrop as soon as it is ready
+function fondSet(S) {
+  if (!FOND) { scene.background.set(S.fog); return; } // the very first world: built before this file has run, with the plain colour as before
+  FOND.cs = null; fondPick();
+}
+// soft, seamless noise: three octaves of smooth lattice noise, the red and the green channel independent
+function fondNoise(size) {
+  const c = document.createElement('canvas'); c.width = c.height = size; const x = c.getContext('2d'), d = x.createImageData(size, size), R = rng(36);
+  const oct = n => { const g = new Float32Array(n * n); for (let i = 0; i < g.length; i++) g[i] = R(); return (u, v) => {
+    const fx = u * n, fy = v * n, ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy, sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty), x1 = (ix + 1) % n, y1 = (iy + 1) % n, x0 = ix % n, y0 = iy % n;
+    return (g[y0 * n + x0] * (1 - sx) + g[y0 * n + x1] * sx) * (1 - sy) + (g[y1 * n + x0] * (1 - sx) + g[y1 * n + x1] * sx) * sy; }; };
+  for (let ch = 0; ch < 2; ch++) { const o1 = oct(4), o2 = oct(8), o3 = oct(16);
+    for (let j = 0; j < size; j++) for (let i = 0; i < size; i++) { const u = i / size, v = j / size; d.data[(j * size + i) * 4 + ch] = (o1(u, v) * .55 + o2(u, v) * .3 + o3(u, v) * .15) * 255; } }
+  for (let i = 3; i < d.data.length; i += 4) d.data[i] = 255;
+  x.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.minFilter = t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; return t;
+}
+// two broad horizontal sheets of mist, one draw call each: the noise is read at the place in the world (so it stays where it is while the camera moves),
+// carried slowly by a drift, and kept away from the knight (it thins out within three tiles of him, so the floor and the creatures stay clear)
+function fondMist() {
+  if (FOND.mist) return FOND.mist; if (!FOND.noise) FOND.noise = fondNoise(128);
+  const vs = 'varying vec2 vW;\nvoid main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }';
+  const fs = 'uniform sampler2D uMap; uniform vec3 uCol; uniform float uA; uniform vec2 uC; uniform vec2 uF; uniform vec2 uD; uniform vec2 uH; uniform float uS; varying vec2 vW;\n'
+    + 'void main(){ float k = smoothstep(3.0, 6.8, length(vW - uC)) * (1.0 - smoothstep(9.0, 15.5, length(vW - uF)));\n'
+    + ' if (k <= 0.0) discard;\n' // no work where the mist is gone: around the knight and past the edge of the sheet
+    + ' float n = dot(texture2D(uMap, vW * uS + uD).rg, uH);\n' // one read of the noise: the red channel for the low sheet, the green one for the high sheet
+    + ' gl_FragColor = vec4(uCol, uA * k * smoothstep(.36, .8, n)); }';
+  FOND.mist = [0, 1].map(i => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(34, 34).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vs, fragmentShader: fs,
+      uniforms: { uMap: { value: FOND.noise }, uCol: { value: new THREE.Color('#ffffff') }, uA: { value: 0 }, uC: { value: new THREE.Vector2() }, uF: { value: new THREE.Vector2() }, uD: { value: new THREE.Vector2() }, uH: { value: new THREE.Vector2(i ? 0 : 1, i ? 1 : 0) }, uS: { value: i ? .085 : .06 } } }));
+    m.renderOrder = 2; m.frustumCulled = false; m.visible = false; m.userData.i = i; scene.add(m); return m;
+  });
+  return FOND.mist;
+}
+// the shafts of light (made by buildShafts) get soft edges, as the rays of the illustrations have: the colour of each vertex fades where the side of the beam turns
+// away from the eye (the camera of a level never turns), and nothing of a beam shows below the head of the knight (it must never pass for the beam of a loot)
+function fondSoft(m) {
+  if (m.userData.soft) return; m.userData.soft = 1;
+  const g = m.geometry, n = g.attributes.normal, p = g.attributes.position, c = g.attributes.color; if (!n || !c) return;
+  for (let i = 0; i < c.count; i++) { const k = fondSS(0, .55, Math.abs(n.getZ(i))) * fondSS(1.2, 3.2, p.getY(i)); c.setXYZ(i, c.getX(i) * k, c.getY(i) * k, c.getZ(i) * k); }
+  c.needsUpdate = true;
+}
+// every frame, after the lights of render3D: the cover and the slide of the backdrop, the lights of the zone, the shafts, the glow, the mist, the air
+function fondFrame(t, fx, fz) {
+  if (!F || !FOND) return; fondPick();
+  const S = F.str, on = fondOn(), L = on && S.lum || null, me = on && save.gfx !== 0;
+  // the backdrop covers the screen (the picture is 16:9), a little larger than needed so that it has room to slide; it follows the camera at a fraction of its speed
+  const bg = scene.background;
+  if (bg && bg.isTexture) {
+    const asp = view.w / Math.max(1, view.h), ia = 64 / 36, z = 1.12, rx = (asp > ia ? 1 : asp / ia) / z, ry = (asp > ia ? ia / asp : 1) / z, mx = 1 - rx, my = 1 - ry;
+    bg.repeat.set(rx, ry); bg.offset.set(mx * (.5 + .22 * Math.tanh((fx - F.W / 2) / 20)), my * (.88 + .12 * Math.tanh((fz - F.H / 2) / 20)));
+  }
+  if (L) { hemi.intensity *= L.hemi || 1; lamp.intensity *= L.lamp || 1; if (L.fog) { scene.fog.near *= L.fog; scene.fog.far *= L.fog; } }
+  sun.intensity = .5 * (L && L.sun || 1);
+  if (F.shafts && on) for (const s of F.shafts) { fondSoft(s); s.material.opacity *= S.shaftA || 1; }
+  if (on && S.air.a > 1) { const aa = pGeo.attributes.palpha.array; for (let i = 0, n = Math.min(motes.length, PCAP); i < n; i++) aa[i] *= S.air.a; } // the specks of the air come first in the buffer
+  M.glow.color.setScalar(on ? .9 + Math.sin(t * 1.3) * .1 + Math.sin(t * 3.1) * .03 : 1); // what glows already breathes a little
+  if (me || FOND.mist) {
+    const ms = fondMist(), Z = S.mist || {}, col = Z.col || S.sky, a = (Z.a == null ? .1 : Z.a) * (me ? 1 : 0);
+    for (const m of ms) {
+      m.visible = me && a > 0; if (!m.visible) continue; const i = m.userData.i, u = m.material.uniforms;
+      m.position.set(fx, i ? 1.9 : 1.05, fz); u.uCol.value.set(i && Z.col2 || col); u.uA.value = a * (i ? .8 : 1); u.uC.value.set(P.x * U, P.y * U); u.uF.value.set(fx, fz);
+      u.uD.value.set(t * (i ? -.011 : .016), t * (i ? .006 : -.008) + i * .4);
+    }
+  }
+}
+
+/* ================= rounded reliefs instead of the wall cubes (36b: « plus de courbes et moins de cubes ») =================
+   buildWorld (e_gl.js) still draws one height for each wall tile that touches the ground (hg). With the setting « Reliefs arrondis »
+   (TU.formes = 1, the default) those heights no longer make one cube a tile: they shape one continuous surface, built here.
+   - a fine grid, N steps a tile (4: measured within the budget of triangles; 3 draws the curves in visible facets);
+   - the height of a point comes from d, its distance to the nearest tile of ground (0 on the ground): a steep rounded rise from
+     the edge of the ground, a domed top with small bumps, then on the far side a fall under the level of the ground: the level
+     reads as an island that floats, not as a tray of cubes. Nothing is built beyond that fall;
+   - the height aimed at is the one of the wall tiles around, blended, with a slow noise drawn from the seed of the level;
+   - nothing moves inside a tile of ground: where the knight walks and what stops him (the grid, F.g) are untouched;
+   - each triangle wears the wall texture where a tall wall rises steeply, the top texture elsewhere, of the tile it stands on
+     (what the editor painted there still shows), with texture coordinates drawn from its place in the world, as the cubes;
+   - the ground stays flat, tile by tile, but its shade rolls in wide patches and a second ground texture of the zone fades in and out.
+   The editor of maps, the camp and the maps whose walls are 3D blocks keep the cubes (formesOn).
+   Only functions here, no value at the top of the file: buildWorld may run before this file has been read (build.mjs, « l'ordre compte »). */
+// whether the level being built gets the reliefs. BK: the kit of 3D blocks the map wears (blocKit), or null
+function formesOn(BK) {
+  if (!F || F.hub || !+TU.formes) return false;
+  // the editor of maps works on the cubes: one tile, one height. ED.on and not G.mode: the editor builds its world before it sets its
+  // mode, and « Essayer » builds the level before the mode goes back to play. (try: ED is declared in a file read after the first world)
+  try { if (ED.on) return false; } catch (e) { }
+  if (BK && BK.mode === 2) return false;                    // walls wholly in 3D blocks
+  if (F.tb && F.bpal) for (let i = 0; i < F.tb.length; i++) if (F.tb[i] < 255 && F.bpal[F.tb[i]] && F.g[i] !== 1) return false; // a block painted on a wall stands on a cube
+  return true;
+}
+// the height of the walls' surface at a place of the world (tiles): the relief when the level has one, else the cube of that tile
+function reliefAt(x, z) {
+  if (!F) return 0; if (F.relief) return F.relief.at(x, z);
+  const tx = Math.floor(x), ty = Math.floor(z); return F.hg && tx >= 0 && ty >= 0 && tx < F.W && ty < F.H ? F.hg[ty * F.W + tx] : 0;
+}
+// the colour that the outer edge of a relief (its fall) turns to: the mist of the world, which the backdrop is made of around the island (the
+// painted backdrop fades into the fog colour of the world, then the two sheets of mist of p_fond.js lie over it), and not black. [r, g, b], 0 to 1
+function formesEdge() {
+  const S = F.str, f = C(S.fog); if (!+TU.fond) return [f.r, f.g, f.b]; // without the painted backdrop, the plain colour of the world is all there is behind (not fondOn(): « Essayer » builds the level while the editor's mode is still on)
+  const Z = S.mist || {}, m = C(Z.col || S.sky), w = Math.min(.7, 2 * (Z.a == null ? .1 : Z.a)); // (the same defaults as the mist of p_fond.js)
+  return [f.r + (m.r - f.r) * w, f.g + (m.g - f.g) * w, f.b + (m.b - f.b) * w];
+}
+// o: { W, H, isF(x, y), hg (one height a tile, 0 = no wall), seed, mur(x, y), dessus(x, y) → the GB of the wall / top texture of a tile }
+// Fills those builders with the relief and gives back what the rest of buildWorld asks of it
+function formesBuild(o) {
+  const N = 4, M = 2, R1 = .38, R3 = Math.round(1.7 * N) / N, DEEP = -.6; // steps a tile, tiles built beyond the map, end of the rise, end of the fall, how deep it falls
+  const W = o.W, H = o.H, isF = o.isF, seed = o.seed | 0, EW = W + 2 * M, EH = H + 2 * M, GW = EW * N + 1, GH = EH * N + 1;
+  const EDGE = formesEdge().map(v => Math.min(1.7, v * 2.8)); // the colour is multiplied by the texture and the light (about a third): lifted so that the fall ends near the mist
+  const sst = (a, b, v) => { const t = v <= a ? 0 : v >= b ? 1 : (v - a) / (b - a); return t * t * (3 - 2 * t); };
+  const mix = (a, b, t) => a + (b - a) * t;
+  const hash = (ix, iy, s) => { let h = Math.imul(ix * 73856093 ^ iy * 19349663 ^ (seed + s * 7919), 0x27d4eb2d); h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; return (h >>> 0) / 4294967296; };
+  const vn = (x, y, s) => { // smooth noise, 0 to 1, one value a unit
+    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy, ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+    const a = hash(ix, iy, s), b = hash(ix + 1, iy, s), c = hash(ix, iy + 1, s), d = hash(ix + 1, iy + 1, s);
+    return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+  };
+  // the tiles, in a frame M tiles wider than the map on each side (the fall of a wall on the edge of the map still has room)
+  const fl = new Uint8Array(EW * EH), th = new Float32Array(EW * EH), band = new Uint8Array(EW * EH);
+  for (let ey = 0; ey < EH; ey++) for (let ex = 0; ex < EW; ex++) { const x = ex - M, y = ey - M, i = ey * EW + ex; if (isF(x, y)) fl[i] = 1; else if (x >= 0 && y >= 0 && x < W && y < H) th[i] = o.hg[y * W + x]; }
+  const flAt = (ex, ey) => ex >= 0 && ey >= 0 && ex < EW && ey < EH && fl[ey * EW + ex] === 1;
+  for (let ey = 0; ey < EH; ey++) for (let ex = 0; ex < EW; ex++) {
+    const i = ey * EW + ex; if (fl[i]) continue;
+    let near = 9; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (flAt(ex + dx, ey + dy)) near = Math.min(near, Math.max(Math.abs(dx), Math.abs(dy)));
+    if (near > 2) continue; band[i] = 1;
+    if (near === 1 && !th[i]) th[i] = flAt(ex, ey - 1) ? .34 : 1.3 + hash(ex, ey, 5) * .75; // beyond the map: the rule of buildWorld
+  }
+  // the tall walls are evened out with the walls around them: a crest that rolls instead of steps, and a tall tile among low ones
+  // comes down instead of standing as a spike. The low ones stay low (they must not hide the room), and so does what the editor chose
+  const th0 = th.slice(), fixed = o.wh;
+  for (let ey = 1; ey < EH - 1; ey++) for (let ex = 1; ex < EW - 1; ex++) {
+    const i = ey * EW + ex, x = ex - M, y = ey - M; if (th0[i] < 1 || (fixed && x >= 0 && y >= 0 && x < W && y < H && fixed[y * W + x])) continue;
+    let sw = 0, st = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const v = th0[i + dy * EW + dx]; if (v > 0) { const w = dx || dy ? (dx && dy ? .5 : 1) : 2; sw += w; st += w * v; } }
+    th[i] = st / sw;
+  }
+  // the points of the fine grid: height, place (xv, zv), distance to the ground, height of the top there, how much of the top is left (1 → 0 along the fall)
+  const hv = new Float32Array(GW * GH).fill(NaN), xv = new Float32Array(GW * GH), zv = new Float32Array(GW * GH), dv = new Float32Array(GW * GH), tv = new Float32Array(GW * GH), bv = new Float32Array(GW * GH), wv = new Float32Array(GW * GH), kw = new Float32Array(GW * GH * 3), kt = new Float32Array(GW * GH * 3); // kw, kt: three numbers a point, its colour
+  const tileOf = (i, j) => Math.min(EH - 1, (j / N) | 0) * EW + Math.min(EW - 1, (i / N) | 0);
+  // first the distance to the ground and the height aimed at
+  const calc = (i, j) => {
+    const k = j * GW + i, ux = i / N, uz = j / N, cx = Math.min(EW - 1, Math.floor(ux)), cy = Math.min(EH - 1, Math.floor(uz));
+    let d = 9, sw = 0, st = 0, qx = ux, qz = uz;
+    for (let ty = Math.max(0, cy - 3); ty <= Math.min(EH - 1, cy + 3); ty++) for (let tx = Math.max(0, cx - 3); tx <= Math.min(EW - 1, cx + 3); tx++) {
+      const q = ty * EW + tx;
+      if (fl[q]) { const dx = Math.max(tx - ux, 0, ux - tx - 1), dz = Math.max(ty - uz, 0, uz - ty - 1), e = Math.sqrt(dx * dx + dz * dz); if (e < d) { d = e; qx = clamp(ux, tx, tx + 1); qz = clamp(uz, ty, ty + 1); } }
+      // the height aimed at: the walls around, each weighed by how near its middle is; a low wall weighs more, so that the walls
+      // kept low in front of the camera stay low up to their ends and the tall ones come down to them
+      else if (th[q] > 0) { const ax = tx + .5 - ux, az = ty + .5 - uz, r = ax * ax + az * az, f = 1 - r / 6.25; if (f > 0) { const w = f * f / ((.02 + r) * th[q]); sw += w; st += w * th[q]; } }
+    }
+    hv[k] = 0; dv[k] = d; tv[k] = sw > 0 ? st / sw : 1.3;
+    // a point beyond the fall is brought back onto its end line (towards the nearest ground): the relief ends on a curve, not on the steps of the grid
+    const pull = d > R3 ? R3 / d : 1; xv[k] = qx + (ux - qx) * pull - M; zv[k] = qz + (uz - qz) * pull - M;
+  };
+  for (let ey = 0; ey < EH; ey++) for (let ex = 0; ex < EW; ex++) if (band[ey * EW + ex]) for (let b = 0; b <= N; b++) for (let a = 0; a <= N; a++) { const i = ex * N + a, j = ey * N + b; if (hv[j * GW + i] !== hv[j * GW + i]) calc(i, j); }
+  // then the distance is smoothed where that brings it down: where a wall juts into the ground its corner leans back instead of
+  // standing as the edge of a cube. The foot does not move (0 stays 0), a straight wall and the corner of a room are left as they are
+  const dAt = (i, j) => { if (i < 0 || j < 0 || i >= GW || j >= GH) return R3; const k = j * GW + i; return hv[k] === hv[k] ? Math.min(dv[k], R3) : fl[tileOf(i, j)] ? 0 : R3; };
+  const blur = src => { const out = new Float32Array(GW * GH); for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const k = j * GW + i; if (hv[k] !== hv[k] || !dv[k]) continue; out[k] = (4 * src(i, j) + 2 * (src(i - 1, j) + src(i + 1, j) + src(i, j - 1) + src(i, j + 1)) + src(i - 1, j - 1) + src(i + 1, j - 1) + src(i - 1, j + 1) + src(i + 1, j + 1)) / 16; } return out; };
+  const d1 = blur(dAt), d2 = blur((i, j) => { if (i < 0 || j < 0 || i >= GW || j >= GH) return R3; const k = j * GW + i; return hv[k] === hv[k] ? d1[k] : dAt(i, j); });
+  // at last the shape
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
+    const k = j * GW + i; if (hv[k] !== hv[k]) continue;
+    const px = i / N - M, pz = j / N - M, d = dv[k], ds = Math.min(d, d2[k]), T0 = tv[k];
+    const T = Math.max(T0 * (1 + .15 * (2 * vn(px / 3.3, pz / 3.3, 1) - 1)), Math.min(T0, 1.3)); // the slow noise never brings a wall under the height of an ordinary one
+    const r2 = .9 + .4 * vn(px / 2.7 + 31.7, pz / 2.7 - 17.3, 2), tall = sst(.5, 1.1, T);
+    const a = sst(0, R1, ds), b = 1 - sst(r2, R3, d), c = Math.sin(Math.PI * clamp((ds - .08) / (r2 + .3), 0, 1));
+    const top = T * (.88 + .2 * c) + (vn(px * .83 + 5.1, pz * .83 + 9.7, 3) - .5) * (.05 + .13 * tall) * sst(.25, .6, ds);
+    const hh = d >= R3 ? DEEP : a * (b * top + (1 - b) * DEEP);
+    hv[k] = hh; tv[k] = Math.max(.2, top); bv[k] = b; wv[k] = T > .8 ? 1 - sst(.42, .58, ds) : 0; // wv: 1 on the steep rise of a tall wall
+    // the surface wavers sideways too, never at its foot: no crest is a ruler line
+    const wob = .28 * sst(0, .3, ds); xv[k] += (vn(px * .55 + 3.1, pz * .55 + 8.2, 9) - .5) * wob; zv[k] += (vn(px * .55 + 13.7, pz * .55 + 1.3, 10) - .5) * wob;
+    // shades: the foot darker and the crest lighter on the steep sides, the tops a little varied, and down the far side the colour turns to the
+    // mist of the world (EDGE), not to black: the island stands out of its backdrop without a dark edge
+    const uf = b >= 1 ? 0 : 1 - sst(DEEP, .7 * tv[k], hh), t = clamp(hh / tv[k], 0, 1);
+    const sw = mix(mix(.55, .42, tall), mix(.85, 1.08, tall), t), st = (mix(.8, .62, tall) + .3 * vn(px * 1.9, pz * 1.9, 4) + .2 * Math.exp(-Math.pow((ds - .42) / .2, 2))) * mix(.72, 1, a);
+    for (let q = 0; q < 3; q++) { kw[k * 3 + q] = mix(sw, EDGE[q], uf); kt[k * 3 + q] = mix(st, EDGE[q], uf); }
+  }
+  // a point that was not worked out lies either on the ground or beyond the fall
+  const hAt = (i, j) => { if (i < 0 || j < 0 || i >= GW || j >= GH) return DEEP; const v = hv[j * GW + i]; return v === v ? v : fl[tileOf(i, j)] ? 0 : DEEP; };
+  // smooth normals, drawn from the slope
+  const nx = new Float32Array(GW * GH), ny = new Float32Array(GW * GH), nz = new Float32Array(GW * GH);
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const k = j * GW + i; if (hv[k] !== hv[k]) continue; const sx = (hAt(i - 1, j) - hAt(i + 1, j)) * N / 2, sz = (hAt(i, j - 1) - hAt(i, j + 1)) * N / 2, l = 1 / Math.sqrt(sx * sx + 1 + sz * sz); nx[k] = sx * l; ny[k] = l; nz[k] = sz * l; }
+  // the triangles: two for each step of the grid, cut along the diagonal that follows the slope best (the edge between the wall
+  // texture and the top texture then runs along the crest instead of drawing teeth)
+  let tris = 0;
+  for (let ey = 0; ey < EH; ey++) for (let ex = 0; ex < EW; ex++) {
+    if (!band[ey * EW + ex]) continue;
+    const mx = clamp(ex - M, 0, W - 1), my = clamp(ey - M, 0, H - 1); let bw = null, bt = null;
+    const tri = (ka, kb, kc) => {
+      const xa = xv[ka], za = zv[ka], xb = xv[kb], zb = zv[kb], xc = xv[kc], zc = zv[kc], ya = hv[ka], yb = hv[kb], yc = hv[kc];
+      const e1x = xb - xa, e1y = yb - ya, e1z = zb - za, e2x = xc - xa, e2y = yc - ya, e2z = zc - za;
+      const fx = e1y * e2z - e1z * e2y, fy = e1z * e2x - e1x * e2z, fz = e1x * e2y - e1y * e2x, up = fy / Math.sqrt(fx * fx + fy * fy + fz * fz);
+      // the wall texture where a tall wall rises steeply from the ground, the top texture where it is nearly flat. The choice is made by
+      // the place on the profile and not by the slope of each triangle (the same nearly everywhere, but no stray triangle of the other
+      // texture where the height wavers). A low bank is all top (moss, snow, ash), and the top hangs down the far side of every wall
+      const wall = (bv[ka] + bv[kb] + bv[kc]) / 3 >= .93 && (wv[ka] + wv[kb] + wv[kc]) / 3 > .5 && up < .9;
+      const g = wall ? (bw || (bw = o.mur(mx, my))) : (bt || (bt = o.dessus(mx, my))), sh = wall ? kw : kt, alongZ = Math.abs(fx) > Math.abs(fz);
+      g.p.push(xa, ya, za, xb, yb, zb, xc, yc, zc); g.n.push(nx[ka], ny[ka], nz[ka], nx[kb], ny[kb], nz[kb], nx[kc], ny[kc], nz[kc]);
+      g.c.push(sh[ka * 3], sh[ka * 3 + 1], sh[ka * 3 + 2], sh[kb * 3], sh[kb * 3 + 1], sh[kb * 3 + 2], sh[kc * 3], sh[kc * 3 + 1], sh[kc * 3 + 2]);
+      // texture coordinates from the place in the world, as the cubes: half a unit a tile, up the height on the sides
+      if (wall) g.u.push((alongZ ? za : xa) / 2, ya / 2, (alongZ ? zb : xb) / 2, yb / 2, (alongZ ? zc : xc) / 2, yc / 2);
+      else g.u.push(xa / 2, -za / 2, xb / 2, -zb / 2, xc / 2, -zc / 2);
+      tris++;
+    };
+    for (let b = 0; b < N; b++) for (let a = 0; a < N; a++) {
+      const k00 = (ey * N + b) * GW + ex * N + a, k10 = k00 + 1, k01 = k00 + GW, k11 = k01 + 1;
+      if (dv[k00] >= R3 && dv[k10] >= R3 && dv[k01] >= R3 && dv[k11] >= R3) continue; // beyond the fall: nothing
+      if (Math.abs(hv[k01] - hv[k10]) <= Math.abs(hv[k00] - hv[k11])) { tri(k01, k11, k10); tri(k01, k10, k00); } else { tri(k00, k01, k11); tri(k00, k11, k10); }
+    }
+  }
+  // what the rest of the world asks: the height at a place (tiles), between the points of the grid
+  const at = (x, z) => {
+    const u = (x + M) * N, v = (z + M) * N; if (!(u >= 0 && v >= 0 && u < GW - 1 && v < GH - 1)) return 0;
+    const i = Math.floor(u), j = Math.floor(v), fx = u - i, fz = v - j, k = j * GW + i, g = q => hv[q] === hv[q] ? hv[q] : 0;
+    return (g(k) * (1 - fx) + g(k + 1) * fx) * (1 - fz) + (g(k + GW) * (1 - fx) + g(k + GW + 1) * fx) * fz;
+  };
+  return {
+    N, tris, at,
+    // where a model stands on a wall: a little into the top, never above it
+    seat: (x, z) => Math.max(0, Math.min(at(x, z), at(x, z - .2)) - .03),
+    // the height of a spot where something small can grow, or -1 where the relief slopes too much for it
+    flatAt: (x, z) => { const h0 = at(x, z), s = Math.abs(at(x + .2, z) - at(x - .2, z)) + Math.abs(at(x, z + .2) - at(x, z - .2)); return s < .22 && h0 > .12 ? h0 - .015 : -1; },
+    // the side of a tall wall that looks at the camera, over tile (x, y): how high it rises, and how far it leans back for each unit of height
+    face: (x, y) => { const top = Math.max(.3, at(x + .5, y + 1 - 1 / N)); return { top, k: 1 / N / top }; },
+    // how much of the second ground texture shows at a tile corner (0 to 1): wide patches, drawn from the seed
+    path: (gx, gy) => .9 * sst(.57, .74, vn(gx / 4.3 + 11.1, gy / 4.3 + 2.9, 8)),
+    // the shade of the ground at a tile corner: wide light and dark patches (4 to 6 tiles) over the grain of each corner, and a soft
+    // dark at the foot of the reliefs that reaches two tiles. One value a corner: the shade flows without drawing the grid
+    sol: (gx, gy) => {
+      let n = 0, m = 0; for (let dy = -2; dy <= 1; dy++) for (let dx = -2; dx <= 1; dx++) if (!isF(gx + dx, gy + dy)) { if (dx === -2 || dx === 1 || dy === -2 || dy === 1) m++; else n++; }
+      return (1 - n * .17) * (1 - Math.min(m, 6) * .022) * (1 + .2 * (2 * vn(gx / 4.7, gy / 4.7, 6) - 1) + .07 * (2 * vn(gx / 2.1 + 3.3, gy / 2.1 + 7.7, 7) - 1));
+    },
+  };
+}
+// the growth of one wall tile, on the relief (the cubes: the end of buildWorld's loop). pb, gb: the builders of what is lit and of what glows
+function formesDecor(RL, pb, gb, glows, kd, x, y, hh, R, backWalls, isF) {
+  const low = hh < 1, front = isF(x, y + 1) && !low;
+  if (front) {
+    backWalls.push([x, y, RL.seat(x + .5, y + .5)]);
+    // what hangs on the side that looks at the camera leans back with the slope: each thing is made as on a cube, then sheared
+    const f = RL.face(x, y), S = new THREE.Matrix4().set(1, 0, 0, 0, 0, 1, 0, 0, 0, -f.k, 1, 0, 0, 0, 0, 1), g0 = glows.length;
+    const lean = b => ({ add: (geo, m, col, smooth) => b.add(geo, new THREE.Matrix4().multiplyMatrices(S, m), col, smooth) }), lp = lean(pb), lg = lean(gb);
+    if (R() < .5) decoFace(lp, lg, glows, kd, x, y, f.top, R);
+    zoneFace(lp, lg, glows, x, y, f.top, R);
+    for (let i = g0; i < glows.length; i++) glows[i][2] -= f.k * glows[i][1];
+  }
+  if (!low && R() < (front ? .45 : .14)) { const px = x + .2 + R() * .6, pz = y + .25 + R() * .55, h0 = RL.flatAt(px, pz); if (h0 > 0) decoTop(pb, gb, glows, kd, px, h0, pz, R); }
+  if (low && R() < .3) { const px = x + .2 + R() * .6, pz = y + .3 + R() * .4, h0 = RL.flatAt(px, pz); if (h0 > 0) decoSmall(pb, kd, px, h0, pz, R); }
+}
+// the models that stand on the walls (drawn by propsPlan, or put there in the editor on a cube) stand on the relief
+function formesProps(RL) { for (const p of F.props) if (!p.floor) p.y = RL.seat(p.x, p.z); }
+// The ground is varied with the second ground texture of the zone (t2_<zone>_sol_chemin: worn earth, packed snow…), laid over the
+// first in wide patches that fade out at their edges: no square shows. id: that texture, or null when the library has none;
+// plain(x, y): a tile of ground that wears the ground texture of the level; shade(gx, gy): the shade of the ground at a tile corner
+function formesChemin(RL, id, plain, shade) {
+  const base = id ? libMat(id) : null; if (!base) return;
+  let L = LT['~' + id]; // kept beside the textures of the library (never thrown away with a level)
+  if (!L) { const m = base.clone(); m.transparent = true; m.depthWrite = false; m.polygonOffset = true; m.polygonOffsetFactor = m.polygonOffsetUnits = -2; L = LT['~' + id] = { mat: m, ok: true }; }
+  const W = F.W, H = F.H, CH = 24, parts = {};
+  const al = (gx, gy) => { for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 0; dx++) { const x = gx + dx, y = gy + dy; if (x >= 0 && y >= 0 && x < W && y < H && F.g[y * W + x] === 1 && !plain(x, y)) return 0; } return RL.path(gx, gy); };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (!plain(x, y)) continue;
+    const a = [al(x, y + 1), al(x + 1, y + 1), al(x + 1, y), al(x, y)]; if (Math.max(a[0], a[1], a[2], a[3]) < .02) continue;
+    const k = ((y / CH) | 0) * 4096 + ((x / CH) | 0), g = parts[k] || (parts[k] = { p: [], c: [], u: [] }), c = [shade(x, y + 1)[0], shade(x + 1, y + 1)[0], shade(x + 1, y)[0], shade(x, y)[0]];
+    const vx = [x, x + 1, x + 1, x], vz = [y + 1, y + 1, y, y];
+    for (const i of [0, 1, 2, 0, 2, 3]) { g.p.push(vx[i], .004, vz[i]); g.c.push(c[i], c[i], c[i], a[i]); g.u.push(vx[i] / 2, -vz[i] / 2); }
+  }
+  for (const k in parts) {
+    const g = parts[k], geo = new THREE.BufferGeometry(), n = g.p.length / 3, up = new Float32Array(n * 3); for (let i = 0; i < n; i++) up[i * 3 + 1] = 1;
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(g.p, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(up, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(g.c, 4)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(g.u, 2)); geo.computeBoundingSphere(); geo.computeBoundingBox();
+    const o = new THREE.Mesh(geo, L.mat); o.receiveShadow = true; o.matrixAutoUpdate = false; o.renderOrder = -1; // drawn before whatever else is see-through (effects on the ground)
+    o.onBeforeRender = () => { const m = L.mat; if (m.map !== base.map) { m.map = base.map; m.needsUpdate = true; } if (!m.color.equals(base.color)) m.color.copy(base.color); }; // the picture of the texture comes later
+    worldGroup.add(o);
+  }
 }
 
 </script>
