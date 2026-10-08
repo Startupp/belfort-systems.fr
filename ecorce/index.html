@@ -461,6 +461,7 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 .grpcode .btn{flex:none;padding:8px 13px}.grpcode .code{font-size:28px}
 .grplv{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:20px;background:var(--bark-3);box-shadow:inset 0 0 0 1.5px var(--line)}
 .grplv b{display:block;font-size:15px;line-height:1.25;margin-top:2px}.grplv .btn{flex:none;padding:8px 12px}
+#home-notes{position:relative}#home-notes.new::after{content:"";position:absolute;top:50%;right:18px;width:11px;height:11px;margin-top:-6px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px rgba(0,0,0,.35)}.notes-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.notes-top p{margin:0;flex:1 1 170px}.note{display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:18px;background:var(--well)}.note small{opacity:.7;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.note b{font-size:18px;line-height:1.25}.note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}.note-img{display:block;width:100%;height:auto;border-radius:12px} .grppage~#sh-more{align-self:flex-start} /* the round arrow of a long page waits on the left: on the right it covered the state (Prêt) of the last visible row */
 .grpacts{display:flex;flex-wrap:wrap;gap:8px;width:100%}
 .grpacts>.btn{flex:1 1 auto;min-width:0;white-space:nowrap;min-height:44px;padding:8px 10px;font-size:14.5px}
 .endteam .grpacts>.btn{font-size:14px;min-height:42px;padding:7px 8px}
@@ -808,7 +809,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
     <div class="home-in">
       <div class="home-top"><div class="eyebrow">Un petit chevalier de fer-blanc sous l'écorce</div><h1>TinKnight</h1></div>
       <div class="home-btns">
-        <button class="btn wide shine" id="home-play" type="button">Jouer</button>
+        <button class="btn wide shine" id="home-play" type="button">Jouer</button><button class="btn wide ghost" id="home-notes" type="button">Nouveautés</button>
         <button class="btn wide ghost" id="home-load" type="button" hidden>Charger une partie</button>
         <button class="btn wide line" id="home-adm" type="button" hidden>Administration</button>
         <button class="btn wide ghost" id="home-quit" type="button" hidden>Quitter</button>
@@ -1294,6 +1295,7 @@ const TUNE_DEF = [
   ['coopGo', 'che', 'Décompte du départ en équipe', 'Quand tout le monde est prêt sur la page du groupe, le niveau part après ce décompte ; un joueur qui repasse « Pas prêt » l\'arrête.', 3, 1, 10, 's'],
   ['coopAuto', 'che', 'Prêt tout seul en fin de niveau', 'Après un niveau gagné en équipe, chacun est prêt tout seul au bout de ce temps (sauf s\'il attend ou ouvre son inventaire).', 3, 1, 15, 's'],
   ['coopVote', 'che', 'Temps pour répondre à un vote', 'Une pause ou un « Réessayer » proposé en équipe attend les réponses ce temps-là ; qui ne répond pas est compté pour.', 10, 3, 30, 's'],
+  ['sacCommun', 'che', 'Sac commun de l\'équipe', '1 = les membres d\'une équipe peuvent mettre des objets de leur sac dans un sac commun, et y prendre ceux des autres ; 0 = fermé (rien ne se met, rien ne se prend ; ce qui est déjà offert reste dans le sac de celui qui l\'a mis).', 1, 0, 1, 'n'],
   ['lanDmg', 'lan', 'Dégâts de l\'onde sans lanterne', 'L\'onde lancée sans lanterne portée.', 20, 0, 200, 'n'],
   ['lanCd', 'lan', 'Recharge de la lanterne', 'Le temps entre deux ondes, sans bonus (une lanterne rare ou épique le raccourcit un peu).', 9, 2, 30, 's'],
   ['lanCdRare', 'lan', 'Recharge gagnée par une lanterne rare', 'Les secondes retirées à la recharge par une lanterne rare.', .5, 0, 3, 's'],
@@ -2183,10 +2185,11 @@ const AFF = {
 const W_DROP = [58, 30, 7, 5], W_RICH = [34, 40, 14, 12], W_BOSS = [0, 42, 30, 28], W_SHOP = [0, 60, 28, 12];
 const pick = a => a[(Math.random() * a.length) | 0];
 let uidN = 0;
+const newItemId = () => Date.now().toString(36) + (uidN++).toString(36) + ((Math.random() * 1296) | 0).toString(36); // the identifier of a new object: loot, and the sac commun (t_groupe.js), where a taken object gets a new one
 // one precise object of the catalog, at a given level
 function makeItem(s, k, lvl) {
   const d = CAT[s][k], sc = lvlScale(lvl) * RAR_MUL[d.r] * (1 - TU.itemSpread / 2 + Math.random() * TU.itemSpread);
-  const it = { i: Date.now().toString(36) + (uidN++).toString(36) + ((Math.random() * 1296) | 0).toString(36), s, k, l: lvl, m: 0, a: [], r: d.r, t: d.set == null ? -1 : d.set, n: d.name };
+  const it = { i: newItemId(), s, k, l: lvl, m: 0, a: [], r: d.r, t: d.set == null ? -1 : d.set, n: d.name };
   it.m = s === 0 ? Math.round(d.dmg * sc * 10) / 10 : Math.round(BASE_MAIN[s] * sc);
   for (const key of d.aff || []) it.a.push([key, AFF[key].roll(lvl, Math.random())]);
   return it;
@@ -6518,7 +6521,7 @@ function pic(s, k) { const e = document.createElement('span'); e.className = 'pi
 /* ================= what is on screen ================= */
 function resetInput() { input.mx = input.my = 0; input.pmx = input.pmy = 0; input.pAtk = input.pLan = false; input.pAim = null; input.atk = input.lan = false; input.joy = null; input.aimJoy = null; input.aim = null; input.keys.clear(); }
 let freshT = 0, wheelAng = 0, wheelBusy = false, wheelWon = null; // the wheel: its angle, whether it is turning, and the prize just won (shown until dismissed)
-const SHEET_IC = { levels: 'niveaux', bag: 'sac', shop: 'boutique', quests: 'quetes', stats: 'stats', team: 'equipe', wheel: 'roulette', opts: 'reglages', pause: 'pause', crea: 'sort', adm: 'cadenas', load: 'nuage' };
+const SHEET_IC = { levels: 'niveaux', bag: 'sac', shop: 'boutique', quests: 'quetes', stats: 'stats', team: 'equipe', commun: 'coffre', notes: 'etoile', wheel: 'roulette', opts: 'reglages', pause: 'pause', crea: 'sort', adm: 'cadenas', load: 'nuage' };
 let bagTab = 'sac', benchMore = false; // the inventory tab shown (sac, eq); the workbench's bonus lines unfolded
 let forge = null; // { id, foods }: the object on the workbench and what is ticked to be fused into it
 let multi = null; // ids of the objects ticked for a grouped sale, or null
@@ -6804,6 +6807,7 @@ function renderSheet() {
     else body.push(h('p', { text: 'Termine un niveau pour enregistrer ton premier temps.' }));
     foot.push(h('button', { class: 'btn wide ghost', type: 'button', onclick: () => openSheet('chars') }, ic('equipe'), 'Changer de chevalier'));
   } else if (sheetKind === 'team') { title = 'Équipe'; teamBody(body, foot); }
+  else if (sheetKind === 'notes') { title = 'Nouveautés'; notesBody(body); } else if (sheetKind === 'commun') { title = 'Sac commun'; grpSacBody(body, foot); } // the common bag of the group (t_groupe.js)
   else if (sheetKind === 'load') { title = 'Charger une partie'; body.push(h('p', { text: 'Sur l\'autre appareil : Réglages, puis « Changer d\'appareil » donne un code. Saisis-le ici pour retrouver ta partie.' }), ...srvCard()); }
   else if (sheetKind === 'crea') { title = 'Mode créatif'; creaBody(body, foot); }
   else if (sheetKind === 'adm') { title = ADM_VIEWS[ADM.view][0]; admBody(body, foot); }
@@ -6899,11 +6903,11 @@ function homeSync() {
   const on = G.mode === 'title' && G.home, el = $('scr-home'); if (el.hidden === on) el.hidden = !on; $('scr-title').hidden = G.mode !== 'title' || G.home || creating; carSync(on); if (!on) return;
   homeArt();
   const set = (id, hid) => { const b = $(id); if (b.hidden !== hid) b.hidden = hid; };
-  set('home-load', !(window.ecorceApp && SRV.state !== 'off')); set('home-quit', !quitApp()); set('home-adm', !((ADM.shown || roleCanPropose()) && SRV.url)); { const t = ADM.shown ? 'Administration' : 'Éditeur de niveaux', b = $('home-adm'); if (b.textContent !== t) b.textContent = t; } // the administration, straight from the home screen (25g)
+  $('home-notes').classList.toggle('new', notesNew()); set('home-load', !(window.ecorceApp && SRV.state !== 'off')); set('home-quit', !quitApp()); set('home-adm', !((ADM.shown || roleCanPropose()) && SRV.url)); { const t = ADM.shown ? 'Administration' : 'Éditeur de niveaux', b = $('home-adm'); if (b.textContent !== t) b.textContent = t; } // the administration, straight from the home screen (25g)
   const l = []; if (window.ecorceApp && DEV.id) l.push('Cet appareil · ' + devCode(DEV.id)); if (window.ecorceApp && SRV.state !== 'off') l.push(srvLine());
   const t = l.join('\n'); if ($('home-foot').textContent !== t) $('home-foot').textContent = t;
 }
-$('home-play').addEventListener('click', () => { G.home = false; NAV.key = ''; showUI(); });
+$('home-play').addEventListener('click', () => { G.home = false; NAV.key = ''; showUI(); }); $('home-notes').addEventListener('click', () => openSheet('notes'));
 $('home-load').addEventListener('click', () => { SRV.ask = 1; SRV.msg = ''; openSheet('load'); }); // the code typed on the new device: the same entry as in the settings
 $('home-quit').addEventListener('click', () => { const q = quitApp(); if (q) q(); });
 // the administration without going through the characters: the last character is taken (the editors try their work with it), then the panel opens
@@ -7192,10 +7196,11 @@ async function joinParty(code, create) {
 function leaveParty() {
   const room = Net.room; if (!room) return;
   try { if (Net.offPeers) Net.offPeers(); } catch (e) { }
-  try { if (room !== Net.lobby) room.leave().catch(() => { }); else room.presence({ s: 0, cp: null, sd: null, fl: null, nx: null, e: null, d: null, kd: null }).catch(() => { }); } catch (e) { }
+  try { if (room !== Net.lobby) room.leave().catch(() => { }); else room.presence({ s: 0, cp: null, sd: null, fl: null, nx: null, e: null, d: null, kd: null, so: null, sq: null, sa: null, sx: null, sk: null }).catch(() => { }); } catch (e) { }
   dropParty();
 }
 function dropParty() {
+  grpSacDrop(); // what was promised and not confirmed comes back to my bag (t_groupe.js)
   for (const v of Net.views.values()) if (v.m && USE3D) freeModel(v.m);
   Net.room = null; Net.code = null; Net.offPeers = null; Net.views.clear(); allies.length = 0; Net.amHost = true; Net.lead = null; Net.g = null;
   if (G.mode === 'end' && run && $('end-team') && showResults.last) showResults(...showResults.last); // the results card loses the team's choices
@@ -9599,8 +9604,16 @@ function nuageFrame(t, fx, fz) {
      vp   [id, 1 pause | 2 retry, level, difficulty] a proposal;  va [id, 1 | 0] an answer;  vr [id, 1 | 0, kind, level, difficulty] the result,
           said for four seconds by the one who proposed (he counts the answers)
      ch   the chests this player opened in the level
+   The sac commun (the common bag: an object one puts in it stays in his own bag and save until another player of the group takes it).
+   Same style as the votes: states said again at every presence, never a single message, so that a lost one breaks nothing:
+     so   [text, …] what this player offers: one text per object (id|slot|kind|rank|main|fusion|points|rerolls|bonus:value,…), 8 at most
+     sq   [n, peer, id] the object he asks for: a number new for each request, from whom, which one (one request at a time)
+     sa   [n, peer, text, …] his « accords »: for that request of that peer, the whole object, said until the taker says « reçu »
+     sx   [n, peer, …] his refusals (« Déjà pris »), said for as long as that peer still asks for n
+     sk   [n, …] the last eight numbers he received (« reçu »)
    Nothing here builds a three.js object, and every top-level name is a function: this file comes last in ORDER. */
-function grpS() { return Net.g || (Net.g = { ready: false, jt: 0, made: false, cf: false, pick: null, kind: 0, endSt: '', autoAt: 0, autoN: 0, goAt: 0, goN: 0, vote: null, ans: null, res: null, done: {}, seen: {}, ch: [], last: {}, pop: {}, sig: '', esig: '', vsig: '', drawT: 0 }); }
+function grpS() { return Net.g || (Net.g = { ready: false, jt: 0, made: false, cf: false, pick: null, kind: 0, endSt: '', autoAt: 0, autoN: 0, goAt: 0, goN: 0, vote: null, ans: null, res: null, done: {}, seen: {}, ch: [], last: {}, pop: {}, sig: '', esig: '', vsig: '', drawT: 0,
+  sac: [], req: null, ask: {}, acc: {}, ref: {}, got: [], qd: {}, takeAt: -9e9, selSac: null }); } // sac: the ids I offer · req: my request · ask: the numbers I may still receive · acc: my accords · ref: my refusals · got: the numbers received · qd: requests seen
 function grpReset(create) { Net.g = null; const g = grpS(); g.jt = Date.now(); g.made = g.cf = !!create; return g; }
 function grpMax() { const n = Math.round(TU.coopMax); return n >= 2 && n <= 8 ? n : 8; }
 // everyone in the team: me first, then every teammate seen. jt 0 for an older version: he was there before
@@ -9623,9 +9636,9 @@ function grpWhere(x) {
 }
 function grpRd() {
   const g = grpS();
-  if (G.mode === 'end') return sheetKind === 'bag' ? 3 : g.endSt === 'ready' ? 1 : g.endSt === 'wait' ? 2 : 0;
+  if (G.mode === 'end') return sheetKind === 'bag' || sheetKind === 'commun' ? 3 : g.endSt === 'ready' ? 1 : g.endSt === 'wait' ? 2 : 0;
   if (G.mode !== 'hub') return 0;
-  if (sheetOpen() && sheetKind !== 'team') return sheetKind === 'bag' ? 3 : 4;
+  if (sheetOpen() && sheetKind !== 'team') return sheetKind === 'bag' || sheetKind === 'commun' ? 3 : 4;
   return g.ready ? 1 : 0;
 }
 function grpReady(x) { if (!x.gv) return true; const w = grpWhere(x); return (w === 'hub' || w === 'end') && (x.me ? grpRd() : x.v.rd) === 1; }
@@ -9663,6 +9676,7 @@ function grpPresence(patch) {
   Object.assign(patch, { gv: 1, jt: g.jt, cf: g.cf ? 1 : null, rd: grpRd(), lk: Math.min(NLV, progOf(ME)), ic: ME.ico, gl: p ? [p[0], p[1]] : null,
     es: G.mode === 'end' && run ? [run.seed, g.kind || 3] : null, vp: g.vote ? [g.vote.id, g.vote.kind, g.vote.fl, g.vote.d] : null, va: g.ans ? [g.ans[0], g.ans[1]] : null,
     vr: g.res && now < g.res.until ? [g.res.id, g.res.ok, g.res.kind, g.res.fl, g.res.d] : null, ch: play && g.ch.length ? g.ch.slice(-48) : null, hm: play ? Math.ceil(P.mhp) : null });
+  sacPresence(patch);
 }
 // what a teammate's presence says about the group (called by netFrame for every teammate)
 function grpRead(v, s) {
@@ -9675,6 +9689,7 @@ function grpRead(v, s) {
   v.va = two(s.va) ? [s.va[0], s.va[1] === 1 ? 1 : 0] : null;
   v.vr = two(s.vr) && (s.vr[2] === 1 || s.vr[2] === 2) ? [s.vr[0], s.vr[1] === 1 ? 1 : 0, s.vr[2], clamp(num(s.vr[3]) | 0, 1, NLV), clamp(num(s.vr[4]) | 0, 0, 2)] : null;
   v.ch = Array.isArray(s.ch) ? s.ch.filter(isInt).slice(0, 64) : null;
+  sacRead(v, s);
 }
 // the proposal under way (the oldest, if two came at once)
 function grpVoteOpen() {
@@ -9771,18 +9786,19 @@ function grpFrame() {
     if (!v.ch || v.sd !== run.seed || v.fl !== run.floor) continue;
     for (const id of v.ch) { const c = F.chests.find(o => o.id === id); if (c && !c.opened) openChest(c, false, v.name); }
   }
+  sacFrame(now);
   grpRedraw(false);
 }
 // what the screens show, in a few words: they are drawn again only when it changes (and at most four times a second)
 function grpSig() {
   const g = grpS(), now = performance.now(), o = grpVoteOpen(), chef = grpChef();
   return JSON.stringify([grpList().map(x => [x.peer, x.live, grpWhere(x), grpReady(x), x.me ? grpRd() : x.v.rd, x.v ? [x.v.name, x.v.col, x.v.lk, x.v.ic, x.v.fl, x.v.gl, x.v.s, Math.round(10 * (x.v.hp || 0) / (x.v.hm || 1))] : G.mode === 'play' ? Math.round(10 * P.hp / (P.mhp || 1)) : 0, now - (g.pop[x.peer] || -9e9) < 900]), chef, g.ready, g.goN, g.goAt > 0, g.endSt, g.autoN,
-    o ? [o.id, grpTally(o), Math.ceil(((g.seen[o.id] || now) + TU.coopVote * 1000 - now) / 1000), g.ans] : 0, Net.err, Net.lead ? [Net.lead.fl, Net.lead.sd] : 0, ME.av]);
+    o ? [o.id, grpTally(o), Math.ceil(((g.seen[o.id] || now) + TU.coopVote * 1000 - now) / 1000), g.ans] : 0, Net.err, Net.lead ? [Net.lead.fl, Net.lead.sd] : 0, ME.av, sacSig()]);
 }
 function grpRedraw(force) {
   const g = grpS(), now = performance.now(); if (!force && now - g.drawT < 250) return; g.drawT = now;
   const s = grpSig();
-  if ((sheetKind === 'team' || (sheetKind === 'pause' && Net.room)) && s !== g.sig) renderSheet();
+  if ((sheetKind === 'team' || sheetKind === 'commun' || (sheetKind === 'pause' && Net.room)) && s !== g.sig) renderSheet();
   if (G.mode === 'end' && $('end-team') && s !== g.esig) grpEndRender();
   grpVoteHud(s);
 }
@@ -9831,6 +9847,7 @@ function grpBody(kids, foot) {
     chef === me ? grpBtn('grp-level', 'Changer', 'niveaux', () => openSheet('levels'), 'small line') : null);
   page.push(box);
   if (chef === me && av && canPlay(av[0], av[1], false) && !(pk && pk[0] === av[0] && pk[1] === av[1])) page.push(grpBtn('grp-resume', 'Reprendre l\'aventure : niveau ' + av[0], 'aller', () => { g.pick = [av[0], av[1]]; sendPresence(true); renderSheet(); }, 'small wide'));
+  if (sacOn()) page.push(sacCard()); // the sac commun: one tap, and what it holds
   // what happens now: the countdown, who is awaited, or the team already in a level
   const lead = Net.lead, busy = L.some(x => x.live && x.gv && !x.me && grpWhere(x) === 'play');
   if (lead && G.mode === 'hub' && (!seedBig(lead.sd) || expeOpen()) && lead.fl <= NLV) page.push(h('p', { class: 'grpnote', text: 'Ton équipe est au niveau ' + lead.fl + '. Tu la suivras au niveau suivant, ou rejoins-la tout de suite.' }), grpBtn('grp-join', 'Rejoindre le niveau ' + lead.fl + ' en cours', 'descendre', () => { Net.ignoreSeed = null; startRun(lead.sd, lead.fl); }, 'small wide'));
@@ -9892,6 +9909,286 @@ function grpPauseBody() {
   const vb = grpVoteBlock(); if (vb) out.push(vb);
   out.push(h('div', { class: 'row grpacts' }, grpBtn('pause-vote', 'Proposer une pause', 'pause', () => { grpPropose(1); renderSheet(); }, 'line', open), grpBtn('pause-retry', 'Réessayer', 'reessayer', () => { grpPropose(2); renderSheet(); }, 'line', open)));
   return out;
+}
+
+/* ================= the sac commun (the common bag) =================
+   An object put in it never leaves the bag and the save of the player who put it, until another player of the group takes it: what one offers
+   is only a list of ids kept in memory for the time of the group (leaving it, or reloading the page, withdraws the offers: the objects stay
+   with their owner). Taking goes through the presence, one request at a time, in the style of the votes (states said again, never a message):
+     taker   sq = [n, donor, id]: the request, with a number new each time, said until it is answered
+     donor   still has it and offers it: takes it out of his bag, saves, then says sa = [n, taker, object] until the taker says « reçu »;
+             otherwise says sx = [n, taker] (« Déjà pris ») for as long as the taker still asks for n. Two takers at once: the first served has it
+     taker   sees the accord of one of his requests for the first time: puts the object in his bag with a new id (newItemId, as the loot has),
+             saves, then says sk = [… n] (the last 8 numbers received). An accord already applied is never applied twice
+     donor   sees « reçu » (n in sk of the taker): forgets the accord. The taker has gone without saying it (4 s): the object comes back to his bag
+   Whatever comes from the network is read as a text and rebuilt field by field (sacParse): an object the save service would refuse never enters a bag. */
+function sacOn() { return !!Net.room && !CREA.on && Math.round(TU.sacCommun) >= 1; } // closed by the setting, and in the creative mode (which never writes the real save)
+function sacId(x) { return typeof x === 'string' && /^[A-Za-z0-9_-]{1,24}$/.test(x); }
+function sacRx() { return sacRx.r || (sacRx.r = /^([A-Za-z0-9_-]{1,24})\|(\d)\|(\d{1,3})\|(\d{1,2})\|(\d{1,5}(?:\.\d)?)\|(\d)\|(\d{1,3})\|(\d{1,2})\|((?:[a-z]{2,5}:\d{1,4}(?:\.\d)?)(?:,[a-z]{2,5}:\d{1,4}(?:\.\d)?){0,2})?$/); }
+function sacTop() { return sacTop.t || (sacTop.t = { dmg: 10, spd: 9, crit: 8, rate: 10, loot: 25, range: 12, hp: 14, leech: 3 }); } // the most a bonus line may carry (serveur/worker.js, REGLES.bonus)
+// a text of the presence back into an object, or null. White list: only what the game makes of an object (makeItem), each field bounded as the save
+// service bounds it (serveur/worker.js, forme(): rank, main figure, fusion, bonus lines), with its smallest settings. Rarity, set and name come from the catalog
+function sacParse(t) {
+  if (typeof t !== 'string' || t.length > 160) return null;
+  const m = sacRx().exec(t); if (!m) return null;
+  const s = +m[2], k = +m[3], l = +m[4], mm = +m[5], f = +m[6], fp = +m[7], rr = +m[8], sc = 1 + .22 * (l - 1), top = sacTop(), a = [];
+  if (s >= NSLOT || k >= CAT[s].length || l < 1 || l > 60 || mm > 40 * sc || f > 5 || fp > 99 || rr > 99) return null;
+  if (m[9]) for (const p of m[9].split(',')) {
+    const q = p.split(':'), key = q[0], v = +q[1];
+    if (!Object.prototype.hasOwnProperty.call(top, key) || !(v > 0) || v > top[key] * (key === 'hp' || key === 'leech' ? sc : 1) + .5 || a.some(x => x[0] === key)) return null;
+    a.push([key, v]);
+  }
+  const c = CAT[s][k];
+  return { i: m[1], s, k, l, m: mm, a, r: c.r, t: c.set == null ? -1 : c.set, n: c.name, f, fp, rr };
+}
+function sacPack(it) { // id|slot|kind|rank|main|fusion|points|rerolls|bonus:value,bonus:value
+  const n = v => String(Math.round(num(v) * 10) / 10);
+  return [it.i, it.s, it.k, it.l, n(it.m), it.f | 0, it.fp | 0, it.rr | 0, (it.a || []).map(a => a[0] + ':' + n(a[1])).join(',')].join('|');
+}
+// an object of my bag that may be offered: the text the others would read gives it back whole
+function sacOk(it) {
+  try {
+    if (!it || typeof it.i !== 'string' || !Array.isArray(it.a)) return false;
+    const p = sacParse(sacPack(it)), same = (x, y) => Math.abs(x - y) < 1e-6;
+    return !!p && p.s === it.s && p.k === it.k && p.l === it.l && same(p.m, it.m) && p.f === (it.f | 0) && p.a.length === it.a.length && p.a.every((x, j) => x[0] === it.a[j][0] && same(x[1], it.a[j][1]));
+  } catch (e) { return false; }
+}
+// what I say (called by grpPresence): the list of what I offer is filtered each time on what is still in my bag, never what I wear
+function sacPresence(patch) {
+  const g = grpS(), on = sacOn();
+  g.sac = on ? g.sac.filter((id, j) => g.sac.indexOf(id) === j && !ME.eq.some(o => o && o.i === id) && sacOk(ME.bag.find(o => o && o.i === id))).slice(0, 8) : [];
+  patch.so = on && G.mode !== 'play' && g.sac.length ? g.sac.map(id => sacPack(ME.bag.find(o => o && o.i === id))) : null; // nothing in a level: the presence stays light there
+  patch.sq = g.req ? [g.req.n, g.req.to, g.req.i] : null;
+  const ac = Object.values(g.acc), rf = Object.keys(g.ref);
+  patch.sa = ac.length ? ac.flatMap(a => [a.n, a.to, sacPack(a.o)]) : null;
+  patch.sx = rf.length ? rf.flatMap(p => [g.ref[p], p]) : null;
+  patch.sk = g.got.length ? g.got.slice(-8) : null;
+}
+// what a teammate says (called by grpRead): flat values only, each one checked. sa and sx are kept only when they are for me
+function sacRead(v, s) {
+  const me = Net.me || '';
+  if (Array.isArray(s.so)) { const so = []; for (const t of s.so.slice(0, 8)) { const o = sacParse(t); if (o && !so.some(x => x.i === o.i)) so.push(o); } v.so = so; }
+  else if (!v.so || (v.s !== 1 && v.s !== 2)) v.so = []; // a teammate in a level says nothing of it: his last list stays until he is back
+  v.sq = Array.isArray(s.sq) && isInt(s.sq[0]) && typeof s.sq[1] === 'string' && s.sq[1].length <= 80 && sacId(s.sq[2]) ? [s.sq[0], s.sq[1], s.sq[2]] : null;
+  v.sk = Array.isArray(s.sk) ? s.sk.filter(isInt).slice(0, 8) : [];
+  v.sa = []; v.sx = [];
+  if (me && Array.isArray(s.sa)) for (let j = 0; j + 2 < s.sa.length && j < 24; j += 3) if (isInt(s.sa[j]) && s.sa[j + 1] === me) { const o = sacParse(s.sa[j + 2]); if (o) v.sa.push({ n: s.sa[j], o }); }
+  if (me && Array.isArray(s.sx)) for (let j = 0; j + 1 < s.sx.length && j < 16; j += 2) if (isInt(s.sx[j]) && s.sx[j + 1] === me) v.sx.push(s.sx[j]);
+}
+// everyone's offers, mine first: [{ peer, name, mine, o }]
+function sacOffers() {
+  const g = grpS(), out = [], me = Net.me || '';
+  for (const id of g.sac) { const it = ME.bag.find(o => o && o.i === id); if (it) out.push({ peer: me, name: cleanName(ME.name), mine: true, o: it }); }
+  for (const v of [...Net.views.values()].filter(x => x.live && x.gv).sort(grpOrder)) for (const o of v.so || []) out.push({ peer: v.peer, name: v.name, mine: false, o });
+  return out;
+}
+// why this object cannot be taken now (said on the button), or '' when it can. v: the view of the one who offers it
+function sacWhy(v, o) {
+  const g = grpS();
+  if (!sacOn()) return 'Le sac commun est fermé';
+  if (G.mode === 'play') return 'Pas pendant un niveau';
+  if (o.l > progOf(ME) + 3) return 'Trop fort pour toi pour l\'instant'; // the same margin as lootFloor() (a_core.js)
+  if (ME.bag.length >= bagCap()) return 'Ton sac est plein';
+  if (g.req) return 'Demande en cours…';
+  if (performance.now() - g.takeAt < 3000) return 'Un instant…';
+  if (!v || !v.live || !v.gv) return 'Ne répond plus';
+  return '';
+}
+function sacRefresh() { grpRedraw(true); if (sheetKind === 'bag') renderSheet(); }
+function sacPut(id) {
+  const g = grpS(), it = ME.bag.find(o => o && o.i === id);
+  if (!sacOn() || G.mode === 'play' || !it || g.sac.includes(id) || g.sac.length >= 8 || !sacOk(it)) return;
+  g.sac.push(id); sfx(640, .08, 'triangle', .04, 160); sendPresence(true); sacRefresh();
+}
+function sacBack(id) {
+  const g = grpS(); if (!g.sac.includes(id)) return;
+  g.sac = g.sac.filter(x => x !== id); g.selSac = { w: 'b', i: id }; sfx(420, .08, 'triangle', .04, -80); sendPresence(true); sacRefresh();
+}
+// I ask for an object of a teammate: one request at a time, 3 s between two takes; the same conditions as the button
+function sacTake(peer, id) {
+  const g = grpS(), v = Net.views.get(peer), o = v && (v.so || []).find(x => x.i === id), now = performance.now();
+  if (!o || sacWhy(v, o)) return;
+  let n; do n = 1 + ((Math.random() * 2e9) | 0); while (g.ask[n] || g.got.includes(n));
+  g.req = { n, to: peer, i: id, nm: v.name, t0: now, gone: 0 }; g.ask[n] = { to: peer, i: id, nm: v.name, t0: now, me: ME }; g.takeAt = now;
+  sfx(560, .08, 'triangle', .04, 120); sendPresence(true); sacRefresh();
+}
+// a request made to me: the object leaves my bag and my save is written before I say yes
+function sacServe(v, n, id) {
+  const g = grpS(), it = ME.bag.find(o => o && o.i === id);
+  if (!sacOn() || !it || !g.sac.includes(id) || !sacOk(it)) { g.ref[v.peer] = n; sendPresence(true); return; }
+  const at = ME.bag.indexOf(it); ME.bag.splice(at, 1); saveGame(true);
+  if (saveDirty) { ME.bag.splice(at, 0, it); saveGame(true); g.ref[v.peer] = n; sendPresence(true); return; } // the device did not write the save: the object stays in the bag and in the save, nothing is promised
+  g.sac = g.sac.filter(x => x !== id);
+  if (sel && sel.w === 'bag') sel = null; // (the selection of the bag is a place in its list)
+  g.acc[v.peer + ':' + n] = { n, to: v.peer, nm: v.name, o: it, me: ME, gone: 0 };
+  sendPresence(true); sfx(540, .1, 'triangle', .04, 120); toast(v.name + ' a pris ' + it.n, RAR[it.r].col); sacRefresh();
+}
+// an accord for me: only the answer to a request of mine, once; the object comes with a new id and the save is written before « reçu »
+function sacApply(v, a) {
+  const g = grpS(), q = g.ask[a.n];
+  if (!q || q.to !== v.peer || g.got.includes(a.n) || a.o.i !== q.i || CREA.on || !save.chars.includes(q.me) || a.o.l > progOf(q.me) + 3) return;
+  const it = Object.assign({}, a.o, { i: newItemId() });
+  q.me.bag.push(it); G.newLoot = true;
+  delete g.ask[a.n]; g.got.push(a.n); while (g.got.length > 8) g.got.shift();
+  if (g.req && g.req.n === a.n) g.req = null; g.takeAt = performance.now();
+  saveGame(true); sendPresence(true); sfx(760, .12, 'triangle', .05, 300); toast('Tu as pris ' + it.n + ' (mis par ' + v.name + ')', RAR[it.r].col); sacRefresh();
+}
+function sacRefused(v, n) {
+  const g = grpS(), q = g.ask[n]; if (!q || q.to !== v.peer) return;
+  delete g.ask[n];
+  if (g.req && g.req.n === n) { g.req = null; toast('Déjà pris'); sfx(300, .12, 'triangle', .04, -100); sendPresence(true); sacRefresh(); }
+}
+// an accord nobody will receive: the object comes back to the bag it left
+function sacGiveBack(a) {
+  if (!save.chars.includes(a.me)) return;
+  a.me.bag.push(a.o); G.newLoot = true; saveGame(true); toast(a.o.n + ' revient dans ton sac', RAR[a.o.r].col);
+}
+// the group ends (leaveParty, dropParty): every accord not confirmed by a « reçu » gives its object back
+function grpSacDrop() {
+  const g = Net.g; if (!g || !g.acc) return;
+  for (const key of Object.keys(g.acc)) { const a = g.acc[key], v = Net.views.get(a.to); if (!(v && v.sk && v.sk.includes(a.n))) sacGiveBack(a); }
+  g.acc = {};
+}
+// every image: the accords I gave, the requests made to me, the answers to mine
+function sacFrame(now) {
+  const g = grpS(), me = Net.me || ''; if (!me) return;
+  for (const key of Object.keys(g.acc)) {
+    const a = g.acc[key], v = Net.views.get(a.to);
+    if (v) { a.gone = 0; if (v.sk && v.sk.includes(a.n)) delete g.acc[key]; } // « reçu »: the object is his
+    else if (!a.gone) a.gone = now;
+    else if (now - a.gone > 4000) { delete g.acc[key]; sacGiveBack(a); sacRefresh(); } // he has left for good: the object comes back
+  }
+  for (const peer of Object.keys(g.ref)) { const v = Net.views.get(peer); if (!v || !v.sq || v.sq[0] !== g.ref[peer] || v.sq[1] !== me) delete g.ref[peer]; } // he has seen it
+  for (const v of [...Net.views.values()].sort(grpOrder)) { // each request is looked at once; the first served has the object, the other is told « Déjà pris »
+    if (!v.live || !v.gv || !v.sq || v.sq[1] !== me) continue;
+    const key = v.peer + ':' + v.sq[0]; if (g.qd[key]) continue;
+    if (Object.keys(g.acc).length >= 4) break; // four accords at a time: the presence stays light, the others wait their turn
+    g.qd[key] = now; sacServe(v, v.sq[0], v.sq[2]);
+  }
+  for (const v of Net.views.values()) { for (const a of v.sa) sacApply(v, a); for (const n of v.sx) sacRefused(v, n); }
+  if (g.req) { // no answer: after 12 s the request is let go (an accord that comes later is still received), at once if the donor has left for good
+    const v = Net.views.get(g.req.to); g.req.gone = v ? 0 : g.req.gone || now;
+    if (now - g.req.t0 > 12000 || (g.req.gone && now - g.req.gone > 4000)) { toast(v ? 'Pas de réponse de ' + g.req.nm : g.req.nm + ' n\'est plus là'); g.req = null; sendPresence(true); sacRefresh(); }
+  }
+  for (const k of Object.keys(g.ask)) if (now - g.ask[k].t0 > 1800000) delete g.ask[k];
+  for (const k of Object.keys(g.qd)) if (now - g.qd[k] > 1800000) delete g.qd[k];
+}
+// what the screens show of it, in a few words
+function sacSig() {
+  const g = grpS(); if (!sacOn()) return 0;
+  return [sacOffers().map(e => e.peer + ':' + e.o.i + ':' + (e.o.f | 0)), g.req ? g.req.n : 0, Object.keys(g.acc).length, Math.max(0, Math.ceil((g.takeAt + 3000 - performance.now()) / 1000)), ME.bag.length, bagCap(), G.mode === 'play'];
+}
+
+/* ---- what the player sees ---- */
+function sacCard() { // on the page of the group: one tap, and how many objects it holds. One line of 46 px: the rows of the team stay in sight
+  const n = sacOffers().length;
+  return h('button', { id: 'grp-sac', class: 'lv', type: 'button', style: '--sc:var(--amber);padding:7px 14px 7px 8px', onclick: () => openSheet('commun') }, h('span', { class: 'num', style: 'width:32px;height:32px', 'aria-hidden': 'true' }, ic('coffre')),
+    h('span', { class: 'txt' }, h('b', null, 'Sac commun', h('span', { id: 'grp-sac-n', style: 'font-weight:400;color:var(--dim)', text: ' · ' + (n ? n + (n > 1 ? ' objets' : ' objet') : 'vide') }))), h('span', { class: 'state' }, ic('aller')));
+}
+// the sheet « Sac commun » (renderSheet, d_ui.js): what everyone offers, then my own bag; the object touched is shown below, as in the bag
+function grpSacBody(kids, foot) {
+  const g = grpS(); g.sig = grpSig();
+  kids.push(h('button', { id: 'sac-back', class: 'chipbtn back', type: 'button', style: 'align-self:flex-start', onclick: () => openSheet('team') }, ic('retour'), 'Retour au groupe'));
+  if (!sacOn()) { kids.push(h('p', { text: 'Le sac commun est fermé.' })); return; }
+  const L = sacOffers(), cap = bagCap(), too = o => o.l > progOf(ME) + 3, pk = g.selSac, mine = L.filter(e => e.mine).length;
+  const cap1 = (txt, no) => h('div', { class: 'price' + (no ? ' no' : ''), style: 'min-width:0' }, h('span', { style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0', text: txt }));
+  const gc = h('div', { class: 'grid' });
+  L.forEach((e, n) => gc.append(h('div', { style: 'min-width:0' }, tile(e.o, { i: n, dim: !e.mine && too(e.o), sel: !!pk && pk.w === 'c' && pk.peer === e.peer && pk.i === e.o.i, onclick: () => { g.selSac = { w: 'c', peer: e.peer, i: e.o.i }; renderSheet(); } }), cap1(e.mine ? 'toi' : e.name, !e.mine && too(e.o)))));
+  kids.push(h('section', { class: 'panel sac', id: 'sac-common' }, h('div', { class: 'ph' }, h('b', null, ic('coffre'), 'Dans le sac commun'), h('span', { class: 'meta', text: L.length ? L.length + (L.length > 1 ? ' objets' : ' objet') : '' })),
+    L.length ? gc : h('p', { text: 'Rien pour l\'instant. Mets un objet de ton sac : les autres du groupe pourront le prendre.' })));
+  for (const a of Object.values(g.acc)) kids.push(h('p', { class: 'grpnote', text: a.nm + ' prend ' + a.o.n + '…' }));
+  if (g.req) kids.push(h('p', { class: 'grpnote', text: 'Tu demandes un objet à ' + g.req.nm + '…' }));
+  else if (ME.bag.length >= cap && L.some(e => !e.mine)) kids.push(h('p', { text: 'Ton sac est plein : vends un objet ou agrandis-le dans l\'inventaire.' }));
+  const gb = h('div', { class: 'grid' });
+  ME.bag.forEach((it, n) => gb.append(tile(it, { i: n + 4, pick: g.sac.includes(it.i), sel: !!pk && pk.w === 'b' && pk.i === it.i, onclick: () => { g.selSac = { w: 'b', i: it.i }; renderSheet(); } })));
+  for (let n = ME.bag.length; n < cap; n++) gb.append(h('div', { class: 'tile empty' }));
+  kids.push(h('section', { class: 'panel sac', id: 'sac-mine' }, h('div', { class: 'ph' }, h('b', null, ic('sac'), 'Ton sac'), h('span', { class: 'meta', text: ME.bag.length + ' sur ' + cap + (mine ? ' · ' + mine + ' en commun' : '') })),
+    ME.bag.length ? gb : h('p', { text: 'Ton sac est vide.' }), h('p', { class: 'grpnote', text: 'Touche un objet, puis « Mettre en commun » : il reste dans ton sac jusqu\'à ce qu\'un autre le prenne. Jusqu\'à 8 objets.' })));
+  // the object touched, below, as in the bag: its card, who put it, and the button (grey, with the reason written, when it cannot be done)
+  let e = null, it = null;
+  if (pk && pk.w === 'c') { e = L.find(x => x.peer === pk.peer && x.o.i === pk.i); it = e && e.o; }
+  else if (pk && pk.w === 'b') { it = ME.bag.find(o => o && o.i === pk.i); if (it && g.sac.includes(it.i)) e = L.find(x => x.mine && x.o.i === it.i); }
+  if (!it) { g.selSac = null; return; }
+  const back = h('button', { class: 'btn line back', type: 'button', 'aria-label': 'Retour', onclick: () => { g.selSac = null; renderSheet(); } }, ic('retour'));
+  if (e && e.mine) foot.push(h('div', { class: 'meta', text: 'Mis par toi · il est toujours dans ton sac' }), detail(it, true), h('div', { class: 'acts' }, back, h('button', { id: 'sac-retake', class: 'btn grow', type: 'button', onclick: () => sacBack(it.i) }, 'Reprendre')));
+  else if (e) { const v = Net.views.get(e.peer), why = sacWhy(v, it);
+    foot.push(h('div', { class: 'meta', text: 'Mis par ' + e.name }), detail(it, true), h('div', { class: 'acts' }, back, h('button', { id: 'sac-take', class: 'btn grow', type: 'button', disabled: !!why, onclick: () => sacTake(e.peer, it.i) }, why || 'Prendre'))); }
+  else { const why = !sacOk(it) ? 'Cet objet ne se partage pas' : g.sac.length >= 8 ? '8 objets déjà en commun' : '';
+    foot.push(detail(it, true), h('div', { class: 'acts' }, back, h('button', { id: 'sac-put', class: 'btn grow', type: 'button', disabled: !!why, onclick: () => sacPut(it.i) }, why || 'Mettre en commun'))); }
+}
+
+/* ================= « Nouveautés » : what changed in the game, from the home screen (8 October, Damien's request) =================
+   The home screen has a « Nouveautés » button (#home-notes, src/head.html) that opens the sheet 'notes' (renderSheet, d_ui.js): every
+   change of the game since it was born, the latest first (« Depuis le début » turns the list over). The button carries a dot until
+   the player has opened the notes that hold the latest entry: its number is kept on the device (key tinknight-nouveautes), not in
+   the save.
+   EVERY PUBLICATION ADDS ONE ENTRY AT THE TOP OF notesList():
+     id   the next number, never reused (the dot of the home screen compares it with the one the device has seen)
+     d    the date, t the title
+     l    a few short lines in simple words, for the players: what they will see, never how it is made
+     img  when a picture helps: the name of a 720 x 450 JPEG of pwa/notes/ (build.mjs copies them to www/notes/). A picture is
+          loaded only when the sheet is open; the standalone page has none: a picture that does not load is taken away.
+   tools/publier.sh recalls the latest entry before it sends the game. Every top-level name here is a function: this file comes
+   last in ORDER, and nothing is read at load. */
+function notesList() {
+  return [
+    { id: 11, d: '8 octobre 2026', t: 'Le sac commun de l\'équipe', img: 'sac_commun', l: [
+      'En équipe, un sac commun : chacun y met des objets de son sac, et les autres peuvent les prendre.',
+      'Un objet trop fort pour toi reste grisé : avance encore un peu pour le prendre.',
+      'Cette page « Nouveautés », depuis l\'écran d\'accueil.'] },
+    { id: 10, d: '8 octobre 2026', t: 'Deux chevaliers', img: 'deux_chevaliers', l: [
+      'À la création, choisis ton chevalier : le Chevalier d\'Écorce porte les lames (épées, lames jumelles, dagues), le Chevalier Champignon les armes à distance (arbalètes, canons).',
+      'Les chevaliers déjà créés ne changent pas : ils gardent toutes leurs armes.',
+      'De nouveaux coups d\'épée pour le Chevalier d\'Écorce.',
+      '9 nouvelles créatures dans les mondes.'] },
+    { id: 9, d: '8 octobre 2026', t: 'Le groupe', img: 'groupe', l: [
+      'Une page pour l\'équipe : qui est là, qui est prêt, et le niveau choisi par le chef.',
+      'Le niveau part quand tout le monde est prêt. Jusqu\'à 8 joueurs.',
+      'À la fin d\'un niveau, l\'équipe peut voter pour faire une pause ou pour réessayer.',
+      'Un coffre ouvert par un joueur s\'ouvre pour toute l\'équipe : chacun son butin.'] },
+    { id: 8, d: '8 octobre 2026', t: 'En équipe, tout le monde avance', l: [
+      'Un joueur qui suit une équipe plus avancée que lui gagne un niveau à chaque victoire, et du butin à sa mesure.'] },
+    { id: 7, d: '8 octobre 2026', t: 'Des nuages, et des créatures par monde', img: 'braises', l: [
+      'Dans les Racines, des nuages passent et leur ombre glisse sur le sol.',
+      'Chaque monde a ses propres créatures.',
+      'De nouveaux reliefs pour l\'Abîme et le Marais.'] },
+    { id: 6, d: '8 octobre 2026', t: 'Le chevalier, plus vivant', l: [
+      'Le chevalier reste en garde quand son arme est sortie.',
+      'Sa pose à l\'accueil est plus naturelle.',
+      'Sur petit écran, la bourse ne recouvre plus la barre de vie.'] },
+    { id: 5, d: '8 octobre 2026', t: 'De vrais reliefs', img: 'racines', l: [
+      'Fini les cubes : des reliefs arrondis, des pièces modelées, un décor peint et de la brume derrière les niveaux.',
+      'Un nouvel écran d\'accueil, avec ton chevalier.',
+      'Premier équilibrage : les prix de l\'étal, les coffres, le monde du Givre.'] },
+    { id: 4, d: '8 octobre 2026', t: 'Réessayer', l: [
+      'Après une défaite, un bouton « Réessayer ».',
+      'Le jeu te prévient quand ton sac est plein.',
+      'En équipe, on joue ensemble même si l\'on n\'est pas au même niveau.'] },
+    { id: 3, d: '8 octobre 2026', t: 'Premières corrections', l: [
+      'La musique joue aussi dans les mondes 6 à 10.',
+      'Des corrections en coop, sur les cartes et sur la sauvegarde.'] },
+    { id: 2, d: '6 octobre 2026', t: 'La sauvegarde en ligne', l: [
+      'Ta partie est gardée en ligne, pour chaque appareil.',
+      'Dans les Réglages, « Changer d\'appareil » donne un code pour retrouver ta partie sur un autre appareil.'] },
+    { id: 1, d: 'Les débuts', t: 'Sous l\'Écorce devient TinKnight', l: [
+      'Un petit chevalier de fer-blanc descend sous l\'écorce : 30 niveaux, des Racines aux Abîmes et au-delà.',
+      'Du butin à chaque niveau, des panoplies, une boutique, une roue de la chance, des quêtes et un atelier.',
+      'La coop par code d\'équipe, sur téléphone, tablette et ordinateur. Le jeu se joue aussi à la manette.',
+      'Le chevalier et les créatures passent en 3D, et le jeu prend son nom : TinKnight.'] },
+  ];
+}
+// the number of the latest entry this device has opened (0: never)
+function notesSeen() { try { return +localStorage.getItem('tinknight-nouveautes') || 0; } catch (e) { return 0; } }
+function notesNew() { return notesList()[0].id > notesSeen(); }
+// the sheet: opening it is having seen the latest entry
+function notesBody(body) {
+  const L = notesList(), old = !!G.notesOld;
+  try { localStorage.setItem('tinknight-nouveautes', String(L[0].id)); } catch (e) { }
+  body.push(h('div', { class: 'notes-top' }, h('p', { text: 'Tout ce qui a changé dans le jeu, ' + (old ? 'depuis le début.' : 'du plus récent au plus ancien.') }),
+    h('button', { class: 'chipbtn', type: 'button', id: 'notes-order', onclick: () => { G.notesOld = !old; renderSheet(); $('sh-body').scrollTop = 0; } }, old ? 'Les plus récentes d\'abord' : 'Depuis le début')));
+  for (const n of old ? L.slice().reverse() : L) body.push(h('article', { class: 'note', 'data-id': n.id }, h('small', { text: n.d }), h('b', { text: n.t }),
+    n.img ? h('img', { class: 'note-img', src: 'notes/' + n.img + '.jpg', alt: '', loading: 'lazy', width: '720', height: '450', onerror: e => e.target.remove() }) : null,
+    h('ul', null, ...n.l.map(x => h('li', { text: x })))));
 }
 
 </script>
