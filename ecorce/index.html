@@ -1223,6 +1223,7 @@ const TUNE_DEF = [
   ['texV2', 'gen', 'Textures v2 par défaut', '1 = chaque monde porte les textures v2 de sa zone (sol naturel, mur habillé, dessus) ; 0 = les premières textures. Une carte peut choisir les siennes dans l\'éditeur.', 1, 0, 1, 'n'],
   ['fond', 'gen', 'Fond peint et effets de zone', '1 = derrière le niveau, un fond peint d\'après l\'illustration de la zone ; dans le niveau, une brume en couches, la lumière et les effets propres à chaque zone ; 0 = le fond uni d\'avant, sans ces ajouts.', 1, 0, 1, 'n'],
   ['formes', 'gen', 'Reliefs arrondis', '1 = les murs des niveaux sont des reliefs continus et arrondis (talus, crêtes bombées, bords qui retombent sous le sol) ; 0 = les cubes d\'avant. L\'éditeur de cartes, le camp et les murs entièrement en blocs 3D gardent les cubes.', 1, 0, 1, 'n'],
+  ['volume', 'gen', 'Pièces de volume sur les reliefs', 'Combien de vraies pièces modelées (massifs, touffes, tas, buttes, une pièce maîtresse par salle) sont posées sur les reliefs des niveaux, d\'après la graine du niveau : 1 = normal, 2 = deux fois plus, 0 = aucune. Les pièces ne couvrent jamais le sol où l\'on marche et ne changent rien au jeu. Sans effet quand les reliefs arrondis (formes) sont à 0, dans le camp et dans l\'éditeur de cartes.', 1, 0, 2, 'n'],
   ['accueil', 'gen', 'Nouvel écran d\'accueil', '1 = l\'écran d\'accueil du chevalier : le tableau de l\'atelier derrière lui, le chevalier debout sur son socle, les six bulles des menus autour de lui ; 0 = la scène d\'avant (le camp vu de près, les bulles en colonne à droite).', 1, 0, 1, 'n'],
   ['animArmes', 'gen', 'Gestes du chevalier par arme', '1 = chaque famille d\'arme a sa tenue (repos, marche, course), sa sortie et son rangement, ses coups enchaînés différents, et ses tirs ont leur forme ; 0 = comme avant (mêmes mouvements pour toutes les armes, tirs ronds).', 1, 0, 1, 'n'],
   ['iconesV2', 'gen', 'Icônes peintes', '1 = les icônes peintes de Damien (pack 4) sur les bulles de l\'accueil et le bouton de la lanterne ; 0 = les icônes dessinées d\'avant.', 1, 0, 1, 'n'],
@@ -1256,7 +1257,7 @@ const TUNE_DEF = [
   ['itemChest', 'but', 'Objet d\'un coffre ordinaire', 'La chance qu\'un coffre ordinaire donne un objet (un coffre doré en donne toujours un).', .5, 0, 1, 'pct'],
   ['chestCoins', 'but', 'Pièces d\'un coffre ordinaire', 'Le nombre de tas de pièces qui en sortent.', 16, 0, 100, 'n'],
   ['chestGold', 'but', 'Pièces d\'un coffre doré', 'Le nombre de tas de pièces qui en sortent.', 28, 0, 150, 'n'],
-  ['chestCoin', 'but', 'Valeur d\'un tas de pièces de coffre', 'Les pièces d\'un tas au premier niveau ; le niveau et la difficulté les multiplient.', 5, 1, 20, 'n'],
+  ['chestCoin', 'but', 'Valeur d\'un tas de pièces de coffre', 'Les pièces d\'un tas au premier niveau ; le niveau et la difficulté les multiplient.', 4, 1, 20, 'n'], // 5 until 8 October: the chests gave 50 to 64 % of the coins of a level
   ['chestSide', 'but', 'Coffres des salles de côté', 'La chance qu\'une salle à l\'écart garde un coffre.', .5, 0, 1, 'pct'],
   ['chestBuried', 'but', 'Coffres enfouis', 'La chance qu\'une salle ordinaire cache un coffre sous terre.', .1, 0, 1, 'pct'],
   ['chestBurrow', 'but', 'Terrier à coffre doré', 'La chance qu\'un niveau cache un terrier avec un coffre doré (une expédition en a toujours un, plus celui-ci).', .4, 0, 1, 'pct'],
@@ -1284,10 +1285,10 @@ const TUNE_DEF = [
   ['affRangeBase', 'obj', 'Bonus de portée : valeur de base', 'Les pourcents de portée d\'un bonus, au plus bas.', 5, 3, 15, 'n', { fx: 'aff', a: 'range' }],
   ['affRangeVar', 'obj', 'Bonus de portée : part de hasard', 'Ce que le hasard peut ajouter, en pourcents.', 7, 2, 21, 'n', { fx: 'aff', a: 'range' }],
   ['shopSize', 'eco', 'Objets sur l\'étal', 'Le nombre d\'objets à vendre au départ (les quêtes en ajoutent).', 4, 1, 12, 'n'],
-  ['shopPrice', 'eco', 'Prix d\'un objet commun', 'Le prix à l\'étal d\'un objet commun de rang 1 ; il monte avec le rang comme les pièces.', 80, 5, 1000, 'n'],
-  ['shopRare', 'eco', 'Prix d\'un objet rare', 'Combien de fois le prix d\'un commun.', 2.5, 1, 20, 'x', { fx: 'shopq', q: 1 }],
-  ['shopEpic', 'eco', 'Prix d\'un objet épique', 'Combien de fois le prix d\'un commun.', 5, 1, 30, 'x', { fx: 'shopq', q: 2 }],
-  ['shopSet', 'eco', 'Prix d\'un objet de panoplie', 'Combien de fois le prix d\'un commun.', 5, 1, 30, 'x', { fx: 'shopq', q: 3 }],
+  ['shopPrice', 'eco', 'Prix d\'un objet commun', 'Le prix à l\'étal d\'un objet commun de rang 1 ; il monte avec le rang comme les pièces.', 160, 5, 1000, 'n'], // 80 until 8 October: a rare cost less than one level of coins
+  ['shopRare', 'eco', 'Prix d\'un objet rare', 'Combien de fois le prix d\'un commun.', 3, 1, 20, 'x', { fx: 'shopq', q: 1 }], // with shopPrice: a rare costs about two levels of coins (tests/equilibre.py)
+  ['shopEpic', 'eco', 'Prix d\'un objet épique', 'Combien de fois le prix d\'un commun.', 6, 1, 30, 'x', { fx: 'shopq', q: 2 }], // twice a rare, as before
+  ['shopSet', 'eco', 'Prix d\'un objet de panoplie', 'Combien de fois le prix d\'un commun.', 6, 1, 30, 'x', { fx: 'shopq', q: 3 }], // as an epic, as before
   ['sell', 'eco', 'Revente d\'un objet commun', 'Ce que rapporte la vente d\'un objet commun de rang 1.', 8, 0, 200, 'n', { fx: 'sellq', q: 0 }],
   ['sellRare', 'eco', 'Revente d\'un objet rare', 'Combien de fois la revente d\'un commun.', 2, 1, 8, 'x', { fx: 'sellq', q: 1 }],
   ['sellEpic', 'eco', 'Revente d\'un objet épique', 'Combien de fois la revente d\'un commun.', 4, 1, 16, 'x', { fx: 'sellq', q: 2 }],
@@ -2003,8 +2004,10 @@ for (const L of LEVELS) L.pool = L.pool.filter(e => !SHOP_ONLY.some(x => x[0] ==
    size × the number of chambers on the way, sides × the side chambers, shape (0 = mixed, 1 caves, 2 pillared halls, 3 round chambers,
    4 twin chambers, 5 long caverns), crowd × the creatures of each chamber, mix = the weights of Sporule, Ronceux, Cracheur, Follet
    (the world's own by default; the very first level has its gentle one), chests × the chances of a chest, decor × the scenery pieces,
-   light × the light of the sky. A boss level keeps its arena: only its decor and light apply. */
-const MIX_WORLD = [[2, 2, 1, 0], [1, 1, 2, 2], [1, 1, 2, 2], [0, 2, 2, 2], [0, 1, 2, 3], [1, 2, 2, 1], [1, 1, 2, 3], [0, 2, 2, 2], [0, 2, 1, 3], [0, 1, 2, 3]], MIX_FIRST = [3, 1, 0, 0];
+   light × the light of the sky. A boss level keeps its arena: only its decor and light apply.
+   The Givre had [0, 2, 2, 2] until 8 October: a third of Ronceux, the strongest creature, made it harder than the Abîme after it
+   (tools/equilibre.mjs, EQUILIBRAGE.md § 6); with one Ronceux in five, the worlds get harder one after the other. */
+const MIX_WORLD = [[2, 2, 1, 0], [1, 1, 2, 2], [1, 1, 2, 2], [0, 1, 2, 2], [0, 1, 2, 3], [1, 2, 2, 1], [1, 1, 2, 3], [0, 2, 2, 2], [0, 2, 1, 3], [0, 1, 2, 3]], MIX_FIRST = [3, 1, 0, 0];
 const LVL = LEVELS.map((L, i) => ({ size: 1, sides: 1, shape: 0, crowd: 1, mix: (i === 0 ? MIX_FIRST : MIX_WORLD[strIdxOf(i + 1)]).slice(), chests: 1, decor: 1, light: 1 }));
 const lvlOpt = floor => LVL[clamp(floor, 1, NLV) - 1];
 const levelOf = f => LEVELS[(f - 1) % NLV];
@@ -2093,7 +2096,7 @@ function rerollAff(it, idx) { const have = it.a.map(x => x[0]), keys = Object.ke
 const itemName = it => it.n + (it.f ? ' +' + it.f : '');
 const itemScrap = it => Math.round(TU.sell * lvlScale(it.l) * [1, TU.sellRare, TU.sellEpic, TU.sellSet][it.r] * (1 + TU.sellFuse * (it.f | 0)));
 const forgeCost = lvl => Math.round(TU.spinBase * (1 + TU.spinLvl * (lvl - 1)) / 5) * 5; // the reference price of the wheel (it was the workbench's, once)
-// at the stall an object costs about what one level brings (rare) or two (epic, set); sold back it is worth far less
+// at the stall an object costs about what two levels bring (rare) or four (epic, set), so that coins are saved up over a few passes; sold back it is worth far less
 const itemPrice = it => Math.round(TU.shopPrice * (1 + TU.lootLin * (it.l - 1)) * [1, TU.shopRare, TU.shopEpic, TU.shopSet][it.r] / 5) * 5;
 const starterWeapon = k => { const it = makeItem(0, k, 1); it.m = WEAPONS[k].dmg; return it; };
 // the bag starts small (TU.bagBase) and can be enlarged at the camp (TU.bagStep places at a time, up to TU.bagTop)
@@ -3863,7 +3866,7 @@ function buildWorld() {
   if (F.hub) buildCamp(); else buildShafts(R);
   for (let i = n2; i < worldGroup.children.length; i++) worldGroup.children[i].userData.layer = F.hub ? 'pnj' : 'murs';
   F.hg = hg; F.relief = RL; // the height of each wall, for the editor (scenery is put on top of a wall), and the relief drawn from them (reliefAt)
-  F.props = propsPlan(backWalls); if (RL) formesProps(RL); if (motes.F !== F) { motes.length = 0; motes.F = F; } modelsWant(); propsBuild(); // a world built again for the same level (a model arrived) keeps what floats in its air
+  F.props = propsPlan(backWalls); if (RL) formesProps(RL); volumeBuild(RL); if (motes.F !== F) { motes.length = 0; motes.F = F; } modelsWant(); propsBuild(); // a world built again for the same level (a model arrived) keeps what floats in its air
 }
 function mushroom(pb, gb, x, y, z, s, capCol, glowCap, R) {
   pb.add(cyl(.05 * s, .07 * s, .3 * s, 5), mat(x, y + .15 * s, z), [.92, .86, .74]);
@@ -4406,6 +4409,7 @@ function render3D() {
   }
   pGeo.setDrawRange(0, n); pGeo.attributes.position.needsUpdate = pGeo.attributes.pcolor.needsUpdate = pGeo.attributes.psize.needsUpdate = pGeo.attributes.palpha.needsUpdate = true;
   pMat.uniforms.uScale.value = R3.domElement.height / (2 * Math.tan(cam3.fov * Math.PI / 360));
+  volumeFrame(fx, fz); // the pieces of the volume kit that are on screen (r_volume.js)
   fondFrame(t, fx, fz); // the backdrop, the lights of the zone, the mist (p_fond.js)
   R3.render(scene, cam3);
 }
@@ -8953,6 +8957,206 @@ function formesChemin(RL, id, plain, shade) {
     o.onBeforeRender = () => { const m = L.mat; if (m.map !== base.map) { m.map = base.map; m.needsUpdate = true; } if (!m.color.equals(base.color)) m.color.copy(base.color); }; // the picture of the texture comes later
     worldGroup.add(o);
   }
+}
+
+/* ================= the volume kit (step 36b): real modelled pieces on the rounded reliefs =================
+   « J'aimerais de vraies formes dans les décors et les niveaux, comme dans les concepts arts » (Damien). The reliefs of q_formes.js are smooth
+   surfaces; here modelled pieces are set on them, as in the concept art. Four of the worlds own a kit (pack 7: ASSETS - CONCEPTS - ARTS/02_modeles_3d/
+   decors/<zone>/volume/, made light by tools/modeles.mjs --volume), five pieces d_<zone>_<piece> at most, each 1 200 triangles, one unit on its longest
+   side, its base at y = 0, its front towards +Z (the camera):
+     massif  an irregular mass of wall .... in the inner corners and in front of the back walls, half sunk in the slope
+     cime    a tuft spilling over the top ... on the crest of the back walls (and of the side walls)
+     pied    a low heap .................... against the foot of the back walls, on the side of the relief
+     butte   a low, wide relief ............ on the crest of the walls, never on the ground where one walks
+     repere  the master piece of the zone .. one a room at most, on the crest at the back
+   A world without kit of its own (Abîme, Mine) shows none; Marais, Canopée, Corail and Dunes wear the kit of the world they borrow (kitOf).
+   Setting « volume » (TUNE, family gen): 1 = normal, up to 2 = twice as many, 0 = none. It needs the rounded reliefs (formes = 1): the camp, the editor of
+   maps and the walls in 3D blocks keep what they have.
+   The pieces are for the eye only: nothing is added to the grid, the collisions or the obstacles. They never stand over a tile of ground, never on the
+   low walls in front of the camera, and none is set where it would hide ground behind it (so never the entrance, the exit, a chest or the knight);
+   they keep away from the scenery of the walls (propsPlan). The plan is drawn from the seed of the level, from the shape of the level and from the table
+   of footprints below, never from what has been loaded: the same level shows the same pieces to the whole team, with or without the models yet.
+   Drawing: one instanced mesh for each piece of the kit (at most four draws), of which only the pieces on screen are filled in, the nearest ones when
+   there are too many (volumeFrame, once an image): about 15 000 triangles at most, and no shadows cast (they are drawn on the walls, lit by the same light).
+   The models come on demand, when a level of the zone is built, never at the start: volumeShapes makes the meshes when they have arrived.
+   Only functions here, no value at the top of the file: the first world is built before this file has been read (see q_formes.js). */
+
+// The footprint of each piece, measured on the files and scaled to one unit on the longest side: [width, height, depth, the reach of the footprint every
+// 30° (0 = +x, 3 = +z towards the camera, 6 = -x, 9 = -z away from it), from the middle of the box]. tests/volume.py checks the table against the models.
+function volKit() {
+  return volKit.t || (volKit.t = {
+    racines: {
+      butte: [1, .18, .93, [.5, .5, .47, .46, .47, .5, .5, .45, .45, .46, .46, .48]],
+      cime: [1, .64, .73, [.5, .48, .38, .37, .42, .5, .5, .48, .34, .37, .46, .51]],
+      massif: [1, .93, .92, [.5, .47, .5, .46, .47, .5, .5, .53, .51, .46, .51, .52]],
+      repere: [.78, 1, .83, [.39, .43, .45, .42, .41, .37, .39, .35, .41, .42, .44, .46]],
+    },
+    mycelium: {
+      butte: [1, .12, 1, [.5, .51, .49, .5, .5, .51, .5, .5, .49, .5, .5, .5]],
+      cime: [1, .47, .81, [.5, .52, .51, .4, .49, .56, .5, .44, .36, .4, .5, .55]],
+      massif: [1, .97, .98, [.5, .45, .43, .49, .48, .49, .5, .53, .52, .49, .47, .51]],
+      repere: [.84, 1, .72, [.42, .42, .37, .36, .38, .38, .42, .41, .39, .36, .32, .36]],
+    },
+    braises: {
+      cime: [1, .59, .81, [.5, .45, .48, .4, .53, .57, .5, .49, .5, .4, .52, .59]],
+      massif: [1, .87, 1, [.5, .52, .49, .5, .46, .43, .5, .56, .51, .5, .52, .52]],
+      pied: [1, .21, .7, [.5, .51, .43, .35, .35, .46, .5, .5, .44, .35, .37, .41]],
+      repere: [.96, 1, .73, [.48, .47, .37, .37, .47, .49, .48, .54, .51, .37, .37, .45]],
+    },
+    givre: {
+      cime: [1, .62, .75, [.5, .54, .51, .38, .5, .55, .5, .5, .46, .38, .44, .53]],
+      massif: [1, .89, .98, [.5, .51, .51, .49, .51, .5, .5, .5, .56, .49, .52, .47]],
+      pied: [1, .22, .87, [.5, .52, .44, .43, .45, .49, .5, .51, .49, .43, .4, .46]],
+      repere: [.43, 1, .47, [.22, .22, .22, .24, .24, .21, .22, .25, .23, .24, .26, .23]],
+    },
+  });
+}
+// size (longest side, in tiles), largest turn from the camera (radians), how deep it is sunk into the surface (part of its height), stretch upwards,
+// how much further into the wall than the footprint needs (a range, in tiles)
+function volLook() {
+  return volLook.t || (volLook.t = {
+    massif: { s: [1.5, 2], yaw: .65, sink: .42, sy: 1, push: [0, .12] },
+    cime: { s: [1.2, 1.6], yaw: .3, sink: .1, sy: 1, push: [0, .15] },
+    pied: { s: [1.3, 1.75], yaw: .4, sink: .04, sy: 1.7, push: [0, 0] },
+    butte: { s: [1.2, 1.6], yaw: 1.6, sink: .5, sy: 1.3, push: [.45, .7] },
+    repere: { s: [1.8, 2.2], yaw: .3, sink: .12, sy: 1, push: [.1, .3] },
+  });
+}
+// what each place of the walls takes, by weight: the corners are for the masses, the crests for the tufts and the low reliefs
+function volWho() {
+  return volWho.t || (volWho.t = {
+    corner: [['massif', 6], ['cime', 1.5], ['pied', 1]],
+    back: [['massif', 4.2], ['cime', 3.2], ['pied', 2.2], ['butte', 1]],
+    side: [['cime', 3.4], ['massif', 2.4], ['butte', 2.6]],
+  });
+}
+
+// The plan of a level: [{ id, x, z, y (the base), rot, s (size in tiles), sy, h (height), r (radius of the sphere that holds it), cat }], tiles.
+// Pure: the seed, the shape of the level, the relief and the scenery of the walls decide, nothing else.
+function volumePlan(RL) {
+  const zn = ZONES[kitOf(F.si)], kit = volKit()[zn], look = volLook(), who = volWho(); if (!kit) return [];
+  const dens = clamp(+TU.volume, 0, 2), W = F.W, H = F.H, g = F.g, hg = F.hg, PI6 = Math.PI / 6, out = [];
+  const isF = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] === 1;
+  const tall = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] !== 1 && hg[y * W + x] >= 1; // the low walls in front of the camera stay bare
+  const R = rng((F.seed ^ 0x7B3D1F) >>> 0), NX = [], NZ = []; for (let j = 0; j < 12; j++) { NX.push(Math.cos(j * PI6)); NZ.push(Math.sin(j * PI6)); }
+  // how far a footprint reaches in the world direction j × 30°, when the piece is turned by yaw: the supports are blended as a support function may be (convex, so never short)
+  const reach = (P, yaw, j) => { let a = (j * PI6 + yaw) % TAU; if (a < 0) a += TAU; const k = Math.min(11, Math.floor(a / PI6)), t = a - k * PI6; return (P[k] * Math.sin(PI6 - t) + P[(k + 1) % 12] * Math.sin(t)) / Math.sin(PI6); };
+  // whether the footprint (grown by m) of a piece touches a tile of ground: the twelve-sided shape against each tile, by separating axes
+  const onFloor = (P, cx, cz, yaw, s, m) => {
+    const h = []; let rm = 0; for (let j = 0; j < 12; j++) { h[j] = s * reach(P, yaw, j) + m; if (h[j] > rm) rm = h[j]; }
+    for (let ty = Math.floor(cz - rm); ty <= Math.floor(cz + rm); ty++) for (let tx = Math.floor(cx - rm); tx <= Math.floor(cx + rm); tx++) {
+      if (!isF(tx, ty)) continue; let inside = true;
+      for (let j = 0; j < 12 && inside; j++) if (NX[j] * (NX[j] >= 0 ? tx : tx + 1) + NZ[j] * (NZ[j] >= 0 ? ty : ty + 1) - (cx * NX[j] + cz * NZ[j]) > h[j]) inside = false;
+      if (inside) return true;
+    }
+    return false;
+  };
+  // the places: the foot of the back walls (ground to the south), the sides of the tall walls, the inner corners of the rooms. [x, z]: on the edge of the ground; ax, az: where the wall lies
+  const cand = [];
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    if (tall(x, y)) {
+      if (isF(x, y + 1)) cand.push({ k: 'back', x: x + .5, z: y + 1, ax: 0, az: -1 });
+      if (isF(x + 1, y)) cand.push({ k: 'side', x: x + 1, z: y + .5, ax: -1, az: 0 });
+      if (isF(x - 1, y)) cand.push({ k: 'side', x, z: y + .5, ax: 1, az: 0 });
+    }
+    if (isF(x, y) && tall(x, y - 1)) {
+      if (!isF(x - 1, y) && tall(x - 1, y - 1) && tall(x - 1, y)) cand.push({ k: 'corner', x, z: y, ax: -.707, az: -.707 });
+      if (!isF(x + 1, y) && tall(x + 1, y - 1) && tall(x + 1, y)) cand.push({ k: 'corner', x: x + 1, z: y, ax: .707, az: -.707 });
+    }
+  }
+  for (let i = cand.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = cand[i]; cand[i] = cand[j]; cand[j] = t; } // the seed's order
+  const props = (F.props || []).filter(p => !p.floor);
+  const topAround = (x, z) => { let m = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const tx = Math.floor(x) + dx, ty = Math.floor(z) + dy; if (tx >= 0 && ty >= 0 && tx < W && ty < H) m = Math.max(m, hg[ty * W + tx]); } return m; };
+  // one try: the piece `piece` at the place c; the item, or null
+  const place = (c, piece) => {
+    const P = kit[piece][3], L = look[piece], s = L.s[0] + R() * (L.s[1] - L.s[0]), yaw = (R() * 2 - 1) * L.yaw, lat = (R() - .5) * (c.k === 'corner' ? .2 : .8), more = R();
+    const sx = c.x + (c.ax === 0 ? lat : 0), sz = c.z + (c.az === 0 ? lat : 0);
+    let p = 0, cx = sx, cz = sz; // the least push into the wall for the footprint to leave the ground
+    for (; p <= 1.2; p += .05) { cx = sx + c.ax * p; cz = sz + c.az * p; if (!onFloor(P, cx, cz, yaw, s, .03)) break; }
+    if (p > 1.2) return null;
+    p = L.push[0] + more * (L.push[1] - L.push[0]); cx += c.ax * p; cz += c.az * p; // further in, so that what is flat lies on the crest and does not hang over the slope
+    const top = topAround(cx, cz), hc = reliefAt(cx, cz); if (hc < .72 * top) return null; // on the crest, not on the fall behind it
+    const hy = s * kit[piece][1] * L.sy, hx = s * kit[piece][0] / 2, hz = s * kit[piece][2] / 2, d0 = Math.min(hx, hz) * .9;
+    let base; const front = Math.max(0, reliefAt(cx - c.ax * d0, cz - c.az * d0)); // the relief at the foot of the wall, where the piece meets the ground
+    if (piece === 'pied') base = front - .03;
+    else if (piece === 'massif') base = front - .1 * hy; // the front of the mass leans on the foot of the slope, the back of it is in the wall
+    else { // along the crest
+      const e = .22 * s, a = reliefAt(cx - c.az * e, cz + c.ax * e), b = reliefAt(cx + c.az * e, cz - c.ax * e); base = (2 * hc + a + b) / 4 * .6 + Math.min(hc, a, b) * .4 - L.sink * hy;
+      // what is low and flat must lie on a flat top, not hang over a slope
+      if (piece === 'butte') { const f = [hc, a, b, reliefAt(cx + c.ax * hz * .5, cz + c.az * hz * .5), reliefAt(cx - c.ax * hz * .5, cz - c.az * hz * .5)]; if (Math.max(...f) - Math.min(...f) > .3) return null; base = Math.min(...f) - L.sink * hy; }
+    }
+    // never hide ground: the strip behind the piece (to the north), as far as its top throws its shadow on the picture, holds no tile of ground
+    const hide = clamp(base + hy, 0, 3.6) * .67 + .3, x0 = cx - s * reach(P, yaw, 6) - .1, x1 = cx + s * reach(P, yaw, 0) + .1, z1 = cz - s * reach(P, yaw, 9) + .05, z0 = z1 - hide;
+    for (let ty = Math.floor(z0); ty <= Math.floor(z1); ty++) for (let tx = Math.floor(x0); tx <= Math.floor(x1); tx++) if (isF(tx, ty)) return null;
+    for (const q of out) if (Math.hypot(cx - q.x, cz - q.z) < 1.35 * (s + q.s) / 2 / Math.sqrt(dens)) return null;
+    for (const w of props) if (Math.hypot(cx - w.x, cz - w.z) < .4 * s + .45 * w.s) return null;
+    return { id: 'd_' + zn + '_' + piece, piece, x: cx, z: cz, y: base, rot: yaw, s, sy: L.sy, h: hy, r: s * .8, cat: c.k };
+  };
+  // the master piece first: one a room at most, on the crest at the back of it
+  if (kit.repere) {
+    const rooms = F.rooms && F.rooms.length ? F.rooms : null, key = (tx, ty) => { if (rooms) for (let i = 0; i < rooms.length; i++) { const r = rooms[i]; if (tx >= r.x0 && tx <= r.x1 && ty >= r.y0 && ty <= r.y1) return i; } return 'c' + ((tx / 14) | 0) + ',' + ((ty / 13) | 0); };
+    const used = new Set(), tries = {}, has = {};
+    for (const c of cand) {
+      if (c.k !== 'back') continue; const rk = key(Math.floor(c.x), Math.floor(c.z)); if (used.has(rk)) continue;
+      if (has[rk] === undefined) has[rk] = R() < Math.min(1, .85 * dens); // a room does not always have one
+      if (!has[rk] || (tries[rk] = (tries[rk] || 0) + 1) > 14) continue;
+      const it = place(c, 'repere'); if (it) { out.push(it); used.add(rk); }
+    }
+  }
+  // then the rest, in the order of the seed, until the walls have as many as they can take
+  const nBack = cand.filter(c => c.k === 'back').length, nSide = cand.filter(c => c.k === 'side').length, nCorner = cand.filter(c => c.k === 'corner').length;
+  const want = Math.round((nBack * .34 + nSide * .12 + nCorner * .7) * dens); let made = 0;
+  for (const c of cand) {
+    if (made >= want) break;
+    const w = who[c.k].filter(([n]) => kit[n]); if (!w.length) continue; let r = R() * w.reduce((a, b) => a + b[1], 0), piece = w[0][0]; for (const [n, v] of w) { if (r < v) { piece = n; break; } r -= v; }
+    const it = place(c, piece); if (it) { out.push(it); made++; }
+  }
+  return out;
+}
+
+// the plan of the level just built (called by buildWorld once the scenery of the walls is set), and the pieces that are already there
+function volumeBuild(RL) {
+  const S = volumeBuild.S || (volumeBuild.S = { F: null, groups: {}, vis: '', fr: null, pm: null, sph: null, y: null });
+  for (const id in S.groups) { const m = S.groups[id].mesh; if (m && m.dispose) try { m.dispose(); } catch (e) { } } // the matrices of the last level
+  S.F = F; S.groups = {}; S.vis = ''; F.vol = [];
+  if (!RL || !USE3D || F.hub || !(+TU.volume > 0)) return;
+  try { F.vol = volumePlan(RL); } catch (e) { F.vol = []; console.warn('volume : plan impossible', e); } // never a reason to stop the game
+  volumeShapes();
+}
+// the meshes of the pieces whose model has arrived: one instanced mesh each, filled in by volumeFrame. A piece that is not there is asked for, once
+function volumeShapes() {
+  const S = volumeBuild.S; if (!S || S.F !== F || !F.vol || !F.vol.length || !MDL.on) return;
+  for (const id of new Set(F.vol.map(p => p.id))) {
+    if (S.groups[id]) continue;
+    const part = modelPart(id); if (!part) { volumeAsk(id); continue; }
+    const a = part.min, b = part.max, k0 = 1 / Math.max(b[0] - a[0], b[1] - a[1], b[2] - a[2]), items = F.vol.filter(p => p.id === id), geo = new THREE.BufferGeometry();
+    geo.setIndex(part.geo.index); for (const n in part.geo.attributes) geo.setAttribute(n, part.geo.attributes[n]); // the shared buffers of the model, as the blocks do
+    geo.boundingBox = new THREE.Box3(new THREE.Vector3(-1, -2, -1), new THREE.Vector3(F.W + 1, 8, F.H + 1)); geo.boundingSphere = geo.boundingBox.getBoundingSphere(new THREE.Sphere());
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3(), t = new THREE.Matrix4(), up = new THREE.Vector3(0, 1, 0);
+    items.forEach((p, i) => { // its box set on the ground at the spot: centred, its base at y = 0, one unit on the longest side, then its size, its turn and its place
+      q.setFromAxisAngle(up, p.rot); const k = p.s * k0; sc.set(k, k * p.sy, k); v.set(p.x, p.y, p.z); m.compose(v, q, sc); p.mx = m.clone().multiply(t.makeTranslation(-(a[0] + b[0]) / 2, -a[1], -(a[2] + b[2]) / 2)); p.n = i; p.g = id;
+    });
+    const mat = volumeShapes.M || (volumeShapes.M = {}), mm = mat[id] || (mat[id] = modelMat(part.map));
+    const mesh = new THREE.InstancedMesh(geo, mm, items.length); mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); mesh.count = 0; mesh.visible = false;
+    mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = true; mesh.matrixAutoUpdate = false;
+    mesh.userData.layer = 'murs'; mesh.userData.volume = true; mesh.userData.keepMat = true; worldGroup.add(mesh); S.groups[id] = { id, mesh, items }; S.vis = '';
+  }
+}
+function volumeAsk(id) {
+  const A = volumeAsk.A || (volumeAsk.A = {}); if (A[id]) return; A[id] = 1;
+  modelLoad(id).then(g => { A[id] = 0; const S = volumeBuild.S; if (g && S && S.F === F && F.vol) volumeShapes(); }, () => { A[id] = 0; });
+}
+// once an image: fill the meshes with the pieces that are on screen (the camera's own frustum), and no further than the fog lets one see
+function volumeFrame(fx, fz) {
+  const S = volumeBuild.S; if (!S || S.F !== F || !F.vol || !F.vol.length) return; const gs = Object.values(S.groups); if (!gs.length) return;
+  if (!S.fr) { S.fr = new THREE.Frustum(); S.pm = new THREE.Matrix4(); S.sph = new THREE.Sphere(); }
+  cam3.updateMatrixWorld(); S.fr.setFromProjectionMatrix(S.pm.multiplyMatrices(cam3.projectionMatrix, cam3.matrixWorldInverse));
+  const far = scene.fog.far + 2.5; let vis = [];
+  for (const g of gs) for (const p of g.items) { if (Math.hypot(p.x - fx, p.z - fz) > far + p.r) continue; S.sph.center.set(p.x, p.y + p.h / 2, p.z); S.sph.radius = p.r; if (S.fr.intersectsSphere(S.sph)) vis.push(p); }
+  if (vis.length > 12) { vis.sort((a, b) => Math.hypot(a.x - fx, a.z - fz) - Math.hypot(b.x - fx, b.z - fz)); vis.length = 12; } // 12 pieces of 1 200 triangles: the budget
+  const sig = vis.map(p => p.g + p.n).sort().join();
+  if (sig === S.vis) return; S.vis = sig;
+  for (const g of gs) { let n = 0; for (const p of vis) if (p.g === g.id) g.mesh.setMatrixAt(n++, p.mx); g.mesh.count = n; g.mesh.visible = n > 0; g.mesh.instanceMatrix.needsUpdate = true; }
 }
 
 </script>
