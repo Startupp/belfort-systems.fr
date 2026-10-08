@@ -566,7 +566,7 @@ input.codein::placeholder{color:var(--dim);opacity:.6}
 .adm-row b{font-size:14.5px;line-height:1.25} .adm-row small{color:var(--dim);font-size:12px;line-height:1.35}
 .adm-row.mod{box-shadow:inset 3px 0 0 var(--amber)}
 .adm-ctl{display:flex;align-items:center;gap:8px;min-width:0}
-.adm-range{flex:1 1 0;min-width:0;height:34px;accent-color:var(--amber);touch-action:pan-y}
+.adm-range{-webkit-appearance:none;appearance:none;background:transparent;flex:1 1 0;min-width:0;height:34px;touch-action:pan-y;cursor:pointer}.adm-range::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:rgba(255,255,255,.3)}.adm-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;margin-top:-9px;border-radius:50%;background:var(--amber);border:3px solid rgba(0,0,0,.6);box-shadow:0 0 0 2px var(--amber)}.adm-range::-moz-range-track{height:8px;border-radius:999px;background:rgba(255,255,255,.3)}.adm-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--amber);border:3px solid rgba(0,0,0,.6);box-shadow:0 0 0 2px var(--amber)}/* the slider is drawn by the game: the one of the phone (thin grey line, dull dot, dimmed while locked) could not be seen on the dark panel */
 .adm-ctl .adm-num{appearance:none;flex:none;width:78px;min-height:40px;padding:6px 10px;border-radius:14px;border:0;background:var(--bark-4);color:var(--cream);font:700 15px var(--ui);text-align:right;user-select:text;-webkit-user-select:text}
 .adm-u{flex:none;color:var(--dim);font-size:12.5px;font-weight:700}
 .adm-def{align-self:flex-start;box-shadow:inset 0 0 0 2px var(--line);min-height:34px;padding:6px 14px;font-size:12.5px}
@@ -694,9 +694,9 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 #sheet.dock .sh-head h2,#sheet.full .sh-head h2{display:block;overflow:hidden;text-overflow:ellipsis}
 #sheet.dock .sh-head h2 .ic,#sheet.full .sh-head h2 .ic{display:inline-grid;vertical-align:middle;margin-right:10px}
 .adm-switch{display:flex;flex-direction:column;gap:8px;flex:none}
-.adm-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:999px;background:var(--well)}
-.adm-tab{appearance:none;border:0;background:transparent;color:var(--dim);font:700 13px var(--ui);min-height:38px;min-width:0;padding:6px 8px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;white-space:nowrap}
-.adm-tab .ic{font-size:16px;flex:none}.adm-tab.on{background:var(--amber);color:var(--ink);cursor:default}
+.adm-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;border-radius:999px;background:var(--well)}
+.adm-tab{appearance:none;border:0;background:transparent;color:var(--dim);font:700 13px var(--ui);min-height:38px;min-width:0;padding:6px 4px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;white-space:nowrap}
+.adm-tab .ic{font-size:16px;flex:none}.adm-tab.on{background:var(--amber);color:var(--ink);cursor:default}.regle{border-radius:16px;background:var(--well);padding:0 14px;flex:none}.regle>summary{cursor:pointer;padding:13px 0;list-style:none;display:flex;align-items:center;gap:8px}.regle>summary::-webkit-details-marker{display:none}.regle>summary::before{content:"+";font:700 18px var(--ui);width:18px;flex:none;text-align:center;color:var(--amber)}.regle[open]>summary::before{content:"–"}.regle ul{margin:0 0 14px;padding-left:18px;display:flex;flex-direction:column;gap:7px}.rg-x{overflow-x:auto;margin:0 0 12px}.rg-t{border-collapse:collapse;font-size:13px;min-width:100%}.rg-t th,.rg-t td{text-align:left;padding:6px 12px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}.rg-t td:last-child{white-space:normal;min-width:170px}.rg-sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;box-shadow:0 0 0 1px rgba(255,255,255,.25)}.rg-adr{font-size:13px;overflow-wrap:anywhere}
 .adm-sub{display:flex;align-items:center;gap:10px}.adm-sub p{flex:1 1 0;min-width:0;margin:0;font-size:12.5px;line-height:1.35;color:var(--dim)}.adm-sub .btn{flex:none;min-height:36px;padding:6px 12px;font-size:13px}
 .adm-player{flex:none}
 @media (max-width:560px){
@@ -714,7 +714,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
   #sheet:is(.dock,.full) .adm-foot .btn{flex:none;width:auto;min-height:36px;padding:6px 12px;font-size:12.5px;white-space:nowrap}#sheet:is(.dock,.full) .adm-foot>.btn.wide{order:-1}
 }
 @media (max-width:560px) and (orientation:portrait){#sheet.dock{max-height:46%}}
-@media (max-width:400px){.adm-jtabs .chipbtn .ic{display:none}.adm-tab{font-size:12.5px;gap:5px;padding:6px 4px}
+@media (max-width:400px){.adm-jtabs .chipbtn .ic{display:none}.adm-tab{font-size:12px;gap:0;padding:6px 2px}
   /* the bar of the editor of levels on a narrow phone: its name ran under « Annuler » and « Essayer » left the bar */
   #ed .ed-top>.row:first-child{gap:5px!important}#ed .ed-top>.row:first-child>.btn.small{padding:8px 10px;flex:none}#ed .ed-top>.row:first-child>.chipbtn{padding:8px 9px;flex:none}
   #ed .ed-top>.row:first-child>.btn.small:last-child .ic{display:none}#ed .ed-top .ed-name{flex:1 1 0;overflow:hidden}
@@ -727,7 +727,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
   #sheet.full .adm-foot{flex-direction:row;align-items:center}#sheet.full .adm-foot>*{flex:1 1 0;min-width:0}#sheet.full .adm-foot>.btn.wide{flex:1.4 1 0}
 }
 @media (pointer:coarse){
-  .adm-row:not(.on) .adm-range{pointer-events:none;opacity:.45}
+  .adm-row:not(.on) .adm-range{pointer-events:none;opacity:.85}.adm-row:not(.on) .adm-range::-webkit-slider-thumb{background:var(--well)}.adm-row:not(.on) .adm-range::-moz-range-thumb{background:var(--well)}
   .adm-row.on{background:color-mix(in srgb,var(--amber) 10%,transparent);box-shadow:inset 0 0 0 2px var(--amber)}
 }
 .opt-acts{display:flex;flex-direction:column;gap:8px}
@@ -6086,7 +6086,7 @@ function admTag() {
 
 // ---- the entry in the settings
 // two entries (24a): the editor of models (levels, camp, then the libraries) and the editor of variables (every setting)
-const ADM_VIEWS = { mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'], joueurs: ['Joueurs et sécurité', 'equipe', 'Statistiques, joueurs et leurs personnages, journal de sécurité'], prop: ['Éditeur de niveaux', 'forge', 'Créer des cartes et les proposer'] };
+const ADM_VIEWS = { mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'], joueurs: ['Joueurs et sécurité', 'equipe', 'Statistiques, joueurs et leurs personnages, journal de sécurité'], regles: ['Règles d\'import', 'quetes', 'Le style du jeu, les formats, Blender et Blockbench'], prop: ['Éditeur de niveaux', 'forge', 'Créer des cartes et les proposer'] };
 function admCard() {
   if (!ADM.shown) return null;
   const live = !!SRV.url;
@@ -6380,12 +6380,13 @@ function admBody(kids, foot) {
   }
   const mod = ADM.view === 'mod';
   // the three editors are tabs, always in the same order; the open one is marked and is not a button (36m: on a phone the buttons used to squeeze the sentence into a narrow column)
-  const tabs = { mod: 'Modèles', var: 'Variables', joueurs: 'Joueurs' };
+  const tabs = { mod: 'Modèles', var: 'Variables', joueurs: 'Joueurs', regles: 'Règles' }; // four tabs: text alone, an icon beside each no longer fits a narrow phone
   kids.push(h('div', { class: 'adm-switch' },
-    h('div', { class: 'adm-tabs', role: 'tablist' }, ...['mod', 'var', 'joueurs'].map(v => v === ADM.view ? h('span', { class: 'adm-tab on', role: 'tab', 'aria-selected': 'true' }, ic(ADM_VIEWS[v][1]), tabs[v])
-      : h('button', { class: 'adm-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-label': ADM_VIEWS[v][0], onclick: () => { ADM.view = v; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, ic(ADM_VIEWS[v][1]), tabs[v]))),
-    h('div', { class: 'adm-sub' }, h('p', { text: ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
+    h('div', { class: 'adm-tabs', role: 'tablist' }, ...['mod', 'var', 'joueurs', 'regles'].map(v => v === ADM.view ? h('span', { class: 'adm-tab on', role: 'tab', 'aria-selected': 'true' }, tabs[v])
+      : h('button', { class: 'adm-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-label': ADM_VIEWS[v][0], onclick: () => { ADM.view = v; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, tabs[v]))),
+    h('div', { class: 'adm-sub' }, h('p', { text: ADM.view === 'regles' ? 'À lire avant de dessiner ou d\'envoyer un fichier : le style du jeu, les formats, et les réglages de Blender et de Blockbench.' : ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
       h('button', { class: 'btn small ghost', type: 'button', onclick: () => closeSheet() }, ic('aller'), 'Aller jouer'))));
+  if (ADM.view === 'regles') { reglesBody(kids); return; } // v_regles.js
   if (ADM.view === 'joueurs') { admJBody(kids); return; } // m_joueurs.js
   if (!mod) {
     const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
@@ -8729,6 +8730,8 @@ const OUTILS = {
   editeur: () => edStart(clamp(+(new URLSearchParams(location.search).get('niveau')) || 1, 1, LEVELS.length), newSeed(0, false)),
   camp: () => edStart('camp'),
   interface: () => hudEditStart('play'),
+  administration: () => { ADM.view = 'mod'; ADM.big = true; document.title = 'Administration · TinKnight'; openSheet('adm'); }, // the whole administration alone on its page (8 October) : …/ecorce/?admin&outil=administration
+  regles: () => { ADM.view = 'regles'; ADM.big = true; openSheet('adm'); },
   bibliotheque: () => { ADM.view = 'mod'; openSheet('adm'); setTimeout(() => { const b = [...document.querySelectorAll('.adm-box b')].find(x => x.textContent === 'La bibliothèque'); if (b) b.scrollIntoView({ block: 'start' }); }, 50); },
 };
 function outilOpen(tries) {
@@ -10189,6 +10192,84 @@ function notesBody(body) {
   for (const n of old ? L.slice().reverse() : L) body.push(h('article', { class: 'note', 'data-id': n.id }, h('small', { text: n.d }), h('b', { text: n.t }),
     n.img ? h('img', { class: 'note-img', src: 'notes/' + n.img + '.jpg', alt: '', loading: 'lazy', width: '720', height: '450', onerror: e => e.target.remove() }) : null,
     h('ul', null, ...n.l.map(x => h('li', { text: x })))));
+}
+
+/* ================= « Règles » : the art direction and the rules of the files to import (8 October, Damien's request) =================
+   The fourth tab of the administration (admBody, i_admin.js; straight from an address: ?admin&outil=regles). It says what makes
+   the look of the game, what a file must respect to stay faithful to it, the formats in short, and the settings of the two outside
+   editors Damien may use (Blender, Blockbench). The complete technical sheet stays FORMATS.md: when a format changes there, the
+   short table of reglesList() follows. The colours of the worlds are those of STRATA (a_core.js), read when the tab is drawn.
+   Every top-level name here is a function: this file comes last in ORDER, and nothing is read at load. */
+function reglesList() {
+  const mondes = STRATA.slice(0, 5).map(S => [S.name, S.floorA, S.wallFace, S.glow, S.deco, S.foe]);
+  return [
+    { t: 'La direction artistique, en bref', open: true, l: [
+      'L\'idée : un petit chevalier de fer-blanc sous l\'écorce d\'un arbre géant. Du bois, de la mousse, des champignons, des lanternes.',
+      'Les formes : peu de triangles, des facettes franches, des volumes ronds et trapus. Rien de fin : tout doit se lire en petit, vu de dessus, sur un téléphone.',
+      'Les proportions, « chibi sérieux » : une grosse tête casquée (près de la moitié de la hauteur), un petit corps, des mains et des pieds épais. Mignon par les proportions, sérieux par l\'attitude : visière fermée, pas de grimace, pas d\'yeux de dessin animé.',
+      'Les couleurs : chaque monde a une couleur sombre et peu vive pour le sol et les murs, et une seule lueur vive. La lueur est réservée à ce qui compte : la visière, les lanternes, les cristaux, les yeux des créatures, ce qui se ramasse.',
+      'Les matières : peintes à la main, en aplats et dégradés doux. Pas de photo, pas de faux relief : le jeu fait lui-même les ombres (rendu à facettes) et le contour sombre des créatures et des armes.',
+      'La lumière : chaude et dorée d\'en haut, des ombres froides et bleutées, de la brume colorée au loin, de petites particules dans l\'air (pollen, spores, braises).',
+      'L\'interface : des panneaux sombres aux coins très ronds, un seul accent de couleur par thème, les titres en gothique (Grenze Gotisch), le texte en Figtree, des icônes au trait.'] },
+    { t: 'Les couleurs de chaque monde', tb: [['Monde', 'Sol', 'Mur', 'Lueur', 'Plantes, décor', 'Créatures'], ...mondes], l: [
+      'Un décor reprend le sol, le mur et les plantes de son monde. La lueur ne sert que par touches.',
+      'Une créature tranche avec le sol de son monde : c\'est ce qui la rend visible.',
+      'Une texture de sol ou de mur doit rester claire : le jeu la multiplie par la teinte du monde.',
+      'Le Marais et les mondes suivants empruntent pour l\'instant les couleurs d\'un de ces cinq mondes.'] },
+    { t: 'Rester fidèle au style, sorte par sorte', l: [
+      'Chevalier : une matière dominante qui se lit de loin (écorce, champignon, glace…), trois couleurs au plus, et la lueur de la visière. La visière est une seule bande lumineuse.',
+      'Arme : grosse et épaisse, lisible quand elle fait un centimètre à l\'écran. Lame claire, poignée sombre, une touche de la lueur de son thème.',
+      'Créature : une forme principale et un ou deux attributs (cornes, chapeau, queue). Des yeux ou une lueur visibles de dessus. Pas de détail plus petit qu\'un vingtième de sa taille.',
+      'Décor : des formes rondes, jamais de cube. Une base large, posée au sol. Les couleurs du monde, peu vives ; pas de lueur, sauf pour une lanterne ou un cristal.',
+      'Texture de sol ou de mur : peinte, claire, sans couture sur les quatre bords, sans photo ni texte.',
+      'Image (fond, illustration) : une peinture, à l\'heure dorée, avec des lanternes et de la brume ; le sujet dans le tiers central.'] },
+    { t: 'Les formats, en bref', tb: [['Sorte', 'Nom du fichier', 'Triangles', 'Texture', 'Poids', 'À savoir'],
+      ['Chevalier', 'chevalier_<nom>.glb', '≈ 6 300', '1024', '< 1 Mo', 'Le squelette de 24 os du chevalier actuel et ses 9 animations, aux mêmes noms'],
+      ['Arme', 'a_<thème>_<epee|dague|arbalete>.glb', '1 900 à 3 000', '512', '< 200 ko', 'Pas de squelette. Épée et dague : pointe en haut. Arbalète : à plat, vers l\'avant'],
+      ['Créature', 'm_<nom>.glb', '≈ 1 500 à 3 000', '512', '< 300 ko', 'Donne le modèle immobile et sa famille : les poses et les cinq animations sont fabriquées ensuite'],
+      ['Décor', 'd_<zone>_<nom>.glb', '≈ 3 000, 4 000 au plus', '512', '< 200 ko', 'La base au bas du modèle'],
+      ['Bloc de niveau', 'b_<zone>_<pièce>.glb', '50 à 300', '512, commune au kit', '', 'Une case exactement, l\'origine au centre de la case, au sol'],
+      ['Herbe', 'h_<zone>_<nom>.glb', '20 à 80', '256, commune', '', 'La base à l\'origine'],
+      ['Texture de zone', 't2_<zone>_<sorte>.jpg', '', '512 × 512', '< 80 ko', 'Sans couture ; elle couvre 2 × 2 cases']], l: [
+      'Pour tous les modèles : un fichier .glb, les textures dedans ; un seul maillage, un seul matériau, une seule image de couleur.',
+      'Le haut vers +Y, le devant vers +Z. La taille et le pivot sont libres (le jeu recentre et met à la taille), sauf pour le chevalier.',
+      'Pas de compression Draco, meshopt ni KTX2. Pas de carte de relief, de métal ni de rugosité : le jeu ne les lit pas.',
+      'Familles de créature : bipede, quadrupede, multipattes, volant, flottant, rampant, sauteur, boule.',
+      'Noms de fichier : en minuscules, sans accent, avec _ entre les mots. Zones : racines, mycelium, braises, givre, abimes, marais.',
+      'La fiche complète, avec tous les cas, est FORMATS.md dans le dépôt du jeu.'] },
+    { t: 'Blender : préparer et exporter', l: [
+      'Dans Blender, le modèle regarde vers −Y (c\'est ce que montre la vue de face, touche 1 du pavé numérique) et Z est en haut. L\'export le tourne tout seul.',
+      'Avant d\'exporter : joins tout en un seul objet (Ctrl + J), puis applique les transformations (Ctrl + A, « All Transforms »).',
+      'Un seul matériau « Principled BSDF », avec une seule image branchée sur « Base Color ». Rien sur Normal, Roughness, Metallic ni Emission.',
+      'Pour tenir le nombre de triangles : le modificateur « Decimate ». Le compte se lit dans « Statistics », du menu « Viewport Overlays ».',
+      'File > Export > glTF 2.0. Format : « glTF Binary (.glb) ». Include : « Selected Objects ». Transform : « +Y Up » coché. Mesh : « Apply Modifiers » coché. Compression : décoché.',
+      'Modèle immobile (arme, décor, bloc, créature au repos) : « Animation » décoché.',
+      'Chevalier ou pièce d\'armure : pars du fichier du chevalier (File > Import > glTF 2.0), garde son squelette et ses poids, ne change que la forme et l\'image. À faire ensemble la première fois.'] },
+    { t: 'Blockbench : préparer et exporter', l: [
+      'Choisis le format « Generic Model » : il accepte les maillages libres et n\'impose pas les règles de Minecraft.',
+      'Le style : pas de pixels visibles et pas de cubes nus. Peins une vraie image (512 pixels pour tout le modèle) et arrondis les formes avec des maillages ou des biseaux.',
+      'Une seule image pour tout le modèle. Blockbench exporte un morceau par cube ou par maillage : ils sont soudés ensuite par l\'outil du dépôt.',
+      'Le devant du modèle regarde vers le sud (+Z). S\'il part à l\'envers, il est retourné à l\'arrivée : ce n\'est pas bloquant.',
+      'File > Export > « Export glTF Model ». Encodage : binaire (.glb). « Embed Textures » coché. « Export Animations » décoché pour un modèle immobile.',
+      'Blockbench convient bien aux armes, aux décors et aux blocs. Pour un chevalier, passe par Blender : il lui faut le squelette du jeu.'] },
+    { t: 'Avant d\'envoyer un fichier', l: [
+      'Le fichier suit sa ligne du tableau des formats : nom, triangles, taille d\'image, poids.',
+      'Il se lit en petit : regarde-le à trois centimètres de haut sur ton écran. Si on ne le reconnaît plus, il a trop de détails.',
+      'Ses couleurs viennent de son monde, et la lueur n\'est que par touches.',
+      'Envoie-le par l\'onglet Modèles, carte « Fichiers importés » (30 Mo au plus) : l\'aperçu donne ses triangles, ses animations et ses dimensions.',
+      'Aujourd\'hui un fichier importé est gardé et visible, pas encore branché dans le jeu : c\'est la prochaine étape des éditeurs.'] },
+  ];
+}
+// the tab: the address of the administration on its own page, then one folding block per subject (the first one open)
+function reglesBody(kids) {
+  kids.push(h('p', { class: 'rg-adr' }, 'Adresse directe de l\'administration, à garder en favori : ', h('b', { text: location.origin + location.pathname + '?admin&outil=administration' })));
+  for (const s of reglesList()) {
+    const d = h('details', { class: 'regle', open: !!s.open }, h('summary', null, h('b', { text: s.t })));
+    if (s.tb) d.append(h('div', { class: 'rg-x' }, h('table', { class: 'rg-t' }, ...s.tb.map((r, i) => h('tr', null, ...r.map(c => {
+      const e = h(i ? 'td' : 'th'); if (/^#[0-9a-f]{6}$/i.test(c)) e.append(h('i', { class: 'rg-sw', style: 'background:' + c })); e.append(c); return e; }))))));
+    if (s.l) d.append(h('ul', null, ...s.l.map(x => h('li', { text: x }))));
+    kids.push(d);
+  }
 }
 
 </script>
