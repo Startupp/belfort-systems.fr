@@ -1255,6 +1255,7 @@ const TUNE_DEF = [
   ['texV2', 'gen', 'Textures v2 par défaut', '1 = chaque monde porte les textures v2 de sa zone (sol naturel, mur habillé, dessus) ; 0 = les premières textures. Une carte peut choisir les siennes dans l\'éditeur.', 1, 0, 1, 'n'],
   ['fond', 'gen', 'Fond peint et effets de zone', '1 = derrière le niveau, un fond peint d\'après l\'illustration de la zone ; dans le niveau, une brume en couches, la lumière et les effets propres à chaque zone ; 0 = le fond uni d\'avant, sans ces ajouts.', 1, 0, 1, 'n'],
   ['formes', 'gen', 'Reliefs arrondis', '1 = les murs des niveaux sont des reliefs continus et arrondis (talus, crêtes bombées, bords qui retombent sous le sol) ; 0 = les cubes d\'avant. L\'éditeur de cartes, le camp et les murs entièrement en blocs 3D gardent les cubes.', 1, 0, 1, 'n'],
+  ['nuages', 'gen', 'Nuages et lumière du ciel', '1 = dans les mondes qui ont un ciel (aujourd\'hui les Racines) : les ombres des nuages glissent sur le sol et les reliefs avec le vent, un voile de nuage passe de temps en temps devant la vue (par les bords et le haut de l\'écran), le soleil est chaud et la lumière baisse un peu quand un nuage passe, le bas des reliefs se fond dans le fond peint ; 2 = davantage de nuages, et le voile passe deux fois plus souvent ; 0 = comme avant. Graphismes allégés : ni ombres de nuages ni voile.', 1, 0, 2, 'n'],
   ['volume', 'gen', 'Pièces de volume sur les reliefs', 'Combien de vraies pièces modelées (massifs, touffes, tas, buttes, une pièce maîtresse par salle) sont posées sur les reliefs des niveaux, d\'après la graine du niveau : 1 = normal, 2 = deux fois plus, 0 = aucune. Les pièces ne couvrent jamais le sol où l\'on marche et ne changent rien au jeu. Sans effet quand les reliefs arrondis (formes) sont à 0, dans le camp et dans l\'éditeur de cartes.', 1, 0, 2, 'n'],
   ['accueil', 'gen', 'Nouvel écran d\'accueil', '1 = l\'écran d\'accueil du chevalier : le tableau de l\'atelier derrière lui, le chevalier debout sur son socle, les six bulles des menus autour de lui ; 0 = la scène d\'avant (le camp vu de près, les bulles en colonne à droite).', 1, 0, 1, 'n'],
   ['animArmes', 'gen', 'Gestes du chevalier par arme', '1 = chaque famille d\'arme a sa tenue (repos, marche, course), sa sortie et son rangement, ses coups enchaînés différents, et ses tirs ont leur forme ; 0 = comme avant (mêmes mouvements pour toutes les armes, tirs ronds).', 1, 0, 1, 'n'],
@@ -1760,10 +1761,13 @@ const CLOAKS = ['#e8a23a', '#5fc0a0', '#dc6f7c', '#8da2f0'];
 // shaft: the colour of the light that falls from above in some chambers. All of it is for the eye only.
 // Optional, read by p_fond.js (setting « fond »): lum { hemi, sun, lamp, fog } (multipliers of the lights and of the fog distance), bg { dim, glow, gl } (the painted
 // backdrop: how dark the illustration is, the colour and the strength of the glow up high), mist { col, col2, a } (the two sheets of mist), shaftA (strength of the shafts), air.a (strength of the specks).
+// Optional, read by s_nuages.js (setting « nuages »): ciel { ombre, couv, taille, vent, froid, soleil, sun, hemi, ciel, respire, voile } (the clouds that pass and the light of the sky).
 const STRATA = [
   { name: 'Racines', floorA: '#4a3a2a', floorB: '#57452f', wallTop: '#120d09', wallFace: '#6b5236', wallEdge: '#8a6e45', glow: '#ffc24a', deco: '#7d9c48', foe: '#c2603f', foe2: '#f0d9a8', fog: '#3a2812', sky: '#e8c280', gnd: '#5a3c1c', sun: '#ffdca6', tex: '#aaa69c', cap: '#5f7a3a', kind: 0,
     air: { n: 52, col: ['#ffd27a', '#ffe8b0'], v: [2, 6], r: .12, a: 1.5 }, shaft: '#ffd98a', shaftA: 2.8,
-    lum: { hemi: 1.6, sun: 1.35, fog: 1.25 }, bg: { dim: .75, glow: '#ffcf7a', gl: .35 }, mist: { col: '#ffeab0', a: .28 } },
+    lum: { hemi: 1.6, sun: 1.35, fog: 1.25 }, bg: { dim: .75, glow: '#ffcf7a', gl: .35 }, mist: { col: '#ffeab0', a: .28 },
+    ciel: { ombre: .62, couv: .5, taille: 5.5, vent: [.42, .16], froid: '#7f98cc', soleil: '#ffd596', sun: 1.55, hemi: .76, ciel: '#d9c79a', respire: .14,
+      voile: { a: .34, col: '#fff2d6', h: 6.5, vit: 1.1, tous: 60 } } },
   { name: 'Mycélium', floorA: '#2c3247', floorB: '#353c54', wallTop: '#0c0f18', wallFace: '#42517a', wallEdge: '#6079a8', glow: '#7fe3d2', deco: '#b58cff', foe: '#4bb0a6', foe2: '#e6d8ff', fog: '#051a2c', sky: '#7fe0e8', gnd: '#3c2a78', sun: '#a6ecff', tex: '#b4cbcc', cap: '#4a4f86', kind: 1,
     air: { n: 70, col: ['#7fe3d2', '#b58cff', '#d2fff6'], v: [-2, 4], r: .15, a: 1.4 },
     lum: { hemi: 1, sun: .8, lamp: .95 }, bg: { dim: .85, glow: '#2fb8d8', gl: .2 }, mist: { col: '#4aa8e0', col2: '#9a6aff', a: .22 } },
@@ -1796,6 +1800,9 @@ const STRATA = [
 ];
 // the world whose models, textures, creatures and colours of menus a world wears (the first five wear their own)
 const kitOf = si => si < 5 ? si : (STRATA[si] && STRATA[si].kit) || 0;
+// the name a world's own files carry (d_<zone>_…, t2_<zone>_…, the pieces of volume, its creatures in MON_OWN): the game wears them first when they exist,
+// and the files of its kit (kitOf) for what is missing. The same names as WORLD_ZONE (o_blocs.js), which is read too late for the first world built.
+function ownZone(si) { return ['racines', 'mycelium', 'braises', 'givre', 'abimes', 'marais', 'canopee', 'corail', 'dunes', 'mine'][si] || null; }
 const PER_WORLD = 6; // five worlds of six levels; the sixth is the boss
 const strIdxOf = f => (((f - 1) / PER_WORLD) | 0) % STRATA.length;
 const isBossFloor = f => f % PER_WORLD === 0;
@@ -2424,8 +2431,12 @@ const DECOR = [
   [['cristaux', .85, 11], ['rocher_enneige', .9, 13]],
   [['autel', .9, 13], ['cristal', .9, 8], ['rocher', .9, 13]],
 ];
+// A world's own floor scenery takes the place of a piece of its kit's list, with the same size and the same obstacle: only the look changes, the level is
+// the same. DECOR_OWN[zone] = [[place in DECOR[kit], model]]. The Marais: a clump of reeds and water lilies instead of the barrel of the Racines.
+const DECOR_OWN = { marais: [[0, 'nenuphar']] };
+function decorOf(si) { const z = ownZone(si), L = DECOR[kitOf(si)].slice(); for (const [i, n] of DECOR_OWN[z] || []) L[i] = ['d_' + z + '_' + n, L[i][1], L[i][2]]; return L; }
 function floorDecor(F, rooms) {
-  const R = rng((F.seed ^ Math.imul(F.floor + 3, 0x85EBCA6B)) >>> 0), W = F.W, g = F.g, list = DECOR[kitOf(F.si)], off = [[F.start.x, F.start.y, 2.2]];
+  const R = rng((F.seed ^ Math.imul(F.floor + 3, 0x85EBCA6B)) >>> 0), W = F.W, g = F.g, list = decorOf(F.si), off = [[F.start.x, F.start.y, 2.2]];
   if (F.lift) off.push([F.lift.x, F.lift.y, 2.4]); for (const c of F.chests) off.push([c.x, c.y, 1.7]); if (F.seals) for (const q of F.seals) off.push([q.x, q.y, 2]);
   for (const e of F.enemies) off.push([e.x, e.y, 1.1]);
   // only where the eight tiles around are open floor: whatever stands there can always be walked around, and never plugs a passage or a burrow
@@ -3832,8 +3843,9 @@ function buildWorld() {
   // what each tile wears (30b): a texture of the library painted on that tile, else the zone painted there, else the map's own
   // texture of the library, else the textures of the level's zone. A key: the zone number, or L<texture>
   const TX = F.tx || {}, TP = F.tpal || [], lay = { sol: F.ts, mur: F.tw, dessus: F.tt };
-  // by default (setting « Textures v2 »), a world wears the v2 textures of its zone: the natural floor, the dressed wall, its top (35b)
-  const zk = ZONES[kitOf(si)], d2 = k => TU.texV2 && typeof MDL !== 'undefined' && MDL.list && ('t2_' + zk + '_' + k) in MDL.list ? 't2_' + zk + '_' + k : null;
+  // by default (setting « Textures v2 »), a world wears the v2 textures of its zone: the natural floor, the dressed wall, its top (35b). A world of the
+  // series 3 wears its own first (t2_<ownZone>_<sorte>, as the Marais when its textures arrive), and for each one missing that of the zone it borrows (kitOf)
+  const zk = ZONES[kitOf(si)], zo = ownZone(si), d2 = k => { if (!TU.texV2 || typeof MDL === 'undefined' || !MDL.list) return null; for (const z of [zo, zk]) if (z && ('t2_' + z + '_' + k) in MDL.list) return 't2_' + z + '_' + k; return null; };
   const TXD = { sol: d2('sol_naturel'), mur: d2('mur_habille'), dessus: d2('dessus') };
   const wear = (kind, x, y) => { const i = y * W + x, a = lay[kind] && lay[kind][i]; if (a != null && a < 255 && TP[a]) return 'L' + TP[a];
     const s = F.surf && F.surf[i]; return s != null && s < 5 ? s : TX[kind] ? 'L' + TX[kind] : TXD[kind] ? 'L' + TXD[kind] : kitOf(si); };
@@ -4357,7 +4369,7 @@ function render3D() {
     let y = 0, sxz = 1, sy = 1, wob = 0;
     if (an) monsterPose(e, m, dt);
     if (e.type === 0) { if (!an) { if (e.st === 2) { const k = Math.abs(Math.sin(t * 7.5 + id)); y = k * .38; sy = 1 + k * .18; } else sy = 1 + Math.sin(t * 3 + id) * .05; sxz = 1 / Math.sqrt(sy); } }
-    else if (e.type === 1) { if (e.st === 1) wob = Math.sin(t * 60) * .04; m.roll = m.mdl && e.st !== 2 ? m.roll * .85 : m.roll + dt * (e.st === 2 ? 22 : e.st === 1 ? 0 : 2.5); m.body.rotation.x = m.roll; } // a model only rolls while it charges
+    else if (e.type === 1) { if (e.st === 1) wob = Math.sin(t * 60) * .04; m.roll = m.mdl && (e.st !== 2 || m.legs) ? m.roll * .85 : m.roll + dt * (e.st === 2 ? 22 : e.st === 1 ? 0 : 2.5); m.body.rotation.x = m.roll; } // a model only rolls while it charges, and one on many legs runs
     else if (e.type === 2) { if (!an) { const k = e.st === 1 ? 1.22 : 1 + Math.sin(t * 2.5 + id) * .04; sy = k; sxz = k; } }
     else if (e.type === 3) { y = m.fly ? .15 + Math.sin(t * 4 + id) * .1 : 0; if (!an) sy = 1 + Math.sin(t * 16 + id) * .12; m.spr.material.opacity = .55 + Math.sin(t * 12 + id) * .2; }
     else if (e.type === 4) { if (e.st === 1) { y = .32; wob = Math.sin(t * 40) * .025; } else if (e.st === 2 && !an) { sy = .78; sxz = 1.12; } else if (!an) sy = 1 + Math.sin(t * 2 + id) * .02; }
@@ -4544,15 +4556,23 @@ function unitMesh(part, material, outline) {
 // creatures: MON[kind][world] (worlds: Racines, Mycélium, Braises, Givre, Abîme). Kind 1 rolls: round, spiky things. Kind 9 = the boss of the world.
 // The five creatures that came with the zones took the places where a model was used twice: the mole guards the Racines,
 // the puffball and the salamander spit in Mycélium and Braises, the hedgehog rolls in Givre, the lantern-bearer flits in the Abîme.
+// The creatures of the pack 3 (8 October) took more of them, each by the way it moves: the mushroom crab guards the Mycélium (a shell on legs, like the
+// beetles that guard elsewhere), the frost fox spits in Givre (a four-legged spitter, like the salamander), the jellyfish of the Abîme floats where the
+// lantern-bearer walked, and the lantern-bearer spits there instead of a toad borrowed from Givre.
 const MON = {
   0: ['champignon_grognon', 'limace_de_seve', 'souche_marcheuse', 'araignee_de_mousse', 'chenille_de_ronce'],
   1: ['bogue_a_piques', 'pomme_de_pin_roulante', 'elite_bogue', 'herisson', 'elite_bogue'],
-  2: ['crapaud_lichen', 'vesse', 'salamandre', 'elite_crapaud', 'elite_crapaud'],
-  3: ['gland_volant', 'feu_follet_ambre', 'feu_follet_ambre', 'chauve_souris_feuille', 'lanternier'],
-  4: ['taupe', 'elite_scarabee', 'scarabee_ecorce', 'elite_scarabee', 'elite_scarabee'],
+  2: ['crapaud_lichen', 'vesse', 'salamandre', 'renard_givre', 'lanternier'],
+  3: ['gland_volant', 'feu_follet_ambre', 'feu_follet_ambre', 'chauve_souris_feuille', 'meduse_abime'],
+  4: ['taupe', 'crabe_champignon', 'scarabee_ecorce', 'elite_scarabee', 'elite_scarabee'],
   9: ['elite_souche', 'elite_champignon', 'elite_limace', 'elite_feu_follet', 'elite_araignee'],
 };
-const monName = (type, si) => MON[type] ? 'm_' + MON[type][kitOf(si)] : null;
+// A world can have creatures of its own for some kinds, by the name of its zone (ownZone, a_core.js); its other kinds are those of the world whose kit it
+// borrows (kitOf), and so is a kind whose model is not in liste.json. The Marais: the little frog hops (kind 0), the acorn beetle charges on its legs (1),
+// the toad no other world shows any more spits (2), the big frog leaps and slams (4); its flier and its boss are those of the Racines. Only the look
+// changes: the kind sets the numbers.
+const MON_OWN = { marais: { 0: 'grenouille_petit', 1: 'scarabee_gland', 2: 'elite_crapaud', 4: 'grenouille' } };
+const monName = (type, si) => { const o = MON_OWN[ownZone(si)], n = o && o[type]; return n && (!MDL.list || ('m_' + n) in MDL.list) ? 'm_' + n : MON[type] ? 'm_' + MON[type][kitOf(si)] : null; };
 // weapons: each one names its model (a_<mdl>, see WEAPONS)
 const weaponModel = kind => 'a_' + WEAPONS[kind].mdl;
 // length of the weapon in the hand, in tiles: swords grow with their reach
@@ -4899,7 +4919,7 @@ function monsterBody(e, m) {
   m.mat = modelMat(part.map); const pivot = unitMesh(part, m.mat, 1.05), z = pivot.userData.size;
   const s = EN[e.type].r * U * (e.type === 9 ? 2.5 : e.type === 3 ? 3.4 : 2.7) / Math.max(z[0], z[2]); // a little wider than the circle that can be hit
   // only what has wings floats: a lantern-bearer on its feet walks, even as a will-o'-the-wisp
-  m.fly = !part.poses || /volant|flottant/.test(part.fam);
+  m.fly = !part.poses || /volant|flottant/.test(part.fam); m.legs = /multipattes/.test(part.fam); // many legs: it charges on them, it does not roll
   // the body turns around its own middle (kind 1 rolls); the pivot lifts that middle to half its height above the ground
   pivot.scale.setScalar(s); pivot.position.y = z[1] * s / 2 + (e.type === 3 && m.fly ? .12 : 0); m.root.add(pivot); m.body = pivot; m.mdl = true;
   if (part.poses && MOB_CLIPS.every(k => part.poses[k])) m.anim = { P: part.poses, w: pivot.userData.mesh.morphTargetInfluences, walk: 0, wt: Math.random() * 2, ph: Math.random() * 3, lx: e.x, ly: e.y, v: 0,
@@ -4965,6 +4985,14 @@ function monsterDie(d, dt) {
    Two kinds of places. The tall pieces stand on the high walls at the back of the chambers (PROPS, chosen here): they dress
    the level without ever hiding the floor. The small ones stand on the floor, where the game put them (F.decor, see
    floorDecor and genHub in a_core.js): those are obstacles. PROPS[world] = [model, longest side in tiles]. */
+// A world's own tall scenery takes the place of a piece of its kit's list, at the same size, when its file is there: PROPS_OWN[zone] = [[place in PROPS[kit], model]].
+// The Marais: its mangrove instead of the arch of lianas. Read by propsOf.
+const PROPS_OWN = { marais: [[0, 'mangrove']] };
+function propsOf(si) {
+  const k = kitOf(si), z = ownZone(si), L = PROPS[k].map(d => ['d_' + ZONES[k] + '_' + d[0], d[1]]);
+  for (const [i, n] of PROPS_OWN[z] || []) if (!MDL.list || ('d_' + z + '_' + n) in MDL.list) L[i] = ['d_' + z + '_' + n, L[i][1]];
+  return L;
+}
 const PROPS = [
   [['arche', 1.8], ['barriere', .9], ['rocher', 1]],
   [['champignon_geant', 1.9], ['totem', 1.7], ['grappe', 1]],
@@ -4975,13 +5003,13 @@ const PROPS = [
 let propGroup = null;
 // spots: [x, y, wall height] of the high walls that face the camera. Chosen once per level, the same for every player (the seed decides)
 function propsPlan(spots) {
-  const R = rng((F.seed ^ 0x9A0B17) >>> 0), zone = 'd_' + ZONES[kitOf(F.si)] + '_', list = PROPS[kitOf(F.si)], want = F.hub ? 4 : F.big ? 9 : 5, out = [];
+  const R = rng((F.seed ^ 0x9A0B17) >>> 0), zone = 'd_' + ZONES[kitOf(F.si)] + '_', list = propsOf(F.si), want = F.hub ? 4 : F.big ? 9 : 5, out = [];
   if (F.wallProps) { for (const p of F.wallProps) out.push(Object.assign({}, p, { m: null })); spots.length = 0; } // the scenery of the walls was set in the level editor
   for (let i = spots.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = spots[i]; spots[i] = spots[j]; spots[j] = t; }
   for (const [x, y, hh] of spots) {
     if (out.length >= want) break; if (out.some(p => Math.abs(p.x - x - .5) + Math.abs(p.z - y - .5) < 5)) continue;
     const d = list[out.length % list.length];
-    out.push({ name: zone + d[0], x: x + .5, y: hh, z: y + .5, s: d[1] * (.9 + R() * .2), rot: (R() - .5) * .9, m: null });
+    out.push({ name: d[0], x: x + .5, y: hh, z: y + .5, s: d[1] * (.9 + R() * .2), rot: (R() - .5) * .9, m: null });
   }
   for (const d of F.decor) out.push({ name: d.n.startsWith('d_') ? d.n : (d.z == null ? zone : 'd_' + ZONES[d.z] + '_') + d.n, kind: d.n, x: d.x * U, y: 0, z: d.y * U, s: d.s, rot: d.rot, m: null, floor: true, glow: d.glow });
   return out;
@@ -5049,9 +5077,10 @@ const TEX_VAR = { naturel: 'naturel', chemin: 'chemin', dalles: 'dalles', habill
 function texInfo(id) {
   let m = /^t_([a-z]+)_(sol|mur|dessus)$/.exec(id), v = 1, sub = '';
   if (!m) { m = /^t2_([a-z]+)_(sol|mur|dessus)(?:_([a-z]+))?$/.exec(id); if (!m) return null; v = 2; sub = m[3] || ''; }
-  const z = ZONES.indexOf(m[1]); if (z < 0) return null;
+  // z: the world the texture belongs to (a world of the series 3 by the name of its zone, t2_marais_…), k: the zone whose materials it takes the place of
+  let z = ZONES.indexOf(m[1]); if (z < 0) for (let w = ZONES.length; w < STRATA.length; w++) if (ownZone(w) === m[1]) z = w; if (z < 0) return null;
   const kind = m[2], what = kind === 'sol' ? 'Sol' : kind === 'mur' ? 'Mur' : 'Dessus';
-  return { id, z, kind, v, sub, name: STRATA[z].name + ' — ' + what + (sub ? ' ' + (TEX_VAR[sub] || sub) : '') + (v === 1 ? ' (première série)' : '') };
+  return { id, z, k: kitOf(z), kind, v, sub, name: STRATA[z].name + ' — ' + what + (sub ? ' ' + (TEX_VAR[sub] || sub) : '') + (v === 1 ? ' (première série)' : '') };
 }
 // the whole library, sorted: by kind (floors, walls, tops), then by zone, the newest series first
 function texLib(kind) {
@@ -5064,7 +5093,7 @@ function texUrl(id) { const cfg = window.ecorceModeles; return cfg && !cfg.txt ?
 const LT = {}; // id → { mat, ok }: one material per texture of the library worn by a map, kept
 function libMat(id) {
   let L = LT[id]; if (L) return L.mat; const t = texInfo(id); if (!t) return null;
-  const own = (t.kind === 'sol' ? M.floor : t.kind === 'mur' ? M.wall : M.top)[t.z], S = STRATA[t.z];
+  const own = (t.kind === 'sol' ? M.floor : t.kind === 'mur' ? M.wall : M.top)[t.k], S = STRATA[t.z];
   const mat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: own.gradientMap, map: own.userData.own });
   mat.color.set(t.kind === 'sol' ? S.floorA : t.kind === 'mur' ? S.wallFace : S.cap); mat.userData.lib = id; if (t.kind === 'mur' && M.rim) M.rim(mat);
   L = LT[id] = { mat, ok: false }; const cfg = window.ecorceModeles;
@@ -8802,6 +8831,7 @@ function fondFrame(t, fx, fz) {
       u.uD.value.set(t * (i ? -.011 : .016), t * (i ? .006 : -.008) + i * .4);
     }
   }
+  nuageFrame(t, fx, fz); // the clouds and the light of a sky, where the world has one (s_nuages.js)
 }
 
 /* ================= rounded reliefs instead of the wall cubes (36b: « plus de courbes et moins de cubes ») =================
@@ -9016,7 +9046,7 @@ function formesChemin(RL, id, plain, shade) {
 
 /* ================= the volume kit (step 36b): real modelled pieces on the rounded reliefs =================
    « J'aimerais de vraies formes dans les décors et les niveaux, comme dans les concepts arts » (Damien). The reliefs of q_formes.js are smooth
-   surfaces; here modelled pieces are set on them, as in the concept art. Four of the worlds own a kit (pack 7: ASSETS - CONCEPTS - ARTS/02_modeles_3d/
+   surfaces; here modelled pieces are set on them, as in the concept art. Six worlds own a kit (packs 7 and 8, the Abîme and the Marais since 8 October: ASSETS - CONCEPTS - ARTS/02_modeles_3d/
    decors/<zone>/volume/, made light by tools/modeles.mjs --volume), five pieces d_<zone>_<piece> at most, each 1 200 triangles, one unit on its longest
    side, its base at y = 0, its front towards +Z (the camera):
      massif  an irregular mass of wall .... in the inner corners and in front of the back walls, half sunk in the slope
@@ -9024,7 +9054,9 @@ function formesChemin(RL, id, plain, shade) {
      pied    a low heap .................... against the foot of the back walls, on the side of the relief
      butte   a low, wide relief ............ on the crest of the walls, never on the ground where one walks
      repere  the master piece of the zone .. one a room at most, on the crest at the back
-   A world without kit of its own (Abîme, Mine) shows none; Marais, Canopée, Corail and Dunes wear the kit of the world they borrow (kitOf).
+   A world wears its own kit as soon as the table below has its zone (volZone: d_<ownZone>_<piece>, e.g. abimes, marais), else the kit of the world it
+   borrows (kitOf): today Marais, Canopée, Corail and Dunes wear another's, and the Abîme and the Mine, without a kit yet, show none. A piece arrives
+   in three steps: node tools/modeles.mjs <site> --volume, node tools/volume_mesure.mjs <zone or piece>, and the printed line pasted in volKit.
    Setting « volume » (TUNE, family gen): 1 = normal, up to 2 = twice as many, 0 = none. It needs the rounded reliefs (formes = 1): the camp, the editor of
    maps and the walls in 3D blocks keep what they have.
    The pieces are for the eye only: nothing is added to the grid, the collisions or the obstacles. They never stand over a tile of ground, never on the
@@ -9044,28 +9076,48 @@ function volKit() {
       butte: [1, .18, .93, [.5, .5, .47, .46, .47, .5, .5, .45, .45, .46, .46, .48]],
       cime: [1, .64, .73, [.5, .48, .38, .37, .42, .5, .5, .48, .34, .37, .46, .51]],
       massif: [1, .93, .92, [.5, .47, .5, .46, .47, .5, .5, .53, .51, .46, .51, .52]],
+      pied: [1, .39, .97, [.5, .46, .45, .48, .44, .47, .5, .55, .48, .48, .44, .49]],
       repere: [.78, 1, .83, [.39, .43, .45, .42, .41, .37, .39, .35, .41, .42, .44, .46]],
     },
     mycelium: {
       butte: [1, .12, 1, [.5, .51, .49, .5, .5, .51, .5, .5, .49, .5, .5, .5]],
       cime: [1, .47, .81, [.5, .52, .51, .4, .49, .56, .5, .44, .36, .4, .5, .55]],
       massif: [1, .97, .98, [.5, .45, .43, .49, .48, .49, .5, .53, .52, .49, .47, .51]],
+      pied: [1, .31, .73, [.5, .47, .41, .37, .38, .41, .5, .51, .44, .37, .41, .43]],
       repere: [.84, 1, .72, [.42, .42, .37, .36, .38, .38, .42, .41, .39, .36, .32, .36]],
     },
     braises: {
+      butte: [1, .15, .99, [.5, .51, .51, .49, .5, .49, .5, .47, .49, .49, .5, .53]],
       cime: [1, .59, .81, [.5, .45, .48, .4, .53, .57, .5, .49, .5, .4, .52, .59]],
       massif: [1, .87, 1, [.5, .52, .49, .5, .46, .43, .5, .56, .51, .5, .52, .52]],
       pied: [1, .21, .7, [.5, .51, .43, .35, .35, .46, .5, .5, .44, .35, .37, .41]],
       repere: [.96, 1, .73, [.48, .47, .37, .37, .47, .49, .48, .54, .51, .37, .37, .45]],
     },
     givre: {
+      butte: [1, .16, .93, [.5, .48, .46, .47, .48, .52, .5, .49, .48, .47, .47, .5]],
       cime: [1, .62, .75, [.5, .54, .51, .38, .5, .55, .5, .5, .46, .38, .44, .53]],
       massif: [1, .89, .98, [.5, .51, .51, .49, .51, .5, .5, .5, .56, .49, .52, .47]],
       pied: [1, .22, .87, [.5, .52, .44, .43, .45, .49, .5, .51, .49, .43, .4, .46]],
       repere: [.43, 1, .47, [.22, .22, .22, .24, .24, .21, .22, .25, .23, .24, .26, .23]],
     },
+    abimes: { // pack 8 (8 octobre) : l'Abîme et le Marais ont leur kit, et les quatre premiers mondes leurs cinq pièces
+      butte: [1, .19, .89, [.5, .51, .46, .45, .46, .45, .5, .46, .43, .45, .47, .49]],
+      cime: [1, .44, .72, [.5, .55, .48, .36, .46, .48, .5, .56, .49, .36, .44, .48]],
+      massif: [1, .85, .92, [.5, .48, .46, .46, .44, .47, .5, .47, .45, .46, .44, .47]],
+      pied: [1, .34, .73, [.5, .52, .44, .37, .39, .42, .5, .57, .49, .37, .38, .45]],
+      repere: [.91, 1, .46, [.45, .4, .33, .23, .33, .43, .45, .39, .34, .23, .37, .45]],
+    },
+    marais: {
+      butte: [1, .22, .97, [.5, .51, .5, .48, .45, .48, .5, .48, .46, .48, .49, .48]],
+      cime: [1, .64, .69, [.5, .5, .44, .34, .47, .54, .5, .51, .46, .34, .49, .54]],
+      massif: [1, .87, .93, [.5, .54, .48, .47, .51, .51, .5, .49, .48, .47, .47, .49]],
+      pied: [1, .46, .7, [.5, .4, .34, .35, .42, .49, .5, .4, .33, .35, .43, .52]],
+      repere: [.93, 1, .86, [.46, .41, .46, .43, .41, .44, .46, .44, .45, .43, .42, .47]],
+    },
   });
 }
+// the zone whose kit a world wears: its own when the table has it, else that of the world it borrows. The table decides, not what has been loaded
+function volZone(si) { const own = ownZone(si); return own && volKit()[own] ? own : ZONES[kitOf(si)]; }
 // size (longest side, in tiles), largest turn from the camera (radians), how deep it is sunk into the surface (part of its height), stretch upwards,
 // how much further into the wall than the footprint needs (a range, in tiles)
 function volLook() {
@@ -9089,7 +9141,7 @@ function volWho() {
 // The plan of a level: [{ id, x, z, y (the base), rot, s (size in tiles), sy, h (height), r (radius of the sphere that holds it), cat }], tiles.
 // Pure: the seed, the shape of the level, the relief and the scenery of the walls decide, nothing else.
 function volumePlan(RL) {
-  const zn = ZONES[kitOf(F.si)], kit = volKit()[zn], look = volLook(), who = volWho(); if (!kit) return [];
+  const zn = volZone(F.si), kit = volKit()[zn], look = volLook(), who = volWho(); if (!kit) return [];
   const dens = clamp(+TU.volume, 0, 2), W = F.W, H = F.H, g = F.g, hg = F.hg, PI6 = Math.PI / 6, out = [];
   const isF = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] === 1;
   const tall = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] !== 1 && hg[y * W + x] >= 1; // the low walls in front of the camera stay bare
@@ -9130,6 +9182,7 @@ function volumePlan(RL) {
     for (; p <= 1.2; p += .05) { cx = sx + c.ax * p; cz = sz + c.az * p; if (!onFloor(P, cx, cz, yaw, s, .03)) break; }
     if (p > 1.2) return null;
     p = L.push[0] + more * (L.push[1] - L.push[0]); cx += c.ax * p; cz += c.az * p; // further in, so that what is flat lies on the crest and does not hang over the slope
+    if (p > 0 && onFloor(P, cx, cz, yaw, s, .03)) return null; // a thin wall: pushed further in, the piece would reach the ground on the other side of it
     const top = topAround(cx, cz), hc = reliefAt(cx, cz); if (hc < .72 * top) return null; // on the crest, not on the fall behind it
     const hy = s * kit[piece][1] * L.sy, hx = s * kit[piece][0] / 2, hz = s * kit[piece][2] / 2, d0 = Math.min(hx, hz) * .9;
     let base; const front = Math.max(0, reliefAt(cx - c.ax * d0, cz - c.az * d0)); // the relief at the foot of the wall, where the piece meets the ground
@@ -9212,6 +9265,129 @@ function volumeFrame(fx, fz) {
   const sig = vis.map(p => p.g + p.n).sort().join();
   if (sig === S.vis) return; S.vis = sig;
   for (const g of gs) { let n = 0; for (const p of vis) if (p.g === g.id) g.mesh.setMatrixAt(n++, p.mx); g.mesh.count = n; g.mesh.visible = n > 0; g.mesh.instanceMatrix.needsUpdate = true; }
+}
+
+/* ================= Clouds that pass, the light of a sky (« des nuages semblant passer devant l'écran », « des éclairages naturels ») =================
+   Setting « nuages » (TUNE, family gen): 1 = in the worlds that have a sky (the field ciel of their entry in STRATA: today the Racines only), 2 = more clouds and the veil twice as often, 0 = as before.
+   For the eye only, as p_fond.js: nothing here touches the map, the collisions, the creatures or the numbers.
+   - The shadows of the clouds: big soft patches that glide over the ground, the reliefs, the grass and the scenery of the walls, all in one direction (the
+     wind), with patches of sun between them. No mesh: the lit materials of the level (MeshToonMaterial) read the noise of p_fond.js (fondNoise) at their place
+     in the world and take part of the sun away where a cloud passes, turning what is left of it cooler. The knight, the creatures, their shots and the loot are
+     not touched: they stay as readable as before (nuageWrap only takes the materials of the level: worldGroup and propGroup).
+   - The veil: now and then a bank of thin cloud drifts between the camera and the level, at the height of a low cloud (a real layer of the world: it slides
+     faster than the ground when the camera moves). It shows at the edges and at the top of the screen, hardly in the middle. One draw call, only while it shows.
+   - The light: a warm sun, a cooler light of the sky, and both breathe with the clouds (a little less light while a cloud is over the knight, then it comes back).
+   - The fall of the reliefs (q_formes.js) melts into the painted backdrop instead of ending on a hard edge (the gaps between two reliefs showed a dark flat band).
+   Light graphics (save.gfx = 0): no shadows of clouds and no veil, the light and the melted edges stay (they cost nothing).
+   Fields of STRATA[i].ciel: ombre (how much of the sun a cloud takes, 0 to 1), couv (how much of the sky is cloud, 0 to 1), taille (size of a cloud, tiles),
+   vent [x, z] (tiles a second), froid (the colour of the light under a cloud), soleil (colour of the sun), sun, hemi (multipliers of the sun and of the sky light),
+   ciel (the colour of the sky light), respire (how much the light drops while a cloud passes), voile { a, col, h, vit, tous (seconds between two banks) }.
+   Only functions here, no value at the top of the file but the state, a var: buildWorld runs before this file has been read (build.mjs, « l'ordre compte »). */
+var NUAGE = { k: '', on: false, F: null, nw: -1, np: -1, mats: [], u: null, nd: null, cov: 0, veil: null, lt: 0 };
+// whether the world being played has a sky: a level (not the camp, not the editor, not the title), a world that has one, the setting on
+function nuageCiel() {
+  if (!+TU.nuages || !F || F.hub || !F.str || !F.str.ciel || G.mode === 'edit' || G.mode === 'title') return null;
+  try { if (ED.on) return null; } catch (e) { }
+  return F.str.ciel;
+}
+// the uniforms shared by every material of the level (one object each: set once a frame, read by all)
+function nuageU() {
+  return NUAGE.u || (NUAGE.u = { uNuMap: { value: null }, uNuP: { value: new THREE.Vector4() }, uNuS: { value: new THREE.Vector4() }, uNuCol: { value: new THREE.Color() },
+    uNuBg: { value: null }, uNuBgM: { value: new THREE.Matrix3() }, uNuRes: { value: new THREE.Vector2(1, 1) }, uNuFog: { value: new THREE.Color() }, uNuF: { value: new THREE.Vector4() } });
+}
+// what a material of the level gets, by the state NUAGE.k: 'o' the shadows of the clouds, 'f' the fall that melts into the backdrop. '' = nothing (the shader of before)
+function nuageShader(sh) {
+  Object.assign(sh.uniforms, nuageU()); // always there: a program made in one state may be used again in the other
+  const k = NUAGE.k; if (!k) return; let f = sh.fragmentShader; const o = k.includes('o');
+  if (!f.includes('#include <lights_fragment_begin>') || !f.includes('#include <lights_toon_pars_fragment>') || !f.includes('#include <fog_fragment>')) return; // a toon material of three.js r128
+  f = f.replace('#include <lights_toon_pars_fragment>', '#include <lights_toon_pars_fragment>\n'
+    + 'uniform sampler2D uNuMap; uniform vec4 uNuP; uniform vec4 uNuS; uniform vec3 uNuCol; uniform sampler2D uNuBg; uniform mat3 uNuBgM; uniform vec2 uNuRes; uniform vec3 uNuFog; uniform vec4 uNuF;\n'
+    + 'vec3 nuWorld() { return ( - vViewPosition ) * mat3( viewMatrix ) + cameraPosition; }\n' // the place in the world, from the place seen by the camera (the view turns, it does not stretch)
+    + 'float nuCov( vec2 w ) { return smoothstep( uNuS.x, uNuS.y, texture2D( uNuMap, w * uNuP.z + uNuP.xy ).r ) * uNuS.z; }\n');
+  // the place, and the light a cloud leaves: computed once, before the lights
+  f = f.replace('#include <lights_fragment_begin>', 'vec3 nuW = nuWorld();\n' + (o ? 'vec3 nuK = mix( vec3( 1.0 ), uNuCol, nuCov( nuW.xz ) );\n' : '')
+    + (o ? THREE.ShaderChunk.lights_fragment_begin.replace('getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );', '$&\n\t\tdirectLight.color *= nuK;') : '#include <lights_fragment_begin>'));
+  // the models of the scenery keep half of their own colours whatever the light (modelLight, e2_modeles.js): a cloud dims that half too, a little less
+  if (o) f = f.replace('diffuseColor.rgb * ' + MODEL_OWN, 'diffuseColor.rgb * mix( vec3( 1.0 ), nuK, .7 ) * ' + MODEL_OWN);
+  // below the ground (the fall of a relief), the colour turns into the backdrop behind it, at the same place on the screen
+  f = f.replace('#include <fog_fragment>', '#include <fog_fragment>\n\tfloat nuCh = 1.0 - smoothstep( uNuF.y, uNuF.z, nuW.y );\n'
+    + '\tif ( nuCh > 0.0 ) gl_FragColor.rgb = mix( gl_FragColor.rgb, uNuF.x > 0.5 ? texture2D( uNuBg, ( uNuBgM * vec3( gl_FragCoord.xy * uNuRes, 1.0 ) ).xy ).rgb : uNuFog, nuCh );');
+  sh.fragmentShader = f;
+}
+// a material of the level learns the clouds: its own hook still runs first, and its program is the one of before while the state is '' (same key, same code)
+function nuageWrap(m) {
+  if (!m || !m.isMeshToonMaterial || m.userData.nu) return; m.userData.nu = 1; NUAGE.mats.push(m);
+  const ob = m.onBeforeCompile, own = Object.prototype.hasOwnProperty.call(m, 'customProgramCacheKey') ? m.customProgramCacheKey : null, base = own ? '' : ob.toString();
+  m.onBeforeCompile = function (sh, r) { ob.call(this, sh, r); nuageShader(sh); };
+  m.customProgramCacheKey = function () { return (own ? own.call(this) : base) + (NUAGE.k ? '|nuages-' + NUAGE.k : ''); };
+  m.needsUpdate = true;
+}
+// the materials of what the level has built (the ground, the reliefs, the grass, the blocks, the volume pieces, the scenery of the walls)
+function nuageScan() {
+  NUAGE.F = F; NUAGE.nw = worldGroup.children.length; NUAGE.np = propGroup ? propGroup.children.length : -1;
+  const take = o => { if (o.isMesh && o.material) nuageWrap(o.material); };
+  for (const o of worldGroup.children) o.traverse(take);
+  if (propGroup) for (const o of propGroup.children) o.traverse(take);
+}
+// the noise of the clouds, read by the game too (the light breathes with what is over the knight): the red channel of fondNoise, as the GPU reads it
+// (the picture is turned upside down on its way to the GPU: the row v of the texture is the row n - 1 - v of the canvas)
+function nuageAt(x, z) {
+  const d = NUAGE.nd; if (!d) return 0; const n = 128, u = NUAGE.u.uNuP.value, fx = (x * u.z + u.x) * n - .5, fz = (z * u.z + u.y) * n - .5;
+  const ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz;
+  const x0 = ((ix % n) + n) % n, x1 = (x0 + 1) % n, r0 = n - 1 - ((iz % n) + n) % n, r1 = (r0 + n - 1) % n;
+  const v = ((d[(r0 * n + x0) * 4] * (1 - tx) + d[(r0 * n + x1) * 4] * tx) * (1 - tz) + (d[(r1 * n + x0) * 4] * (1 - tx) + d[(r1 * n + x1) * 4] * tx) * tz) / 255, s = NUAGE.u.uNuS.value;
+  return fondSS(s.x, s.y, v);
+}
+// the veil: one wide sheet of thin cloud, high between the camera and the level, its noise read at its place in the world (it keeps its place when the camera
+// moves, and slides faster than the ground: it is nearer). It shows in banks that drift with the wind, at the edges and the top of the screen more than in the middle
+function nuageVeil() {
+  if (NUAGE.veil) return NUAGE.veil;
+  const vs = 'varying vec2 vW;\nvoid main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }';
+  const fs = 'uniform sampler2D uMap; uniform vec3 uCol; uniform vec4 uP; uniform vec4 uB; uniform vec4 uS; varying vec2 vW;\n'
+    + 'void main(){ vec2 s = gl_FragCoord.xy * uS.xy; vec2 c = ( s - vec2( .5, .42 ) ) * vec2( 1.0, uS.z );\n'
+    + ' float m = mix( .1, 1.0, smoothstep( .24, .64, length( c ) ) ) * mix( 1.0, 1.25, smoothstep( .6, 1.0, s.y ) );\n' // clear in the middle of the screen, more at the edges and the top
+    + ' float d = dot( vW, uB.xy ) - uB.z, b = smoothstep( -uB.w, -.25 * uB.w, d ) * ( 1.0 - smoothstep( .25 * uB.w, uB.w, d ) );\n' // the bank that passes
+    + ' float a = b * m; if ( a <= 0.0 ) discard;\n'
+    + ' float n = texture2D( uMap, vW * uP.z + uP.xy ).g * .62 + texture2D( uMap, vW * uP.z * 2.3 - uP.yx * 1.6 + .37 ).r * .38;\n'
+    + ' gl_FragColor = vec4( uCol, uP.w * a * smoothstep( .4, .68, n ) ); }';
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(44, 44).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, depthTest: false, vertexShader: vs, fragmentShader: fs,
+    uniforms: { uMap: { value: FOND.noise }, uCol: { value: new THREE.Color('#ffffff') }, uP: { value: new THREE.Vector4() }, uB: { value: new THREE.Vector4() }, uS: { value: new THREE.Vector4() } } }));
+  m.renderOrder = 3; m.frustumCulled = false; m.visible = false; scene.add(m); return NUAGE.veil = m;
+}
+// every frame, after fondFrame (the lights of the zone are set): the state of the materials, the clouds, the light, the veil
+function nuageFrame(t, fx, fz) {
+  if (!F || !USE3D) return;
+  const C0 = nuageCiel(), me = !!C0 && save.gfx !== 0, k = C0 ? (me ? 'of' : 'f') : '';
+  if (k !== NUAGE.k) { // back to the programs of before, or on to the clouds
+    if (!k && F.str) { sun.color.set(F.str.sun); hemi.color.set(F.str.sky); } // the colours buildWorld gives (the setting turned off in a level)
+    NUAGE.k = k; for (const m of NUAGE.mats) m.needsUpdate = true;
+  }
+  if (NUAGE.veil) NUAGE.veil.visible = false;
+  if (!C0) return;
+  if (NUAGE.F !== F || NUAGE.nw !== worldGroup.children.length || NUAGE.np !== (propGroup ? propGroup.children.length : -1)) nuageScan();
+  const U0 = nuageU(), S = F.str, dt = clamp(t - NUAGE.lt, 0, .1); NUAGE.lt = t;
+  if (!FOND.noise) FOND.noise = fondNoise(128);
+  if (!NUAGE.nd) try { const c = FOND.noise.image; NUAGE.nd = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; } catch (e) { NUAGE.nd = null; }
+  // the clouds: the noise laid on the world, one cell for `taille` tiles, carried by the wind
+  const sc = 1 / (4 * (C0.taille || 7)), V = C0.vent, vx = V ? V[0] : .4, vz = V ? V[1] : .15, plus = +TU.nuages > 1, cv = clamp((C0.couv == null ? .45 : C0.couv) * (plus ? 1.3 : 1), 0, 1), lo = .58 - .22 * cv; // nuages = 2: more of the sky is cloud, and the veil comes twice as often
+  U0.uNuMap.value = FOND.noise; U0.uNuP.value.set(-vx * t * sc, -vz * t * sc, sc, 0); U0.uNuS.value.set(lo, lo + .13, me ? 1 : 0, 0);
+  const om = C0.ombre == null ? .5 : C0.ombre, fr = C(C0.froid || '#9fb2d6'); U0.uNuCol.value.setRGB(1 - om * (1 - fr.r), 1 - om * (1 - fr.g), 1 - om * (1 - fr.b));
+  // the backdrop behind the falls of the reliefs: the painted one where it is ready, else the plain colour of the world
+  const bg = scene.background; U0.uNuFog.value.copy(C(S.fog)); U0.uNuRes.value.set(1 / Math.max(1, R3.domElement.width), 1 / Math.max(1, R3.domElement.height));
+  if (bg && bg.isTexture) { U0.uNuBg.value = bg; U0.uNuBgM.value = bg.matrix; U0.uNuF.value.set(1, -.56, -.06, 0); } else { U0.uNuF.value.set(0, -.56, -.06, 0); }
+  // the light: a warm sun, a cooler sky; both a little lower while a cloud is over the knight (the mean of five points around him, smoothed)
+  const c = (nuageAt(fx, fz) * 2 + nuageAt(fx - 2.5, fz) + nuageAt(fx + 2.5, fz) + nuageAt(fx, fz - 2.5) + nuageAt(fx, fz + 2.5)) / 6;
+  NUAGE.cov += (c - NUAGE.cov) * Math.min(1, dt * 1.2); const br = 1 - (C0.respire == null ? .12 : C0.respire) * NUAGE.cov * (me ? 1 : .5);
+  if (C0.soleil) sun.color.copy(C(C0.soleil)); if (C0.ciel) hemi.color.copy(C(C0.ciel));
+  sun.intensity *= (C0.sun || 1) * br; hemi.intensity *= (C0.hemi || 1) * (1 - (1 - br) * .5);
+  // the veil
+  const Vo = C0.voile; if (!me || !Vo || !(Vo.a > 0)) return;
+  const v = nuageVeil(), u = v.material.uniforms, vl = Math.hypot(vx, vz) || 1, dx = vx / vl, dz = vz / vl, sp = Vo.vit || 1.1, per = (Vo.tous || 60) / (plus ? 2 : 1) * sp, w = 9;
+  const ph = (t * sp) % per, pos = dx * fx + dz * fz + ph - per / 2; // the middle of the bank, along the wind, from the point the camera looks at
+  if (Math.abs(ph - per / 2) > w + 7) return; // between two banks: nothing drawn
+  v.visible = true; v.position.set(fx, Vo.h || 6.5, fz + 3);
+  u.uMap.value = FOND.noise; u.uCol.value.copy(C(Vo.col || '#fff4dc')); u.uP.value.set(-dx * sp * t * .045, -dz * sp * t * .045, .045, Vo.a * (plus ? 1.25 : 1)); // its wisps drift with the bank
+  u.uB.value.set(dx, dz, pos, w); u.uS.value.set(1 / Math.max(1, R3.domElement.width), 1 / Math.max(1, R3.domElement.height), view.h / Math.max(1, view.w), 0);
 }
 
 </script>
