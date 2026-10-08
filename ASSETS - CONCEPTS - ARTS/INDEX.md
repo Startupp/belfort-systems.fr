@@ -26,7 +26,7 @@ Genere le 2026-10-08 par la reorganisation. Un dossier par ligne.
 | `02_modeles_3d/chevaliers` | 4 | 3.8 Mo |
 | `02_modeles_3d/chevaliers/champignon` | 2 | 1.3 Mo |
 | `02_modeles_3d/chevaliers/pack1_clips_separes` | 10 | 30.6 Mo |
-| `02_modeles_3d/creatures` | 10 | 2.6 Mo |
+| `02_modeles_3d/creatures` | 19 | 4.9 Mo |
 | `02_modeles_3d/creatures/pack1_statiques` | 26 | 8.2 Mo |
 | `02_modeles_3d/creatures/pack2_animes/bipedes` | 7 | 8.6 Mo |
 | `02_modeles_3d/creatures/pack2_animes/flottants` | 2 | 2.5 Mo |
@@ -94,7 +94,7 @@ Genere le 2026-10-08 par la reorganisation. Un dossier par ligne.
 | `07_outils/attaques_monstres` | 1 | 0.0 Mo |
 | `07_outils/dashboard` | 3 | 0.0 Mo |
 | `07_outils/monstres_animes` | 4 | 0.0 Mo |
-| `07_outils/pipeline` | 19 | 0.1 Mo |
+| `07_outils/pipeline` | 22 | 0.1 Mo |
 | `07_outils/pipeline/niveaux` | 4 | 0.0 Mo |
 | `07_outils/validations` | 2 | 1.0 Mo |
 | `_alternatives/textures_v1/abimes` | 7 | 1.1 Mo |
@@ -102,8 +102,8 @@ Genere le 2026-10-08 par la reorganisation. Un dossier par ligne.
 | `_alternatives/textures_v1/givre` | 7 | 1.1 Mo |
 | `_alternatives/textures_v1/mycelium` | 7 | 1.6 Mo |
 | `_alternatives/textures_v1/racines` | 7 | 1.2 Mo |
-| `_apercus` | 22 | 1.9 Mo |
+| `_apercus` | 24 | 2.2 Mo |
 | `_apercus/pack2_monstres_animes` | 6 | 0.7 Mo |
-| `_journal` | 8 | 0.0 Mo |
+| `_journal` | 9 | 0.0 Mo |
 | `_journal/pack_zones_promo` | 3 | 0.2 Mo |
 | `_journal/textures` | 1 | 0.0 Mo |
