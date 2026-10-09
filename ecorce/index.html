@@ -873,7 +873,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "2786ace";
+window.ecorceBuild = "ed1f0f1";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -7734,7 +7734,7 @@ if (!window.THREE) { // first host unreachable: try the second one, and switch t
   s.onload = () => { if (start3D()) { resize(); worldChanged(); modelsStart(); } };
   document.head.appendChild(s);
 }
-applyGame(); refreshStats(); worldChanged(); devStart(); srvStart(); $('sh-body').addEventListener('scroll', shMore, { passive: true }); addEventListener('resize', shMore); admStart(); initNet(); retStart(); showUI();
+applyGame(); refreshStats(); worldChanged(); devStart(); srvStart(); $('sh-body').addEventListener('scroll', shMore, { passive: true }); addEventListener('resize', shMore); admStart(); initNet(); retStart(); sonUiStart(); showUI();
 requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(frame); });
 window.__game = { G, P, Net, input, get F() { return F; }, get run() { return run; }, get save() { return save; }, get ME() { return ME; }, get ST() { return ST; }, get gl() { return USE3D; }, startRun, makeItem, rollFrom, newSeed, refreshStats, openSheet, closeSheet, backToHub, pickChar, setGame, toggleMode, DEV, SRV, saveGame, srvMoveOut, srvMoveIn, MDL };
 
@@ -10347,6 +10347,8 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 17, d: '10 octobre 2026', t: 'Le son dès l\'accueil', l: [
+      'La musique et le petit son des boutons démarrent dès le premier toucher sur l\'écran d\'accueil (avant, il fallait attendre le premier niveau).'] },
     { id: 16, d: '9 octobre 2026', t: 'De vraies musiques', l: [
       'Le jeu a maintenant de vrais morceaux : un pour les menus, un pour chaque monde, et deux pour les boss.',
       'Dans les réglages : le volume de la musique et celui des bruitages, chacun à ton goût.',
@@ -12330,7 +12332,7 @@ function sonKey() {
   return 'musique_accueil';
 }
 function sonStep() {
-  const s = sonS(); sonBuzz(); if (!s.ui) { s.ui = true; sonUiStart(); }
+  const s = sonS(); sonBuzz(); sonUiStart();
   if (!(TU.musique > 0) || !window.ecorceApp) return false;
   const on = !save.mute && !!save.music && sonVolM() > 0 && TU.musVol > 0, key = on ? sonKey() : '';
   if (key && s.fail[key]) return false; // this file did not come: the notes made by the code take over
@@ -12362,10 +12364,14 @@ function sonBuzz() {
 }
 // a soft tick on every button of the menus (the game's own sounds stay on top of it)
 function sonUiStart() {
+  const s = sonS(); if (s.ui) return; s.ui = true;
+  // (10 October) the browser only lets sound start after a touch: the first touch anywhere wakes the sound, so the music of the menus and the ticks play from the home screen on
+  const wake = () => { try { if (!save.mute) wakeAudio(); } catch (_) { } };
+  document.addEventListener('pointerdown', wake, true); document.addEventListener('keydown', wake, true);
   document.addEventListener('click', e => { try { if (!(TU.sonMenus > 0)) return; const b = e.target && e.target.closest && e.target.closest('button'); if (!b || b.disabled || b.closest('#pad')) return; sonUi(b.classList.contains('shine') ? 2 : b.classList.contains('back') || b.id === 'b-close' ? 0 : 1); } catch (_) { } }, true);
 }
 function sonUi(kind) { // 0 = back, 1 = a button, 2 = the main button
-  if (save.mute || !AC || AC.state !== 'running') return;
+  if (save.mute) return; if (!AC || AC.state !== 'running') { wakeAudio(); if (AC && AC.state === 'suspended' && !sonUi.wait) { sonUi.wait = true; AC.resume().then(() => { sonUi.wait = false; sonUi(kind); }, () => { sonUi.wait = false; }); } return; }
   try {
     const t = AC.currentTime, v = .05 * Math.min(2, TU.sfxVol) * sonVolS(), f = kind === 2 ? [660, 990] : kind === 0 ? [520, 390] : [740, 740];
     f.forEach((hzv, i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(hzv, t + i * .045);
