@@ -873,7 +873,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "ba640c4";
+window.ecorceBuild = "2786ace";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -1363,6 +1363,10 @@ const TUNE_DEF = [
   ['toastT', 'res', 'Durée d\'un message', 'Le temps pendant lequel un message reste affiché en haut de l\'écran (objet trouvé, sortie ouverte…).', 2.4, 1, 8, 's'],
   ['celeT', 'res', 'Durée de la fête de fin de niveau', 'Le temps de la danse et des feux d\'artifice sur la sortie, avant l\'écran de résultats.', 2.4, .5, 6, 's'],
   ['sfxVol', 'res', 'Volume des bruitages', 'Multiplie le volume de tous les bruitages (0 = aucun bruitage). Le joueur peut toujours couper le son dans ses réglages.', 1, 0, 2, 'x'],
+  ['musique', 'res', 'Vraies musiques', '1 = le jeu joue ses morceaux (un pour les menus, un par monde, deux pour les boss) ; 0 = les notes fabriquées par le jeu, comme avant.', 1, 0, 1, 'choice', { choices: ['Notes du jeu', 'Morceaux'] }],
+  ['vibK', 'res', 'Force des vibrations', 'Multiplie la durée des vibrations du téléphone quand l\'écran tremble (0 = aucune). Chaque joueur peut les couper dans ses réglages.', 1, 0, 3, 'x'],
+  ['sonMenus', 'res', 'Tic des boutons', 'Le petit son joué à chaque bouton des menus.', 1, 0, 1, 'choice', { choices: ['Non', 'Oui'] }],
+  ['sonCauch', 'res', 'Musique d\'action en Cauchemar', '1 = en Cauchemar, les niveaux jouent les morceaux d\'action du pack (Action 1, 3 et 5) au lieu du morceau du monde ; 0 = le morceau du monde, comme en Normal.', 1, 0, 1, 'n'],
   ['musVol', 'res', 'Volume de la musique', 'Multiplie le volume de la musique (0 = aucune musique).', 1, 0, 2, 'x'],
   ['stickR', 'res', 'Course du pouce', 'La distance, en points d\'écran, dont le pouce doit glisser pour que le chevalier marche à pleine vitesse.', 46, 24, 90, 'px'],
   ['stickDead', 'res', 'Zone morte du pouce', 'En dessous de cette part de la course du pouce, le chevalier ne bouge pas.', .15, 0, .5, 'pct'],
@@ -2923,7 +2927,7 @@ P.x = F.start.x; P.y = F.start.y; P.mhp = P.hp = ST.hp;
 /* ================= audio ================= */
 let AC = null;
 function sfx(f, d = .08, type = 'square', v = .05, slide = 0) {
-  if (save.mute || !(TU.sfxVol > 0)) return; v *= TU.sfxVol; // (the setting « Volume des bruitages »)
+  if (save.mute || !(TU.sfxVol > 0)) return; v *= TU.sfxVol * (typeof sonVolS === 'function' ? sonVolS() : 1); // (the setting « Volume des bruitages »)
   try {
     AC = AC || new (window.AudioContext || window.webkitAudioContext)();
     if (AC.state === 'suspended') AC.resume();
@@ -2955,6 +2959,7 @@ function note(f, t, dur, type, vol, att) {
 function musicKey() { return (G.mode === 'play' || G.mode === 'end') && !F.hub ? kitOf(F.si) + (levelOf(F.floor).boss ? 'b' : '') : ME.game ? 'campx' : 'camp'; }
 function musicStep() {
   if (!AC || AC.state !== 'running') return;
+  if (typeof sonStep === 'function' && sonStep()) { if (MUS.bus && MUS.vol !== 0) { MUS.vol = 0; MUS.bus.gain.setTargetAtTime(0, AC.currentTime, .2); } MUS.next = 0; return; } // real pieces play instead of these notes (zz_sons.js)
   try {
     if (!MUS.bus) { // melody -> soft low-pass -> out, with a quiet echo
       const bus = AC.createGain(), lp = AC.createBiquadFilter(), dl = AC.createDelay(1), fb = AC.createGain();
@@ -7025,6 +7030,7 @@ function renderSheet() {
     body.push(h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('ombre')), h('div', { class: 'grow' }, h('b', { text: 'Modèles 3D' }), h('span', { class: 'meta', id: 'mdl-line', style: 'display:block', text: modelsLine() }))));
     body.push(toggleRow('son', 'Son', !save.mute, () => { save.mute = !save.mute; saveGame(false); renderSheet(); if (!save.mute) { wakeAudio(); sfx(660, .1, 'triangle', .05, 300); } }));
     if (!save.mute) body.push(toggleRow('musique', 'Musique', save.music, () => { save.music = !save.music; saveGame(false); renderSheet(); }));
+    body.push(...sonRows()); // how loud, and the vibrations (zz_sons.js)
     const app = window.ecorceApp;
     if (app && !app.installed()) body.push(h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('installer')), h('div', { class: 'grow' }, h('b', { text: 'Installer comme une application' }),
       h('span', { class: 'meta', style: 'display:block', text: app.canAsk() ? 'Plein écran, icône sur l\'écran d\'accueil, jouable hors connexion.' : app.ios ? 'Sur iPhone : bouton Partager de Safari, puis « Sur l\'écran d\'accueil ».' : 'Dans le menu du navigateur : « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».' })),
@@ -10341,6 +10347,11 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 16, d: '9 octobre 2026', t: 'De vraies musiques', l: [
+      'Le jeu a maintenant de vrais morceaux : un pour les menus, un pour chaque monde, et deux pour les boss.',
+      'Dans les réglages : le volume de la musique et celui des bruitages, chacun à ton goût.',
+      'Le téléphone vibre un court instant sur les coups qui comptent. Ça se coupe aussi dans les réglages.',
+      'Musiques : AlkaKrab.'] },
     { id: 15, d: '8 octobre 2026', t: 'Un bug, une idée ? Écris-nous', l: [
       'Nouveau bouton « Signaler un bug, faire un retour » : sur l\'accueil, dans la pause et dans les réglages.',
       'Écris ton message et joins deux captures au plus. Pendant un niveau, la capture du jeu est déjà prête.',
@@ -12290,6 +12301,87 @@ function varEmpty() {
   el.textContent = ADM.tool === 'fav' ? '' : q ? 'Aucun réglage ne correspond à « ' + q + ' »' + (ADM.tool === 'mod' ? ' parmi ceux que tu as modifiés.' : '.') : ADM.tool === 'mod' ? 'Aucun réglage modifié : tout est à la valeur d\'origine du jeu.' : '';
   el.hidden = any || !el.textContent;
   const pin = $('var-pin'); if (pin) pin.hidden = ADM.tool !== 'fav' && (!!q || ADM.tool === 'mod') && !ADM.rows.some(r => r.pin && !r.row.hidden);
+}
+
+/* ================= the music and the feel of the hits (9 October, Damien's request) =================
+   The game used to make its music note by note (musicStep, b_game.js): it tired everyone. Real pieces now play instead, one for the
+   menus, one for each world, two for the bosses: the loops of « Fantasy RPG Music Pack Vol. 3 » by AlkaKrab (royalty-free, commercial
+   use allowed, credit not required ; the files must not be given away as they are: see CREDITS_SONS.md). They are in pwa/sons/
+   (build.mjs copies them next to the standalone page), in OGG and in MP3 for the browsers that do not read OGG, and each is fetched
+   only when its world is played. Inside Claude, or when a file does not come, the old notes play as before.
+     sonStep()   called by musicStep at every image: true when a piece plays in place of the notes
+     sonBuzz()   a short vibration of the phone whenever the screen shakes (a hit taken, a great blow, a boss that falls)
+     sonUi()     a soft tick on the buttons of the menus
+   The player's own choices stay on the device (key tk-sons): m, s (0 to 1), v (0 = no vibration). Settings: musique, vibK, sonMenus.
+   Every top-level name here is a function: this file comes after d_ui.js. */
+function sonS() { return sonS.s || (sonS.s = { el: null, gain: null, cur: '', swapAt: 0, tryAt: 0, vol: -1, shake: 0, buzzAt: 0, fail: {}, ext: '', ui: false }); }
+// the player's choices stay on the device (key tk-sons), not in the save: the save only keeps what the service knows
+function sonP() { const s = sonS(); if (!s.p) { s.p = { m: .6, s: 1, v: 1 }; try { const o = JSON.parse(localStorage.getItem('tk-sons') || '{}'); for (const k of ['m', 's', 'v']) if (typeof o[k] === 'number' && isFinite(o[k])) s.p[k] = clamp(o[k], 0, 1); } catch (e) { } } return s.p; }
+function sonSet(k, v) { sonP()[k] = v; try { localStorage.setItem('tk-sons', JSON.stringify(sonP())); } catch (e) { } renderSheet(); }
+function sonVolM() { return sonP().m; }
+function sonVolS() { return sonP().s; }
+// which piece: the menus, the world of the level (the tenth world borrows the piece of the fifth), or one of the two boss pieces
+function sonKey() {
+  if ((G.mode === 'play' || G.mode === 'end') && F && !F.hub) {
+    if (levelOf(F.floor).boss) return (F.si | 0) % 2 ? 'boss_b' : 'boss_a';
+    if (run && (run.diff | 0) === 2 && TU.sonCauch > 0) return 'action_' + [1, 3, 5][(F.si | 0) % 3]; // (9 October, Damien) Nightmare plays the pieces of action
+    const w = (F.si | 0) % 10; return 'monde_' + String(w === 9 ? 5 : w + 1).padStart(2, '0');
+  }
+  return 'musique_accueil';
+}
+function sonStep() {
+  const s = sonS(); sonBuzz(); if (!s.ui) { s.ui = true; sonUiStart(); }
+  if (!(TU.musique > 0) || !window.ecorceApp) return false;
+  const on = !save.mute && !!save.music && sonVolM() > 0 && TU.musVol > 0, key = on ? sonKey() : '';
+  if (key && s.fail[key]) return false; // this file did not come: the notes made by the code take over
+  if (!s.el) {
+    if (!key) return true;
+    const el = new Audio(); el.loop = true; el.preload = 'auto'; s.ext = el.canPlayType('audio/ogg; codecs="vorbis"') ? 'ogg' : 'mp3';
+    el.addEventListener('error', () => { if (s.cur) s.fail[s.cur] = 1; });
+    try { const src = AC.createMediaElementSource(el), g = AC.createGain(); g.gain.value = 0; src.connect(g); g.connect(AC.destination); s.gain = g; } catch (e) { s.gain = null; el.volume = 0; }
+    document.addEventListener('visibilitychange', () => { try { if (document.hidden) el.pause(); else if (s.cur && s.vol > 0) el.play().catch(() => { }); } catch (e) { } });
+    s.el = el;
+  }
+  const now = performance.now(), set = v => { if (v === s.vol) return; s.vol = v; try { if (s.gain) s.gain.gain.setTargetAtTime(v, AC.currentTime, .25); else s.el.volume = v; } catch (e) { } };
+  if (key !== s.cur) { // the piece changes: the old one fades, the new one comes half a second later
+    if (!s.swapAt) { s.swapAt = now + (s.cur && s.vol > 0 ? 550 : 0); set(0); }
+    if (now >= s.swapAt) { s.swapAt = 0; s.cur = key; try { if (key) { s.el.src = 'sons/' + key + '.' + s.ext; s.tryAt = 0; } else s.el.pause(); } catch (e) { } }
+    return true;
+  }
+  if (!key) return true;
+  if (s.el.paused && now > s.tryAt && !document.hidden) { s.tryAt = now + 1200; try { s.el.play().catch(() => { }); } catch (e) { } }
+  set(sonVolM() * Math.min(2, TU.musVol) * .55);
+  return true;
+}
+// the phone shakes with the screen: G.shake rises at every hit that counts
+function sonBuzz() {
+  const s = sonS(), k = G.shake || 0, was = s.shake; s.shake = k;
+  if (!(k > was + .4) || sonP().v === 0 || !(TU.vibK > 0) || !navigator.vibrate) return;
+  const now = performance.now(); if (now - s.buzzAt < 70) return; s.buzzAt = now;
+  try { navigator.vibrate(Math.round(clamp(k * 6 * TU.vibK, 8, 80))); } catch (e) { }
+}
+// a soft tick on every button of the menus (the game's own sounds stay on top of it)
+function sonUiStart() {
+  document.addEventListener('click', e => { try { if (!(TU.sonMenus > 0)) return; const b = e.target && e.target.closest && e.target.closest('button'); if (!b || b.disabled || b.closest('#pad')) return; sonUi(b.classList.contains('shine') ? 2 : b.classList.contains('back') || b.id === 'b-close' ? 0 : 1); } catch (_) { } }, true);
+}
+function sonUi(kind) { // 0 = back, 1 = a button, 2 = the main button
+  if (save.mute || !AC || AC.state !== 'running') return;
+  try {
+    const t = AC.currentTime, v = .05 * Math.min(2, TU.sfxVol) * sonVolS(), f = kind === 2 ? [660, 990] : kind === 0 ? [520, 390] : [740, 740];
+    f.forEach((hzv, i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(hzv, t + i * .045);
+      g.gain.setValueAtTime(.0001, t + i * .045); g.gain.linearRampToValueAtTime(i && kind === 1 ? .0001 : v, t + i * .045 + .008); g.gain.exponentialRampToValueAtTime(.0001, t + i * .045 + .09);
+      o.connect(g); g.connect(AC.destination); o.start(t + i * .045); o.stop(t + i * .045 + .12); });
+  } catch (e) { }
+}
+// the player's rows in the settings: how loud the music and the sounds, and the vibrations
+function sonRows() {
+  const lv = [.3, .6, 1], near = v => { let b = 0; lv.forEach((x, i) => { if (Math.abs(x - v) < Math.abs(lv[b] - v)) b = i; }); return b; }, out = [];
+  if (!save.mute) {
+    if (save.music) out.push(choiceRow('musique', 'Volume de la musique', ['Doux', 'Moyen', 'Fort'], near(sonVolM()), i => sonSet('m', lv[i])));
+    out.push(choiceRow('son', 'Volume des bruitages', ['Doux', 'Moyen', 'Fort'], near(sonVolS()), i => { sonSet('s', lv[i]); sfx(660, .1, 'triangle', .05, 300); }));
+  }
+  if (navigator.vibrate) out.push(toggleRow('appareil', 'Vibrations à l\'impact', sonP().v !== 0, () => { sonSet('v', sonP().v === 0 ? 1 : 0); if (sonP().v) try { navigator.vibrate(30); } catch (e) { } }));
+  return out;
 }
 
 </script>
