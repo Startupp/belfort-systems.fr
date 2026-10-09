@@ -873,7 +873,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "ed1f0f1";
+window.ecorceBuild = "05017e5";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -3640,7 +3640,7 @@ function viewHalf() { return Math.max(clamp(view.w / 2 / TILE_PX, HALF_MIN, HALF
 // sharpness: screen pixels drawn for one CSS pixel. Auto follows the graphics switch; the rest is the player's choice
 // (8 October) Auto never draws more than about 2.3 million points (a 1080p picture): on a large window or a 4K screen the 3D picture grew with the window
 // and the game slowed down, while a phone-sized window ran well. « Haute » and « Max » stay the player's choice.
-function resScale() { const d = window.devicePixelRatio || 1, cap = Math.max(.5, Math.sqrt(2.3e6 / Math.max(1, view.w * view.h))); return save.res === 1 ? .75 : save.res === 2 ? 1 : save.res === 3 ? Math.min(1.5, Math.max(1, d)) : save.res === 4 ? Math.min(3, d) : Math.min(save.gfx !== 0 ? 2 : 1.25, d, cap); }
+function resScale() { const d = window.devicePixelRatio || 1, cap = Math.max(.5, Math.sqrt(2.3e6 / Math.max(1, view.w * view.h))); return save.res === 1 ? .75 : save.res === 2 ? 1 : save.res === 3 ? Math.min(1.5, Math.max(1, d)) : save.res === 4 ? Math.min(3, d) : Math.min(2, d, cap); } // Auto: as sharp as the screen allows (up to 2), whatever the shadows; only the size of the window limits it (cap)
 const view = { w: 360, h: 640, dpr: 1, zoom: 1, vw: 304 };
 const cam = { x: 0, y: 0, init: false }; // smoothed focus point, in logic pixels
 let USE3D = false, camX = 0, camY = 0;
@@ -7714,10 +7714,10 @@ function frame(ts) {
   const cap = FPS[save.fps | 0]; if (cap && ts - lastTs < 1000 / cap - 2) { requestAnimationFrame(frame); return; } // the player asked for fewer frames (battery, heat)
   let dt = (ts - lastTs) / 1000; if (dt > 1) { Net.nhUntil = performance.now() + 1200; perfN = -30; perfT = 0; } // back from a hidden tab: resync before hosting
   lastTs = ts;
-  if (USE3D && save.gfx !== 0 && G.mode === 'play' && !G.noDegrade && dt < 1) { // slow device: drop shadows and resolution once
+  if (USE3D && save.gfx !== 0 && G.mode === 'play' && !G.noDegrade && dt < 1) { // slow device: drop the shadows once (the sharpness stays)
     if (++perfN > 0) perfT += dt;
     // with the frames limited to 30 or 45 a second (45 gives 30 on a 60 Hz screen), an image of 33 ms is what was asked for, not a slow device
-    if (perfN >= 150) { if (perfT / perfN > (cap && cap < 60 ? .045 : .034)) { save.gfx = 0; glQuality(); saveGame(false); toast('Graphismes allégés pour rester fluide'); } perfN = -30; perfT = 0; }
+    if (perfN >= 150) { if (perfT / perfN > (cap && cap < 60 ? .045 : .034)) { save.gfx = 0; glQuality(); saveGame(false); toast('Ombres coupées pour rester fluide (Réglages pour les remettre)'); } perfN = -30; perfT = 0; }
   }
   dt = clamp(dt, 0, .05);
   // the image is drawn even when a step of the game fails: a bug shows as a frozen creature, not as a frozen screen with no way out
