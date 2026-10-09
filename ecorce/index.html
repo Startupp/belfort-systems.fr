@@ -770,6 +770,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 #crea-wheel .cw-p:active,#crea-wheel .cw-c:active{filter:brightness(1.25)}
 @media (prefers-reduced-motion:no-preference){#crea-wheel .cw-p{animation:cwIn .16s ease-out both}@keyframes cwIn{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}}}
 #ed .ed-tex{max-height:30vh;overflow:auto}.tex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px}.tex-zone{grid-column:1/-1;font-size:11px;color:var(--ink-3,#b9a98a);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}.tex-it{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:2px solid transparent;border-radius:8px;padding:2px;color:inherit;cursor:pointer}.tex-it[aria-pressed=true]{border-color:var(--gold,#ffc24a)}.tex-it small{font-size:10px;line-height:1.1;text-align:center}.ic[hidden]{display:none!important}.uiic{width:30px;height:30px;object-fit:contain;display:block;flex:none;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}#b-lan .uiic{width:58%;height:58%;margin:auto}.adm-lib{max-height:50vh;overflow:auto}.adm-libm .ed-pb{min-width:0;border-radius:10px;height:auto;white-space:normal;font-size:11px;line-height:1.15;text-align:center}.adm-libm{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}.adm-box .seg .chipbtn{white-space:nowrap}.adm-lib .tex-it:first-child{display:none}.tex-img{width:56px;height:56px;border-radius:6px;object-fit:cover;background:#0006;display:block}.tex-none{display:grid;place-items:center;font-size:20px}#ed .ed-layers{background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin-top:6px;display:flex;flex-direction:column;gap:6px;font-size:13px}#ed .ed-layers .chipbtn{flex:none;padding:4px 8px;font-size:12px}
+/* the workshop « Les clés » (x_cles.js): the same layout as the level editor; a view that turns, the tools in bubbles on the left, a short drawer at the bottom, a panel on the right from 700 points */#cles{position:fixed;inset:0;z-index:59;display:grid;grid-template-rows:auto minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr);background:radial-gradient(ellipse at 50% 40%,#2c2219,#120d09 75%);color:var(--cream);padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(8px + env(safe-area-inset-bottom,0px));gap:8px}#cles .cl-top{display:flex;align-items:center;gap:8px}#cles .cl-back{width:44px;height:44px;padding:0;border-radius:50%;justify-content:center;background:var(--bark-2);flex:none}#cles .cl-name{background:var(--bark-2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;min-height:44px;display:flex;flex-direction:column;justify-content:center;min-width:0}#cles .cl-name small{font-size:11px;color:var(--dim)}#cles .cl-view{position:relative;min-height:0;border-radius:var(--r-sm);overflow:hidden}#cles .cl-canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}#cles .cl-no3d{position:absolute;left:64px;right:64px;top:40%;text-align:center;font-size:13px;color:var(--dim)}#cles .cl-tools,#cles .cl-rail{position:absolute;top:6px;display:flex;flex-direction:column;flex-wrap:wrap;gap:7px;max-height:calc(100% - 12px);z-index:2}#cles .cl-tools{left:6px;align-content:flex-start}#cles .cl-rail{right:6px;align-content:flex-end}#cles .cl-tools .chipbtn,#cles .cl-rail .chipbtn{position:relative;flex:none;width:46px;height:46px;padding:0;border-radius:50%;justify-content:center;background:var(--bark-2);border:1.5px solid var(--line);color:var(--cream)}#cles .cl-rail .chipbtn{width:42px;height:42px}#cles .cl-tools .chipbtn[aria-pressed=true],#cles .cl-rail .chipbtn[aria-pressed=true]{background:var(--amber);border-color:var(--amber);color:var(--ink)}#cles .cl-lab{display:none}#cles .cl-tools .chipbtn[aria-pressed=true] .cl-lab,#cles.help .cl-tools .cl-lab,#cles.help .cl-rail .cl-lab{display:block;position:absolute;left:54px;top:50%;transform:translateY(-50%);white-space:nowrap;font:700 12px var(--ui);color:var(--cream);background:var(--bark-2);border:1px solid var(--line);border-radius:999px;padding:5px 10px;pointer-events:none}#cles.help .cl-rail .cl-lab{left:auto;right:50px}#cles .cl-tags{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:10px;pointer-events:none}#cles .cl-tags span{font:700 12px var(--ui);background:var(--well);border:1px solid var(--line);border-radius:999px;padding:4px 10px}#cles .cl-dock{display:flex;flex-direction:column;max-height:max(34vh,190px);min-height:0;background:var(--bark-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:2px 10px 8px}#cles .cl-dock.min{max-height:none}#cles .cl-scroll{overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:6px;font-size:13px}#cles .cl-scroll>*{flex:none}#cles .ed-fold{align-self:center;background:none;border:0;padding:4px 30px;cursor:pointer}#cles .ed-fold i{display:block;width:40px;height:4px;border-radius:2px;background:var(--line)}#cles .cl-tip{margin:0;background:var(--well);border-radius:8px;padding:6px 10px;line-height:1.3}#cles .cl-h{font:700 13px var(--ui);margin-top:4px}#cles .cl-chips{display:flex;flex-wrap:wrap;gap:6px}#cles .cl-chips .chipbtn{flex:none}#cles .cl-pal{display:flex;gap:6px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}#cles .cl-pal .ed-pb{flex:none;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 6px;min-width:70px;max-width:96px;white-space:normal;text-align:center;font-size:11px;line-height:1.1}#cles .cl-pal .ed-pb img{width:44px;height:44px;object-fit:contain}#cles .cl-row{background:var(--well);border-radius:8px;padding:6px 8px}#cles .cl-row small{display:block;color:var(--dim);font-size:11px}#cles .adm-search{margin:0}#cles input[type=range]{width:100%}#cles .cl-line{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}#cles .cl-line span{font-size:12px;color:var(--dim);min-width:52px}#cles .cl-mini{flex:none;width:84px;height:84px;object-fit:contain;image-rendering:pixelated;border-radius:6px;background:#0006}#cles .cl-sb{display:flex;flex-direction:column;gap:6px}#cles .adm-sel{max-width:100%}#cles .cl-scroll>.row>.adm-search{flex:1;min-width:0}#cles .cl-col{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--dim)}#cles .cl-col input{width:46px;height:34px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--well)}#cles .cl-tex{max-height:30vh;flex:none}#cles .cl-sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);padding:0;flex:none;cursor:pointer}#cles .cl-sw[aria-pressed=true]{border-color:var(--cream);box-shadow:0 0 0 3px var(--amber)}@media (min-width:700px){#cles{grid-template-columns:minmax(0,1fr) clamp(300px,30vw,400px);grid-template-rows:auto minmax(0,1fr)}#cles .cl-dock{grid-column:2;grid-row:1/3;max-height:none}#cles .cl-dock.min{max-height:none}#cles .cl-pal{flex-wrap:wrap;overflow-x:visible}}@media (min-width:1000px){#cles .cl-tools{background:var(--bark-2);border:1px solid var(--line);border-radius:22px;padding:8px;flex-wrap:nowrap}#cles .cl-tools .chipbtn{width:auto;min-width:140px;height:42px;border-radius:999px;padding:0 14px;justify-content:flex-start;gap:10px;border-color:transparent;background:none}#cles .cl-tools .chipbtn .cl-lab,#cles .cl-tools .chipbtn[aria-pressed=true] .cl-lab{display:inline;position:static;transform:none;background:none;border:0;padding:0;color:inherit;font:700 13.5px var(--ui)}}
 </style>
 <script src="three.min.js"></script>
 
@@ -872,7 +873,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "fc73e7b";
+window.ecorceBuild = "5184433";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
    This file is only added to www/index.html (browser, installed app, APK), never to the page published in Claude.
@@ -1181,6 +1182,7 @@ const TUNE_FAM = [
   ['ryt', 'Rythmes', 'Quand se renouvelle ce qui se renouvelle : le jour, l\'étal.'],
   ['niv', 'Niveaux', 'Le tirage de chaque niveau : choisis un niveau, règle-le, regarde son plan et essaie-le.'],
   ['hud', 'Interface', 'La place, la taille, la transparence de chaque élément de l\'écran de jeu et du camp, et les couleurs de chaque thème (réglés dans l\'Éditeur de modèles, k_hud.js).'],
+  ['viv', 'Niveaux vivants', 'À l\'essai, tout est éteint par défaut : coffres vraiment enfouis, décors à casser, objectifs de niveau, décors de sol propres à chaque monde. Les gains seront rééquilibrés avec l\'expérience par chevalier.'],
 ];
 const EN_NAMES = [[0, 'du Sporule', 'Sporule'], [1, 'du Ronceux', 'Ronceux'], [2, 'du Cracheur', 'Cracheur'], [3, 'du Follet', 'Follet'], [4, 'du Gardien', 'Gardien'], [9, 'du boss', 'Boss']];
 const RAR_LINES = [['DROP', 'une créature ordinaire'], ['RICH', 'un gardien ou un coffre ordinaire'], ['BOSS', 'un boss ou un coffre doré'], ['SHOP', 'l\'étal']];
@@ -1477,6 +1479,28 @@ const TUNE_DEF = [
   ['SLOTbag', 'emp', 'Places de sac gagnables', 'Le nombre de places de sac en plus que les quêtes peuvent faire gagner. On ne peut que l\'augmenter.', 'SLOT_TOP.bag', 12, 40, 'n', { fx: 'slot', k: 'bag' }],
   ['dayStart', 'ryt', 'Heure du changement de jour', 'Les quêtes du jour et les tours de roulette se renouvellent à cette heure (0 = minuit).', 0, 0, 23, 'n', { fx: 'day' }],
   ['shopEvery', 'ryt', 'Niveaux gagnés entre deux étals', 'L\'étal se renouvelle tous les ce nombre de niveaux gagnés (1 = après chaque niveau).', 1, 1, 5, 'n', { fx: 'every' }],
+  // « Niveaux vivants » (branch niveaux-vivants, 8 October): prototypes, every one OFF by default (src/x_vivants.js, src/y_sol.js). The gains have their own lines:
+  // they will be balanced again with the experience by knight.
+  ['nvCoffres', 'viv', 'Coffres enfouis jusqu\'à l\'approche', '0 = comme aujourd\'hui : un coffre caché est annoncé dès qu\'il est à l\'écran et en vue. 1 = il reste sous un petit tas de terre, sort quand on s\'approche, et n\'est annoncé qu\'à ce moment.', 0, 0, 1, 'n'],
+  ['nvCoffreR', 'viv', 'Coffre enfoui : distance de découverte', 'À quelle distance du chevalier un coffre enfoui sort de terre (il faut aussi le voir : pas à travers un mur).', 64, 32, 160, 'c'],
+  ['nvCoffreIndice', 'viv', 'Coffre enfoui : distance de l\'indice', 'En deçà de cette distance, une petite lueur monte de temps en temps du tas de terre (0 = aucun indice : seul le tas se voit).', 144, 0, 320, 'c'],
+  ['nvCasse', 'viv', 'Décors destructibles', '0 = aucun. 1 = des jarres, tonnelets et souches creuses à casser dans le monde 1 (Racines). 2 = dans tous les mondes (essai : ils gardent les formes des Racines).', 0, 0, 2, 'n'],
+  ['nvCasseN', 'viv', 'Décors destructibles par salle', 'Combien de décors à casser en moyenne par salle (ils viennent par grappes de deux ou trois, contre les murs).', 2.2, 0, 6, 'n'],
+  ['nvCasseChance', 'viv', 'Décor cassé : chance de pièces', 'La chance qu\'un décor cassé lâche des pièces.', .55, 0, 1, 'pct'],
+  ['nvCassePieces', 'viv', 'Décor cassé : pièces', 'Les pièces d\'un décor cassé qui en lâche, au niveau 1 (les niveaux suivants les multiplient comme le reste du butin).', 2, 0, 20, 'n'],
+  ['nvCasseVie', 'viv', 'Décor cassé : chance de boule de vie', 'La chance qu\'un décor cassé lâche une boule de vie, seulement quand il manque de la vie.', .1, 0, 1, 'pct'],
+  ['nvCasseObjet', 'viv', 'Décor cassé : chance d\'objet', 'La chance qu\'un décor cassé lâche un objet (mêmes qualités qu\'une créature ordinaire).', .03, 0, .5, 'pct'],
+  ['nvQuetes', 'viv', 'Mini-quêtes de niveau', '0 = aucune. 1 = chaque niveau tire ses objectifs (vaincre des créatures, ouvrir les coffres, trouver le coffre caché, casser des décors, visiter les salles, garder sa vie), annoncés au départ, suivis à l\'écran, payés à la sortie.', 0, 0, 1, 'n'],
+  ['nvQuetesN', 'viv', 'Objectifs par niveau', 'Le nombre d\'objectifs tirés pour chaque niveau.', 2, 1, 3, 'n'],
+  ['nvQuetePieces', 'viv', 'Objectif rempli : pièces', 'Les pièces données à la sortie pour chaque objectif rempli, au niveau 1 (multipliées comme le reste du butin). Plus tard : de l\'expérience.', 12, 0, 200, 'n'],
+  ['nvQueteTout', 'viv', 'Tous les objectifs : pièces en plus', 'Les pièces données en plus quand tous les objectifs du niveau sont remplis, au niveau 1.', 20, 0, 400, 'n'],
+  ['nvQueteChasse', 'viv', 'Objectif « créatures » : part à vaincre', 'La part des créatures du niveau que demande l\'objectif « Vaincs des créatures ».', .6, .2, 1, 'pct'],
+  ['nvQueteCasse', 'viv', 'Objectif « décors » : part à casser', 'La part des décors destructibles du niveau que demande l\'objectif « Casse des décors ».', .6, .2, 1, 'pct'],
+  ['nvQueteVie', 'viv', 'Objectif « vie » : seuil', 'L\'objectif « Garde ta vie » échoue dès que la vie passe sous cette part.', .5, .1, .9, 'pct'],
+  ['nvQueteVite', 'viv', 'Objectif « vite » : temps du boss', 'Le temps accordé par l\'objectif « Vaincs le boss vite » (niveaux de boss seulement).', 90, 30, 300, 's'],
+  ['nvSortie', 'viv', 'Sortie verrouillée par les objectifs', '0 = la sortie s\'ouvre comme aujourd\'hui, les objectifs sont un bonus. 1 = elle demande aussi un objectif rempli. 2 = tous. Demande « Mini-quêtes de niveau » ; en équipe la sortie reste libre.', 0, 0, 2, 'n'],
+  ['nvSol', 'viv', 'Décors de sol et roseaux', '0 = comme aujourd\'hui. 1 = des décors de sol sur lesquels on marche, propres aux Racines, au Mycélium et au Marais, et des roseaux à la place des brins vert vif sur les murs du Marais. Seule l\'image change.', 0, 0, 1, 'n'],
+  ['nvSolDens', 'viv', 'Décors de sol : densité', 'Multiplie le nombre de décors de sol.', 1, .2, 3, 'x'],
 ];
 // the draw of each level (20a): the same lines for each of the 30 levels, shown one level at a time by the panel (d[8].lv = its number).
 // Their defaults are the table LVL of a_core.js; a level that is not changed is drawn as before.
@@ -1906,7 +1930,7 @@ const STRATA = [
 const kitOf = si => si < 5 ? si : (STRATA[si] && STRATA[si].kit) || 0;
 // the name a world's own files carry (d_<zone>_…, t2_<zone>_…, the pieces of volume, its creatures in MON_OWN): the game wears them first when they exist,
 // and the files of its kit (kitOf) for what is missing. The same names as WORLD_ZONE (o_blocs.js), which is read too late for the first world built.
-function ownZone(si) { return ['racines', 'mycelium', 'braises', 'givre', 'abimes', 'marais', 'canopee', 'corail', 'dunes', 'mine'][si] || null; }
+function ownZone(si) { return ['racines', 'mycelium', 'braises', 'givre', 'abimes', 'marais', 'canopee', 'corail', 'dunes', 'mine'][si] || (STRATA[si] && STRATA[si].zone) || null; } // (zone: a world made in the workshop, x5_monde.js)
 const PER_WORLD = 6; // five worlds of six levels; the sixth is the boss
 const strIdxOf = f => (((f - 1) / PER_WORLD) | 0) % STRATA.length;
 const isBossFloor = f => f % PER_WORLD === 0;
@@ -2923,7 +2947,7 @@ function startRun(seed, floor) {
   setGame(seedBig(seed) ? 1 : 0); // a level of the other game (a teammate may have chosen it) is played with that game's equipment
   run = { seed, floor, diff: seedDiff(seed), big: seedBig(seed), target: floor, t0: performance.now(), done: false, cele: 0, fwT: 0, time: 0, best: 0, stats: { ecl: 0, gem: 0, items: [], kills: 0 } };
   refreshStats(); P.hp = P.mhp; P.down = false; G.stop = 0; P.lanCd = 0; P.atkCd = 0; P.combo = 0; P.chain = 0; P.big = false; P.dance = 0; P.lunge = 0; P.dashT = 0; P.dashCd = 0; P.dodgeT = 0;
-  F = genFloor(seed, floor); worldChanged();
+  F = genFloor(seed, floor); nvLevel(); worldChanged(); // (nvLevel, x_vivants.js: what can be broken and the objectives of the level ; nothing unless their settings are on)
   P.x = F.start.x; P.y = F.start.y; P.face = Math.PI / 2; P.inv = 1; P.reviveT = 0; P.target = null;
   clearFx(); myD = {}; myKd = new Set(); Net.deadSummons = new Set(); Net.lastHK = -1;
   for (const v of Net.views.values()) { v.D = {}; v.init = false; }
@@ -2962,7 +2986,7 @@ function finishRun(kind) { // 'win' | 'dead' | 'quit'
   // (after a defeat or a quit as after a win, Damien's decision of 8 October: it used to be lost without a word)
   let left = 0; for (const p of pickups) if (p.kind === 'i') { left += itemScrap(p.item); run.leftItems.push(p.item); }
   if (left) { ME.ecl += left; run.stats.ecl += left; run.stats.left = left; }
-  Net.ignoreSeed = run.seed; G.mode = 'end'; G.paused = false; P.down = false; wakeOff();
+  nvFinish(kind); Net.ignoreSeed = run.seed; G.mode = 'end'; G.paused = false; P.down = false; wakeOff(); // (nvFinish: a level won pays its objectives, x_vivants.js)
   grpEnd(kind); saveGame(true); sfx(win ? 520 : 140, .3, 'triangle', .06, win ? 400 : -60);
   endPick = -1; showResults(kind, unlockedNow); sendPresence(true); lobbyPresence();
 }
@@ -3037,6 +3061,7 @@ function doAttack(ch) {
       if (hit) { G.stop = .07; if (lunge) ME.stats.charge++; vfx('impact', cx, cy, 12, { color: hex(col), scale: 1.4 }); }
     }
   }
+  nvStrike(reach, arc, w); // (what can be broken in the sweep, x_vivants.js)
   if (hit && ST.b3[2] && ++P.combo % TU.set2every === 0) wave(TU.set2waveR, ST.dmg * TU.set2waveDmg, SETS[2].col); // Colibri: every fourth blow
 }
 function doLantern() {
@@ -3047,7 +3072,7 @@ function doLantern() {
   for (const s of eshots) if (hyp(s.x - P.x, s.y - P.y) <= R0) burst(s.x, s.y, '#ff8f7a', 4, 60, 12);
   eshots = eshots.filter(s => hyp(s.x - P.x, s.y - P.y) > R0);
   if (ST.b3[0]) heal(Math.ceil(P.mhp * TU.set0heal));
-  G.shake = 5; sfx(180, .35, 'sine', .09, 500);
+  nvBurst(R0); G.shake = 5; sfx(180, .35, 'sine', .09, 500);
 }
 function hurt(dmg) {
   if (CREA.god) return; // creative mode: invincible
@@ -3255,7 +3280,7 @@ function updateEnemies(dt) {
       if (d < e.r + P.r + 1) hurt(EN[e.type].dmg * dm * (e.st === 2 && e.type === 1 ? TU.en1chDmg : e.st === 2 && e.type === 9 ? TU.en9chDmg : e.type === 4 ? TU.en4contact : 1));
     }
   }
-  if (F.lift && !F.lift.open) { let open = true; if (F.seals) open = F.sealMask === (1 << F.seals.length) - 1; else for (const e of F.enemies) if (e.guard && !e.dead) { open = false; break; } if (open) { F.lift.open = true; if (performance.now() > F.quietUntil) { toast(F.seals ? 'Les sceaux sont réunis : la sortie s\'ouvre' : 'La sortie s\'ouvre'); ring(F.lift.x, F.lift.y, 60, F.str.glow, .6); sfx(440, .3, 'triangle', .06, 440); } } }
+  if (F.lift && !F.lift.open) { let open = true; if (F.seals) open = F.sealMask === (1 << F.seals.length) - 1; else for (const e of F.enemies) if (e.guard && !e.dead) { open = false; break; } if (open && !nvLocked()) { F.lift.open = true; if (performance.now() > F.quietUntil) { toast(F.seals ? 'Les sceaux sont réunis : la sortie s\'ouvre' : 'La sortie s\'ouvre'); ring(F.lift.x, F.lift.y, 60, F.str.glow, .6); sfx(440, .3, 'triangle', .06, 440); } } }
 }
 function boom(s) { // a shell bursting: everything close takes most of the blow
   ring(s.x, s.y, s.aoe, s.col, .35); ring(s.x, s.y, s.aoe * .55, '#fff', .2); burst(s.x, s.y, s.col, 14, 150, 12); G.shake = Math.max(G.shake, 6);
@@ -3320,6 +3345,7 @@ function updatePickups(dt) {
     if (c.opened) { chestGone(c); continue; } if (P.down) continue;
     const d = hyp(c.x - P.x, c.y - P.y);
     if (c.hidden && !c.shown) { // a buried chest is announced as soon as it is on screen and in sight; it opens when you then walk onto it
+      if (TU.nvCoffres) { nvChest(c, d); continue; } // (setting « Coffres enfouis jusqu'à l'approche », x_vivants.js: it stays under the ground until the knight is close)
       if (c.found) { /* the light is on its way (popStep) */ }
       else if ((G.frame + c.id) % 6 === 0 && chestSeen(c)) { c.found = true; popChest(c); }
       else if (d < 150 && (G.frame + c.id * 41) % 200 === 0) mote(c.x + (Math.random() - .5) * 8, c.y, 4, '#fff1c4', 2.4, .7, 26);
@@ -3494,7 +3520,7 @@ function update(dt) {
   if (G.stop > 0) { G.stop -= dt; if (!Net.room) dt *= .12; }
   if (run.target > run.floor) { celeStep(dt); if (G.mode === 'play') { updateShots(dt); updatePickups(dt); updateFx(dt); sendPresence(); } return; }
   if (!G.paused) { updatePlayer(dt); tutoStep(dt); run.time += dt; if (G.frame % 90 === 0) questTick(); } else P.moving = false;
-  updateEnemies(dt); updateShots(dt); updatePickups(dt); updateSeals(); updateLift(dt); updateFx(dt); coopChecks(dt);
+  updateEnemies(dt); updateShots(dt); updatePickups(dt); updateSeals(); updateLift(dt); updateFx(dt); coopChecks(dt); nvStep(dt);
   sendPresence(); updateHud();
   if (saveDirty && G.frame % 300 === 0) persistLocal();
 }
@@ -3748,7 +3774,7 @@ function render2D() {
     if (c.hidden && !c.shown) continue; const k = c.opened ? chestFade(c) : 1; if (k <= 0) continue; ctx.globalAlpha = k;
     ctx.fillStyle = c.opened ? S.wallFace : c.gold ? '#ffd24a' : '#c9831f'; ctx.fillRect(c.x - 11, c.y - (c.opened ? 3 : 9), 22, c.opened ? 7 : 16); if (!c.opened) { ctx.fillStyle = '#fff1c4'; ctx.fillRect(c.x - 2, c.y - 3, 4, 5); } ctx.globalAlpha = 1;
   }
-  if (F.seals) for (const q of F.seals) if (!q.got) { ctx.fillStyle = '#7fe3d2'; ctx.beginPath(); ctx.moveTo(q.x, q.y - 16 + Math.sin(t * 3) * 2); ctx.lineTo(q.x + 8, q.y - 4); ctx.lineTo(q.x, q.y + 6); ctx.lineTo(q.x - 8, q.y - 4); ctx.closePath(); ctx.fill(); }
+  nvDraw2D(ctx); if (F.seals) for (const q of F.seals) if (!q.got) { ctx.fillStyle = '#7fe3d2'; ctx.beginPath(); ctx.moveTo(q.x, q.y - 16 + Math.sin(t * 3) * 2); ctx.lineTo(q.x + 8, q.y - 4); ctx.lineTo(q.x, q.y + 6); ctx.lineTo(q.x - 8, q.y - 4); ctx.closePath(); ctx.fill(); }
   for (const p of pickups) {
     const col = p.kind === 'e' ? GM().col : p.kind === 'h' ? '#ff4d5e' : RAR[p.item.r].col;
     if (p.kind === 'i') { ctx.fillStyle = col; ctx.globalAlpha = .35; ctx.fillRect(p.x - 2, p.y - 46, 4, 46); ctx.globalAlpha = 1; }
@@ -4026,7 +4052,7 @@ function buildWorld() {
   const ck = (x, y) => ((y / CHUNK) | 0) * 4096 + ((x / CHUNK) | 0);
   // what each tile wears (30b): a texture of the library painted on that tile, else the zone painted there, else the map's own
   // texture of the library, else the textures of the level's zone. A key: the zone number, or L<texture>
-  const TX = F.tx || {}, TP = F.tpal || [], lay = { sol: F.ts, mur: F.tw, dessus: F.tt };
+  const TX = F.tx || (F.str && F.str.tx) || {}, TP = F.tpal || [], lay = { sol: F.ts, mur: F.tw, dessus: F.tt };
   // by default (setting « Textures v2 »), a world wears the v2 textures of its zone: the natural floor, the dressed wall, its top (35b). A world of the
   // series 3 wears its own first (t2_<ownZone>_<sorte>, as the Marais when its textures arrive), and for each one missing that of the zone it borrows (kitOf)
   const zk = ZONES[kitOf(si)], zo = ownZone(si), d2 = k => { if (!TU.texV2 || typeof MDL === 'undefined' || !MDL.list) return null; for (const z of [zo, zk]) if (z && ('t2_' + z + '_' + k) in MDL.list) return 't2_' + z + '_' + k; return null; };
@@ -4081,14 +4107,15 @@ function buildWorld() {
   zoneMats(); const mt = (A, k) => { const w = k.split(':')[0]; if (w[0] === 'L') return libMat(w.slice(1)) || A[kitOf(si)]; zoneTexWant(+w); return A[+w]; };
   for (const k in FB) addW(FB[k], mt(M.floor, k), 2); for (const k in WB) addW(WB[k], mt(M.wall, k), 1); for (const k in TB) addW(TB[k], mt(M.top, k), 1);
   if (RL && TXD.sol) formesChemin(RL, d2('sol_chemin'), (x, y) => isF(x, y) && wear('sol', x, y) === 'L' + TXD.sol && !(blk0 && blocTile(x, y)), q); // the ground varied with a second texture, in patches
-  herbsBuild(isF);
+  herbsBuild(isF); solBuild(isF);
   if (blk0) blocsBuild(blk0, hg, isF, (x, y, ground) => !ground && (painted('mur', x, y) || painted('dessus', x, y)), !!RL);
   for (const k in PB) addW(PB[k], M.toon, 1); for (const k in GBs) if (!GBs[k].empty) { const o = new THREE.Mesh(GBs[k].build(), M.glow); o.matrixAutoUpdate = false; worldGroup.add(o); }
   for (const gl of glows.slice(0, 46)) { const s = sprite(gl[3], gl[4]); s.position.set(gl[0], gl[1], gl[2]); s.material.opacity = .55; worldGroup.add(s); }
   // each thing built belongs to a layer of the level editor (sol, murs, niveau, pnj), which can show or hide it
   for (let i = n0; i < worldGroup.children.length; i++) { const o = worldGroup.children[i]; o.userData.layer = M.floor.includes(o.material) || (o.material.userData.lib && texInfo(o.material.userData.lib).kind === 'sol') ? 'sol' : 'murs'; }
+  if (S.cree && typeof clesWorldTint === 'function') clesWorldTint(n0, worldGroup.children.length); // a world made in the workshop wears its own colours (x5_monde.js)
   const n1 = worldGroup.children.length;
-  buildLift(); for (const c of F.chests) buildChest(c); if (F.seals) for (const q of F.seals) buildSeal(q);
+  buildLift(); for (const c of F.chests) buildChest(c); if (F.seals) for (const q of F.seals) buildSeal(q); nvBuild();
   for (let i = n1; i < worldGroup.children.length; i++) worldGroup.children[i].userData.layer = 'niveau';
   const n2 = worldGroup.children.length;
   if (F.hub) buildCamp(); else buildShafts(R);
@@ -4100,7 +4127,7 @@ function mushroom(pb, gb, x, y, z, s, capCol, glowCap, R) {
   pb.add(cyl(.05 * s, .07 * s, .3 * s, 5), mat(x, y + .15 * s, z), [.92, .86, .74]);
   (glowCap ? gb : pb).add(dome(.2 * s, 7, 3), mat(x, y + .27 * s, z, 1, .8, 1, 0, R() * 6), capCol);
 }
-function decoTop(pb, gb, glows, si, x, y, z, R) {
+function decoTop(pb, gb, glows, si, x, y, z, R) { if (solTop(pb, x, y, z, R)) return; // (the reeds of the Marais, y_sol.js, setting « Décors de sol et roseaux »)
   const S = F.str;
   if (si === 0) {
     const k = R();
@@ -4116,7 +4143,7 @@ function decoTop(pb, gb, glows, si, x, y, z, R) {
     else for (let i = 0; i < 3; i++) pb.add(cone(.1, .4 + R() * .5, 4), mat(x + (R() - .5) * .3, y + .2, z + (R() - .5) * .25, 1, 1, 1, (R() - .5) * .4, R(), (R() - .5) * .4), [.2, .14, .12]);
   }
 }
-function decoFace(pb, gb, glows, si, x, y, hh, R) { // on the wall face that looks at the camera
+function decoFace(pb, gb, glows, si, x, y, hh, R) { if (solFace(pb, x, y, hh, R)) return; // on the wall face that looks at the camera (the Marais: reeds at its foot, y_sol.js)
   const S = F.str, z = y + 1.03;
   if (si === 0) { // roots running down the bark
     for (let i = 0, n = 1 + ((R() * 3) | 0); i < n; i++) { const len = hh * (.45 + R() * .5), px = x + .12 + R() * .76, rr = .035 + R() * .04; pb.add(cyl(rr, rr * .5, len, 5), mat(px, hh - len / 2 + .04, z, 1, 1, 1, 0, 0, (R() - .5) * .25), rgb(S.wallEdge, 1.05 + R() * .2)); }
@@ -4625,7 +4652,7 @@ function render3D() {
     const tw = Math.max(0, Math.sin(t * 5 + c.id * 2.1)); m.gl.material.opacity = c.opened ? .28 : .5 + Math.sin(t * 4 + c.x) * .18; m.star.material.opacity = c.opened ? 0 : tw * tw; m.star.scale.setScalar(.35 + tw * .55); m.star.position.x = Math.sin(c.id + Math.floor(t * 5 / TAU + c.id * .33) * 2.4) * .26;
     if (!c.opened && (G.frame + c.id * 7) % (c.gold ? 9 : 16) === 0 && Math.abs(c.x - P.x) < 220 && Math.abs(c.y - P.y) < 320) mote(c.x + (Math.random() - .5) * 22, c.y + (Math.random() - .5) * 12, 8 + Math.random() * 16, c.gold ? '#fff1c4' : '#ffd986', 1.7, .55, 26);
   }
-  if (F.seals) for (const q of F.seals) if (q.m) { const m = q.m; m.grp.visible = !q.got; if (q.got) continue; m.gem.rotation.y = t * 1.6; m.gem.position.y = .78 + Math.sin(t * 2.2 + q.id) * .08; m.beam.rotation.y = -t * .5; m.beam.material.opacity = .36 + Math.sin(t * 3 + q.id) * .1; m.gl.material.opacity = .6 + Math.sin(t * 4 + q.id) * .15; }
+  nvFrame(t); if (F.seals) for (const q of F.seals) if (q.m) { const m = q.m; m.grp.visible = !q.got; if (q.got) continue; m.gem.rotation.y = t * 1.6; m.gem.position.y = .78 + Math.sin(t * 2.2 + q.id) * .08; m.beam.rotation.y = -t * .5; m.beam.material.opacity = .36 + Math.sin(t * 3 + q.id) * .1; m.gl.material.opacity = .6 + Math.sin(t * 4 + q.id) * .15; }
 
   if (F.shafts) for (const s of F.shafts) s.material.opacity = .24 + Math.sin(t * .6 + s.userData.k) * .05;
   // particles: sparks from the game, plus what floats in the air of each world (golden dust, spores, embers, snow, sparks)
@@ -4665,8 +4692,8 @@ function modelsStart() {
   MDL.dir = cfg.dir; MDL.txt = !!cfg.txt; MDL.step = 'wait'; MDL.why = ''; let at = 'le lecteur de modèles';
   new Promise(ok => ok(window.THREE.GLTFLoader ? 0 : window.ecorceLecteur ? window.ecorceLecteur() : cfg.js ? loadScript(cfg.js) : Promise.reject(new Error('il manque à la page'))))
     .then(() => { if (!window.THREE.GLTFLoader) throw new Error('il ne s\'est pas lancé'); at = 'la liste des modèles'; return fetch(cfg.dir + 'liste.json'); }).then(r => { if (!r.ok) throw new Error('réponse ' + r.status); return r.json(); })
-    .then(list => { MDL.list = list; if (F) zoneTexWant(F.si); try { uiIconsApply(); } catch (e) { } MDL.loader = new THREE.GLTFLoader(); at = 'le chevalier'; return modelRead('chevalier'); })
-    .then(g => { for (const c of g.animations) MDL.clips[c.name] = c; MDL.hero = g.scene; MDL.on = true; MDL.step = 'on'; modelsWant(); })
+    .then(list => { MDL.list = list; try { if (typeof clesList === 'function') clesList(list); } catch (e) { } if (F) zoneTexWant(F.si); try { uiIconsApply(); } catch (e) { } MDL.loader = new THREE.GLTFLoader(); at = 'le chevalier'; return modelRead('chevalier'); })
+    .then(g => { for (const c of g.animations) MDL.clips[c.name] = c; MDL.hero = g.scene; MDL.on = true; MDL.step = 'on'; modelsWant(); try { if (typeof clesAnimApply === 'function') clesAnimApply(); } catch (e) { console.warn(e); } })
     .catch(e => { MDL.step = 'fail'; MDL.why = at + ' — ' + whyOf(e); MDL.loader = null; console.warn('modèles indisponibles :', at, e); });
 }
 // Read one model file. Nothing here needs more than fetch() of a file next to the page and plain <img> pictures:
@@ -4675,11 +4702,12 @@ function modelsStart() {
 //   - the loader would read pictures through createImageBitmap, which fetches a blob: link, something a published page may refuse:
 //     it is hidden for the time of the call, so that the loader falls back on plain <img>.
 function modelRead(name) {
-  return fetch(MDL.dir + name + (MDL.txt ? '.txt' : '.glb')).then(r => { if (!r.ok) throw new Error('réponse ' + r.status); return MDL.txt ? r.text() : r.arrayBuffer(); })
+  const own = typeof clesRead === 'function' ? clesRead(name) : null; // (x_cles.js) on the administration's device: a file of the library tied in its place, or a shape of the workshop
+  return (own || fetch(MDL.dir + name + (MDL.txt ? '.txt' : '.glb')).then(r => { if (!r.ok) throw new Error('réponse ' + r.status); return MDL.txt ? r.text() : r.arrayBuffer(); })
     .then(data => new Promise((ok, ko) => {
       const keep = window.createImageBitmap; try { window.createImageBitmap = undefined; } catch (e) { }
       try { MDL.loader.parse(data, '', ok, ko); } catch (e) { ko(e); } finally { try { window.createImageBitmap = keep; } catch (e) { } }
-    })).then(g => {
+    }))).then(g => {
       g.scene.traverse(o => {
         if (!o.isMesh) return; const map = o.material.map;
         // textures are read as they are drawn everywhere else in the game (no colour-space conversion)
@@ -4800,11 +4828,11 @@ const BODIES = {};
 function bodyOf(cls) {
   const name = CLASSES[clsOf({ cls })].body; if (name === 'chevalier' || !MDL.on) return body0();
   const b = BODIES[name] || (BODIES[name] = { name, hero: null, clips: {}, ro: {}, calm: CALM, asked: false });
-  if (!b.asked && MDL.loader) { b.asked = true; modelLoad(name).then(g => { if (!g || !g.animations.length) return; for (const c of g.animations) b.clips[c.name] = c; b.hero = g.scene; }); } // (absent from liste.json: null, the first body stays)
+  if (!b.asked && MDL.loader) { b.asked = true; modelLoad(name).then(g => { if (!g || !g.animations.length) return; for (const c of g.animations) b.clips[c.name] = c; b.hero = g.scene; if (typeof clesAnimApply === 'function') clesAnimApply(); }); } // (absent from liste.json: null, the first body stays)
   return b.hero ? b : body0();
 }
 // what tells one knight's model from another, beyond its cloak, its weapon and its lantern: the models or the shapes built by code, and its body
-function heroMk(cls) { const c2 = clsOf({ cls }) === 2, c1 = clsOf({ cls }) === 1; if (!MDL.hero) return c2 ? '|c' : ''; return bodyOf(cls) !== body0() ? '|m2' : c2 ? '|m|c' : c1 ? '|m|e' : '|m'; } // (|e: the Chevalier d'Écorce has the same body as a knight of before the classes, but his own blows: the model is made again when the class differs)
+function heroMk(cls) { const c2 = clsOf({ cls }) === 2, c1 = clsOf({ cls }) === 1; if (!MDL.hero) return c2 ? '|c' : ''; return (bodyOf(cls) !== body0() ? '|m2' : c2 ? '|m|c' : c1 ? '|m|e' : '|m') + (typeof clesMk === 'function' ? clesMk() : ''); } // (clesMk, x4_anims.js: the workshop's animations and knight on the administration's device) // (|e: the Chevalier d'Écorce has the same body as a knight of before the classes, but his own blows: the model is made again when the class differs)
 /* (They are for the Chevalier d'Écorce only, class 1: a knight created before the classes, class 0, keeps the gestures of his last save: Damien, 8 October.)
    The sword attacks delivered with the Chevalier Champignon, carried over to the skeleton of the first body (chevalier_attaques.glb, tools/modeles.mjs --attaques:
    the bones and the clips, no body). They are read at the first blow of a blade by a knight of the first body (the Écorce, a free knight) with animArmes on,
@@ -4822,6 +4850,7 @@ function makeHero(col, kind, lan, cls) {
   let mesh = null; const bones = {}; body.traverse(o => { if (o.isSkinnedMesh) mesh = o; if (o.isBone) bones[o.name] = o; });
   const tm = modelMat(mesh.material.map, true); // the model keeps its own colours; the player's colour is the ring at its feet
   mesh.material = tm; mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false; body.scale.multiplyScalar(HERO_H);
+  if (typeof clesPersoDress === 'function') clesPersoDress(body, bones, mesh, bd); // (x6_perso.js) the knight « de base » in pieces, on the administration's device when asked
   const mixer = new THREE.AnimationMixer(body), act = {};
   for (const k in bd.clips) { const a = mixer.clipAction(bd.clips[k]); a.play(); a.setEffectiveWeight(0); act[k] = a; }
   const lc = lanCol(lan), glow = sprite(lc, 1.5); glow.position.set(-.26, .36, .1); tilt.add(glow);
@@ -4872,7 +4901,7 @@ function heroSwap(m, on) { bearInit();
     hd.position.copy(bl.p); hd.quaternion.copy(bl.q); hd.scale.copy(bl.s); hd.userData.bl = bl;
   }
 }
-function freeHero(m) { scene.remove(m.root); m.mixer.stopAllAction(); for (const k of ['hand', 'hand2']) if (m[k]) for (const x of m[k].userData.mats) x.dispose(); for (const x of m.mats) x.dispose(); }
+function freeHero(m) { scene.remove(m.root); if (m.body && m.body.userData.clesPerso && typeof clesPersoFree === 'function') clesPersoFree(m.body.userData.clesPerso); m.mixer.stopAllAction(); for (const k of ['hand', 'hand2']) if (m[k]) for (const x of m[k].userData.mats) x.dispose(); for (const x of m.mats) x.dispose(); }
 /* ---------- a bearing for each family of weapons (setting animArmes) ----------
    The knight has one set of animations, whatever he carries. On top of them each family of weapons adds its own bearing: small
    rotations of the bones, in degrees, in the knight's own frame [x, y, z]. A bone first turns about its own vertical (y), then
@@ -6051,7 +6080,7 @@ function creaCard() {
 const creaBtn = (icn, label, fn) => h('button', { class: 'btn line', type: 'button', onclick: fn }, ic(icn), label);
 function creaBody(kids, foot) {
   const playing = G.mode === 'play' && run && !F.hub;
-  if (ED.floor && !ED.on) kids.push(h('button', { class: 'btn wide', type: 'button', onclick: edBack }, ic('forge'), 'Retour à l\'éditeur · niveau ' + ED.floor));
+  if (ED.floor && !ED.on) kids.push(h('button', { class: 'btn wide', type: 'button', onclick: edBack }, ic('forge'), 'Retour à l\'éditeur · ' + (ED.sand ? 'bac à sable' : 'niveau ' + ED.floor)));
   kids.push(h('p', { style: 'font-size:13px', text: 'Rien de ce qui se passe ici n\'est enregistré ni envoyé. En quittant ce mode, le jeu se recharge et reprend ta vraie partie là où elle était.' }));
   if (playing) kids.push(h('div', { class: 'eyebrow', text: 'Dans ce niveau' }), h('div', { class: 'crea-grid' },
     creaBtn('c_kills', 'Vaincre toutes les créatures', creaKillAll), creaBtn('boss', 'Une créature de chaque sorte', creaZoo), creaBtn('coffre', 'Révéler les coffres', creaChests),
@@ -6163,7 +6192,7 @@ function admReapply() {
   admFxAll();
 }
 // called once at the start of the game, right after srvStart
-function admStart() { admReapply(); }
+function admStart() { admReapply(); try { if (typeof clesStart === 'function') clesStart(); } catch (e) { console.warn(e); } } // (x_cles.js: the workshop's own worlds and animations)
 const admSaveTrial = () => { ADM.local = true; admWrite(ADM_TRIAL, JSON.stringify(tuneDiff())); admTag(); };
 // the small tag at the bottom of the screen
 function admTag() {
@@ -6346,7 +6375,7 @@ function admMapState(k) {
 const ADM_MAP_TXT = { none: 'Tiré au sort pour tous les joueurs.', mine: 'Fait à la main sur cet appareil seulement : les joueurs ne le voient pas encore.', pub: 'Publié : tous les joueurs ont cette carte.', both: 'Publié, et modifié ici depuis : les joueurs ont encore l\'ancienne version.' };
 async function admMapPub(k, plan) {
   if (ADM.busy) return;
-  const why = plan && planProblem(k, plan); // a map nobody could finish is not published: it would be replaced by the draw for every player
+  const why = plan && (planProblem(k, plan) || (typeof clesPlanLocal === 'function' && clesPlanLocal(plan))); // a map nobody could finish is not published: it would be replaced by the draw for every player
   if (why) { ADM.msg = 'Cette carte ne peut pas être publiée : ' + why + '. Corrige-la dans l\'éditeur, puis publie.'; ADM.mapAsk = null; renderSheet(); return; }
   ADM.busy = true; ADM.msg = ''; renderSheet();
   try {
@@ -6482,7 +6511,7 @@ function admBody(kids, foot) {
     const search = h('input', { type: 'text', class: 'adm-search', placeholder: 'Chercher un réglage', 'aria-label': 'Chercher un réglage', value: ADM.q, autocomplete: 'off' });
     search.addEventListener('input', () => { ADM.q = search.value; admFilter(); });
     kids.push(search);
-  } else kids.push(roleAdmCard(), admCampCard(), admLibCard(), admHudCard(), admFilesCard());
+  } else kids.push(roleAdmCard(), typeof clesCard === 'function' ? clesCard() : null, admCampCard(), admLibCard(), admHudCard(), admFilesCard());
   for (const [id, name, phrase] of TUNE_FAM) {
     if (id === 'hud' || (id === 'niv') !== mod) continue; // the draw of each level goes with the maps, every other family with the variables; the screen has its own editor (k_hud.js)
     const badge = h('span', { class: 'adm-badge', hidden: true }), list = h('div', { class: 'adm-list' }), sec = h('section', { class: 'adm-fam' });
@@ -6957,7 +6986,7 @@ function showResults(kind, unlockedNow) {
   kids.push(h('div', null, h('div', { class: 'eyebrow', text: 'Niveau ' + f + ' · ' + levelOf(f).name }), h('h2', { text: win ? 'Niveau terminé' : kind === 'dead' ? 'Tu es tombé' : 'Niveau quitté' })));
   const rb = run.big, rd = run.diff, where = rb ? ' en expédition' : rd ? ' en ' + DIFFS[rd].name : '';
   kids.push(h('p', { text: win ? (unlockedNow < 0 ? 'Tu as terminé les ' + NLV + ' niveaux' + where + '.' : unlockedNow ? 'Nouveau niveau débloqué' + where + ' : ' + LEVELS[unlockedNow - 1].name + '.' : 'Tu peux le refaire autant que tu veux pour son butin.') : 'Tout ce que tu as ramassé reste à toi.' }));
-  kids.push(h('div', { class: 'chips', style: 'width:100%' }, stat(GM().ic, '+' + s.ecl, GM().coin, 'var(--amber)'), stat('sac', s.items.length, s.items.length > 1 ? 'objets' : 'objet'), stat('epee', s.kills, 'créatures'), s.gem ? stat('gemme', '+' + s.gem, s.gem > 1 ? 'gemmes' : 'gemme', '#7fe3d2') : null));
+  kids.push(h('div', { class: 'chips', style: 'width:100%' }, stat(GM().ic, '+' + s.ecl, GM().coin, 'var(--amber)'), stat('sac', s.items.length, s.items.length > 1 ? 'objets' : 'objet'), stat('epee', s.kills, 'créatures'), s.gem ? stat('gemme', '+' + s.gem, s.gem > 1 ? 'gemmes' : 'gemme', '#7fe3d2') : null)); nvResults(kids, kind); // (the objectives of the level, x_vivants.js)
   if (win) kids.push(h('p', { class: 'timeline' + (run.best ? ' best' : '') }, ic(run.best ? 'trophee' : 'temps'), fmtTime(run.time) + (run.best === 2 ? ' · nouveau record' : run.best === 1 ? ' · premier temps' : '')));
   const L = run.leftItems || [];
   if (s.left && L.length) { // a full bag: what stayed on the floor was sold, but any of it can still be kept in place of an object of the bag
@@ -7755,7 +7784,8 @@ function campApply(F0, p) {
 }
 // the animals of the camp, moved by ox, oy tiles (their spot and the corner they wander in)
 function campShift(F0, ox, oy) { if (!ox && !oy) return; for (const c of F0.critters || []) { c.x += ox * T; c.y += oy * T; c.tx += ox * T; c.ty += oy * T; c.zone = [c.zone[0] + ox, c.zone[1] + oy, c.zone[2] + ox, c.zone[3] + oy]; } }
-const planFor = (seed, floor) => { const p = planOf(floor); return p && !p.big === !seedBig(seed) && !isBossFloor(floor) ? p : null; };
+// (x2_sable.js: clesSbPlanFor gives a level of the workshop's sandbox, for the seed of its try only)
+const planFor = (seed, floor) => { const p = (typeof clesSbPlanFor === 'function' && clesSbPlanFor(seed, floor)) || planOf(floor); return p && !p.big === !seedBig(seed) && !isBossFloor(floor) ? p : null; };
 
 /* ---------------- the editor itself ---------------- */
 // the layers of what is edited: each can be shown or hidden, and locked (then nothing on it can be picked)
@@ -7795,14 +7825,14 @@ function edPush() { ED.undo.push(edStamp()); if (ED.undo.length > 60) ED.undo.sh
 function edLoad(txt) { const p = JSON.parse(txt); if (ED.camp) { F = genHub(); campApply(F, p); ED.last = null; edFollow(); } else F = planToFloor(p, ED.seed, ED.floor); ED.sel = null; worldChanged(); edSaveDraft(); edUI(); } // what is kept follows undo and redo too
 function edUndo() { if (!ED.undo.length) return; ED.redo.push(edStamp()); edLoad(ED.undo.pop()); }
 function edRedo() { if (!ED.redo.length) return; ED.undo.push(edStamp()); edLoad(ED.redo.pop()); }
-function edSaveDraft() { if (ED.camp) PLANS.camp = campToPlan(F); else PLANS[ED.floor] = floorToPlan(F); plansKeep(); } // every change is kept at once: the level made by hand is in force here
+function edSaveDraft() { if (ED.sand && typeof clesSbKeep === 'function') return clesSbKeep(); if (ED.camp) PLANS.camp = campToPlan(F); else PLANS[ED.floor] = floorToPlan(F); plansKeep(); } // every change is kept at once: the level made by hand is in force here
 
 // open the editor on a level: the plan on show in the admin panel (or the one already made by hand)
 function edStart(floor, seed) {
   if (Net.room) return;
   if (floor === 'camp') return edCamp();
   if (!CREA.on) { saveGame(true); CREA.on = true; } // the editor works in creative mode: nothing it does reaches the save
-  closeSheet(); run = null; ED.on = true; ED.camp = false; ED.floor = floor; ED.seed = seed; ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
+  closeSheet(); run = null; ED.on = true; ED.camp = false; ED.sand = null; ED.floor = floor; ED.seed = seed; ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
   F = genFloor(seed, floor); worldChanged(); edTakeWalls();
   P.x = F.start.x; P.y = F.start.y; cam.init = false; ED.half = F.big ? 11 : 13; ED.yaw = ED.yawV = 0; ED.chain = 0;
   G.mode = 'edit'; G.paused = false; showUI(); edUI();
@@ -7810,7 +7840,7 @@ function edStart(floor, seed) {
 // the camp: the same editor, with its places and people to move instead of creatures, chests and a way out
 function edCamp() {
   if (!CREA.on) { saveGame(true); CREA.on = true; }
-  closeSheet(); run = null; ED.on = true; ED.camp = true; ED.floor = 0; ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
+  closeSheet(); run = null; ED.on = true; ED.camp = true; ED.sand = null; ED.floor = 0; ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
   F = genHub(); worldChanged(); edTakeWalls(); ED.last = null; edFollow(); P.x = F.start.x; P.y = F.start.y; cam.init = false; ED.half = 9;
   G.mode = 'edit'; G.paused = false; showUI(); edUI();
 }
@@ -7831,10 +7861,10 @@ function edLayerVis() {
   for (const e of F.enemies) if (e.m && e.m.root) e.m.root.visible = v(ED.camp ? 'pnj' : 'niveau');
   if (F.hub && typeof CAMP !== 'undefined') for (const c of CAMP.npcs) if (c.m && c.m.root) c.m.root.visible = v('pnj');
 }
-function edStop() { ED.on = false; ED.camp = false; edUI(); backToHub(); }
+function edStop() { if (ED.sand && typeof clesSbStop === 'function') return clesSbStop(); ED.on = false; ED.camp = false; edUI(); backToHub(); }
 // play it at once, as it is now, in creative mode; « Retour à l'éditeur » in the creative panel brings it back
-function edTry() { edSaveDraft(); ED.on = false; edUI(); Net.ignoreSeed = null; for (const k of ['unlocked', 'un1', 'un2', 'unx']) ME[k] = Math.max(ME[k], ED.floor); startRun(ED.seed, ED.floor); }
-function edBack() { if (!ED.floor) return; closeSheet(); edStart(ED.floor, ED.seed); }
+function edTry() { if (ED.sand && typeof clesSbTry === 'function') return clesSbTry(); edSaveDraft(); ED.on = false; edUI(); Net.ignoreSeed = null; for (const k of ['unlocked', 'un1', 'un2', 'unx']) ME[k] = Math.max(ME[k], ED.floor); startRun(ED.seed, ED.floor); }
+function edBack() { if (ED.sand && typeof clesSbBack === 'function') return clesSbBack(); if (!ED.floor) return; closeSheet(); edStart(ED.floor, ED.seed); }
 // the level stands still: only the camera moves. P is where it looks, under the aim in the middle of the view (24b);
 // the arrows, ZQSD or the left stick move it, in the directions of the screen whatever the turn of the camera
 function edStep(dt) {
@@ -8142,7 +8172,7 @@ function edUI() {
   const top = h('div', { class: 'ed-top' },
     h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:8px' },
       h('button', { class: 'btn small line', type: 'button', 'aria-label': 'Quitter l\'éditeur', onclick: edStop }, ic('retour')),
-      h('div', { class: 'grow ed-name' }, h('b', { text: ED.camp ? 'Le camp' : 'Niveau ' + ED.floor }), h('small', { text: L.name })),
+      h('div', { class: 'grow ed-name' }, h('b', { text: ED.sand ? 'Bac à sable' : ED.camp ? 'Le camp' : 'Niveau ' + ED.floor }), h('small', { text: ED.sand && typeof clesSbName === 'function' ? clesSbName() : L.name })),
       h('button', { class: 'btn small', type: 'button', onclick: ED.camp ? edStop : edTry }, ic('aller'), ED.camp ? 'Terminer' : 'Essayer')));
   // the bubbles of the view, down the right edge (8 October, the layout of audit/maquettes/editeur_mobile_et_grand_ecran.png): undo, redo, layers, points,
   // turning the view, the help. They used to crowd the top bar and a second row folded behind « Plus »
@@ -10669,6 +10699,1280 @@ async function retAdmDel(r) {
   const a = retA(); a.ask = 0;
   try { const o = await admJCall('retour-retirer', { n: r.n }); a.n = o.nouveaux | 0; a.list = a.list.filter(x => x.n !== r.n); a.open = 0; } catch (e) { a.msg = String(e.message || e); }
   retAdmDraw();
+}
+
+/* ================= « Les clés » : the workshop of the administration (9 October, Damien's request) =================
+   « Les outils qui me donneraient vraiment toutes les clés » : create content and tie it to the game without code. Opened from Administration >
+   Modèles > « Les clés : l'atelier ». It covers the screen with a view of its own (a little 3D scene that turns) and, like the level editor
+   (j_editeur.js), the tools in bubbles down the left edge, a short drawer at the bottom of a phone, a panel on the right from 700 points wide.
+   Its tools (one file each, all after d_ui.js, functions only):
+     liens   (this file)       tie a file of the library (l_fichiers.js) to a creature, a weapon, a piece of scenery or a block, or add it as a new one;
+     sable   (x2_sable.js)     the sandbox: an empty level to paint and fill with the level editor, kept in a library of levels;
+     formes  (x3_formes.js)    a piece of scenery or a block made of ready shapes, in the colours of a world;
+     anims   (x4_anims.js)     the clips of a knight or a creature, their speed, and the clips of one knight on another of the same skeleton;
+     monde   (x5_monde.js)     a new world: name, colours, floors and walls, creatures, the names of its six levels;
+     perso   (x6_perso.js)     the knight « de base » made of separate pieces on the skeleton (COSMETIQUES.md).
+   What they make lives on this device only (key tk-cles, the administration's device: ADM.shown), never in the save, and players never see it:
+   the save service has no place yet for these new kinds of data. « Fichier » in the rail writes all of it in a JSON file and reads it back.
+   The game reads it through a few calls guarded by typeof: clesRead (modelRead, e2_modeles.js), clesList (modelsStart), clesStart (admStart),
+   clesCard (the card in Modèles), clesPlanLocal (a map that wears what only this device has is not published). */
+function clesS() { return clesS.s || (clesS.s = { on: false, tool: 'liens', data: null, r: null, scene: null, cam: null, raf: 0, objs: [], spin: 0, files: null, filesBusy: false, msg: '', min: false, help: false, view: null, lk: 'crea', lf: null, lt: null, lnom: '', drag: null, yaw: .5, pitch: .35, zoom: 1, step: null }); }
+function clesOn() { try { return !!ADM.shown; } catch (e) { return false; } } // the administration's device only: a player never reads tk-cles
+function clesClean(d) {
+  const o = v => v && typeof v === 'object' && !Array.isArray(v) ? v : {}, a = v => Array.isArray(v) ? v : [];
+  d = o(d); return { v: 1, liens: o(d.liens), neufs: o(d.neufs), hist: a(d.hist).slice(-60), formes: o(d.formes), niveaux: a(d.niveaux), anims: o(d.anims), mondes: a(d.mondes), perso: o(d.perso) };
+}
+function clesData() { const s = clesS(); if (!s.data) { let d = null; try { d = JSON.parse(localStorage.getItem('tk-cles') || 'null'); } catch (e) { } s.data = clesClean(d); } return s.data; }
+function clesKeep() { try { localStorage.setItem('tk-cles', JSON.stringify(clesData())); return true; } catch (e) { clesSay('Plus assez de place sur cet appareil : rien n\'a été gardé.'); return false; } }
+function clesSay(m) { const s = clesS(); s.msg = m; const el = $('cl-msg'); if (el) { el.textContent = m; el.hidden = !m; } }
+// a name of the game for what is made here: lower case, no accent, _ between the words
+function clesSlug(t) { return admFold(t || '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'sans_nom'; }
+// called by admStart (i_admin.js) once the game has started
+function clesStart() {
+  if (!clesOn()) return;
+  for (const k of ['clesMondesStart', 'clesAnimApply']) try { if (typeof window[k] === 'function') window[k](); } catch (e) { console.warn(k, e); }
+}
+// the list of models has arrived (modelsStart): the new pieces made or tied here join it, so that the editor and the library show them
+function clesList(list) {
+  if (!clesOn() || !list) return; const d = clesData();
+  for (const n in d.neufs) list[n] = list[n] || 1;
+  for (const n in d.formes) list[n] = list[n] || 1;
+}
+// a model the game asks for (modelRead): the file tied in its place on this device, or a shape of the workshop; null: the game's own file
+function clesRead(name) {
+  if (!clesOn()) return null; const d = clesData(), base = String(name).replace(/_lo$/, ''), L = d.liens[base] || d.neufs[base];
+  if (L && L.id && typeof SRV !== 'undefined' && SRV.url) return clesFile(L.id);
+  if (d.formes[base] && typeof clesFormGltf === 'function') return Promise.resolve(clesFormGltf(d.formes[base]));
+  return null;
+}
+// a .glb of the library, read the way modelRead reads the game's own (pictures through plain <img>)
+function clesFile(id) {
+  const c = clesFile.c || (clesFile.c = {}); if (c[id]) return c[id].then(buf => clesParse(buf.slice(0)));
+  c[id] = fetch(filUrl(id)).then(r => { if (!r.ok) throw new Error('réponse ' + r.status); return r.arrayBuffer(); });
+  c[id].catch(() => { delete c[id]; });
+  return c[id].then(buf => clesParse(buf.slice(0)));
+}
+function clesParse(buf) {
+  return new Promise((ok, ko) => {
+    const L = MDL.loader || new THREE.GLTFLoader(), keep = window.createImageBitmap; try { window.createImageBitmap = undefined; } catch (e) { }
+    try { L.parse(buf, '', ok, ko); } catch (e) { ko(e); } finally { try { window.createImageBitmap = keep; } catch (e) { } }
+  });
+}
+// what only this device has (pieces made or tied here as new): a map that wears one is not published, the players would see a stand-in
+function clesLocalNames() { if (!clesOn()) return []; const d = clesData(); return Object.keys(d.neufs).concat(Object.keys(d.formes)); }
+function clesPlanLocal(plan) {
+  const loc = new Set(clesLocalNames()); if (!plan || !loc.size) return null; const used = new Set();
+  for (const d of plan.decor || []) if (loc.has(d[0])) used.add(d[0]);
+  for (const w of plan.wp || []) if (loc.has(w[0])) used.add(w[0]);
+  for (const b of plan.bpal || []) if (loc.has(b)) used.add(b);
+  for (const k of ['sol', 'mur', 'dessus']) if (plan.tx && loc.has(plan.tx[k])) used.add(plan.tx[k]);
+  return used.size ? 'elle porte ' + (used.size > 1 ? 'des pièces' : 'une pièce') + ' qui n\'existe' + (used.size > 1 ? 'nt' : '') + ' que sur cet appareil (' + [...used].map(clesNameOf).join(', ') + ')' : null;
+}
+function clesNameOf(n) { const d = clesData(), x = d.neufs[n] || d.formes[n]; return x && x.nom ? x.nom : clesLabel(n); }
+// a model's name in plain words: « Taupe », « Racines — Mur 1 », « Rocher »
+function clesLabel(n) { n = String(n); if (/^d_/.test(n)) return edDecorName(n); if (/^b_/.test(n)) { const b = blocLib().find(x => x.id === n); if (b) return b.name; } const t = n.replace(/^[a-z]_/, '').replace(/_/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); }
+// a model was tied, untied or made again: what the game kept of it goes, and what shows it is built again
+function clesRefresh(names) {
+  for (const n0 of names) for (const n of [n0, n0 + '_lo']) {
+    if (typeof MDL !== 'undefined') { delete MDL.cache[n]; delete MDL.wait[n]; }
+    try { delete BLOC_GEO[n]; } catch (e) { } try { delete PREV.cache[n]; if (PREV.name === n) { prevFree(PREV.cur); PREV.cur = null; PREV.name = ''; } } catch (e) { }
+  }
+  if (!USE3D || !F) return;
+  try { for (const e of F.enemies || []) if (e.m) { freeMesh(e.m.root); e.m = null; } if (typeof PM !== 'undefined' && PM) PM.wName = null; worldChanged(); } catch (e) { console.warn(e); }
+}
+
+/* ---------------- the workshop itself ---------------- */
+// [key, name of the bubble, icon, what it is for]; a tool shows once its file is there (clesP_<key>)
+function clesTools() {
+  return [['liens', 'Relier', 'plus', 'Relier un fichier envoyé (Fichiers importés) à une créature, une arme, un décor ou un bloc du jeu, ou l\'ajouter comme nouveau décor ou bloc.'],
+    ['sable', 'Bac à sable', 'c_map', 'Un niveau vide pour peindre sols, murs et décors, poser créatures et armes, l\'essayer, puis le ranger dans ta bibliothèque de niveaux.'],
+    ['formes', 'Formes', 'forge', 'Fabriquer un décor ou un bloc avec des formes prêtes (bloc par bloc, ou à partir d\'un modèle tout fait), dans les couleurs d\'un monde.'],
+    ['anims', 'Animations', 'aller', 'Voir les animations d\'un chevalier ou d\'une créature, leur vitesse, et donner à un chevalier les animations d\'un autre.'],
+    ['monde', 'Monde', 'zcamp', 'Créer un monde : son nom, ses couleurs, ses sols et murs, ses créatures et ses six niveaux.'],
+    ['perso', 'Personnage', 'equipe', 'Le chevalier de base, fait de pièces séparées (tête, corps, cape, mains, pieds, arme) : la future structure des cosmétiques.']]
+    .filter(t => typeof window['clesP_' + t[0]] === 'function');
+}
+function clesOpen(tool) {
+  const s = clesS(); if (Net.room) return;
+  if (tool) s.tool = tool; if (!clesTools().some(t => t[0] === s.tool)) s.tool = 'liens';
+  closeSheet(); s.on = true; s.msg = ''; clesUI(); clesLoop();
+}
+function clesClose() {
+  const s = clesS(); s.on = false; cancelAnimationFrame(s.raf); const r = $('cles'); if (r) r.remove();
+  if (typeof window['clesX_' + s.tool] === 'function') window['clesX_' + s.tool]();
+  ADM.view = 'mod'; openSheet('adm');
+}
+function clesGo(tool) { const s = clesS(); if (s.tool === tool) return; if (typeof window['clesX_' + s.tool] === 'function') window['clesX_' + s.tool](); s.tool = tool; s.msg = ''; clesShow([]); s.step = null; clesUI(); }
+// the card in Administration > Modèles
+function clesCard() {
+  if (!clesOn()) return null; const T = clesTools();
+  return h('section', { class: 'adm-fam adm-box' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'Les clés : l\'atelier' }),
+    h('small', { text: 'Créer et brancher du contenu sans code : ' + T.map(t => t[1].toLowerCase()).join(', ') + '. Tout reste sur cet appareil (les joueurs ne voient rien) ; « Fichier » l\'enregistre ou le reprend.' }))),
+    h('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px;padding:0 14px 14px' }, ...T.map((t, i) => h('button', { class: 'btn small' + (i ? ' line' : ''), type: 'button', disabled: !!Net.room, onclick: () => clesOpen(t[0]) }, ic(t[2]), t[1]))));
+}
+// the little 3D view: one renderer, kept; what a tool shows is a list of objects (clesShow), turned with a finger or by itself
+function clesView() {
+  const s = clesS(); if (s.r) return true; if (!USE3D || !window.THREE) return false;
+  try {
+    s.r = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true }); s.r.setClearColor(0, 0); s.r.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+    s.r.domElement.className = 'cl-canvas'; s.scene = new THREE.Scene(); s.scene.add(new THREE.HemisphereLight('#fff6e0', '#4a3a2c', 1.45));
+    const d = new THREE.DirectionalLight('#ffffff', .95); d.position.set(2, 3, 2); s.scene.add(d); s.cam = new THREE.PerspectiveCamera(30, 1, .01, 200);
+    const el = s.r.domElement; el.style.touchAction = 'none';
+    el.addEventListener('pointerdown', e => { s.drag = [e.clientX, e.clientY, s.yaw, s.pitch]; el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointermove', e => { if (!s.drag) return; s.yaw = s.drag[2] - (e.clientX - s.drag[0]) * .01; s.pitch = clamp(s.drag[3] + (e.clientY - s.drag[1]) * .006, -.2, 1.3); s.spinOff = true; });
+    el.addEventListener('pointerup', () => { s.drag = null; }); el.addEventListener('pointercancel', () => { s.drag = null; });
+    el.addEventListener('wheel', e => { s.zoom = clamp(s.zoom * (e.deltaY > 0 ? 1.1 : .9), .3, 4); e.preventDefault(); }, { passive: false });
+    return true;
+  } catch (e) { s.r = null; return false; }
+}
+// what the view shows: objects already sized and placed by the tool; fit: the radius of what must stay in view
+function clesShow(objs, fit) {
+  const s = clesS(); if (!s.scene) return;
+  for (const o of s.objs) { s.scene.remove(o); if (o.userData.free) o.userData.free(); }
+  s.objs = objs || []; for (const o of s.objs) s.scene.add(o); s.fit = fit || 1; s.mixers = s.objs.map(o => o.userData.mixer).filter(Boolean);
+}
+// a model as an object one unit long on its longest side, its base on the ground, its middle on the axis
+function clesUnit(obj, size) {
+  const g = new THREE.Group(); obj.traverse(o => { if (o.isMesh) o.frustumCulled = false; }); obj.updateMatrixWorld(true); /* (a body on bones moves out of its box: never left out of the view) */ const bb = clesBox(obj), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3()), k = (size || 1) / (Math.max(sz.x, sz.y, sz.z) || 1);
+  obj.position.sub(new THREE.Vector3(c.x, bb.min.y, c.z)); const inner = new THREE.Group(); inner.add(obj); inner.scale.setScalar(k); g.add(inner); g.userData.size = [sz.x * k, sz.y * k, sz.z * k]; return g;
+}
+// the box of a model; a body on bones is measured by its bones (head_end, the toes…): its mesh is stored in other units than what the bones make of it
+function clesBox(obj) {
+  let skin = false; obj.traverse(o => { if (o.isSkinnedMesh) skin = true; }); if (!skin) return new THREE.Box3().setFromObject(obj);
+  const bb = new THREE.Box3(), v = new THREE.Vector3(); obj.traverse(o => { if (o.isBone) bb.expandByPoint(o.getWorldPosition(v)); });
+  const sz = bb.getSize(new THREE.Vector3()); bb.min.y -= sz.y * .03; bb.max.y += sz.y * .06; bb.expandByVector(new THREE.Vector3(sz.y * .1, 0, sz.y * .1)); return bb;
+}
+function clesLoop() {
+  const s = clesS(); cancelAnimationFrame(s.raf); let last = performance.now();
+  const step = t => {
+    if (!s.on) return; s.raf = requestAnimationFrame(step); const dt = Math.min(.05, (t - last) / 1000); last = t;
+    const box = $('cl-view'); if (!s.r || !box) return; if (s.r.domElement.parentNode !== box) box.prepend(s.r.domElement);
+    const w = box.clientWidth, hh = box.clientHeight; if (!w || !hh) return;
+    if (s.w !== w || s.h !== hh) { s.w = w; s.h = hh; s.r.setSize(w, hh); s.cam.aspect = w / hh; s.cam.updateProjectionMatrix(); }
+    if (!s.drag && !s.spinOff) s.yaw += dt * .45;
+    for (const m of s.mixers || []) m.update(dt);
+    if (s.step) try { s.step(dt); } catch (e) { s.step = null; console.warn(e); }
+    const R = s.fit * 2.6 * s.zoom, cy = s.fit * .45; s.cam.position.set(Math.sin(s.yaw) * Math.cos(s.pitch) * R, cy + Math.sin(s.pitch) * R, Math.cos(s.yaw) * Math.cos(s.pitch) * R); s.cam.lookAt(0, cy, 0);
+    s.r.render(s.scene, s.cam);
+  };
+  s.raf = requestAnimationFrame(step);
+}
+// a label over the view (« Avant », « Après »…)
+function clesTags(list) { return h('div', { class: 'cl-tags' }, ...list.map(t => h('span', { text: t }))); }
+function clesUI() {
+  const s = clesS(); let root = $('cles'); if (!s.on) { if (root) root.remove(); return; }
+  if (!root) { root = h('div', { id: 'cles', role: 'dialog', 'aria-label': 'L\'atelier' }); document.body.append(root); }
+  const T = clesTools(), T0 = T.find(t => t[0] === s.tool) || T[0], has3d = clesView();
+  const rb = (icn, lab, fn, at) => h('button', Object.assign({ class: 'chipbtn', type: 'button', 'aria-label': lab, title: lab, onclick: fn }, at || {}), ic(icn), h('span', { class: 'cl-lab', text: lab }));
+  const top = h('div', { class: 'cl-top' }, h('button', { class: 'btn small line cl-back', type: 'button', 'aria-label': 'Revenir à l\'administration', onclick: clesClose }, ic('retour')),
+    h('div', { class: 'cl-name' }, h('b', { text: T0[1] }), h('small', { text: 'L\'atelier · sur cet appareil' })));
+  const tools = h('div', { class: 'cl-tools' }, ...T.map(t => rb(t[2], t[1], () => clesGo(t[0]), { 'aria-pressed': String(t[0] === s.tool) })));
+  const file = h('input', { type: 'file', accept: '.json,application/json', hidden: true }); file.addEventListener('change', () => { const f = file.files && file.files[0]; if (f) f.text().then(clesImport, () => clesSay('Ce fichier ne se lit pas.')); });
+  const rail = h('div', { class: 'cl-rail' }, rb('bulle', 'Aide', () => { s.help = !s.help; s.min = false; clesUI(); }, { 'aria-pressed': String(s.help) }),
+    rb('nuage', 'Enregistrer dans un fichier', clesExport), rb('recommencer', 'Reprendre d\'un fichier', () => file.click()), file);
+  const view = h('div', { class: 'cl-view', id: 'cl-view' }, has3d ? null : h('p', { class: 'cl-no3d', text: 'L\'aperçu en 3D demande la 3D (les modèles du jeu chargés). Les réglages restent possibles.' }), tools, rail, h('div', { id: 'cl-tags' }));
+  let body = []; try { body = window['clesP_' + s.tool]() || []; } catch (e) { console.error(e); body = [h('p', { class: 'adm-msg', text: 'Cet outil n\'a pas pu s\'ouvrir : ' + (e.message || e) })]; }
+  const dock = h('div', { class: 'cl-dock' + (s.min ? ' min' : '') }, h('button', { class: 'ed-fold', type: 'button', 'aria-label': s.min ? 'Déplier le panneau' : 'Replier le panneau', 'aria-expanded': String(!s.min), onclick: () => { s.min = !s.min; clesUI(); } }, h('i')),
+    s.min ? null : h('div', { class: 'cl-scroll' }, s.help ? h('p', { class: 'cl-tip', text: T0[3] + ' Un doigt sur la vue la fait tourner ; la molette zoome.' }) : null,
+      h('p', { id: 'cl-msg', class: 'adm-msg', role: 'status', hidden: !s.msg, text: s.msg }), ...body.filter(Boolean)));
+  root.className = s.help ? 'help' : ''; root.replaceChildren(top, view, dock);
+}
+function clesExport() {
+  const blob = new Blob([JSON.stringify({ jeu: 'TinKnight', atelier: clesData() }, null, 1)], { type: 'application/json' }), a = h('a', { href: URL.createObjectURL(blob), download: 'tinknight-atelier.json' });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); clesSay('Fichier tinknight-atelier.json enregistré : liens, formes, niveaux, mondes, animations, personnage.');
+}
+// a file read back: what it holds is added to what is here (same name: the file's version wins)
+function clesImport(text) {
+  let m = null; try { m = JSON.parse(text); } catch (e) { }
+  if (!m || !m.atelier || typeof m.atelier !== 'object') { clesSay('Ce fichier n\'est pas un fichier de l\'atelier TinKnight.'); return; }
+  const a = clesClean(m.atelier), d = clesData(), before = Object.keys(d.liens).concat(Object.keys(d.neufs), Object.keys(d.formes));
+  for (const k of ['liens', 'neufs', 'formes', 'anims', 'perso']) Object.assign(d[k], a[k]);
+  for (const k of ['niveaux', 'mondes']) for (const x of a[k]) { const i = d[k].findIndex(y => y && x && y.id === x.id); if (i >= 0) d[k][i] = x; else d[k].push(x); }
+  clesKeep(); if (MDL.list) clesList(MDL.list); clesRefresh([...new Set(before.concat(Object.keys(a.liens), Object.keys(a.neufs), Object.keys(a.formes)))]);
+  clesSay('Repris : ' + Object.keys(a.liens).length + ' liens, ' + Object.keys(a.neufs).length + ' nouveaux, ' + Object.keys(a.formes).length + ' formes, ' + a.niveaux.length + ' niveaux, ' + a.mondes.length + ' mondes.' + (a.mondes.length ? ' Les mondes apparaissent au prochain lancement.' : ''));
+  clesUI();
+}
+
+/* ---------------- tool 1 : tie a file of the library to the game ---------------- */
+// the kinds of things a file can take the place of: [key, name, test on a model name, what the game does with it]
+function clesKinds() {
+  return [['crea', 'Créature', n => /^m_/.test(n)], ['arme', 'Arme', n => /^a_/.test(n)], ['decor', 'Décor', n => /^d_/.test(n)], ['bloc', 'Bloc', n => /^b_/.test(n) && !/_lo$/.test(n)],
+    ['ndecor', 'Nouveau décor', null], ['nbloc', 'Nouveau bloc', null]];
+}
+// where a creature model shows in the game: « Racines · Gardien »
+function clesWhere(n) {
+  const out = [], kinds = ['Sporule', 'Ronceux', 'Cracheur', 'Follet', 'Gardien'];
+  for (const t in MON) MON[t].forEach((x, w) => { if ('m_' + x === n) out.push(STRATA[w].name + ' · ' + (t === '9' ? 'boss' : kinds[t])); });
+  for (const z in MON_OWN) for (const t in MON_OWN[z]) if ('m_' + MON_OWN[z][t] === n) { const w = STRATA.findIndex((S, i) => ownZone(i) === z); out.push((STRATA[w] ? STRATA[w].name : z) + ' · ' + (t === '9' ? 'boss' : kinds[t])); }
+  if (/^a_/.test(n)) for (const W of WEAPONS) if ('a_' + W.mdl === n && out.length < 3) out.push(W.n || W.name || '');
+  return out.filter(Boolean).join(', ');
+}
+function clesTargets(k) {
+  const K = clesKinds().find(x => x[0] === k); if (!K || !K[2] || !MDL.list) return [];
+  const loc = new Set(clesLocalNames());
+  return Object.keys(MDL.list).filter(n => K[2](n) && !loc.has(n)).sort().map(n => [n, k === 'bloc' ? (blocLib().find(b => b.id === n) || { name: n }).name : k === 'decor' ? edDecorName(n) : n.slice(2).replace(/_/g, ' ')]);
+}
+function clesFilesLoad() {
+  const s = clesS(); if (s.filesBusy || !SRV.url || !ADM.mdp) return; s.filesBusy = true;
+  filCall('fichiers').then(o => { s.files = o.fichiers.filter(f => f.type === 'model/gltf-binary'); }, e => { s.files = []; clesSay(String(e.message || e)); })
+    .then(() => { s.filesBusy = false; if (s.on && s.tool === 'liens') clesUI(); });
+}
+// the view of tool 1: the model in the game now (« Avant ») and the file (« Après »), side by side
+function clesLiensShow() {
+  const s = clesS(); if (!s.scene) return; const want = (s.lt || '') + '|' + (s.lf || ''); if (s.shown === want) return; s.shown = want;
+  const objs = [], tags = [], put = (o, x, tag) => { o.position.x = x; objs.push(o); tags.push(tag); };
+  const done = () => { if (s.shown !== want || s.tool !== 'liens') return; clesShow(objs.slice(), objs.length > 1 ? 1.25 : .8); const t = $('cl-tags'); if (t) t.replaceChildren(clesTags(tags)); };
+  const jobs = [];
+  if (s.lt) jobs.push(modelLoad(s.lt).then(g => { if (g) put(clesUnit(g.scene.clone()), s.lf ? -.7 : 0, clesData().liens[s.lt] ? 'En jeu ici (déjà relié)' : 'Avant'); }));
+  if (s.lf) jobs.push(clesFile(s.lf).then(g => { put(clesUnit(g.scene), s.lt ? .7 : 0, 'Après : le fichier'); if (g.animations.length) { const mx = new THREE.AnimationMixer(g.scene); mx.clipAction(g.animations[0]).play(); objs[objs.length - 1].userData.mixer = mx; } }, () => clesSay('Ce fichier ne se lit pas comme un modèle.')));
+  Promise.all(jobs).then(done, done); if (!jobs.length) done();
+}
+function clesP_liens() {
+  const s = clesS(), d = clesData(), out = [];
+  if (!SRV.url) return [h('p', { text: 'Il faut ouvrir le jeu depuis le site : les fichiers sont gardés par le service.' })];
+  if (s.files === null) { s.files = []; clesFilesLoad(); }
+  const chip = (on, lab, fn, more) => h('button', Object.assign({ class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: fn }, more || {}), lab);
+  out.push(h('b', { class: 'cl-h', text: '1. Le fichier' }), s.files.length ? h('div', { class: 'cl-chips' }, ...s.files.map(f => chip(s.lf === f.id, f.nom, () => { s.lf = f.id; s.lnom = s.lnom || f.nom.replace(/\.glb$/i, ''); clesUI(); clesLiensShow(); }, { 'data-id': f.id })))
+    : h('small', { text: s.filesBusy ? 'Lecture des fichiers…' : 'Aucun modèle envoyé : envoie d\'abord un .glb dans Modèles > Fichiers importés.' }));
+  out.push(h('b', { class: 'cl-h', text: '2. Ce qu\'il devient' }), h('div', { class: 'cl-chips' }, ...clesKinds().map(([k, n]) => chip(s.lk === k, n, () => { s.lk = k; s.lt = null; s.shown = null; clesUI(); clesLiensShow(); }, { 'data-k': k }))));
+  const nouveau = s.lk === 'ndecor' || s.lk === 'nbloc';
+  if (nouveau) {
+    const inp = h('input', { type: 'text', class: 'adm-search', maxlength: '30', value: s.lnom || '', placeholder: 'Son nom', 'aria-label': 'Nom du nouveau' + (s.lk === 'nbloc' ? ' bloc' : ' décor') });
+    inp.addEventListener('input', () => { s.lnom = inp.value; const b = $('cl-go'); if (b) b.disabled = !(s.lf && clesSlug(s.lnom) !== 'sans_nom'); });
+    out.push(h('small', { text: s.lk === 'nbloc' ? 'Un bloc de 1 × 1 case, posé dans l\'éditeur de niveaux (Terrain > Blocs 3D, rangée « import »).' : 'Un décor de plus, posé dans l\'éditeur de niveaux (Décors > Décor au sol > Autres) et dans le bac à sable.' }), inp);
+  } else {
+    const L = clesTargets(s.lk);
+    out.push(h('small', { text: s.lt ? (clesWhere(s.lt) ? 'Dans le jeu : ' + clesWhere(s.lt) + '.' : 'Le modèle « ' + s.lt + ' ».') : 'Touche ce que le fichier doit remplacer.' }),
+      h('div', { class: 'seg cl-pal' }, ...L.map(([n, lab]) => edPalBtn(n, lab + (d.liens[n] ? ' ●' : ''), s.lt === n, () => { s.lt = n; clesUI(); clesLiensShow(); }))));
+  }
+  const ready = s.lf && (nouveau ? clesSlug(s.lnom) !== 'sans_nom' : s.lt);
+  out.push(h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' }, h('button', { id: 'cl-go', class: 'btn small', type: 'button', disabled: !ready, onclick: clesLier }, ic('plus'), nouveau ? 'Ajouter à la bibliothèque' : 'Relier'),
+    d.hist.length ? h('button', { class: 'btn small line', type: 'button', onclick: clesDefaire }, ic('recommencer'), 'Revenir en arrière') : null));
+  // what is tied on this device now
+  const ties = Object.entries(d.liens).map(([n, L]) => [n, L, 'remplace']).concat(Object.entries(d.neufs).map(([n, L]) => [n, L, 'nouveau']));
+  out.push(h('b', { class: 'cl-h', text: 'En place sur cet appareil' }), ties.length ? null : h('small', { text: 'Rien pour l\'instant : le jeu montre ses propres modèles.' }),
+    ...ties.map(([n, L, k]) => h('div', { class: 'row cl-row', style: 'flex-wrap:nowrap;align-items:center;gap:6px' }, h('span', { class: 'grow' }, h('b', { text: k === 'nouveau' ? L.nom : clesLabel(n) }), h('small', { text: (k === 'nouveau' ? 'Nouveau ' + (/^b_/.test(n) ? 'bloc' : 'décor') + ' (' + n + ')' : 'remplacé par ' + L.nom) + ' · ' + new Date(L.quand || 0).toLocaleDateString('fr-FR') })),
+      h('button', { class: 'chipbtn', type: 'button', 'aria-label': 'Défaire ' + n, onclick: () => clesDelier(n) }, ic('fermer'), 'Défaire'))),
+    h('small', { text: 'Ces liens ne servent que sur cet appareil : les joueurs gardent les modèles d\'origine. Une carte qui porte un nouveau décor ou bloc ne se publie pas.' }));
+  setTimeout(clesLiensShow, 0);
+  return out;
+}
+// one change of tie, remembered so that « Revenir en arrière » can put back what was before
+function clesTie(n, val, neuf) {
+  const d = clesData(), box = neuf ? d.neufs : d.liens; d.hist.push({ n, neuf: !!neuf, avant: box[n] || null, quand: Date.now() }); if (d.hist.length > 60) d.hist.shift();
+  if (val) box[n] = val; else delete box[n];
+  if (neuf && MDL.list) { if (val) MDL.list[n] = 1; else delete MDL.list[n]; }
+  clesKeep(); clesRefresh([n]); clesS().shown = null;
+}
+function clesLier() {
+  const s = clesS(), f = (s.files || []).find(x => x.id === s.lf); if (!f) return;
+  if (s.lk === 'ndecor' || s.lk === 'nbloc') {
+    const n = (s.lk === 'nbloc' ? 'b_import_' : 'd_import_') + clesSlug(s.lnom);
+    clesTie(n, { id: f.id, nom: (s.lnom || f.nom).trim().slice(0, 30), fichier: f.nom, quand: Date.now() }, true); clesSay('« ' + clesNameOf(n) + ' » est dans la bibliothèque (' + (s.lk === 'nbloc' ? 'Terrain > Blocs 3D' : 'Décors > Autres') + ').');
+  } else { if (!s.lt) return; clesTie(s.lt, { id: f.id, nom: f.nom, quand: Date.now() }); clesSay(clesLabel(s.lt) + ' est remplacé par ' + f.nom + ' sur cet appareil. « Défaire » ou « Revenir en arrière » rend l\'original.'); }
+  clesUI(); clesLiensShow();
+}
+function clesDelier(n) { const d = clesData(), neuf = !!d.neufs[n]; clesTie(n, null, neuf); clesSay(neuf ? 'Retiré de la bibliothèque.' : 'Le modèle d\'origine est revenu.'); clesUI(); }
+function clesDefaire() {
+  const d = clesData(), x = d.hist.pop(); if (!x) return; const box = x.neuf ? d.neufs : d.liens;
+  if (x.avant) box[x.n] = x.avant; else delete box[x.n]; if (x.neuf && MDL.list) { if (x.avant) MDL.list[x.n] = 1; else delete MDL.list[x.n]; }
+  clesKeep(); clesRefresh([x.n]); clesS().shown = null; clesSay('Dernier changement défait (' + clesNameOf(x.n) + ').'); clesUI();
+}
+
+/* ================= « Les clés », tool 2 : the sandbox (9 October) =================
+   An empty level of a world, opened in the level editor (j_editeur.js) with all its tools: dig and fill, paint the floors and the walls (zones
+   and textures of the library), blocks, scenery on the floor and on the walls (the pieces tied or made in the workshop are in « Autres »),
+   creatures, chests, the way in and out. « Essayer » plays it at once in creative mode, with the weapon chosen here. Every change is kept in
+   the workshop's library of levels (tk-cles, niveaux: { id, nom, monde, plan, quand }), never in PLANS: nothing of the game changes until
+   « Mettre à la place du niveau N » copies it there, from where Modèles > Niveaux publishes it as any map made by hand.
+   The editor knows it by ED.sand (the id of the level in hand): edSaveDraft, edStop, edBack, edUI and planFor ask clesSb… below. */
+function clesSbList() { return clesData().niveaux; }
+function clesSbGet(id) { return clesSbList().find(x => x.id === id) || null; }
+// a new empty level: rock all round, open ground inside, the way in on the left, the way out on the right
+function clesSbNew(monde, size) {
+  const W = size | 0 || 24, H = W, mid = (H / 2) | 0; let g = '';
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) g += x > 0 && y > 0 && x < W - 1 && y < H - 1 ? '1' : '0';
+  const plan = { v: 1, floor: monde * PER_WORLD + 1, big: false, W, H, g, s: '.'.repeat(W * H), h: '.'.repeat(W * H), rooms: [[W / 2, H / 2, 'start', 1, 1, W - 2, H - 2]],
+    start: [3.5 * T, (mid + .5) * T], lift: [(W - 3.5) * T, (mid + .5) * T], foes: [], chests: [], decor: [], seals: null, wp: [] };
+  const n = clesSbList().filter(x => x.monde === monde).length + 1;
+  const e = { id: 'sb' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36), nom: 'Bac à sable ' + STRATA[monde].name + (n > 1 ? ' ' + n : ''), monde, plan, quand: Date.now() };
+  clesSbList().push(e); clesKeep(); return e;
+}
+// the editor opened on a level of the sandbox (as edStart does for a level of the game)
+function clesSbOpen(id) {
+  const e = clesSbGet(id); if (!e || Net.room) return; const s = clesS();
+  if (!CREA.on) { saveGame(true); CREA.on = true; } // the editor works in creative mode: nothing reaches the save
+  if (s.on) { s.on = false; cancelAnimationFrame(s.raf); const r = $('cles'); if (r) r.remove(); }
+  closeSheet(); run = null; const floor = clamp(e.monde, 0, STRATA.length - 1) * PER_WORLD + 1;
+  ED.on = true; ED.camp = false; ED.sand = e.id; ED.floor = floor; ED.seed = newSeed(0, false); ED.undo = []; ED.redo = []; ED.sel = null; ED.tool = 'sel'; ED.dz = null; ED.deco = 0;
+  F = planToFloor(e.plan, ED.seed, floor); worldChanged(); edTakeWalls();
+  P.x = F.start.x; P.y = F.start.y; cam.init = false; ED.half = 13; ED.yaw = ED.yawV = 0; ED.chain = 0;
+  G.mode = 'edit'; G.paused = false; showUI(); edUI();
+}
+// what the editor would keep in PLANS goes to the level of the sandbox (edSaveDraft)
+function clesSbKeep() { const e = clesSbGet(ED.sand); if (!e) return; e.plan = floorToPlan(F); e.quand = Date.now(); clesKeep(); }
+function clesSbName() { const e = clesSbGet(ED.sand); return e ? e.nom : ''; }
+// back from the editor: the workshop again, on the sandbox (edStop)
+function clesSbStop() { ED.on = false; ED.sand = null; edUI(); backToHub(); clesOpen('sable'); }
+// played at once in creative mode, with the weapon chosen; the plan is given to this seed only (planFor), so that any other game of that level is the game's own
+function clesSbTry(id) {
+  const e = clesSbGet(id || ED.sand); if (!e || Net.room) return; const s = clesS();
+  if (ED.on && ED.sand === e.id) clesSbKeep();
+  if (s.on) { s.on = false; cancelAnimationFrame(s.raf); const r = $('cles'); if (r) r.remove(); }
+  if (!CREA.on) { saveGame(true); CREA.on = true; }
+  const floor = clamp(e.monde, 0, STRATA.length - 1) * PER_WORLD + 1; ED.on = false; ED.sand = e.id; ED.floor = floor; edUI(); closeSheet();
+  s.sbSeed = newSeed(0, false); s.sbFloor = floor; ED.seed = s.sbSeed;
+  if (s.sbArme != null && WEAPONS[s.sbArme]) { ME.eq[0] = makeItem(0, s.sbArme, Math.max(1, progOf(ME))); refreshStats(); }
+  for (const k of ['unlocked', 'un1', 'un2', 'unx']) ME[k] = Math.max(ME[k], floor);
+  Net.ignoreSeed = null; startRun(s.sbSeed, floor);
+}
+function clesSbPlanFor(seed, floor) { const s = clesS(); if (!s.sbSeed || seed !== s.sbSeed || floor !== s.sbFloor || !ED.sand) return null; const e = clesSbGet(ED.sand); return e ? e.plan : null; }
+// « Retour à l'éditeur » of the creative panel, after a try (edBack)
+function clesSbBack() { const id = ED.sand; closeSheet(); clesSbOpen(id); }
+// the level of the sandbox put in the place of a level of the game, on this device (PLANS): Modèles > Niveaux then publishes it as any map made by hand
+function clesSbPut(id, n) {
+  const e = clesSbGet(id); if (!e || !(n >= 1 && n <= LEVELS.length) || isBossFloor(n)) return false;
+  const why = planProblem(String(n), e.plan); if (why) { clesSay('Pas encore jouable : ' + why + '. Corrige-le dans l\'éditeur.'); return false; }
+  PLANS[n] = JSON.parse(JSON.stringify(Object.assign({}, e.plan, { floor: n }))); plansKeep();
+  const loc = clesPlanLocal(e.plan);
+  clesSay('« ' + e.nom + ' » remplace le niveau ' + n + ' sur cet appareil. Pour tous : Modèles > Niveaux > niveau ' + n + ' > Publier pour tous.' + (loc ? ' Attention : ' + loc + ', il ne pourra pas être publié tel quel.' : ''));
+  return true;
+}
+function clesSbCopy(id) { const e = clesSbGet(id); if (!e) return; const c = JSON.parse(JSON.stringify(e)); c.id = 'sb' + Date.now().toString(36); c.nom = e.nom + ' (copie)'; c.quand = Date.now(); clesSbList().push(c); clesKeep(); }
+function clesSbDrop(id) { const d = clesData(); d.niveaux = d.niveaux.filter(x => x.id !== id); clesKeep(); }
+// a small plan of a level of the sandbox: ground, the way in (green), the way out (light), creatures (red), chests (gold), scenery
+function clesSbMini(p) {
+  const cv = h('canvas', { class: 'cl-mini', width: 1, height: 1, 'aria-hidden': 'true' }), s = Math.max(2, Math.floor(84 / Math.max(p.W, p.H)));
+  cv.width = p.W * s; cv.height = p.H * s; const c = cv.getContext('2d'); c.fillStyle = '#120d09'; c.fillRect(0, 0, cv.width, cv.height); c.fillStyle = '#6b5236';
+  for (let i = 0; i < p.W * p.H; i++) if (p.g.charCodeAt(i) === 49) c.fillRect((i % p.W) * s, ((i / p.W) | 0) * s, s, s);
+  const dot = (x, y, r, col) => { c.fillStyle = col; c.beginPath(); c.arc(x / T * s, y / T * s, r * s, 0, TAU); c.fill(); };
+  for (const d of p.decor || []) dot(d[1], d[2], .45, '#b9a98a'); for (const q of p.chests || []) dot(q[0], q[1], .6, '#ffc24a'); for (const f of p.foes || []) dot(f[1], f[2], .5, '#ff6b5b');
+  dot(p.start[0], p.start[1], .8, '#5fe0a0'); if (p.lift) dot(p.lift[0], p.lift[1], .8, '#f1e4c8'); return cv;
+}
+function clesP_sable() {
+  const s = clesS(), L = clesSbList(), out = [];
+  if (s.sbMonde == null) s.sbMonde = 0; if (!s.sbTaille) s.sbTaille = 24;
+  const chip = (on, lab, fn, more) => h('button', Object.assign({ class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: fn }, more || {}), lab);
+  out.push(h('b', { class: 'cl-h', text: 'Nouveau niveau vide' }),
+    h('div', { class: 'cl-chips' }, ...STRATA.map((S, w) => chip(s.sbMonde === w, S.name, () => { s.sbMonde = w; clesUI(); }, { 'data-monde': String(w) }))),
+    h('div', { class: 'cl-chips' }, ...[16, 24, 32, 48].map(n => chip(s.sbTaille === n, n + ' × ' + n + ' cases', () => { s.sbTaille = n; clesUI(); }))),
+    h('button', { class: 'btn small', type: 'button', id: 'cl-sb-new', onclick: () => { const e = clesSbNew(s.sbMonde, s.sbTaille); clesSbOpen(e.id); } }, ic('plus'), 'Créer et ouvrir dans l\'éditeur'),
+    h('small', { text: 'Dans l\'éditeur : Terrain pour creuser, peindre les sols et les murs (textures de la bibliothèque), Décors (tes décors et blocs ajoutés sont dans « Autres »), Niveau pour les créatures et les coffres. Chaque changement est gardé ici.' }));
+  // the weapon worn when a level of the sandbox is tried
+  const sel = h('select', { class: 'adm-sel', 'aria-label': 'Arme pour essayer' }, h('option', { value: '', text: 'Celle que porte ton chevalier' }), ...WEAPONS.map((W, k) => h('option', { value: String(k), text: W.name + ' (' + FAMS[W.fam] + ')' })));
+  sel.value = s.sbArme == null ? '' : String(s.sbArme); sel.addEventListener('change', () => { s.sbArme = sel.value === '' ? null : +sel.value; });
+  out.push(h('b', { class: 'cl-h', text: 'Pour essayer : l\'arme' }), sel);
+  out.push(h('b', { class: 'cl-h', text: 'Ta bibliothèque de niveaux (' + L.length + ')' }), L.length ? null : h('small', { text: 'Aucun pour l\'instant.' }));
+  for (const e of L.slice().reverse()) {
+    const name = h('input', { type: 'text', class: 'adm-search', value: e.nom, maxlength: '40', 'aria-label': 'Nom du niveau' }); name.addEventListener('change', () => { e.nom = name.value.trim().slice(0, 40) || e.nom; clesKeep(); });
+    const lv = h('select', { class: 'adm-sel', 'aria-label': 'Niveau à remplacer' }, h('option', { value: '', text: 'Mettre à la place du niveau…' }), ...LEVELS.map((x, i) => isBossFloor(i + 1) ? null : h('option', { value: String(i + 1), text: (i + 1) + ' · ' + x.name + (planOf(String(i + 1)) ? ' (déjà fait à la main)' : '') })).filter(Boolean));
+    lv.addEventListener('change', () => { const n = +lv.value; if (n && clesSbPut(e.id, n)) clesUI(); });
+    const ask = s.sbAsk === e.id, foes = (e.plan.foes || []).length;
+    out.push(h('div', { class: 'cl-row cl-sb', 'data-sb': e.id }, h('div', { class: 'row', style: 'flex-wrap:nowrap;gap:8px;align-items:center' }, clesSbMini(e.plan),
+      h('div', { class: 'grow', style: 'display:flex;flex-direction:column;gap:4px;min-width:0' }, name, h('small', { text: (STRATA[e.monde] || STRATA[0]).name + ' · ' + e.plan.W + ' × ' + e.plan.H + ' · ' + foes + (foes > 1 ? ' créatures · ' : ' créature · ') + (e.plan.decor || []).length + ' décors · ' + new Date(e.quand).toLocaleDateString('fr-FR') }))),
+      h('div', { class: 'cl-chips' }, h('button', { class: 'chipbtn', type: 'button', onclick: () => clesSbOpen(e.id) }, ic('forge'), 'Ouvrir'), h('button', { class: 'chipbtn', type: 'button', onclick: () => clesSbTry(e.id) }, ic('aller'), 'Essayer'),
+        h('button', { class: 'chipbtn', type: 'button', onclick: () => { clesSbCopy(e.id); clesUI(); } }, 'Copier'),
+        h('button', { class: 'chipbtn' + (ask ? ' danger' : ''), type: 'button', onclick: () => { if (!ask) { s.sbAsk = e.id; clesUI(); setTimeout(() => { if (s.sbAsk === e.id) { s.sbAsk = null; if (s.on) clesUI(); } }, 5000); return; } s.sbAsk = null; clesSbDrop(e.id); clesUI(); } }, ic('poubelle'), ask ? 'Sûr ?' : 'Retirer')), lv));
+  }
+  out.push(h('small', { text: 'Ces niveaux restent sur cet appareil (« Fichier » dans la colonne de droite pour les garder ailleurs). Mis à la place d\'un niveau, ils se publient depuis Modèles > Niveaux, comme une carte faite à la main.' }));
+  // the view: the last level of the library, in a little 3D relief
+  setTimeout(() => clesSbShow(L[L.length - 1]), 0);
+  return out;
+}
+// the view of the sandbox: the plan of a level in relief (ground, walls, the colours of its world)
+function clesSbShow(e) {
+  const s = clesS(); if (!s.scene || s.tool !== 'sable') return; if (!e) { clesShow([]); return; }
+  const p = e.plan, S = STRATA[e.monde] || STRATA[0], g = new THREE.Group(), k = 1 / Math.max(p.W, p.H);
+  const floorM = new THREE.MeshLambertMaterial({ color: S.floorA }), wallM = new THREE.MeshLambertMaterial({ color: S.wallFace }), box = new THREE.BoxGeometry(k, k, k);
+  const n = p.W * p.H, walls = new THREE.InstancedMesh(box, wallM, n), m4 = new THREE.Matrix4(); let c = 0;
+  for (let i = 0; i < n; i++) if (p.g.charCodeAt(i) !== 49) { m4.makeTranslation(((i % p.W) + .5) * k - .5, k / 2, (((i / p.W) | 0) + .5) * k - .5); walls.setMatrixAt(c++, m4); }
+  walls.count = c; const fl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorM); fl.rotation.x = -Math.PI / 2; g.add(fl, walls);
+  const dot = (x, y, col, r) => { const m = new THREE.Mesh(new THREE.SphereGeometry(k * r, 10, 8), new THREE.MeshLambertMaterial({ color: col, emissive: col, emissiveIntensity: .3 })); m.position.set(x / T * k - .5, k * r, y / T * k - .5); g.add(m); };
+  for (const f of p.foes || []) dot(f[1], f[2], S.foe, .6); for (const q of p.chests || []) dot(q[0], q[1], '#ffc24a', .5); dot(p.start[0], p.start[1], '#5fe0a0', .7); if (p.lift) dot(p.lift[0], p.lift[1], S.glow, .7);
+  g.userData.free = () => g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+  g.position.y = .05; clesShow([g], 1.15); const t = $('cl-tags'); if (t) t.replaceChildren(clesTags([e.nom]));
+}
+
+/* ================= « Les clés », tool 3 : pieces made of shapes (9 October) =================
+   A piece of scenery or a block is put together from ready shapes (cube, rounded cube, sphere, dome, cone, cylinder, crystal, ring), one by one
+   (« bloc par bloc »: each shape placed, sized, turned, coloured, copied beside itself), or from a ready model (mushroom, crystals, reeds, rock,
+   stump, lantern, wall block, floor slab, pillar) that is then changed at will. Its colours are taken in the palette of a world (STRATA).
+   The recipe is kept in the workshop (tk-cles, formes[name] = { nom, sorte, monde, parts: [{ f, c, p: [x, y, z], s: [x, y, z], r, t }], quand }), under
+   the name d_forme_<nom> (scenery) or b_forme_<nom> (block): the game builds the shape itself when it asks for that model (clesRead → clesFormGltf),
+   in the game's own style (facets, a little palette picture read by the toon material), so that the level editor, the sandbox, the library and
+   the previews show it like any other piece. Nothing is written as a file: the save service has no place for it yet. */
+function clesFormShapes() { // [key, name]
+  return [['cube', 'Cube'], ['cubeR', 'Cube arrondi'], ['sphere', 'Sphère'], ['dome', 'Dôme'], ['cone', 'Cône'], ['cyl', 'Cylindre'], ['cristal', 'Cristal'], ['anneau', 'Anneau']];
+}
+// the palette of a world: [field of STRATA, name]
+function clesFormPal() { return [['floorA', 'Sol'], ['floorB', 'Sol clair'], ['wallFace', 'Mur'], ['wallEdge', 'Bord du mur'], ['cap', 'Dessus'], ['deco', 'Décor'], ['glow', 'Lueur'], ['foe', 'Créature'], ['foe2', 'Clair'], ['wallTop', 'Ombre']]; }
+function clesFormCol(monde, k) { const S = STRATA[monde] || STRATA[0]; return S[k] || '#888888'; }
+// the ready models: a list of parts, in the colours of the world chosen (k: a field of the palette)
+function clesFormModels() {
+  const P = (f, k, p, s, r, t) => ({ f, k, p, s, r: r || 0, t: t || 0 });
+  return [
+    ['champignon', 'Champignon', 'decor', [P('cyl', 'foe2', [0, .22, 0], [.22, .44, .22]), P('dome', 'deco', [0, .42, 0], [.7, .38, .7]), P('sphere', 'foe2', [.16, .58, .1], [.09, .09, .09]), P('sphere', 'foe2', [-.12, .59, -.12], [.08, .08, .08])]],
+    ['cristaux', 'Cristaux', 'decor', [P('cristal', 'glow', [0, .38, 0], [.22, .76, .22]), P('cristal', 'glow', [.17, .24, .06], [.15, .48, .15], 30, 22), P('cristal', 'deco', [-.15, .2, -.05], [.14, .4, .14], -20, -25), P('cubeR', 'wallFace', [0, .04, 0], [.5, .1, .4])]],
+    ['roseaux', 'Roseaux', 'decor', [P('cyl', 'deco', [0, .4, 0], [.05, .8, .05]), P('cone', 'cap', [0, .86, 0], [.08, .14, .08]), P('cyl', 'deco', [.13, .32, .06], [.045, .64, .045], 0, 8), P('cone', 'cap', [.15, .67, .06], [.07, .12, .07]), P('cyl', 'deco', [-.11, .28, -.08], [.045, .56, .045], 0, -9), P('cyl', 'deco', [.02, .24, -.15], [.04, .48, .04], 0, -6), P('cubeR', 'floorB', [0, .03, 0], [.42, .06, .36])]],
+    ['rocher', 'Rocher', 'decor', [P('sphere', 'wallFace', [0, .26, 0], [.8, .52, .66], 20), P('sphere', 'wallEdge', [.24, .18, .12], [.4, .34, .36], 40), P('sphere', 'cap', [-.05, .48, 0], [.42, .14, .34])]],
+    ['souche', 'Souche', 'decor', [P('cyl', 'wallFace', [0, .22, 0], [.56, .44, .56]), P('cyl', 'foe2', [0, .45, 0], [.5, .03, .5]), P('cone', 'wallFace', [.3, .07, 0], [.18, .14, .3], 0, 70), P('cone', 'wallFace', [-.24, .06, .16], [.16, .12, .26], 140, 70), P('dome', 'deco', [.12, .47, .1], [.14, .08, .14])]],
+    ['lanterne', 'Lanterne', 'decor', [P('cyl', 'wallTop', [0, .4, 0], [.08, .8, .08]), P('cubeR', 'glow', [0, .86, 0], [.22, .24, .22]), P('cone', 'wallTop', [0, 1.02, 0], [.3, .12, .3]), P('cubeR', 'wallTop', [0, .03, 0], [.3, .06, .3])]],
+    ['mur', 'Bloc de mur', 'bloc', [P('cubeR', 'wallFace', [0, .5, 0], [1, 1, 1]), P('cubeR', 'cap', [0, 1.02, 0], [1.02, .1, 1.02])]],
+    ['dalle', 'Dalle de sol', 'sol', [P('cubeR', 'floorB', [0, .06, 0], [1, .12, 1])]],
+    ['pilier', 'Pilier', 'bloc', [P('cubeR', 'wallEdge', [0, .05, 0], [.8, .1, .8]), P('cyl', 'wallFace', [0, .55, 0], [.55, .95, .55]), P('cubeR', 'wallEdge', [0, 1.04, 0], [.8, .1, .8])]],
+  ];
+}
+// one shape, one unit wide, centred on its middle
+function clesFormBase(f) {
+  const G = THREE;
+  if (f === 'cube') return new G.BoxGeometry(1, 1, 1);
+  if (f === 'cubeR') { const g = new G.BoxGeometry(1, 1, 1, 3, 3, 3), a = g.attributes.position, r = .22, v = new G.Vector3(), c = new G.Vector3();
+    for (let i = 0; i < a.count; i++) { v.fromBufferAttribute(a, i); c.set(clamp(v.x, -.5 + r, .5 - r), clamp(v.y, -.5 + r, .5 - r), clamp(v.z, -.5 + r, .5 - r)); const d = v.sub(c); if (d.lengthSq() > 1e-9) d.setLength(r); c.add(d); a.setXYZ(i, c.x, c.y, c.z); } return g; }
+  if (f === 'sphere') return new G.IcosahedronGeometry(.5, 1);
+  if (f === 'dome') { const g = new G.SphereGeometry(.5, 9, 4, 0, Math.PI * 2, 0, Math.PI / 2); g.translate(0, -.25, 0); g.scale(1, 2, 1); return g; }
+  if (f === 'cone') return new G.ConeGeometry(.5, 1, 7);
+  if (f === 'cyl') return new G.CylinderGeometry(.5, .5, 1, 8);
+  if (f === 'cristal') { const g = new G.OctahedronGeometry(.5, 0); return g; }
+  if (f === 'anneau') { const g = new G.TorusGeometry(.36, .14, 5, 10); g.rotateX(Math.PI / 2); g.scale(1, 3.5, 1); return g; }
+  return new G.BoxGeometry(1, 1, 1);
+}
+// the whole recipe as one geometry: every shape placed, its colour a pixel of a little palette picture (one material, one picture: the format of the game)
+function clesFormGeo(rec) {
+  const cols = [], pos = [], uv = [], m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), parts = (rec.parts || []).slice(0, 60);
+  for (const p of parts) if (!cols.includes(p.c)) cols.push(p.c);
+  const n = Math.max(1, cols.length);
+  for (const p of parts) {
+    let g = clesFormBase(p.f); if (g.index) g = g.toNonIndexed();
+    e.set((p.t || 0) * Math.PI / 180, (p.r || 0) * Math.PI / 180, 0, 'YXZ'); q.setFromEuler(e); m.compose(new THREE.Vector3(p.p[0], p.p[1], p.p[2]), q, new THREE.Vector3(Math.max(.01, p.s[0]), Math.max(.01, p.s[1]), Math.max(.01, p.s[2]))); g.applyMatrix4(m);
+    const a = g.attributes.position, u = (cols.indexOf(p.c) + .5) / n; for (let i = 0; i < a.count; i++) { pos.push(a.getX(i), a.getY(i), a.getZ(i)); uv.push(u, .5); } g.dispose();
+  }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos.length ? pos : [0, 0, 0, .01, 0, 0, 0, .01, 0], 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv.length ? uv : [0, 0, 0, 0, 0, 0], 2));
+  geo.computeVertexNormals(); geo.computeBoundingBox();
+  const cv = document.createElement('canvas'); cv.width = n * 4; cv.height = 4; const c = cv.getContext('2d'); cols.forEach((col, i) => { c.fillStyle = col; c.fillRect(i * 4, 0, 4, 4); });
+  const tex = new THREE.CanvasTexture(cv); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false;
+  return { geo, tex, tris: pos.length / 9 };
+}
+// what modelRead gets for a shape of the workshop: the same as a .glb read (a scene with one mesh, no animation)
+function clesFormGltf(rec) { const b = clesFormGeo(rec), mesh = new THREE.Mesh(b.geo, new THREE.MeshBasicMaterial({ map: b.tex })), scene = new THREE.Group(); scene.add(mesh); return { scene, animations: [] }; }
+function clesFormNew(sorte) { return { nom: '', sorte: sorte || 'decor', monde: 0, parts: [], quand: 0 }; }
+function clesFormCur() { const s = clesS(); return s.fo || (s.fo = clesFormNew()); }
+function clesFormPush() { const s = clesS(); (s.foUndo || (s.foUndo = [])).push(JSON.stringify(clesFormCur())); if (s.foUndo.length > 60) s.foUndo.shift(); }
+function clesFormUndo() { const s = clesS(); if (!s.foUndo || !s.foUndo.length) return; s.fo = JSON.parse(s.foUndo.pop()); s.foSel = Math.min(s.foSel | 0, s.fo.parts.length - 1); clesUI(); }
+function clesFormModel(key) {
+  const M = clesFormModels().find(x => x[0] === key); if (!M) return; const fo = clesFormCur(); clesFormPush();
+  fo.parts = M[3].map(p => ({ f: p.f, c: clesFormCol(fo.monde, p.k), k: p.k, p: p.p.slice(), s: p.s.slice(), r: p.r, t: p.t })); fo.sorte = M[2]; if (!fo.nom) fo.nom = M[1]; clesS().foSel = 0; clesUI();
+}
+function clesFormAdd(f) { const s = clesS(), fo = clesFormCur(); clesFormPush(); const top = fo.parts.reduce((a, p) => Math.max(a, p.p[1] + p.s[1] / 2), 0); fo.parts.push({ f, c: clesFormCol(fo.monde, 'wallFace'), k: 'wallFace', p: [0, fo.parts.length ? top + .2 : .25, 0], s: [.5, .5, .5], r: 0, t: 0 }); s.foSel = fo.parts.length - 1; clesUI(); }
+// « bloc par bloc »: a copy of the shape in hand, put right beside it
+function clesFormDup() { const s = clesS(), fo = clesFormCur(), p = fo.parts[s.foSel]; if (!p) return; clesFormPush(); const c = JSON.parse(JSON.stringify(p)); c.p[0] += p.s[0]; fo.parts.push(c); s.foSel = fo.parts.length - 1; clesUI(); }
+function clesFormDel() { const s = clesS(), fo = clesFormCur(); if (!fo.parts[s.foSel]) return; clesFormPush(); fo.parts.splice(s.foSel, 1); s.foSel = Math.max(0, s.foSel - 1); clesUI(); }
+// a new world for the palette: every shape that took a colour of the palette takes the same colour of the new world
+function clesFormWorld(w) { const fo = clesFormCur(); clesFormPush(); fo.monde = w; for (const p of fo.parts) if (p.k) p.c = clesFormCol(w, p.k); clesUI(); }
+// sorte: 'decor' (scenery, d_forme_…), 'bloc' (a block of wall, b_forme_…) or 'sol' (a block of floor, b_forme_sol_…: the editor puts on the ground only pieces named _sol_)
+function clesFormName(fo) { return (fo.sorte === 'bloc' ? 'b_forme_' : fo.sorte === 'sol' ? 'b_forme_sol_' : 'd_forme_') + clesSlug(fo.nom); }
+function clesFormSave() {
+  const s = clesS(), fo = clesFormCur(), d = clesData(); if (!fo.parts.length) { clesSay('Ajoute d\'abord une forme.'); return; } if (!fo.nom.trim()) { clesSay('Donne-lui un nom.'); return; }
+  const name = clesFormName(fo);
+  if (d.formes[name] && s.foFrom !== name && s.foAsk !== name) { s.foAsk = name; clesSay('Une forme porte déjà ce nom : touche encore « Enregistrer » pour la remplacer, ou change le nom.'); return; }
+  s.foAsk = null; fo.quand = Date.now(); d.formes[name] = JSON.parse(JSON.stringify(fo)); s.foFrom = name; clesKeep();
+  if (MDL.list) MDL.list[name] = 1; clesRefresh([name]);
+  clesSay('« ' + fo.nom + ' » est dans la bibliothèque : ' + (fo.sorte !== 'decor' ? 'éditeur de niveaux et bac à sable, Terrain > Blocs 3D (rangée « forme »).' : 'éditeur de niveaux et bac à sable, Décors > Décor au sol > Autres.')); clesUI();
+}
+function clesFormOpen(name) { const s = clesS(), x = clesData().formes[name]; if (!x) return; s.fo = JSON.parse(JSON.stringify(x)); s.foFrom = name; s.foSel = 0; s.foUndo = []; clesUI(); }
+function clesFormDrop(name) {
+  const d = clesData(); delete d.formes[name]; if (MDL.list) delete MDL.list[name]; clesKeep(); clesRefresh([name]);
+  const used = d.niveaux.filter(e => (e.plan.decor || []).some(x => x[0] === name) || (e.plan.bpal || []).includes(name)).map(e => e.nom);
+  clesSay('Forme retirée.' + (used.length ? ' Elle était posée dans : ' + used.join(', ') + ' (elle y laisse une pièce de remplacement).' : ''));
+}
+function clesP_formes() {
+  const s = clesS(), fo = clesFormCur(), d = clesData(), out = [], sel = fo.parts[s.foSel | 0];
+  const chip = (on, lab, fn, more) => h('button', Object.assign({ class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: fn }, more || {}), lab);
+  const nm = h('input', { type: 'text', class: 'adm-search', value: fo.nom, maxlength: '30', placeholder: 'Son nom', 'aria-label': 'Nom de la forme' }); nm.addEventListener('input', () => { fo.nom = nm.value; });
+  out.push(nm, h('div', { class: 'cl-chips' }, chip(fo.sorte === 'decor', 'Décor', () => { fo.sorte = 'decor'; clesUI(); }), chip(fo.sorte === 'bloc', 'Bloc de mur', () => { fo.sorte = 'bloc'; clesUI(); }), chip(fo.sorte === 'sol', 'Dalle de sol', () => { fo.sorte = 'sol'; clesUI(); })));
+  out.push(h('b', { class: 'cl-h', text: 'Modèles tout faits' }), h('div', { class: 'cl-chips' }, ...clesFormModels().map(M => chip(false, M[1], () => clesFormModel(M[0]), { 'data-modele': M[0] }))));
+  out.push(h('b', { class: 'cl-h', text: 'Ajouter une forme' }), h('div', { class: 'cl-chips' }, ...clesFormShapes().map(([f, n]) => chip(false, n, () => clesFormAdd(f), { 'data-forme': f }))));
+  const wsel = h('select', { class: 'adm-sel', 'aria-label': 'Couleurs du monde' }, ...STRATA.map((S, w) => h('option', { value: String(w), text: 'Couleurs : ' + S.name })));
+  wsel.value = String(fo.monde | 0); wsel.addEventListener('change', () => clesFormWorld(+wsel.value)); out.push(wsel);
+  if (fo.parts.length) out.push(h('b', { class: 'cl-h', text: 'Les formes (' + fo.parts.length + ')' }), h('div', { class: 'cl-chips' }, ...fo.parts.map((p, i) => chip((s.foSel | 0) === i, (i + 1) + ' · ' + (clesFormShapes().find(x => x[0] === p.f) || ['', p.f])[1], () => { s.foSel = i; clesUI(); }))));
+  if (sel) {
+    out.push(h('div', { class: 'cl-chips' }, ...clesFormPal().map(([k, n]) => { const col = clesFormCol(fo.monde, k); return h('button', { class: 'cl-sw', type: 'button', title: n, 'aria-label': 'Couleur ' + n, 'aria-pressed': String(sel.c === col), style: 'background:' + col, onclick: () => { clesFormPush(); sel.c = col; sel.k = k; clesUI(); } }); }),
+      h('button', { class: 'chipbtn', type: 'button', onclick: () => { clesFormPush(); sel.f = clesFormShapes()[(clesFormShapes().findIndex(x => x[0] === sel.f) + 1) % clesFormShapes().length][0]; clesUI(); } }, 'Autre forme')));
+    const line = (lab, get, set, lo, hi, st) => { const v = h('span', { text: String(+get().toFixed(2)).replace('.', ',') }), r = h('input', { type: 'range', min: String(lo), max: String(hi), step: String(st), value: String(get()), 'aria-label': lab });
+      r.addEventListener('pointerdown', () => clesFormPush()); r.addEventListener('keydown', () => clesFormPush());
+      r.addEventListener('input', () => { set(+r.value); v.textContent = String(+(+r.value).toFixed(2)).replace('.', ','); clesFormView(); }); return h('label', { class: 'cl-line' }, h('span', { text: lab }), r, v); };
+    out.push(line('Gauche, droite', () => sel.p[0], x => { sel.p[0] = x; }, -1.5, 1.5, .02), line('Hauteur du sol', () => sel.p[1], x => { sel.p[1] = x; }, -.5, 2.5, .02), line('Avant, arrière', () => sel.p[2], x => { sel.p[2] = x; }, -1.5, 1.5, .02),
+      line('Largeur', () => sel.s[0], x => { sel.s[0] = x; }, .02, 2.5, .02), line('Hauteur', () => sel.s[1], x => { sel.s[1] = x; }, .02, 2.5, .02), line('Profondeur', () => sel.s[2], x => { sel.s[2] = x; }, .02, 2.5, .02),
+      line('Tourner', () => sel.r || 0, x => { sel.r = x; }, -180, 180, 5), line('Pencher', () => sel.t || 0, x => { sel.t = x; }, -90, 90, 5),
+      h('div', { class: 'cl-chips' }, h('button', { class: 'chipbtn', type: 'button', onclick: clesFormDup }, ic('plus'), 'Copier à côté'), h('button', { class: 'chipbtn', type: 'button', onclick: clesFormDel }, ic('fermer'), 'Retirer cette forme')));
+  }
+  out.push(h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' }, h('button', { class: 'btn small', type: 'button', id: 'cl-fo-save', onclick: clesFormSave }, ic('nuage'), 'Enregistrer dans la bibliothèque'),
+    s.foUndo && s.foUndo.length ? h('button', { class: 'btn small line', type: 'button', onclick: clesFormUndo }, ic('retour'), 'Annuler') : null,
+    h('button', { class: 'btn small ghost', type: 'button', onclick: () => { s.fo = clesFormNew(fo.sorte); s.foFrom = null; s.foUndo = []; s.foSel = 0; clesUI(); } }, 'Nouvelle')));
+  const saved = Object.keys(d.formes).sort();
+  out.push(h('b', { class: 'cl-h', text: 'Tes formes (' + saved.length + ')' }), saved.length ? null : h('small', { text: 'Aucune pour l\'instant.' }),
+    ...saved.map(n => { const x = d.formes[n], ask = s.foDrop === n; return h('div', { class: 'row cl-row', style: 'flex-wrap:nowrap;align-items:center;gap:6px' }, h('span', { class: 'grow' }, h('b', { text: x.nom }), h('small', { text: (x.sorte === 'bloc' ? 'Bloc de mur' : x.sorte === 'sol' ? 'Dalle de sol' : 'Décor') + ' · ' + x.parts.length + ' formes · ' + n })),
+      h('button', { class: 'chipbtn', type: 'button', onclick: () => clesFormOpen(n) }, 'Ouvrir'),
+      h('button', { class: 'chipbtn' + (ask ? ' danger' : ''), type: 'button', 'aria-label': 'Retirer ' + x.nom, onclick: () => { if (!ask) { s.foDrop = n; clesUI(); return; } s.foDrop = null; clesFormDrop(n); clesUI(); } }, ic('poubelle'), ask ? 'Sûr ?' : null)); }),
+    h('small', { text: 'Le style du jeu : des formes rondes et trapues, une base large posée au sol, une seule lueur vive (la couleur « Lueur »). Un bloc tient dans 1 × 1 case.' }));
+  setTimeout(clesFormView, 0);
+  return out;
+}
+// the view: the piece as the game will draw it (its toon light), the shape in hand marked by a box; a grid of one tile under it
+function clesFormView() {
+  const s = clesS(); if (!s.scene || s.tool !== 'formes') return; const fo = clesFormCur(), b = clesFormGeo(fo), g = new THREE.Group();
+  const mat = typeof modelMat === 'function' && typeof gradTex !== 'undefined' ? modelMat(b.tex) : new THREE.MeshLambertMaterial({ map: b.tex });
+  g.add(new THREE.Mesh(b.geo, mat)); const grid = new THREE.GridHelper(1, 1, 0x8a6e45, 0x8a6e45); grid.material.transparent = true; grid.material.opacity = .5; g.add(grid);
+  const sel = fo.parts[s.foSel | 0]; if (sel && fo.parts.length > 1) { const one = clesFormGeo({ parts: [sel] }); const bx = new THREE.Box3Helper(one.geo.boundingBox, 0xffc24a); g.add(bx); g.userData.one = one; }
+  g.userData.free = () => { b.geo.dispose(); b.tex.dispose(); mat.dispose(); grid.geometry.dispose(); grid.material.dispose(); if (g.userData.one) { g.userData.one.geo.dispose(); g.userData.one.tex.dispose(); } };
+  const bb = b.geo.boundingBox, r = Math.max(.8, bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z); clesShow([g], r * 1.1);
+  const t = $('cl-tags'); if (t) t.replaceChildren(clesTags([Math.round(b.tris) + ' triangles' + (b.tris > 4000 ? ' : trop pour un décor (4 000 au plus)' : '')]));
+}
+
+/* ================= « Les clés », tool 4 : animations (9 October) =================
+   See the clips of a knight, of a creature or of a model sent to the library: each clip with its length, played in a loop at the speed chosen,
+   stopped, or moved by hand along its timeline. The two knights share one skeleton of 24 bones with the same names (FORMATS.md § 1): the clips
+   of one play on the other as they are. « Donner à ce chevalier les animations de… » shows it at once, and « Utiliser en jeu sur cet appareil »
+   makes the game do it on this device (tk-cles, anims.transfer = { body that receives: body that gives }): clesAnimApply puts the clips of
+   the giver in the tables of the receiver (MDL.clips for the first body, BODIES[…].clips for the Champignon), the originals kept aside to
+   come back. Only the nine clips the game plays (and the sword attacks of the Champignon) are carried. The speed here is for looking: in play
+   each clip lasts what the game asks (the speed of a blow is the speed of the weapon, in Variables). */
+function clesAnimGame() { return ['repos', 'marche', 'course', 'epee', 'jumelles', 'dague', 'arbalete', 'touche', 'mort', 'epee_taille', 'epee_double', 'epee_triple', 'jumelles_vrille', 'epee_lourde']; }
+function clesAnimKnights() { return [['chevalier', 'Chevalier d\'Écorce (premier corps)'], ['chevalier_champignon', 'Chevalier Champignon']]; }
+// the clips of a body as the game holds them now (null while its file has not come)
+function clesAnimTable(name) {
+  if (name === 'chevalier') return MDL.on ? MDL.clips : null;
+  const b = typeof BODIES !== 'undefined' && BODIES[name]; return b && b.hero ? b.clips : null;
+}
+// the original clips of a body (before any transfer of this workshop)
+function clesAnimOwn(name) { const s = clesS(), bak = s.animBak && s.animBak[name]; return bak || clesAnimTable(name); }
+// the game's tables made to match tk-cles: first everything back as it came, then each transfer laid on
+function clesAnimApply() {
+  if (!clesOn() || typeof MDL === 'undefined' || !MDL.on) return;
+  const s = clesS(), d = clesData(), T = (d.anims && d.anims.transfer) || {}; s.animBak = s.animBak || {};
+  if (Object.values(T).includes('chevalier_champignon') || T.chevalier_champignon) try { bodyOf(2); } catch (e) { } // its file is read once, then this runs again (bodyOf)
+  for (const [name] of clesAnimKnights()) {
+    const tab = clesAnimTable(name); if (!tab) continue;
+    if (!s.animBak[name]) s.animBak[name] = Object.assign({}, tab);
+    for (const k of Object.keys(tab)) if (!(k in s.animBak[name])) s.animBak[name][k] = tab[k]; // clips that came later (the sword attacks) are originals too, unless laid by a transfer
+  }
+  for (const [name] of clesAnimKnights()) {
+    const tab = clesAnimTable(name), bak = s.animBak[name]; if (!tab || !bak) continue; let changed = false;
+    for (const k of Object.keys(tab)) if (tab[k] !== bak[k]) { if (bak[k]) tab[k] = bak[k]; else delete tab[k]; changed = true; }
+    const src = T[name] && s.animBak[T[name]];
+    if (src && T[name] !== name) for (const k of clesAnimGame()) if (src[k] && tab[k] !== src[k]) { tab[k] = src[k]; changed = true; }
+    if (changed) { const ro = name === 'chevalier' ? ROOT_OFF : (BODIES[name] && BODIES[name].ro); if (ro) for (const k of Object.keys(ro)) delete ro[k]; }
+  }
+}
+// what the knight's model key carries, so that a knight already on screen is made again when a transfer changes (heroMk)
+function clesMk() { if (!clesOn()) return ''; const d = clesData(), T = (d.anims && d.anims.transfer) || {}, k = Object.keys(T).sort().map(n => n + '>' + T[n]).join(','); return (k ? '|a:' + k : '') + (typeof clesPersoMk === 'function' ? clesPersoMk() : ''); }
+// the bones of a model, and whether the clips of another one can play on it (each clip moves bones by name)
+function clesAnimBones(scene) { const out = new Set(); scene.traverse(o => { if (o.isBone) out.add(o.name); }); return out; }
+function clesAnimFits(scene, clips) { const B = clesAnimBones(scene), miss = new Set(); for (const c of clips) for (const t of c.tracks) { const n = t.name.split('.')[0]; if (!B.has(n) && !/morphTargetInfluences/.test(t.name)) miss.add(n); } return { bones: B.size, miss: [...miss] }; }
+// the model in hand: { key ('k:chevalier', 'm:m_taupe', 'f:<id>'), name, g (as read) }
+function clesAnimLoad(key) {
+  const s = clesS(); if (s.anLoad === key) return; s.anLoad = key; s.anG = null; s.anClip = null;
+  const [kind, id] = [key.slice(0, 1), key.slice(2)];
+  const p = kind === 'f' ? clesFile(id) : kind === 'k' && id === 'chevalier' ? Promise.resolve(MDL.on ? { scene: MDL.hero, animations: Object.values(clesAnimOwn('chevalier') || {}) } : null)
+    : kind === 'k' ? new Promise(ok => { try { bodyOf(2); } catch (e) { } const t0 = Date.now(), wait = () => { const b = BODIES[id]; if (b && b.hero) ok({ scene: b.hero, animations: Object.values(clesAnimOwn(id)) }); else if (Date.now() - t0 > 20000) ok(null); else setTimeout(wait, 200); }; wait(); })
+    : modelLoad(id);
+  p.then(g => { if (s.anLoad !== key) return; s.anG = g; if (!g) clesSay('Ce modèle n\'a pas pu être lu.'); clesUI(); }, () => { if (s.anLoad === key) clesSay('Ce modèle n\'a pas pu être lu.'); });
+}
+function clesAnimClips() { // the clips shown: the model's own, or those of the knight that gives them
+  const s = clesS(); if (!s.anG) return []; const src = s.anFrom && clesAnimOwn(s.anFrom); return src ? Object.values(src) : s.anG.animations;
+}
+function clesP_anims() {
+  const s = clesS(), d = clesData(), out = [], T = d.anims.transfer || (d.anims.transfer = {});
+  if (!s.anKey) s.anKey = 'k:chevalier'; if (!s.anSpeed) s.anSpeed = 1;
+  if (!MDL.on) return [h('p', { text: 'Les animations se voient avec la 3D et les modèles du jeu chargés.' })];
+  clesAnimLoad(s.anKey);
+  const chip = (on, lab, fn, more) => h('button', Object.assign({ class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: fn }, more || {}), lab);
+  const go = k => { s.anKey = k; s.anFrom = null; s.anClip = null; clesUI(); };
+  out.push(h('b', { class: 'cl-h', text: 'Qui' }), h('div', { class: 'cl-chips' }, ...clesAnimKnights().map(([n, lab]) => chip(s.anKey === 'k:' + n, lab, () => go('k:' + n), { 'data-qui': n }))));
+  const mons = Object.keys(MDL.list || {}).filter(n => /^m_/.test(n)).sort(), ms = h('select', { class: 'adm-sel', 'aria-label': 'Une créature' }, h('option', { value: '', text: 'Une créature…' }), ...mons.map(n => h('option', { value: n, text: clesLabel(n) + (clesWhere(n) ? ' (' + clesWhere(n) + ')' : '') })));
+  ms.value = s.anKey.startsWith('m:') ? s.anKey.slice(2) : ''; ms.addEventListener('change', () => { if (ms.value) go('m:' + ms.value); }); out.push(ms);
+  if (s.files === null) { s.files = []; clesFilesLoad(); }
+  if ((s.files || []).length) { const fs = h('select', { class: 'adm-sel', 'aria-label': 'Un fichier envoyé' }, h('option', { value: '', text: 'Un fichier envoyé…' }), ...s.files.map(f => h('option', { value: f.id, text: f.nom })));
+    fs.value = s.anKey.startsWith('f:') ? s.anKey.slice(2) : ''; fs.addEventListener('change', () => { if (fs.value) go('f:' + fs.value); }); out.push(fs); }
+  if (!s.anG) { out.push(h('small', { text: 'Chargement…' })); return out; }
+  const clips = clesAnimClips(); if (!s.anClip || !clips.some(c => c.name === s.anClip)) s.anClip = (clips.find(c => c.name === 'repos') || clips[0] || {}).name || null;
+  out.push(h('b', { class: 'cl-h', text: 'Les animations (' + clips.length + ')' }), clips.length ? h('div', { class: 'cl-chips' }, ...clips.map(c => chip(s.anClip === c.name, c.name + ' · ' + c.duration.toFixed(2).replace('.', ',') + ' s', () => { s.anClip = c.name; s.anPause = false; clesUI(); }, { 'data-clip': c.name })))
+    : h('small', { text: 'Ce modèle n\'a aucune animation.' }));
+  const sp = h('input', { type: 'range', min: '0.1', max: '2', step: '0.05', value: String(s.anSpeed), 'aria-label': 'Vitesse' }), spv = h('span', { text: '× ' + String(s.anSpeed).replace('.', ',') });
+  sp.addEventListener('input', () => { s.anSpeed = +sp.value; spv.textContent = '× ' + String(+sp.value).replace('.', ','); if (s.anAct) s.anAct.timeScale = s.anPause ? 0 : s.anSpeed; });
+  const tl = h('input', { type: 'range', min: '0', max: '1', step: '0.001', value: '0', 'aria-label': 'Moment de l\'animation', id: 'cl-an-t' });
+  tl.addEventListener('input', () => { s.anPause = true; if (s.anAct) { s.anAct.timeScale = 0; s.anAct.time = +tl.value * s.anAct.getClip().duration; } const b = $('cl-an-play'); if (b) b.lastChild.textContent = 'Lecture'; });
+  out.push(h('label', { class: 'cl-line' }, h('span', { text: 'Vitesse' }), sp, spv), h('label', { class: 'cl-line' }, h('span', { text: 'Moment' }), tl, h('span', { id: 'cl-an-tv', text: '' })),
+    h('div', { class: 'cl-chips' }, h('button', { class: 'chipbtn', type: 'button', id: 'cl-an-play', onclick: () => { s.anPause = !s.anPause; if (s.anAct) s.anAct.timeScale = s.anPause ? 0 : s.anSpeed; clesUI(); } }, ic(s.anPause ? 'aller' : 'pause'), s.anPause ? 'Lecture' : 'Pause'),
+      h('button', { class: 'chipbtn', type: 'button', onclick: () => { s.anSpeed = 1; clesUI(); } }, 'Vitesse normale')),
+    h('small', { text: 'La vitesse sert à regarder. En jeu, chaque animation dure ce que le jeu demande (la vitesse d\'un coup est celle de l\'arme, dans Variables).' }));
+  // the clips of one knight on the other
+  if (s.anKey.startsWith('k:')) {
+    const me = s.anKey.slice(2), others = clesAnimKnights().filter(k => k[0] !== me), fits = s.anFrom ? clesAnimFits(s.anG.scene, clesAnimClips()) : null;
+    out.push(h('b', { class: 'cl-h', text: 'Les animations d\'un autre chevalier' }), h('div', { class: 'cl-chips' }, chip(!s.anFrom, 'Les siennes', () => { s.anFrom = null; s.anClip = null; clesUI(); }),
+      ...others.map(([n, lab]) => chip(s.anFrom === n, 'Celles du ' + lab.replace(/ \(.*\)/, ''), () => { s.anFrom = n; s.anClip = null; if (!clesAnimTable(n)) { try { bodyOf(2); } catch (e) { } clesSay('Chargement des animations…'); setTimeout(() => { clesSay(''); clesUI(); }, 1500); } clesUI(); }, { 'data-de': n }))));
+    if (fits) out.push(h('small', { class: fits.miss.length ? 'adm-msg' : '', text: fits.miss.length ? 'Squelettes différents : ' + fits.miss.length + ' os manquent (' + fits.miss.slice(0, 4).join(', ') + '). Le résultat sera faux.' : 'Même squelette (' + fits.bones + ' os) : les animations passent telles quelles.' }));
+    const on = T[me];
+    out.push(h('div', { class: 'cl-chips' }, s.anFrom && s.anFrom !== on ? h('button', { class: 'btn small', type: 'button', id: 'cl-an-use', disabled: !!(fits && fits.miss.length), onclick: () => { T[me] = s.anFrom; clesKeep(); clesAnimApply(); clesSay('En jeu sur cet appareil, au prochain niveau : le ' + clesAnimKnights().find(k => k[0] === me)[1].replace(/ \(.*\)/, '') + ' bouge comme le ' + clesAnimKnights().find(k => k[0] === s.anFrom)[1].replace(/ \(.*\)/, '') + '.'); clesUI(); } }, ic('aller'), 'Utiliser en jeu sur cet appareil') : null,
+      on ? h('button', { class: 'btn small line', type: 'button', id: 'cl-an-back', onclick: () => { delete T[me]; clesKeep(); clesAnimApply(); clesSay('Ses animations d\'origine sont revenues.'); clesUI(); } }, ic('recommencer'), 'Rendre ses animations d\'origine') : null),
+      h('small', { text: on ? 'En jeu ici, il porte les animations du ' + (clesAnimKnights().find(k => k[0] === on) || ['', on])[1] + '. Les joueurs ne voient rien de ce changement.' : 'En jeu, il porte les siennes.' }));
+  }
+  setTimeout(clesAnimShow, 0);
+  return out;
+}
+// the view: the model in hand, playing the clip chosen
+function clesAnimShow() {
+  const s = clesS(); if (!s.scene || s.tool !== 'anims' || !s.anG) return; const clips = clesAnimClips(), clip = clips.find(c => c.name === s.anClip);
+  const want = s.anKey + '|' + (s.anFrom || '') + '|' + (s.anClip || ''); if (s.anShown === want && s.objs.length) { if (s.anAct) s.anAct.timeScale = s.anPause ? 0 : s.anSpeed; return; } s.anShown = want;
+  let body; const skinned = (() => { let k = false; s.anG.scene.traverse(o => { if (o.isSkinnedMesh) k = true; }); return k; })();
+  body = skinned ? THREE.SkeletonUtils.clone(s.anG.scene) : s.anG.scene.clone();
+  const holder = clesUnit(body, 1); s.anAct = null;
+  if (clip) { const mx = new THREE.AnimationMixer(body); s.anAct = mx.clipAction(clip); s.anAct.play(); s.anAct.timeScale = s.anPause ? 0 : s.anSpeed; holder.userData.mixer = mx; holder.userData.free = () => mx.stopAllAction(); }
+  clesShow([holder], 1); const t = $('cl-tags'); if (t) t.replaceChildren(clesTags([clip ? clip.name : 'sans animation']));
+  s.step = () => { const a = s.anAct; if (!a || s.tool !== 'anims') return; const d = a.getClip().duration || 1, tm = a.time % d, v = $('cl-an-tv'), r = $('cl-an-t'); if (v) v.textContent = tm.toFixed(2).replace('.', ',') + ' s'; if (r && !s.anPause) r.value = String(tm / d); };
+}
+function clesX_anims() { const s = clesS(); s.anShown = null; s.anAct = null; }
+
+/* ================= « Les clés », tool 5 : a new world (9 October) =================
+   Its name, five colours (ground, wall, edge of the wall, scenery, glow), the world it starts from (« base » : the models, the light and the air it
+   borrows, kitOf), its floor, wall and top among the textures of the library, its creatures (one model for each kind, the boss too), the names of
+   its six levels. Kept in the workshop (tk-cles, mondes: [{ id, nom, kit, coul: { sol, mur, bord, decor, lueur }, tex: { sol, mur, dessus }, crea: { 0…4, 9 },
+   niveaux: [six names], quand }]). On the administration's device each one is added at the end of STRATA, LEVELS and LVL when the game starts
+   (clesMondesStart, from admStart), the lists keeping their order; its zone (STRATA[i].zone, read by ownZone) carries its creatures (MON_OWN), its
+   textures (tx, read by buildWorld) and its colours (clesWorldTint, called by buildWorld). Only the creative mode opens it (NLV): a player never
+   sees it, even on this device out of the creative mode, and nothing of it reaches a save or the service. */
+function clesMix(a, b, t) { const p = x => [1, 3, 5].map(i => parseInt(x.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
+function clesMondeKinds() { return [[0, 'Sporule'], [1, 'Ronceux'], [2, 'Cracheur'], [3, 'Follet'], [4, 'Gardien'], [9, 'Boss']]; }
+function clesMondeNew(kit) {
+  const S = STRATA[kit | 0];
+  return { id: 'mo' + Date.now().toString(36), nom: '', kit: kit | 0, coul: { sol: S.floorA, mur: S.wallFace, bord: S.wallEdge, decor: S.deco, lueur: S.glow }, tex: { sol: null, mur: null, dessus: null }, crea: {}, niveaux: ['', '', '', '', '', ''], quand: 0 };
+}
+// the STRATA entry of a world made here: its base's, with its own name, colours and zone (no sky of clouds: the clouds patch the base's materials)
+function clesMondeStrata(m) {
+  const B = STRATA[m.kit] || STRATA[0], S = JSON.parse(JSON.stringify(B)), c = m.coul; delete S.ciel;
+  Object.assign(S, { name: m.nom || 'Monde sans nom', kit: m.kit, zone: 'monde_' + m.id, cree: m.id, floorA: c.sol, floorB: clesMix(c.sol, '#ffffff', .08), wallFace: c.mur, wallEdge: c.bord, cap: clesMix(c.mur, c.decor, .35),
+    wallTop: clesMix(c.mur, '#000000', .75), deco: c.decor, glow: c.lueur, shaft: c.lueur, foe2: clesMix(c.lueur, '#ffffff', .6) });
+  if (S.air) S.air.col = [c.lueur, clesMix(c.lueur, '#ffffff', .5)];
+  if (S.mist) S.mist.col = clesMix(S.mist.col || c.lueur, c.lueur, .4); if (S.bg) S.bg.glow = c.lueur;
+  S.tx = m.tex && (m.tex.sol || m.tex.mur || m.tex.dessus) ? { sol: m.tex.sol || null, mur: m.tex.mur || null, dessus: m.tex.dessus || null } : null;
+  return S;
+}
+function clesMondeName(m, i) { const n = m.niveaux && m.niveaux[i] && m.niveaux[i].trim(); return n || (i === 5 ? 'Le Gardien de ' + (m.nom || 'ce monde') : (m.nom || 'Monde') + ' · ' + (i + 1)); }
+// one world laid in the game's lists (at index si, its own place at the end); again in place when it changes
+function clesMondeLay(m, si) {
+  const S = clesMondeStrata(m), base = m.kit * PER_WORLD;
+  if (STRATA[si]) Object.assign(STRATA[si], S); else STRATA[si] = S;
+  for (let i = 0; i < PER_WORLD; i++) {
+    const n = si * PER_WORLD + i, L0 = LEVELS[base + i];
+    const L = { name: clesMondeName(m, i), pool: L0.pool.map(e => e.slice()) }; if (i === 5) L.boss = true;
+    if (LEVELS[n]) Object.assign(LEVELS[n], L); else LEVELS[n] = L;
+    if (!LVL[n]) LVL[n] = JSON.parse(JSON.stringify(LVL[base + i]));
+  }
+  BOSS_NAMES[si] = clesMondeName(m, 5); BOSS_FELL[si] = ' est vaincu';
+  const own = {}; for (const [k] of clesMondeKinds()) { const n = m.crea && m.crea[k]; if (n) own[k] = String(n).replace(/^m_/, ''); }
+  MON_OWN[S.zone] = own;
+}
+// at the start of the game (admStart): every world made here, after the game's own, in the order they were made
+function clesMondesStart() {
+  if (!clesOn()) return; const s = clesS(); if (s.mondes0 != null) return; s.mondes0 = STRATA.length;
+  clesData().mondes.forEach((m, i) => { try { clesMondeLay(m, s.mondes0 + i); } catch (e) { console.warn('monde ' + m.nom, e); } });
+}
+function clesMondeIndex(m) { const s = clesS(); if (s.mondes0 == null) clesMondesStart(); const i = clesData().mondes.findIndex(x => x.id === m.id); return i < 0 ? -1 : s.mondes0 + i; }
+// the colours of a world made here on its ground and walls (buildWorld, after the meshes of the level): the materials of the base, tinted, made for this build only
+function clesWorldTint(n0, n1) {
+  const S = F && F.str; if (!S || !S.cree || !worldGroup) return;
+  const kindOf = mt => { if (M.floor.includes(mt)) return 'sol'; if (M.wall.includes(mt)) return 'mur'; if (M.top.includes(mt)) return 'dessus'; const id = mt.userData && mt.userData.lib, t = id && texInfo(id); return t ? t.kind : null; };
+  const made = new Map();
+  for (let i = n0; i < n1; i++) {
+    const o = worldGroup.children[i]; if (!o.isMesh || !o.material) continue; const k = kindOf(o.material); if (!k) continue;
+    let c = made.get(o.material);
+    if (!c) { c = o.material.clone(); c.onBeforeCompile = o.material.onBeforeCompile; c.customProgramCacheKey = o.material.customProgramCacheKey; c.userData = Object.assign({}, o.material.userData);
+      const col = k === 'sol' ? S.floorA : k === 'mur' ? S.wallFace : S.cap; c.color.set(o.material.map ? clesMix('#ffffff', col, .62) : col); made.set(o.material, c); }
+    o.material = c;
+  }
+}
+function clesMondeCur() { const s = clesS(); return s.mo || (s.mo = clesMondeNew(0)); }
+function clesMondeSave() {
+  const s = clesS(), m = clesMondeCur(), d = clesData(); if (!m.nom.trim()) { clesSay('Donne un nom au monde.'); return; }
+  m.nom = m.nom.trim().slice(0, 30); m.quand = Date.now(); const i = d.mondes.findIndex(x => x.id === m.id), copy = JSON.parse(JSON.stringify(m));
+  if (i >= 0) d.mondes[i] = copy; else d.mondes.push(copy); clesKeep();
+  const si = clesMondeIndex(m); clesMondeLay(copy, si);
+  clesSay('« ' + m.nom + ' » est le monde ' + (si + 1) + ', niveaux ' + (si * PER_WORLD + 1) + ' à ' + (si * PER_WORLD + PER_WORLD) + ' : en mode créatif seulement, sur cet appareil.'); clesUI();
+}
+function clesMondeTry(m, n) { const si = clesMondeIndex(m); if (si < 0) { clesSay('Enregistre d\'abord le monde.'); return; } const s = clesS(); s.on = false; cancelAnimationFrame(s.raf); const r = $('cles'); if (r) r.remove(); if (!CREA.on) { saveGame(true); CREA.on = true; } closeSheet(); creaGo(si * PER_WORLD + (n || 1)); }
+function clesP_monde() {
+  const s = clesS(), m = clesMondeCur(), d = clesData(), out = [], saved = d.mondes.find(x => x.id === m.id);
+  const chip = (on, lab, fn, more) => h('button', Object.assign({ class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: fn }, more || {}), lab);
+  if (d.mondes.length) out.push(h('b', { class: 'cl-h', text: 'Tes mondes' }), h('div', { class: 'cl-chips' }, ...d.mondes.map(x => chip(x.id === m.id, x.nom, () => { s.mo = JSON.parse(JSON.stringify(x)); clesUI(); })),
+    chip(!saved, '+ Nouveau', () => { s.mo = clesMondeNew(0); clesUI(); })));
+  const nm = h('input', { type: 'text', class: 'adm-search', value: m.nom, maxlength: '30', placeholder: 'Nom du monde', 'aria-label': 'Nom du monde' }); nm.addEventListener('input', () => { m.nom = nm.value; });
+  out.push(nm, h('b', { class: 'cl-h', text: 'Le monde de base (modèles, lumière, air)' }), h('div', { class: 'cl-chips' }, ...STRATA.slice(0, 5).map((S, w) => chip(m.kit === w, S.name, () => { const n = clesMondeNew(w); m.kit = w; m.coul = n.coul; clesUI(); }, { 'data-kit': String(w) }))));
+  const col = (k, lab) => { const i = h('input', { type: 'color', value: m.coul[k], 'aria-label': 'Couleur ' + lab }); i.addEventListener('input', () => { m.coul[k] = i.value; clesMondeView(); }); return h('label', { class: 'cl-col' }, i, h('span', { text: lab })); };
+  out.push(h('b', { class: 'cl-h', text: 'Ses cinq couleurs' }), h('div', { class: 'cl-chips' }, col('sol', 'Sol'), col('mur', 'Mur'), col('bord', 'Bord du mur'), col('decor', 'Décor'), col('lueur', 'Lueur')));
+  // floor, wall and top: the library of textures, or the base's
+  const tk = s.moTex || 'sol'; out.push(h('b', { class: 'cl-h', text: 'Sols et murs' }), h('div', { class: 'cl-chips' }, ...[['sol', 'Sol'], ['mur', 'Mur'], ['dessus', 'Dessus du mur']].map(([k, n]) => chip(tk === k, n + (m.tex[k] ? ' : ' + texName(m.tex[k]) : ''), () => { s.moTex = k; clesUI(); }))),
+    h('div', { class: 'adm-lib cl-tex' }, texPick(tk, m.tex[tk], id => { m.tex[tk] = id; clesUI(); }, 'Ceux du monde de base')));
+  // creatures
+  const mons = Object.keys(MDL.list || {}).filter(n => /^m_/.test(n)).sort();
+  out.push(h('b', { class: 'cl-h', text: 'Ses créatures' }), ...clesMondeKinds().map(([k, lab]) => { const sel = h('select', { class: 'adm-sel', 'aria-label': 'Créature ' + lab }, h('option', { value: '', text: lab + ' : celle du monde de base (' + clesLabel(k === 9 ? 'm_' + MON[9][m.kit] : 'm_' + MON[k][m.kit]) + ')' }), ...mons.map(n => h('option', { value: n, text: lab + ' : ' + clesLabel(n) })));
+    sel.value = m.crea[k] || ''; sel.addEventListener('change', () => { if (sel.value) m.crea[k] = sel.value; else delete m.crea[k]; clesMondeView(); }); return sel; }),
+    h('small', { text: 'Une créature garde les règles de sa sorte (vie, attaques) : seul son modèle change. Les créatures que tu as reliées dans « Relier » sont dans la liste sous leur nom d\'origine.' }));
+  out.push(h('b', { class: 'cl-h', text: 'Ses six niveaux' }), ...m.niveaux.map((n, i) => { const inp = h('input', { type: 'text', class: 'adm-search', value: n, maxlength: '40', placeholder: clesMondeName(m, i), 'aria-label': 'Nom du niveau ' + (i + 1) }); inp.addEventListener('input', () => { m.niveaux[i] = inp.value; }); return inp; }));
+  const si = saved ? clesMondeIndex(m) : -1, last = saved && d.mondes[d.mondes.length - 1].id === m.id, ask = s.moAsk === m.id;
+  out.push(h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' }, h('button', { class: 'btn small', type: 'button', id: 'cl-mo-save', onclick: clesMondeSave }, ic('plus'), saved ? 'Enregistrer les changements' : 'Créer le monde'),
+    saved ? h('button', { class: 'btn small line', type: 'button', id: 'cl-mo-try', onclick: () => clesMondeTry(m, 1) }, ic('aller'), 'Essayer son niveau 1') : null,
+    saved ? h('button', { class: 'btn small line', type: 'button', onclick: () => { const e = clesSbNew(si, 24); clesSbOpen(e.id); } }, ic('c_map'), 'Un bac à sable de ce monde') : null,
+    last ? h('button', { class: 'btn small ghost' + (ask ? ' danger' : ''), type: 'button', onclick: () => { if (!ask) { s.moAsk = m.id; clesUI(); return; } s.moAsk = null; d.mondes.pop(); clesKeep(); s.mo = clesMondeNew(0); clesSay('Monde retiré : il disparaît au prochain lancement du jeu.'); clesUI(); } }, ic('poubelle'), ask ? 'Sûr ? Touche encore' : 'Retirer ce monde') : null),
+    h('small', { text: (saved ? 'Monde ' + (si + 1) + ', niveaux ' + (si * PER_WORLD + 1) + ' à ' + (si * PER_WORLD + PER_WORLD) + '. ' : '') + 'Un nouveau monde s\'ajoute après les autres. Il ne s\'ouvre qu\'en mode créatif, sur cet appareil : les joueurs ne le voient pas. Seul le dernier monde créé peut être retiré (l\'ordre des mondes ne change jamais).' }));
+  setTimeout(clesMondeView, 0);
+  return out;
+}
+// the view: a corner of the world (ground, a wall with its edge and its top, a piece of scenery, a glowing crystal) and its first creature
+function clesMondeView() {
+  const s = clesS(); if (!s.scene || s.tool !== 'monde') return; const m = clesMondeCur(), S = clesMondeStrata(m), g = new THREE.Group(), L = c => new THREE.MeshLambertMaterial({ color: clesMix(c, '#000000', .3) }); // (the light of the view is strong: the colours are given a little darker, as they look in a level)
+  const add = (geo, mat, x, y, z) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); g.add(o); return o; };
+  add(new THREE.BoxGeometry(1.6, .06, 1.2), L(S.floorA), 0, -.03, 0);
+  add(new THREE.BoxGeometry(1.6, .5, .3), L(S.wallFace), 0, .25, -.45); add(new THREE.BoxGeometry(1.62, .05, .32), L(S.wallEdge), 0, .5, -.45); add(new THREE.BoxGeometry(1.6, .04, .3), L(S.cap), 0, .54, -.45);
+  add(new THREE.CylinderGeometry(.05, .06, .2, 6), L(S.foe2), -.5, .1, .1); add(new THREE.SphereGeometry(.14, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), L(S.deco), -.5, .2, .1);
+  const cr = add(new THREE.OctahedronGeometry(.1, 0), new THREE.MeshBasicMaterial({ color: S.glow }), .55, .16, .25); cr.scale.y = 1.8;
+  g.userData.free = () => g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+  const objs = [g], c0 = (m.crea && m.crea[4]) || 'm_' + MON[4][m.kit];
+  clesShow(objs, 1.45);
+  modelLoad(c0).then(mg => { if (!mg || s.tool !== 'monde' || !s.objs.includes(g)) return; const u = clesUnit(mg.scene.clone(), .45); u.position.set(.15, 0, .15); s.objs.push(u); s.scene.add(u); }); const t = $('cl-tags'); if (t) t.replaceChildren(clesTags([S.name]));
+}
+
+/* ================= « Les clés », tool 6 : the knight « de base », in pieces (9 October) =================
+   A simple knight made of separate pieces carried by the bones of the existing skeleton (chevalier.glb, 24 bones): head / helmet, body, cloak,
+   hands, feet, weapon. It is a stand-in for the cosmetics to come (COSMETIQUES.md): each slot is the place of a future cosmetic, each piece of a
+   slot one of its versions; a piece is a recipe of shapes (x3_formes.js) placed against its bone at rest, so that a real model (a .glb on one
+   bone) can take its place later without changing the rest. Kept in the workshop (tk-cles, perso = { on, pieces: { slot: { p: piece, c: colour } } }).
+   « Le porter en jeu sur cet appareil » dresses every knight of the first body on this device (the model of the knight hidden, the pieces on its
+   bones; the weapon of the game stays in its hand, the « arme » slot is shown in the workshop only): makeHero asks clesPersoDress. */
+// the slots: [key, name, [[piece key, name, [ [bone, parts (in heights of the knight, from the bone at rest; k = which colour: 'c' its own, 'n' dark, 'm' metal, 'p' skin)] … ] ] … ] ]
+function clesPersoSlots() {
+  const P = (f, k, p, s, r, t) => ({ f, k, p, s, r: r || 0, t: t || 0 });
+  return [
+    ['tete', 'Tête / casque', [
+      ['heaume', 'Heaume', [['Head', [P('cubeR', 'c', [0, .13, .01], [.36, .32, .34]), P('cube', 'n', [0, .12, .175], [.25, .05, .02]), P('cone', 'm', [0, .32, -.02], [.06, .1, .06])]]]],
+      ['cornes', 'Casque à cornes', [['Head', [P('sphere', 'c', [0, .13, 0], [.37, .33, .36]), P('cone', 'm', [.17, .27, 0], [.06, .16, .06], 0, 0), P('cone', 'm', [-.17, .27, 0], [.06, .16, .06], 0, 0), P('cube', 'n', [0, .11, .17], [.22, .04, .02])]]]],
+      ['capuche', 'Capuche', [['Head', [P('dome', 'c', [0, .13, -.01], [.4, .36, .4]), P('sphere', 'p', [0, .1, .06], [.27, .24, .26]), P('cone', 'c', [0, .26, -.17], [.12, .18, .12], 0, -55)]]]]]],
+    ['corps', 'Corps', [
+      ['simple', 'Simple', [['Spine01', [P('cubeR', 'c', [0, .02, 0], [.26, .2, .18])]], ['Hips', [P('cubeR', 'n', [0, -.02, 0], [.24, .1, .17])]],
+        ['LeftArm', [P('sphere', 'm', [0, 0, 0], [.1, .1, .1])]], ['RightArm', [P('sphere', 'm', [0, 0, 0], [.1, .1, .1])]], ['LeftForeArm', [P('sphere', 'c', [0, 0, 0], [.08, .08, .08])]], ['RightForeArm', [P('sphere', 'c', [0, 0, 0], [.08, .08, .08])]],
+        ['LeftUpLeg', [P('sphere', 'n', [0, -.03, 0], [.1, .1, .1])]], ['RightUpLeg', [P('sphere', 'n', [0, -.03, 0], [.1, .1, .1])]], ['LeftLeg', [P('sphere', 'c', [0, -.02, 0], [.085, .1, .085])]], ['RightLeg', [P('sphere', 'c', [0, -.02, 0], [.085, .1, .085])]]]],
+      ['plastron', 'Plastron', [['Spine01', [P('cubeR', 'm', [0, .03, .005], [.3, .22, .2]), P('cubeR', 'c', [0, -.06, 0], [.27, .06, .19])]], ['Hips', [P('cubeR', 'c', [0, -.03, 0], [.26, .12, .18])]],
+        ['LeftArm', [P('dome', 'm', [0, .02, 0], [.13, .07, .13])]], ['RightArm', [P('dome', 'm', [0, .02, 0], [.13, .07, .13])]], ['LeftForeArm', [P('sphere', 'c', [0, 0, 0], [.08, .08, .08])]], ['RightForeArm', [P('sphere', 'c', [0, 0, 0], [.08, .08, .08])]],
+        ['LeftUpLeg', [P('sphere', 'n', [0, -.03, 0], [.1, .1, .1])]], ['RightUpLeg', [P('sphere', 'n', [0, -.03, 0], [.1, .1, .1])]], ['LeftLeg', [P('sphere', 'm', [0, -.02, 0], [.09, .1, .09])]], ['RightLeg', [P('sphere', 'm', [0, -.02, 0], [.09, .1, .09])]]]]]],
+    ['cape', 'Cape', [['courte', 'Courte', [['Spine02', [P('cubeR', 'c', [0, -.06, -.11], [.3, .24, .035], 0, 8)]]]], ['longue', 'Longue', [['Spine02', [P('cubeR', 'c', [0, -.15, -.12], [.32, .4, .035], 0, 9)]]]], ['aucune', 'Aucune', []]]],
+    ['mains', 'Mains', [['gants', 'Gants', [['LeftHand', [P('sphere', 'c', [0, 0, 0], [.09, .09, .09])]], ['RightHand', [P('sphere', 'c', [0, 0, 0], [.09, .09, .09])]]]], ['moufles', 'Moufles', [['LeftHand', [P('cubeR', 'c', [0, 0, 0], [.1, .11, .1])]], ['RightHand', [P('cubeR', 'c', [0, 0, 0], [.1, .11, .1])]]]]]],
+    ['pieds', 'Pieds', [['bottes', 'Bottes', [['LeftFoot', [P('cubeR', 'c', [0, -.03, .03], [.11, .09, .17])]], ['RightFoot', [P('cubeR', 'c', [0, -.03, .03], [.11, .09, .17])]]]], ['sabots', 'Sabots', [['LeftFoot', [P('cyl', 'c', [0, -.035, .02], [.12, .08, .15])]], ['RightFoot', [P('cyl', 'c', [0, -.035, .02], [.12, .08, .15])]]]]]],
+    ['arme', 'Arme (atelier seulement)', [['epee', 'Épée', [['RightHand', [P('cube', 'm', [0, .22, .02], [.03, .32, .06]), P('cube', 'n', [0, .05, .02], [.13, .025, .04]), P('cyl', 'c', [0, 0, .02], [.035, .08, .035])]]]], ['aucune', 'Aucune', []]]],
+  ];
+}
+function clesPersoCols() { return ['#e8a23a', '#5fc0a0', '#dc6f7c', '#8da2f0', '#8a6e45', '#6b5236', '#9aa3ad', '#7d9c48', '#a050ff', '#3a2a27']; }
+function clesPersoDef() { return { on: false, pieces: { tete: { p: 'heaume', c: '#9aa3ad' }, corps: { p: 'simple', c: '#8a6e45' }, cape: { p: 'courte', c: '#e8a23a' }, mains: { p: 'gants', c: '#6b5236' }, pieds: { p: 'bottes', c: '#6b5236' }, arme: { p: 'epee', c: '#6b5236' } } }; }
+function clesPersoCur() { const d = clesData(); if (!d.perso || !d.perso.pieces) d.perso = clesPersoDef(); for (const [k] of clesPersoSlots()) if (!d.perso.pieces[k]) d.perso.pieces[k] = clesPersoDef().pieces[k]; return d.perso; }
+function clesPersoMk() { const d = clesData(); return d.perso && d.perso.on ? '|p:' + JSON.stringify(d.perso.pieces).length + ':' + Object.values(d.perso.pieces).map(x => x.p + x.c).join('') : ''; }
+// the pieces put on a body (a clone of the first knight's model): each one on its bone, placed against the bone at rest; the model's own mesh hidden.
+// game: true in play (the weapon slot is left to the game's own weapon). The meshes made are returned (to free them)
+function clesPersoOn(body, bones, mesh, game) {
+  const per = clesPersoCur(), out = [];
+  body.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(body.matrixWorld).invert(), wp = b => new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().multiplyMatrices(inv, b.matrixWorld));
+  const top = bones.head_end ? wp(bones.head_end).y : bones.Head ? wp(bones.Head).y * 1.42 : 1, H = top * 1.04; // the height of the knight in the body's own units (the parts are given in heights of the knight)
+  const shade = { n: '#2a201a', m: '#9aa3ad', p: '#e8c9a0' };
+  for (const [slot, , pieces] of clesPersoSlots()) {
+    if (game && slot === 'arme') continue; const ch = per.pieces[slot], pc = pieces.find(x => x[0] === ch.p) || pieces[0];
+    for (const [bn, parts] of pc[2]) {
+      const bone = bones[bn]; if (!bone) continue; const rest = new THREE.Matrix4().multiplyMatrices(inv, bone.matrixWorld), at = new THREE.Vector3().setFromMatrixPosition(rest);
+      const rec = { parts: parts.map(p => ({ f: p.f, c: p.k === 'c' ? ch.c : shade[p.k], p: [at.x + p.p[0] * H, at.y + p.p[1] * H, at.z + p.p[2] * H], s: p.s.map(v => v * H), r: p.r, t: p.t })) };
+      const b = clesFormGeo(rec), mt = typeof modelMat === 'function' && typeof gradTex !== 'undefined' ? modelMat(b.tex) : new THREE.MeshLambertMaterial({ map: b.tex });
+      const m = new THREE.Mesh(b.geo, mt); m.castShadow = true; m.frustumCulled = false; m.userData.cles = slot;
+      new THREE.Matrix4().copy(rest).invert().decompose(m.position, m.quaternion, m.scale); bone.add(m); out.push(m);
+    }
+  }
+  if (mesh) mesh.visible = false; return out;
+}
+function clesPersoFree(list) { for (const m of list || []) { if (m.parent) m.parent.remove(m); m.geometry.dispose(); if (m.material.map) m.material.map.dispose(); m.material.dispose(); } }
+// called by makeHero: a knight of the first body, on the administration's device, when « Le porter en jeu » is on
+function clesPersoDress(body, bones, mesh, bd) {
+  if (!clesOn()) return; const per = clesData().perso; if (!per || !per.on || (typeof body0 === 'function' && bd !== body0())) return;
+  try { body.userData.clesPerso = clesPersoOn(body, bones, mesh, true); } catch (e) { console.warn('chevalier de base', e); if (mesh) mesh.visible = true; }
+}
+function clesP_perso() {
+  const s = clesS(), per = clesPersoCur(), out = [];
+  if (!MDL.on) return [h('p', { text: 'Le chevalier de base se voit avec la 3D et les modèles du jeu chargés.' })];
+  const chip = (on, lab, fn, more) => h('button', Object.assign({ class: 'chipbtn', type: 'button', 'aria-pressed': String(on), onclick: fn }, more || {}), lab);
+  const set = (slot, k, v) => { per.pieces[slot][k] = v; clesKeep(); s.peShown = null; clesUI(); };
+  out.push(toggleRow('equipe', 'Le porter en jeu sur cet appareil (mode créatif)', !!per.on, () => { per.on = !per.on; clesKeep(); clesSay(per.on ? 'Ton chevalier porte ces pièces au prochain niveau (sur cet appareil). Les joueurs ne voient rien.' : 'Ton chevalier reprend son modèle.'); clesUI(); }));
+  for (const [slot, name, pieces] of clesPersoSlots()) {
+    const ch = per.pieces[slot];
+    out.push(h('b', { class: 'cl-h', text: name }), h('div', { class: 'cl-chips' }, ...pieces.map(([k, n]) => chip(ch.p === k, n, () => set(slot, 'p', k), { 'data-piece': slot + ':' + k })),
+      ...clesPersoCols().map(c => h('button', { class: 'cl-sw', type: 'button', 'aria-label': name + ' couleur ' + c, 'aria-pressed': String(ch.c === c), style: 'background:' + c, onclick: () => set(slot, 'c', c) }))));
+  }
+  if (!s.peClip) s.peClip = 'repos';
+  out.push(h('b', { class: 'cl-h', text: 'Le voir bouger' }), h('div', { class: 'cl-chips' }, ...['repos', 'course', 'epee', 'arbalete', 'touche', 'mort'].filter(c => MDL.clips[c]).map(c => chip(s.peClip === c, c, () => { s.peClip = c; s.peShown = null; clesUI(); }))),
+    h('button', { class: 'btn small line', type: 'button', onclick: () => { clesData().perso = Object.assign(clesPersoDef(), { on: per.on }); clesKeep(); s.peShown = null; clesUI(); } }, ic('recommencer'), 'Pièces de départ'),
+    h('small', { text: 'Chaque emplacement (tête, corps, cape, mains, pieds, arme) sera un cosmétique : une pièce posée sur un os du squelette. La structure prévue est dans COSMETIQUES.md.' }));
+  setTimeout(clesPersoShow, 0);
+  return out;
+}
+function clesPersoShow() {
+  const s = clesS(); if (!s.scene || s.tool !== 'perso' || !MDL.on) return; const want = JSON.stringify(clesPersoCur().pieces) + s.peClip; if (s.peShown === want && s.objs.length) return; s.peShown = want;
+  const body = THREE.SkeletonUtils.clone(MDL.hero), bones = {}; let mesh = null; body.traverse(o => { if (o.isBone) bones[o.name] = o; if (o.isSkinnedMesh) mesh = o; });
+  const made = clesPersoOn(body, bones, mesh, false), holder = clesUnit(body, 1), clip = MDL.clips[s.peClip] || MDL.clips.repos;
+  if (clip) { const mx = new THREE.AnimationMixer(body); mx.clipAction(clip).play(); holder.userData.mixer = mx; }
+  holder.userData.free = () => clesPersoFree(made); clesShow([holder], 1.2); const t = $('cl-tags'); if (t) t.replaceChildren(clesTags([made.length + ' pièces sur ' + new Set(made.map(m => m.parent.name)).size + ' os']));
+}
+
+/* ================= « Niveaux vivants » (8 October, Damien's request) : prototypes, every one behind a setting that is OFF by default =================
+   Damien: « on peut juste esquiver tout le niveau et aller jusqu'au portail, tuer 3 mobs et partir ». Measured (audit/niveaux_vivants/CONSTAT.md):
+   a level is done in 27 seconds with 4 creatures out of 21 and no chest. Three mechanics answer it, each one behind its line of the family
+   « Niveaux vivants » of the settings (a_tune.js); with every line at 0 nothing here runs and the game is the game of before.
+     nvCoffres  a hidden chest stays under a small mound of earth, comes out when the knight walks close (TU.nvCoffreR, in sight), and is only
+                announced then. Before: announced as soon as it was on screen and in sight, six tiles away (updatePickups, b_game.js).
+     nvCasse    things to break, with loot: jars of bark, kegs, hollow stumps, in clusters of two or three against the walls (1 = world 1 only).
+                The knight strikes them alone when one is in reach and no creature is, as he does with creatures; the lantern breaks them too.
+     nvQuetes   objectives of the level, drawn by the seed (the same for a whole team): told at the start, followed on screen, paid at the way out.
+     nvSortie   the way out also asks for objectives (alone only: in a team it stays as it is).
+   Where the game calls this file (one line each): startRun → nvLevel ; update → nvStep ; doAttack → nvStrike ; doLantern → nvBurst ; updatePickups
+   → nvChest ; updateEnemies → nvLocked ; finishRun → nvFinish ; showResults → nvResults ; buildWorld → nvBuild ; render3D → nvFrame ; render2D → nvDraw2D.
+   What it keeps: F.nv (the level: what can be broken) and run.nv (the run: objectives and counts). Nothing is saved, nothing is sent: every
+   player breaks his own things and draws his own loot, as with what creatures drop. The gains have their own settings: they are provisional,
+   and are the place where the experience by knight will be given (nvPay).
+   Every top-level name here is a function: this file comes after d_ui.js, whose last lines already run the game. */
+function nvCasseOn() { return !!F && !F.hub && (TU.nvCasse >= 2 || (TU.nvCasse >= 1 && F.si === 0)); }
+function nvR() { return run.nv || (run.nv = { q: [], casse: 0, rooms: new Set(), low: false, vt: null, gain: null, key: '', said: 0, shown: false }); }
+// called by startRun once the level is drawn and before it is built: what can be broken, then the objectives
+function nvLevel() {
+  if (!F || F.hub) return;
+  F.nv = { br: [] }; if (run) run.nv = null;
+  if (nvCasseOn()) nvPlace(F.nv);
+  if (run && TU.nvQuetes) nvDraw();
+  nvHud();
+}
+
+/* ---------- things to break ---------- */
+// Where: on a floor tile against a wall, with open floor in front and on both sides (never in a passage: there is always room to walk round),
+// away from the start, the way out, the chests, the creatures and the scenery. The seed decides, with a stream of its own: the level itself
+// is drawn exactly as before. k: 0 jar, 1 keg, 2 hollow stump (two blows).
+function nvPlace(S) {
+  const R = rng((F.seed ^ Math.imul(F.floor + 11, 0x7F4A7C15)) >>> 0), W = F.W, H = F.H, g = F.g;
+  const fl = (x, y) => x > 0 && y > 0 && x < W - 1 && y < H - 1 && g[y * W + x] === 1 && !(F.secret && F.secret.has(y * W + x));
+  const off = [[F.start.x, F.start.y, 2.6]]; if (F.lift) off.push([F.lift.x, F.lift.y, 2.8]);
+  for (const c of F.chests) off.push([c.x, c.y, 1.7]); if (F.seals) for (const q of F.seals) off.push([q.x, q.y, 2]);
+  for (const e of F.enemies) off.push([e.x, e.y, e.type === 9 ? 5 : 1.2]); for (const d of F.decor) off.push([d.x, d.y, 1.3]);
+  const cand = [];
+  for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) {
+    if (!fl(x, y)) continue;
+    for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) { // the wall behind it: above first (it then stands at the back of the chamber, in full view), or on a side
+      if (g[(y + dy) * W + x + dx] === 1) continue;
+      const ox = -dx, oy = -dy, sx = dy ? 1 : 0, sy = dx ? 1 : 0; // (ox, oy): away from the wall ; (sx, sy): along it
+      if (fl(x + ox, y + oy) && fl(x + ox * 2, y + oy * 2) && fl(x + sx, y + sy) && fl(x - sx, y - sy) && fl(x + sx + ox, y + sy + oy) && fl(x - sx + ox, y - sy + oy)) { cand.push([x, y, dx, dy]); break; }
+    }
+  }
+  for (let i = cand.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = cand[i]; cand[i] = cand[j]; cand[j] = t; }
+  const rooms = Math.max(1, (F.rooms && F.rooms.length) || Math.round(cand.length / 14)), want = Math.min(60, Math.round(TU.nvCasseN * rooms)), heads = [];
+  const free = (px, py) => !off.some(k => hyp(px - k[0], py - k[1]) < k[2] * T) && !S.br.some(b => hyp(px - b.x, py - b.y) < 19);
+  const put = (x, y, dx, dy) => {
+    const px = (x + .5) * T + dx * 5 + (R() - .5) * 7, py = (y + .5) * T + dy * 5 + (R() - .5) * 7; if (!free(px, py)) return false;
+    const r = R(), k = r < .45 ? 0 : r < .8 ? 1 : 2, b = { id: S.br.length, x: px, y: py, r: k === 2 ? 10 : 8, k, s: 1.05 + R() * .3, rot: R() * TAU, hp: k === 2 ? 2 : 1, dead: false, t: -9, dt: -9, due: 0, m: null };
+    S.br.push(b); F.blocks.push({ x: px, y: py, r: b.r, nv: b }); return true;
+  };
+  for (const [x, y, dx, dy] of cand) {
+    if (S.br.length >= want) break; if (heads.some(k => Math.abs(k[0] - x) + Math.abs(k[1] - y) < 5)) continue;
+    if (!put(x, y, dx, dy)) continue; heads.push([x, y]);
+    const sx = dy ? 1 : 0, sy = dx ? 1 : 0, n = 1 + ((R() * 2.2) | 0); let a = 1, b = 1;
+    for (let i = 0; i < n && S.br.length < want; i++) { // its neighbours, along the same wall
+      const side = R() < .5 ? 1 : -1, d = side > 0 ? a++ : b++, nx = x + sx * d * side, ny = y + sy * d * side;
+      if (cand.some(c => c[0] === nx && c[1] === ny)) put(nx, ny, dx, dy);
+    }
+  }
+}
+// a blow lands on it (dmg is not counted: a jar is a jar)
+function nvHit(b) {
+  if (b.dead) return; b.hp--; b.t = G.time;
+  burst(b.x, b.y, '#c9a26a', 5, 70, 8); sfx(240, .05, 'square', .035, -90);
+  if (b.hp <= 0) nvBreak(b);
+}
+function nvBreak(b) {
+  if (b.dead) return; b.dead = true; b.dt = G.time; b.due = 0;
+  F.blocks = F.blocks.filter(k => k.nv !== b);
+  burst(b.x, b.y, b.k === 0 ? '#b0744a' : '#8a5a32', 14, 120, 9); burst(b.x, b.y, '#e8d8b0', 6, 60, 14); ring(b.x, b.y, 20, '#e8d8b0', .25);
+  sfx(170, .1, 'sawtooth', .05, -70); sfx(520, .06, 'square', .025, -300); G.shake = Math.max(G.shake, 1.8);
+  if (run) nvR().casse++;
+  if (performance.now() < F.quietUntil) return; // joined late: no loot for what broke before
+  // what it held (provisional figures, each one a setting): an object now and then, a life orb when life is missing, coins more than every other time
+  const lm = lootMul(F.floor) * F.mod.ecl, r = Math.random();
+  if (r < TU.nvCasseObjet) dropPickup(b.x, b.y, 'i', 0, makeLoot(lootFloor(), W_DROP, F.mod.lv));
+  else if (r < TU.nvCasseObjet + TU.nvCasseVie && P.hp < P.mhp) dropPickup(b.x, b.y, 'h', 1);
+  else if (Math.random() < TU.nvCasseChance && TU.nvCassePieces > 0) dropPickup(b.x, b.y, 'e', Math.max(1, Math.ceil(TU.nvCassePieces * lm)));
+}
+// the end of doAttack: what the blade sweeps breaks; a bolt or a shell breaks the first thing on its line, when it gets there
+function nvStrike(reach, arc, w) {
+  const S = F && F.nv; if (!S || !S.br.length || F.hub) return;
+  let first = null, fd = 1e9;
+  for (const b of S.br) {
+    if (b.dead) continue; const dx = b.x - P.x, dy = b.y - P.y, d = hyp(dx, dy), da = Math.abs(angDiff(Math.atan2(dy, dx), P.face));
+    if (w.proj) { if (d < reach + b.r && da < Math.max(.12, Math.atan2(b.r + 4, d)) && d < fd && los(P.x, P.y, b.x, b.y)) { fd = d; first = b; } }
+    else if (d < reach + b.r && (d < b.r + 6 || da < arc / 2)) nvHit(b);
+  }
+  if (first) first.due = G.time + fd / Math.max(60, w.spd);
+}
+// the wave of the lantern
+function nvBurst(r) { const S = F && F.nv; if (S && !F.hub) for (const b of S.br) if (!b.dead && hyp(b.x - P.x, b.y - P.y) < r + b.r) nvBreak(b); }
+// each image of a level (update, b_game.js): the knight strikes what can be broken when it is in reach and no creature is ; the objectives follow
+function nvStep(dt) {
+  if (!run || !F || F.hub || G.mode !== 'play') return;
+  const S = F.nv;
+  if (S && S.br.length) {
+    for (const b of S.br) if (b.due && !b.dead && G.time >= b.due) { b.due = 0; nvHit(b); }
+    if (!P.down && !G.paused && P.atkCd <= 0 && !manualNow() && !(P.target && canStrike(P.target))) {
+      const w = WEAPONS[ST.kind], reach = w.proj ? Math.min(ST.range, 104) : ST.range - 3; let best = null, bd = 1e9;
+      for (const b of S.br) { if (b.dead || b.due) continue; const d = hyp(b.x - P.x, b.y - P.y) - b.r; if (d < reach && d < bd && (!w.proj || los(P.x, P.y, b.x, b.y))) { bd = d; best = b; } }
+      if (best) { P.face = Math.atan2(best.y - P.y, best.x - P.x); P.target = null; doAttack(0); }
+    }
+  }
+  if (run.nv && run.nv.q.length) nvTrack();
+}
+
+/* ---------- hidden chests ---------- */
+// called for a chest still under the ground (updatePickups, setting nvCoffres): it comes out when the knight is close and sees the spot, and only then
+// is it announced. Before that, a little light now and then tells an attentive player where to dig (TU.nvCoffreIndice ; 0 = none: only the mound shows)
+function nvChest(c, d) {
+  if (c.found) return; // the light is on its way (popStep)
+  if (d < TU.nvCoffreR && los(P.x, P.y, c.x, c.y)) {
+    c.found = true; popChest(c); const s = $('pop-s'); if (s) s.textContent = c.gold ? 'Tu as déterré un trésor rare' : 'Tu l\'as déterré';
+    burst(c.x, c.y, '#7a5a3a', 14, 100, 5); return;
+  }
+  if (TU.nvCoffreIndice > 0 && d < TU.nvCoffreIndice && (G.frame + c.id * 41) % 150 === 0) mote(c.x + (Math.random() - .5) * 8, c.y, 4, '#fff1c4', 2.2, .7, 26);
+}
+
+/* ---------- objectives of the level ---------- */
+// id → its icon, its sentence, how far it is. « sur »: it can always be done by walking and fighting (the only ones the way out may ask for);
+// « passif »: it holds until it is lost. n: the number to reach.
+function nvDefs() {
+  return {
+    chasse: { ic: 'epee', sur: 1, txt: n => 'Vaincs ' + n + ' créatures', court: 'Créatures', val: () => run.stats.kills },
+    coffres: { ic: 'coffre', sur: 1, txt: n => n > 1 ? 'Ouvre ' + n + ' coffres' : 'Ouvre le coffre', court: n => n > 1 ? 'Coffres ouverts' : 'Coffre à ouvrir', val: () => F.chests.filter(c => !c.hidden && c.opened).length },
+    casse: { ic: 'nv_casse', sur: 1, txt: n => 'Casse ' + n + ' décors', court: 'Décors cassés', val: () => nvR().casse },
+    salles: { ic: 'nv_salles', sur: 1, txt: n => 'Visite les ' + n + ' salles', court: 'Salles visitées', val: () => nvR().rooms.size },
+    cache: { ic: 'nv_cache', txt: () => 'Trouve le coffre caché', court: 'Coffre caché à trouver', val: () => F.chests.filter(c => c.hidden && c.opened).length },
+    vie: { ic: 'coeur', passif: 1, txt: () => 'Garde plus de ' + Math.round(TU.nvQueteVie * 100) + ' % de ta vie', court: () => 'Vie au-dessus de ' + Math.round(TU.nvQueteVie * 100) + ' %', lost: () => nvR().low },
+    vite: { ic: 'temps', passif: 1, txt: n => 'Vaincs le boss en moins de ' + fmtTime(n), court: n => 'Boss en moins de ' + fmtTime(n), lost: n => { const r = nvR(); return r.vt == null ? run.time > n : r.vt > n; }, won: n => { const r = nvR(); return r.vt != null && r.vt <= n; } },
+  };
+}
+// the objectives of this level, drawn by its seed: one that can always be done first, then others, one passive at most
+function nvDraw() {
+  const r = nvR(), R = rng((F.seed ^ Math.imul(F.floor + 5, 0x2C1B3C6D)) >>> 0), foes = F.enemies.filter(e => e.type !== 9 && !e.summon).length;
+  const seen = F.chests.filter(c => !c.hidden).length, br = F.nv ? F.nv.br.length : 0, can = [];
+  if (foes >= 6) can.push(['chasse', Math.max(4, Math.round(foes * TU.nvQueteChasse)), 3]);
+  if (F.rooms && F.rooms.length >= 4) can.push(['salles', F.rooms.length, 2]);
+  if (br >= 5) can.push(['casse', Math.min(14, Math.max(3, Math.round(br * TU.nvQueteCasse))), 2]);
+  if (seen >= 1) can.push(['coffres', Math.min(2, seen), 2]);
+  if (F.chests.some(c => c.hidden)) can.push(['cache', 1, 1]);
+  can.push(['vie', 1, 1]); if (F.boss) can.push(['vite', TU.nvQueteVite, 2]);
+  const D = nvDefs(), take = list => { let t = 0; for (const c of list) t += c[2]; let x = R() * t; for (const c of list) { x -= c[2]; if (x <= 0) return c; } return list[list.length - 1]; };
+  const sure = can.filter(c => D[c[0]].sur), want = clamp(Math.round(TU.nvQuetesN), 1, 3);
+  if (sure.length) r.q.push(take(sure));
+  while (r.q.length < want) { const rest = can.filter(c => !r.q.includes(c) && !(D[c[0]].passif && r.q.some(q => D[q[0]].passif))); if (!rest.length) break; r.q.push(take(rest)); }
+  r.q = r.q.map(c => ({ id: c[0], n: c[1], v: 0, ok: false, lost: false }));
+  r.rooms.add(0); nvTrack(); r.ann = G.time; nvAnnounce();
+}
+// where each objective stands ; the first time one is filled (or lost) it says so
+function nvTrack() {
+  const r = run.nv, D = nvDefs(); if (!r) return;
+  if (P.mhp && P.hp / P.mhp < TU.nvQueteVie && !P.down) r.low = true; if (P.down) r.low = true;
+  if (r.vt == null && F.boss) { const b = F.enemies.find(e => e.type === 9); if (b && b.dead) r.vt = run.time; }
+  if (F.rooms && G.frame % 6 === 0) F.rooms.forEach((room, i) => { if (!r.rooms.has(i) && hyp(P.x - (room.cx + .5) * T, P.y - (room.cy + .5) * T) < 3.4 * T) r.rooms.add(i); });
+  for (const q of r.q) {
+    const d = D[q.id], was = q.ok, wasLost = q.lost;
+    if (d.passif) { q.lost = !!d.lost(q.n); q.ok = d.won ? d.won(q.n) : !q.lost; q.v = q.ok ? 1 : 0; }
+    else { q.v = Math.min(q.n, d.val()); q.ok = q.v >= q.n; }
+    if (G.mode === 'play' && run.time > .5) {
+      if (!d.passif && q.ok && !was) nvCheer(q, d);
+      if (d.passif && q.lost && !wasLost) { floatText(P.x, P.y - 18, 'Objectif perdu', '#e2674f'); sfx(200, .16, 'sawtooth', .04, -90); }
+    }
+  }
+  const key = r.q.map(q => q.id + q.v + (q.ok ? 'o' : '') + (q.lost ? 'x' : '')).join('|') + (nvLocked() ? 'L' : '');
+  if (!r.over && (key !== r.key || !r.shown)) { r.key = key; nvHud(); }
+}
+function nvCheer(q, d) {
+  floatText(P.x, P.y - 18, 'Objectif rempli !', '#8fe06a'); ring(P.x, P.y, 34, '#8fe06a', .45); ring(P.x, P.y, 56, '#fff', .3); burst(P.x, P.y, '#8fe06a', 14, 120, 12);
+  sfx(660, .12, 'triangle', .05, 300); sfx(990, .2, 'sine', .04, 200); P.joyT = .6;
+}
+// the way out stays shut while the objectives it asks for are not filled (setting nvSortie ; alone only). Asked by updateEnemies each image
+function nvLocked() {
+  if (!TU.nvQuetes || !TU.nvSortie || Net.room || !run || !run.nv || !F || F.hub || F.boss) return false;
+  const D = nvDefs(), sure = run.nv.q.filter(q => D[q.id].sur); if (!sure.length) return false;
+  const need = TU.nvSortie >= 2 ? sure.length : 1, lock = sure.filter(q => q.ok).length < need;
+  if (lock && F.lift && !F.lift.open && G.time - run.nv.said > 6 && hyp(F.lift.x - P.x, F.lift.y - P.y) < 70 && !F.enemies.some(e => e.guard && !e.dead)) {
+    run.nv.said = G.time; toast(need > 1 ? 'La sortie attend : remplis tes objectifs' : 'La sortie attend : remplis un objectif'); sfx(180, .2, 'sine', .05, -40);
+  }
+  return lock;
+}
+// what a filled objective pays, at the way out. Today coins (provisional, a setting each); the experience by knight will be given here
+function nvPay() {
+  const r = run.nv, lm = lootMul(run.floor) * seedMod(run.seed).ecl, done = r.q.filter(q => q.ok).length, all = done === r.q.length && done > 0;
+  const each = Math.round(TU.nvQuetePieces * lm), bonus = all ? Math.round(TU.nvQueteTout * lm) : 0;
+  return { done, n: r.q.length, each, bonus, pieces: done * each + bonus, all };
+}
+// the run ends (finishRun, before the save): a level won pays its objectives
+function nvFinish(kind) {
+  const r = run && run.nv; nvHud(true); if (!r || !r.q.length) return;
+  r.over = true; nvTrack(); r.gain = null; if (kind !== 'win') return;
+  const g = nvPay(); r.gain = g;
+  if (g.pieces > 0) { ME.ecl += g.pieces; run.stats.ecl += g.pieces; }
+}
+
+/* ---------- on screen ---------- */
+// the few icons these screens need and the game has not (drawn like its own: a grid of 24, a line of 2). The file of icons is made by a tool: they are added here
+function nvIcons() {
+  if (ICON_LIB.nv_ok) return; const g = d => [24, '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</g>'];
+  ICON_LIB.nv_objectif = g('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>');
+  ICON_LIB.nv_ok = g('<circle cx="12" cy="12" r="9"/><path d="M7.500 12.500l3 3 6-7"/>');
+  ICON_LIB.nv_vide = g('<circle cx="12" cy="12" r="9"/>');
+  ICON_LIB.nv_perdu = g('<circle cx="12" cy="12" r="9"/><path d="M8.500 8.500l7 7M15.500 8.500l-7 7"/>');
+  ICON_LIB.nv_cache = g('<path d="M3 19c2-3 5-4.500 9-4.500s7 1.500 9 4.500"/><path d="M8 14.500V10h8v4.500"/><path d="M8 10c0-2.500 1.500-4 4-4s4 1.500 4 4"/><path d="M12 11.500v1.500"/>');
+  ICON_LIB.nv_casse = g('<path d="M9 4h6M9.500 4c0 2-3 3-3 7.500 0 4 2 7.500 5.500 7.500s5.500-3.500 5.500-7.500c0-4.500-3-5.500-3-7.500"/><path d="M12 8l-1.500 3 3 2-2 3"/>');
+  ICON_LIB.nv_salles = g('<path d="M3 20V9l4-4h4v6h6V5h4v15z"/><path d="M11 20v-4h3v4"/>');
+  ICON_LIB.nv_cle = g('<circle cx="7.500" cy="15.500" r="3.500"/><path d="M10 13l9-9M16 7l3 3M13.500 9.500l2 2"/>');
+  ICON_LIB.nv_elite = g('<path d="M4 18l1.500-9 4 4L12 6l2.500 7 4-4L20 18z"/><path d="M4 21h16"/>');
+  ICON_LIB.nv_xp = g('<path d="M12 3l2.600 5.600 6 .700-4.400 4.200 1.200 6L12 16.600 6.600 19.500l1.200-6L3.400 9.300l6-.700z"/><path d="M12 9v4M10 11h4"/>');
+}
+function nvCss() {
+  if ($('nv-css')) return; const s = document.createElement('style'); s.id = 'nv-css';
+  s.textContent = '#nv-q{position:absolute;right:12px;top:66px;z-index:6;display:flex;flex-direction:column;gap:4px;align-items:flex-end;pointer-events:none;max-width:62vw}' +
+    '#nv-q .nvl{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 7px;border-radius:999px;background:rgba(23,18,13,.78);background:color-mix(in srgb,var(--well) 78%,transparent);font-size:12px;font-weight:700;line-height:1.1;color:var(--cream);white-space:nowrap;font-variant-numeric:tabular-nums;transition:color .3s}' +
+    '#nv-q .nvl .ic{width:15px;height:15px;flex:none;color:var(--dim)} #nv-q .nvl .ic svg{width:100%;height:100%;display:block}' +
+    '#nv-q .nvl b{font-weight:800;color:var(--amber);margin-left:2px} #nv-q .nvl.ok{color:#bfe8a0} #nv-q .nvl.ok .ic,#nv-q .nvl.ok b{color:#8fe06a} #nv-q .nvl.lost{color:var(--dim);text-decoration:line-through} #nv-q .nvl.lost .ic{color:var(--danger)}' +
+    '#nv-q .nvk{font-size:11px;font-weight:700;color:var(--amber);padding:3px 9px;border-radius:999px;background:rgba(23,18,13,.78);display:flex;align-items:center;gap:5px} #nv-q .nvk .ic{width:12px;height:12px} #nv-q .nvk .ic svg{width:100%;height:100%;display:block}' +
+    '#nv-ann{position:absolute;left:50%;top:46%;z-index:29;transform:translate(-50%,0);width:min(84vw,430px);padding:12px 16px 13px;border-radius:22px;background:rgba(23,18,13,.9);background:color-mix(in srgb,var(--well) 90%,transparent);box-shadow:inset 0 0 0 2px var(--line),0 14px 40px rgba(0,0,0,.5);pointer-events:none;opacity:0;display:flex;flex-direction:column;gap:7px}' +
+    '#nv-ann.go{animation:nvann 4.6s ease-out} @keyframes nvann{0%{opacity:0;transform:translate(-50%,10px)}7%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-6px)}}' +
+    '@media (prefers-reduced-motion:reduce){#nv-ann.go{animation:nvannr 4.4s linear}@keyframes nvannr{0%,85%{opacity:1}to{opacity:0}}}' +
+    '#nv-ann small{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)} #nv-ann div{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;color:var(--cream)} #nv-ann .ic{width:19px;height:19px;flex:none;color:var(--amber)} #nv-ann .ic svg{width:100%;height:100%;display:block} #nv-ann em{font-style:normal;font-size:12px;color:var(--dim);font-weight:600}' +
+    '.nv-res{width:100%;display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:20px;background:var(--bark-3);text-align:left}' +
+    '.nv-res .nvr{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:var(--cream)} .nv-res .nvr .ic{width:19px;height:19px;flex:none;color:var(--dim)} .nv-res .nvr .ic svg{width:100%;height:100%;display:block}' +
+    '.nv-res .nvr span:nth-child(2){flex:1;min-width:0} .nv-res .nvr.ok .ic{color:#8fe06a} .nv-res .nvr.no{color:var(--dim)} .nv-res .nvr.no .ic{color:var(--danger)} .nv-res .nvr i{font-style:normal;font-size:13px;color:var(--amber);font-variant-numeric:tabular-nums;white-space:nowrap} .nv-res .nvr.no i{color:var(--dim);font-weight:600}' +
+    '.nv-res .nvt{display:flex;justify-content:space-between;gap:8px;margin-top:3px;padding-top:8px;border-top:1px solid var(--line);font-size:13px;font-weight:700;color:var(--amber)} .nv-res .nvt.no{color:var(--dim);font-weight:600}';
+  document.head.append(s);
+}
+function nvLine(q, D) { const d = D[q.id], f = x => typeof x === 'function' ? x(q.n) : x; return { d, long: d.txt(q.n), court: f(d.court) }; }
+// the objectives under the buttons of the level: two or three short lines, the count in amber, green once filled (off: true hides them)
+function nvHud(off) {
+  let el = $('nv-q'); const r = run && run.nv, on = !off && !!r && r.q.length > 0 && G.mode === 'play' && !!F && !F.hub;
+  if (r) r.shown = on; if (!on) { if (el) el.hidden = true; return; }
+  nvCss(); nvIcons(); if (!el) { el = h('div', { id: 'nv-q', 'aria-label': 'Objectifs du niveau' }); $('hud').append(el); } // (inside the HUD of a level: it comes and goes with it)
+  const D = nvDefs(), kids = r.q.map(q => { const L = nvLine(q, D);
+    return h('div', { class: 'nvl' + (q.lost ? ' lost' : q.ok ? ' ok' : '') }, ic(q.lost ? 'nv_perdu' : q.ok ? 'nv_ok' : L.d.ic), h('span', { text: L.court }), L.d.passif || q.n < 2 ? null : h('b', { text: q.v + ' / ' + q.n })); });
+  if (nvLocked()) kids.push(h('div', { class: 'nvk' }, ic('cadenas'), 'Sortie fermée'));
+  el.replaceChildren(...kids); el.hidden = false;
+}
+// told at the start, under the card of the level, for four seconds
+function nvAnnounce() {
+  const r = run.nv; if (!r || !r.q.length) return; nvCss(); nvIcons();
+  let el = $('nv-ann'); if (!el) { el = h('div', { id: 'nv-ann', role: 'status' }); $('game').append(el); }
+  const D = nvDefs(), g = nvPayPreview();
+  el.replaceChildren(h('small', { text: r.q.length > 1 ? 'Objectifs du niveau' : 'Objectif du niveau' }), ...r.q.map(q => h('div', null, ic(D[q.id].ic), h('span', { text: D[q.id].txt(q.n) }))),
+    h('em', { text: (nvLockNeed() ? (nvLockNeed() > 1 ? 'La sortie les demande. ' : 'La sortie en demande un. ') : '') + '+ ' + g.each + ' ' + GM().coin + ' chacun' + (g.bonus ? ', + ' + g.bonus + ' si tout est rempli' : '') }));
+  el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+}
+function nvPayPreview() { const lm = lootMul(run.floor) * seedMod(run.seed).ecl; return { each: Math.round(TU.nvQuetePieces * lm), bonus: run.nv.q.length > 1 ? Math.round(TU.nvQueteTout * lm) : 0 }; }
+function nvLockNeed() { if (!TU.nvSortie || Net.room || F.boss) return 0; const D = nvDefs(), s = run.nv.q.filter(q => D[q.id].sur).length; return !s ? 0 : TU.nvSortie >= 2 ? s : 1; }
+// the results screen (showResults, d_ui.js): each objective, filled or not, and what it paid
+function nvResults(kids, kind) {
+  const r = run && run.nv; if (!r || !r.q.length) return; nvCss(); nvIcons();
+  const D = nvDefs(), g = r.gain || nvPay(), win = kind === 'win', box = h('div', { class: 'nv-res' }, h('div', { class: 'eyebrow', text: 'Objectifs du niveau · ' + g.done + ' sur ' + g.n }));
+  for (const q of r.q) { const L = nvLine(q, D), part = !q.ok && !L.d.passif && q.n > 1 ? q.v + ' / ' + q.n : '';
+    box.append(h('div', { class: 'nvr ' + (q.ok ? 'ok' : 'no') }, ic(q.ok ? 'nv_ok' : 'nv_perdu'), h('span', { text: L.long }), h('i', { text: q.ok && win ? '+' + g.each : q.ok ? '' : part }))); }
+  box.append(win ? h('div', { class: 'nvt' + (g.pieces ? '' : ' no') }, h('span', { text: g.all ? 'Tout est rempli : + ' + g.bonus + ' en plus' : g.done ? 'Il en restait ' + (g.n - g.done) + ' : rejoue le niveau pour le bonus' : 'Aucun objectif rempli cette fois' }), g.pieces ? h('span', { text: '+' + g.pieces + ' ' + GM().coin }) : null)
+    : h('div', { class: 'nvt no' }, h('span', { text: 'Les objectifs ne paient qu\'à la sortie du niveau.' })));
+  kids.push(box);
+}
+
+/* ---------- drawn in 3D (the page without three.js draws them flat: nvDraw2D) ---------- */
+// called by buildWorld once the chests are built: one small mesh for each thing to break still standing, a mound of earth over each chest still buried
+function nvBuild() {
+  if (!USE3D || !F || F.hub) return; const S = F.nv;
+  if (S) for (const b of S.br) { b.m = null; b.rub = null; if (!b.dead) nvMesh(b); else nvRubble(b); }
+  for (const c of F.chests) { c.nvm = null; if (TU.nvCoffres && c.hidden && !c.shown) nvMound(c); }
+}
+function nvMesh(b) {
+  const g = new GB(), S = F.str, s = b.s, moss = rgb(S.deco, .5), R = rng((b.id * 9973 + F.seed) >>> 0);
+  if (b.k === 0) { // a jar of bark: a round belly, a short neck, a lip, a band, a patch of moss
+    const clay = rgb('#7a4c2e', .7), dark = rgb('#452a1a', .7);
+    g.add(sph(.2, 8, 6), mat(0, .2, 0, 1, 1.08, 1), (x, y) => y < .12 ? [clay[0] * .72, clay[1] * .72, clay[2] * .72] : clay, true);
+    g.add(cyl(.105, .135, .1, 8), mat(0, .42, 0), clay); g.add(cyl(.135, .115, .045, 8), mat(0, .485, 0), dark);
+    g.add(cyl(.205, .205, .04, 8), mat(0, .22, 0), dark); g.add(dome(.09, 6, 3), mat(.1, .3, .1, 1, .5, 1), moss);
+  } else if (b.k === 1) { // a keg: two cones mouth to mouth, two hoops, a pale lid
+    const wood = rgb('#6a4626', .72), hoop = rgb('#2a1d14', .8), lid = rgb('#9a7a4a', .7);
+    g.add(cyl(.2, .165, .19, 8), mat(0, .095, 0), wood); g.add(cyl(.165, .2, .19, 8), mat(0, .285, 0), wood);
+    g.add(cyl(.2, .2, .04, 8), mat(0, .09, 0), hoop); g.add(cyl(.2, .2, .04, 8), mat(0, .29, 0), hoop); g.add(cyl(.15, .15, .02, 8), mat(0, .385, 0), lid);
+    g.add(dome(.07, 6, 3), mat(-.11, .38, .04, 1, .5, 1), moss);
+  } else { // a hollow stump: flared bark, a pale ring of wood, a dark hole, a root or two, a small brown mushroom
+    const bark = rgb('#5e4630', .7), ring = rgb('#a8895a', .65), hole = rgb('#1c130c');
+    g.add(cyl(.2, .27, .3, 7), mat(0, .15, 0), (x, y) => y < .1 ? [bark[0] * .75, bark[1] * .75, bark[2] * .75] : bark); g.add(cyl(.185, .185, .02, 7), mat(0, .305, 0), ring); g.add(cyl(.115, .115, .025, 7), mat(0, .31, 0), hole);
+    for (let i = 0; i < 3; i++) { const a = R() * TAU; g.add(cone(.07, .22, 4), mat(Math.cos(a) * .24, .04, Math.sin(a) * .24, 1, 1, 1, Math.sin(a) * 1.25, 0, -Math.cos(a) * 1.25), bark); }
+    mushroom(g, g, .19, .16, .12, .5, rgb('#9a6a44', .7), false, R); g.add(dome(.1, 6, 3), mat(-.08, .3, -.06, 1, .4, 1), moss);
+  }
+  const m = withOutline(shade(new THREE.Mesh(g.build(), M.toon)), 1.06); m.position.set(b.x * U, 0, b.y * U); m.rotation.y = b.rot; m.scale.setScalar(s); m.userData.layer = 'niveau';
+  worldGroup.add(m); b.m = m;
+}
+// what is left of it: a few shards on the ground, that nobody trips on
+function nvRubble(b) {
+  const g = new GB(), R = rng((b.id * 7919 + 13) >>> 0), col = rgb(b.k === 0 ? '#8a5632' : b.k === 1 ? '#74502c' : '#56402c');
+  for (let i = 0; i < 5; i++) { const a = R() * TAU, d = .05 + R() * .2; g.add(b.k === 0 ? cone(.07 + R() * .05, .05, 3) : box(.14 + R() * .1, .03, .05), mat(Math.cos(a) * d, .02, Math.sin(a) * d, 1, 1, 1, 0, R() * TAU, (R() - .5) * .3), [col[0] * (.8 + R() * .3), col[1] * (.8 + R() * .3), col[2] * (.8 + R() * .3)]); }
+  if (b.k === 2) g.add(cyl(.22, .26, .07, 7), mat(0, .035, 0), col);
+  const m = new THREE.Mesh(g.build(), M.toon); m.receiveShadow = true; m.position.set(b.x * U, 0, b.y * U); m.rotation.y = b.rot; m.userData.layer = 'niveau'; worldGroup.add(m); b.rub = m;
+}
+// the mound over a buried chest: earth a little darker than the floor, a few pebbles. Nothing shines: on the ground, only loot does
+function nvMound(c) {
+  const g = new GB(), S = F.str, R = rng((c.id * 5113 + F.seed) >>> 0), earth = rgb(S.floorA, .95), dark = rgb(S.floorA, .7);
+  g.add(ico(.22, 1), mat(0, .0, 0, 1, .32, .9, 0, R() * 3, 0), earth); g.add(ico(.13, 0), mat(.15, .0, .09, 1, .4, 1, R(), R(), 0), dark); g.add(ico(.1, 0), mat(-.16, 0, -.07, 1, .4, 1, R(), R(), 0), dark);
+  for (let i = 0; i < 4; i++) { const a = R() * TAU, d = .2 + R() * .14; g.add(ico(.035 + R() * .03), mat(Math.cos(a) * d, .02, Math.sin(a) * d, 1, .7, 1, R(), R(), R()), rgb(S.wallEdge, .55)); }
+  const m = new THREE.Mesh(g.build(), M.toon); m.receiveShadow = true; m.position.set(c.x * U, 0, c.y * U); m.rotation.y = (c.id * 1.7) % TAU; m.userData.layer = 'niveau'; worldGroup.add(m); c.nvm = m;
+}
+// each image (render3D): a thing just struck wobbles ; one that breaks flattens and is gone, its shards stay ; a mound goes when its chest comes out
+function nvFrame(t) {
+  if (!F || F.hub) return; const S = F.nv;
+  if (S) for (const b of S.br) {
+    const m = b.m; if (!m) continue;
+    if (!b.dead) { const k = Math.max(0, 1 - (t - b.t) / .28); m.rotation.z = k ? Math.sin(t * 46) * .16 * k : 0; const p = 1 + k * .08; m.scale.set(b.s * p, b.s * (1 - k * .08), b.s * p); continue; }
+    const k = (t - b.dt) / .16;
+    if (k >= 1) { worldGroup.remove(m); m.geometry.dispose(); b.m = null; if (!b.rub) nvRubble(b); } else m.scale.set(b.s * (1 + k * .5), b.s * (1 - k * .9), b.s * (1 + k * .5));
+  }
+  // (a chest still buried was drawn all the same: its group's « visible » was left undefined, which three.js takes for visible. With the setting on it is truly hidden)
+  if (TU.nvCoffres) for (const c of F.chests) { if (c.m && c.hidden && !c.shown) c.m.grp.visible = false; if (c.nvm) c.nvm.visible = c.hidden && !c.found && !c.shown; } else for (const c of F.chests) if (c.nvm) c.nvm.visible = false;
+}
+// the same, flat, for the page without three.js (render2D, c_render.js, in the frame of the level)
+function nvDraw2D(c2) {
+  if (!F || F.hub) return; const S = F.nv;
+  if (TU.nvCoffres) for (const c of F.chests) if (c.hidden && !c.found && !c.shown) { c2.fillStyle = 'rgba(20,12,6,.45)'; c2.beginPath(); c2.ellipse(c.x, c.y, 9, 5, 0, 0, TAU); c2.fill(); }
+  if (S) for (const b of S.br) {
+    if (b.dead) { c2.fillStyle = 'rgba(90,60,34,.55)'; c2.beginPath(); c2.ellipse(b.x, b.y, 7, 3, b.rot, 0, TAU); c2.fill(); continue; }
+    const w = Math.max(0, 1 - (G.time - b.t) / .28) * Math.sin(G.time * 46) * 2;
+    c2.fillStyle = b.k === 0 ? '#9a6238' : b.k === 1 ? '#84582e' : '#5e4630'; c2.beginPath(); c2.ellipse(b.x + w, b.y - 3, b.r, b.r + 1, 0, 0, TAU); c2.fill();
+    c2.fillStyle = b.k === 2 ? '#1c130c' : '#33241a'; c2.beginPath(); c2.ellipse(b.x + w, b.y - 6, b.r * .55, b.r * .3, 0, 0, TAU); c2.fill();
+  }
+}
+
+/* ================= scenery of the ground, proper to each world, and the reeds of the Marais (8 October, Damien's request) =================
+   Damien: « le Marais ressemble trop aux Racines et le Mycélium aux Abîmes : il manque des décors de sol non bloquants propres à chaque monde ;
+   les brins du kit Racines font des bâtons néon sur les murs du Marais : à remplacer par des roseaux ».
+   Setting « Décors de sol et roseaux » (TU.nvSol, family « Niveaux vivants », OFF by default ; TU.nvSolDens multiplies their number). For the eye
+   only: nothing here stops feet, shots or sight, nothing shines (on the ground, only loot does), the level and its collisions are what they were.
+     Racines   roots that break the surface, ferns, brown mushrooms, a mossy log, a stump cut low
+     Mycélium  a fairy ring, pale threads of mycelium, puffballs, a cushion of blue moss
+     Marais    puddles (some with water lilies), rushes, rotten planks of a pontoon, flat mossy stones ; and reeds with their brown heads on top
+               of the walls, in place of the three bright blades the Racines kit puts there (decoTop, e_gl.js)
+   The shapes are built by code (rounded, squat, the dark colours of each world), merged into one mesh per piece of 24 × 24 tiles: a stand-in
+   until Damien's own models arrive (audit/niveaux_vivants/PROPOSITIONS.md, 3.3). solPlan decides where, from the seed, without three.js:
+   the same for a whole team. solBuild is called by buildWorld, solTop by decoTop.
+   Every top-level name here is a function. */
+function solOn() { return !!TU.nvSol && !!F && !F.hub; }
+function solZone() { const z = F ? ownZone(F.si) : null; return z === 'racines' || z === 'mycelium' || z === 'marais' ? z : null; }
+// kind, weight, where: 0 anywhere, 1 against a wall, 2 in the open (the eight tiles around are floor)
+function solKinds(z) {
+  return z === 'racines' ? [['racine', 3, 0], ['fougere', 3, 0], ['champis', 2.4, 0], ['rondin', 1.6, 2], ['souche', 1.2, 2]]
+    : z === 'mycelium' ? [['rond', 1.6, 2], ['filaments', 3.4, 0], ['vesses', 2.6, 0], ['coussin', 2.4, 0]]
+      : [['flaque', 2.8, 2], ['joncs', 3.6, 0], ['planches', 1.5, 2], ['pierres', 2.4, 0]];
+}
+// where each piece lies: [{ k, x, y (tiles), s, rot, n }], the same for everyone who plays this seed
+function solPlan() {
+  const z = solZone(), out = []; if (!z || !solOn()) return out;
+  const W = F.W, H = F.H, g = F.g, R = rng((F.seed ^ 0x50C1A7) >>> 0), kinds = solKinds(z), dens = .15 * clamp(+TU.nvSolDens || 1, .2, 3);
+  const fl = (x, y) => x >= 0 && y >= 0 && x < W && y < H && g[y * W + x] === 1 && !(F.secret && F.secret.has(y * W + x));
+  const off = [[F.start.x / T, F.start.y / T, 1.2]]; if (F.lift) off.push([F.lift.x / T, F.lift.y / T, 1.7]);
+  for (const c of F.chests) off.push([c.x / T, c.y / T, 1.1]); for (const b of F.blocks || []) off.push([b.x / T, b.y / T, .75]);
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    if (!fl(x, y)) continue; const r = R(); if (r > dens) continue;
+    const edge = !fl(x - 1, y) || !fl(x + 1, y) || !fl(x, y - 1) || !fl(x, y + 1);
+    let open = !edge; for (let dy = -1; dy <= 1 && open; dy++) for (let dx = -1; dx <= 1; dx++) if (!fl(x + dx, y + dy)) { open = false; break; }
+    const can = kinds.filter(k => k[2] === 0 || (k[2] === 1 && edge) || (k[2] === 2 && open)); if (!can.length) continue;
+    let t = 0; for (const k of can) t += k[1]; let v = R() * t, pick = can[0]; for (const k of can) { v -= k[1]; if (v <= 0) { pick = k; break; } }
+    const px = x + .5 + (R() - .5) * (pick[2] === 2 ? .3 : .6), py = y + .5 + (R() - .5) * (pick[2] === 2 ? .3 : .6);
+    if (off.some(o => hyp(px - o[0], py - o[1]) < o[2]) || out.some(o => hyp(px - o.x, py - o.y) < (pick[2] === 2 || o.w === 2 ? 1.5 : .9))) continue;
+    out.push({ k: pick[0], w: pick[2], x: px, y: py, s: .85 + R() * .4, rot: R() * TAU, n: (R() * 1e6) | 0 });
+  }
+  return out;
+}
+// the light of a level makes a colour of the builder much brighter than it is written: each world dims what is written here (a dark world dims less)
+function solDim() { const z = solZone(); return z === 'racines' ? .5 : z === 'mycelium' ? .62 : .7; }
+// one piece, added to a builder (b), at (x, z) on the ground. Colours: the world's own, darkened ; nothing glows. Each one is about a tile wide and
+// low: it must read from above on a phone, and never hide a creature or what lies on the ground
+function solPiece(b, p, S) {
+  const R = rng(p.n), x = p.x, z = p.y, s = p.s, dim = solDim(), c = (css, k) => rgb(css, (k == null ? 1 : k) * dim), at = (dx, dz) => [x + (dx * Math.cos(p.rot) - dz * Math.sin(p.rot)) * s, z + (dx * Math.sin(p.rot) + dz * Math.cos(p.rot)) * s];
+  const k = p.k, shroom = (qx, qz, m, stem, cap) => { b.add(cyl(.04 * m, .06 * m, .16 * m, 5), mat(qx, .08 * m, qz), stem); b.add(dome(.15 * m, 7, 3), mat(qx, .13 * m, qz, 1, .8, 1, 0, R() * 6), cap); };
+  if (k === 'racine') { // a root that breaks the surface: a low thick arch, a smaller one beside it, a pad of moss
+    const bark = c('#4e3520', .9 + R() * .2);
+    b.add(torus(.4 * s, .085 * s, Math.PI, 9), mat(x, -.05, z, 1, .55, 1, 0, p.rot, 0), bark);
+    const q = at(.42, .2); b.add(torus(.22 * s, .06 * s, Math.PI, 7), mat(q[0], -.03, q[1], 1, .55, 1, 0, p.rot + .7 + R(), 0), c('#432c1a'));
+    if (R() < .6) b.add(dome(.1 * s, 6, 3), mat(x, .2 * s, z, 1.3, .5, 1, 0, p.rot, 0), c(S.deco, .55));
+  } else if (k === 'fougere') { // a fern: fronds lying in a rosette, darker than the grass
+    const n = 7 + ((R() * 4) | 0), L = .46 * s;
+    for (let i = 0; i < n; i++) { const a = i / n * TAU + (R() - .5) * .4, l = L * (.75 + R() * .4), up = 1.15 + R() * .2;
+      b.add(cone(.115 * s, l, 3), mat(x + Math.cos(a) * l * .46, .05 + l * .16, z - Math.sin(a) * l * .46, 1, 1, .42, 0, a, -up), c(i % 2 ? '#3f5c2a' : '#4c6a30', .85 + R() * .2)); }
+    b.add(dome(.06 * s, 5, 3), mat(x, .03, z, 1, .7, 1), c('#34491f'));
+  } else if (k === 'champis') { // three to five brown mushrooms: round caps, pale feet
+    for (let i = 0, n = 3 + ((R() * 3) | 0); i < n; i++) { const q = at((R() - .5) * .55, (R() - .5) * .55); shroom(q[0], q[1], (.7 + R() * .8) * s, c('#d8c8a8', .8), c(i % 2 ? '#7a3c26' : '#8a4a2c', .85 + R() * .2)); }
+  } else if (k === 'rondin') { // a log lying down, moss on its back, pale ends, a mushroom leaning on it
+    const L = .9 * s, r = .14 * s, sx = Math.sin(p.rot), cx = Math.cos(p.rot);
+    b.add(cyl(r, r * 1.1, L, 7), mat(x, r * .8, z, 1, 1, 1, Math.PI / 2, 0, -p.rot), c('#4a3422', .95)); // (it lies along (sin rot, cos rot))
+    for (const sd of [-1, 1]) b.add(cyl(r * .8, r * .8, .014, 7), mat(x + sx * sd * (L / 2 + .005), r * .8, z + cx * sd * (L / 2 + .005), 1, 1, 1, Math.PI / 2, 0, -p.rot), c('#a8875a', .9));
+    b.add(dome(r * 1.04, 6, 3), mat(x, r * 1.15, z, 1, .5, 2.6, 0, p.rot, 0), c(S.deco, .55));
+    shroom(x + cx * r * 1.5, z - sx * r * 1.5, .8 * s, c('#d8c8a8', .8), c('#8a4a2c'));
+  } else if (k === 'souche') { // a stump cut low: bark, pale rings, moss on one side
+    b.add(cyl(.27 * s, .34 * s, .14, 8), mat(x, .07, z, 1, 1, 1, 0, p.rot, 0), c('#4a3422')); b.add(cyl(.24 * s, .24 * s, .02, 8), mat(x, .145, z, 1, 1, 1, 0, p.rot, 0), c('#a8875a', .9)); b.add(cyl(.12 * s, .12 * s, .02, 8), mat(x, .15, z), c('#8a6a42', .9));
+    const q = at(.2, .1); b.add(dome(.16 * s, 6, 3), mat(q[0], .1, q[1], 1, .5, 1), c(S.deco, .55));
+    for (let i = 0; i < 3; i++) { const a = p.rot + i * 2.1; b.add(cone(.1 * s, .3 * s, 4), mat(x + Math.cos(a) * .34 * s, .03, z + Math.sin(a) * .34 * s, 1, 1, 1, Math.sin(a) * 1.35, 0, -Math.cos(a) * 1.35), c('#432c1a')); }
+  } else if (k === 'rond') { // a fairy ring: pale caps in a circle
+    const n = 8 + ((R() * 4) | 0), rr = .5 * s;
+    for (let i = 0; i < n; i++) { if (R() < .12) continue; const a = i / n * TAU + R() * .2; shroom(x + Math.cos(a) * rr, z + Math.sin(a) * rr, (.55 + R() * .4) * s, c('#aab4c8', .7), c(i % 3 ? '#7a70b0' : '#5f98a8', .8)); }
+  } else if (k === 'filaments') { // threads of mycelium: pale veins that fork, flat on the ground, a small knot where they meet
+    const col = c('#6f86a2', .7);
+    for (let i = 0, n = 4 + ((R() * 3) | 0); i < n; i++) { let a = p.rot + i / n * TAU + (R() - .5) * .6, px = x, pz = z;
+      for (let j = 0; j < 3; j++) { const len = (.34 - j * .07) * s, mx = px + Math.cos(a) * len / 2, mz = pz + Math.sin(a) * len / 2;
+        b.add(box(len, .012, .055 - j * .014), mat(mx, .014, mz, 1, 1, 1, 0, -a, 0), col); px += Math.cos(a) * len; pz += Math.sin(a) * len; a += (R() - .5) * 1.1; } }
+    b.add(dome(.09 * s, 6, 3), mat(x, .008, z, 1, .5, 1), c('#9ab0c8', .85));
+  } else if (k === 'vesses') { // puffballs: pale, round, squat
+    for (let i = 0, n = 2 + ((R() * 3) | 0); i < n; i++) { const q = at((R() - .5) * .5, (R() - .5) * .5), m = (.11 + R() * .09) * s;
+      b.add(sph(m, 7, 5), mat(q[0], m * .7, q[1], 1, .8, 1), c('#a8b6c6', .7 + R() * .15), true); }
+  } else if (k === 'coussin') { // a cushion of blue moss, a paler crown, a small cap growing out of it
+    b.add(dome(.4 * s, 8, 3), mat(x, 0, z, 1, .34, .8, 0, p.rot, 0), c('#27555e', .9)); const q = at(.08, .03); b.add(dome(.22 * s, 7, 3), mat(q[0], .08 * s, q[1], 1, .36, .8, 0, p.rot, 0), c('#377680', .9));
+    if (R() < .6) { const q2 = at(-.18, .1); shroom(q2[0], q2[1], .6 * s, c('#aab4c8', .7), c('#7a70b0', .8)); }
+  } else if (k === 'flaque') { // a puddle: dark still water, a paler heart, and water lilies on it more than every other time
+    const rr = (.55 + R() * .25) * s, ob = .7 + R() * .25;
+    b.add(cyl(rr, rr, .006, 12), mat(x, .008, z, 1, 1, ob, 0, p.rot, 0), c('#132a27')); b.add(cyl(rr * .62, rr * .62, .006, 10), mat(x + .05, .012, z - .04, 1, 1, ob, 0, p.rot, 0), c('#1f443f'));
+    if (R() < .7) for (let i = 0, n = 2 + ((R() * 3) | 0); i < n; i++) { const a = R() * TAU, d = R() * rr * .55, qx = x + Math.cos(a) * d, qz = z + Math.sin(a) * d * ob, pr = .1 + R() * .06;
+      b.add(new THREE.CylinderGeometry(pr, pr, .01, 8, 1, false, .5, TAU - .9), mat(qx, .022, qz, 1, 1, 1, 0, R() * TAU, 0), c('#47703a', .8 + R() * .2)); if (R() < .4) b.add(ico(.04), mat(qx, .045, qz, 1, .9, 1), c('#b89aa8', .8)); }
+  } else if (k === 'joncs') { // a tuft of rushes: dull green, brown tips, a little taller than the grass
+    for (let i = 0, n = 6 + ((R() * 4) | 0); i < n; i++) { const q = at((R() - .5) * .3, (R() - .5) * .3), hh = (.34 + R() * .3) * s;
+      b.add(cone(.03, hh, 4), mat(q[0], hh / 2, q[1], 1, 1, 1, (R() - .5) * .5, 0, (R() - .5) * .5), c(i % 3 ? '#4f6030' : '#665f33', .8 + R() * .25)); }
+  } else if (k === 'planches') { // two or three planks of a pontoon, sunk in the mud
+    for (let i = 0, n = 2 + ((R() * 1.6) | 0); i < n; i++) { const q = at(0, (i - (n - 1) / 2) * .2);
+      b.add(box((.8 + R() * .14) * s, .035, .16 * s), mat(q[0] + (R() - .5) * .08, .018, q[1], 1, 1, 1, 0, -p.rot + (R() - .5) * .12, (R() - .5) * .04), c(['#4e4030', '#423628', '#5a4a34'][i % 3], .9)); }
+  } else if (k === 'pierres') { // flat stones, the first one wearing moss
+    for (let i = 0, n = 2 + ((R() * 2) | 0); i < n; i++) { const q = at((R() - .5) * .5, (R() - .5) * .5), m = (.17 + R() * .1) * s;
+      b.add(ico(m, 0), mat(q[0], m * .16, q[1], 1, .34, .8, R(), R() * 6, 0), c('#525a4a', .8 + R() * .2)); if (i === 0) b.add(dome(m * .7, 6, 3), mat(q[0], m * .26, q[1], 1, .3, .8), c(S.deco, .5)); }
+  }
+}
+// called by buildWorld after the herbs: one mesh per piece of map, so that only what is near the knight is drawn
+function solBuild(isF) {
+  if (!USE3D || !solOn()) return 0; const plan = solPlan(); if (!plan.length) return 0;
+  const CH = 24, B = {}, S = F.str;
+  for (const p of plan) { const k = ((p.y / CH) | 0) * 4096 + ((p.x / CH) | 0); solPiece(B[k] || (B[k] = new GB()), p, S); }
+  for (const k in B) { if (B[k].empty) continue; const o = new THREE.Mesh(B[k].build(), M.toon); o.receiveShadow = true; o.castShadow = false; o.matrixAutoUpdate = false; o.userData.layer = 'sol'; o.userData.sol = true; worldGroup.add(o); }
+  return plan.length;
+}
+// called by decoTop (the growth on top of a wall) and by decoFace (what hangs on the side of a wall that looks at the camera): in the Marais, reeds with
+// their brown heads instead of the bright blades and of the pale roots of the Racines kit, on top of the wall and standing at its foot. true = done
+function solFace(pb, x, y, hh, R) { if (!solOn() || ownZone(F.si) !== 'marais') return false; if (R() < .55) solReeds(pb, x + .2 + R() * .6, 0, y + 1.13 + R() * .1, R, .8); return true; }
+function solTop(pb, x, y, z, R) { if (!solOn() || ownZone(F.si) !== 'marais') return false; solReeds(pb, x, y, z, R, 1); return true; }
+function solReeds(pb, x, y, z, R, k) {
+  for (let i = 0, n = 4 + ((R() * 3) | 0); i < n; i++) {
+    const px = x + (R() - .5) * .3, pz = z + (R() - .5) * .2 * k, hh = (.5 + R() * .45) * k, lx = (R() - .5) * .22, lz = (R() - .5) * .22, g = .8 + R() * .25;
+    pb.add(cyl(.016, .022, hh, 4), mat(px, y + hh / 2, pz, 1, 1, 1, lx, 0, lz), [.26 * g, .32 * g, .16 * g]);
+    if (i < 3) pb.add(cyl(.036, .036, .13, 5), mat(px - lz * hh * .5, y + hh - .03, pz + lx * hh * .5, 1, 1, 1, lx, 0, lz), [.24, .15, .09]); // the head of a reed: brown, never bright
+    else pb.add(cone(.03, hh * .7, 3), mat(px + .05, y + hh * .35, pz, 1, 1, .4, lx + .2, R() * 3, lz - .2), [.24 * g, .31 * g, .15 * g]);
+  }
 }
 
 </script>
