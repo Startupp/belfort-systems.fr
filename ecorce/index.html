@@ -906,7 +906,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "4a268dc";
+window.ecorceBuild = "09a62ee";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -2557,7 +2557,7 @@ function swapGame(c) { for (const k of GAME_KEYS) { const v = c[k]; c[k] = c.alt
 const ICONS = ['abime', 'ambre', 'braises', 'champignon', 'ecorce', 'givre', 'mycelium', 'ronce', 'rose'], ICON_OF_COL = ['ambre', 'mycelium', 'rose', 'givre'];
 const iconOr = (v, col) => ICONS.includes(v) ? v : ICON_OF_COL[clamp(col | 0, 0, 3)];
 function newChar(name, col, kind, ico, cls) { // cls: its class (CLASSES), 0 when not given (the character of a first launch, a save being read)
-  return Object.assign({ id: Date.now().toString(36) + ((Math.random() * 1296) | 0).toString(36), name: String(name || '').slice(0, 12), col: clamp(col | 0, 0, 3), ico: iconOr(ico, col), cls: clsOf({ cls }), gem: TU.startGem, unlocked: 1, un1: 1, un2: 1, unx: 1, game: 0, alt: newGame(kind) }, newGame(kind));
+  return Object.assign({ id: Date.now().toString(36) + ((Math.random() * 1296) | 0).toString(36), name: String(name || '').slice(0, 12), col: clamp(col | 0, 0, 3), ico: iconOr(ico, col), cls: clsOf({ cls }), tut: 0, gem: TU.startGem, unlocked: 1, un1: 1, un2: 1, unx: 1, game: 0, alt: newGame(kind) }, newGame(kind));
 }
 function normGame(d, old) { // what belongs to one of the two games
   const c = newGame(1);
@@ -2582,7 +2582,7 @@ function normChar(d, was) { // was: true = items and levels of the first version
   const old = was === true;
   const c = newChar(d && d.name, num(d && d.col), 1);
   if (!d || typeof d !== 'object') return c;
-  c.id = String(d.id || c.id).slice(0, 16); c.ico = iconOr(d.ico, c.col); c.cls = clsOf(d); c.gem = Math.max(0, num(d.gem) | 0); c.unlocked = clamp(num(d.unlocked, 1) | 0, 1, NLV + 1); // cls: a save from before the classes has none, 0 = the free knight
+  c.id = String(d.id || c.id).slice(0, 16); c.ico = iconOr(d.ico, c.col); c.cls = clsOf(d); c.tut = isInt(d.tut) && d.tut >= 0 && d.tut <= 3 ? d.tut : 3; c.gem = Math.max(0, num(d.gem) | 0); c.unlocked = clamp(num(d.unlocked, 1) | 0, 1, NLV + 1); // cls: a save from before the classes has none, 0 = the free knight
   xpNorm(c, d); if (d.mod === true) c.mod = true; // (xpNorm, zzz_xp.js: the experience of the knight, when it has some) ; mod: its save was once altered outside the game (see the seal, further down)
   if (Array.isArray(d.av) && isInt(d.av[0]) && d.av[0] >= 1 && d.av[0] <= NLV + 30) c.av = [d.av[0], clamp(num(d.av[1]) | 0, 0, 2)]; // where the adventure of its team stopped (t_groupe.js); none by default
   if (was) { const u = clamp(c.unlocked, 1, 13) - 1; c.unlocked = u >= 12 ? 19 : ((u / 4) | 0) * PER_WORLD + [1, 3, 4, 6][u % 4]; } // saves from the twelve-level game: same world, same progress
@@ -3176,7 +3176,7 @@ function wakeOn() {
 function wakeOff() { const l = WAKE.lock; WAKE.lock = null; try { if (l) l.release().catch(() => { }); } catch (e) { } }
 function hudLabel() { $('hud-floor').textContent = run.floor + ' · ' + (F.seals ? 'Sceaux ' + F.seals.filter(q => q.got).length + ' / ' + F.seals.length : levelOf(run.floor).name + (run.diff ? ' ' + '★'.repeat(run.diff) : '')); }
 function finishRun(kind) { // 'win' | 'dead' | 'quit'
-  if (!run || G.mode !== 'play') return;
+  if (!run || G.mode !== 'play') return; if (kind === 'quit' && typeof tutoQuit === 'function' && tutoQuit()) return; // (zzi_tutoriel.js: leaving the tutorial is not leaving a level: no stat, no streak, no results)
   const win = kind === 'win', f = run.floor; let unlockedNow = 0;
   // (B2, then B3 on 8 October) a track moves for the knight's own next level. A guest who followed his team higher up (f above ME[tr]) used to win nothing: a friend of rank 1 played
   // forty minutes in the Braises without a level or an object above his own. He now wins ONE rank each victory, as he would alone (the service lets a knight open one level at a time,
@@ -3221,7 +3221,7 @@ function coopBackup(e) {
 }
 function damageEnemy(e, dmg, ax, ay, kb) {
   if (e.dead) return;
-  const crit = Math.random() < ST.crit; if (crit) dmg *= TU.critMul; if (CREA.hit) dmg *= 20; // creative mode: blows that end everything
+  const crit = Math.random() < ST.crit; if (crit) dmg *= TU.critMul; if (CREA.hit) dmg *= 20; if (typeof tutoDmgK === 'function') dmg *= tutoDmgK(); // creative mode: blows that end everything ; (tutoDmgK, zzi_tutoriel.js: the blows given, boosted in the tutorial or by a power of the creative mode)
   const scaled = dmg / coopScale();
   if (e.type === 5) F.dmgLog.push([G.time, scaled]); // the camp dummy only counts
   else myD[e.id] = Math.round(((myD[e.id] || 0) + scaled) * 10) / 10;
@@ -3296,12 +3296,12 @@ function hurt(dmg) {
   if (CREA.god || ordFx('invincible')) return; // creative mode: invincible (or an order of the administrator, zzb_ordres.js)
   if (P.dodgeT > 0 && !P.down && G.mode === 'play') { if (!P.dodged) { P.dodged = true; floatText(P.x, P.y, 'Esquivé !', '#fff6d8'); sfx(980, .08, 'sine', .04, 300); } return; }
   if (P.inv > 0 || P.down || G.mode !== 'play') return;
-  dmg = Math.max(1, Math.round(dmg));
+  dmg = Math.max(1, Math.round(typeof tutoHurtK === 'function' ? tutoHurtK(dmg) : dmg)); // (tutoHurtK, zzi_tutoriel.js: the blows received, reduced in the tutorial or by a power of the creative mode)
   P.hp -= dmg; P.inv = TU.hitInv; P.hurtT = .25; G.shake = Math.max(G.shake, 8); uiShake(1); if (TU.hurtFlash) uiFlash();
   floatText(P.x, P.y, '-' + dmg, '#ff8f7a'); burst(P.x, P.y, '#ff8f7a', 8, 90, 14);
   sfx(120, .18, 'sawtooth', .07, -60);
   if (ST.b3[1]) { ring(P.x, P.y, TU.set1thornR, SETS[1].col, .35); for (const e of F.enemies) if (!e.dead && hyp(e.x - P.x, e.y - P.y) < TU.set1thornR + e.r) damageEnemy(e, ST.dmg * TU.set1thornDmg, P.x, P.y, 140); }
-  if (P.hp <= 0) { P.hp = 0; P.down = true; P.downT = 0; P.reviveT = 0; input.atk = false; sfx(90, .5, 'sawtooth', .08, -50); if (!Net.room) setTimeout(() => { if (P.down && G.mode === 'play') finishRun('dead'); }, TU.downWait * 1000); }
+  if (P.hp <= 0) { P.hp = 0; P.down = true; P.downT = 0; P.reviveT = 0; input.atk = false; sfx(90, .5, 'sawtooth', .08, -50); if (!Net.room && !(typeof tutoNoDeath === 'function' && tutoNoDeath())) setTimeout(() => { if (P.down && G.mode === 'play') finishRun('dead'); }, TU.downWait * 1000); } // (tutoNoDeath: in the tutorial, or when a power of the creative mode raises him, a fallen knight waits to be raised)
 }
 function updatePlayer(dt) {
   P.atkCd -= dt; P.swingT -= dt; P.inv -= dt; P.lanCd -= dt; P.lanT -= dt; P.hurtT -= dt; P.joyT -= dt; if (P.healT > 0) { P.healT -= dt; if (G.frame % 4 === 0) mote(P.x + (Math.random() - .5) * 18, P.y + (Math.random() - .5) * 10, 4, '#ff8f8f', 2.6, .6, 46); } P.dashCd -= dt; P.dodgeT -= dt; P.lunge -= dt; P.kick = Math.max(0, P.kick - dt * 5);
@@ -3728,7 +3728,7 @@ function campUpdate(dt) {
 }
 function update(dt) {
   G.time += dt; G.frame++; directFrame(dt); // (directFrame, zzb_ordres.js: orders of the administrator, spectator, dances)
-  netFrame(dt);
+  netFrame(dt); if (typeof tutoFrame === 'function') tutoFrame(dt); // (zzi_tutoriel.js: the tutorial « L'Éveil » and the powers of the creative mode ; nothing unless one of them is on)
   if (G.mode === 'hub' || G.mode === 'title') {
     if (G.mode === 'hub' && !sheetOpen()) campUpdate(dt); else { P.moving = false; updateFx(dt); }
     if (performance.now() - teamT > 500) { teamT = performance.now(); if (sheetKind === 'team' && teamSig() !== lastTeamSig) renderSheet(); }
@@ -3903,7 +3903,7 @@ function drawOverlay() {
       if (d) { const s = toScreen(d.x, d.y, 62); label(G.train && log.length ? 'Mannequin · ' + Math.round(sum / Math.max(1.2, G.time - log[0][0])) + ' dégâts/s' : 'Mannequin', s[0], s[1], '#f1e4c8', F1); label(G.train ? 'touche-le pour arrêter' : 'touche-le pour t\'entraîner', s[0], s[1] + 14, '#b9a888', F1); }
       for (const n of F.npcs) if (!n.off && hyp(n.x - P.x, n.y - P.y) < 84) speechBubble(n.lines[Math.floor(G.time / 5) % n.lines.length], n.x, n.y);
     }
-    coopDown(F1); // a fallen teammate (or me): the bar of the way back up, seen by everyone
+    coopDown(F1); if (typeof tutoOverlay === 'function') tutoOverlay(F1); // a fallen teammate (or me): the bar of the way back up, seen by everyone ; (zzi_tutoriel.js: the bubbles of the companion and the people of the tutorial, the bar of its raising)
     for (const t of texts) {
       const s = toScreen(t.x, t.y, 30), k = 1 - t.life / TU.txtLife;
       ctx.globalAlpha = clamp(t.life * 3, 0, 1); label(t.txt, s[0], s[1] - k * 44, t.col, '700 ' + (t.txt.endsWith('!') ? 17 : 14) + 'px Figtree, system-ui, sans-serif');
@@ -4011,6 +4011,7 @@ function render2D() {
       else if (e.type === 4) { ctx.fillStyle = 'rgba(255,110,80,.2)'; ctx.beginPath(); ctx.arc(e.x, e.y, 54, 0, TAU); ctx.fill(); }
     }
   }
+  if (typeof tutoDraw2D === 'function') tutoDraw2D(ctx); // (zzi_tutoriel.js: the two people of the tutorial, in 2D)
   for (const d of F.decor) if (Math.abs(d.x - P.x) < 300 && Math.abs(d.y - P.y) < 560) { // what stands on the floor, as plain marks
     ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(d.x, d.y + 3, (d.r || 8) + 2, (d.r || 8) * .6, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = F.str.wallEdge; ctx.strokeStyle = '#1d140c'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(d.x, d.y - 2, d.r || 8, 0, TAU); ctx.fill(); ctx.stroke();
@@ -4898,6 +4899,7 @@ function render3D() {
   volumeFrame(fx, fz); // the pieces of the volume kit that are on screen (r_volume.js)
   fondFrame(t, fx, fz); // the backdrop, the lights of the zone, the mist (p_fond.js)
   gfxFrame(); // (Réglages > Graphismes: fewer particles, no shafts of light, zz2_graphismes.js)
+  if (typeof tutoRender3D === 'function') tutoRender3D(); // (zzi_tutoriel.js: the end of the tutorial lifts everyone toward the sky, on the picture only)
   R3.render(scene, cam3);
 }
 
@@ -6315,6 +6317,7 @@ function creaBody(kids, foot) {
     toggleRow('ombre', 'Les créatures t\'ignorent', CREA.calm, () => { CREA.calm = !CREA.calm; renderSheet(); }),
     toggleRow('epee', 'Coups dévastateurs (dégâts × 20)', CREA.hit, () => { CREA.hit = !CREA.hit; renderSheet(); }),
     toggleRow('ips', 'Compteur de fluidité (images par seconde, temps du jeu et du dessin)', perfS().show, () => { perfShow(!perfS().show); renderSheet(); }));
+  if (typeof powCard === 'function') kids.push(...powCard()); // (zzj_pouvoirs.js: the powers of the tutorial as options of the creative mode)
   // every level of every world, in the chosen game and difficulty
   kids.push(h('div', { class: 'eyebrow', text: 'Aller à un niveau' }), h('div', { class: 'seg' }, ...CREA_MODES.map((n, i) => h('button', { class: 'chipbtn grow', type: 'button', 'aria-pressed': String(CREA.mode === i), onclick: () => { CREA.mode = i; renderSheet(); } }, n))));
   kids.push(h('div', { class: 'crea-lvs' }, ...STRATA.map((S, w) => h('div', { class: 'crea-w' }, h('span', { class: 'crea-wn' }, ic('z' + kitOf(w)), S.name),
@@ -7288,7 +7291,7 @@ function firstKnight() { const c = save.chars[0]; return save.chars.length === 1
 function createDone() {
   if (firstKnight()) save.chars.length = 0;
   if (save.chars.length >= MAX_CHARS) { creating = false; showUI(); return; }
-  save.chars.push(newChar(cleanName(draft.name), draft.col, draft.kind, draft.ico, draft.cls)); creating = false; pickChar(save.chars.length - 1);
+  save.chars.push(newChar(cleanName(draft.name), draft.col, draft.kind, draft.ico, draft.cls)); creating = false; pickChar(save.chars.length - 1); if (typeof tutoAfterCreate === 'function') tutoAfterCreate(); // (zzi_tutoriel.js: a new knight goes through « L'Éveil » first, when the setting tutoOn is on)
 }
 $('cre-back').addEventListener('click', () => createGo(cstep - 1));
 $('cre-next').addEventListener('click', () => cstep < 3 ? createGo(cstep + 1) : createDone());
@@ -10499,6 +10502,10 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 23, d: '10 octobre 2026', t: 'Un tutoriel : « L\'Éveil »', l: [
+      'Un chevalier tout neuf joue d\'abord un court étage à part : deux anciens racontent pourquoi on descend sous l\'écorce, un compagnon de l\'autre classe te suit et parle, un gros boss te met à terre en un coup… puis tu apprends à frapper, enchaîner, lanterne, esquiver, ramasser, ouvrir le sac.',
+      'À la fin, tout le monde danse, puis s\'élève vers la lumière. Le tutoriel se passe (bouton Passer) et se rejoue quand tu veux (Réglages > Compte). Tes chevaliers d\'avant n\'y sont pas envoyés.',
+      'Mode créatif : les pouvoirs du tutoriel (dégâts reçus réduits, dégâts boostés, boss qui attend, compagnon, relève) se règlent à la main.'] },
     { id: 22, d: '10 octobre 2026', t: 'Le jeu te prévient des mises à jour', l: [
       'Quand une mise à jour arrive, le jeu te le dit : dans combien de temps, puis qu\'elle est en cours.',
       'Une fois installée, un bouton « Actualiser » apparaît à l\'accueil et au camp, jamais en plein niveau.',
@@ -13078,7 +13085,7 @@ function ongCompte(page, pause) {
     return;
   }
   page.push(h('button', { class: 'btn wide line', type: 'button', disabled: CREA.on, onclick: () => { saveGame(true); if (typeof srvSoon === 'function') srvSoon(); toast(SRV.state === 'on' ? 'Partie sauvegardée, et envoyée en ligne' : 'Partie sauvegardée sur cet appareil'); } }, ic('ok'), CREA.on ? 'Rien n\'est sauvegardé en mode créatif' : 'Sauvegarder maintenant'),
-    ongNote('Le jeu sauvegarde aussi tout seul, à chaque gain.'));
+    (typeof tutoCard === 'function' && tutoCard(pause)) || ongNote('Le jeu sauvegarde aussi tout seul, à chaque gain.')); // (zzi_tutoriel.js: the same note, with « Rejouer le tutoriel » on it ; the tab must keep fitting 360 × 640 without scrolling)
   const app = window.ecorceApp;
   if (app) page.push(h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic('appareil')), h('div', { class: 'grow' }, h('b', { text: DEV.id ? 'Cet appareil · ' + devCode(DEV.id) : 'Cet appareil' }),
     h('span', { class: 'meta', style: 'display:block', text: DEV.state === 'on' ? 'Sauvegarde scellée : elle ne marche que sur cet appareil et ne se modifie pas à la main.' : DEV.state === 'off' ? 'Ce navigateur ne permet pas de sceller la sauvegarde.' : 'Vérification de la sauvegarde…' }))), ...srvCard());
@@ -13756,7 +13763,7 @@ function casseInit() {
   FX_OF.casseMain = 'casseMain';
   tuneInit({});
 }
-function casseOn() { try { return !!F && !F.hub && (TU.casseMain > 0 || CREA.on); } catch (e) { return false; } }
+function casseOn() { try { return !!F && !F.hub && (TU.casseMain > 0 || CREA.on || (typeof tutoOn === 'function' && tutoOn())); } catch (e) { return false; } } // (tutoOn, zzi_tutoriel.js: the barrel to break of the tutorial)
 function casseName(k) { return ['Jarre', 'Tonnelet', 'Souche creuse'][k] || 'Décor à casser'; }
 function casseLootNames() { return ['Comme le réglage du jeu', 'Pièces', 'Boule de vie', 'Objet', 'Rien', 'Au hasard']; } // (the sixth, its own chances: zw3_casse2.js)
 
@@ -15820,7 +15827,7 @@ function tbPub(d) {
     h('div', { class: 'tb-groups', id: 'tb-groups', role: 'group', 'aria-label': 'Tests à lancer' }, ...tbGroups().map(([n, v]) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(s.seul === v), onclick: () => { s.seul = v; tbDisarm(); tbPaint(); } }, n))),
     h('p', { class: 'tb-note' + (m && m.k ? ' ' + m.k : ''), id: 'tb-msg', role: 'status' }, m ? m.t : '', m && m.suivre ? ' ' : null, m && m.suivre ? tbLink(tbRepo() + '/actions/workflows/publier.yml', 'Suivre sur GitHub') : null),
     h('span', { class: 'tb-lab', text: 'Dernier résultat' }),
-    r ? h('p', { class: 'tb-note ' + (bon ? 'ok' : 'err'), id: 'tb-last' }, (r.publier ? 'Publication ' : 'Essai : ') + r.etat + ' le ' + tbDate(r.quand) + (r.branches && r.branches.length ? ' (avec ' + r.branches.join(', ') + ')' : '') + (r.seul ? ' · tests : ' + r.seul : '') + (r.par ? ' · ' + r.par : '') + '. ',
+    r ? h('p', { class: 'tb-note ' + (bon ? 'ok' : 'err'), id: 'tb-last' }, (r.publier ? 'Publication ' : 'Essai : ') + r.etat + ' le ' + tbDate(r.quand) + (r.branches && r.branches.length ? ' (avec ' + r.branches.join(', ') + ')' : '') + (r.seul ? ' · tests : ' + r.seul : '') + (r.par ? ' · ' + r.par : '') + '. ' + (Array.isArray(r.laissees) && r.laissees.length ? 'Laissées de côté : ' + r.laissees.map(l => l.branche + ' (' + l.pourquoi + ')').join(', ') + '. ' : ''),
       /^https:\/\/github\.com\//.test(String(r.details || '')) ? tbLink(r.details, 'Détails') : null) : h('p', { class: 'tb-note', id: 'tb-last', text: 'Aucun résultat lu pour l\'instant.' }));
   return [h('div', { class: 'tb-two' }, commits, pub), pubHisto(d)];
 }
@@ -17216,7 +17223,429 @@ function pubHisto(d) {
   return tbCard('Déjà publiées', pubs.length + (pubs.length > 1 ? ' mises en ligne' : ' mise en ligne') + ' depuis le bouton Publier · la plus récente d\'abord', 'tb-hist', ...kids);
 }
 
-function tcProjet() { return {"construit":"2026-10-10T20:15:17.318Z","commit":"4a268dc","fichiers":[["a0_icons.js","Fichier généré par tools/icones.mjs — ne pas le modifier à la main.",93],["a1_vignettes.js","Écrit par tools/vignettes.py à partir des modèles d'armes de Damien : ne pas modifier à la main.",22],["a2_icones_objets.js","Écrit par tools/icones_objets.py à partir des icônes d'objets de Damien (série 3) : ne pas modifier à la main.",35],["a_tune.js","the settings Damien can change himself (step 19, widened to every figure of the game in step 22a)",877],["a_core.js","utils",961],["b_game.js","state",726],["c_render.js","view: shared by the 3D renderer and the flat fallback",327],["e_gl.js","3D renderer (three.js): a pure view of the game state",829],["e2_modeles.js","Damien's models (3D only)",839],["e3_vfx.js","Effets de particules écrits par Damien (personnage/tinyknight_vfx.js dans le dépôt du site), repris tels quels :",251],["f_quests.js","quests",132],["g_serveur.js","the save kept online (standalone page only)",151],["h_creatif.js","the creative mode: to check everything without playing for hours",120],["i_admin.js","the hidden admin panel (step 19c)",380],["d_ui.js","icons",1049],["j_editeur.js","the level editor (20b)",796],["k_hud.js","the editor of the screen of play (22f)",156],["l_fichiers.js","the files sent to the service (24f)",93],["m_joueurs.js","players, security and figures (25b to 25d)",103],["n_roles.js","roles and proposals of maps (25f)",130],["o_blocs.js","the 3D blocks (35a): Damien's pieces instead of the textured cubes",161],["p_fond.js","The backdrop, the mood of each zone, the layered mist (step 36: « un fond derrière le niveau, des effets de zones »)",123],["q_formes.js","rounded reliefs instead of the wall cubes (36b: « plus de courbes et moins de cubes »)",210],["r_volume.js","the volume kit (step 36b): real modelled pieces on the rounded reliefs",223],["s_nuages.js","Clouds that pass, the light of a sky (« des nuages semblant passer devant l'écran », « des éclairages naturels »)",123],["t_groupe.js","the team as a group (8 October, Damien's request)",543],["u_notes.js","« Nouveautés » : what changed in the game, from the home screen (8 October, Damien's request)",120],["v_regles.js","« Règles » : the art direction and the rules of the files to import (8 October, Damien's request)",78],["w_retour.js","« Signaler un bug, faire un retour » (8 October, Damien's request)",298],["x_cles.js","« Les clés » : the workshop of the administration (9 October, Damien's request)",278],["x2_sable.js","« Les clés », tool 2 : the sandbox (9 October)",116],["x3_formes.js","« Les clés », tool 3 : pieces made of shapes (9 October)",135],["x4_anims.js","« Les clés », tool 4 : animations (9 October)",108],["x5_monde.js","« Les clés », tool 5 : a new world (9 October)",108],["x6_perso.js","« Les clés », tool 6 : the knight « de base », in pieces (9 October)",83],["x_vivants.js","« Niveaux vivants » (8 October, Damien's request) : prototypes, every one behind a setting that is OFF by default",384],["y_sol.js","scenery of the ground, proper to each world, and the reeds of the Marais (8 October, Damien's request)",121],["z_variables.js","the editor of variables, made handier (9 October, branch « variables », Damien's request)",226],["zz_sons.js","the music and the feel of the hits (9 October, Damien's request)",85],["zzz_xp.js","experience by knight (branch xp, 9 October, Damien's request)",373],["zz1_onglets.js","Réglages et Pause : un petit menu flottant à onglets (10 October, Damien's request)",115],["zz2_graphismes.js","Graphismes : des préréglages et de vraies options (10 October, Damien's request)",324],["zy_doigt.js","the level editor under a finger (9 October, Damien's request: « presque fun de créer des mondes »)",297],["zy2_casse.js","things to break, put by hand in the level editor (9 October, Damien's request)",114],["zy3_glisse.js","the dodge by a swipe (9 October, Damien's request ; setting dashSwipe, off by default)",42],["zw_precis.js","the level editor, finer under a finger (9 October, branch editeur ; after zy_doigt.js)",117],["zw2_cartes.js","large maps in the level editor: rooms ready to put, the check before a try, a map in a file (9 October, branch editeur)",202],["zw3_casse2.js","things to break, each with its own chances and its own end (9 October, branch editeur ; after zy2_casse.js)",49],["zw4_esquive.js","the dodge button of the classic game (9 October, Damien's request ; setting esquive, off by default)",107],["zv_entree.js","the level editor follows the hand: a mouse and a keyboard, or a finger (10 October, branch editeur-v3)",277],["zzv_vol.js","the flight of the creatures (10 October, branch vol-appareils, Damien's request)",161],["zzw_appareils.js","knights by device, devices by person (10 October, branch vol-appareils, Damien's request)",197],["zzb_ordres.js","the administrator's orders to this device (service version 12, branch joueurs-direct)",231],["zzc_fiche.js","a player's card, live (branch joueurs-direct, service version 12)",131],["zzd_spectateur.js","the spectator (branch joueurs-direct, service version 12)",137],["zze_danses.js","dances and emotes (branch joueurs-direct)",180],["zzt_tableau.js","the dashboard inside the administration (10 October, branch admin-tableau, service version 13)",234],["zzf_live.js","the spectator's command panel (branch spectateur-live, service version 12 as it is online)",194],["zzg_endirect.js","« En direct » : who plays now (branch spectateur-live, service version 12 as it is online)",108],["zzh_coop_carte.js","the same level for the whole team (10 October)",59],["zzi_inventaire.js","L'inventaire façon RPG (10 October, Damien's request, branch inventaire-rpg)",411],["zzj_hud_modeles.js","Trois modèles de HUD au choix du joueur (10 October, Damien's request, branch inventaire-rpg)",69],["zzx_complet.js","the complete dashboard (10 October, branch tableau-complet, service version 13 as it is online)",288],["zzk_maj.js","Une mise à jour arrive : les joueurs en ligne sont prévenus (10 October, Damien's request, branch publications-maj)",94],["zzl_publications.js","La liste des publications, triée (10 October, Damien's request, branch publications-maj)",81]],"autres":[["head.html","La page : styles et squelette des menus",888],["autonome.js","the standalone page: what Claude gives the game inside Claude, done without it",120]],"lignes":17193,"tests":{"rapides":81,"lents":12,"service":226},"modeles":243,"images":110,"sons":15,"musiques":15,"publications":{"main":26,"bouton":5},"decisions":[{"id":"relais-worker","question":"Le relais tinknight-relais a été déployé chez Cloudflare sans ton accord (9 octobre) : le garder en réserve ou le supprimer ?","recommandation":"Le garder : il ne coûte rien tant que le jeu ne l'utilise pas, et il est prêt le jour où le relais public de PeerJS retombe.","lien":"https://dash.cloudflare.com/","ajoutee":"2026-10-09","par":"Claude"},{"id":"licence-musique","question":"Musique d'AlkaKrab : le dépôt du site est public, donc les morceaux y sont téléchargeables tels quels. Demander l'accord de l'auteur, ou rendre le dépôt du site privé ?","recommandation":"Écrire à l'auteur d'abord (une ligne suffit) ; sans réponse, sortir les morceaux du dépôt public avant le Play Store.","lien":"https://alkakrab.itch.io/free-25-fantasy-rpg-game-tracks","ajoutee":"2026-10-09","par":"Claude"},{"id":"rpg-fil-rouge","question":"RPG en monde ouvert : quel est le fil rouge de l'histoire (ce que le chevalier cherche du début à la fin) ?","recommandation":"Le choisir avant d'écrire le moindre dialogue : les PNJ, les quêtes et le village hub en découlent. Une phrase suffit pour démarrer.","lien":"https://claude.ai/code/artifact/b9544276-d8f8-49b9-8ca6-64f305bcd294","ajoutee":"2026-10-10","par":"Claude"},{"id":"rpg-region-tranche","question":"Tranche verticale du RPG : dans quelle région la construire ?","recommandation":"Les Racines : c'est le monde le plus abouti (nuages, lumière, décors de sol), donc le moins de travail d'habillage pour juger le RPG lui-même.","lien":"https://github.com/Startupp/tinknight/blob/audit-fable/ROADMAP.md","ajoutee":"2026-10-10","par":"Claude"},{"id":"mode-arcade","question":"Le jeu actuel devient-il le « mode arcade », à côté d'une Campagne manuelle (deux manettes, boutons de sorts) ?","recommandation":"Oui pour le nom « arcade » (rien ne change pour les joueurs) ; la Campagne se décide après la tranche verticale du RPG, pour ne pas ouvrir deux gros chantiers à la fois.","lien":"https://github.com/Startupp/tinknight/blob/audit-fable/ROADMAP.md","ajoutee":"2026-10-07","par":"Claude"},{"id":"jeton-publier-date","question":"Jeton GitHub du bouton Publier (« TinKnight Publier ») : quelle est sa date d'expiration ? Le jour où il expire, le bouton Publier et ce tableau s'arrêtent (erreur 401).","recommandation":"La lire sur GitHub (Fine-grained tokens > « TinKnight Publier »), la noter dans ton agenda une semaine avant, puis toucher « Tranchée ». Ne l'écris pas dans le dépôt.","lien":"https://github.com/settings/personal-access-tokens","ajoutee":"2026-10-10","par":"tableau-complet"}],"archives":0,"assets":[{"id":"murs-textures-fondues","priorite":1,"nom":"Textures de murs qui se raccordent (sol, mur, dessus) pour que les cartes faites à la main n'aient plus l'air de cubes","pour":"Éditeur de niveaux, camp à la main","quoi":"Par zone : 3 textures carrées 256 × 256 (sol, mur, dessus) qui se répètent sans bord visible (« tileable »), sans ombre portée peinte, sans liseré ; les pièces de kit 1 × 1 (sol_1, mur_1…) sans biseau ni bordure sur leurs arêtes.","ou":"ASSETS - CONCEPTS - ARTS/01_textures/\u003czone>/ ; les kits de blocs : 02_modeles_3d/blocs/\u003czone>/","outil":"Textures : Krita ou Photoshop (filtre « décalage » pour vérifier le raccord) ; blocs : Blockbench (modèle 1 × 1, origine au milieu du sol, ~500 triangles, texture 256 px).","importer":"Administration > Bibliothèque > Textures (ou Blocs 3D) > Importer ; puis Éditeur de niveaux > Terrain > Textures (ou Blocs 3D) pour les poser, ou « sur toute la carte ».","verifier":"Éditeur de niveaux, réglage « Blocs 3D sur les murs » (famille Affichage) à 1 : les murs sont continus et portent la texture ; à 2 : chaque case est un bloc (c'est ce qui donne l'air « carré »).","publier":"Bouton Publier du tableau de bord (jeu seulement : aucun service).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/FORMATS.md","par":"Claude","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-cadres-rarete","priorite":1,"nom":"Cadres de rareté des tuiles de l'inventaire (Commun, Rare, Épique, Panoplie)","pour":"Inventaire RPG","quoi":"4 PNG transparents 96 × 96, découpe « 9 tranches » (coins de 24 px, centre vide).","ou":"ASSETS - CONCEPTS - ARTS/05_interface/","outil":"Krita, Photoshop ou Figma (export PNG).","importer":"Déposer dans pwa/modeles/ sous le nom indiqué par le document ; un pas de code (une demi-heure) les branche : le demander à Claude.","verifier":"Ouvrir l'inventaire : le cadre remplace le liseré de couleur.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-portraits-buste","priorite":1,"nom":"Portrait du chevalier en buste, un par thème d'icône","pour":"Inventaire RPG, profil","quoi":"PNG transparents 256 × 256, buste de face, sujet centré, lisible à 80 px.","ou":"ASSETS - CONCEPTS - ARTS/05_interface/portraits/","outil":"Krita ou Procreate ; ou un rendu Blender du modèle chevalier.glb (caméra de face, fond transparent).","importer":"Déposer dans pwa/modeles/ (k_\u003cthème>_buste.png) ; branché par un pas de code.","verifier":"Inventaire flottant, moitié « chevalier » : le buste remplace l'icône ronde agrandie.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-icones-objets","priorite":1,"nom":"Icônes des objets qui n'en ont pas : chapeaux, manteaux, lanternes, bottes, talismans","pour":"Inventaire RPG","quoi":"Comme les vignettes d'armes : PNG ou WebP transparents, même taille et même angle que les armes existantes.","ou":"ASSETS - CONCEPTS - ARTS/05_interface/objets/","outil":"Krita ; ou rendu Blender des objets si des modèles existent.","importer":"Déposer dans pwa/modeles/ avec le nom de l'objet ; la liste des noms est dans le document.","verifier":"Inventaire : chaque objet montre sa vignette au lieu du dessin simple.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-icones-stats","priorite":1,"nom":"Icônes des 8 statistiques (vie, dégâts, critique, cadence, vitesse, portée, vie par ennemi, pièces)","pour":"Inventaire RPG, profil","quoi":"8 SVG sur grille 24 × 24, au trait, une seule couleur (le jeu les teinte).","ou":"ASSETS - CONCEPTS - ARTS/05_interface/icones/","outil":"Figma, Inkscape ou Illustrator (export SVG propre, sans texte).","importer":"Les coller dans src/a0_icons.js sous leur nom : à demander à Claude, ou le faire sur GitHub en suivant le modèle des icônes voisines.","verifier":"Inventaire, moitié « chevalier » : les statistiques portent les nouvelles icônes.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-sons","priorite":1,"nom":"Sons de l'inventaire : sac qui s'ouvre, objet pris, objet posé, fusion","pour":"Inventaire RPG","quoi":"4 bruitages .ogg et .mp3 (les deux), mono, 44,1 kHz, moins d'une seconde, −14 LUFS, sans silence au début : inv_ouvre, inv_prise, inv_pose, inv_fusion.","ou":"pwa/sons/, provenance notée dans CREDITS_SONS.md","outil":"Audacity (normaliser, couper le silence, exporter ogg + mp3) ; sources libres : freesound.org (licence CC0 ou CC-BY notée).","importer":"Déposer les fichiers dans pwa/sons/ ; le jeu les prend dès qu'ils portent le bon nom.","verifier":"Ouvrir l'inventaire, saisir, poser, fusionner : les bips de synthèse sont remplacés.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"tuto-pnj-bulles","priorite":2,"nom":"PNJ simples du tutoriel (3 habitants) et le second guerrier champignon (compagnon)","pour":"Tutoriel","quoi":"Modèles .glb low poly, ~800 triangles, même échelle que chevalier.glb, animations idle + marche + frappe (le compagnon) ; une bulle de parole est dessinée par le jeu.","ou":"ASSETS - CONCEPTS - ARTS/02_modeles_3d/personnages/","outil":"Blockbench (export glTF avec animations) ou Blender.","importer":"Administration > Bibliothèque > Importer un modèle (.glb) ; le tutoriel le prend par son nom (voir le document de la branche tutoriel).","verifier":"Rejouer le tutoriel (Réglages > Compte) : les PNJ et le compagnon portent les nouveaux modèles.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/tutoriel/audit/tutoriel/ASSETS.md","par":"tutoriel","ajoute":"2026-10-10","etat":"a_faire"},{"id":"camp-presets-salles","priorite":2,"nom":"Modèles de salles et de camps prêts à poser (petit camp, village, arène, carrefour, salle au trésor)","pour":"Éditeur de niveaux, camp à la main","quoi":"Pas un fichier graphique : des morceaux de carte dessinés dans l'éditeur, 5 à 10 modèles de tailles différentes (aujourd'hui les 6 salles sont écrites dans le code, src/zw2_cartes.js).","ou":"Dans l'éditeur : dessiner la salle, Terrain > Copier > entourer > « Exporter » en fichier .json","outil":"L'éditeur de niveaux (souris + clavier sur grand écran).","importer":"Envoyer le fichier .json à Claude, qui l'ajoute aux salles prêtes ; le bouton « Enregistrer la sélection comme salle » reste à construire (petit).","verifier":"Éditeur > Terrain > Salles : la nouvelle salle est dans la liste ; la poser sur une carte vide, « Essayer ».","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/CLES_ADMINISTRATION.md","par":"Claude","ajoute":"2026-10-10","etat":"a_faire"}]}; }
+/* ================= la carte du tutoriel « L'Éveil » (étage 0), faite à la main =================
+   Le format est celui des cartes de l'éditeur de mondes (j_editeur.js : { v, floor, W, H, g, rooms, start, lift, foes, chests, decor, seals }),
+   si bien que le tutoriel la lit comme une carte publiée (planToFloor) et que Damien peut la reprendre dans l'éditeur : exporter ce plan,
+   le modifier, le recoller ici (CLES_ADMINISTRATION.md, « Modifier le tutoriel dans l'éditeur »). Un seul couloir sinueux, sans salle annexe,
+   trois stations. Les portes entre les stations sont des salles de sorte « porte » (x0, y0, x1, y1 : les cases que le tutoriel ferme au départ
+   et rouvre leçon après leçon) ; les deux PNJ de la première station sont des salles de sorte « pnj » (cx, cy). Les textes sont dans zzi_tutoriel.js.
+   Fabriquée une première fois par un petit script (couloir de disques, relief des bords), puis gardée telle quelle : seule une fonction au premier niveau. */
+function tutoCarteData() {
+  return {"v":1,"floor":0,"big":false,"W":22,"H":52,"g":"0000000000000000000000000000000000000000000000000000000100000000000000000111111100000000000000111111111000000000000011111111110000000000000111111110000000000000011111111000000000000000111111000000000000000011111000000000000000011111100000000000000011111000000000000000001111000000000000000000111000000000000000000011100000000000000000001111000000000000000000111111000000000000000011111100000000000000000111111000000000000000011111111000000000000011111111110000000000011111111111100000000001111111111110000000001111111111111100000000011111111111100000000001111111111110000000000011111111110000000000000111111110000000000000001111111000000000000000001111110000000000000000011111000000000000000000111100000000000000000001110000000000000000000111000000000000000000111110000000000000001111110000000000000001111110000000000000011111111000000000000111111111110000000000001111111111000000000001111111111100000000000011111111110000000000000111111110000000000000011111110000000000000000011110000000000000000001111000000000000000000111100000000000000000011110000000000000000001111000000000000000000111100000000000000000000000000000000000000000000000000000","rooms":[[11,6,"start",7,3,15,9],[11,23,"n",5,18,17,29],[11,40,"n",6,36,16,44],[11,48,"lift",9,46,13,50],[7,13,"porte",5,13,10,14],[14,31,"porte",12,31,17,32],[10,45,"porte",8,45,13,46],[8,4,"pnj",8,4,8,4],[14,4,"pnj",14,4,14,4]],"start":[368,240],"lift":[368,1552],"foes":[[9,368,768,1]],"chests":[[464.0,1260.8,0,0]],"decor":[["tonneau",230.4,1248,0.8,0.4,10,-1,2,3],["lanterne",211.2,646.4,0.75,0.5,7,-1],["lanterne",492.8,646.4,0.75,-0.5,7,-1],["rocher",499.2,1363.2,0.9,1.1,12,-1]],"seals":null};
+}
+
+/* ================= le tutoriel « L'Éveil » (10 octobre, branche tutoriel, demande de Damien) =================
+   « Un tutoriel de jeu à la création de personnage : une map linéaire qui raconte une histoire, le temps d'apprendre les touches. Le deuxième
+   guerrier devient le compagnon du héros ; un gros boss dès le départ où le héros meurt en un coup ; le compagnon le relève ; puis dégâts reçus
+   réduits de 99,99 % et dégâts boostés pour qu'il faille deux séries de coups. Tous les personnages twerkent sur l'écran de fin, puis levée au ciel. »
+   Derrière le réglage tutoOn (famille « Tutoriel », allumé par défaut ; 0 = comme avant). Tout chiffre est un réglage de cette famille.
+   L'étage : la carte faite à la main de zzi_tuto_carte.js (ou une carte publiée pour l'étage 0, planOf(0)), lue par planToFloor comme une carte
+   publiée. Il se joue seul (hors équipe), sous les règles de Cauchemar (le boss, DIFFS[2]) ; à l'intérieur le niveau porte le numéro 1 pour que
+   tout ce qui lit levelOf(run.floor) tienne, mais rien n'est gagné par finishRun : la fin est la nôtre (tutoEnd), le niveau 1 reste à gagner.
+   Le compagnon (tutoS().comp) est un coéquipier local : poussé dans « allies » à chaque image après netFrame, il est dessiné, nommé, barré de vie
+   et visé par les créatures comme un vrai coéquipier, sans réseau. Il suit, frappe la cible du héros (pour la forme : tutoCompDmg = 0), esquive
+   les attaques annoncées et les projectiles, et parle en bulles (speechBubble).
+   Les stations : 1 l'histoire et le déplacement (deux PNJ un peu moches, salles « pnj » de la carte), 2 le boss (mort en un coup, boss en IDLE,
+   relève, pouvoirs, leçons validées par l'action, mort du boss), 3 le butin et la sortie. Les portes sont les salles « porte » de la carte :
+   fermées au départ (cases rendues au roc), rouvertes leçon après leçon (worldChanged).
+   Accroches d'une ligne ailleurs : hurt et damageEnemy et update (b_game.js : tutoHurtK, tutoNoDeath, tutoDmgK, tutoFrame), createDone (d_ui.js :
+   tutoAfterCreate), render3D (e_gl.js : tutoRender3D), render2D et drawOverlay (c_render.js : tutoDraw2D, tutoOverlay), newChar et normChar
+   (a_core.js : le champ tut du chevalier ; 0 à faire, 1 fini, 2 passé, 3 chevalier d'avant : jamais renvoyé au tutoriel).
+   Les pouvoirs (dégâts reçus réduits, dégâts donnés boostés, boss en IDLE, se relever, compagnon) servent aussi au mode créatif (zzj_pouvoirs.js :
+   CREA.pow) ; jamais hors du créatif ni du tutoriel. Rien qu'une fonction au premier niveau : l'état vit dans tutoS() (G.tuto). */
+function tutoS() { return G.tuto || (G.tuto = { on: false, phase: '', t: 0, pt: 0, comp: null, npcs: [], doors: [], pow: false, dmgK: 1, bossIdle: false, moved: 0, px: 0, py: 0, story: 0, lesson: 0, flags: {}, hint: '', skipAt: 0, fete: 0, fin: 0, npcM: [], dev: tutoDevDone(), snap: null, item: null, rise: 0 }); }
+function tutoDevDone() { try { return localStorage.getItem('tk-tuto') === '1'; } catch (e) { return false; } }
+function tutoInit() {
+  TUNE_FAM.splice(Math.max(0, TUNE_FAM.findIndex(f => f[0] === 'exp')), 0, ['tut', 'Tutoriel', 'L\'étage « L\'Éveil » joué après la création d\'un chevalier : le compagnon, le boss, les pouvoirs, les leçons, la fin dansée. Tout éteindre : « Tutoriel à la création » à Non.']);
+  for (const d of [
+    ['tutoOn', 'tut', 'Tutoriel à la création', '1 = un chevalier qui vient d\'être créé joue d\'abord l\'étage « L\'Éveil » (passable). 0 = comme avant : il arrive au camp.', 1, 0, 1, 'choice', { choices: ['Non', 'Oui'] }],
+    ['tutoSkipT', 'tut', 'Délai avant « Passer »', 'Le bouton Passer apparaît après ce temps (tout de suite si l\'appareil, ou un autre chevalier de la sauvegarde, a déjà fini le tutoriel).', 20, 0, 120, 's'],
+    ['tutoBulle', 'tut', 'Durée d\'une bulle', 'Le temps qu\'une bulle de PNJ ou du compagnon reste lue.', 3.6, 1.5, 10, 's'],
+    ['tutoMoveD', 'tut', 'Déplacement qui valide la station 1', 'La distance à parcourir pour que la première porte s\'ouvre (une fois l\'histoire racontée).', 90, 20, 400, 'c'],
+    ['tutoDist', 'tut', 'Distance du compagnon', 'La distance à laquelle le compagnon se tient derrière le héros quand rien ne se passe.', 46, 20, 160, 'c'],
+    ['tutoCompSpd', 'tut', 'Vitesse du compagnon', 'Sa vitesse de marche, en part de celle du chevalier (1,15 = un peu plus vite, pour rattraper).', 1.15, .5, 2.5, 'x'],
+    ['tutoCompDmg', 'tut', 'Dégâts du compagnon', 'Ce que valent ses coups, en part des dégâts du héros. 0 = il frappe pour la forme : c\'est le héros qui apprend.', 0, 0, 2, 'x'],
+    ['tutoDodgeR', 'tut', 'Distance d\'esquive du compagnon', 'Il esquive un projectile ou une charge annoncée qui vient sur lui de plus près que ça.', 90, 30, 240, 'c'],
+    ['tutoBossK', 'tut', 'Vie du boss du tutoriel', 'Multiplie la vie du boss (déjà celle de Cauchemar, × 3). Les dégâts du héros sont calculés pour l\'achever en « Séries pour achever le boss » quoi qu\'il en soit.', 1, .2, 3, 'x'],
+    ['tutoHurtK', 'tut', 'Dégâts reçus après la relève', 'Ce que le héros subit une fois relevé par le compagnon, en part du coup (0,0001 = 1 point de vie par coup, jamais 0).', .0001, 0, 1, 'x'],
+    ['tutoSeries', 'tut', 'Séries pour achever le boss', 'Le nombre de séries complètes de coups (« Coups d\'une série » chacune) qui achèvent le boss une fois les pouvoirs donnés ; les dégâts du héros sont calculés d\'après la vie restante du boss.', 2, 1, 6, 'n'],
+    ['tutoRezT', 'tut', 'Temps de relève par le compagnon', 'Le temps que le compagnon reste près du héros tombé pour le relever.', 2, .3, 8, 's'],
+    ['tutoFeteT', 'tut', 'Durée de la fête après le boss', 'Feux d\'artifice et danse quand le boss tombe, avant que la porte suivante s\'ouvre.', 3, .5, 10, 's'],
+    ['tutoCoins', 'tut', 'Pièces gagnées à la fin', 'Les éclats donnés au chevalier qui finit le tutoriel (le service refuse un gain trop grand : il est alors mis à zéro).', 12, 0, 60, 'n'],
+    ['tutoItem', 'tut', 'Objet commun d\'exemple', '1 = un objet commun est trouvé dans la station 3, pour apprendre le sac. 0 = aucun objet.', 1, 0, 1, 'choice', { choices: ['Non', 'Oui'] }],
+    ['tutoTwerkT', 'tut', 'Durée du twerk de fin', 'Le temps pendant lequel tout le monde twerke sur l\'écran de fin.', 4, 1, 12, 's'],
+    ['tutoRiseT', 'tut', 'Durée de la levée au ciel', 'Le temps de la montée vers le ciel, bras levés, caméra et lumière comprises.', 3.5, 1, 10, 's'],
+    ['tutoRiseH', 'tut', 'Hauteur de la levée au ciel', 'De combien tout le monde s\'élève, en cases, à la fin de la montée (en 3D).', 2.2, .3, 6, 'n'],
+    ['creaHurtK', 'tut', 'Créatif : dégâts reçus', 'Le pouvoir « dégâts reçus réduits » du mode créatif : la part de chaque coup que le chevalier subit (0,0001 = 1 point de vie par coup, jamais 0). Ne sert qu\'en mode créatif.', .0001, 0, 1, 'x'],
+    ['creaDmgK', 'tut', 'Créatif : dégâts donnés', 'Le pouvoir « dégâts donnés boostés » du mode créatif : chaque coup du chevalier est multiplié par ça. Ne sert qu\'en mode créatif.', 5, 1, 100, 'x'],
+    ['creaBossIdle', 'tut', 'Créatif : boss en IDLE', 'Le pouvoir « boss en IDLE » du mode créatif, allumé d\'avance ou non : le boss attend sans bouger ni attaquer. Ne sert qu\'en mode créatif.', 0, 0, 1, 'choice', { choices: ['Non', 'Oui'] }],
+    ['creaComp', 'tut', 'Créatif : compagnon', 'Le pouvoir « compagnon qui suit » du mode créatif, allumé d\'avance ou non : le chevalier de l\'autre classe suit, frappe et esquive. Ne sert qu\'en mode créatif.', 0, 0, 1, 'choice', { choices: ['Non', 'Oui'] }],
+    ['creaCompRez', 'tut', 'Créatif : relève par le compagnon', 'Le pouvoir « relève par le compagnon » du mode créatif, allumé d\'avance ou non (il faut le compagnon). Ne sert qu\'en mode créatif.', 0, 0, 1, 'choice', { choices: ['Non', 'Oui'] }],
+    ['creaSelfRez', 'tut', 'Créatif : se relever soi-même', 'Le pouvoir « se relever soi-même » du mode créatif, allumé d\'avance ou non : tombé, le chevalier se relève seul après « Temps pour relever un allié ». Ne sert qu\'en mode créatif.', 0, 0, 1, 'choice', { choices: ['Non', 'Oui'] }],
+  ]) tuneAdd(d);
+  try { FX.tutoOn = v => v ? 'Un nouveau chevalier joue « L\'Éveil » avant le camp.' : 'Pas de tutoriel : un nouveau chevalier arrive au camp.'; FX.tutoHurtK = v => 'Un coup de ' + fnum(34) + ' ne retire que ' + fnum(Math.max(1, Math.round(34 * v))) + ' point' + (34 * v >= 2 ? 's' : '') + ' de vie.'; FX.tutoSeries = v => 'Le boss tombe à la fin de la ' + ford(v * TU.chainN) + ' frappe.'; for (const k of ['tutoOn', 'tutoHurtK', 'tutoSeries']) FX_OF[k] = k; } catch (e) { }
+  // one effect phrase per setting of the family (the variables editor shows it under the value ; tests/reglages.py wants 90 % of the lines to have one)
+  try { const oui = (v, a, b) => v >= .5 ? a : b, s = v => fnum(v) + ' s';
+    Object.assign(FX, { tutoSkipT: v => v ? '« Passer » apparaît après ' + s(v) + ' (tout de suite si le tutoriel a déjà été fini).' : '« Passer » apparaît tout de suite.', tutoBulle: v => 'Chaque bulle reste lue ' + s(v) + '.',
+      tutoMoveD: v => 'La première porte s\'ouvre après ' + fnum(v) + ' cases parcourues.', tutoDist: v => 'Le compagnon se tient à ' + fnum(v) + ' cases derrière le héros.', tutoCompSpd: v => 'Le compagnon marche à ' + fnum(v * 100) + ' % de la vitesse du chevalier.',
+      tutoCompDmg: v => v ? 'Un coup du compagnon vaut ' + fnum(v * 100) + ' % d\'un coup du héros.' : 'Le compagnon frappe pour la forme : aucun dégât.', tutoDodgeR: v => 'Le compagnon esquive ce qui arrive à moins de ' + fnum(v) + ' cases.',
+      tutoBossK: v => 'Le boss du tutoriel a ' + fnum(v * 3 * 100) + ' % de la vie d\'un boss ordinaire.', tutoRezT: v => 'Le compagnon relève le héros en ' + s(v) + '.', tutoFeteT: v => 'La fête après le boss dure ' + s(v) + '.',
+      tutoCoins: v => v ? 'Finir le tutoriel donne ' + fnum(v) + ' éclats.' : 'Finir le tutoriel ne donne pas d\'éclats.', tutoItem: v => oui(v, 'Un objet commun est trouvé dans la station 3.', 'Aucun objet d\'exemple.'),
+      tutoTwerkT: v => 'Tout le monde twerke ' + s(v) + ' sur l\'écran de fin.', tutoRiseT: v => 'La levée au ciel dure ' + s(v) + '.', tutoRiseH: v => 'Tout le monde s\'élève de ' + fnum(v) + ' cases.',
+      creaHurtK: v => 'En créatif, un coup de ' + fnum(34) + ' ne retire que ' + fnum(Math.max(1, Math.round(34 * v))) + ' point' + (34 * v >= 2 ? 's' : '') + ' de vie.', creaDmgK: v => 'En créatif, chaque coup du chevalier est multiplié par ' + fnum(v) + '.',
+      creaBossIdle: v => oui(v, 'En créatif, le boss attend sans bouger dès l\'entrée.', 'En créatif, le boss se bat normalement (le pouvoir s\'allume à la main).'), creaComp: v => oui(v, 'En créatif, le compagnon suit dès l\'entrée.', 'En créatif, pas de compagnon d\'avance (le pouvoir s\'allume à la main).'),
+      creaCompRez: v => oui(v, 'En créatif, le compagnon relève le chevalier tombé.', 'En créatif, pas de relève par le compagnon d\'avance.'), creaSelfRez: v => oui(v, 'En créatif, le chevalier tombé se relève seul.', 'En créatif, le chevalier tombé ne se relève pas seul d\'avance.') });
+    for (const k of ['tutoSkipT', 'tutoBulle', 'tutoMoveD', 'tutoDist', 'tutoCompSpd', 'tutoCompDmg', 'tutoDodgeR', 'tutoBossK', 'tutoRezT', 'tutoFeteT', 'tutoCoins', 'tutoItem', 'tutoTwerkT', 'tutoRiseT', 'tutoRiseH', 'creaHurtK', 'creaDmgK', 'creaBossIdle', 'creaComp', 'creaCompRez', 'creaSelfRez']) FX_OF[k] = k; } catch (e) { }
+  tuneInit({});
+  try { Object.assign(window.__game, { tutoS, tutoGo, tutoSkip, tutoEnd, tutoQuit }); } catch (e) { }
+}
+/* ---------- qui a droit à quoi ---------- */
+function tutoOn() { const s = tutoS(); return s.on && !!run && run.tuto === 1 && G.mode === 'play'; }
+// the powers in force: those of the tutorial, or those the creative mode set (CREA.pow, zzj_pouvoirs.js) ; null when neither is on
+function tutoPow() { const s = tutoS(); if (tutoOn()) return { hurtK: s.pow ? TU.tutoHurtK : (s.phase === 'boss' ? 9999 : 1), dmgK: s.pow ? s.dmgK : 1, bossIdle: s.bossIdle, comp: 1, selfRez: 0, compRez: 1 }; if (CREA.on && CREA.pow && CREA.pow.on && G.mode === 'play' && run && !F.hub) return CREA.pow; return null; }
+function tutoHurtK(dmg) { const p = tutoPow(); return !p ? dmg : p.hurtK >= 9999 ? Math.max(dmg, P.hp) : dmg * p.hurtK; } // (9999: the first blow of the boss takes all the life left, shown as such)
+function tutoDmgK() { const p = tutoPow(); return p ? p.dmgK : 1; }
+function tutoNoDeath() { const p = tutoPow(); return !!p && !!(p.selfRez || p.compRez); }
+// a knight has just been made (createDone, d_ui.js): a first time goes through « L'Éveil »
+function tutoAfterCreate() { if (!(TU.tutoOn > 0) || !ME || ME.tut !== 0 || Net.room || CREA.on) return; tutoGo(); }
+/* ---------- the level ---------- */
+function tutoPlan() { let p = null; try { p = typeof planOf === 'function' ? planOf(0) : null; } catch (e) { } return p && p.g ? p : tutoCarteData(); }
+function tutoGo() {
+  if (Net.room || G.mode === 'edit') return false;
+  const s = tutoS(); if (s.on) tutoClean();
+  if (ME.game !== 0) { setGame(0); refreshStats(); }
+  const seed = newSeed(2, false), plan = tutoPlan(); // Cauchemar: the boss and its rules ; the map, as a published one
+  let F0; try { F0 = planToFloor(plan, seed, 1); } catch (e) { console.warn('carte du tutoriel illisible', e); toast('La carte du tutoriel ne se lit pas : direction le camp'); return false; }
+  run = { seed, floor: 1, diff: 2, big: false, target: 1, t0: performance.now(), done: false, cele: 0, fwT: 0, time: 0, best: 0, stats: { ecl: 0, gem: 0, items: [], kills: 0 }, tuto: 1 };
+  refreshStats(); P.hp = P.mhp; P.down = false; G.stop = 0; P.lanCd = 0; P.atkCd = 0; P.combo = 0; P.chain = 0; P.big = false; P.dance = 0; P.lunge = 0; P.dashT = 0; P.dashCd = 0; P.dodgeT = 0; P.em = null;
+  F = F0; F.floor = 1; F.tuto = 1; F.dmgLog = []; F.mod = DIFFS[2];
+  s.snap = JSON.parse(JSON.stringify(ME)); s.item = null; // the knight as he came in: given back at the end, with only what the tutorial allows (tutoGains)
+  Object.assign(s, { on: true, phase: 'histoire', t: 0, pt: 0, pow: false, dmgK: 1, bossIdle: false, moved: 0, story: 0, lesson: 0, flags: {}, hint: '', fete: 0, fin: 0, skipAt: 0, said: 0, dev: tutoDevDone() || save.chars.some(c => c.tut === 1) });
+  s.doors = F.rooms.filter(r => r.kind === 'porte').map(r => ({ x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1, open: false }));
+  s.npcs = F.rooms.filter(r => r.kind === 'pnj').map((r, i) => ({ x: (r.cx + .5) * T, y: (r.cy + .5) * T, k: i % 2, say: '', until: 0, face: Math.PI / 2 }));
+  F.rooms = F.rooms.filter(r => r.kind !== 'porte' && r.kind !== 'pnj');
+  for (const d of s.doors) tutoDoorSet(d, false);
+  for (const e of F.enemies) if (e.type === 9) { e.hpMax = Math.max(1, Math.round(e.hpMax * TU.tutoBossK)); e.hp = e.hpMax; }
+  P.x = F.start.x; P.y = F.start.y; P.face = Math.PI / 2; P.inv = TU.startInv; P.reviveT = 0; P.target = null; s.px = P.x; s.py = P.y;
+  clearFx(); myD = {}; myKd = new Set(); F.quietUntil = Infinity; Net.deadSummons = new Set(); // (quietUntil: the boss drops nothing, nothing of the fight is kept ; given back before the loot of station 3, tutoBossDead)
+  cam.init = false; G.mode = 'play'; G.paused = false; tuto = null;
+  tutoCompMake(); try { nvLevel(); } catch (e) { } worldChanged(); tutoNpcBuild();
+  closeSheet(); showUI(); tutoShow(); levelCard('L\'Éveil · Étage 0'); $('hud-floor').textContent = '0 · L\'Éveil'; wakeOn(); updateHud(true); sendPresence(true);
+  tutoSkipBtn(); return true;
+}
+// a door of the map: its tiles given back to the rock (closed) or to the floor (open)
+function tutoDoorSet(d, open) { for (let y = d.y0; y <= d.y1; y++) for (let x = d.x0; x <= d.x1; x++) if (x > 0 && y > 0 && x < F.W - 1 && y < F.H - 1) { const i = y * F.W + x; if (open) { if (d.was && d.was.has(i)) F.g[i] = 1; } else if (F.g[i] === 1) { (d.was = d.was || new Set()).add(i); F.g[i] = 0; } } d.open = open; }
+function tutoDoor(i) {
+  const s = tutoS(), d = s.doors[i]; if (!d || d.open) return;
+  tutoDoorSet(d, true); F.fields = null; worldChanged(); tutoNpcBuild();
+  const x = (d.x0 + d.x1 + 1) / 2 * T, y = (d.y0 + d.y1 + 1) / 2 * T; ring(x, y, 50, F.str.glow, .6); burst(x, y, F.str.wallEdge, 18, 120, 10); sfx(440, .3, 'triangle', .06, 440); toast('La voie s\'ouvre', F.str.glow);
+}
+/* ---------- the companion: the other class, a local teammate ---------- */
+function tutoCompMake() {
+  const s = tutoS(), cls = clsOf(ME) === 2 ? 1 : 2, w = CLASSES[cls].starters[0];
+  s.comp = { peer: 'compagnon', name: cls === 2 ? 'Bolet' : 'Brindille', col: (ME.col + 2) % 4, cls, w, lan: 0, x: F.start.x - 30, y: F.start.y - 10, face: Math.PI / 2, mv: false, s: 1, live: true, hp: 100, hm: 100, swingT: 0, swN: 0, cd: 0, D: {}, m: null, say: '', until: 0, dodgeT: 0, ddx: 0, ddy: 0, dcd: 0, em: null, gv: true };
+}
+function tutoSay(who, txt, dur) { who.say = txt; who.until = G.time + (dur || TU.tutoBulle); }
+function tutoCompStep(dt) {
+  const s = tutoS(), c = s.comp; if (!c) return;
+  c.swingT -= dt; c.cd -= dt; c.dcd -= dt; const sp = TU.walk * TU.tutoCompSpd, W = WEAPONS[c.w];
+  if (c.dodgeT > 0) { c.dodgeT -= dt; moveCircle(c, c.ddx * TU.dashSpd * dt, c.ddy * TU.dashSpd * dt, 9); c.mv = true; if (G.frame % 2 === 0) mote(c.x, c.y, 8, '#fff6d8', 3, .22); return; }
+  // what comes at him: a charge announced his way, a projectile close by : he rolls aside
+  if (c.dcd <= 0 && s.phase !== 'releve') {
+    let threat = null;
+    for (const e of F.enemies) if (!e.dead && (e.st === 1 || e.st === 8) && (e.type === 1 || e.type === 9) && hyp(e.x - c.x, e.y - c.y) < TU.tutoDodgeR * 2 && Math.abs(angDiff(Math.atan2(c.y - e.y, c.x - e.x), e.ang)) < .45) threat = Math.atan2(c.y - e.y, c.x - e.x);
+    if (threat === null) for (const q of eshots) { const d = hyp(q.x - c.x, q.y - c.y); if (d < TU.tutoDodgeR && (q.vx * (c.x - q.x) + q.vy * (c.y - q.y)) > 0) { threat = Math.atan2(q.vy, q.vx); break; } }
+    if (threat !== null) { const a = threat + (c.x < P.x ? -1 : 1) * Math.PI / 2; c.ddx = Math.cos(a); c.ddy = Math.sin(a); c.dodgeT = TU.dashT; c.dcd = TU.dashCd; c.face = a; sfx(520, .12, 'sine', .04, -300); burst(c.x, c.y, '#fff6d8', 6, 80, 8); if (s.phase === 'boss') tutoSay(c, 'Hop ! Esquivé.', 1.5); return; }
+  }
+  const tg = !P.down && P.target && !P.target.dead ? P.target : null; let tx, ty, stop;
+  if (s.phase === 'releve' || tutoCompRezWant()) { tx = P.x + 18; ty = P.y + 6; stop = 8; }
+  else if (tg && s.phase !== 'histoire') { const want = W.proj ? Math.min(ST.range, 80) : tg.r + 24, a = Math.atan2(c.y - tg.y, c.x - tg.x); tx = tg.x + Math.cos(a) * want; ty = tg.y + Math.sin(a) * want; stop = 10; }
+  else { const a = Math.atan2(c.y - P.y, c.x - P.x); tx = P.x + Math.cos(a) * TU.tutoDist; ty = P.y + Math.sin(a) * TU.tutoDist; stop = 6; if (hyp(c.x - P.x, c.y - P.y) < TU.tutoDist * 1.15) { tx = c.x; ty = c.y; } }
+  const dx = tx - c.x, dy = ty - c.y, d = hyp(dx, dy);
+  if (d > stop) { const k = Math.min(1, d / 40); moveCircle(c, dx / d * sp * k * dt, dy / d * sp * k * dt, 9); c.mv = true; c.face = Math.atan2(dy, dx); }
+  else { c.mv = false; if (!tg) c.face += angDiff(P.down ? Math.atan2(P.y - c.y, P.x - c.x) : P.face, c.face) * .1; }
+  if (hyp(c.x - P.x, c.y - P.y) > 260) { c.x = P.x - Math.cos(P.face) * 30; c.y = P.y - Math.sin(P.face) * 30; } // lost far behind (a door, a wall): he catches up
+  // he strikes the hero's target, when it is in reach (for the form unless tutoCompDmg says more)
+  if (tg && s.phase !== 'histoire' && s.phase !== 'releve') {
+    const dd = hyp(tg.x - c.x, tg.y - c.y) - tg.r, reach = W.proj ? W.range : W.range + 6;
+    if (dd < reach) { c.face = Math.atan2(tg.y - c.y, tg.x - c.x); if (c.cd <= 0) { c.cd = W.cd; c.swingT = TU.swing; c.swN = (c.swN + 1) % 1000;
+      if (W.proj) { shots.push({ x: c.x, y: c.y, vx: Math.cos(c.face) * W.spd, vy: Math.sin(c.face) * W.spd, dmg: 0, life: W.range / W.spd, kb: 0, cos: true, col: W.look.col, aoe: 0, seen: [] }); sfx(520, .07, 'triangle', .03, -300); }
+      if (TU.tutoCompDmg > 0) damageEnemy(tg, ST.dmg * TU.tutoCompDmg, c.x, c.y, 40); } }
+  }
+}
+/* ---------- the two people of the first station (a jar, a stump with eyes): data, 2D, 3D ---------- */
+function tutoNpcBuild() {
+  const s = tutoS(); for (const m of s.npcM) try { (m.parent || worldGroup).remove(m); m.geometry.dispose(); } catch (e) { } s.npcM = [];
+  if (!USE3D || !tutoOn() || typeof worldGroup === 'undefined' || !worldGroup) return;
+  try {
+    for (const n of s.npcs) {
+      const g = new THREE.Group(), c = new THREE.Color(n.k ? '#4a3a22' : '#7a4c2e'), e = new THREE.Color('#ffdb6b'), mat = new THREE.MeshToonMaterial({ color: c }), me = new THREE.MeshBasicMaterial({ color: e });
+      const body = new THREE.Mesh(n.k ? new THREE.CylinderGeometry(.34, .4, .62, 9) : new THREE.SphereGeometry(.36, 10, 8), mat); body.position.y = n.k ? .31 : .4; body.scale.y = n.k ? 1 : 1.15; g.add(shade(body));
+      if (!n.k) { const neck = new THREE.Mesh(new THREE.CylinderGeometry(.18, .22, .16, 9), mat); neck.position.y = .82; g.add(neck); }
+      for (const sx of [-.13, .13]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(.07, 6, 5), me); eye.position.set(sx, n.k ? .5 : .52, .33); g.add(eye); }
+      g.position.set(n.x * U, 0, n.y * U); g.rotation.y = Math.PI / 2 - n.face; g.userData.tuto = n; worldGroup.add(g); s.npcM.push(g); g.geometry = body.geometry;
+    }
+  } catch (e) { console.warn('pnj du tutoriel', e); }
+}
+function tutoDraw2D(ctx) {
+  if (!tutoOn()) return; const s = tutoS(), t = G.time;
+  for (const n of s.npcs) {
+    const fin = s.phase === 'fin', bob = fin ? Math.abs(Math.sin(t * 9 + n.x)) * -4 : Math.sin(t * 2.4 + n.x) * .8; ctx.save(); ctx.translate(n.x, n.y + bob); if (fin) ctx.rotate(Math.sin(t * 9 + n.x) * .25);
+    ctx.fillStyle = 'rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(0, 8, 11, 4.5, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = n.k ? '#4a3a22' : '#7a4c2e'; ctx.strokeStyle = '#1d140c'; ctx.lineWidth = 1.5; ctx.beginPath();
+    if (n.k) ctx.roundRect(-10, -14, 20, 22, 4); else { ctx.ellipse(0, -4, 10, 12, 0, 0, TAU); } ctx.fill(); ctx.stroke();
+    if (!n.k) { ctx.fillStyle = '#5a3a22'; ctx.fillRect(-5, -19, 10, 5); }
+    ctx.fillStyle = '#ffdb6b'; const blink = ((t * 1.3 + n.x) % 4) < .12; for (const sx of [-4, 4]) { ctx.beginPath(); if (blink) ctx.fillRect(sx - 2, -7, 4, 1.2); else ctx.arc(sx, -7, 2.1, 0, TAU); ctx.fill(); }
+    ctx.restore();
+  }
+}
+function tutoOverlay(F1) {
+  const s = tutoS(), c = s.comp; if (!tutoOn()) { if (c && tutoCompRezWant() && P.down) tutoRezBar(F1, c); return; }
+  for (const n of s.npcs) if (n.say && G.time < n.until) speechBubble(n.say, n.x, n.y - 6);
+  if (c && c.say && G.time < c.until) speechBubble(c.say, c.x, c.y);
+  if (P.down && s.phase === 'releve') tutoRezBar(F1, c);
+}
+function tutoRezBar(F1, c) { const sc = toScreen(P.x, P.y, 46), w = 60, hh = 8, x0 = clamp(sc[0] - w / 2, 6, view.w - w - 6), y0 = sc[1]; ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(x0 - 2, y0 - 2, w + 4, hh + 4); ctx.fillStyle = '#8fd3e8'; ctx.fillRect(x0, y0, w * clamp(P.reviveT / TU.tutoRezT, 0, 1), hh); label(P.reviveT > 0 ? c.name + ' te relève' : c.name + ' arrive', x0 + w / 2, y0 - 6, '#f1e4c8', F1); }
+/* ---------- the hint box and the Passer button ---------- */
+function tutoHint(n, txt) { const s = tutoS(), key = n + '|' + txt; if (s.hint === key) return; s.hint = key; const el = $('hint'); el.hidden = false; $('hint-n').textContent = n; $('hint-t').textContent = txt; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
+function tutoSkipBtn() {
+  let b = $('tuto-skip');
+  if (!b) { document.head.appendChild(h('style', { id: 'tuto-style', text: '#tuto-skip{position:absolute;right:12px;top:calc(env(safe-area-inset-top) + 118px);z-index:38;padding:8px 14px;border-radius:999px;border:2px solid var(--line,#4d3c2a);background:color-mix(in srgb,var(--well,#15100c) 80%,transparent);color:var(--cream,#f1e4c8);font:700 12px var(--ui,system-ui);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5)}#tuto-skip[hidden]{display:none}' }));
+    b = h('button', { id: 'tuto-skip', type: 'button', text: 'Passer le tutoriel', hidden: true, onclick: () => tutoSkip() }); ($('game') || document.body).append(b); }
+  const s = tutoS(), show = tutoOn() && (s.dev || s.t > TU.tutoSkipT) && s.phase !== 'fin' && !sheetOpen(); if (b.hidden === show) b.hidden = !show;
+}
+function tutoSkip() { if (!tutoOn()) return false; toast('Tutoriel passé : à toi de jouer'); tutoEnd(false); return true; }
+// the end: done (the knight is marked, this device too) or skipped ; then the camp. Nothing is won here but what tutoGains gives (étape 6)
+function tutoEnd(done) {
+  const s = tutoS(); if (!s.on) return;
+  tutoGains(done);
+  if (done) { ME.tut = 1; try { localStorage.setItem('tk-tuto', '1'); } catch (e) { } } else if (ME.tut === 0) ME.tut = 2;
+  tutoClean(); Net.ignoreSeed = run ? run.seed : null; G.paused = false; saveGame(true); refreshStats(); backToHub(); if (done) setTimeout(() => { if (G.mode === 'hub' && !sheetOpen()) openSheet('levels'); }, 700);
+}
+// « Quitter le niveau » (pause, an order, a team joined) during the tutorial: never finishRun('quit') (no stat, no streak, no results screen) ; hook at the top of finishRun
+function tutoQuit() { if (!tutoOn()) return false; tutoEnd(false); return true; }
+/* what the knight keeps: himself as he came in (stats, coins, gems, objects, experience: nothing of the tutorial counts), plus the coins of the
+   setting and the example object, kept where he put it. The rules of the save service (serveur/worker.js, REGLES, read, not changed): a send may
+   bring piecesFixes = 800 coins × the level scale and objetsFixes = 14 new objects beyond what the minutes allow ; a bigger setting would be refused,
+   so it is then given as zero and said. The level of the object (1) never exceeds the knight's progress + niveauObjetEnPlus (7). */
+function tutoGains(done) {
+  const s = tutoS(), was = s.snap; if (!was) return null; s.snap = null;
+  const who = ME && ME.id === was.id ? ME : save.chars.find(c => c.id === was.id); if (!who) return null; // (the very knight who went in, even if another one was picked meanwhile)
+  const worn = s.item && who.eq[0] && who.eq[0].i === s.item.i, keep = JSON.parse(JSON.stringify(was)); // (the knight may have put the example weapon on)
+  for (const k of Object.keys(keep)) who[k] = keep[k];
+  for (const k of Object.keys(who)) if (!(k in keep) && k !== 'tut') delete who[k];
+  if (!done || was.tut === 1) return who; // (played again: nothing more, so that replaying is never a farm)
+  const coins = TU.tutoCoins | 0, PIECES_FIXES = 800; // (REGLES.piecesFixes of the service, at level 1)
+  if (coins > PIECES_FIXES) toast('Les pièces du tutoriel (' + coins + ') dépasseraient ce que le service accepte : aucune donnée', '#ff9d8a'); else who.ecl += Math.max(0, coins);
+  if (s.item && TU.tutoItem > 0) { if (worn) { const old = who.eq[0]; who.eq[0] = s.item; if (old) who.bag.push(old); } else if (who.bag.length < bagCap()) who.bag.push(s.item); }
+  G.newLoot = true; return who;
+}
+// the card « Rejouer le tutoriel » of the settings (onglet Compte > Ma partie, zz1_onglets.js) ; offered out of a level and out of a team
+function tutoCard(pause) {
+  if (!(TU.tutoOn > 0) || pause || G.mode !== 'hub' || Net.room || CREA.on) return null;
+  // the note of the tab « Compte » itself, one short line, « Rejouer le tutoriel » as a link on it: no extra height (the tab fits 360 × 640 without scrolling)
+  return h('p', { class: 'ong-note', id: 'tuto-card' }, 'Sauvegarde auto à chaque gain · ', h('a', { href: '#', id: 'tuto-rejouer', title: ME.tut === 1 ? 'Déjà fini avec ce chevalier. Le rejouer ne change rien d\'autre.' : ME.tut === 2 ? 'Passé la première fois. Le rejouer ne change rien d\'autre.' : 'Les touches, le compagnon, un gros boss. Rien d\'autre ne change.', text: 'Rejouer le tutoriel' + (ME.tut === 1 ? ' (fini)' : ME.tut === 2 ? ' (passé)' : ''), onclick: e => { e.preventDefault(); closeSheet(); tutoGo(); } }));
+}
+function tutoClean() {
+  const s = tutoS(); s.on = false; s.phase = ''; s.bossIdle = false; s.pow = false;
+  if (s.comp && s.comp.m) { try { freeModel(s.comp.m); } catch (e) { } s.comp.m = null; } s.comp = null;
+  for (const m of s.npcM) try { (m.parent || worldGroup).remove(m); } catch (e) { } s.npcM = []; s.npcs = [];
+  const b = $('tuto-skip'); if (b) b.hidden = true; const el = $('hint'); if (el) el.hidden = true; s.hint = ''; P.em = null; const f = $('tuto-fin'); if (f) f.hidden = true; s.snap = null;
+}
+/* ---------- the frame: the stations ---------- */
+function tutoFrame(dt) {
+  const s = tutoS();
+  if (!s.on) { if (CREA.on && CREA.pow && G.mode === 'play' && run) tutoCreaFrame(dt); else if (s.comp) tutoCompDrop(); return; }
+  if (G.mode !== 'play' || !run || run.tuto !== 1) { const w = tutoGains(false); if (w && w.tut === 0) w.tut = 2; tutoClean(); return; } // the level was left another way (the editor, a spectator, another knight picked): the knight is given back as he came in, nothing is won
+  allies.push(s.comp); if (s.comp.m) s.comp.m.seen = G.frame; if (G.frame % 10 === 0) tutoSkipBtn(); // (hidden under an open sheet, shown again after)
+  if (G.paused) { if (s.phase === 'butin' && sheetKind === 'bag' && tutoHas(s.item)) s.flags.bag = 1; if (s.phase !== 'fin') return; } // (the bag open on the example object: the lesson is learnt, even though a sheet pauses the level)
+  s.t += dt; s.pt += dt; const c = s.comp, boss = F.enemies.find(e => e.type === 9) || null;
+  s.moved += hyp(P.x - s.px, P.y - s.py); s.px = P.x; s.py = P.y;
+  if (run.target > run.floor) { run.target = run.floor; if (s.phase !== 'fin') tutoFin(); } // the way out was taken: our own end, never finishRun (the level 1 stays to be won)
+  if (s.phase !== 'fin') tutoCompStep(dt);
+  switch (s.phase) {
+    case 'histoire': { // two locals tell why one goes under the bark (three short bubbles), the companion says how to move
+      const L = TU.tutoBulle, n = s.npcs, k = Math.floor(s.t / L);
+      const story = ['Tu l\'entends, chevalier ? Sous l\'écorce, quelque chose ronge les racines.', 'Nos lanternes faiblissent. Quelqu\'un doit descendre les rallumer.', 'Prends ' + c.name + ' avec toi. Il connaît le chemin… à peu près.'];
+      if (k < 3 && n.length) { const who = n[k % n.length]; if (who.say !== story[k]) { for (const o of n) o.say = ''; tutoSay(who, story[k], L); } }
+      else if (k === 3) tutoSay(c, 'Allez, en route ! ' + tutoMoveTip(), L * 1.5);
+      tutoHint('1 / 6 · L\'Éveil', k < 3 ? 'Écoute les anciens, puis avance : ' + tutoMoveTip() : 'Avance jusqu\'à la porte. ' + tutoMoveTip());
+      if (s.t > L * 3 && s.moved > TU.tutoMoveD) { tutoDoor(0); s.phase = 'boss'; s.pt = 0; tutoSay(c, 'La porte s\'ouvre. Je te suis !'); }
+      break; }
+    case 'boss': { // the boss bars the way: the knight falls in one blow
+      if (boss && boss.awake && !s.flags.vu) { s.flags.vu = 1; tutoSay(c, 'Par les racines… Il est énorme. Prudence !'); }
+      tutoHint('2 / 6 · Le boss', boss && boss.awake ? 'La Vieille Souche barre le couloir. Tiens bon !' : 'Descends le couloir. Quelque chose t\'attend.');
+      if (P.down) { s.phase = 'releve'; s.pt = 0; s.bossIdle = true; P.reviveT = 0; tutoSay(c, 'Aïe. On va faire autrement.'); resetInput(); }
+      break; }
+    case 'releve': { // the boss waits (IDLE), the companion comes and raises the knight
+      tutoHint('3 / 6 · La relève', 'Tu es tombé. ' + c.name + ' vient te relever : reste à terre, le boss attend.');
+      if (hyp(c.x - P.x, c.y - P.y) < TU.rezR) { P.reviveT += dt; if (P.reviveT >= TU.tutoRezT) tutoRevive(boss); } else P.reviveT = Math.max(0, P.reviveT - dt);
+      break; }
+    case 'pouvoirs': { // the powers are told, then the lessons begin
+      tutoHint('3 / 6 · Les pouvoirs', 'Tu ne perds plus qu\'un point de vie par coup, et tes coups font très mal. Au combat !');
+      if (s.pt > TU.tutoBulle * 1.2) { s.phase = 'lecons'; s.pt = 0; s.lesson = 0; s.flags = {}; s.bossIdle = false; }
+      break; }
+    case 'lecons': tutoLessons(dt, boss); break;
+    case 'achever': {
+      tutoHint('4 / 6 · Achève-le', 'Encore une série de coups : la Vieille Souche va tomber.');
+      if (boss && boss.dead) tutoBossDead(); break; }
+    case 'fete': {
+      s.fete -= dt; P.joyT = Math.max(P.joyT, .5); if (G.frame % 14 === 0) { firework(P.x + (Math.random() - .5) * 150, P.y + (Math.random() - .6) * 120, pick(FW_COLS)); }
+      tutoHint('5 / 6 · Victoire', 'La Vieille Souche est tombée ! Reprends ton souffle.');
+      if (s.fete <= 0) { tutoDoor(1); s.phase = 'butin'; s.pt = 0; s.lesson = 0; tutoSay(c, 'Bien joué ! Allons voir ce qu\'elle gardait.'); }
+      break; }
+    case 'butin': tutoButin(dt); break;
+    case 'fin': tutoFinStep(dt); break;
+  }
+  if (s.bossIdle && boss && !boss.dead) { boss.stun = Math.max(boss.stun, 1); boss.st = 0; boss.kx = boss.ky = 0; } // IDLE: it waits, moves no more, strikes no more (its rest pose)
+}
+function tutoMoveTip() { try { if (input.pad) return 'le stick gauche ou la croix de la manette te déplacent.'; if (input.keys.size || (matchMedia && matchMedia('(pointer: fine)').matches && !('ontouchstart' in window))) return 'les flèches ou Z Q S D te déplacent (ou clique et glisse).'; } catch (e) { } return 'glisse ton pouce n\'importe où sur l\'écran pour te déplacer.'; }
+// the companion raises the knight: life back, the powers of the tutorial, the boss will move again once they are told
+function tutoRevive(boss) {
+  const s = tutoS(); P.down = false; P.hp = P.mhp; P.inv = TU.rezInv; P.reviveT = 0; P.downT = 0; s.pow = true; s.phase = 'pouvoirs'; s.pt = 0;
+  s.H0 = boss ? boss.hp : 0; s.dmgK = tutoDmgFor(boss); ring(P.x, P.y, 30, '#8fd3e8', .5); burst(P.x, P.y, '#8fd3e8', 16, 110, 6); sfx(520, .3, 'sine', .06, 500); vfx('soin', P.x, P.y, 0, { scale: 1 }); uiShake(1);
+  tutoSay(s.comp, 'Debout ! Je te prête mes pouvoirs : un point de vie par coup reçu, et des coups qui font très mal.', TU.tutoBulle * 1.4);
+  floatText(P.x, P.y - 10, 'Pouvoirs du tutoriel', '#ffd76a');
+}
+/* The blows given, so that tutoSeries full series of TU.chainN blows finish the boss from its life left H:
+   one series = (chainN − 1) plain blows of D and one big blow of D × (1 + hb × TU.finish), hb = heavyXbow for a crossbow, heavyBlade for a blade ;
+   k = 1.01 × H / (tutoSeries × D × (chainN − 1 + 1 + hb × finish)) ; the 1 % covers the rounding to a tenth of each blow (myD). Crits only hasten. */
+function tutoDmgFor(boss) {
+  const H = boss ? Math.max(1, boss.hp) : 1440, W = WEAPONS[ST.kind], hb = W.proj ? TU.heavyXbow : TU.heavyBlade, D = Math.max(.1, ST.dmg), N = Math.max(1, TU.tutoSeries | 0);
+  return Math.max(1, 1.01 * H / (N * D * (TU.chainN + hb * TU.finish)));
+}
+function tutoLessons(dt, boss) {
+  const s = tutoS(), c = s.comp, f = s.flags, esq = typeof esqOn === 'function' && esqOn(), L = [
+    ['Frappe', 'Approche : ton chevalier frappe seul dès que la Souche entre dans son cercle.', 'Vas-y, frappe-la ! Approche jusqu\'au cercle.', () => boss && boss.hp < boss.hpMax],
+    ['Le grand coup', 'Enchaîne les coups sans pause : le ' + ford(TU.chainN) + ' est un grand coup.', 'Sans pause ! Le ' + ford(TU.chainN) + ' coup d\'affilée frappe bien plus fort.', () => !!f.big],
+    ['La lanterne', 'Touche la lanterne : elle efface les projectiles et blesse tout autour de toi.', 'Ta lanterne ! Elle efface les projectiles et blesse autour de toi.', () => !!f.lan],
+    ['L\'esquive', 'Appuie sur Esquive (ou Maj) : une roulade sans dégât.', 'Esquive ! Une roulade et rien ne te touche.', () => !!f.esq],
+  ]; if (!esq) L.pop();
+  if (P.big && P.swingT > 0) f.big = 1; if (P.lanT > 0) f.lan = 1; if (P.dashT > 0) f.esq = 1;
+  if (boss && !boss.dead && s.lesson < L.length) { const top = boss.hpMax - 1, id = boss.id; if ((myD[id] || 0) > top) myD[id] = top; } // the boss holds on until every lesson is learnt
+  const cur = L[s.lesson]; if (!cur) { s.phase = 'achever'; s.pt = 0; tutoSay(c, 'Tu sais tout. Achève-la !'); $('b-lan').classList.remove('pulse'); return; }
+  tutoHint('4 / 6 · ' + cur[0], cur[1]); $('b-lan').classList.toggle('pulse', s.lesson === 2);
+  if (s.pt === dt || (s.pt > TU.tutoBulle * 2 && c.until < G.time)) { tutoSay(c, cur[2]); if (s.pt !== dt) s.pt = 0; }
+  if (cur[3]()) { s.lesson++; s.pt = 0; sfx(700, .12, 'sine', .04, 300); floatText(P.x, P.y - 12, cur[0] + ' : appris !', '#ffd76a'); if (L[s.lesson]) tutoSay(c, L[s.lesson][2]); }
+  if (boss && boss.dead) tutoBossDead();
+}
+function tutoBossDead() {
+  const s = tutoS(); s.phase = 'fete'; s.pt = 0; s.fete = TU.tutoFeteT; s.flags.won = 1;
+  for (const e of F.enemies) if (e.summon && !e.dead) kill(e); $('b-lan').classList.remove('pulse'); F.quietUntil = 0; // (the barrel and the chest of station 3 do drop)
+  tutoSay(s.comp, 'Elle est tombée ! Tu es fait pour ça.', TU.tutoFeteT); P.joyT = 1.2; uiShake(2);
+}
+/* ---------- station 3 : the loot (the example object and the bag), a thing to break, a chest, then the way out ---------- */
+function tutoHas(it) { return !!it && (ME.bag.some(o => o.i === it.i) || ME.eq.some(o => o && o.i === it.i)); } // the example object is in the bag, or worn
+function tutoButin(dt) {
+  const s = tutoS(), c = s.comp, f = s.flags, room = F.rooms.find(r => r.kind === 'n' && r.cy > 30) || null, cx = room ? (room.cx + .5) * T : P.x, cy = room ? (room.cy + .5) * T : P.y;
+  const inRoom = room ? P.y > (room.y0 - 1) * T : true;
+  if (!f.drop && inRoom) { f.drop = 1; if (TU.tutoItem > 0) { const cls = clsOf(ME), k = cls === 2 ? 2 : (ME.eq[0] && ME.eq[0].k === 1 ? 0 : 1); s.item = makeItem(0, k, 1); dropPickup(cx, cy - 20, 'i', 0, s.item); ring(cx, cy - 20, 30, '#ffd986', .5); } }
+  const br = (F.nv && F.nv.br || []).filter(b => b.main), chest = F.chests[0] || null;
+  const L = [
+    TU.tutoItem > 0 ? ['Le butin', 'Un objet brille : il vient à toi tout seul. Ouvre ensuite le sac (le bouton en haut) et équipe-le si tu veux.', 'Regarde, un objet ! Ramasse-le, puis ouvre ton sac : tu peux l\'équiper.', () => !!f.drop && (!s.item || !!f.bag)] : null,
+    br.length ? ['Casse un décor', 'Près du tonneau, touche le bouton de frappe : il casse, et lâche ce qu\'il cache.', 'Ce tonneau cache quelque chose : frappe-le ! Touche le bouton de frappe tout près.', () => br.some(b => b.dead)] : null,
+    chest ? ['Le coffre', 'Marche sur le coffre pour l\'ouvrir.', 'Un coffre ! Marche dessus pour l\'ouvrir.', () => chest.opened] : null,
+    ['La sortie', 'Suis la flèche jusqu\'à la sortie et reste dessus.', 'La sortie est par là. Suis la flèche !', () => false],
+  ].filter(Boolean);
+  const cur = L[Math.min(s.lesson, L.length - 1)];
+  if (cur === L[L.length - 1] && !s.doors[2].open) { tutoDoor(2); if (F.lift) F.lift.open = true; }
+  tutoHint((5 + Math.min(1, s.lesson)) + ' / 6 · ' + cur[0], cur[1]);
+  if (inRoom && (s.pt === dt || (s.pt > TU.tutoBulle * 2.5 && c.until < G.time))) { tutoSay(c, cur[2]); if (s.pt !== dt) s.pt = 0; }
+  if (cur[3]()) { s.lesson++; s.pt = 0; sfx(700, .12, 'sine', .04, 300); floatText(P.x, P.y - 12, cur[0] + ' : appris !', '#ffd76a'); if (L[s.lesson]) tutoSay(c, L[s.lesson][2]); }
+}
+/* ---------- the end : everyone dances (the twerk of zze_danses.js), then rises to the sky (arms up, the camera climbs, the light opens), the card « Tu es prêt » ---------- */
+function tutoFin() {
+  const s = tutoS(), c = s.comp; s.phase = 'fin'; s.pt = 0; s.fin = 0; s.rise = 0; resetInput(); P.moving = false; P.target = null; P.inv = 99; $('pad').hidden = true; G.paused = true; $('b-lan').classList.remove('pulse');
+  tutoHint('Tu es prêt', 'L\'Éveil est fini. Regarde-les danser !');
+  // everyone around the knight: the companion beside him, the two locals who came down to see (they stood far up the corridor)
+  c.x = P.x + 30; c.y = P.y + 4; c.face = -Math.PI / 2; c.mv = false; c.dodgeT = 0;
+  s.npcs.forEach((n, i) => { n.x = P.x - 34 - i * 26; n.y = P.y + 8 + i * 10; n.face = -Math.PI / 2; n.say = ''; burst(n.x, n.y, '#fff6d8', 10, 90, 8); });
+  for (const m of s.npcM) { const n = m.userData.tuto; m.position.set(n.x * U, 0, n.y * U); }
+  tutoDanse('twerk'); sfx(660, .3, 'triangle', .06, 500); vfx('niveau_sup', P.x, P.y, 0, { color: hex(GM().col) });
+  tutoFinDom();
+}
+function tutoDanse(id) {
+  const s = tutoS(), i = danseLib().findIndex(d => d[0] === id); if (i < 0 || !danseAllowed()) { P.em = null; if (s.comp) s.comp.em = null; return; }
+  P.em = { id: i, t0: G.time, end: G.time + 999 }; if (s.comp) { s.comp.em = { id: i, t0: G.time }; s.comp.emx = null; }
+}
+function tutoFinStep(dt) {
+  const s = tutoS(), tw = TU.tutoTwerkT, ri = TU.tutoRiseT; s.fin += dt; P.moving = false; P.swingT = 0; P.hurtT = 0; P.dashT = 0; P.joyT = 0;
+  updateFx(dt); if (G.frame % 16 === 0 && s.fin < tw + ri) firework(P.x + (Math.random() - .5) * 170, P.y + (Math.random() - .6) * 130, pick(FW_COLS));
+  if (!USE3D) { if (s.fin < tw) { P.face += dt * 5; if (s.comp) s.comp.face -= dt * 5; } else { P.face = Math.PI / 2; if (s.comp) s.comp.face = Math.PI / 2; } } // without a skeleton (2D): they spin on the spot, then face us (P.moving would end the dance: danseFrame)
+  if (s.fin >= tw && !s.flags.rise) { s.flags.rise = 1; tutoDanse('victoire'); tutoHint('Tu es prêt', 'Vers la lumière…'); sfx(520, .5, 'sine', .05, 600); }
+  s.rise = clamp((s.fin - tw) / ri, 0, 1);
+  for (const m of s.npcM) { const t = G.time, n = m.userData.tuto; m.rotation.z = s.fin < tw ? Math.sin(t * 9 + n.x) * .22 : 0; m.position.y = s.fin < tw ? Math.abs(Math.sin(t * 9 + n.x)) * .12 : 0; } // the locals wiggle too (3D)
+  const el = $('tuto-fin'); if (el) { const k = s.rise * s.rise, carte = s.fin >= tw + ri; el.style.setProperty('--k', k.toFixed(3)); el.classList.toggle('carte', carte); if (carte) $('hint').hidden = true; }
+}
+// before the 3D picture is drawn (render3D, e_gl.js): the rise of everyone, the camera that climbs, the light that opens ; nothing out of the end
+function tutoRender3D() {
+  const s = tutoS(); if (!s.on || s.phase !== 'fin' || !(s.rise > 0)) return;
+  try {
+    const k = s.rise * s.rise * (3 - 2 * s.rise), hgt = k * TU.tutoRiseH, lift = m => { if (m) m.position.y += hgt; };
+    if (typeof PM !== 'undefined' && PM) lift(PM.root); if (s.comp && s.comp.m) lift(s.comp.m.root); for (const m of s.npcM) lift(m);
+    cam3.position.y += hgt * .9; cam3.lookAt(cam.x * U, hgt * .7, cam.y * U);
+    hemi.intensity += k * 1.6; lamp.intensity += k * 2; scene.fog.near *= 1 + k * 3; scene.fog.far *= 1 + k * 3;
+  } catch (e) { }
+}
+function tutoFinDom() {
+  let el = $('tuto-fin');
+  if (!el) { document.head.appendChild(h('style', { id: 'tuto-fin-style', text: '#tuto-fin{position:absolute;inset:0;z-index:40;pointer-events:none;background:radial-gradient(circle at 50% 35%,rgba(255,246,216,calc(var(--k,0)*.95)),rgba(255,236,190,calc(var(--k,0)*.75)) 60%,rgba(255,226,170,calc(var(--k,0)*.6)));display:flex;align-items:center;justify-content:center;padding:24px}#tuto-fin[hidden]{display:none}#tuto-fin .tf{opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s;background:color-mix(in srgb,var(--well,#15100c) 92%,transparent);color:var(--cream,#f1e4c8);border-radius:22px;padding:22px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5);border:2px solid var(--amber,#ffc24a)}#tuto-fin.carte .tf{opacity:1;transform:none;pointer-events:auto}#tuto-fin .tf h2{margin:0 0 6px;font:500 30px "Grenze Gotisch",Georgia,serif;color:var(--amber,#ffc24a)}#tuto-fin .tf p{margin:0 0 16px;font-size:14px;line-height:1.4}' }));
+    el = h('div', { id: 'tuto-fin', role: 'dialog', 'aria-label': 'Tutoriel terminé' }, h('div', { class: 'tf' }, h('h2', { text: 'Tu es prêt' }), h('p', { id: 'tuto-fin-txt' }), h('button', { class: 'btn wide shine', id: 'tuto-continuer', type: 'button', text: 'Continuer', onclick: () => tutoEnd(true) })));
+    ($('game') || document.body).append(el); }
+  const coins = TU.tutoCoins | 0, s = tutoS(), again = ME.tut === 1;
+  $('tuto-fin-txt').textContent = 'Les anciens te saluent, ' + (ME.name || 'chevalier') + '. Le camp t\'attend' + (again ? '. Tu connaissais déjà le chemin : rien ne change' : ', et l\'étage 1 s\'ouvre. Ce qui brille ici reste sous l\'écorce' + (coins > 0 ? ', sauf ' + coins + ' éclats pour la route' : '') + (s.item && TU.tutoItem > 0 ? ' et l\'objet trouvé' : '')) + '.';
+  el.style.setProperty('--k', '0'); el.classList.remove('carte'); el.hidden = false;
+}
+/* ---------- the powers of the creative mode (CREA.pow, set by zzj_pouvoirs.js), outside the tutorial ---------- */
+function tutoCreaFrame(dt) {
+  const p = CREA.pow, s = tutoS(); if (!p.on || !run || F.hub) { if (s.comp) tutoCompDrop(); return; }
+  if (p.bossIdle) for (const b of F.enemies) if (b.type === 9 && !b.dead) { b.stun = Math.max(b.stun, 1); b.st = 0; b.kx = b.ky = 0; }
+  if (p.comp) { if (!s.comp || s.comp.seed !== run.seed) { tutoCompMake(); s.comp.seed = run.seed; s.comp.x = P.x - 24; s.comp.y = P.y; } allies.push(s.comp); if (!G.paused) tutoCompStep(dt); } else if (s.comp) tutoCompDrop();
+  if (P.down && G.mode === 'play' && !G.paused) {
+    const near = p.compRez && s.comp && hyp(s.comp.x - P.x, s.comp.y - P.y) < TU.rezR;
+    if (p.selfRez || near) { P.reviveT += dt; if (P.reviveT >= (near && !p.selfRez ? TU.tutoRezT : TU.rezT)) { P.down = false; P.hp = P.mhp; P.inv = TU.rezInv; P.reviveT = 0; ring(P.x, P.y, 30, '#8fd3e8', .5); burst(P.x, P.y, '#8fd3e8', 16, 110, 6); sfx(520, .3, 'sine', .06, 500); } }
+    else P.reviveT = Math.max(0, P.reviveT - dt);
+  }
+}
+function tutoCompDrop() { const s = tutoS(); if (s.comp && s.comp.m) { try { freeModel(s.comp.m); } catch (e) { } } s.comp = null; }
+// the companion walks to a fallen knight in the creative mode too (tutoCompStep: the phase 'releve' sends him ; here the same by the power)
+function tutoCompRezWant() { return !!(CREA.on && CREA.pow && CREA.pow.on && CREA.pow.compRez && P.down); }
+tutoInit();
+
+/* ================= les pouvoirs du tutoriel, en options du mode créatif (10 octobre, branche tutoriel) =================
+   Damien : « Ajouter ces paramètres au mode créatif. » La carte « Pouvoirs du tutoriel » de la page du mode créatif (accroche d'une ligne dans
+   creaBody, h_creatif.js) : dégâts reçus × (curseur), dégâts donnés × (curseur), boss en IDLE, compagnon qui suit, relève par le compagnon,
+   se relever soi-même. Les valeurs de départ sont les réglages creaHurtK, creaDmgK, creaBossIdle, creaComp, creaCompRez, creaSelfRez de la
+   famille « Tutoriel » (ajoutés par tuneAdd dans zzi_tutoriel.js) ; ce que le joueur bouge ici vit dans CREA.pow, jamais dans la sauvegarde
+   (le mode créatif n'écrit rien) et ne compte que tant que CREA.on (tutoPow, zzi_tutoriel.js : hurt, damageEnemy, la relève, le boss, le compagnon).
+   Rien qu'une fonction au premier niveau ; l'état est CREA.pow. */
+function powS() { if (!CREA.pow) CREA.pow = { on: false, hurtK: TU.creaHurtK, dmgK: TU.creaDmgK, bossIdle: TU.creaBossIdle > 0, comp: TU.creaComp > 0, compRez: TU.creaCompRez > 0, selfRez: TU.creaSelfRez > 0 }; return CREA.pow; }
+function powSet(k, v) { const p = powS(); p[k] = v; renderSheet(); }
+// a slider of the sheet: the number shown beside it follows the finger
+function powSlider(icn, label, k, lo, hi, step, fmt) {
+  const p = powS(), out = h('b', { text: fmt(p[k]) });
+  const r = h('input', { type: 'range', class: 'adm-range', min: String(lo), max: String(hi), step: String(step), value: String(p[k]), 'aria-label': label });
+  r.addEventListener('input', () => { p[k] = +r.value; out.textContent = fmt(p[k]); });
+  r.addEventListener('change', () => powSet(k, +r.value));
+  return h('div', { class: 'qc', style: '--i:0' }, h('span', { class: 'num' }, ic(icn)), h('div', { class: 'grow' }, h('span', { class: 'row', style: 'justify-content:space-between' }, h('span', { text: label }), out), r));
+}
+function powCard() {
+  const p = powS(), hurt = v => v <= 0 ? '0 (1 point par coup)' : v >= 1 ? '× 1 (comme d\'habitude)' : '× ' + (v < .01 ? String(v).replace('.', ',') : fnum(v)) + ' (' + Math.max(1, Math.round(34 * v)) + ' point' + (34 * v >= 2 ? 's' : '') + ' pour un coup de 34)';
+  return [
+    h('div', { class: 'eyebrow', text: 'Pouvoirs du tutoriel' }),
+    h('p', { style: 'font-size:13px', text: 'Les pouvoirs de « L\'Éveil », à ta main : ils valent ici seulement, rien n\'est enregistré. Leurs valeurs de départ sont les réglages « Créatif : … » de la famille Tutoriel.' }),
+    toggleRow('etoile', 'Pouvoirs allumés', p.on, () => powSet('on', !p.on)),
+    powSlider('bouclier', 'Dégâts reçus', 'hurtK', 0, 1, .0001, hurt),
+    powSlider('epee', 'Dégâts donnés', 'dmgK', 1, 100, .5, v => '× ' + fnum(v)),
+    toggleRow('boss', 'Boss en IDLE (il attend sans bouger ni attaquer)', p.bossIdle, () => powSet('bossIdle', !p.bossIdle)),
+    toggleRow('c_levels', 'Compagnon de l\'autre classe (il suit, frappe, esquive)', p.comp, () => powSet('comp', !p.comp)),
+    toggleRow('c_dash', 'Relève par le compagnon (il faut le compagnon)', p.compRez, () => powSet('compRez', !p.compRez)),
+    toggleRow('ok', 'Se relever soi-même', p.selfRez, () => powSet('selfRez', !p.selfRez)),
+    h('button', { class: 'btn small ghost', type: 'button', text: 'Remettre les pouvoirs aux réglages', onclick: () => { CREA.pow = null; powS(); renderSheet(); } }),
+  ];
+}
+
+function tcProjet() { return {"construit":"2026-10-10T21:38:14.635Z","commit":"09a62ee","fichiers":[["a0_icons.js","Fichier généré par tools/icones.mjs — ne pas le modifier à la main.",93],["a1_vignettes.js","Écrit par tools/vignettes.py à partir des modèles d'armes de Damien : ne pas modifier à la main.",22],["a2_icones_objets.js","Écrit par tools/icones_objets.py à partir des icônes d'objets de Damien (série 3) : ne pas modifier à la main.",35],["a_tune.js","the settings Damien can change himself (step 19, widened to every figure of the game in step 22a)",877],["a_core.js","utils",961],["b_game.js","state",726],["c_render.js","view: shared by the 3D renderer and the flat fallback",328],["e_gl.js","3D renderer (three.js): a pure view of the game state",830],["e2_modeles.js","Damien's models (3D only)",839],["e3_vfx.js","Effets de particules écrits par Damien (personnage/tinyknight_vfx.js dans le dépôt du site), repris tels quels :",251],["f_quests.js","quests",132],["g_serveur.js","the save kept online (standalone page only)",151],["h_creatif.js","the creative mode: to check everything without playing for hours",121],["i_admin.js","the hidden admin panel (step 19c)",380],["d_ui.js","icons",1049],["j_editeur.js","the level editor (20b)",796],["k_hud.js","the editor of the screen of play (22f)",156],["l_fichiers.js","the files sent to the service (24f)",93],["m_joueurs.js","players, security and figures (25b to 25d)",103],["n_roles.js","roles and proposals of maps (25f)",130],["o_blocs.js","the 3D blocks (35a): Damien's pieces instead of the textured cubes",161],["p_fond.js","The backdrop, the mood of each zone, the layered mist (step 36: « un fond derrière le niveau, des effets de zones »)",123],["q_formes.js","rounded reliefs instead of the wall cubes (36b: « plus de courbes et moins de cubes »)",210],["r_volume.js","the volume kit (step 36b): real modelled pieces on the rounded reliefs",223],["s_nuages.js","Clouds that pass, the light of a sky (« des nuages semblant passer devant l'écran », « des éclairages naturels »)",123],["t_groupe.js","the team as a group (8 October, Damien's request)",543],["u_notes.js","« Nouveautés » : what changed in the game, from the home screen (8 October, Damien's request)",124],["v_regles.js","« Règles » : the art direction and the rules of the files to import (8 October, Damien's request)",78],["w_retour.js","« Signaler un bug, faire un retour » (8 October, Damien's request)",298],["x_cles.js","« Les clés » : the workshop of the administration (9 October, Damien's request)",278],["x2_sable.js","« Les clés », tool 2 : the sandbox (9 October)",116],["x3_formes.js","« Les clés », tool 3 : pieces made of shapes (9 October)",135],["x4_anims.js","« Les clés », tool 4 : animations (9 October)",108],["x5_monde.js","« Les clés », tool 5 : a new world (9 October)",108],["x6_perso.js","« Les clés », tool 6 : the knight « de base », in pieces (9 October)",83],["x_vivants.js","« Niveaux vivants » (8 October, Damien's request) : prototypes, every one behind a setting that is OFF by default",384],["y_sol.js","scenery of the ground, proper to each world, and the reeds of the Marais (8 October, Damien's request)",121],["z_variables.js","the editor of variables, made handier (9 October, branch « variables », Damien's request)",226],["zz_sons.js","the music and the feel of the hits (9 October, Damien's request)",85],["zzz_xp.js","experience by knight (branch xp, 9 October, Damien's request)",373],["zz1_onglets.js","Réglages et Pause : un petit menu flottant à onglets (10 October, Damien's request)",115],["zz2_graphismes.js","Graphismes : des préréglages et de vraies options (10 October, Damien's request)",324],["zy_doigt.js","the level editor under a finger (9 October, Damien's request: « presque fun de créer des mondes »)",297],["zy2_casse.js","things to break, put by hand in the level editor (9 October, Damien's request)",114],["zy3_glisse.js","the dodge by a swipe (9 October, Damien's request ; setting dashSwipe, off by default)",42],["zw_precis.js","the level editor, finer under a finger (9 October, branch editeur ; after zy_doigt.js)",117],["zw2_cartes.js","large maps in the level editor: rooms ready to put, the check before a try, a map in a file (9 October, branch editeur)",202],["zw3_casse2.js","things to break, each with its own chances and its own end (9 October, branch editeur ; after zy2_casse.js)",49],["zw4_esquive.js","the dodge button of the classic game (9 October, Damien's request ; setting esquive, off by default)",107],["zv_entree.js","the level editor follows the hand: a mouse and a keyboard, or a finger (10 October, branch editeur-v3)",277],["zzv_vol.js","the flight of the creatures (10 October, branch vol-appareils, Damien's request)",161],["zzw_appareils.js","knights by device, devices by person (10 October, branch vol-appareils, Damien's request)",197],["zzb_ordres.js","the administrator's orders to this device (service version 12, branch joueurs-direct)",231],["zzc_fiche.js","a player's card, live (branch joueurs-direct, service version 12)",131],["zzd_spectateur.js","the spectator (branch joueurs-direct, service version 12)",137],["zze_danses.js","dances and emotes (branch joueurs-direct)",180],["zzt_tableau.js","the dashboard inside the administration (10 October, branch admin-tableau, service version 13)",234],["zzf_live.js","the spectator's command panel (branch spectateur-live, service version 12 as it is online)",194],["zzg_endirect.js","« En direct » : who plays now (branch spectateur-live, service version 12 as it is online)",108],["zzh_coop_carte.js","the same level for the whole team (10 October)",59],["zzi_inventaire.js","L'inventaire façon RPG (10 October, Damien's request, branch inventaire-rpg)",411],["zzj_hud_modeles.js","Trois modèles de HUD au choix du joueur (10 October, Damien's request, branch inventaire-rpg)",69],["zzx_complet.js","the complete dashboard (10 October, branch tableau-complet, service version 13 as it is online)",288],["zzk_maj.js","Une mise à jour arrive : les joueurs en ligne sont prévenus (10 October, Damien's request, branch publications-maj)",94],["zzl_publications.js","La liste des publications, triée (10 October, Damien's request, branch publications-maj)",81],["zzi_tuto_carte.js","la carte du tutoriel « L'Éveil » (étage 0), faite à la main",11],["zzi_tutoriel.js","le tutoriel « L'Éveil » (10 octobre, branche tutoriel, demande de Damien)",378],["zzj_pouvoirs.js","les pouvoirs du tutoriel, en options du mode créatif (10 octobre, branche tutoriel)",33]],"autres":[["head.html","La page : styles et squelette des menus",888],["autonome.js","the standalone page: what Claude gives the game inside Claude, done without it",120]],"lignes":17622,"tests":{"rapides":82,"lents":12,"service":226},"modeles":243,"images":110,"sons":15,"musiques":15,"publications":{"main":26,"bouton":5},"decisions":[{"id":"relais-worker","question":"Le relais tinknight-relais a été déployé chez Cloudflare sans ton accord (9 octobre) : le garder en réserve ou le supprimer ?","recommandation":"Le garder : il ne coûte rien tant que le jeu ne l'utilise pas, et il est prêt le jour où le relais public de PeerJS retombe.","lien":"https://dash.cloudflare.com/","ajoutee":"2026-10-09","par":"Claude"},{"id":"licence-musique","question":"Musique d'AlkaKrab : le dépôt du site est public, donc les morceaux y sont téléchargeables tels quels. Demander l'accord de l'auteur, ou rendre le dépôt du site privé ?","recommandation":"Écrire à l'auteur d'abord (une ligne suffit) ; sans réponse, sortir les morceaux du dépôt public avant le Play Store.","lien":"https://alkakrab.itch.io/free-25-fantasy-rpg-game-tracks","ajoutee":"2026-10-09","par":"Claude"},{"id":"rpg-fil-rouge","question":"RPG en monde ouvert : quel est le fil rouge de l'histoire (ce que le chevalier cherche du début à la fin) ?","recommandation":"Le choisir avant d'écrire le moindre dialogue : les PNJ, les quêtes et le village hub en découlent. Une phrase suffit pour démarrer.","lien":"https://claude.ai/code/artifact/b9544276-d8f8-49b9-8ca6-64f305bcd294","ajoutee":"2026-10-10","par":"Claude"},{"id":"rpg-region-tranche","question":"Tranche verticale du RPG : dans quelle région la construire ?","recommandation":"Les Racines : c'est le monde le plus abouti (nuages, lumière, décors de sol), donc le moins de travail d'habillage pour juger le RPG lui-même.","lien":"https://github.com/Startupp/tinknight/blob/audit-fable/ROADMAP.md","ajoutee":"2026-10-10","par":"Claude"},{"id":"mode-arcade","question":"Le jeu actuel devient-il le « mode arcade », à côté d'une Campagne manuelle (deux manettes, boutons de sorts) ?","recommandation":"Oui pour le nom « arcade » (rien ne change pour les joueurs) ; la Campagne se décide après la tranche verticale du RPG, pour ne pas ouvrir deux gros chantiers à la fois.","lien":"https://github.com/Startupp/tinknight/blob/audit-fable/ROADMAP.md","ajoutee":"2026-10-07","par":"Claude"},{"id":"jeton-publier-date","question":"Jeton GitHub du bouton Publier (« TinKnight Publier ») : quelle est sa date d'expiration ? Le jour où il expire, le bouton Publier et ce tableau s'arrêtent (erreur 401).","recommandation":"La lire sur GitHub (Fine-grained tokens > « TinKnight Publier »), la noter dans ton agenda une semaine avant, puis toucher « Tranchée ». Ne l'écris pas dans le dépôt.","lien":"https://github.com/settings/personal-access-tokens","ajoutee":"2026-10-10","par":"tableau-complet"}],"archives":0,"assets":[{"id":"murs-textures-fondues","priorite":1,"nom":"Textures de murs qui se raccordent (sol, mur, dessus) pour que les cartes faites à la main n'aient plus l'air de cubes","pour":"Éditeur de niveaux, camp à la main","quoi":"Par zone : 3 textures carrées 256 × 256 (sol, mur, dessus) qui se répètent sans bord visible (« tileable »), sans ombre portée peinte, sans liseré ; les pièces de kit 1 × 1 (sol_1, mur_1…) sans biseau ni bordure sur leurs arêtes.","ou":"ASSETS - CONCEPTS - ARTS/01_textures/\u003czone>/ ; les kits de blocs : 02_modeles_3d/blocs/\u003czone>/","outil":"Textures : Krita ou Photoshop (filtre « décalage » pour vérifier le raccord) ; blocs : Blockbench (modèle 1 × 1, origine au milieu du sol, ~500 triangles, texture 256 px).","importer":"Administration > Bibliothèque > Textures (ou Blocs 3D) > Importer ; puis Éditeur de niveaux > Terrain > Textures (ou Blocs 3D) pour les poser, ou « sur toute la carte ».","verifier":"Éditeur de niveaux, réglage « Blocs 3D sur les murs » (famille Affichage) à 1 : les murs sont continus et portent la texture ; à 2 : chaque case est un bloc (c'est ce qui donne l'air « carré »).","publier":"Bouton Publier du tableau de bord (jeu seulement : aucun service).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/FORMATS.md","par":"Claude","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-cadres-rarete","priorite":1,"nom":"Cadres de rareté des tuiles de l'inventaire (Commun, Rare, Épique, Panoplie)","pour":"Inventaire RPG","quoi":"4 PNG transparents 96 × 96, découpe « 9 tranches » (coins de 24 px, centre vide).","ou":"ASSETS - CONCEPTS - ARTS/05_interface/","outil":"Krita, Photoshop ou Figma (export PNG).","importer":"Déposer dans pwa/modeles/ sous le nom indiqué par le document ; un pas de code (une demi-heure) les branche : le demander à Claude.","verifier":"Ouvrir l'inventaire : le cadre remplace le liseré de couleur.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-portraits-buste","priorite":1,"nom":"Portrait du chevalier en buste, un par thème d'icône","pour":"Inventaire RPG, profil","quoi":"PNG transparents 256 × 256, buste de face, sujet centré, lisible à 80 px.","ou":"ASSETS - CONCEPTS - ARTS/05_interface/portraits/","outil":"Krita ou Procreate ; ou un rendu Blender du modèle chevalier.glb (caméra de face, fond transparent).","importer":"Déposer dans pwa/modeles/ (k_\u003cthème>_buste.png) ; branché par un pas de code.","verifier":"Inventaire flottant, moitié « chevalier » : le buste remplace l'icône ronde agrandie.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-icones-objets","priorite":1,"nom":"Icônes des objets qui n'en ont pas : chapeaux, manteaux, lanternes, bottes, talismans","pour":"Inventaire RPG","quoi":"Comme les vignettes d'armes : PNG ou WebP transparents, même taille et même angle que les armes existantes.","ou":"ASSETS - CONCEPTS - ARTS/05_interface/objets/","outil":"Krita ; ou rendu Blender des objets si des modèles existent.","importer":"Déposer dans pwa/modeles/ avec le nom de l'objet ; la liste des noms est dans le document.","verifier":"Inventaire : chaque objet montre sa vignette au lieu du dessin simple.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-icones-stats","priorite":1,"nom":"Icônes des 8 statistiques (vie, dégâts, critique, cadence, vitesse, portée, vie par ennemi, pièces)","pour":"Inventaire RPG, profil","quoi":"8 SVG sur grille 24 × 24, au trait, une seule couleur (le jeu les teinte).","ou":"ASSETS - CONCEPTS - ARTS/05_interface/icones/","outil":"Figma, Inkscape ou Illustrator (export SVG propre, sans texte).","importer":"Les coller dans src/a0_icons.js sous leur nom : à demander à Claude, ou le faire sur GitHub en suivant le modèle des icônes voisines.","verifier":"Inventaire, moitié « chevalier » : les statistiques portent les nouvelles icônes.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-sons","priorite":1,"nom":"Sons de l'inventaire : sac qui s'ouvre, objet pris, objet posé, fusion","pour":"Inventaire RPG","quoi":"4 bruitages .ogg et .mp3 (les deux), mono, 44,1 kHz, moins d'une seconde, −14 LUFS, sans silence au début : inv_ouvre, inv_prise, inv_pose, inv_fusion.","ou":"pwa/sons/, provenance notée dans CREDITS_SONS.md","outil":"Audacity (normaliser, couper le silence, exporter ogg + mp3) ; sources libres : freesound.org (licence CC0 ou CC-BY notée).","importer":"Déposer les fichiers dans pwa/sons/ ; le jeu les prend dès qu'ils portent le bon nom.","verifier":"Ouvrir l'inventaire, saisir, poser, fusionner : les bips de synthèse sont remplacés.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"camp-presets-salles","priorite":2,"nom":"Modèles de salles et de camps prêts à poser (petit camp, village, arène, carrefour, salle au trésor)","pour":"Éditeur de niveaux, camp à la main","quoi":"Pas un fichier graphique : des morceaux de carte dessinés dans l'éditeur, 5 à 10 modèles de tailles différentes (aujourd'hui les 6 salles sont écrites dans le code, src/zw2_cartes.js).","ou":"Dans l'éditeur : dessiner la salle, Terrain > Copier > entourer > « Exporter » en fichier .json","outil":"L'éditeur de niveaux (souris + clavier sur grand écran).","importer":"Envoyer le fichier .json à Claude, qui l'ajoute aux salles prêtes ; le bouton « Enregistrer la sélection comme salle » reste à construire (petit).","verifier":"Éditeur > Terrain > Salles : la nouvelle salle est dans la liste ; la poser sur une carte vide, « Essayer ».","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/CLES_ADMINISTRATION.md","par":"Claude","ajoute":"2026-10-10","etat":"a_faire"},{"id":"tuto-deux-pnj-anciens-de-la-sta","priorite":2,"nom":"Deux PNJ « anciens » de la station 1 (une jarre vivante et une souche à yeux, aujourd'hui des formes en code dans tutoNpcBuild / tutoDraw2D)","pour":"Tutoriel","quoi":"Deux PNJ « anciens » de la station 1 (une jarre vivante et une souche à yeux, aujourd'hui des formes en code dans tutoNpcBuild / tutoDraw2D)","ou":"pwa/modeles/pnj_jarre.glb, pwa/modeles/pnj_souche.glb (3D) ; en 2D rien à fournir","outil":"Meshy ou Tripo (low poly, moins de 2 000 triangles, une seule texture 512), ou l'atelier Formes des clés","importer":"Déposer les .glb, puis demander à Claude de remplacer les formes de tutoNpcBuild par loadModel (une ligne par PNJ)","verifier":"Créer un chevalier : les deux anciens à gauche et à droite de la première salle, bulles au-dessus","publier":"Fusion de la branche tutoriel, bouton Publier","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/CLES_ADMINISTRATION.md","par":"tutoriel","ajoute":"2026-10-10","etat":"a_faire"},{"id":"tuto-un-d-cor-propre-l-tage-0-z","priorite":2,"nom":"Un décor propre à l'étage 0 (zone « L'Éveil » : surfaces, murs, lanternes faibles)","pour":"Tutoriel","quoi":"Un décor propre à l'étage 0 (zone « L'Éveil » : surfaces, murs, lanternes faibles)","ou":"Éditeur de monde : exporter le plan de src/zzi_tuto_carte.js, le colorer (surfaces s, hauteurs h), recoller ; ou une carte publiée pour l'étage 0","outil":"L'éditeur de monde du jeu (calques Surfaces et Murs), aucun fichier externe","importer":"Publier la carte pour l'étage 0 depuis l'éditeur : elle passe devant la carte du code (planOf(0))","verifier":"Rejouer le tutoriel depuis Réglages > Compte","publier":"Publier les cartes depuis l'administration","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/CLES_ADMINISTRATION.md","par":"tutoriel","ajoute":"2026-10-10","etat":"a_faire"},{"id":"tuto-un-boss-vieille-souche-l","priorite":2,"nom":"Un boss « Vieille Souche » à l'allure d'arbre (aujourd'hui le boss ordinaire au rang Cauchemar)","pour":"Tutoriel","quoi":"Un boss « Vieille Souche » à l'allure d'arbre (aujourd'hui le boss ordinaire au rang Cauchemar)","ou":"pwa/modeles/boss_souche.glb, ou une variante de peau dans l'atelier Formes","outil":"Meshy / Tripo, ou l'atelier Formes des clés (une peau de plus pour la créature 9)","importer":"Déposer le .glb ; demander à Claude un réglage « skin du boss du tutoriel » (une ligne dans tutoGo)","verifier":"Station 2 du tutoriel","publier":"Fusion + Publier","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/CLES_ADMINISTRATION.md","par":"tutoriel","ajoute":"2026-10-10","etat":"a_faire"},{"id":"tuto-un-compagnon-reconnaissable-","priorite":2,"nom":"Un compagnon reconnaissable (couleur ou cape propre : aujourd'hui l'autre classe avec la cape ME.col + 2)","pour":"Tutoriel","quoi":"Un compagnon reconnaissable (couleur ou cape propre : aujourd'hui l'autre classe avec la cape ME.col + 2)","ou":"Rien à fournir : un réglage de couleur suffit ; ou une cape de plus dans l'atelier Perso","outil":"Atelier Perso des clés","importer":"Demander à Claude un réglage tutoCompCol (famille Tutoriel)","verifier":"Station 1 : Brindille / Bolet derrière le héros","publier":"Fusion + Publier","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/CLES_ADMINISTRATION.md","par":"tutoriel","ajoute":"2026-10-10","etat":"a_faire"},{"id":"tuto-sons-une-bulle-qui-s-ouvre","priorite":2,"nom":"Sons : une bulle qui s'ouvre (court, doux), la levée au ciel (nappe montante de 3 à 4 s), la fête du boss (fanfare courte)","pour":"Tutoriel","quoi":"Sons : une bulle qui s'ouvre (court, doux), la levée au ciel (nappe montante de 3 à 4 s), la fête du boss (fanfare courte)","ou":"pwa/sons/tuto_bulle.ogg, pwa/sons/tuto_levee.ogg, pwa/sons/tuto_fete.ogg (aujourd'hui des sons de synthèse sfx)","outil":"Pas de Suno ; packs CC0 (Kenney, freesound) avec la licence notée dans audit/sons/PROMPTS_SONS.txt, ou jsfxr","importer":"Déposer les .ogg (et .mp3) dans pwa/sons/ ; demander à Claude de les brancher à la place des trois sfx de synthèse de zzi_tutoriel.js (zz_sons.js joue les fichiers)","verifier":"Tutoriel de bout en bout, son allumé","publier":"Fusion + Publier","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/CLES_ADMINISTRATION.md","par":"tutoriel","ajoute":"2026-10-10","etat":"a_faire"}]}; }
 </script>
 </body>
 </html>
