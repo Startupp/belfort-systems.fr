@@ -906,7 +906,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "78a20ef";
+window.ecorceBuild = "f427aa8";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -1603,7 +1603,7 @@ const TUNE_DEF = [
   ['nvSortie', 'viv', 'Sortie verrouillée par les objectifs', '0 = la sortie s\'ouvre comme aujourd\'hui, les objectifs sont un bonus. 1 = elle demande aussi un objectif rempli. 2 = tous. Demande « Mini-quêtes de niveau » ; en équipe la sortie reste libre.', 0, 0, 2, 'n'],
   ['nvSol', 'viv', 'Décors de sol et roseaux', '0 = comme aujourd\'hui. 1 = des décors de sol sur lesquels on marche, propres aux Racines, au Mycélium et au Marais, et des roseaux à la place des brins vert vif sur les murs du Marais. Seule l\'image change.', 0, 0, 1, 'n'],
   ['nvSolDens', 'viv', 'Décors de sol : densité', 'Multiplie le nombre de décors de sol.', 1, .2, 3, 'x'],
-  ['barChev', 'aff', 'Barres de vie des chevaliers', '0 = aucune (comme avant). 1 = une barre de vie au-dessus de chaque coéquipier, à sa couleur. 2 = aussi au-dessus de ton chevalier, même seul. (Les créatures blessées ont déjà la leur.)', 2, 0, 2, 'n'],
+  ['barChev', 'aff', 'Barres de vie des chevaliers', '0 = aucune (comme avant). 1 = une barre de vie au-dessus de chaque coéquipier, à sa couleur. 2 = aussi au-dessus de ton chevalier, même seul. Les créatures blessées ont déjà la leur.', 2, 0, 2, 'n'],
 ];
 // the draw of each level (20a): the same lines for each of the 30 levels, shown one level at a time by the panel (d[8].lv = its number).
 // Their defaults are the table LVL of a_core.js; a level that is not changed is drawn as before.
@@ -2012,6 +2012,38 @@ FX.volPiqueT = v => 'Le joueur a ' + fnum(v) + ' s pour voir venir le piqué' + 
 FX.volPiqueV = v => 'Un Follet plonge à ' + fnum(TU.en3spd * v / 32) + ' cases/s' + (TU.volTraj === 4 ? '.' : ' (sert avec la trajectoire « En piqué »).');
 FX.volPiqueH = v => 'Il monte de ' + fnum(v) + ' case avant de plonger' + (TU.volTraj === 4 ? '.' : ' (sert avec la trajectoire « En piqué »).');
 const TAU_VOL = Math.PI * 2;
+// ---- the floating inventory (10 October, branch inventaire-rpg; the code is src/zzi_inventaire.js). « invV2 » at 0 gives back the inventory of
+// before, untouched. The three ways of personalising an object (locks, engraving, tint) are written and switched off: nothing changes until they are lit.
+TUNE_FAM.splice(TUNE_FAM.findIndex(f => f[0] === 'eco') + 1, 0, ['inv', 'Inventaire', 'L\'inventaire flottant façon RPG (le sac d\'un côté, le chevalier de l\'autre), ses gestes (appui court, appui long, glisser-déposer), et l\'atelier des attributs avec ses personnalisations (verrou, gravure, teinte), éteintes d\'origine.']); // (shown right after « Boutique, sac et gemmes »)
+for (const d of [
+  ['invV2', 'inv', 'Inventaire', '« Flottant » : le cadre flottant façon RPG, le sac et le chevalier côte à côte, glisser-déposer. « Ancien » : l\'inventaire d\'avant, à onglets.', 1, 0, 1, 'choice', { choices: ['Ancien', 'Flottant (RPG)'], fx: 'invV2' }],
+  ['invLoupe', 'inv', 'Ouverture en loupe', 'L\'inventaire s\'ouvre en grandissant depuis l\'icône du sac. Éteint (ou si l\'appareil demande moins d\'animations) : un simple fondu.', 1, 0, 1, 'choice', { choices: ['Fondu', 'Loupe'], fx: 'invLoupe' }],
+  ['invPrise', 'inv', 'Délai avant de saisir un objet au doigt (millisecondes)', 'Le doigt doit rester posé ce temps-là sur un objet pour le saisir ; plus court, le doigt qui glisse fait défiler le sac. La souris saisit tout de suite.', 160, 60, 400, 'n', { fx: 'invPrise' }],
+  ['invAppui', 'inv', 'Durée de l\'appui long (millisecondes)', 'Le temps d\'appui, sans bouger, qui ouvre la fiche détaillée d\'un objet.', 480, 300, 1200, 'n', { fx: 'invAppui' }],
+  ['invVerrou', 'inv', 'Verrouiller un bonus', 'Allumé : à l\'atelier, un cadenas sur chaque bonus, et « Tout » qui relance d\'un coup tous les bonus non verrouillés.', 0, 0, 1, 'choice', { choices: ['Éteint', 'Allumé'], fx: 'invVerrou' }],
+  ['invVerrouCout', 'inv', 'Prix d\'un verrou (gemmes)', 'Ce que chaque bonus verrouillé ajoute au prix de « Tout relancer ».', 2, 0, 50, 'n', { fx: 'invVerrouCout' }],
+  ['invTout', 'inv', 'Remise de « Tout relancer »', 'Le prix de « Tout » = prix d\'une relance × bonus relancés × cette remise (1 = aucune remise).', .75, .25, 1, 'n', { fx: 'invTout' }],
+  ['invGrave', 'inv', 'Gravure', 'Allumé : à l\'atelier, graver un nom (14 lettres) sur un objet. Le nom s\'affiche devant celui de l\'objet dans l\'inventaire.', 0, 0, 1, 'choice', { choices: ['Éteint', 'Allumé'], fx: 'invGrave' }],
+  ['invGraveCout', 'inv', 'Prix d\'une gravure (pièces)', 'Les pièces pour graver ou changer une gravure ; l\'effacer est gratuit.', 150, 0, 5000, 'n', { fx: 'invGraveCout' }],
+  ['invTeinte', 'inv', 'Teinte', 'Allumé : à l\'atelier, teinter l\'image d\'un objet (six teintes). Visible dans l\'inventaire seulement.', 0, 0, 1, 'choice', { choices: ['Éteint', 'Allumé'], fx: 'invTeinte' }],
+  ['invTeinteCout', 'inv', 'Prix d\'une teinte (gemmes)', 'Les gemmes pour teinter un objet ; revenir à la teinte d\'origine est gratuit.', 3, 0, 50, 'n', { fx: 'invTeinteCout' }],
+  ['hudModele', 'aff', 'Modèle d\'écran de jeu d\'origine', 'Le modèle d\'un joueur qui n\'a pas encore choisi dans Réglages > Jeu : Épuré, Classique (l\'écran d\'avant) ou Complet.', 1, 0, 2, 'choice', { choices: ['Épuré', 'Classique', 'Complet'], fx: 'hudModele' }],
+]) tuneAdd(d);
+// what each of these settings does, said in one sentence (the editor of variables shows it under the line)
+Object.assign(FX, {
+  invV2: v => v ? 'L\'inventaire s\'ouvre dans un cadre flottant : le sac d\'un côté, le chevalier de l\'autre, glisser-déposer.' : 'L\'inventaire d\'avant : une feuille à deux onglets, Sac et Équipé.',
+  invLoupe: v => v ? 'L\'inventaire grandit depuis l\'icône du sac (un simple fondu si l\'appareil demande moins d\'animations).' : 'L\'inventaire apparaît en fondu.',
+  invPrise: v => 'Un doigt posé ' + fnum(v / 1000) + ' s sur un objet le saisit ; s\'il glisse avant, c\'est le sac qui défile.',
+  invAppui: v => 'Un appui de ' + fnum(v / 1000) + ' s sans bouger ouvre la fiche détaillée de l\'objet.',
+  invVerrou: v => v ? 'À l\'atelier : un cadenas par bonus, et « Tout » qui relance les bonus non verrouillés.' : 'Pas de cadenas à l\'atelier : chaque bonus se relance un par un.',
+  invVerrouCout: v => 'Avec un bonus verrouillé, « Tout relancer » coûte ' + fplu(v, 'gemme', 'gemmes') + ' de plus' + (TU.invVerrou ? '.' : ' (sert quand « Verrouiller un bonus » est allumé).'),
+  invTout: v => 'Relancer 3 bonus d\'un coup coûte ' + fplu(Math.ceil(TU.reroll * 3 * v), 'gemme', 'gemmes') + ' au lieu de ' + TU.reroll * 3 + (TU.invVerrou ? '.' : ' (sert quand « Verrouiller un bonus » est allumé).'),
+  invGrave: v => v ? 'À l\'atelier, un objet peut recevoir un nom gravé de 14 lettres.' : 'Pas de gravure à l\'atelier ; un objet déjà gravé garde son nom, sans le montrer.',
+  invGraveCout: v => 'Graver un objet coûte ' + fplu(v, 'pièce', 'pièces') + (TU.invGrave ? '.' : ' (sert quand « Gravure » est allumée).'),
+  invTeinte: v => v ? 'À l\'atelier, l\'image d\'un objet peut prendre une des cinq teintes.' : 'Pas de teinte à l\'atelier ; un objet déjà teint garde sa teinte, sans la montrer.',
+  invTeinteCout: v => 'Teinter un objet coûte ' + fplu(v, 'gemme', 'gemmes') + (TU.invTeinte ? '.' : ' (sert quand « Teinte » est allumée).'),
+  hudModele: v => 'Un joueur qui n\'a rien choisi joue avec l\'écran « ' + ['Épuré', 'Classique', 'Complet'][v] + ' » ; son propre choix (Réglages > Jeu) passe avant.',
+});
 
 'use strict';
 /* ================= utils ================= */
@@ -2442,7 +2474,7 @@ function normItem(d, old) {
   }
   if (w7) it.m = Math.round(it.m * (c.dmg * RAR_MUL[c.r]) / (w7.dmg * RAR_MUL[w7.r]) * 10) / 10;
   if (d.sold) it.sold = true;
-  if (!old) { it.f = clamp(num(d.f) | 0, 0, TU.fuseMax); it.fp = Math.max(0, num(d.fp) | 0); it.rr = clamp(num(d.rr) | 0, 0, 99); }
+  if (!old) { it.f = clamp(num(d.f) | 0, 0, TU.fuseMax); it.fp = Math.max(0, num(d.fp) | 0); it.rr = clamp(num(d.rr) | 0, 0, 99); invNorm(it, d); } // (invNorm, zzi_inventaire.js: the fields a workshop of attributes adds — engraving g, tint c, locks v)
   return it;
 }
 /* fusion: feed an object with others of the same quality or lower; each step lifts its main figure (and the reach of a heavy piece) */
@@ -4837,8 +4869,9 @@ function render3D() {
   // particles: sparks from the game, plus what floats in the air of each world (golden dust, spores, embers, snow, sparks)
   const A = S.air;
   while (motes.length < A.n) motes.push(airMote(A, true));
+  const airOn = !(typeof ED !== 'undefined' && ED.on && ED.layers.air && !ED.layers.air.v); // the editor's layer « Air du monde » hides what floats (it belongs to no map: it is the weather of the world)
   const pa = pGeo.attributes.position.array, ca = pGeo.attributes.pcolor.array, sa = pGeo.attributes.psize.array, aa = pGeo.attributes.palpha.array; let n = 0;
-  for (const m of motes) {
+  if (airOn) for (const m of motes) {
     m.h += m.v * dt; m.x += Math.sin(t * .7 + m.s) * 6 * dt; if (m.h > 72 || m.h < 1 || Math.abs(m.x - cam.x) > 230 || Math.abs(m.y - cam.y) > 300) Object.assign(m, airMote(A, false));
     const c = C(m.c); pa[n * 3] = m.x * U; pa[n * 3 + 1] = m.h * U; pa[n * 3 + 2] = m.y * U; ca[n * 3] = c.r; ca[n * 3 + 1] = c.g; ca[n * 3 + 2] = c.b; sa[n] = A.r;
     aa[n] = (.3 + Math.sin(t * 2 + m.s * 3) * .2) * Math.min(1, m.h / 10, (72 - m.h) / 10); n++; // they fade out before the ground: down there, only loot shines
@@ -6811,6 +6844,7 @@ function uiShake(n) { const g = $('game'); g.classList.remove('shk1', 'shk2'); v
 function uiFlash() { const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
 function showUI() {
   const m = G.mode, sh = sheetOpen(); applyTheme(); if (m !== 'title') G.home = false;
+  hudmApply(); // the model of screen the player chose (zzj_hud_modeles.js)
   if (m !== 'title') creating = false; $('scr-title').hidden = m !== 'title' || G.home || creating; $('scr-create').hidden = m !== 'title' || G.home || !creating; homeSync(); $('camp-top').hidden = m !== 'hub'; $('tabs').hidden = m !== 'hub' || sh;
   document.body.classList.toggle('lobby', lobbyOn()); // the home screen of a character: bubbles instead of a camp (27a)
   lobbyLay();
@@ -6835,6 +6869,7 @@ function lobbyLay() {
 }
 addEventListener('resize', lobbyLay);
 function openSheet(kind) {
+  invFrom(kind); // the floating inventory: where its icon is, a clean state (zzi_inventaire.js)
   if (kind === 'chars') { closeSheet(); G.mode = 'title'; G.home = false; creating = false; askDel = -1; resetInput(); showUI(); return; }
   sheetKind = kind; sel = null; multi = null; forge = null; resetInput(); if (kind === 'adm') admCrea(); // (the administration works in the creative mode, i_admin.js)
   if (kind === 'wheel' && !wheelBusy) { wheelWon = null; wheelAng = 0; }
@@ -6919,6 +6954,7 @@ function stat(icon, val, lab, col, sub) { return h('div', { class: 'stat' }, h('
 /* ================= the sheet: one at a time ================= */
 function renderSheet() {
   if (!sheetOpen()) return; ongShell(); // (the settings and the pause menu float, zz1_onglets.js)
+  invShell(); // (and so does the inventory, zzi_inventaire.js)
   // the administration (34c): docked by default, a quarter of the screen under the game or beside it, so that the game stays in view;
   // « Agrandir » gives it the whole screen when there is a lot to choose
   const adm = sheetKind === 'adm', big = adm && !!ADM.big;
@@ -6950,6 +6986,7 @@ function renderSheet() {
       Net.room && !big ? (grpIsChef() ? h('button', { id: 'lv-pick', class: 'btn wide shine', type: 'button', disabled: !can, onclick: () => { if (!can) return; grpS().pick = [selLevel, diff]; sendPresence(true); openSheet('team'); } }, ic('equipe'), 'Choisir pour l\'équipe' + (diff ? ' · ' + mod.name : ''))
         : h('button', { id: 'lv-pick', class: 'btn wide', type: 'button', disabled: true }, ic('chef'), 'Le chef d\'équipe choisit le niveau')) // the group (t_groupe.js): the chef chooses, the level starts when everyone is ready
       : h('button', { class: 'btn wide shine', type: 'button', disabled: !can, onclick: () => { if (!can) return; Net.ignoreSeed = null; startRun(newSeed(diff, big), selLevel); } }, ic('descendre'), (Net.room ? 'Entrer ensemble' : 'Entrer') + (big ? ' · Expédition' : diff ? ' · ' + mod.name : '')));
+  } else if (sheetKind === 'bag' && invOn()) { title = 'Inventaire'; purse = true; invBody(body); // the floating inventory (zzi_inventaire.js) ; below, the inventory of before (setting invV2 at 0)
   } else if (sheetKind === 'bag') {
     title = 'Inventaire'; purse = true; // « Sac · n sur N » is said once, in the Sac block
     if (Net.room && (G.mode === 'hub' || G.mode === 'end')) body.push(h('button', { id: 'bag-back', class: 'chipbtn back', type: 'button', style: 'align-self:flex-start', onclick: () => G.mode === 'end' ? closeSheet() : openSheet('team') }, ic('retour'), G.mode === 'end' ? 'Retour aux résultats' : 'Retour au groupe'));
@@ -7088,6 +7125,7 @@ function renderSheet() {
   $('sh-title').replaceChildren(ic(sheetKind === 'adm' ? ADM_VIEWS[ADM.view][1] : SHEET_IC[sheetKind] || 'etoile'), title); $('sh-lab').textContent = purse ? lab : ''; $('sh-ecl').hidden = !purse || G.mode === 'hub'; $('sh-ecl-n').textContent = String(ME.ecl); $('sh-gem-n').textContent = String(ME.gem);
   $('sh-body').replaceChildren(...body.filter(Boolean), h('button', { id: 'sh-more', class: 'more', type: 'button', hidden: true, onclick: shMoreGo }, ic('aller'))); $('sh-foot').replaceChildren(...foot);
   requestAnimationFrame(shMore);
+  invUn(); // one scrolling zone at a time (zzi_inventaire.js)
   for (const id of ['world-seg', 'theme-seg']) { const row = $(id), on = row && row.querySelector('[aria-pressed="true"]'); if (on) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2; } // a sliding row shows its chosen tab
 }
 /* ================= results ================= */
@@ -7911,7 +7949,7 @@ const planFor = (seed, floor) => { const p = (typeof ccInTeam === 'function' && 
 
 /* ---------------- the editor itself ---------------- */
 // the layers of what is edited: each can be shown or hidden, and locked (then nothing on it can be picked)
-const ED_LAYERS = [['sol', 'Sol'], ['murs', 'Murs'], ['decmur', 'Décors des murs'], ['decsol', 'Décors au sol'], ['niveau', 'Créatures, coffres, entrée, sortie'], ['pnj', 'PNJ et zones d\'interaction']];
+const ED_LAYERS = [['sol', 'Sol'], ['murs', 'Murs'], ['decmur', 'Décors des murs'], ['decsol', 'Décors au sol'], ['niveau', 'Créatures, coffres, entrée, sortie'], ['pnj', 'PNJ et zones d\'interaction'], ['air', 'Air du monde (poussière, spores)']];
 const ED_KIND_LAYER = { start: 'niveau', lift: 'niveau', foe: 'niveau', chest: 'niveau', seal: 'niveau', decor: 'decsol', br: 'niveau', wprop: 'decmur', counter: 'pnj', portal: 'pnj', wheel: 'pnj', fire: 'pnj', dummy: 'pnj', npc: 'pnj', zone: 'pnj' };
 const ED = { layers: Object.fromEntries(ED_LAYERS.map(l => [l[0], { v: true, l: false }])), tk: 'sol', tsol: null, tmur: null, ttop: null, layersOpen: false, on: false, floor: 1, seed: 0, tool: 'sel', crea: 0, deco: 0, dz: null, zone: 0, wh: 2, sel: null, undo: [], redo: [], half: 9, yaw: 0, yawV: 0, chain: 0, padPrev: {}, fam: 'terrain', bs: 3, bround: true, bmode: 'libre', anchor: null, ghost: null, lastT: null, pts: false, ptrs: new Map(), drag: null, pinch: 0, busy: false };
 // [tool, name in the bar, icon, what a touch on the map does]
@@ -10447,6 +10485,12 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 21, d: '10 octobre 2026', t: 'Un inventaire façon RPG', l: [
+      'L\'inventaire s\'ouvre dans un cadre flottant : ton sac d\'un côté, ton chevalier, ses statistiques et son équipement de l\'autre. Plus d\'onglets.',
+      'Glisse un objet sur ton chevalier pour l\'équiper, sur « Atelier » pour le renforcer, sur « Vendre » pour le vendre.',
+      'Un appui court montre ses statistiques comparées à ce que tu portes ; un appui long ouvre sa fiche détaillée.',
+      'Une seule zone défile à la fois : Équiper et Vendre restent toujours à l\'écran, même pour une épée légendaire.',
+      'Réglages > Jeu : trois écrans de jeu au choix, Épuré, Classique ou Complet.'] },
     { id: 20, d: '10 octobre 2026', t: 'Le même niveau pour toute l\'équipe', l: [
       'En équipe, chacun joue exactement le même niveau : les réglages publiés et les cartes publiées sont relus en rejoignant l\'équipe et entre deux niveaux.',
       'Si un coéquipier joue une autre version du jeu, le jeu le dit : il suffit de recharger la page.'] },
@@ -12989,6 +13033,7 @@ function ongJeu(page, pause) {
   page.push(h('div', { class: 'choice' }, h('span', { class: 'row', style: 'flex-wrap:nowrap' }, ic('loupe'), 'Vue'),
     h('div', { class: 'seg' }, ...VIEW_NAMES.map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String((save.zoom | 0) === i), onclick: () => { save.zoom = i; display(); } }, n))),
     ongNote('Large montre plus de terrain, Proche rapproche du chevalier. Un grand écran montre de lui-même plus de terrain.')));
+  page.push(hudmRow()); // « Écran de jeu » : Épuré, Classique, Complet (zzj_hud_modeles.js)
   page.push(ongBug()); // « Signaler un bug, faire un retour » (w_retour.js)
 }
 
@@ -16222,6 +16267,486 @@ function ccFrame() {
     return;
   }
   if (s.said !== key && performance.now() - run.t0 > 4000) { s.said = key; run.fpBad = true; toast('Ton niveau n\'est pas celui de l\'équipe : recharge le jeu (mise à jour).', 'var(--risk)'); }
+}
+
+/* ================= L'inventaire façon RPG (10 October, Damien's request, branch inventaire-rpg) =================
+   « Certains objets comme l'épée légendaire sont trop grands et je n'arrive pas à scroller », « plusieurs fenêtres à scroll s'empilent »,
+   « cadre flottant avec l'inventaire d'un côté et les stats + l'équipé de l'autre, pas d'onglets, des icônes ».
+   Every top-level name here is a function (this file comes after d_ui.js, whose last lines already run the game) ; what must be
+   remembered lives in invS(). The styles are written by invCss(), so that this file is the only one to carry them.
+     1. invUn()      one scrolling zone at a time in the sheets of before (the old inventory, its workbench, the shop)
+     2. invBody()    the floating inventory (setting « invV2 » ; 0 = the inventory of before, untouched in d_ui.js): the knight, his
+                     figures as icons and his six slots on one side, the bag as a grid of icons on the other ; on a phone held upright
+                     the two halves stand one above the other, and only the grid of the bag scrolls. It opens like a magnifier from
+                     the icon of the bag (invFrom keeps where it is).
+     3. the gestures a short press shows a small bubble (the figures against what is worn) ; a long press the detailed card with its
+                     quick buttons ; an object is dragged, finger or mouse, onto a slot, the workshop or the sale ; arrows + Enter
+                     work as in every menu (the tiles are buttons).
+     4. the workshop of attributes (invAtelier): a window of its own to fuse, re-roll, and — settings off — lock, engrave, tint.
+   The hooks in d_ui.js are one line each: openSheet (invFrom), renderSheet (invShell, invBody, invUn). */
+function invS() { return invS.s || (invS.s = { css: false }); }
+function invCss() {
+  const s = invS(); if (s.css) return; s.css = true;
+  const st = document.createElement('style'); st.id = 'inv-css'; st.textContent = invCssText(); document.body.append(st); // after the page's own style (which sits in the body), so that it wins a tie
+}
+function invCssText() {
+  return [
+    /* 1. one scrolling zone at a time: the card of an object scrolls, the list behind it stays still ; at the workbench the bag scrolls, its card does not */
+    '#sheet.un-fiche #sh-body{overflow:hidden}#sheet.un-fiche #sh-more{display:none}',
+    '#sheet.un-sac #sh-foot>:first-child{max-height:none;overflow:visible}',
+    '@media (max-height:720px){#sheet.un-sac #sh-foot .wb .note{display:none}#sheet.un-sac #sh-foot .bigpic{width:44px;height:44px}}',
+    /* 2. the floating frame, in the style of the settings (#sheet.flot) */
+    '#sheet.inv2{left:4px;right:4px;top:4px;bottom:4px;margin:auto;max-width:560px;height:min(calc(100% - 8px),700px);max-height:none;border-radius:var(--r);border:1px solid var(--line);box-shadow:0 14px 50px rgba(0,0,0,.7);transform-origin:var(--ox,50%) var(--oy,100%)}',
+    '#sheet.inv2.in{animation:invLoupe .32s cubic-bezier(.2,.85,.3,1.06)}#sheet.inv2.calme.in{animation:ongIn .2s ease-out}',
+    '@keyframes invLoupe{from{opacity:.2;transform:scale(.04);border-radius:50%}55%{opacity:1}}',
+    '@media (prefers-reduced-motion:reduce){#sheet.inv2.in{animation:ongIn .2s ease-out}.inv *{animation:none!important;transition:none!important}}',
+    '#sheet.inv2 .sh-head{padding:6px 8px 4px 14px}#sheet.inv2 .sh-head .round{width:40px;height:40px}#sheet.inv2 .sh-head h2{font-size:24px;gap:8px}#sheet.inv2 .sh-head h2 .ic{width:34px;height:34px;font-size:20px}#sheet.inv2 .sh-sub{display:none}',
+    '#sheet.inv2 #sh-body{flex:1 1 0;min-height:0;overflow:hidden;padding:0 10px 10px;gap:0}#sheet.inv2 #sh-foot,#sheet.inv2 #sh-more{display:none}',
+    '.inv{position:relative;flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:8px;--sl:clamp(44px,13.5vw,56px);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}',
+    '.inv-hero{flex:none;display:grid;grid-template-columns:var(--sl) minmax(0,1fr) var(--sl);gap:8px;padding:8px;border-radius:var(--r-sm);background:var(--well)}',
+    '.inv-col{display:flex;flex-direction:column;gap:6px;justify-content:center}',
+    '.inv-mid{display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:0}.inv-top{display:flex;gap:8px;align-items:center;justify-content:center;min-width:0}',
+    '.inv-por{width:calc(var(--sl)*1.45);aspect-ratio:1;border-radius:50%;flex:none;background:var(--c) var(--img,none) center/cover no-repeat;box-shadow:0 0 0 3px var(--c),inset 0 0 0 2px rgba(0,0,0,.25);position:relative;overflow:hidden}',
+    '.inv-por:not([style*="--img"])::before{content:"";position:absolute;left:50%;top:46%;width:44%;height:44%;border-radius:50%;background:#f3e0bd;transform:translate(-50%,-50%)}',
+    '.inv-big{display:flex;flex-direction:column;gap:4px;min-width:0}.inv-st{display:flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;background:var(--bark-3);font:700 12px var(--ui);color:var(--cream);white-space:nowrap;min-width:0;font-variant-numeric:tabular-nums;cursor:default}',
+    '.inv-st .ic{font-size:14px;color:var(--amber);flex:none}.inv-st.g{font-size:15px;padding:4px 10px}.inv-st.g .ic{font-size:17px}.inv-st.hp .ic{color:var(--danger)}',
+    '.inv-sts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.inv-sts .inv-st{justify-content:center;padding-inline:3px}',
+    '.inv-sets{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}.inv-sets .inv-st{color:var(--sc);font-size:11px}.inv-sets i{width:8px;height:8px;border-radius:50%;background:var(--sc);flex:none}',
+    '.inv-bag{flex:1 1 0;min-height:0;min-width:0;display:flex;flex-direction:column;gap:6px}',
+    '.inv-bar{flex:none;display:flex;align-items:center;gap:6px;min-height:32px}.inv-bar .cnt{display:flex;align-items:center;gap:5px;font:700 14px var(--ui);color:var(--cream)}.inv-bar .cnt .ic{color:var(--amber);font-size:18px}.inv-bar .pill{padding:5px 10px;font-size:13px;background:var(--bark-3);margin-left:auto}',
+    '.inv-bar .chipbtn{min-height:32px;padding:4px 9px;font-size:12.5px;display:inline-flex;align-items:center;gap:4px}.inv-bar .hint{font:600 12.5px var(--ui);color:var(--dim);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    '.inv-grid{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;align-content:start;padding:4px;border-radius:var(--r-sm);background:var(--well);touch-action:pan-y}',
+    '.tile.iv{border-radius:14px;touch-action:pan-y;animation:none!important}.tile.iv em{right:5px;bottom:2px;font-size:10px;text-shadow:0 1px 2px #000}.tile.iv .ic{font-size:24px}.tile.iv.empty{color:var(--line);box-shadow:inset 0 0 0 2px var(--line);background:transparent;cursor:default;opacity:.7}.inv-grid .tile.iv.empty{opacity:.35}',
+    '.tile.iv .pst{position:absolute;left:5px;bottom:5px;width:8px;height:8px;border-radius:50%;background:var(--rc);box-shadow:0 0 0 2px rgba(10,6,3,.7)}.tile.iv u{left:5px;top:5px;width:8px;height:8px;box-shadow:0 0 0 2px rgba(10,6,3,.7)}',
+    '.tile.iv s{position:absolute;left:auto;right:4px;top:auto;bottom:14px;padding:0;background:none;box-shadow:none;font:700 10px var(--ui);text-decoration:none;color:var(--amber);text-shadow:0 1px 2px #000}.tile.iv.up::before{right:5px;top:5px;border-width:5px;border-top:0;border-bottom-width:8px}',
+    '.tile.iv .vr{position:absolute;inset:0;display:grid;place-items:center;color:var(--cream);pointer-events:none}.tile.iv .vr .ic{font-size:20px;filter:drop-shadow(0 1px 2px #000)}.tile.iv.pick::after{border-radius:14px;background-size:18px;background-position:right 3px top 3px}',
+    '.tile.iv.cur{box-shadow:inset 0 0 0 3px var(--cream)}.tile.iv.arme{transform:scale(1.08);z-index:2;transition:transform .12s}.tile.iv.pris{opacity:.3}',
+    '.inv-dock{flex:none;display:flex;gap:8px;min-height:48px}.inv-dk{appearance:none;flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-sm);border:2px dashed var(--line);background:transparent;color:var(--dim);font:700 13.5px var(--ui);cursor:pointer;padding:4px 8px}',
+    '.inv-dk .ic{font-size:22px;color:var(--amber)}.inv-dk[aria-pressed=true]{border-style:solid;border-color:var(--amber);color:var(--cream)}.inv-dock .btn{flex:1.6 1 0;min-width:0;min-height:44px;padding:6px 10px;font-size:14px;justify-content:center}.inv-dock .chipbtn{min-height:40px;padding:4px 10px;font-size:12.5px}',
+    /* 3. the drag: what can take the object lights up, the rest fades */
+    '.inv.glisse [data-drop].ok{border-color:var(--amber);border-style:solid;box-shadow:0 0 0 3px var(--amber),0 0 18px color-mix(in srgb,var(--amber) 60%,transparent);opacity:1;animation:invPouls .8s ease-in-out infinite;color:var(--cream)}',
+    '.inv.glisse .inv-bag.ok{animation:none;box-shadow:none}.inv.glisse .inv-bag.ok .inv-grid{box-shadow:inset 0 0 0 3px var(--amber)}',
+    '.inv.glisse [data-drop].non{opacity:.3}.inv.glisse [data-drop].sur{background:color-mix(in srgb,var(--amber) 35%,transparent);transform:scale(1.06)}.inv.glisse .inv-bag.sur{transform:none;background:none}',
+    '@keyframes invPouls{50%{box-shadow:0 0 0 5px var(--amber),0 0 26px var(--amber)}}',
+    '.tile.iv.inv-ghost{position:fixed;z-index:999;pointer-events:none;margin:0;transform:scale(1.18) rotate(-5deg);filter:drop-shadow(0 10px 14px rgba(0,0,0,.6));opacity:.95;transition:none}',
+    '.inv-refus{position:absolute;inset:0;z-index:3;border-radius:14px;background:rgba(40,8,6,.86);display:grid;place-items:center;color:#ff8a70;pointer-events:none;animation:invNon .4s}.inv-refus .ic{font-size:22px}.inv-refus i{position:absolute;right:-6px;bottom:-6px;width:22px;height:22px;border-radius:50%;background:var(--bark-4) var(--img,none) center/cover no-repeat;box-shadow:0 0 0 2px #ff8a70}',
+    '@keyframes invNon{20%{transform:translateX(-5px)}50%{transform:translateX(5px)}80%{transform:translateX(-3px)}}',
+    /* the bubble of a short press, the card of a long one, the question before a sale */
+    '.inv-bulle{position:absolute;z-index:5;width:min(236px,calc(100% - 8px));padding:9px 10px 10px;border-radius:16px;background:var(--bark-4);box-shadow:0 0 0 2px var(--rc),0 10px 26px rgba(0,0,0,.65);display:flex;flex-direction:column;gap:7px;animation:ongIn .14s ease-out}',
+    '.inv-bulle .tt{display:flex;align-items:center;gap:6px;min-width:0}.inv-bulle .tt b{color:var(--rc);font:700 14px var(--ui);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 0}.inv-bulle .tt small{font:700 11px var(--ui);color:var(--dim);white-space:nowrap}',
+    '.inv-x{appearance:none;border:0;width:28px;height:28px;border-radius:50%;background:var(--bark-3);color:var(--cream);display:grid;place-items:center;flex:none;cursor:pointer;padding:0}.inv-x .ic{font-size:14px}',
+    '.inv-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 6px}.inv-row{display:flex;align-items:center;gap:4px;font:700 12.5px var(--ui);color:var(--cream);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:0}.inv-row .ic{font-size:14px;color:var(--amber);flex:none}',
+    '.inv-row em{font-style:normal;font-size:11px;color:var(--dim)}.inv-row em.up{color:var(--moss)}.inv-row em.down{color:var(--danger)}',
+    '.inv-verdict{font:700 12px var(--ui);padding:3px 8px;border-radius:999px;background:var(--bark-3);color:var(--dim);white-space:nowrap}.inv-verdict.up{background:var(--moss);color:#10200a}.inv-verdict.down{background:var(--danger);color:#2a0806}',
+    '.inv-ba{display:flex;gap:6px;align-items:center}.inv-ba .btn{flex:1 1 0;min-height:38px;padding:6px 10px;font-size:14px;justify-content:center;min-width:0}.inv-ba .rd{flex:none;width:38px;padding:0}.inv-ba .lockd{flex:1 1 0;display:flex;align-items:center;gap:6px;font:700 12px var(--ui);color:#ff8a70;min-width:0}',
+    '.inv-fiche{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--bark) 82%,transparent);border-radius:var(--r-sm);animation:ongIn .16s ease-out}',
+    '.inv-carte{width:100%;max-width:480px;max-height:100%;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:var(--r-sm);background:var(--bark-3);box-shadow:0 10px 30px rgba(0,0,0,.6)}.inv-carte .scr{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}',
+    '.inv-carte .acts{flex:none;display:flex;gap:6px}.inv-carte .acts .btn{flex:1 1 0;min-width:0;min-height:44px;padding:6px 8px;font-size:13.5px;justify-content:center;gap:5px}.inv-carte .acts .back{flex:none;width:44px;padding:0}',
+    '.inv.a-fiche .inv-grid{overflow:hidden}',
+    '.inv-ask{position:absolute;left:8px;right:8px;bottom:8px;z-index:7;margin-inline:auto;max-width:380px;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bark-4);box-shadow:0 0 0 2px var(--amber),0 10px 26px rgba(0,0,0,.65);animation:ongIn .14s ease-out}',
+    '.inv-ask .tile{width:44px;flex:none}.inv-ask b{flex:1 1 0;min-width:0;font:700 13.5px var(--ui);color:var(--cream);display:flex;align-items:center;gap:5px;flex-wrap:wrap}.inv-ask .btn{min-height:40px;padding:6px 12px;font-size:14px;flex:none}',
+    '#inv-say{position:absolute;left:12px;right:12px;top:52px;z-index:9;text-align:center;font:700 15px var(--ui);color:var(--cream);pointer-events:none;opacity:0;transition:opacity .2s;text-shadow:0 2px 6px #000,0 0 14px #000}#inv-say.show{opacity:1}#sheet:not(.inv2) #inv-say{display:none}',
+    /* 4. the workshop of attributes */
+    '.atl-obj{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:var(--r-sm);background:var(--well);border:2px solid transparent;min-width:0}',
+    '.atl-hd{display:flex;align-items:center;gap:8px;min-width:0}.atl-hd .tile{width:var(--sl);flex:none;cursor:default}.atl-hd .nm{flex:1 1 0;min-width:0}.atl-hd .nm b{display:block;color:var(--rc);font:700 15px var(--ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.atl-hd .nm small{font:600 11.5px var(--ui);color:var(--dim);display:flex;align-items:center;gap:5px}.atl-hd .nm small i{width:8px;height:8px;border-radius:50%;background:var(--rc)}',
+    '.atl-fu{display:flex;align-items:center;gap:8px;font:700 13px var(--ui);color:var(--cream);white-space:nowrap}.atl-fu .bar{flex:1 1 0;margin:0}.atl-fu .ic{color:var(--amber);font-size:16px}.atl-fu small{color:var(--dim);font-size:11.5px}',
+    '.atl-at{display:flex;align-items:center;gap:6px;padding:4px 4px 4px 9px;border-radius:12px;background:var(--bark-3);font:700 12.5px var(--ui);color:var(--cream);min-width:0}.atl-at>.ic{font-size:15px;color:var(--amber);flex:none}.atl-at span.t{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    '.atl-at .btn{min-height:32px;padding:3px 10px;font-size:12.5px;gap:3px;flex:none;width:auto}.atl-at .btn .ic{font-size:15px}.atl-at .btn .jem,.inv-dock .btn .gem{background:var(--ink)}.atl-at .lk{appearance:none;border:0;width:32px;height:32px;border-radius:50%;background:var(--bark-4);color:var(--dim);display:grid;place-items:center;padding:0;cursor:pointer;flex:none}.atl-at .lk[aria-pressed=true]{background:var(--amber);color:var(--ink)}.atl-at.lkd{box-shadow:inset 0 0 0 2px var(--amber)}',
+    '.atl-ats{display:flex;flex-direction:column;gap:4px}.atl-tools{display:flex;gap:6px;flex-wrap:wrap}.atl-tools .chipbtn{min-height:32px;padding:4px 9px;font-size:12.5px;display:inline-flex;align-items:center;gap:4px}',
+    '.atl-tints{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.atl-tint{appearance:none;border:0;width:30px;height:30px;border-radius:50%;background:var(--tc);cursor:pointer;padding:0;box-shadow:inset 0 0 0 2px rgba(0,0,0,.35)}.atl-tint[aria-pressed=true]{box-shadow:0 0 0 3px var(--cream)}',
+    '.atl-grave{display:flex;gap:6px;align-items:center}.atl-grave input{flex:1 1 0;min-width:0;min-height:36px;border-radius:999px;border:2px solid var(--line);background:var(--well);color:var(--cream);font:600 14px var(--ui);padding:4px 12px}.atl-grave .btn{min-height:36px;padding:4px 10px;font-size:13px}',
+    /* two halves side by side on a wide screen: the bag on the left, the knight on the right */
+    '@media (min-width:760px),(orientation:landscape) and (max-height:520px){#sheet.inv2{max-width:920px;height:min(calc(100% - 8px),640px)}.inv{flex-direction:row-reverse;gap:10px;--sl:clamp(40px,calc((100dvh - 190px) / 3),64px)}.inv-hero,.atl-obj{width:min(46%,340px);align-self:stretch;align-content:center}.atl-obj{justify-content:center}.inv-sts{grid-template-columns:repeat(2,minmax(0,1fr))}.inv-top{flex-direction:column}.inv-big{flex-direction:row}.inv-mid{gap:8px}}',
+    '@media (min-width:760px) and (min-height:560px){#sheet.inv2{height:min(calc(100% - 40px),640px)}.inv{--sl:74px}.inv-hero,.atl-obj{width:min(46%,380px)}.inv-por{width:calc(var(--sl)*1.9)}.inv-st{font-size:13.5px;padding:5px 9px}.inv-st.g{font-size:17px}.inv-grid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}.atl-at{font-size:14px}}',
+  ].join('\n');
+}
+/* 1. Called at the end of renderSheet. The foot of a sheet may hold a card that scrolls (the object chosen, the workbench with its
+   bonus lines unfolded) while the list above scrolls too: two zones one above the other, and the finger never knows which one moves.
+   Rule: when the card of the foot really overflows, the list is frozen on the chosen object (un-fiche) ; at the workbench, where the
+   objects to fuse are ticked in the list, it is the card that is kept short and still (un-sac). */
+function invUn() {
+  invCss(); const sh = $('sheet'), body = $('sh-body'), foot = $('sh-foot'); sh.classList.remove('un-fiche', 'un-sac');
+  if (!sheetOpen()) return; if (sh.classList.contains('inv2')) { invAfter(); return; }
+  const card = foot.firstElementChild; if (!card) return;
+  if (sheetKind === 'bag' && forge && !benchMore) { sh.classList.add('un-sac'); return; }
+  if (!/(auto|scroll)/.test(getComputedStyle(card).overflowY) || card.scrollHeight <= card.clientHeight + 2) return;
+  sh.classList.add('un-fiche');
+  const cur = body.querySelector('.tile.sel, .lv.sel'); if (cur) cur.scrollIntoView({ block: 'nearest' });
+}
+
+/* ================= 2. the floating inventory ================= */
+function invOn() { return TU.invV2 === 1; }
+// called first thing by openSheet: where the icon of the bag is on the screen (the window grows out of it), and a clean state
+function invFrom(kind) {
+  if (kind !== 'bag') return; const s = invS(); invDragEnd();
+  s.bub = null; s.fiche = null; s.ask = null; s.multi = null; s.at = null; s.pickAt = false; s.refus = null; s.top = 0; s.from = null; s.tool = '';
+  const el = G.mode === 'play' ? $('b-bag') : document.querySelector('#tabs .tab[data-k="bag"]');
+  if (el && el.offsetParent !== null) { const r = el.getBoundingClientRect(); if (r.width) s.from = [r.left + r.width / 2, r.top + r.height / 2]; }
+}
+function invShell() {
+  invCss(); const sh = $('sheet'), on = sheetKind === 'bag' && invOn(); sh.classList.toggle('inv2', on);
+  if (on) sh.classList.toggle('calme', !TU.invLoupe);
+}
+function invItem(ref) { if (!ref) return null; const it = findItem(ref.id); return it || null; }
+function invWhere(it) { return ME.eq.includes(it) ? 'eq' : 'bag'; }
+function invBetter(it) { return itemOk(it) && (!ME.eq[it.s] || gainOf(it) > .005); }
+function invPct(v) { return (v >= 0 ? '+' : '−') + Math.abs(Math.round(v * 100)) + ' %'; }
+function invTint(it) { return TU.invTeinte && it.c ? ';--hue:' + invTints()[clamp(it.c | 0, 0, invTints().length - 1)][1] + 'deg' : ''; }
+function invName(it) { return (TU.invGrave && it.g ? '« ' + it.g + ' » ' : '') + itemName(it); }
+// a tile of the new inventory: the picture first, the rank, a dot of the colour of its quality, the mark of a set, of a fusion, of « better »
+function invTile(it, o) {
+  const s = invS(), alien = !itemOk(it), w = o.w, lab = invName(it) + ' · ' + RAR[it.r].name + ' · rang ' + it.l + (alien ? ' · arme du ' + CLASSES[clsOfWeapon(it.k)].name : '');
+  const t = h(o.still ? 'div' : 'button', { class: 'tile iv r' + it.r + (o.up ? ' up' : '') + (o.pick ? ' pick' : '') + (o.cur ? ' cur' : '') + (alien ? ' alien' : '') + (o.cls ? ' ' + o.cls : ''), 'data-id': it.i, 'data-w': w,
+    style: '--rc:' + RAR[it.r].col + (it.t >= 0 ? ';--sc:' + SETS[it.t].col : '') + invTint(it), 'aria-label': lab }, pic(it.s, it.k), h('em', { text: String(it.l) }), h('i', { class: 'pst' }));
+  if (!o.still) { t.type = 'button'; t.addEventListener('click', e => invTap(it, w, e)); }
+  if (it.t >= 0) t.append(h('u')); if (it.f) t.append(h('s', { text: '+' + it.f }));
+  if (alien) t.append(h('i', { class: 'vr', 'aria-hidden': 'true' }, ic('cadenas')));
+  if (TU.invTeinte && it.c) t.querySelector('.pic').style.filter = 'hue-rotate(var(--hue))';
+  return t;
+}
+function invStat(icn, val, lab, cls) { return h('div', { class: 'inv-st' + (cls ? ' ' + cls : ''), role: 'img', 'aria-label': lab + ' : ' + val, title: lab, onclick: () => invSay(lab + ' : ' + val) }, ic(icn), h('b', { text: val })); }
+// the knight: his portrait, his figures as icons, his six slots (three on each side, as on a sheet of character)
+function invHero() {
+  const s = invS(), slot = i => {
+    const it = ME.eq[i], el = it ? invTile(it, { w: 'eq', cur: !!(s.bub && s.bub.id === it.i) }) : h('div', { class: 'tile iv empty', role: 'img', 'aria-label': SLOTS[i] + ' : vide' }, ic('e' + i));
+    el.dataset.drop = 'eq:' + i; el.classList.add('slot');
+    if (s.refus && s.refus.slot === i) { const c = CLASSES[s.refus.cls], art = iconArt(c.ico); el.append(h('span', { class: 'inv-refus', role: 'img', 'aria-label': 'Arme du ' + c.name }, ic('cadenas'), h('i', { 'data-ico': c.ico, style: art ? '--img:' + art : '' }))); }
+    return el; };
+  const art = iconArt(ME.ico), por = h('div', { class: 'inv-por', role: 'img', 'aria-label': ME.name || 'Chevalier', 'data-ico': ME.ico || '', style: '--c:' + CLOAKS[ME.col] + (art ? ';--img:' + art : '') });
+  const mid = h('div', { class: 'inv-mid' }, h('div', { class: 'inv-top' }, por, h('div', { class: 'inv-big' }, invStat('s_hp', String(ST.hp), 'Vie', 'g hp'), invStat('s_dmg', String(Math.round(ST.dps)), 'Dégâts par seconde', 'g'))),
+    h('div', { class: 'inv-sts' }, invStat('s_crit', Math.round(ST.crit * 100) + ' %', 'Coups critiques'), invStat('s_rate', invPct(ST.rate - 1), 'Cadence'), invStat('s_spd', invPct(ST.spd - 1), 'Vitesse'),
+      invStat('s_range', invPct(ST.reach - 1), 'Portée'), invStat('s_leech', frn(ST.leech), 'Vie par ennemi'), invStat('s_loot', invPct(ST.loot - 1), GM().Coin + ' trouvés')));
+  const sets = []; for (let k = 0; k < SETS.length; k++) if (ST.sets[k] > 0) { const S = SETS[k], n = Math.min(3, ST.sets[k]);
+    sets.push(h('div', { class: 'inv-st', style: '--sc:' + S.col, role: 'img', 'aria-label': 'Panoplie ' + S.name + ' ' + n + ' sur 3', onclick: () => invSay(n >= 3 ? S.b3 : n >= 2 ? S.b2 : 'Panoplie ' + S.name + ' : 2 pièces pour le premier bonus', S.col) }, h('i'), S.name + ' ' + n + '/3')); }
+  if (sets.length) mid.append(h('div', { class: 'inv-sets' }, ...sets));
+  return h('div', { class: 'inv-hero' }, h('div', { class: 'inv-col' }, slot(0), slot(1), slot(2)), mid, h('div', { class: 'inv-col' }, slot(3), slot(4), slot(5)));
+}
+function invPurse() { return h('div', { class: 'pill', role: 'img', 'aria-label': coins(ME.ecl) + ', ' + ME.gem + ' gemmes' }, h('span', { class: 'gem' }), h('span', { text: String(ME.ecl) }), jem(), h('span', { text: String(ME.gem) })); }
+// the bag: a grid of icons (the only thing that scrolls), and under it the two places an object is dragged to
+function invBag() {
+  const s = invS(), cap = bagCap(), bar = h('div', { class: 'inv-bar' }), grid = h('div', { class: 'inv-grid', id: 'inv-grid' }), dock = h('div', { class: 'inv-dock' });
+  if (Net.room && (G.mode === 'hub' || G.mode === 'end')) bar.append(h('button', { id: 'bag-back', class: 'chipbtn back', type: 'button', 'aria-label': G.mode === 'end' ? 'Retour aux résultats' : 'Retour au groupe', onclick: () => G.mode === 'end' ? closeSheet() : openSheet('team') }, ic('retour')));
+  bar.append(h('span', { class: 'cnt', role: 'img', 'aria-label': 'Sac : ' + ME.bag.length + ' sur ' + cap }, ic('sac'), ME.bag.length + '/' + cap));
+  if (s.multi) bar.append(h('span', { class: 'hint', text: 'Touche ce qui part' }));
+  else if (s.pickAt) bar.append(h('span', { class: 'hint', text: 'Touche l\'objet à travailler' }));
+  else if (ME.cap < TU.bagTop) { const cost = bagCost(ME);
+    bar.append(h('button', { class: 'chipbtn', id: 'inv-plus', type: 'button', disabled: ME.ecl < cost, 'aria-label': 'Agrandir le sac de ' + TU.bagStep + ' places pour ' + coins(cost), onclick: () => { if (ME.ecl < cost || ME.cap >= TU.bagTop) return; ME.ecl -= cost; ME.cap += TU.bagStep; afterGear(560, true); } }, ic('plus'), String(TU.bagStep), h('span', { class: 'gem' }), String(cost))); }
+  else if (bagGemOk(ME)) { const cost = TU.bagGemCost, n = Math.min(TU.bagGemStep, TU.bagTop + TU.bagGemTop - ME.cap);
+    bar.append(h('button', { class: 'chipbtn', id: 'inv-plus', type: 'button', disabled: ME.gem < cost, 'aria-label': 'Agrandir le sac de ' + n + ' places pour ' + cost + ' gemmes', onclick: () => { if (ME.gem < cost || !bagGemOk(ME)) return; ME.gem -= cost; ME.cap += n; afterGear(560, true); } }, ic('plus'), String(n), jem(), String(cost))); }
+  bar.append(invPurse());
+  ME.bag.forEach(it => grid.append(invTile(it, { w: 'bag', up: !s.multi && invBetter(it), pick: !!(s.multi && s.multi.has(it.i)), cur: !!(s.bub && s.bub.id === it.i) })));
+  for (let i = ME.bag.length; i < cap; i++) grid.append(h('div', { class: 'tile iv empty', 'aria-hidden': 'true' }));
+  if (s.multi) { // a grouped sale: tick, or let a shortcut tick ; the button says what it brings
+    const picks = ME.bag.filter(o => s.multi.has(o.i)), total = picks.reduce((a, o) => a + itemScrap(o), 0), quick = (lab, f) => h('button', { class: 'chipbtn', type: 'button', onclick: () => { s.multi = new Set(ME.bag.filter(f).map(o => o.i)); renderSheet(); } }, lab);
+    dock.append(h('button', { class: 'chipbtn back', type: 'button', 'aria-label': 'Terminer la vente', onclick: () => { s.multi = null; renderSheet(); } }, ic('retour')), quick('Communs', o => o.r === 0), quick('Moins bons', o => o.r < 3 && !invBetter(o)),
+      h('button', { class: 'btn', id: 'inv-vendre', type: 'button', disabled: !picks.length, 'aria-label': picks.length ? 'Vendre ' + picks.length + (picks.length > 1 ? ' objets pour ' : ' objet pour ') + coins(total) : 'Touche les objets à vendre', onclick: () => { if (!picks.length) return; ME.ecl += total; ME.bag = ME.bag.filter(o => !s.multi.has(o.i)); s.multi = null; invSay('+' + coins(total), GM().col); afterGear(300, picks.length > 2); } }, ic('vendre'), picks.length ? String(picks.length) : null, picks.length ? h('span', { class: 'gem' }) : null, picks.length ? String(total) : null));
+  } else dock.append(
+    h('button', { class: 'inv-dk', id: 'inv-atelier', type: 'button', 'data-drop': 'atelier', 'aria-pressed': String(!!s.pickAt), 'aria-label': 'Atelier : glisse un objet ici, ou touche ce bouton puis un objet', onclick: () => { const it = invItem(s.bub); if (it) { invAtOpen(it); return; } s.pickAt = !s.pickAt; renderSheet(); } }, ic('forge'), 'Atelier'),
+    h('button', { class: 'inv-dk', id: 'inv-vente', type: 'button', 'data-drop': 'vendre', disabled: !ME.bag.length, 'aria-label': 'Vendre : glisse un objet ici, ou touche ce bouton pour en vendre plusieurs', onclick: () => { const it = invItem(s.bub); if (it && invWhere(it) === 'bag') { s.ask = { id: it.i }; s.bub = null; renderSheet(); return; } s.multi = new Set(); s.bub = null; s.pickAt = false; renderSheet(); } }, ic('vendre'), 'Vendre'));
+  const box = h('div', { class: 'inv-bag', 'data-drop': 'sac' }, bar, grid, dock); return box;
+}
+function invBody(body) {
+  const s = invS(); invBind();
+  const old = document.getElementById('inv-grid'); if (old) s.top = old.scrollTop; // the sheet is redrawn after each action: the grid stays where it was
+  if (s.bub && !invItem(s.bub)) s.bub = null; if (s.fiche && !invItem(s.fiche)) s.fiche = null; if (s.ask && !invItem(s.ask)) s.ask = null; if (s.at && !invItem(s.at)) s.at = null;
+  if (s.multi) for (const id of [...s.multi]) if (!ME.bag.some(o => o.i === id)) s.multi.delete(id);
+  const root = h('div', { class: 'inv' + (s.at ? ' atl' : '') + (s.fiche ? ' a-fiche' : ''), id: 'inv', onclick: e => { if (s.bub && !e.target.closest('.tile, .inv-bulle, button')) { s.bub = null; renderSheet(); } } });
+  if (s.at) root.append(...invAtelier()); else root.append(invHero(), invBag());
+  const bub = !s.at && invItem(s.bub), fiche = invItem(s.fiche), ask = invItem(s.ask);
+  if (bub) root.append(invBulle(bub)); if (fiche) root.append(invFiche(fiche)); if (ask) root.append(invAsk(ask));
+  body.push(root);
+}
+// after the sheet is drawn (called by invUn): the grid where it was, the bubble beside its tile, the point the window grows from
+function invAfter() {
+  const s = invS(), sh = $('sheet'), grid = document.getElementById('inv-grid'), root = document.getElementById('inv'); if (!root) return;
+  if (s.at) $('sh-title').replaceChildren(ic('forge'), 'Atelier'); // the workshop is a window of its own: it says its name
+  if (grid) { grid.scrollTop = s.top || 0; if (!grid.onscroll) grid.onscroll = () => { s.top = grid.scrollTop; const b = root.querySelector('.inv-bulle'); if (b && s.bub && s.bub.w === 'bag' && !s.placing) { s.bub = null; b.remove(); const c = root.querySelector('.tile.cur'); if (c) c.classList.remove('cur'); } }; }
+  if (s.from) { const an = sh.style.animation; sh.style.animation = 'none'; const r = sh.getBoundingClientRect(); sh.style.animation = an; sh.style.setProperty('--ox', (s.from[0] - r.left).toFixed(0) + 'px'); sh.style.setProperty('--oy', (s.from[1] - r.top).toFixed(0) + 'px'); s.from = null; }
+  const b = root.querySelector('.inv-bulle');
+  if (b && s.bub) { // beside its tile: above when the tile is low, under it otherwise, never out of the frame
+    const t = root.querySelector('.tile.iv[data-id="' + s.bub.id + '"]'); if (!t) return;
+    s.placing = true; if (grid && grid.contains(t)) t.scrollIntoView({ block: 'nearest' }); const R = root.getBoundingClientRect(), r = t.getBoundingClientRect(), bw = b.offsetWidth, bh = b.offsetHeight;
+    let x = clamp(r.left + r.width / 2 - bw / 2 - R.left, 4, R.width - bw - 4), y = r.bottom - R.top + 6; if (y + bh > R.height - 4) y = r.top - R.top - bh - 6; if (y < 4) y = clamp(R.height - bh - 4, 4, R.height);
+    b.style.left = x.toFixed(0) + 'px'; b.style.top = y.toFixed(0) + 'px'; setTimeout(() => { s.placing = false; }, 60);
+    if (s.bub.key) { s.bub.key = false; const go = b.querySelector('.btn:not([disabled])') || b.querySelector('button'); if (go) navMark(go); }
+  }
+}
+// a word said inside the window (the game's own toast is drawn under a floating window)
+function invSay(text, col) {
+  const s = invS(), sh = $('sheet'); let t = document.getElementById('inv-say');
+  if (!t) { t = h('div', { id: 'inv-say', role: 'status', 'aria-live': 'polite' }); sh.append(t); }
+  t.textContent = text; t.style.color = col || ''; t.classList.add('show'); clearTimeout(s.sayT); s.sayT = setTimeout(() => t.classList.remove('show'), 1500);
+}
+// the lines of an object against what is worn in its slot: [icon, name, worn (or null), this one, unit]
+function invRows(it, cur) {
+  const rows = [], val = (o, k) => { const f = o.a.find(x => x[0] === k); return f ? f[1] : 0; };
+  if (it.s === 0) { const w = WEAPONS[it.k], c = cur && WEAPONS[cur.k]; rows.push(['s_dmg', 'Dégâts', cur && mainOf(cur), mainOf(it), ''], ['s_rate', 'Coups par seconde', c && 1 / c.cd, 1 / w.cd, ''], ['s_range', 'Portée (cases)', cur && rangeOf(cur) / T, rangeOf(it) / T, '']); }
+  else rows.push([it.s === 3 ? 's_lan' : 's_hp', it.s === 3 ? 'Onde de lanterne' : 'Vie', cur && mainOf(cur), mainOf(it), '']);
+  const keys = it.a.map(x => x[0]); if (cur) for (const [k] of cur.a) if (!keys.includes(k)) keys.push(k);
+  for (const k of keys) rows.push([AFF_IC[k], k === 'loot' ? GM().Coin + ' trouvés' : AFF_LAB[k], cur && val(cur, k), val(it, k), AFF_PCT[k] ? ' %' : '']);
+  return rows;
+}
+
+/* ================= 3. the gestures ================= */
+// a short press (or Enter): the small bubble. At the workshop and in a grouped sale a press ticks the object instead
+function invTap(it, w, e) {
+  const s = invS(); if (s.hold || Date.now() < (s.noClick || 0)) return;
+  if (s.at) { if (w === 'bag') invFeed(it); return; }
+  if (s.multi) { if (w !== 'bag') return; if (s.multi.has(it.i)) s.multi.delete(it.i); else s.multi.add(it.i); sfx(s.multi.has(it.i) ? 620 : 420, .04, 'sine', .03, 100); renderSheet(); return; }
+  if (s.pickAt) { invAtOpen(it); return; }
+  s.bub = s.bub && s.bub.id === it.i ? null : { id: it.i, w, key: !!e && e.detail === 0 }; sfx(560, .03, 'sine', .02, 60); renderSheet();
+}
+function invEquip(it) {
+  const s = invS(), i = ME.bag.indexOf(it); if (i < 0) return false;
+  if (!itemOk(it)) { invRefuse(it); return false; }
+  const old = ME.eq[it.s]; ME.eq[it.s] = it; if (old) ME.bag[i] = old; else ME.bag.splice(i, 1);
+  s.bub = null; s.fiche = null; afterGear(700, it.r >= 2); return true;
+}
+function invUnequip(it) {
+  const s = invS(); if (!ME.eq.includes(it)) return false;
+  if (it.s === 0) { invSay('Une arme se remplace'); sfx(180, .1, 'square', .04, 90); return false; }
+  if (ME.bag.length >= bagCap()) { invSay('Sac plein'); sfx(180, .1, 'square', .04, 90); return false; }
+  ME.bag.push(it); ME.eq[it.s] = null; s.bub = null; s.fiche = null; afterGear(360); return true;
+}
+function invSell(it) { const s = invS(), i = ME.bag.indexOf(it); if (i < 0) return; const n = itemScrap(it); ME.ecl += n; ME.bag.splice(i, 1); s.ask = null; s.bub = null; s.fiche = null; invSay('+' + coins(n), GM().col); afterGear(300); }
+// a weapon of another class on the slot of the weapon: the slot says no with a padlock and the face of the class that wears it
+function invRefuse(it) {
+  const s = invS(), c = clsOfWeapon(it.k); s.refus = { slot: 0, cls: c }; sfx(180, .12, 'square', .05, 90); if (typeof uiShake === 'function') uiShake(1);
+  invSay('Arme du ' + CLASSES[c].name, '#ff8a70'); renderSheet(); clearTimeout(s.refT); s.refT = setTimeout(() => { s.refus = null; if (sheetKind === 'bag' && invOn()) renderSheet(); }, 1500);
+}
+// the small bubble: the name, the quality, each figure as an icon with what it changes, and the one button that matters
+function invBulle(it) {
+  const s = invS(), w = invWhere(it), cur = w === 'bag' ? ME.eq[it.s] : null, alien = !itemOk(it), rows = h('div', { class: 'inv-rows' });
+  for (const [icn, lab, a, b, unit] of invRows(it, cur)) { const d = cur ? Math.round((b - a) * 10) / 10 : 0;
+    rows.append(h('div', { class: 'inv-row', role: 'img', 'aria-label': lab + ' : ' + frn(b) + unit + (cur ? ' (porté : ' + frn(a) + unit + ')' : ''), title: lab }, ic(icn || 'etoile'), h('b', { text: frn(b) + unit }), cur && d ? h('em', { class: d > 0 ? 'up' : 'down', text: (d > 0 ? '+' : '−') + frn(Math.abs(d)) }) : null)); }
+  const tt = h('div', { class: 'tt' }, h('b', { text: invName(it) }), h('small', { text: RAR[it.r].name + ' · ' + it.l }), h('button', { class: 'inv-x back', type: 'button', 'aria-label': 'Fermer la bulle', onclick: () => { s.bub = null; renderSheet(); } }, ic('fermer')));
+  const ba = h('div', { class: 'inv-ba' });
+  if (w === 'bag' && !alien) { const d = Math.round(gainOf(it) * 100); ba.append(h('span', { class: 'inv-verdict ' + (d > 0 || !cur ? 'up' : d < 0 ? 'down' : ''), text: !cur ? 'Libre' : d > 0 ? '+' + d + ' %' : d < 0 ? '−' + (-d) + ' %' : '=' }),
+    h('button', { class: 'btn small', id: 'inv-b-eq', type: 'button', onclick: () => invEquip(it) }, ic('equiper'), 'Équiper')); }
+  else if (alien) ba.append(h('span', { class: 'lockd' }, ic('cadenas'), CLASSES[clsOfWeapon(it.k)].short));
+  else ba.append(h('span', { class: 'inv-verdict', text: 'Porté' }), h('span', { style: 'flex:1' }));
+  ba.append(h('button', { class: 'btn small line rd', id: 'inv-b-plus', type: 'button', 'aria-label': 'Fiche détaillée', onclick: () => { s.fiche = { id: it.i }; s.bub = null; renderSheet(); } }, ic('loupe')));
+  return h('div', { class: 'inv-bulle', style: '--rc:' + RAR[it.r].col, role: 'dialog', 'aria-label': invName(it) }, tt, rows, ba);
+}
+// the detailed card of a long press: the whole table of before (detail, d_ui.js), which scrolls alone, and its quick buttons always in view
+function invFiche(it) {
+  const s = invS(), w = invWhere(it), shut = () => { s.fiche = null; renderSheet(); }, acts = h('div', { class: 'acts' }, h('button', { class: 'btn line back', type: 'button', 'aria-label': 'Retour', onclick: shut }, ic('retour')));
+  if (w === 'bag') acts.append(itemOk(it) ? h('button', { class: 'btn', id: 'inv-f-eq', type: 'button', onclick: () => invEquip(it) }, ic('equiper'), 'Équiper')
+    : h('button', { class: 'btn', type: 'button', disabled: true, 'data-alien': '1', 'aria-label': 'Arme du ' + CLASSES[clsOfWeapon(it.k)].name }, ic('cadenas'), CLASSES[clsOfWeapon(it.k)].short));
+  else if (it.s !== 0) acts.append(h('button', { class: 'btn', id: 'inv-f-off', type: 'button', disabled: ME.bag.length >= bagCap(), onclick: () => invUnequip(it) }, ic('sac'), 'Retirer'));
+  acts.append(h('button', { class: 'btn line', id: 'inv-f-fu', type: 'button', 'aria-label': 'Fusion et attributs', onclick: () => invAtOpen(it) }, ic('forge'), 'Fusion'));
+  if (w === 'bag') acts.append(h('button', { class: 'btn line', id: 'inv-f-ve', type: 'button', 'aria-label': 'Vendre pour ' + coins(itemScrap(it)), onclick: () => { s.ask = { id: it.i }; renderSheet(); } }, ic('vendre'), h('span', { class: 'gem' }), String(itemScrap(it))));
+  return h('div', { class: 'inv-fiche', role: 'dialog', 'aria-label': 'Fiche de ' + invName(it), onclick: e => { if (e.target.classList.contains('inv-fiche')) shut(); } }, h('div', { class: 'inv-carte' }, h('div', { class: 'scr', id: 'inv-scr' }, detail(it, w === 'bag')), acts));
+}
+// before a sale: one question, the object, what it brings
+function invAsk(it) {
+  const s = invS(), n = itemScrap(it);
+  return h('div', { class: 'inv-ask', role: 'alertdialog', 'aria-label': 'Vendre ' + invName(it) + ' pour ' + coins(n) + ' ?' }, invTile(it, { w: 'bag', still: true }), h('b', null, 'Vendre ?', h('span', { class: 'gem' }), '+' + n),
+    h('button', { class: 'btn small', id: 'inv-ask-oui', type: 'button', 'aria-label': 'Vendre pour ' + coins(n), onclick: () => invSell(it) }, ic('ok')),
+    h('button', { class: 'btn small line back', id: 'inv-ask-non', type: 'button', 'aria-label': 'Garder', onclick: () => { s.ask = null; renderSheet(); } }, ic('fermer')));
+}
+/* The drag. A finger that slides at once scrolls the bag as always ; a finger that rests a moment (TU.invPrise) takes the object, which
+   then follows it ; resting longer without moving (TU.invAppui) opens the detailed card. A mouse takes the object as soon as it moves
+   with the button down. What can receive the object lights up ; the rest fades. */
+function invBind() {
+  const s = invS(); if (s.bound) return; s.bound = true; const body = $('sh-body');
+  body.addEventListener('pointerdown', invDown);
+  body.addEventListener('contextmenu', e => { if (e.target.closest('.inv')) e.preventDefault(); });
+  body.addEventListener('click', e => { if ((s.hold || Date.now() < (s.noClick || 0)) && e.target.closest('.inv')) { e.stopPropagation(); e.preventDefault(); } }, true); // the click that ends a drag or a long press does nothing
+  addEventListener('pointermove', invMove); addEventListener('pointerup', invUp); addEventListener('pointercancel', () => { s.hold = false; invDragEnd(); });
+  document.addEventListener('touchmove', e => { const p = s.press; if (p && (p.armed || p.drag) && e.cancelable) e.preventDefault(); }, { passive: false }); // once the object is taken, the bag no longer scrolls under the finger
+}
+function invDown(e) {
+  const s = invS(); if (sheetKind !== 'bag' || !invOn() || e.button > 0 || s.press) return;
+  const el = e.target.closest('.tile.iv[data-id]'); if (!el || el.tagName !== 'BUTTON' || s.fiche || s.ask || s.multi) return;
+  const it = findItem(el.dataset.id); if (!it) return; const mouse = e.pointerType === 'mouse';
+  const p = s.press = { id: it.i, w: el.dataset.w, el, x: e.clientX, y: e.clientY, pid: e.pointerId, mouse, armed: mouse, drag: false };
+  if (!mouse) p.armT = setTimeout(() => { if (s.press !== p) return; p.armed = true; el.classList.add('arme'); try { if (navigator.vibrate && !save.mute) navigator.vibrate(8); } catch (err) { } }, TU.invPrise);
+  p.longT = setTimeout(() => { if (s.press !== p || p.drag) return; invDragEnd(); s.hold = true; s.bub = null; s.fiche = { id: it.i }; sfx(700, .05, 'sine', .03, 120); renderSheet(); }, TU.invAppui);
+}
+function invMove(e) {
+  const s = invS(), p = s.press; if (!p || e.pointerId !== p.pid) return; const d = Math.hypot(e.clientX - p.x, e.clientY - p.y);
+  if (!p.drag) { if (p.armed && d > (p.mouse ? 6 : 8)) invDragStart(p, e); else if (!p.armed && d > 10) { invDragEnd(); return; } else return; }
+  invDragAt(p, e.clientX, e.clientY);
+}
+// what the object in hand may be dropped on: { 'eq:2': true, atelier: true, … } ; false = shown as refused
+function invTargets(it, w) {
+  const s = invS(), o = {};
+  if (s.at) { const t = invItem(s.at); o.four = !!t && w === 'bag' && it !== t && canFeed(t, it) && (t.f | 0) < TU.fuseMax; return o; }
+  for (let i = 0; i < NSLOT; i++) o['eq:' + i] = w === 'bag' && i === it.s && itemOk(it);
+  o.atelier = true; o.vendre = w === 'bag'; o.sac = w === 'eq' && it.s !== 0 && ME.bag.length < bagCap();
+  return o;
+}
+function invDragStart(p, e) {
+  const s = invS(), it = findItem(p.id), root = document.getElementById('inv'); if (!it || !root) { invDragEnd(); return; }
+  clearTimeout(p.longT); clearTimeout(p.armT); p.drag = true; p.ok = invTargets(it, p.w); if (s.bub) { s.bub = null; const b = root.querySelector('.inv-bulle'); if (b) b.remove(); }
+  const r = p.el.getBoundingClientRect(), g = p.el.cloneNode(true); g.classList.remove('arme', 'cur', 'up'); g.classList.add('inv-ghost'); g.removeAttribute('data-drop'); g.style.width = r.width + 'px'; g.style.height = r.height + 'px'; g.id = 'inv-ghost';
+  document.body.append(g); p.ghost = g; p.gw = r.width; p.el.classList.remove('arme'); p.el.classList.add('pris'); root.classList.add('glisse');
+  for (const t of root.querySelectorAll('[data-drop]')) { const k = t.dataset.drop; if (t === p.el || (k === 'sac' && p.w === 'bag')) continue; t.classList.add(p.ok[k] ? 'ok' : 'non'); }
+  if (p.w === 'bag' && it.s === 0 && !itemOk(it)) { const sl = root.querySelector('[data-drop="eq:0"]'); if (sl && !sl.querySelector('.inv-refus')) { const c = CLASSES[clsOfWeapon(it.k)], art = iconArt(c.ico); sl.append(h('span', { class: 'inv-refus', style: 'animation:none' }, ic('cadenas'), h('i', { 'data-ico': c.ico, style: art ? '--img:' + art : '' }))); } }
+  sfx(480, .04, 'sine', .03, 160);
+}
+function invDropAt(x, y) { const el = document.elementFromPoint(x, y), t = el && el.closest('[data-drop]'); return t && t.closest('#inv') ? t : null; }
+function invDragAt(p, x, y) {
+  const g = p.ghost; if (!g) return; g.style.left = (x - p.gw / 2) + 'px'; g.style.top = (y - p.gw / 2 - (p.mouse ? 0 : p.gw * .55)) + 'px'; p.lx = x; p.ly = y;
+  const t = invDropAt(x, y); if (p.over && p.over !== t) p.over.classList.remove('sur'); p.over = t && t !== p.el && p.ok[t.dataset.drop] ? t : null; if (p.over) p.over.classList.add('sur');
+}
+function invUp(e) {
+  const s = invS(), p = s.press; if (s.hold) { s.hold = false; s.noClick = Date.now() + 150; } if (!p || e.pointerId !== p.pid) return;
+  if (!p.drag) { invDragEnd(); return; } // a plain press: the click that follows opens the bubble
+  const t = invDropAt(e.clientX, e.clientY), it = findItem(p.id), k = t && t !== p.el ? t.dataset.drop : ''; invDragEnd(); s.noClick = Date.now() + 150; if (!it || !k) return;
+  invDrop(it, p.w, k);
+}
+// the object let go on a target
+function invDrop(it, w, k) {
+  const s = invS(), ok = invTargets(it, w)[k];
+  if (k.startsWith('eq:')) { if (w !== 'bag') return; const slot = +k.slice(3); if (slot === it.s && !itemOk(it)) invRefuse(it); else if (ok) invEquip(it); else { invSay(SLOTS[it.s] + ' : l\'autre case'); sfx(180, .1, 'square', .04, 90); } }
+  else if (k === 'atelier') invAtOpen(it);
+  else if (k === 'vendre') { if (ok) { s.ask = { id: it.i }; sfx(520, .05, 'sine', .03, 90); renderSheet(); } else { invSay('Retire-le d\'abord'); sfx(180, .1, 'square', .04, 90); } }
+  else if (k === 'sac') { if (w === 'eq') invUnequip(it); }
+  else if (k === 'four') { if (ok) invFeed(it); else sfx(180, .1, 'square', .04, 90); }
+}
+function invDragEnd() {
+  const s = invS(), p = s.press; s.press = null; const g = document.getElementById('inv-ghost'); if (g) g.remove(); if (!p) return;
+  clearTimeout(p.armT); clearTimeout(p.longT); if (p.el) p.el.classList.remove('arme', 'pris');
+  const root = document.getElementById('inv'); if (root) { root.classList.remove('glisse'); for (const t of root.querySelectorAll('.ok, .non, .sur')) t.classList.remove('ok', 'non', 'sur'); const r = root.querySelector('.inv-refus[style]'); if (r) r.remove(); }
+}
+
+/* ================= 4. the workshop of attributes: a window of its own =================
+   Everything an object can become, in one place: its fusion (objects of the bag are ticked or dragged onto it), each of its bonus
+   lines with its re-roll in gems — what the game already allowed, at the same prices. Three more ways of making an object one's own
+   are written and switched off (settings « invVerrou », « invGrave », « invTeinte ») : each adds a field to the object (v, g, c),
+   kept by invNorm when a save is read ; nothing is taken away or renamed. */
+function invAtOpen(it) { const s = invS(); s.at = { id: it.i, foods: new Set() }; s.bub = null; s.fiche = null; s.pickAt = false; s.ask = null; s.tool = ''; s.top = 0; sfx(600, .05, 'triangle', .03, 200); renderSheet(); }
+function invFeed(food) {
+  const s = invS(), t = invItem(s.at); if (!t || !ME.bag.includes(food) || !canFeed(t, food) || (t.f | 0) >= TU.fuseMax) return;
+  if (s.at.foods.has(food.i)) s.at.foods.delete(food.i); else s.at.foods.add(food.i); sfx(s.at.foods.has(food.i) ? 620 : 420, .04, 'sine', .03, 100); renderSheet();
+}
+function invTints() { return [['Origine', 0], ['Braise', -35], ['Mousse', 70], ['Lagune', 150], ['Abîme', 230], ['Rose', 300]]; }
+function invLocks(it) { return TU.invVerrou && Array.isArray(it.v) ? it.v.filter(i => i < it.a.length) : []; }
+function invAllCost(it) { const lk = invLocks(it).length, n = it.a.length - lk; return n > 0 ? Math.ceil(rerollCost(it) * n * TU.invTout) + lk * TU.invVerrouCout : 0; }
+// kept from a save (called by normItem, a_core.js): the three fields this file adds to an object
+function invNorm(it, d) {
+  if (typeof d.g === 'string' && d.g.trim()) it.g = d.g.replace(/[^\p{L}\p{N} _\-'.]/gu, '').trim().slice(0, 14);
+  if (!it.g) delete it.g; const c = num(d.c) | 0; if (c > 0 && c < invTints().length) it.c = c;
+  if (Array.isArray(d.v)) { const v = [...new Set(d.v.filter(x => Number.isInteger(x) && x >= 0 && x < it.a.length))].slice(0, 3); if (v.length) it.v = v; }
+}
+function invAtelier() {
+  const s = invS(), it = invItem(s.at), f = it.f | 0, foods = ME.bag.filter(o => s.at.foods.has(o.i)), pv = fusePreview(it, foods), full = f >= TU.fuseMax;
+  const need = full ? 1 : fuseNeed(pv.f >= TU.fuseMax ? TU.fuseMax - 1 : pv.f), have = pv.f >= TU.fuseMax ? need : pv.fp, main = k => { const v = it.m * (1 + TU.fuseMain * k); return frn(it.s === 0 ? Math.round(v * 10) / 10 : Math.round(v)); };
+  const back = () => { s.at = null; s.tool = ''; s.top = 0; renderSheet(); }, locks = invLocks(it);
+  const obj = h('div', { class: 'atl-obj', id: 'atl-obj', 'data-drop': 'four', style: '--rc:' + RAR[it.r].col },
+    h('div', { class: 'atl-hd' }, invTile(it, { w: invWhere(it), still: true }), h('div', { class: 'nm' }, h('b', { text: invName(it) }), h('small', null, h('i'), RAR[it.r].name + ' · rang ' + it.l + (invWhere(it) === 'eq' ? ' · porté' : '')))),
+    h('div', { class: 'atl-fu', role: 'img', 'aria-label': full ? 'Fusion au maximum, +' + TU.fuseMax : 'Fusion +' + f + (pv.f > f ? ', bientôt +' + pv.f : '') + ', ' + have + ' sur ' + need + ' pour le palier suivant' }, ic('forge'), h('b', { text: full ? 'MAX +' + f : pv.f > f ? '+' + f + ' → +' + pv.f : '+' + f }),
+      full ? null : h('div', { class: 'bar' }, h('i', { style: 'transform:scaleX(' + clamp(have / need, 0, 1) + ')' })), full ? null : h('small', { text: have + '/' + need }),
+      ic(it.s === 0 ? 's_dmg' : it.s === 3 ? 's_lan' : 's_hp'), h('b', { text: pv.f > f ? main(f) + ' → ' + main(pv.f) : main(f) })));
+  const ats = h('div', { class: 'atl-ats' });
+  it.a.forEach((a, idx) => { const cost = rerollCost(it), lk = locks.includes(idx);
+    ats.append(h('div', { class: 'atl-at' + (lk ? ' lkd' : '') }, ic(AFF_IC[a[0]] || 'etoile'), h('span', { class: 't', text: AFF[a[0]].txt(a[1]) }),
+      TU.invVerrou ? h('button', { class: 'lk', type: 'button', 'aria-pressed': String(lk), 'aria-label': (lk ? 'Déverrouiller' : 'Verrouiller') + ' ce bonus', onclick: () => { const v = new Set(invLocks(it)); if (lk) v.delete(idx); else v.add(idx); if (v.size) it.v = [...v].sort(); else delete it.v; saveGame(false); sfx(lk ? 420 : 620, .04, 'sine', .03, 100); renderSheet(); } }, ic('cadenas')) : null,
+      h('button', { class: 'btn small', type: 'button', disabled: ME.gem < cost || lk, 'aria-label': 'Relancer ce bonus pour ' + cost + ' gemmes', onclick: () => { if (ME.gem < cost || lk) return; ME.gem -= cost; ME.stats.reroll++; rerollAff(it, idx); invSay(AFF[it.a[idx][0]].txt(it.a[idx][1]), '#7fe3d2'); afterGear(880, true); } }, ic('recommencer'), jem(), String(cost)))); });
+  if (it.a.length) obj.append(ats);
+  const tools = h('div', { class: 'atl-tools' });
+  if (TU.invVerrou && it.a.length - locks.length > 0 && it.a.length > 1) { const cost = invAllCost(it);
+    tools.append(h('button', { class: 'chipbtn', id: 'atl-tout', type: 'button', disabled: ME.gem < cost, 'aria-label': 'Relancer tous les bonus non verrouillés pour ' + cost + ' gemmes', onclick: () => { if (ME.gem < cost) return; ME.gem -= cost; const lk = invLocks(it); it.a.forEach((a, i) => { if (!lk.includes(i)) { rerollAff(it, i); it.rr = Math.max(0, (it.rr | 0) - 1); } }); it.rr = (it.rr | 0) + 1; ME.stats.reroll++; invSay('Bonus relancés', '#7fe3d2'); afterGear(880, true); } }, ic('recommencer'), 'Tout', jem(), String(cost))); }
+  if (TU.invGrave) tools.append(h('button', { class: 'chipbtn', id: 'atl-grave', type: 'button', 'aria-pressed': String(s.tool === 'grave'), onclick: () => { s.tool = s.tool === 'grave' ? '' : 'grave'; renderSheet(); } }, ic('sceau'), 'Gravure'));
+  if (TU.invTeinte) tools.append(h('button', { class: 'chipbtn', id: 'atl-teinte', type: 'button', 'aria-pressed': String(s.tool === 'teinte'), onclick: () => { s.tool = s.tool === 'teinte' ? '' : 'teinte'; renderSheet(); } }, ic('petale'), 'Teinte'));
+  if (tools.childNodes.length) obj.append(tools);
+  if (s.tool === 'grave' && TU.invGrave) { const cost = TU.invGraveCout, inp = h('input', { type: 'text', maxlength: '14', value: it.g || '', placeholder: 'Un nom gravé', 'aria-label': 'Nom gravé sur l\'objet', enterkeyhint: 'done' });
+    const go = () => { const v = inp.value.replace(/[^\p{L}\p{N} _\-'.]/gu, '').trim().slice(0, 14); if (v === (it.g || '')) { s.tool = ''; renderSheet(); return; } if (v && ME.ecl < cost) return; if (v) { ME.ecl -= cost; it.g = v; } else delete it.g; s.tool = ''; invSay(v ? '« ' + v + ' »' : 'Gravure effacée', RAR[it.r].col); afterGear(660); };
+    inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') go(); });
+    obj.append(h('div', { class: 'atl-grave' }, inp, h('button', { class: 'btn small', id: 'atl-grave-ok', type: 'button', disabled: ME.ecl < cost && !it.g, 'aria-label': 'Graver pour ' + coins(cost), onclick: go }, ic('ok'), h('span', { class: 'gem' }), String(cost)))); }
+  if (s.tool === 'teinte' && TU.invTeinte) { const cost = TU.invTeinteCout;
+    obj.append(h('div', { class: 'atl-tints' }, ...invTints().map((t, i) => h('button', { class: 'atl-tint', type: 'button', style: '--tc:hsl(' + (40 + t[1]) + ' 70% 55%)', 'aria-pressed': String((it.c | 0) === i), 'aria-label': 'Teinte ' + t[0] + (i ? ' pour ' + cost + ' gemmes' : ''), onclick: () => { if ((it.c | 0) === i) return; if (i && ME.gem < cost) { invSay('Il faut ' + cost + ' gemmes'); return; } if (i) { ME.gem -= cost; it.c = i; } else delete it.c; invSay('Teinte ' + t[0], RAR[it.r].col); afterGear(660); } })),
+      h('small', { class: 'inv-row' }, jem(), String(cost)))); }
+  const bar = h('div', { class: 'inv-bar' }, h('button', { class: 'chipbtn back', id: 'atl-retour', type: 'button', 'aria-label': 'Retour à l\'inventaire', onclick: back }, ic('retour')),
+    h('span', { class: 'hint', text: full ? 'Fusion au maximum' : 'Coche ou glisse ce qui fusionne' }), invPurse());
+  const grid = h('div', { class: 'inv-grid', id: 'inv-grid' }), can = full ? [] : ME.bag.filter(o => o !== it && canFeed(it, o));
+  for (const o of can) grid.append(invTile(o, { w: 'bag', pick: s.at.foods.has(o.i) }));
+  if (!can.length) grid.append(h('p', { class: 'ong-note', style: 'grid-column:1/-1;padding:10px;text-align:center', text: full ? 'Cet objet ne peut plus être renforcé.' : 'Rien à fusionner : il faut des objets de même qualité ou moins.' }));
+  const dock = h('div', { class: 'inv-dock' }, h('button', { class: 'btn' + (foods.length ? ' shine' : ''), id: 'atl-fusion', type: 'button', disabled: !foods.length || full, 'aria-label': foods.length ? 'Fusionner ' + foods.length + (foods.length > 1 ? ' objets' : ' objet') : 'Coche des objets à fusionner',
+    onclick: () => { if (!foods.length || full) return; it.f = pv.f; it.fp = pv.fp; ME.stats.fuse += foods.length; ME.bag = ME.bag.filter(o => !s.at.foods.has(o.i)); s.at.foods.clear(); invSay(itemName(it), RAR[it.r].col); afterGear(760, true); } }, ic('forge'), foods.length ? 'Fusionner ' + foods.length : 'Fusionner'));
+  return [obj, h('div', { class: 'inv-bag' }, bar, grid, dock)];
+}
+// for the tests and the captures: put the inventory in a given state without a finger (the object n of the bag)
+function invTest(what, n) {
+  const s = invS(), it = ME.bag[n | 0]; if (sheetKind !== 'bag' || !invOn()) return false; s.bub = s.fiche = s.ask = s.at = null; s.multi = null; s.pickAt = false; invDragEnd(); renderSheet();
+  if (what === 'bulle' && it) { s.bub = { id: it.i, w: 'bag' }; renderSheet(); }
+  else if (what === 'fiche' && it) { s.fiche = { id: it.i }; renderSheet(); }
+  else if (what === 'atelier' && it) invAtOpen(it);
+  else if (what === 'vente') { s.multi = new Set(); renderSheet(); }
+  else if (what === 'glisse' && it) { const el = document.querySelector('#inv-grid .tile.iv[data-id="' + it.i + '"]'), r = el.getBoundingClientRect(), p = s.press = { id: it.i, w: 'bag', el, x: r.left + 20, y: r.top + 20, pid: -1, mouse: false, armed: true, drag: false };
+    invDragStart(p, null); const t = document.querySelector('[data-drop="eq:' + it.s + '"]').getBoundingClientRect(); invDragAt(p, t.left + t.width / 2, t.top + t.height / 2); }
+  return true;
+}
+
+/* ================= Trois modèles de HUD au choix du joueur (10 October, Damien's request, branch inventaire-rpg) =================
+   « Proposer plusieurs modèles d'HUD, de préférence le même style que le menu d'options. » In Réglages > Jeu, « Écran de jeu » :
+     Épuré     the life and the three buttons, nothing else: no name of the level, no bar of the creatures, no purse ; a smaller map
+     Classique the screen of before, untouched (the choice of origin)
+     Complet   the screen of before, plus a row of figures under the name of the level: damage per second, critical hits, the bag,
+               the time in the level, the gems
+   The choice is the player's, kept on the device (localStorage « tk-hud-modele ») : it is not a setting of the game and never touches
+   a save. « hudModele » (settings, family Affichage et mondes) is the model of a player who has not chosen. A model is a class on <body>
+   (hudm0, hudm2 ; none for Classique) and a few rules of style: it never writes the properties the editor of the screen uses
+   (translate, scale, opacity and visibility, set by hudApply in k_hud.js), so the place, size, transparency and « hidden » chosen in
+   the editor hold in the three models. The row of figures of « Complet » is one more piece of the editor (« Les chiffres du modèle
+   Complet »). Every top-level name here is a function ; the state lives in hudmS(). The hooks: showUI (d_ui.js) calls hudmApply,
+   ongJeu (zz1_onglets.js) adds hudmRow. */
+function hudmS() { return hudmS.s || (hudmS.s = { ready: false, cur: -1, timer: 0 }); }
+function hudmNames() { return ['Épuré', 'Classique', 'Complet']; }
+function hudmGet() { const s = hudmS(); if (s.own === undefined) { s.own = null; try { s.own = localStorage.getItem('tk-hud-modele'); } catch (e) { } } const n = s.own === null || s.own === '' ? TU.hudModele : +s.own; return n === 0 || n === 2 ? n : 1; } // (the device is read once: showUI calls this often)
+function hudmSet(n) { const s = hudmS(); s.own = String(clamp(n | 0, 0, 2)); try { localStorage.setItem('tk-hud-modele', s.own); } catch (e) { } hudmApply(); updateHud(true); }
+function hudmCss() {
+  return [
+    '#hud-plus{display:none;gap:4px;flex-wrap:wrap;max-width:min(230px,calc(100vw - 150px));pointer-events:none}body.hudm2 #hud-plus{display:flex}',
+    '#hud-plus>span{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:999px;background:color-mix(in srgb,var(--well) 80%,transparent);font:700 11.5px var(--ui);color:var(--cream);font-variant-numeric:tabular-nums;white-space:nowrap}#hud-plus .ic{font-size:13px;color:var(--amber)}',
+    /* Épuré: the life and the buttons */
+    'body.hudm0 #hud .xpbar,body.hudm0 #hud-floor,body.hudm0 #hud .hud-r .pill,body.hudm0 #hud-plus,body.hudm0 #hp-txt{display:none}',
+    'body.hudm0 #hud .hpbar{width:118px;height:12px}body.hudm0 #mini{transform:scale(.72);transform-origin:left top;filter:opacity(.8)}body.hudm0 #hud .round{filter:opacity(.78)}body.hudm0 #pad .pb{filter:opacity(.8)}',
+    /* Complet: a little more room for the figures */
+    'body.hudm2 #hud .hpbar{width:176px}body.hudm2 #hud .xpbar{width:176px}body.hudm2 #mini{margin-top:var(--hudm-plus,52px)}',
+    /* the row of the three models, in the settings */
+    '#sheet.flot .choice.hudm-row{padding-block:7px 8px;gap:5px}.hudm-row .seg .chipbtn{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:4px 3px;min-height:34px;font-size:11.5px}.hudm-pv{width:26px;height:18px;border-radius:4px;background:var(--well);box-shadow:inset 0 0 0 1px var(--line);position:relative;display:block;flex:none}',
+    '.hudm-pv i{position:absolute;border-radius:1px;background:var(--cream);opacity:.85}.hudm-pv .v{left:3px;top:3px;width:10px;height:2px;background:var(--danger)}.hudm-pv .x{left:3px;top:6px;width:7px;height:2px}.hudm-pv .c{left:3px;top:9px;width:12px;height:2px;opacity:.5}.hudm-pv .p{right:3px;top:3px;width:5px;height:3px}.hudm-pv .b{right:3px;bottom:3px;width:5px;height:5px;border-radius:50%}.hudm-pv .b2{right:10px;bottom:3px;width:3px;height:3px;border-radius:50%}',
+  ].join('\n');
+}
+// once: the style, the row of figures (one more piece of the editor of the screen, with its five settings like the others)
+function hudmReady() {
+  const s = hudmS(); if (s.ready) return true;
+  try { if (!HUD_EL || !HUD || typeof run === 'undefined') return false; } catch (e) { return false; } // the first calls come while the files after d_ui.js are not read yet: later
+  s.ready = true;
+  const st = document.createElement('style'); st.id = 'hudm-css'; st.textContent = hudmCss(); document.body.append(st);
+  const left = document.querySelector('#hud .hud-l'); if (left && !$('hud-plus')) left.append(h('div', { id: 'hud-plus', role: 'img', 'aria-label': 'Chiffres du chevalier' }));
+  if (!HUD_EL.some(e => e[0] === 'plus')) {
+    HUD_EL.splice(HUD_EL.findIndex(e => e[0] === 'nom') + 1, 0, ['plus', '#hud-plus', 'Les chiffres du modèle Complet', 'play']);
+    tuneAdd(['hudplusX', 'hud', 'Les chiffres du modèle Complet : place de gauche à droite', 'Le décalage vers la droite (en points d\'écran) par rapport à sa place d\'origine, en jeu.', 0, -600, 600, 'px', { fx: 'hudpos' }]);
+    tuneAdd(['hudplusY', 'hud', 'Les chiffres du modèle Complet : place de haut en bas', 'Le décalage vers le bas (en points d\'écran) par rapport à sa place d\'origine, en jeu.', 0, -900, 900, 'px', { fx: 'hudpos' }]);
+    tuneAdd(['hudplusS', 'hud', 'Les chiffres du modèle Complet : taille', 'Plus grand ou plus petit que d\'origine.', 1, .5, 2.5, 'x', { fx: 'hudsize' }]);
+    tuneAdd(['hudplusO', 'hud', 'Les chiffres du modèle Complet : opacité', 'Plus ou moins transparent.', 1, .15, 1, 'pct', { fx: 'hudop' }]);
+    tuneAdd(['hudplusV', 'hud', 'Les chiffres du modèle Complet : visible', 'Montré ou caché.', 1, 0, 1, 'choice', { choices: ['Caché', 'Visible'], fx: 'hudvis' }]);
+    tuneInit({}); hudApply();
+  }
+  s.timer = setInterval(hudmTick, 500); return true;
+}
+// called by showUI: the class of the model in force
+function hudmApply() {
+  if (!hudmReady()) { setTimeout(hudmApply, 60); return; } const s = hudmS(), m = hudmGet(); if (m === s.cur) return; s.cur = m;
+  document.body.classList.toggle('hudm0', m === 0); document.body.classList.toggle('hudm2', m === 2); hudmTick(true);
+}
+function hudmTick(force) {
+  const s = hudmS(), box = $('hud-plus'); if (!box || s.cur !== 2) return;
+  const edit = HUD.edit === 'play'; if (G.mode !== 'play' && !edit && !force) return;
+  const t = run && !edit ? fmtTime(run.time || 0) : '1:23', key = [Math.round(ST.dps), Math.round(ST.crit * 100), ME.bag.length, bagCap(), t, ME.gem].join('|'); if (key === s.key) return; s.key = key;
+  const chip = (icn, v, lab) => h('span', { title: lab }, ic(icn), v);
+  box.replaceChildren(chip('s_dmg', String(Math.round(ST.dps)), 'Dégâts par seconde'), chip('s_crit', Math.round(ST.crit * 100) + ' %', 'Coups critiques'), chip('sac', ME.bag.length + '/' + bagCap(), 'Sac'), chip('temps', t, 'Temps dans le niveau'), chip('gemme', String(ME.gem), 'Gemmes'));
+  const hgt = box.offsetHeight; if (hgt && hgt !== s.h) { s.h = hgt; document.body.style.setProperty('--hudm-plus', (hgt + 5) + 'px'); } // the map moves down by the height of the row, so that it never hides it
+}
+// in Réglages > Jeu: the three models, each with a tiny drawing of what it shows
+function hudmRow() {
+  const cur = hudmGet(), pv = n => h('span', { class: 'hudm-pv', 'aria-hidden': 'true' }, h('i', { class: 'v' }), n > 0 ? h('i', { class: 'x' }) : null, n > 1 ? h('i', { class: 'c' }) : null, n > 0 ? h('i', { class: 'p' }) : null, h('i', { class: 'b' }), h('i', { class: 'b2' }));
+  return h('div', { class: 'choice hudm-row', id: 'hudm-row' }, h('span', { class: 'row', style: 'flex-wrap:nowrap' }, ic('ecran'), 'Écran de jeu'),
+    h('div', { class: 'seg' }, ...hudmNames().map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(cur === i), 'aria-label': 'Écran de jeu ' + n, onclick: () => { hudmSet(i); renderSheet(); } }, pv(i), n))));
 }
 
 </script>
