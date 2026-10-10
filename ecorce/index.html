@@ -906,7 +906,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "59cf2e1";
+window.ecorceBuild = "72ddf48";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -6686,6 +6686,7 @@ function admBody(kids, foot) {
     h('div', { class: 'adm-sub' }, h('p', { text: ADM.view === 'tableau' ? tbSub() : ADM.view === 'regles' ? 'À lire avant de dessiner ou d\'envoyer un fichier : le style du jeu, les formats, et les réglages de Blender et de Blockbench.' : ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
       h('button', { class: 'btn small ghost', type: 'button', onclick: () => closeSheet() }, ic('aller'), 'Aller jouer'))));
   if (ADM.view === 'tableau') { tbBody(kids); return; } // the dashboard (zzt_tableau.js, service version 13)
+  if (typeof admLiens === 'function') kids.push(admLiens()); // the two pages of Damien, one touch away from each other: this administration and his dashboard (zzg_endirect.js)
   if (ADM.view === 'regles') { reglesBody(kids); return; } // v_regles.js
   if (ADM.view === 'joueurs') { admJBody(kids); return; } // m_joueurs.js
   if (!mod) { varBody(kids, foot); return; } // the view « Variables »: z_variables.js
@@ -8847,6 +8848,7 @@ function admJBody(kids) {
   kids.push(h('div', { class: 'row', style: 'gap:8px;align-items:center' }, h('small', { class: 'grow adm-msg', text: ADMJ.busy ? 'Lecture…' : ADMJ.msg }),
     h('button', { class: 'btn small line', type: 'button', disabled: ADMJ.busy, onclick: () => admJLoad(want) }, ic('recommencer'), 'Actualiser')));
   if (ADMJ.tab === 'stats' && ADMJ.stats) kids.push(...appVues(ADMJ.stats)); // (zzw_appareils.js: « Chiffres » = admJStats, « Par appareil », « Par personne »)
+  if (ADMJ.tab === 'joueurs' && typeof endPanel === 'function') kids.push(endPanel()); // « En direct » : who plays now, kept up to date (zzg_endirect.js)
   if (ADMJ.tab === 'joueurs' && ADMJ.joueurs) kids.push(...admJPlayers(ADMJ.joueurs));
   if (ADMJ.tab === 'secu' && ADMJ.journal) kids.push(...admJSecurity(ADMJ.journal));
 }
@@ -13000,7 +13002,7 @@ function ongSon(page) {
 
 /* ---------- Compte ---------- */
 // one page for every player ; a device opened as administrator has a second one, for its doors (so that neither has anything to scroll)
-function ongComptePages() { return ADM.shown ? ['Ma partie', 'Administration'] : ['Ma partie']; }
+function ongComptePages() { return ADM.shown ? ['Ma partie', 'Administration'] : (typeof ordCrea === 'function' && ordCrea()) ? ['Ma partie', 'Mode créatif'] : ['Ma partie']; } // (a player the administrator opened the creative mode to gets its page too, zzb_ordres.js)
 function ongCompte(page, pause) {
   const s = ongS(), names = ongComptePages(); s.compte = clamp(s.compte | 0, 0, names.length - 1);
   if (names.length > 1) page.push(h('div', { class: 'seg ong-sub', id: 'compte-seg' }, ...names.map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(s.compte === i), onclick: () => ongGo('compte', i) }, n))));
@@ -14994,7 +14996,7 @@ async function ordPoll() {
       if (Array.isArray(r.ordres) && !s.bad) for (const o of r.ordres.slice(0, 10)) await ordTake(o);
     } else if (r && r.pourquoi === 'inconnu') s.can = false; // a service from before the orders
   } catch (e) { }
-  s.busy = false; s.next = Date.now() + (s.p.faits.length ? 1500 : s.fast ? 5000 : G.mode === 'play' ? 30000 : 45000);
+  s.busy = false; s.next = Date.now() + (s.p.faits.length ? 1500 : s.fast ? (typeof liveFast === 'function' ? liveFast() : 5000) : G.mode === 'play' ? 30000 : 45000);
 }
 async function ordVerify(b, sig) {
   const s = ordS(); if (!s.p.cle || typeof b !== 'string' || typeof sig !== 'string' || b.length > 4000) return false;
@@ -15011,7 +15013,7 @@ async function ordRights(d) {
   if (was !== s.p.crea) ordCreaChanged();
 }
 function ordCreaChanged() {
-  const on = ordS().p.crea === 1; if (on) { CREA.shown = true; }
+  const on = ordS().p.crea === 1; if (on) { CREA.shown = true; try { if (typeof ongS === 'function') { ongS().tab = 'compte'; ongS().compte = 1; } } catch (e) { } } // (and the settings open on the page that holds it, zz1_onglets.js)
   toast(on ? 'Le mode créatif t\'est ouvert : il est dans les réglages' : 'Le mode créatif t\'a été retiré', 'var(--amber)');
   if (!on && CREA.on && !ADM.shown) { setTimeout(() => location.reload(), 1800); return; } // the player is inside it: the page reloads, the real save comes back (as « Quitter le mode créatif »)
   try { if (sheetOpen() && (sheetKind === 'opts' || sheetKind === 'pause')) renderSheet(); } catch (e) { }
@@ -15856,6 +15858,308 @@ function tbCss() {
     + '@media (max-width:699px){#sheet .tb-top .var-bulles{display:flex;gap:6px;width:auto;flex:none}#sheet .tb-top .var-bulle small{display:none}#sheet .tb-top .var-bic{width:40px;height:40px;font-size:18px}#sheet #tb-go{width:40px;min-height:40px;padding:0;justify-content:center;font-size:0;border-radius:50%}#sheet #tb-go .ic{font-size:18px;margin:0}#sheet.dock .tb{gap:10px}#sheet.dock .tb-card>.adm-head small{display:none}}'
     // the whole screen (« Agrandir »), wide: the commits beside the publication
     + '@media (min-width:900px){#sheet.full .tb-two{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}}' }));
+}
+
+/* ================= the spectator's command panel (branch spectateur-live, service version 12 as it is online) =================
+   Damien's request: « un panneau live data avec les stats et l'administration des joueurs, et les options du mode créatif activables à
+   distance lorsque je regarde en temps réel une partie. »
+   While the administrator watches a game (specOn, zzd_spectateur.js) a floating panel sits over it. It can be folded, moved by its title
+   (finger or mouse), and acts on the player being watched — or on the teammate the camera follows (◀ ▶): the device is the one his presence
+   names (v.dv), else the one « Regarder » was asked for. Three tabs:
+     - « Stats »     : what the service and the room say of him now (level, life, coins, gems, bag, effects in force, team, creative mode);
+     - « Commandes » : the orders of the closed list of the service version 12 (zzb_ordres.js, serveur/worker.js): effects with a length, life,
+                       coins, gems, an object, a message, the camp, a level, the creative mode given or taken back;
+     - « Créatif »   : every option of the creative mode (h_creatif.js). Those an order of version 12 can carry are live; the others are
+                       greyed with the bubble « demande le service v13 » and the order the service would need (liveCrea: the whole list).
+   Nothing new is asked of the service: an order goes by the administration's password (admJCall, op « ordre »), is signed by the service for
+   that device and written in the security log, exactly as from the card of a player. Under the tabs, the last orders with their state, live:
+   envoyé → reçu → exécuté, or refusé (and why).
+   How often: the panel reads the orders of the watched device every 3 s (4 s when nothing waits). That reading is what tells the service
+   « this device is followed », so the player's game reads its queue every 5 s instead of 30 to 45 s (the service's « vite », 2 minutes
+   long, renewed by each reading) — and every 2,5 s when that game itself knows a spectator is there (liveFast, asked by ordPoll).
+   One watched device, one administrator: about 20 + 24 short requests a minute, nothing for the other players.
+   Only functions at the top level; the state lives in liveS() (G.live). */
+function liveS() { return G.live || (G.live = { open: true, tab: 'cmd', id: '', d: null, old: false, busy: false, msg: '', bad: false, at: 0, reading: false, dur: 60, n: 1000, g: 50, slot: 0, k: 0, vie: 2, rain: 2000, txt: '', lv: 1, df: 0, pos: null, drag: null, sig: '', logSig: '', tip: '', tipT: 0 }); }
+// how often a followed device reads its queue (ordPoll, zzb_ordres.js): twice as often while it knows a spectator is in its room
+function liveFast() { try { return specWatched() ? 2500 : 5000; } catch (e) { return 5000; } }
+function liveEvery() { const d = liveS().d; return d && Array.isArray(d.ordres) && d.ordres.some(o => !o.fait && !o.annule && o.fin >= d.maintenant) ? 3000 : 4000; }
+// the device the panel acts on: the one the camera follows
+function liveTarget() { const s = specS(), t = Net.room ? specTarget() : null, n = Net.room ? specViews().length : 0; return { id: (t && t.dv) || (n < 2 ? s.dev : '') || '', name: t ? t.name : '', v: t }; } // (a game from before the device code in the presence: only the one « Regarder » was asked for is known)
+function liveDurs() { return [[15, '15 s'], [60, '1 min'], [300, '5 min'], [600, '10 min'], [1800, '30 min'], [3600, '1 h']]; }
+/* ---------- the options of the creative mode, one by one: what version 12 carries, what version 13 would have to ---------- */
+function liveCrea() {
+  const s = liveS(), fx = k => liveFxOn(k);
+  return [
+    { id: 'acces', lab: 'Lui ouvrir le mode créatif', ic: 'sort', v12: 'ordre « creatif »', on: () => !!(s.d && s.d.creatif), go: () => liveSend('creatif', { v: s.d && s.d.creatif ? 0 : 1 }), note: 'Il le trouve dans ses réglages ; retirer l\'accès l\'en fait sortir (sa page se recharge).' },
+    { id: 'god', lab: 'Invincible', ic: 'bouclier', v12: 'ordre « effet » invincible', on: () => fx('invincible'), go: () => liveSend('effet', fx('invincible') ? { e: 'invincible', on: 0 } : { e: 'invincible', on: 1, d: Math.min(600, s.dur) }), note: 'Durée choisie, 10 min au plus par ordre.' },
+    { id: 'hit', lab: 'Coups dévastateurs (dégâts × 10)', ic: 'epee', v12: 'ordre « degats » × 10', on: () => fx('degats'), go: () => liveSend('degats', fx('degats') ? { x: 1, d: 5 } : { x: 10, d: s.dur }), note: 'Le créatif fait × 20 ; la borne de la version 12 est × 10.', v13: 'borne « degats » portée à 20' },
+    { id: 'pieces', lab: '+ 10 000 pièces', ic: GM().ic, v12: 'ordre « pieces »', go: () => liveSend('pieces', { n: 10000 }) },
+    { id: 'gemmes', lab: '+ 500 gemmes', ic: 'gemme', v12: 'ordre « gemmes »', go: () => liveSend('gemmes', { n: 500 }) },
+    { id: 'niveau', lab: 'Aller à un niveau (Normal, Difficile, Cauchemar)', ic: 'portail', v12: 'ordre « niveau »', go: () => { s.tab = 'cmd'; liveDraw(true); const e = $('live-row-move'); if (e) e.scrollIntoView({ block: 'center' }); }, note: 'Onglet Commandes > Déplacer. Un joueur seul uniquement.' },
+    { id: 'arme', lab: 'Une arme au choix dans son sac', ic: 'sac', v12: 'ordre « objet »', go: () => { s.tab = 'cmd'; s.slot = 0; liveDraw(true); const e = $('live-row-obj'); if (e) e.scrollIntoView({ block: 'center' }); }, note: 'Onglet Commandes > Objet, une arme à la fois.' },
+    { id: 'calm', lab: 'Les créatures l\'ignorent', ic: 'ombre', v13: 'effet « ignore » ajouté à la liste des effets' },
+    { id: 'kill', lab: 'Vaincre toutes les créatures', ic: 'c_kills', v13: 'ordre « action » { a: "tuer" }' },
+    { id: 'zoo', lab: 'Une créature de chaque sorte', ic: 'boss', v13: 'ordre « action » { a: "zoo" }' },
+    { id: 'chests', lab: 'Révéler les coffres', ic: 'coffre', v13: 'ordre « action » { a: "coffres" }' },
+    { id: 'open', lab: 'Ouvrir la sortie (réunir les sceaux)', ic: 'portail', v13: 'ordre « action » { a: "sortie" }' },
+    { id: 'exit', lab: 'L\'emmener à la sortie', ic: 'aller', v13: 'ordre « action » { a: "aller" }' },
+    { id: 'end', lab: 'Finir le niveau', ic: 'trophee', v13: 'ordre « action » { a: "finir" }' },
+    { id: 'unlock', lab: 'Tout débloquer (niveaux, mondes, thèmes)', ic: 'cadenas', v13: 'ordre « debloquer » (le service accepte alors le saut de niveaux)' },
+    { id: 'weapons', lab: 'Toutes les armes dans le sac', ic: 'sac', v13: 'ordre « armes » (le sac est agrandi, le service crédite les objets)' },
+    { id: 'expe', lab: 'Aller à un niveau en Expédition', ic: 'portail', v13: 'ordre « niveau » avec d = 3 (Expédition)' },
+    { id: 'ips', lab: 'Compteur de fluidité sur son écran', ic: 'ips', v13: 'ordre « action » { a: "fluidite" }' },
+  ];
+}
+function liveFxOn(k) { const d = liveS().d, e = d && d.etat; return !!(e && Array.isArray(e.fx) && e.fx.some(x => x[0] === k)); }
+function liveFxLeft(k) { const d = liveS().d, e = d && d.etat, x = e && Array.isArray(e.fx) && e.fx.find(x => x[0] === k); return x ? x[1] : 0; }
+/* ---------- reading and sending ---------- */
+async function liveLoad() {
+  const s = liveS(), id = s.id; if (!id || s.reading) return; s.reading = true;
+  try { const r = await admJCall('ordres', { id }); if (s.id === id) { if (Array.isArray(r.ordres)) { s.d = r; s.old = false; } else { s.d = null; s.old = true; } if (s.bad) { s.bad = false; s.msg = ''; } } }
+  catch (e) { if (s.id === id) { s.bad = true; s.msg = String(e.message || e); } }
+  s.reading = false; s.at = Date.now(); liveDraw(false);
+}
+async function liveSend(type, args) {
+  const s = liveS(), id = s.id; if (!id || s.busy) return null; s.busy = true; s.bad = false; s.msg = 'Envoi…'; liveDraw(true);
+  let o = null;
+  try { const r = await admJCall('ordre', { id, type, args: args || {} }); if (Array.isArray(r.ordres)) { if (s.id === id) s.d = r; o = r.ordres[0]; s.msg = ''; } else { s.old = true; s.msg = ''; } }
+  catch (e) { s.bad = true; s.msg = String(e.message || e); }
+  s.busy = false; s.at = Date.now() - liveEvery() + 1200; try { ADMJ.journal = null; } catch (e) { } liveDraw(true); // read again soon: the game answers within a few seconds
+  return o;
+}
+async function liveCancel(n) {
+  const s = liveS(); try { const r = await admJCall('ordre-annuler', { id: s.id, n }); if (Array.isArray(r.ordres)) s.d = r; s.bad = false; s.msg = 'Ordre annulé.'; } catch (e) { s.bad = true; s.msg = String(e.message || e); }
+  liveDraw(true);
+}
+// the state of an order, in one word (the same words as the card of a player, zzc_fiche.js)
+function liveEtat(o, now) { return o.annule ? 'annule' : o.fait ? (o.ok ? 'execute' : 'refuse') : o.fin < now ? 'perime' : o.livre ? 'recu' : 'envoye'; }
+/* ---------- on the screen ---------- */
+function liveCss() {
+  if ($('live-style')) return;
+  const css = '#live-pan{position:absolute;z-index:72;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom) + 8px);max-width:420px;margin-inline:auto;display:flex;flex-direction:column;border-radius:16px;background:rgba(27,21,15,.96);color:var(--cream,#f1e4c8);border:1px solid var(--line,#4d3c2a);box-shadow:0 10px 34px rgba(0,0,0,.6);font:600 13px var(--ui,system-ui);touch-action:none}#live-pan[hidden]{display:none}' +
+    '@media (min-width:760px){#live-pan{left:auto;right:12px;top:calc(env(safe-area-inset-top) + 68px);bottom:auto;width:390px;margin:0}}#live-pan.moved{right:auto;bottom:auto;margin:0;width:min(420px,calc(100% - 16px))}' +
+    '#live-head{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;cursor:grab;user-select:none;-webkit-user-select:none;min-height:46px}#live-head:active{cursor:grabbing}#live-head .grow{flex:1 1 0;min-width:0;display:flex;flex-direction:column}#live-head b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#live-head small{font-size:11.5px;color:var(--dim,#b9a888);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '#live-dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--dim,#b9a888)}#live-dot.on{background:#5fe08a;box-shadow:0 0 0 3px rgba(95,224,138,.25)}#live-fold{flex:none;min-width:44px;min-height:44px;border-radius:12px;border:0;background:var(--bark-4,#3e3022);color:inherit;font:700 16px var(--ui,system-ui);cursor:pointer}' +
+    '#live-body{display:flex;flex-direction:column;gap:8px;padding:0 10px 10px;min-height:0}#live-pan.folded #live-body{display:none}#live-tabs{display:flex;gap:6px}#live-tabs button{flex:1 1 0;min-height:40px;border-radius:99px;border:0;background:var(--bark-4,#3e3022);color:var(--cream,#f1e4c8);font:700 13px var(--ui,system-ui);cursor:pointer}#live-tabs button[aria-pressed="true"]{background:var(--amber,#ffc24a);color:var(--ink,#15100c)}' +
+    '#live-main{display:flex;flex-direction:column;gap:8px;max-height:min(40vh,360px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding-right:2px}.lv-row{display:flex;flex-direction:column;gap:4px;padding-top:6px;border-top:1px solid var(--line,#4d3c2a)}.lv-row:first-child{border-top:0;padding-top:0}.lv-row>b{font-size:12px;color:var(--dim,#b9a888);letter-spacing:.02em}.lv-in{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.lv-in small{flex:1 1 120px;color:var(--dim,#b9a888);font-size:11.5px;font-weight:600}' +
+    '.lv-b{appearance:none;border:0;border-radius:99px;min-height:40px;padding:6px 14px;font:700 13px var(--ui,system-ui);background:var(--amber,#ffc24a);color:var(--ink,#15100c);cursor:pointer}.lv-b.g{background:var(--bark-4,#3e3022);color:var(--cream,#f1e4c8)}.lv-b[aria-pressed="true"]{background:var(--amber,#ffc24a);color:var(--ink,#15100c)}.lv-b[disabled]{opacity:.45;cursor:default}' +
+    '.lv-f{flex:1 1 110px;min-width:0;min-height:40px;padding:6px 10px;border-radius:12px;border:1px solid var(--line,#4d3c2a);background:var(--well,#17120d);color:var(--cream,#f1e4c8);font:600 14px var(--ui,system-ui);user-select:text;-webkit-user-select:text}.lv-f.n{flex:0 1 96px}' +
+    '.lv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.lv-tile{display:flex;flex-direction:column;gap:1px;padding:7px 8px;border-radius:10px;background:var(--bark-3,#30251a);min-width:0}.lv-tile b{font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lv-tile small{font-size:10.5px;color:var(--dim,#b9a888);font-weight:600}.lv-bar{height:8px;border-radius:99px;background:var(--well,#17120d);overflow:hidden}.lv-bar i{display:block;height:100%;width:var(--w,0%);background:#5fe08a}' +
+    '.lv-opt{display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 10px;border-radius:12px;border:0;background:var(--bark-3,#30251a);color:var(--cream,#f1e4c8);font:600 13px var(--ui,system-ui);text-align:left;cursor:pointer;width:100%}.lv-opt .ic{flex:none;width:18px;height:18px}.lv-opt .grow{flex:1 1 0;min-width:0}.lv-opt em{flex:none;font-style:normal;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:#2f5a3a;color:#c9f5d4}.lv-opt.v13{opacity:.55;cursor:help}.lv-opt.v13 em{background:var(--bark-4,#3e3022);color:var(--dim,#b9a888)}.lv-opt[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--amber,#ffc24a)}.lv-opt[disabled]{opacity:.45}' +
+    '#live-tip{padding:7px 10px;border-radius:10px;background:var(--amber,#ffc24a);color:var(--ink,#15100c);font-size:12px}#live-tip[hidden],#live-msg[hidden]{display:none}#live-msg{font-size:12px;color:var(--dim,#b9a888)}#live-msg.bad{color:#ff8f7a}' +
+    '#live-log{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line,#4d3c2a);padding-top:6px}.lv-ord{display:flex;align-items:center;gap:6px;min-height:28px}.lv-ord>span{flex:1 1 0;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lv-st{flex:none;display:flex;gap:3px;align-items:center}.lv-st i{font-style:normal;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--bark-4,#3e3022);color:var(--dim,#b9a888);opacity:.5}.lv-st i.ok{opacity:1;background:#2f5a3a;color:#c9f5d4}.lv-st i.no{opacity:1;background:#6a2b22;color:#ffd0c6}.lv-st i.now{opacity:1;background:var(--amber,#ffc24a);color:var(--ink,#15100c)}.lv-x{flex:none;min-height:28px;border:0;border-radius:99px;padding:2px 9px;background:var(--bark-4,#3e3022);color:var(--cream,#f1e4c8);font:700 11px var(--ui,system-ui);cursor:pointer}';
+  document.head.appendChild(h('style', { id: 'live-style', text: css }));
+}
+function liveDom() {
+  if ($('live-pan')) return; liveCss(); const s = liveS();
+  const head = h('div', { id: 'live-head' }, h('i', { id: 'live-dot', 'aria-hidden': 'true' }), h('span', { class: 'grow' }, h('b', { id: 'live-who' }), h('small', { id: 'live-sub' })),
+    h('button', { id: 'live-fold', type: 'button', 'aria-label': 'Replier ou déplier le panneau de commandes', 'aria-expanded': 'true', onclick: () => { s.open = !s.open; liveDraw(true); } }, '▾'));
+  const tab = (k, n) => h('button', { type: 'button', 'data-tab': k, 'aria-pressed': 'false', onclick: () => { s.tab = k; s.tip = ''; liveDraw(true); } }, n);
+  ($('game') || document.body).append(h('section', { id: 'live-pan', hidden: true, role: 'region', 'aria-label': 'Commandes du spectateur' }, head,
+    h('div', { id: 'live-body' }, h('div', { id: 'live-tabs', role: 'group' }, tab('stats', 'Stats'), tab('cmd', 'Commandes'), tab('crea', 'Créatif')),
+      h('div', { id: 'live-main' }), h('div', { id: 'live-tip', role: 'status', hidden: true }), h('small', { id: 'live-msg', role: 'status', hidden: true }), h('div', { id: 'live-log' }))));
+  // moved by its title, finger or mouse (a touch on the fold button is not a move)
+  head.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; const p = $('live-pan'), r = p.getBoundingClientRect(), g = ($('game') || document.body).getBoundingClientRect(); s.drag = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top, gx: g.left, gy: g.top, moved: false, x0: e.clientX, y0: e.clientY }; try { head.setPointerCapture(e.pointerId); } catch (_) { } });
+  head.addEventListener('pointermove', e => { const d = s.drag; if (!d || d.id !== e.pointerId) return; if (!d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 6) return; d.moved = true; s.pos = { x: e.clientX - d.dx - d.gx, y: e.clientY - d.dy - d.gy }; livePlace(); });
+  const up = e => { if (s.drag && s.drag.id === e.pointerId) s.drag = null; }; head.addEventListener('pointerup', up); head.addEventListener('pointercancel', up);
+  for (const ev of ['pointerdown', 'pointerup', 'click', 'wheel', 'touchstart']) $('live-pan').addEventListener(ev, e => e.stopPropagation()); // nothing of the panel reaches the game under it
+}
+function livePlace() {
+  const s = liveS(), p = $('live-pan'); if (!p) return; p.classList.toggle('moved', !!s.pos); if (!s.pos) { p.style.left = p.style.top = ''; return; }
+  const g = $('game') || document.body, w = g.clientWidth, hh = g.clientHeight; s.pos.x = clamp(s.pos.x, 4, Math.max(4, w - p.offsetWidth - 4)); s.pos.y = clamp(s.pos.y, 4, Math.max(4, hh - 50));
+  p.style.left = s.pos.x + 'px'; p.style.top = s.pos.y + 'px';
+}
+function liveNum(k, min, max, lab) { const s = liveS(), i = h('input', { type: 'number', class: 'lv-f n', min: String(min), max: String(max), step: '1', value: String(s[k]), 'aria-label': lab, inputmode: 'numeric' }); i.addEventListener('input', () => { s[k] = clamp(Math.round(+i.value) || 0, min, max); }); return i; }
+function liveSel(k, opts, lab, redraw) { const s = liveS(), x = h('select', { class: 'lv-f', 'aria-label': lab }, ...opts.map(([v, t]) => h('option', { value: String(v), text: t }))); x.value = String(s[k]); x.addEventListener('change', () => { s[k] = +x.value; if (k === 'slot') s.k = 0; if (redraw) liveDraw(true); }); return x; }
+function liveBtn(lab, fn, ghost, more) { const s = liveS(); return h('button', Object.assign({ class: 'lv-b' + (ghost ? ' g' : ''), type: 'button', disabled: s.busy || !s.id, onclick: fn }, more || {}), lab); }
+function liveRow(title, id, ...kids) { return h('div', { class: 'lv-row', id: id || null }, h('b', { text: title }), h('div', { class: 'lv-in' }, ...kids)); }
+function liveStats() {
+  const s = liveS(), d = s.d, e = (d && d.etat) || {}, t = liveTarget(), v = t.v, sac = d && d.sac, N = ordFxNames(), fr = ficheFr;
+  const tile = (val, lab, id) => h('div', { class: 'lv-tile', 'data-k': id }, h('b', { text: String(val) }), h('small', { text: lab }));
+  const inLevel = !!v && (v.s === 1 || v.s === 2) && v.fl >= 1, hp = inLevel && v.hm > 0 ? clamp(Math.round(v.hp / v.hm * 100), 0, 100) : (e.vie | 0), n = Net.room ? specViews().length : 0;
+  const where = inLevel ? 'Niveau ' + v.fl : e.mode === 'play' ? 'Niveau ' + (e.niv | 0) : e.mode === 'hub' ? 'Accueil' : e.mode === 'end' ? 'Fin de niveau' : e.mode === 'edit' ? 'Éditeur' : d && d.enLigne ? 'Écran titre' : '—';
+  const fx = (e.fx || []).map(x => (N[x[0]] || ({ vie: 'Vie', vitesse: 'Vitesse', degats: 'Dégâts' })[x[0]] || x[0]) + ' ' + ficheDur(x[1]));
+  return [h('div', { class: 'lv-tiles' }, tile(where, e.mode === 'play' && e.dif ? (DIFFS[e.dif] || {}).name || 'en jeu' : 'où il est', 'ou'), tile(hp + ' %', v && v.s === 2 ? 'vie · À TERRE' : 'vie', 'vie'), tile(n > 1 ? n + ' joueurs' : 'Seul', 'équipe', 'eq'),
+      tile(sac ? fr(sac.pieces) : '—', 'pièces', 'pieces'), tile(sac ? fr(sac.gemmes) : '—', 'gemmes', 'gemmes'), tile(sac ? sac.niveau : '—', 'niveau atteint', 'prog'),
+      tile(sac ? sac.objets.filter(o => !o.e).length : '—', 'objets au sac', 'sac'), tile(d ? (d.creatif ? 'Ouvert' : 'Fermé') : '—', e.cr ? 'créatif · il y est' : 'mode créatif', 'crea'), tile(d ? (d.enLigne ? 'En ligne' : 'Hors ligne') : '…', d && d.vu ? 'signe ' + admJWhen(d.vu) : 'service', 'ligne')),
+    h('div', { class: 'lv-bar', 'aria-hidden': 'true' }, h('i', { style: '--w:' + hp + '%' })),
+    h('small', { id: 'live-fx', style: 'color:var(--dim)', text: fx.length ? 'En vigueur : ' + fx.join(' · ') : 'Aucun effet en vigueur.' }),
+    h('small', { style: 'color:var(--dim)', text: 'Pièces, gemmes, sac : à sa dernière sauvegarde. Vie et niveau : en direct. Son jeu relève ses ordres toutes les ' + (specS().solo ? '2,5' : '5') + ' s tant que ce panneau est ouvert.' })];
+}
+function liveCmd() {
+  const s = liveS(), d = s.d, N = ordFxNames(), solo = specS().solo, cat = CAT[s.slot] || [], dfx = () => Math.min(600, s.dur);
+  const fxs = Object.keys(N).filter(k => k !== 'butin').map(k => h('button', { class: 'lv-b g', type: 'button', 'data-fx': k, 'aria-pressed': String(liveFxOn(k)), disabled: s.busy || !s.id, onclick: () => liveSend('effet', liveFxOn(k) ? { e: k, on: 0 } : { e: k, on: 1, d: dfx() }) }, N[k]));
+  const txt = h('input', { type: 'text', class: 'lv-f', id: 'live-txt', maxlength: '140', placeholder: 'Un mot sur son écran', value: s.txt, 'aria-label': 'Message', enterkeyhint: 'send' });
+  txt.addEventListener('input', () => { s.txt = txt.value; }); const say = () => { const t = s.txt.trim(); if (t) liveSend('message', { t }).then(o => { if (o) { s.txt = ''; liveDraw(true); } }); };
+  return [liveRow('Durée des effets et de la vie', '', liveSel('dur', liveDurs(), 'Durée'), h('small', { text: 'Effets : 10 min au plus par ordre.' })),
+    liveRow('Effets (une touche allume, une autre coupe)', 'live-row-fx', ...fxs),
+    liveRow('Pluie de butin', '', liveNum('rain', 10, 20000, 'Pièces de la pluie'), liveBtn(liveFxOn('butin') ? 'Couper' : 'Faire pleuvoir', () => liveSend('effet', liveFxOn('butin') ? { e: 'butin', on: 0 } : { e: 'butin', on: 1, d: dfx(), n: s.rain }), false, { id: 'live-rain' })),
+    liveRow('Vie' + (liveFxOn('vie') ? ' · en vigueur' : ''), '', liveSel('vie', [.25, .5, 1.5, 2, 3, 4].map(v => [v, '× ' + String(v).replace('.', ',')]), 'Vie'), liveBtn('Régler', () => liveSend('vie', { x: s.vie, d: s.dur }), false, { id: 'live-vie' }), liveBtn('Normale', () => liveSend('vie', { x: 1, d: 5 }), true)),
+    liveRow('Pièces', '', liveNum('n', 1, 100000, 'Nombre de pièces'), liveBtn('Donner', () => liveSend('pieces', { n: s.n }), false, { id: 'live-pieces' }), liveBtn('Retirer', () => liveSend('pieces', { n: -s.n }), true)),
+    liveRow('Gemmes', '', liveNum('g', 1, 5000, 'Nombre de gemmes'), liveBtn('Donner', () => liveSend('gemmes', { n: s.g }), false, { id: 'live-gemmes' }), liveBtn('Retirer', () => liveSend('gemmes', { n: -s.g }), true)),
+    liveRow('Objet', 'live-row-obj', liveSel('slot', SLOTS.map((n, i) => [i, n]), 'Sorte d\'objet', true), liveSel('k', cat.map((c, i) => [i, c.name + ' (' + RAR[c.r].name + ')']), 'Objet'), liveBtn('Donner', () => liveSend('objet', { s: s.slot, k: s.k }), false, { id: 'live-objet' })),
+    liveRow('Message à l\'écran', '', txt, liveBtn('Envoyer', say, false, { id: 'live-say' })),
+    liveRow('Déplacer' + (solo ? '' : ' (joueur en équipe : refusé par son jeu)'), 'live-row-move', liveBtn('Ramener au camp', () => liveSend('camp'), false, { id: 'live-camp' }), liveSel('lv', LEVELS.slice(0, 60).map((l, i) => [i + 1, (i + 1) + ' · ' + l.name]), 'Niveau'), liveSel('df', DIFFS.slice(0, 3).map((x, i) => [i, x.name]), 'Difficulté'), liveBtn('Téléporter', () => liveSend('niveau', { n: s.lv, d: s.df }), false, { id: 'live-niveau' })),
+    liveRow('Mode créatif', '', h('small', { text: d ? (d.creatif ? 'Ouvert à ce joueur.' : 'Fermé à ce joueur.') : '…' }), liveBtn(d && d.creatif ? 'Retirer l\'accès' : 'Donner l\'accès', () => liveSend('creatif', { v: d && d.creatif ? 0 : 1 }), !!(d && d.creatif), { id: 'live-crea' }))];
+}
+function liveCreaTab() {
+  const s = liveS();
+  return [h('small', { style: 'color:var(--dim)', text: 'Les options du mode créatif, sur SA vraie partie. « v12 » : marche avec le service en ligne. Grisé : demande le service v13 (touche pour voir l\'ordre à ajouter).' }),
+    ...liveCrea().map(o => o.go
+      ? h('button', { class: 'lv-opt', type: 'button', 'data-opt': o.id, 'data-v': '12', title: o.v12 + (o.note ? ' · ' + o.note : ''), 'aria-pressed': o.on ? String(!!o.on()) : null, disabled: s.busy || !s.id, onclick: () => { s.tip = ''; o.go(); } }, ic(o.ic), h('span', { class: 'grow', text: o.lab + (o.on && o.on() ? ' · en vigueur' : '') }), h('em', { text: 'v12' }))
+      : h('button', { class: 'lv-opt v13', type: 'button', 'data-opt': o.id, 'data-v': '13', 'aria-disabled': 'true', title: 'Demande le service v13 : ' + o.v13, onclick: () => liveTip('« ' + o.lab + ' » demande le service v13 : ' + o.v13 + '.') }, ic(o.ic), h('span', { class: 'grow', text: o.lab }), h('em', { text: 'v13' })))];
+}
+function liveTip(t) { const s = liveS(); s.tip = t; clearTimeout(s.tipT); s.tipT = setTimeout(() => { s.tip = ''; liveDraw(false); }, 7000); liveDraw(false); }
+function liveLog() {
+  const s = liveS(), d = s.d, now = d ? d.maintenant : Date.now(), L = d && Array.isArray(d.ordres) ? d.ordres.slice(0, 4) : [];
+  if (!L.length) return [h('small', { style: 'color:var(--dim)', text: s.old ? 'Le service en ligne n\'est pas en version 12 : pas d\'ordres.' : 'Aucun ordre pour ce joueur. Chaque ordre s\'affiche ici : envoyé, reçu, exécuté ou refusé.' })];
+  return L.map(o => { const e = liveEtat(o, now), st = ficheState(o, now), end = e === 'execute' ? ['Exécuté', 'ok'] : e === 'refuse' ? ['Refusé', 'no'] : e === 'annule' ? ['Annulé', 'no'] : e === 'perime' ? ['Périmé', 'no'] : ['Exécuté', ''];
+    return h('div', { class: 'lv-ord', 'data-n': String(o.n), 'data-etat': e, title: st[0] }, h('span', { text: ficheLabel(o) + (o.fait && !o.ok && o.resultat ? ' — ' + o.resultat : '') }),
+      h('span', { class: 'lv-st' }, h('i', { class: e === 'envoye' ? 'now' : 'ok', text: 'Envoyé' }), h('i', { class: e === 'recu' ? 'now' : o.livre ? 'ok' : '', text: 'Reçu' }), h('i', { class: end[1], text: end[0] })),
+      e === 'envoye' || e === 'recu' ? h('button', { class: 'lv-x', type: 'button', 'aria-label': 'Annuler cet ordre', onclick: () => liveCancel(o.n) }, '✕') : null); });
+}
+// drawn again only when something it shows has changed, and never under a finger: a field that holds the keyboard keeps it
+function liveDraw(force) {
+  const s = liveS(), p = $('live-pan'); if (!p || p.hidden) return; const t = liveTarget(), d = s.d, e = (d && d.etat) || {};
+  p.classList.toggle('folded', !s.open); $('live-fold').textContent = s.open ? '▾' : '▴'; $('live-fold').setAttribute('aria-expanded', String(s.open));
+  const last = d && d.ordres && d.ordres[0], lastE = last ? liveEtat(last, d.maintenant) : '';
+  $('live-who').textContent = 'Commandes · ' + (t.name || (s.id ? devCode(s.id) : 'personne'));
+  $('live-sub').textContent = !s.id ? 'Aucun joueur à commander pour l\'instant' : !d ? (s.old ? 'Service d\'avant la version 12' : 'Lecture…') : (d.enLigne ? 'En ligne' : 'Hors ligne') + ' · ' + devCode(s.id) + (last && !s.open ? ' · dernier ordre : ' + ({ envoye: 'envoyé', recu: 'reçu', execute: 'exécuté', refuse: 'refusé', annule: 'annulé', perime: 'périmé' })[lastE] : '');
+  $('live-dot').className = d && d.enLigne ? 'on' : '';
+  for (const b of $('live-tabs').children) b.setAttribute('aria-pressed', String(b.dataset.tab === s.tab));
+  const msg = $('live-msg'); msg.hidden = !s.msg; msg.textContent = s.msg; msg.className = s.bad ? 'bad' : ''; const tip = $('live-tip'); tip.hidden = !s.tip; tip.textContent = s.tip;
+  if (!s.open) return;
+  const logSig = JSON.stringify([s.id, s.old, d && d.ordres ? d.ordres.slice(0, 4).map(o => [o.n, liveEtat(o, d.maintenant), o.resultat]) : 0]);
+  if (logSig !== s.logSig) { s.logSig = logSig; $('live-log').replaceChildren(...liveLog()); }
+  const main = $('live-main'), ae = document.activeElement, typing = !force && ae && main.contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName);
+  const sig = s.tab === 'stats' ? 'stats' + Math.floor(Date.now() / 1000) : JSON.stringify([s.tab, s.id, s.busy, specS().solo, d ? [d.creatif, d.enLigne, (e.fx || []).map(x => x[0])] : 0, s.slot]);
+  if (typing || (!force && sig === s.sig)) return; s.sig = sig;
+  const y = main.scrollTop; main.replaceChildren(...(s.tab === 'stats' ? liveStats() : s.tab === 'crea' ? liveCreaTab() : liveCmd())); main.scrollTop = y;
+}
+/* ---------- the pace ---------- */
+function liveTick() {
+  const s = liveS(), on = typeof specOn === 'function' && specOn();
+  if (!on) { const p = $('live-pan'); if (p && !p.hidden) p.hidden = true; return; }
+  liveDom(); const p = $('live-pan'); if (p.hidden) { p.hidden = false; s.sig = s.logSig = ''; if (innerHeight < 620) s.open = false; livePlace(); }
+  const t = liveTarget();
+  if (t.id !== s.id) { s.id = t.id; s.d = null; s.old = false; s.msg = ''; s.bad = false; s.at = 0; s.sig = s.logSig = ''; } // the camera passed to a teammate: the panel follows
+  if (s.id && !document.hidden && !s.reading && !s.busy && Date.now() - s.at >= liveEvery()) liveLoad();
+  liveDraw(false);
+}
+function liveStart() {
+  setInterval(liveTick, 500);
+  // typing in the panel is not steering the spectator (◀ ▶, Tab and Escape belong to it everywhere else): this listener is set before its own
+  addEventListener('keydown', e => { const p = $('live-pan'); if (!p || p.hidden || !e.target || !p.contains(e.target) || !/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return; if (e.key === 'Escape') e.target.blur(); if (e.key === 'Enter' && e.target.id === 'live-txt') { e.preventDefault(); $('live-say').click(); } e.stopImmediatePropagation(); }, true);
+  addEventListener('resize', () => { if (liveS().pos) livePlace(); });
+}
+setTimeout(liveStart, 0);
+
+/* ================= « En direct » : who plays now (branch spectateur-live, service version 12 as it is online) =================
+   In « Joueurs et sécurité » > « Joueurs », above the list, a panel that keeps itself up to date: the players online now (their game read
+   its queue of orders less than 75 seconds ago), the games going on (level, difficulty, life, alone or in a team), and for each of them
+   « Regarder » (the spectator, zzd_spectateur.js, with its command panel, zzf_live.js) and « Fiche » (the card of the player, zzc_fiche.js).
+   It reads the op « direct » of the service (the administration's password; one short reading, no writing) every 20 seconds while the tab
+   is on the screen and the page visible, and when « Actualiser » is touched. The figures never go away during a reading: the panel is
+   redrawn in place only when the answer is there.
+   The service version 12 says « en équipe » or not, never which team: the players of a team are brought together when they are in a team
+   at the same level and difficulty (said so on the screen). The team code in the state of a device is a thing for version 13.
+   Only functions at the top level; the state lives in endS() (G.endirect). */
+function endS() { return G.endirect || (G.endirect = { d: null, at: 0, busy: false, err: '', old: false, timer: 0, every: 20000, ok: 0, ask: null, said: {} }); }
+async function endLoad() {
+  const s = endS(); if (s.busy) return; s.busy = true; endMark();
+  try { const r = await admJCall('direct'); if (Array.isArray(r.direct)) { s.d = r; s.ok = Date.now(); s.old = false; s.err = ''; try { const f = ficheS(); f.direct = {}; for (const x of r.direct) f.direct[x.appareil] = x; } catch (e) { } } else s.old = true; }
+  catch (e) { s.err = String(e.message || e); }
+  s.busy = false; s.at = Date.now(); endDraw();
+}
+function endTick() {
+  const s = endS(), el = $('endirect'); if (!el || document.hidden || sheetKind !== 'adm' || !sheetOpen()) return;
+  if (!s.busy && Date.now() - s.at >= s.every) endLoad(); else endMark();
+}
+// the name of a device: what its game says, else its characters in the list of players, else its code
+function endName(x) { const e = x.etat || {}; if (e.nom) return e.nom; const a = (ADMJ.joueurs || []).find(a => a.id === x.appareil); return (a && a.persos.map(p => p.nom).join(', ')) || devCode(x.appareil); }
+function endWhere(e) {
+  return e.mode === 'play' ? 'niveau ' + (e.niv | 0) + (e.dif ? ' (' + ((DIFFS[e.dif] || {}).name || '') + ')' : '') + ' · vie ' + (e.vie | 0) + ' %' : e.mode === 'end' ? 'fin de niveau' : e.mode === 'hub' ? 'à l\'accueil' : e.mode === 'edit' ? 'dans l\'éditeur' : 'écran titre';
+}
+// the games going on: one per player alone, one per team (the players in a team at the same level and difficulty)
+function endGames(L) {
+  const out = [], teams = {};
+  for (const x of L) { const e = x.etat || {}; if (e.mode !== 'play') continue;
+    if (!e.eq) { out.push({ niv: e.niv | 0, dif: e.dif | 0, team: false, who: [x] }); continue; }
+    const k = (e.niv | 0) + '/' + (e.dif | 0); if (!teams[k]) out.push(teams[k] = { niv: e.niv | 0, dif: e.dif | 0, team: true, who: [] }); teams[k].who.push(x); }
+  return out.sort((a, b) => b.who.length - a.who.length || b.niv - a.niv);
+}
+function endWhy() { return !Net.lobby || !Net.lobby.direct ? 'La coop directe n\'est pas disponible sur cette page : pas de spectateur ici.' : Net.room ? 'Quitte d\'abord ton équipe pour regarder.' : ''; }
+function endLine(x) {
+  const s = endS(), e = x.etat || {}, id = x.appareil, me = id === DEV.id, ask = s.ask && s.ask.id === id, can = !me && typeof specCan === 'function' && specCan() && !s.ask;
+  return h('div', { class: 'end-l', 'data-id': id }, h('span', { class: 'grow' }, h('b', { text: endName(x) + (me ? ' (toi, cet appareil)' : '') }), h('small', { text: devCode(id) + ' · ' + endWhere(e) + (e.eq ? ' · en équipe' : '') + (e.cr ? ' · en mode créatif' : '') + (s.said[id] ? ' · ' + s.said[id] : '') })),
+    h('button', { class: 'btn small end-watch', type: 'button', disabled: !can, title: me ? 'C\'est cet appareil.' : endWhy() || 'Regarder sa partie en spectateur invisible', onclick: () => endWatch(id) }, ask ? 'Demande…' : 'Regarder'),
+    h('button', { class: 'btn small line end-card', type: 'button', onclick: () => endCard(id) }, 'Fiche'));
+}
+function endBody() {
+  const s = endS(), d = s.d, kids = [];
+  if (s.old) return [h('small', { class: 'adm-msg', text: 'En direct : le service en ligne n\'est pas encore en version 12.' })];
+  if (!d) return [h('small', { class: 'adm-msg', text: s.err || 'Lecture…' })];
+  const L = d.direct, play = L.filter(x => (x.etat || {}).mode === 'play'), G2 = endGames(L), rest = L.filter(x => (x.etat || {}).mode !== 'play');
+  const tile = (n, lab, k) => h('div', { class: 'adm-tile', 'data-k': k }, h('b', { text: String(n) }), h('small', { text: lab }));
+  kids.push(h('div', { class: 'adm-tiles end-tiles' }, tile(L.length, 'en ligne maintenant', 'ligne'), tile(G2.length, G2.length > 1 ? 'parties en cours' : 'partie en cours', 'parties'), tile(play.length, 'dans un niveau', 'niveau'), tile(L.filter(x => (x.etat || {}).eq).length, 'en équipe', 'equipe'), tile(L.filter(x => (x.etat || {}).cr).length, 'en mode créatif', 'creatif')));
+  const why = endWhy(); if (why && L.length) kids.push(h('small', { class: 'adm-msg', text: why }));
+  if (!L.length) { kids.push(h('small', { text: 'Personne en ligne en ce moment. (Un jeu d\'avant la version 12 ne se signale pas.)' })); return kids; }
+  if (G2.length) kids.push(h('div', { class: 'eyebrow', text: 'Parties en cours' }), ...G2.map(g => h('div', { class: 'end-g', 'data-team': g.team ? '1' : '0' },
+    h('small', { class: 'end-gt', text: 'Niveau ' + g.niv + ' · ' + ((DIFFS[g.dif] || {}).name || 'Normal') + ' · ' + (g.team ? (g.who.length > 1 ? 'équipe, ' + g.who.length + ' joueurs en ligne' : 'en équipe') : 'seul') }), ...g.who.map(endLine))));
+  if (G2.some(g => g.team && g.who.length > 1)) kids.push(h('small', { text: 'Les joueurs d\'une équipe sont réunis par niveau et difficulté : le service v12 dit « en équipe », pas le code de l\'équipe.' }));
+  if (rest.length) kids.push(h('div', { class: 'eyebrow', text: 'En ligne, hors d\'un niveau' }), h('div', { class: 'end-g' }, ...rest.map(endLine)));
+  return kids;
+}
+function endMark() { // the small line of the head: when it was read, a reading under way — the figures stay
+  const s = endS(), e = $('end-when'), b = $('end-refresh'); if (b) b.disabled = s.busy; if (e) e.textContent = endWhen();
+}
+function endWhen() { const s = endS(); return s.busy && s.d ? 'Mise à jour…' : s.err && s.d ? 'Service muet : chiffres d\'' + admJWhen(s.ok) : s.d ? 'À jour ' + (Date.now() - s.at < 5000 ? 'à l\'instant' : 'il y a ' + Math.round((Date.now() - s.at) / 1000) + ' s') + ' · se met à jour seul toutes les ' + Math.round(s.every / 1000) + ' s' : ''; }
+function endDraw() { const b = $('end-body'); if (!b) return; const a = document.activeElement, keep = a && b.contains(a) ? [a.className, a.closest('.end-l') && a.closest('.end-l').dataset.id] : null; b.replaceChildren(...endBody()); endMark();
+  if (keep) { const l = [...b.querySelectorAll('.end-l')].find(l => l.dataset.id === keep[1]), t = l && [...l.querySelectorAll('button')].find(x => x.className === keep[0]); if (t) t.focus(); } }
+// asked by the tab « Joueurs » (admJBody, m_joueurs.js)
+function endPanel() {
+  const s = endS(); endCss();
+  if (!s.timer) s.timer = setInterval(endTick, 1000);
+  if (!s.d && !s.busy && !s.old && !s.err) setTimeout(endLoad, 0);
+  return h('section', { id: 'endirect', class: 'endirect', 'aria-label': 'En direct' },
+    h('div', { class: 'end-head' }, h('i', { 'aria-hidden': 'true' }), h('b', { text: 'En direct' }), h('small', { id: 'end-when', class: 'grow', text: endWhen() }),
+      h('button', { class: 'btn small line', id: 'end-refresh', type: 'button', disabled: s.busy, onclick: endLoad }, ic('recommencer'), 'Actualiser')),
+    h('div', { id: 'end-body' }, ...endBody()));
+}
+function endCard(id) { // the card of this player, in the list just under
+  ADMJ.open = id; ADMJ.q = ''; renderSheet();
+  setTimeout(() => { const r = document.querySelector('.adm-player.on'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); else if (!ADMJ.joueurs) admJLoad('joueurs'); }, 60);
+}
+// « Regarder » straight from here: the order goes to the player's game, which answers at its next reading (up to 45 seconds when no card was open on him)
+async function endWatch(id) {
+  const s = endS(); if (s.ask || typeof specCan !== 'function' || !specCan()) return;
+  const ask = s.ask = { id, t0: Date.now() }, say = t => { s.said[id] = t; endDraw(); }; say('demande envoyée : son jeu répond en moins de 45 s…');
+  let n = 0; try { const r = await admJCall('ordre', { id, type: 'regarder', args: { d: 10 } }); n = r.ordres && r.ordres[0] && r.ordres[0].type === 'regarder' ? r.ordres[0].n : 0; } catch (e) { s.ask = null; say('Regarder : ' + String(e.message || e)); return; }
+  if (!n) { s.ask = null; say('Regarder : le service n\'est pas en version 12'); return; }
+  for (let i = 0; i < 50 && s.ask === ask; i++) {
+    await new Promise(r => setTimeout(r, 1500)); let r = null; try { r = await admJCall('ordres', { id }); } catch (e) { continue; }
+    const me = (r.ordres || []).find(x => x.n === n); if (!me || !me.fait) continue;
+    s.ask = null;
+    if (!me.ok) { say('Regarder : refusé par son jeu (' + (me.resultat || '?') + ')'); return; }
+    const eq = /^eq:([a-z0-9]{2,8})$/.exec(me.resultat || ''), code = eq ? eq[1] : me.resultat === 'salle' ? me.args.salle : '';
+    if (!code || !specStart(code, id, !eq)) say('Regarder : la partie n\'a pas pu être rejointe'); else delete s.said[id];
+    return;
+  }
+  if (s.ask === ask) { s.ask = null; say('Regarder : son jeu n\'a pas répondu (page fermée ?)'); }
+}
+function endCss() {
+  if ($('end-style')) return;
+  document.head.appendChild(h('style', { id: 'end-style', text: '.endirect{flex:none;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;background:var(--bark-3)}.end-head{display:flex;align-items:center;gap:8px}.end-head>i{flex:none;width:10px;height:10px;border-radius:50%;background:#5fe08a;box-shadow:0 0 0 3px rgba(95,224,138,.25)}.end-head b{flex:none;font-size:15px}.end-head small{min-width:0;font-size:11.5px;color:var(--dim)}' +
+    '#end-body{display:flex;flex-direction:column;gap:8px}.end-tiles{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}.end-g{display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:10px;background:var(--bark-4)}.end-gt{font-weight:700;color:var(--amber)}' +
+    '.end-l{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.end-l .grow{flex:1 1 110px;min-width:0;display:flex;flex-direction:column}.end-l b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.end-l small{font-size:11.5px;color:var(--dim)}.end-l .btn.small{min-height:40px;padding:6px 12px;font-size:13px}' }));
+}
+/* ---------- the two pages of Damien, linked from the top of the administration (admBody, i_admin.js) ----------
+   « Tableau de bord » is his private page on claude.ai (publication, cloud tasks, progress): only his account opens it. « Administration » is this
+   very page alone on the site, the address to keep as a favourite. Both open in a new tab. The dashboard already has its own way back here. */
+function admLiensList() { return [['Tableau de bord', 'https://claude.ai/artifact/9NHHtg1tdiymNCRHNoH6QV', 'Publier, tâches cloud, avancement (ta page privée sur claude.ai)'], ['Administration', 'https://belfort-systems.fr/ecorce/?admin&outil=administration', 'Cette administration seule sur sa page : l\'adresse à garder en favori']]; }
+function admLiens() {
+  if (!$('adm-liens-style')) document.head.appendChild(h('style', { id: 'adm-liens-style', text: '.adm-liens{flex:none;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12.5px;color:var(--dim)}.adm-liens a{display:inline-flex;align-items:center;min-height:36px;padding:4px 12px;border-radius:99px;box-shadow:inset 0 0 0 1px var(--line);color:var(--cream);font-weight:700;text-decoration:none}.adm-liens a:hover,.adm-liens a:focus-visible{box-shadow:inset 0 0 0 1px var(--amber)}' }));
+  return h('nav', { class: 'adm-liens', id: 'adm-liens', 'aria-label': 'Tes deux pages' }, h('span', { text: 'Tes pages :' }), ...admLiensList().map(([n, u, t]) => h('a', { href: u, target: '_blank', rel: 'noopener', title: t, text: n + ' ↗' })));
 }
 
 </script>
