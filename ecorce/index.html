@@ -906,7 +906,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "d8845f3";
+window.ecorceBuild = "4a268dc";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -6401,7 +6401,7 @@ $('crea-btn').addEventListener('click', () => creaWheelToggle());
    never in localStorage. Changes are made through tuneSet (a_tune.js): they apply at once, on this device only, and a local
    trial (tk-reglages-essai) remembers them until they are published (19d).
    Nothing here touches the save (save, ME, saveGame, persistLocal): the settings are a device matter, like CREA. */
-const ADM = { shown: false, mdp: '', busy: false, msg: '', q: '', open: { niv: true }, view: 'var', ask: false, local: false, rows: [], fams: [], lv: 1, seed: 0, sub: {}, tool: 'all', recap: false, cmp: '', askLoad: '' }; // (tool, recap, cmp, askLoad: the view « Variables », z_variables.js)
+const ADM = { shown: false, mdp: '', busy: false, msg: '', q: '', open: { niv: true }, view: 'tableau', ask: false, local: false, rows: [], fams: [], lv: 1, seed: 0, sub: {}, tool: 'all', recap: false, cmp: '', askLoad: '' }; // (tool, recap, cmp, askLoad: the view « Variables », z_variables.js)
 const ADM_TRIAL = 'tk-reglages-essai';
 const admKey = (f) => { try { return f(); } catch (e) { return null; } };
 function admRead(k, store) { return admKey(() => (store === 's' ? sessionStorage : localStorage).getItem(k)); }
@@ -6434,7 +6434,7 @@ function admCard() { // one door in the settings of a device already opened as a
   const live = !!SRV.url;
   return h('div', { class: 'adm-cards' }, h('div', { class: 'qc adm-door', style: '--i:0' }, h('span', { class: 'num' }, ic('cadenas')), h('div', { class: 'grow' }, h('b', { text: 'Administration' }),
     h('span', { class: 'meta', style: 'display:block', text: live ? (retAdmPeek() > 0 ? retAdmNew() + ' · ' : '') + 'Modèles, variables, joueurs, règles d\'import' : 'Il faut ouvrir le jeu depuis le site' })),
-    live ? h('button', { class: 'btn small', type: 'button', text: 'Ouvrir', onclick: () => { ADM.msg = ''; if (!ADM_VIEWS[ADM.view] || ADM.view === 'prop') ADM.view = 'var'; openSheet('adm'); } }) : null));
+    live ? h('button', { class: 'btn small', type: 'button', text: 'Ouvrir', onclick: () => { ADM.msg = ''; if (!ADM_VIEWS[ADM.view] || ADM.view === 'prop') ADM.view = 'tableau'; openSheet('adm'); } }) : null));
 }
 
 // (8 October, Damien) entering the administration turns the creative mode on: everything is open to try, and nothing of it reaches the real game,
@@ -8525,7 +8525,7 @@ function edPalBtn(model, label, on, fn) {
 }
 // the chosen model of the palette, turning in a corner while the tool is in hand
 function edPrevStep() {
-  const want = ED.on && G.mode === 'edit' && ED.tool === 'decmur' ? 'd_' + ZONES[ED.dz == null ? edZone() : ED.dz] + '_' + PROPS[ED.dz == null ? edZone() : ED.dz][ED.deco % 3][0] : ED.on && G.mode === 'edit' && (ED.tool === 'crea' || ED.tool === 'decor') ? (ED.tool === 'crea' ? monName(ED_FOES[ED.crea][0], strIdxOf(ED.floor)) : 'd_' + ZONES[ED.dz == null ? edZone() : ED.dz] + '_' + edDecor()[ED.deco % edDecor().length][0]) : '';
+  const want = ED.on && G.mode === 'edit' && ED.tool === 'decmur' ? 'd_' + ZONES[ED.dz == null ? edZone() : ED.dz] + '_' + PROPS[ED.dz == null ? edZone() : ED.dz][ED.deco % 3][0] : ED.on && G.mode === 'edit' && (ED.tool === 'crea' || ED.tool === 'decor') ? (ED.tool === 'crea' ? monName(ED_FOES[ED.crea][0], strIdxOf(ED.floor)) : decoModel(edDecor()[ED.deco % edDecor().length][0], ED.dz == null ? edZone() : ED.dz)) : ''; // (the same name as the palette's: the decors of « Autres » and of the library already carry their whole name)
   const box = $('ed-prevbox'); if (!want || !box || !prevInit()) return;
   if (PREV.name !== want) { prevFree(PREV.cur); PREV.cur = null; PREV.name = want; modelLoad(want).then(() => { if (PREV.name === want && !PREV.cur) { PREV.cur = prevModel(want); if (PREV.cur) PREV.scene.add(PREV.cur); } }); }
   if (PREV.r.domElement.parentNode !== box) box.append(PREV.r.domElement);
@@ -9086,7 +9086,7 @@ const OUTILS = {
   editeur: () => edStart(clamp(+(new URLSearchParams(location.search).get('niveau')) || 1, 1, LEVELS.length), newSeed(0, false)),
   camp: () => edStart('camp'),
   interface: () => hudEditStart('play'),
-  administration: () => { ADM.view = 'mod'; ADM.big = true; document.title = 'Administration · TinKnight'; openSheet('adm'); }, // the whole administration alone on its page (8 October) : …/ecorce/?admin&outil=administration
+  administration: () => { ADM.view = 'tableau'; ADM.big = true; document.title = 'Administration · TinKnight'; openSheet('adm'); }, // the whole administration alone on its page (8 October) : …/ecorce/?admin&outil=administration
   regles: () => { ADM.view = 'regles'; ADM.big = true; openSheet('adm'); },
   tableau: () => { ADM.view = 'tableau'; ADM.big = true; openSheet('adm'); }, // the dashboard in the administration (zzt_tableau.js) : …/ecorce/?admin&outil=tableau
   bibliotheque: () => { ADM.view = 'mod'; openSheet('adm'); setTimeout(() => { const b = [...document.querySelectorAll('.adm-box b')].find(x => x.textContent === 'La bibliothèque'); if (b) b.scrollIntoView({ block: 'start' }); }, 50); },
@@ -15695,6 +15695,8 @@ function danseRows() {
    A service still in version 12 answers an unknown op with the list of devices: the tab then says « Demande le service version 13 »
    and gives the link to the claude.ai page.
    Hooks elsewhere, one line each: src/i_admin.js (ADM_VIEWS, the tabs, tbBody), src/n_roles.js (?admin&outil=tableau), build.mjs.
+   (branch tableau-complet) The four panels are no longer bubbles: the tab is one page of cards that fold and change places
+   (src/zzx_complet.js, tcCards), with « État », « Décisions », « En chiffres »… around the three panels read on GitHub.
    Every top-level name here is a function: this file comes after d_ui.js. */
 function tbS() { return tbS.s || (tbS.s = { data: null, sig: '', lu: 0, tried: 0, busy: false, err: '', code: '', old: false, stop: false, mdp: '', sec: 'pub', pick: {}, tests: true, service: false, seul: '', armed: '', armT: 0, msg: null, sending: false, last: '', watch: 0, timer: 0, open: {} }); }
 function tbDash() { return 'https://claude.ai/artifact/9NHHtg1tdiymNCRHNoH6QV'; } // the page « Tableau de bord TinKnight » (private to Damien's account)
@@ -15705,10 +15707,9 @@ function tbGroups() {
     ['Éditeur et atelier', 'editeur,editeur_tactile,atelier,cles_liens,cles_sable,cles_formes,cles_anims,cles_monde,cles_perso'], ['Niveaux', 'niveaux,mondes,zones,decors,coffres_enfouis,destructibles,mini_quetes,sol_vivant'],
     ['Sauvegarde et service', 'serveur,sauvegarde_en_ligne,garde_fous,sceau'], ['Menus et accueil', 'accueil,accueil_bulles,nouveautes,hud,manette,boutique,chevaliers,classes'], ['Son', 'sons']];
 }
-function tbSecs() { return [['pub', 'nuage', 'Publication'], ['taches', 'temps', 'Tâches cloud'], ['chantiers', 'stats', 'Chantiers'], ['liens', 'aller', 'Raccourcis']]; }
 // the name of the tab (i_admin.js asks for it each time the tabs are drawn: the styles are there before the first drawing)
 function tbTab() { tbCss(); return 'Tableau'; }
-function tbSub() { return 'L\'état du projet, lu sur GitHub par le service : ce qui est en ligne, ce qui attend, les tâches cloud, et le bouton Publier.'; }
+function tbSub() { return 'Tout le projet sur une page : l\'état en direct, le bouton Publier, les tâches cloud, tes décisions, les raccourcis. Chaque carte se replie et se déplace.'; }
 function tbShown() { return sheetKind === 'adm' && ADM.view === 'tableau' && !!ADM.mdp && !!$('tb-root'); }
 function tbDate(v) { const d = new Date(v); return isNaN(d) ? '' : d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
 function tbAgo(ms) { const m = Math.max(0, Math.round(ms / 60000)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0'); }
@@ -15727,6 +15728,7 @@ async function tbLoad() {
   const s = tbS(); if (s.busy || !SRV.url || !ADM.mdp) return;
   s.busy = true; s.mdp = ADM.mdp; tbEtat();
   const { status, o } = await tbCall('tableau'); s.busy = false; s.tried = Date.now();
+  if (status !== 403 && status !== 429) tcLive(); // the password was not refused: the other live readings of « État » (zzx_complet.js)
   if (o.ok && o.tableau === 1 && Array.isArray(o.commits)) {
     const d = { commits: o.commits, attente: Array.isArray(o.attente) ? o.attente : [], taches: Array.isArray(o.taches) ? o.taches : [], chantiers: Array.isArray(o.chantiers) ? o.chantiers : [], resultat: o.resultat || null, historique: Array.isArray(o.historique) ? o.historique : null, travail: String(o.travail || 'audit-fable') }; // (historique: zzl_publications.js ; null with a service that does not give it yet)
     const sig = JSON.stringify(d), same = sig === s.sig && !s.err && !s.old && !!s.data;
@@ -15749,7 +15751,7 @@ function tbTick() {
 }
 // the line that says when it was read: changed in place, nothing else moves
 function tbEtatTxt() {
-  const s = tbS(), nom = (tbSecs().find(x => x[0] === s.sec) || tbSecs()[0])[2];
+  const s = tbS(), nom = 'GitHub';
   const quand = s.busy ? (s.lu ? 'Lu à ' + tbClock(s.lu) + ' · mise à jour…' : 'Lecture…') : s.lu ? 'Lu à ' + tbClock(s.lu) + (Date.now() < s.watch ? ' · suivi rapproché' : '') : s.old ? 'Service version 12' : s.err ? 'Non lu' : '';
   return [nom, quand];
 }
@@ -15760,9 +15762,10 @@ function tbEtat() {
 // the new content is built off screen, then put in place in one go: nothing blanks out between two readings
 function tbPaint() {
   const r = $('tb-root'); if (!r || sheetKind !== 'adm' || ADM.view !== 'tableau') return;
+  if (tcS().drag) { tcS().late = true; return; } // a card is held under a finger: the drawing waits for it to be put down
   const f = document.createDocumentFragment(); f.append(...tbParts().filter(Boolean)); r.replaceChildren(f);
 }
-function tbGo(sec) { tbS().sec = sec; tbPaint(); const b = $('sh-body'); if (b) b.scrollTop = 0; }
+function tbGo(sec) { tbS().sec = sec; tcShow(sec); }
 
 // ---- the tab (called by admBody, i_admin.js)
 function tbBody(kids) {
@@ -15773,18 +15776,12 @@ function tbBody(kids) {
   if (!s.busy && !s.stop && (!s.tried || Date.now() - s.tried >= 60000)) setTimeout(tbLoad, 0);
 }
 function tbParts() {
-  const s = tbS(), d = s.data, t = tbEtatTxt(), out = [];
-  out.push(h('div', { class: 'tb-top' },
-    h('div', { class: 'var-bulles', id: 'tb-bulles', role: 'tablist', 'aria-label': 'Panneaux du tableau de bord' }, ...tbSecs().map(([k, icon, lab]) => { const n = k === 'pub' && d ? d.commits.filter(c => !c.enLigne).length : k === 'taches' && d ? d.taches.filter(x => x.sommaire && !x.sommaire.fini).length : 0;
-      return h('button', { class: 'var-bulle', type: 'button', role: 'tab', 'data-t': k, 'aria-pressed': String(s.sec === k), 'aria-label': lab + (n ? ' (' + n + ')' : ''), title: lab, onclick: () => tbGo(k) }, h('span', { class: 'var-bic' }, ic(icon), h('i', { hidden: !n, text: n ? String(n) : '' })), h('small', { text: lab })); })),
-    h('button', { class: 'btn small line', id: 'tb-go', type: 'button', disabled: s.busy, 'aria-label': 'Actualiser', onclick: () => { s.stop = false; tbLoad(); } }, ic('recommencer'), 'Actualiser')));
-  out.push(h('p', { class: 'tb-cap', id: 'tb-etat', role: 'status' }, h('b', { text: t[0] }), t[1] ? ' · ' + t[1] : ''));
-  if (s.sec === 'liens') { out.push(...tbLinks()); return out; }
-  if (s.old) { out.push(tbOld()); return out; }
-  if (s.err) out.push(h('p', { class: 'tb-note err', id: 'tb-err', role: 'alert', text: s.err + (d ? ' Ce qui suit date de ' + tbClock(s.lu) + '.' : '') }),
-    d ? null : h('p', { class: 'tb-note' }, 'En attendant, la page claude.ai marche toujours : ', tbLink(tbDash(), 'ouvrir le tableau de bord')));
-  if (!d) { if (!s.err) out.push(h('p', { class: 'tb-note', text: 'Lecture de GitHub par le service…' })); return out; }
-  out.push(...(s.sec === 'taches' ? tbTasks(d) : s.sec === 'chantiers' ? tbChantiers(d) : tbPub(d)));
+  const s = tbS(), d = s.data, t = tbEtatTxt(), out = [], plie = tcDefs().every(x => !tcOpen(x[0]));
+  out.push(h('div', { class: 'tc-top' }, h('p', { class: 'tb-cap', id: 'tb-etat', role: 'status' }, h('b', { text: t[0] }), t[1] ? ' · ' + t[1] : ''),
+    h('div', { class: 'tb-btns' }, h('button', { class: 'chipbtn tc-mini', id: 'tc-plier', type: 'button', onclick: () => tcAll(plie) }, plie ? 'Tout déplier' : 'Tout replier'),
+      h('button', { class: 'btn small line', id: 'tb-go', type: 'button', disabled: s.busy, 'aria-label': 'Actualiser', onclick: () => { s.stop = false; tcS().force = true; tbLoad(); } }, ic('recommencer'), 'Actualiser'))));
+  if (s.err) out.push(h('p', { class: 'tb-note err', id: 'tb-err', role: 'alert', text: s.err + (d ? ' Ce qui suit date de ' + tbClock(s.lu) + '.' : '') }));
+  out.push(tcCards(d)); // every card, in the order kept on this device (zzx_complet.js)
   return out;
 }
 // a service of before: one plain sentence, and the page that still does the job
@@ -15807,6 +15804,7 @@ function tbPub(d) {
       : [h('li', null, h('code', { text: '—' }), h('span', { text: 'Aucune modification lue.' }))])),
     h('div', { class: 'tb-btns' }, tbLink(tbRepo() + '/commits/' + d.travail, 'Toutes, sur GitHub', 'tb-out')));
   const branches = d.attente.length ? pubGroupes(d, (b, c) => { const cb = h('input', { type: 'checkbox', 'data-b': b.nom, 'aria-label': 'Ajouter la branche ' + b.nom }); cb.checked = !!s.pick[b.nom];
+    if (c.g !== 0) { cb.disabled = true; cb.checked = false; delete s.pick[b.nom]; cb.title = 'Pas encore publiable : la tâche n\'est pas finie (elle entrerait en conflit)'; } // (only a finished branch can be ticked: an unfinished one made the action fail on 10 October)
     cb.addEventListener('change', () => { if (cb.checked) s.pick[b.nom] = true; else delete s.pick[b.nom]; tbDisarm(); });
     return h('label', { class: 'tb-br', 'data-g': String(c.g) }, cb, h('b', null, b.nom, pubChip(c)), h('small', { text: pubMots(b, c) })); }) // (sorted in two groups, each with its state: zzl_publications.js)
     : [h('p', { class: 'tb-note', id: 'tb-none', text: 'Aucune branche en attente : tout est déjà dans la version de travail.' })];
@@ -15888,18 +15886,6 @@ function tbChantiers(d) {
     h('p', { class: 'tb-note', text: 'Un élément compte quand il est en ligne ; une branche en cours compte pour son sommaire. Chaque tâche cloud ajoute les siens : personne ne coche rien à la main.' })];
 }
 
-// ---- « Raccourcis »: what stays in this window first, then the pages outside
-function tbLinks() {
-  const go = v => () => { ADM.view = v; ADM.msg = ''; renderSheet(); const b = $('sh-body'); if (b) b.scrollTop = 0; };
-  const inb = (lab, sub, fn, main, off) => h('button', { class: 'tb-link' + (main ? ' main' : ''), type: 'button', disabled: !!off, onclick: fn }, h('b', { text: lab }), h('span', { text: sub }));
-  const out = (lab, sub, href) => tbLink(href, [h('b', { text: lab }), h('span', { text: sub })], 'tb-link');
-  return [h('span', { class: 'tb-lab', text: 'Dans cette fenêtre' }),
-    h('div', { class: 'tb-links', id: 'tb-liens' }, inb('Joueurs et retours', 'Qui joue, fiches, bugs et idées', go('joueurs'), true), inb('Variables', 'Tous les chiffres du jeu', go('var')), inb('Éditeur de modèles', 'Cartes, camp, bibliothèque, atelier', go('mod')),
-      inb('Éditeur de niveaux', 'Niveau ' + (ADM.lv || 1) + ', à la main', () => { if (Net.room) return; if (!ADM.seed) ADM.seed = newSeed(0, false); edStart(ADM.lv || 1, ADM.seed); }, false, !!Net.room || !!LEVELS[(ADM.lv || 1) - 1].boss),
-      inb('Règles d\'import', 'Style, formats, Blender', go('regles'))),
-    h('span', { class: 'tb-lab', text: 'Ailleurs (nouvel onglet)' }),
-    h('div', { class: 'tb-links' }, out('Tableau de bord claude.ai', 'La page d\'origine', tbDash()), out('Publications', 'L\'action « Publier » sur GitHub', tbRepo() + '/actions/workflows/publier.yml'), out('Journal de bord', 'Ce qui a été fait, jour par jour', tbRepo() + '/blob/audit-fable/audit/JOURNAL.md'))];
-}
 // the two kinds the service writes in the security log (the list of names belongs to m_joueurs.js)
 function tbGenres() { if (typeof ADMJ_GENRES === 'undefined' || ADMJ_GENRES.publier) return; ADMJ_GENRES.publier = ['Demande de publication', 'calm']; ADMJ_GENRES.tableau = ['Tableau de bord lu', 'calm']; }
 function tbCss() {
@@ -16767,6 +16753,294 @@ function hudmRow() {
     h('div', { class: 'seg' }, ...hudmNames().map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(cur === i), 'aria-label': 'Écran de jeu ' + n, onclick: () => { hudmSet(i); renderSheet(); } }, pv(i), n))));
 }
 
+/* ================= the complete dashboard (10 October, branch tableau-complet, service version 13 as it is online) =================
+   Damien's request: « mets à jour le dashboard avec les sections qu'il manque, les infos évidentes que je n'ai pas ajoutées ».
+   The tab « Tableau » (src/zzt_tableau.js) becomes one page of cards, each one folds, and their order is changed with a finger:
+     « État »          everything live: the version on line, the work version, the service (version, answers or not, how fast), the relay,
+                       players now and today, devices and knights, unread feedback, the last publication, the cloud tasks, the decisions ;
+     « Publication », « Tâches cloud », « Chantiers »   the three panels of zzt_tableau.js, unchanged inside ;
+     « Décisions »     read from avancement/decisions.json (written in the page by build.mjs), « Tranchée » archives one ON THIS DEVICE
+                       (the service version 13 cannot write that file: its op « publier » only writes publier/demandes/) ;
+     « Ouvrir »        Jouer, Variables, Joueurs, the editors, the frame counter ;
+     « En chiffres »   every figure counted, none typed: by the game itself (settings, news, worlds) or by build.mjs (tcProjet()) ;
+     « Comment tout s'emboîte », « Les fichiers du jeu » (the build order, each file with the first line of its header) ;
+     « Raccourcis »    the repositories, Actions, Cloudflare, the documents, the tools, the Claude account.
+   Live data: the op « tableau » (read by zzt_tableau.js), then the hello of the service (GET /), and the ops « direct », « retours »
+   and « stats » that the administration already uses. They are asked only after the password was accepted by « tableau » (a refused
+   password is never sent four times in a row), every 60 seconds with the tab (« stats » every 5 minutes: it reads every save).
+   Kept on the device (localStorage « tk-tableau »): the order of the cards, which are folded, the decisions marked « Tranchée ».
+   Every top-level name here is a function: this file comes after d_ui.js. */
+function tcS() { if (!tcS.s) { const k = tcKept(); tcS.s = { ordre: k.ordre, plie: k.plie, tranchees: k.tranchees, live: {}, lu: 0, statsLu: 0, busy: false, force: false, drag: '', late: false, armed: '', armT: 0 }; } return tcS.s; }
+function tcKept() {
+  let o = null; try { o = JSON.parse(localStorage.getItem('tk-tableau') || 'null'); } catch (e) { }
+  o = o && typeof o === 'object' ? o : {}; const map = v => v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+  return { ordre: Array.isArray(o.ordre) ? o.ordre.filter(x => typeof x === 'string') : [], plie: map(o.plie), tranchees: map(o.tranchees) };
+}
+function tcKeep() { const s = tcS(); try { localStorage.setItem('tk-tableau', JSON.stringify({ ordre: s.ordre, plie: s.plie, tranchees: s.tranchees })); } catch (e) { } }
+function tcP() { return typeof tcProjet === 'function' ? tcProjet() : { fichiers: [], autres: [], lignes: 0, tests: { rapides: 0, lents: 0, service: 0 }, modeles: 0, images: 0, sons: 0, musiques: 0, publications: { main: 0, bouton: 0 }, decisions: [], archives: 0, construit: '', commit: '' }; }
+function tcN(n) { return (+n || 0).toLocaleString('fr-FR'); }
+// the cards, in their first order ; the last field: open the first time
+function tcDefs() {
+  return [['etat', 'État', true], ['pub', 'Publication', true], ['decisions', 'Décisions qui t\'attendent', true], ['taches', 'Tâches cloud', false], ['chantiers', 'Avancement par chantier', false], ['assets', 'Assets nécessaires', false],
+    ['ouvrir', 'Ouvrir', false], ['chiffres', 'En chiffres', false], ['emboite', 'Comment tout s\'emboîte', false], ['fichiers', 'Les fichiers du jeu', false], ['liens', 'Raccourcis', false]];
+}
+function tcOrdre() { const s = tcS(), ids = tcDefs().map(d => d[0]), out = s.ordre.filter((x, i) => ids.includes(x) && s.ordre.indexOf(x) === i); for (const id of ids) if (!out.includes(id)) out.splice(Math.min(out.length, ids.indexOf(id)), 0, id); return out; }
+function tcOpen(id) { const s = tcS(), d = tcDefs().find(x => x[0] === id); return id in s.plie ? !s.plie[id] : !!(d && d[2]); }
+function tcSet(id, open) { const s = tcS(); s.plie[id] = !open; tcKeep(); tcRefresh(id); }
+// one card redrawn in place (a fold, a live reading): nothing else moves
+function tcRefresh(id) { const s = tcS(), old = $('tc-' + id); if (!old || typeof tbShown !== 'function' || !tbShown()) return; if (s.drag) { s.late = true; return; } old.replaceWith(tcCard(id, tbS().data)); }
+function tcAll(open) { const s = tcS(); for (const d of tcDefs()) s.plie[d[0]] = !open; tcKeep(); tbPaint(); }
+
+// ---- the live readings beside « tableau »
+async function tcLive() {
+  const s = tcS(); if (s.busy || !SRV.url || !ADM.mdp) return;
+  s.busy = true; const L = s.live, now = Date.now(), force = s.force; s.force = false;
+  const t0 = performance.now(), wantStats = force || !L.stats || now - s.statsLu >= 300000;
+  const hello = (async () => { try { const r = await fetch(SRV.url.replace(/\/+$/, '') + '/', { cache: 'no-store' }), o = await r.json(); return { ok: !!(o && o.ok), version: (o && o.version) | 0, ms: Math.round(performance.now() - t0) }; } catch (e) { return { ok: false, version: 0, ms: 0 }; } })();
+  const [hl, di, re, st] = await Promise.all([hello, tbCall('direct'), tbCall('retours', { combien: 1 }), wantStats ? tbCall('stats') : null]);
+  L.hello = hl;
+  L.direct = di.o.ok && Array.isArray(di.o.direct) ? di.o.direct.length : di.o.ok ? -1 : L.direct; // -1: a service of before « en ligne maintenant »
+  if (re.o.ok && typeof re.o.nouveaux === 'number') L.retours = re.o.nouveaux;
+  if (st && st.o.ok && st.o.stats && typeof st.o.stats === 'object') { L.stats = st.o.stats; s.statsLu = now; }
+  L.refus = [di, re].every(x => x.status === 403 || x.status === 429);
+  s.busy = false; s.lu = Date.now(); tcRefresh('etat');
+}
+
+// ---- « État »: one line each, with its dot (« » green, w orange, r red, i not read yet)
+function tcEtatRows(d) {
+  const s = tcS(), L = s.live, T = tbS(), P = tcP(), rows = [], wait = !s.lu && !!SRV.url, row = (k, lab, val, dot, sub) => rows.push({ k, lab, val, dot, sub: sub || '' });
+  const build = String(window.ecorceBuild || P.commit || ''), num = P.publications.main + P.publications.bouton;
+  const vrais = d ? d.commits.filter(c => !/^(Publier|Tester) : /.test(String(c.msg || ''))) : [], off = vrais.filter(c => !c.enLigne).length, on = d ? d.commits.find(c => c.enLigne) : null;
+  if (d) row('ligne', 'En ligne', on ? on.sha + ' · publication n° ' + num : 'plus ancienne que les ' + d.commits.length + ' dernières modifications', on ? '' : 'w', (on ? 'mise en ligne du ' + tbDate(on.quand) + ' · ' : '') + 'cette page : ' + (build || 'version non notée'));
+  else row('ligne', 'En ligne', build ? 'cette page : ' + build + ' · publication n° ' + num : '—', T.err ? 'w' : 'i', T.old ? 'Le service version 12 ne lit pas GitHub.' : T.err ? 'GitHub non lu.' : 'Lecture…');
+  if (d) row('travail', 'Version de travail', d.travail + ' · ' + (d.commits[0] ? d.commits[0].sha : '—'), off ? 'w' : '', off ? off + (off === vrais.length && off >= 10 ? ' ou plus' : '') + (off > 1 ? ' modifications pas encore en ligne' : ' modification pas encore en ligne') : 'tout est en ligne');
+  const hl = L.hello;
+  if (!SRV.url) row('service', 'Service', 'pas de service sur cette page', 'w', 'La sauvegarde en ligne et ce tableau ont besoin du service.');
+  else if (!hl) row('service', 'Service', '…', 'i', 'Lecture…');
+  else if (!hl.ok) row('service', 'Service', 'ne répond pas', 'r', 'Les joueurs ne sont plus sauvegardés en ligne tant qu\'il ne répond pas.');
+  else row('service', 'Service', 'version ' + hl.version + ' · répond en ' + tcN(hl.ms) + ' ms', hl.version < 13 || hl.ms >= 1500 ? 'w' : '', hl.version < 13 ? 'Ce tableau demande la version 13.' : hl.ms >= 1500 ? 'Lent : à revoir si ça dure.' : 'répond');
+  let maison = false, secours = false; try { maison = /^https:\/\//.test(String(window.ecorceRelais || '')); secours = maison && Math.round(TU.relais) === 1; } catch (e) { }
+  row('relais', 'Relais des équipes', maison && !secours ? 'maison' : 'public (PeerJS)', secours ? 'w' : '', secours ? 'Le réglage « relais » est sur le secours.' : maison ? 'Notre relais, chez Cloudflare.' : 'Notre relais reste en réserve.');
+  const st = L.stats, dir = L.direct;
+  if (L.refus) row('joueurs', 'Joueurs', 'non lus', 'r', 'Le service a refusé le mot de passe.');
+  else row('joueurs', 'Joueurs', wait || (dir == null && !st) ? '…' : (dir == null || dir < 0 ? '—' : tcN(dir)) + ' en ligne maintenant · ' + (st ? tcN(st.actifs1) : '—') + ' aujourd\'hui', wait || (dir == null && !st) ? 'i' : '', st ? tcN(st.actifs7) + ' sur 7 jours · ' + tcN(st.nouveaux7) + (st.nouveaux7 > 1 ? ' nouveaux' : ' nouveau') + ' cette semaine' : '');
+  row('appareils', 'Appareils et chevaliers', st ? tcN(st.appareils) + (st.appareils > 1 ? ' appareils · ' : ' appareil · ') + tcN(st.personnages) + (st.personnages > 1 ? ' chevaliers' : ' chevalier') : wait ? '…' : '—', st ? (st.bloques ? 'w' : '') : 'i', st && st.bloques ? st.bloques + (st.bloques > 1 ? ' appareils bloqués' : ' appareil bloqué') : st ? 'aucun appareil bloqué' : '');
+  row('retours', 'Retours non lus', L.retours == null ? (wait ? '…' : '—') : tcN(L.retours), L.retours == null ? 'i' : L.retours ? 'w' : '', L.retours ? 'À lire dans Joueurs > Retours.' : L.retours === 0 ? 'tout est lu' : '');
+  const r = d && d.resultat, bon = r && (r.etat === 'réussie' || r.etat === 'tests réussis');
+  if (d) row('resultat', r && r.publier === false ? 'Dernier essai' : 'Dernière publication', r ? r.etat + ' le ' + tbDate(r.quand) : 'aucune lue', r ? (bon ? '' : 'r') : 'i', r ? (r.branches && r.branches.length ? 'avec ' + r.branches.join(', ') : 'version de travail seule') + (r.tests === false ? ' · sans tests' : '') : '');
+  if (d) {
+    const run = d.taches.filter(t => t.sommaire && !t.sommaire.fini), pct = t => Math.min(100, Math.round(t.sommaire.etapes.reduce((a, e) => a + (e.fait ? +e.poids || 0 : 0), 0)));
+    const stale = run.filter(t => t.dernier && Date.now() - new Date(t.dernier).getTime() > 40 * 60000).length;
+    row('taches', 'Tâches cloud', run.length ? run.length + ' en cours' : 'aucune en cours', stale ? 'w' : '', run.length ? run.map(t => t.branche + ' ' + pct(t) + ' %').join(' · ') + (stale ? ' · ' + stale + ' sans envoi depuis 40 min' : '') : '');
+  }
+  const dec = tcDecisions().length; row('decisions', 'Décisions', dec ? dec + (dec > 1 ? ' t\'attendent' : ' t\'attend') : 'aucune en attente', dec ? 'w' : '', '');
+  return rows;
+}
+function tcEtat(d) {
+  const s = tcS(), rows = tcEtatRows(d), go = { retours: ['Lire', () => tcGo('joueurs')], joueurs: ['Voir', () => tcGo('joueurs')], decisions: ['Voir', () => tcShow('decisions')], taches: ['Voir', () => tcShow('taches')], resultat: ['Voir', () => tcShow('pub')] };
+  return [h('ul', { class: 'tc-etat', id: 'tc-etat-rows' }, ...rows.map(r => h('li', { 'data-k': r.k, 'data-dot': r.dot || 'ok' }, h('span', { class: 'tb-dot ' + r.dot, role: 'img', 'aria-label': r.dot === 'r' ? 'à corriger' : r.dot === 'w' ? 'à regarder' : r.dot === 'i' ? 'pas encore lu' : 'bon' }),
+    h('span', { class: 'tc-el' }, h('small', { text: r.lab }), h('b', { text: r.val }), r.sub ? h('small', { class: 'tc-sub', text: r.sub }) : null),
+    go[r.k] && r.val !== '…' ? h('button', { class: 'chipbtn tc-mini', type: 'button', 'aria-label': go[r.k][0] + ' : ' + r.lab, onclick: go[r.k][1] }, go[r.k][0]) : null))),
+    h('p', { class: 'tb-note', id: 'tc-etat-lu', text: (s.lu ? 'Service lu à ' + tbClock(s.lu) : SRV.url ? 'Lecture du service…' : '') + (s.busy && s.lu ? ' · mise à jour…' : '') })];
+}
+function tcGo(view) { ADM.view = view; ADM.msg = ''; renderSheet(); const b = $('sh-body'); if (b) b.scrollTop = 0; }
+// open a card and bring it under the eyes
+function tcShow(id) { const s = tcS(); if (!tcOpen(id)) { s.plie[id] = false; tcKeep(); tcRefresh(id); } const e = $('tc-' + id); if (e) e.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+
+// ---- « Décisions »: the file avancement/decisions.json as build.mjs wrote it in the page, less those marked on this device
+function tcDecisions() { const s = tcS(); return tcP().decisions.filter(x => !s.tranchees[x.id]); }
+function tcTrancher(id) {
+  const s = tcS();
+  if (s.armed !== id) { s.armed = id; clearTimeout(s.armT); s.armT = setTimeout(() => { if (s.armed === id) { s.armed = ''; tcRefresh('decisions'); } }, 6000); tcRefresh('decisions'); return; }
+  s.armed = ''; clearTimeout(s.armT); s.tranchees[id] = new Date().toISOString(); tcKeep(); tcRefresh('decisions'); tcRefresh('etat');
+}
+function tcRouvrir(id) { const s = tcS(); delete s.tranchees[id]; tcKeep(); tcRefresh('decisions'); tcRefresh('etat'); }
+function tcDecBody() {
+  const s = tcS(), P = tcP(), open = tcDecisions(), done = P.decisions.filter(x => s.tranchees[x.id]);
+  const one = x => h('li', { class: 'tc-dec', 'data-d': x.id }, h('span', { class: 'tb-dot w' }),
+    h('div', { class: 'tc-el' }, h('b', { text: x.question }), x.recommandation ? h('small', null, h('em', { text: 'Conseil : ' }), x.recommandation) : null,
+      h('div', { class: 'tb-btns' }, h('button', { class: 'btn small' + (s.armed === x.id ? ' danger' : ' line'), type: 'button', 'data-tr': x.id, onclick: () => tcTrancher(x.id) }, s.armed === x.id ? 'Confirmer : tranchée' : 'Tranchée'),
+        x.lien ? tbLink(x.lien, 'Ouvrir le lien', 'tb-out') : null, h('small', { class: 'tc-sub', text: (x.ajoutee ? 'depuis le ' + x.ajoutee.split('-').reverse().slice(0, 2).join('/') : '') + (x.par ? ' · ' + x.par : '') }))));
+  return [open.length ? h('ul', { class: 'tc-decs', id: 'tc-decs' }, ...open.map(one)) : h('p', { class: 'tb-note ok', id: 'tc-decs', text: 'Aucune décision ne t\'attend.' }),
+    done.length ? h('details', { class: 'tc-done', id: 'tc-done' }, h('summary', { text: done.length + (done.length > 1 ? ' tranchées sur cet appareil' : ' tranchée sur cet appareil') }),
+      h('ul', { class: 'tc-decs' }, ...done.map(x => h('li', { class: 'tc-dec' }, h('span', { class: 'tb-dot' }), h('div', { class: 'tc-el' }, h('span', { text: x.question }), h('div', { class: 'tb-btns' }, h('small', { class: 'tc-sub', text: 'le ' + tbDate(s.tranchees[x.id]) }), h('button', { class: 'chipbtn tc-mini', type: 'button', onclick: () => tcRouvrir(x.id) }, 'Rouvrir'))))))) : null,
+    h('p', { class: 'tb-note', text: '« Tranchée » range la décision sur cet appareil seulement : le service ne sait pas écrire ce fichier. Dis ton choix à Claude, qui le notera dans les archives de avancement/decisions.json. Les tâches cloud ajoutent ici leurs questions.' })];
+}
+
+// ---- « Assets nécessaires »: read from avancement/assets.json (written in the page by build.mjs) ; every task adds there what it needs from
+// Damien's hands (a model, a texture, an icon, a sound), with where to do it, which tool, how the game takes it and how it is published
+function tcAssets() { const P = tcP(); return Array.isArray(P.assets) ? P.assets : []; }
+function tcAssetsOpen() { return tcAssets().filter(a => a.etat !== 'fait'); }
+function tcAssetsBody() {
+  const open = tcAssetsOpen().sort((a, b) => a.priorite - b.priorite), done = tcAssets().filter(a => a.etat === 'fait'), P = ['', 'se voit tout de suite', 'enrichit', 'finition'];
+  const line = (lab, txt) => txt ? h('div', { class: 'tc-as-l' }, h('b', { text: lab + ' ' }), h('span', { text: txt })) : null;
+  const one = a => h('details', { class: 'tc-as', 'data-a': a.id }, h('summary', {}, h('span', { class: 'tb-dot ' + (a.priorite === 1 ? 'w' : '') }), h('b', { text: a.nom }), h('small', { text: ' · ' + a.pour + ' · ' + P[a.priorite] })),
+    h('div', { class: 'tc-el' }, line('Quoi :', a.quoi), line('Où :', a.ou), line('Outil :', a.outil), line('Importer :', a.importer), line('Vérifier :', a.verifier), line('Publier :', a.publier),
+      h('div', { class: 'tb-btns' }, a.doc ? tbLink(a.doc, 'Le document', 'tb-out') : null, h('small', { class: 'tc-sub', text: (a.ajoute ? 'depuis le ' + a.ajoute.split('-').reverse().slice(0, 2).join('/') : '') + (a.par ? ' · ' + a.par : '') }))));
+  return [open.length ? h('div', { class: 'tc-ass', id: 'tc-ass' }, ...open.map(one)) : h('p', { class: 'tb-note ok', id: 'tc-ass', text: 'Aucun asset n\'attend ta main.' }),
+    done.length ? h('details', { class: 'tc-done' }, h('summary', { text: done.length + (done.length > 1 ? ' faits' : ' fait') }), h('div', { class: 'tc-ass' }, ...done.map(one))) : null,
+    h('p', { class: 'tb-note', text: 'Chaque tâche ajoute ici ce qu\'elle attend de tes mains (avancement/assets.json) : quoi, où, avec quel outil, comment le jeu le prend, où vérifier, comment ça part chez tout le monde. Dis à Claude quand un asset est fait : il passe en « fait » (rien n\'est supprimé).' })];
+}
+
+// ---- « Ouvrir »: what stays in this window, then what opens beside
+function tcOuvrir() {
+  const inb = (lab, sub, fn, main, off) => h('button', { class: 'tb-link' + (main ? ' main' : ''), type: 'button', disabled: !!off, onclick: fn }, h('b', { text: lab }), h('span', { text: sub }));
+  const out = (lab, sub, href) => tbLink(href, [h('b', { text: lab + ' ↗' }), h('span', { text: sub })], 'tb-link'), ici = location.origin + location.pathname;
+  return [h('div', { class: 'tb-links', id: 'tb-liens' }, inb('Jouer', 'Fermer l\'administration', () => closeSheet(), true), inb('Joueurs et retours', 'Qui joue, fiches, bugs et idées', () => tcGo('joueurs')), inb('Variables', tcN(TUNE_DEF.length) + ' réglages', () => tcGo('var')), inb('Éditeur de modèles', 'Cartes, camp, bibliothèque, atelier', () => tcGo('mod')),
+    inb('Éditeur de niveaux', 'Niveau ' + (ADM.lv || 1) + ', à la main', () => { if (Net.room) return; if (!ADM.seed) ADM.seed = newSeed(0, false); edStart(ADM.lv || 1, ADM.seed); }, false, !!Net.room || !!LEVELS[(ADM.lv || 1) - 1].boss),
+    inb('Règles d\'import', 'Style, formats, Blender', () => tcGo('regles')),
+    out('Compteur de fluidité', 'Images par seconde, dans un nouvel onglet', ici + '?perf'), out('Administration seule', 'L\'adresse à garder en favori', ici + '?admin&outil=administration'))];
+}
+
+// ---- « En chiffres »: counted by the game (settings, news, worlds) or by build.mjs (tcProjet), never typed
+function tcChiffresList() {
+  const P = tcP(); let mondes = 5, notes = 0; try { mondes = clamp((TU.mondes | 0) || 5, 1, STRATA.length); } catch (e) { } try { notes = notesList().length; } catch (e) { }
+  const pub = P.publications.main + P.publications.bouton, nf = P.fichiers.length + P.autres.length;
+  return [['reglages', tcN(TUNE_DEF.length), 'réglages dans l\'administration, dont ' + tcN(TUNE_DEF.filter(d => d[8] && d[8].lv).length) + ' pour le tirage des niveaux'], ['tests', tcN(P.tests.rapides + P.tests.lents), 'tests du jeu (' + P.tests.rapides + ' rapides, ' + P.tests.lents + ' lents)'], ['service', tcN(P.tests.service), 'vérifications du service'],
+    ['fichiers', tcN(nf), 'fichiers de code, ' + tcN(P.lignes) + ' lignes'], ['modeles', tcN(P.modeles), 'modèles 3D, et ' + tcN(P.images) + ' images'], ['sons', tcN(P.sons), 'sons, dont ' + tcN(P.musiques) + (P.musiques > 1 ? ' musiques' : ' musique')],
+    ['notes', tcN(notes), 'entrées dans « Nouveautés »'], ['mondes', mondes + ' / ' + STRATA.length, 'mondes ouverts, ' + Math.min(LEVELS.length, mondes * PER_WORLD) + ' étages sur ' + LEVELS.length], ['publications', tcN(pub), 'publications, dont ' + P.publications.bouton + ' par le bouton Publier']];
+}
+function tcChiffres() {
+  const P = tcP();
+  return [h('div', { class: 'tc-figs', id: 'tc-figs' }, ...tcChiffresList().map(([k, n, lab]) => h('div', { class: 'tc-fig', 'data-f': k }, h('b', { text: n }), h('span', { text: lab })))),
+    h('p', { class: 'tb-note', text: 'Tout est compté, rien n\'est écrit à la main : par le jeu lui-même, ou par build.mjs à la construction de cette page' + (P.construit ? ' (' + tbDate(P.construit) + (P.commit ? ', ' + P.commit : '') + ')' : '') + '.' })];
+}
+
+// ---- « Comment tout s'emboîte »
+function tcEmboite() {
+  const P = tcP(), nf = P.fichiers.length, nt = P.tests.rapides, pill = t => h('span', { class: 'tc-pill', text: t }), arr = () => h('span', { class: 'tc-arr', 'aria-hidden': 'true', text: '→' });
+  const node = (lab, b, p) => h('div', { class: 'tc-node' }, h('span', { class: 'tb-lab', text: lab }), h('b', { text: b }), h('p', { text: p }));
+  let maison = false; try { maison = /^https:\/\//.test(String(window.ecorceRelais || '')); } catch (e) { }
+  return [h('div', { class: 'tc-flow', role: 'img', 'aria-label': 'Chemin d\'une publication : src, build.mjs, www/index.html, bouton Publier, belfort-systems.fr/ecorce' }, pill('src/ (le code)'), arr(), pill('build.mjs'), arr(), pill('www/index.html'), arr(), pill('bouton Publier'), arr(), pill('belfort-systems.fr/ecorce')),
+    h('div', { class: 'tc-nodes', id: 'tc-nodes' },
+      node('Le jeu', 'Une seule page web', 'build.mjs assemble les ' + nf + ' fichiers de src/ en une page, plus les modèles 3D et les sons de pwa/. La même page sert le site, l\'appli installable et l\'APK Android.'),
+      node('L\'hébergement', 'GitHub Pages', 'Le dépôt du site belfort-systems.fr reçoit une copie du jeu dans ecorce/. GitHub la met en ligne en une à deux minutes.'),
+      node('Le service', 'Cloudflare Worker + base D1', 'Sauvegardes en ligne, retours des joueurs, réglages et cartes publiés, administration, lecture de GitHub pour ce tableau. Code dans serveur/, déployé seulement avec ton accord.'),
+      node('La coop', 'De téléphone à téléphone', maison ? 'Les joueurs se trouvent par notre relais (relais/), puis jouent en direct. Le relais public de PeerJS reste en secours (réglage « relais »).' : 'Les joueurs se trouvent par le relais public de PeerJS, puis jouent en direct. Notre propre relais est prêt dans relais/, en réserve.'),
+      node('Les garde-fous', 'Tests et publication', nt + ' tests rapides passent avant une publication (case « Lancer les tests »). Une publication qui changerait serveur/ ou relais/ est refusée tant que « Autoriser un service » n\'est pas cochée.'),
+      node('Les tâches cloud', 'Une branche par sujet', 'Chaque tâche part de la version de travail (audit-fable), pousse seulement sa branche et tient son sommaire dans avancement/. Rien n\'est en ligne avant « Publier ».'))];
+}
+
+// ---- « Les fichiers du jeu »: the build order, each file with the first line of its header (both written by build.mjs)
+function tcFichiers() {
+  const P = tcP(), li = f => h('li', null, h('code', { text: f[0] }), h('span', { text: f[1] || '—' }), h('em', { text: tcN(f[2]) }));
+  return [h('p', { class: 'tb-note', text: 'Dans l\'ordre où build.mjs les assemble. La description est la première ligne du commentaire en tête de chaque fichier ; à droite, son nombre de lignes.' }),
+    h('ul', { class: 'tc-files', id: 'tc-files' }, ...P.fichiers.map(li)), h('span', { class: 'tb-lab', text: 'À côté' }), h('ul', { class: 'tc-files' }, ...P.autres.map(li)),
+    h('div', { class: 'tb-btns' }, tbLink(tbRepo() + '/tree/audit-fable/src', 'Voir le dossier src/ sur GitHub', 'tb-out'))];
+}
+
+// ---- « Raccourcis »: everything that lives outside the game (each opens in a new tab)
+function tcLiensList() {
+  const R = tbRepo(), doc = f => R + '/blob/audit-fable/' + f, S = 'https://github.com/Startupp/belfort-systems.fr', srv = String(SRV.url || 'https://jeu-sauvegarde.damien-belfort.workers.dev').replace(/\/+$/, '');
+  return [
+    ['Le projet', [['Bible du projet', 'Règles, méthode, RPG, cartes, assets : à donner à toute IA', 'https://claude.ai/code/artifact/b9544276-d8f8-49b9-8ca6-64f305bcd294'], ['Passation', 'Reprendre le projet là où il en est', doc('PASSATION.md')], ['Les clés de l\'administration', 'Ce que tu fais seul, où cliquer', doc('CLES_ADMINISTRATION.md')],
+      ['Réglages', 'Chaque variable expliquée', doc('REGLAGES.md')], ['Feuille de route', 'Le tableau trié du plus rapide au plus long', doc('ROADMAP.md')], ['Journal de bord', 'Ce qui a été fait, jour par jour', doc('audit/JOURNAL.md')]]],
+    ['Code et publication', [['Dépôt du jeu (privé)', 'Startupp/tinknight', R], ['Publications', 'L\'action « Publier », son historique', R + '/actions/workflows/publier.yml'], ['Actions du jeu', 'Déploiements du service, APK Android', R + '/actions'],
+      ['Décisions', 'Le fichier avancement/decisions.json', doc('avancement/decisions.json')], ['Chantiers', 'Le fichier avancement/chantiers.json', doc('avancement/chantiers.json')]]],
+    ['Hébergement', [['Dépôt du site (public)', 'Startupp/belfort-systems.fr', S], ['Publications du site', 'État de chaque mise en ligne', S + '/actions'], ['Cloudflare', 'Service jeu-sauvegarde, base D1, relais', 'https://dash.cloudflare.com/'], ['Page du service', 'Sauvegardes, avec le mot de passe', srv + '/admin']]],
+    ['Création', [['Blockbench', 'Modèles et animations, le plus simple', 'https://www.blockbench.net/'], ['Blender', 'Tout, plus long à apprendre', 'https://www.blender.org/'], ['Higgsfield', 'Images de concept, 3D', 'https://higgsfield.ai/'], ['Niveaux vivants, avant / après', 'La page des prototypes', 'https://claude.ai/artifact/RURL9YSsNdw5uvCeCMQE16']]],
+    ['Son', [['Pack d\'AlkaKrab', 'La musique du jeu', 'https://alkakrab.itch.io/free-25-fantasy-rpg-game-tracks'], ['Kenney, sons', 'Bruitages libres de droits (CC0)', 'https://kenney.nl/assets/category:Audio'], ['Freesound', 'Filtrer sur la licence CC0', 'https://freesound.org/']]],
+    ['Bibliothèques du jeu', [['three.js', 'La 3D (version r128)', 'https://threejs.org/docs/'], ['PeerJS', 'La coop entre appareils', 'https://peerjs.com/'], ['Capacitor', 'L\'APK Android', 'https://capacitorjs.com/']]],
+    ['Compte Claude', [['Utilisation et crédits', 'Limite, plafond, alertes', 'https://claude.ai/settings/usage'], ['Aide : crédits d\'utilisation', 'Comment ils fonctionnent', 'https://support.claude.com/en/articles/12429409-using-extra-usage'], ['Tes pages', 'Toutes les pages publiées', 'https://claude.ai/code/artifacts'], ['Ancien tableau de bord', 'La page claude.ai d\'origine', tbDash()]]]];
+}
+function tcLiens() {
+  return [h('div', { class: 'tc-boxes', id: 'tc-liens' }, ...tcLiensList().map(([lab, L]) => h('div', { class: 'tc-box' }, h('span', { class: 'tb-lab', text: lab }), h('ul', null, ...L.map(([n, sub, href]) => h('li', null, tbLink(href, [h('b', { text: n + ' ↗' }), h('span', { text: sub })])))))))];
+}
+
+// ---- the cards
+// what a folded card still says (text, dot)
+function tcSum(id, d) {
+  const T = tbS(), P = tcP(), need = T.old ? ['Demande le service version 13', 'w'] : !d ? [!SRV.url ? 'Pas de service' : T.err ? 'Non lu' : 'Lecture…', T.err ? 'r' : 'i'] : null;
+  if (id === 'etat') { const R = tcEtatRows(d), r = R.filter(x => x.dot === 'r').length, w = R.filter(x => x.dot === 'w').length, i = R.filter(x => x.dot === 'i').length; return [r + w ? (r + w) + (r + w > 1 ? ' points à regarder' : ' point à regarder') : i ? 'Lecture…' : 'Tout va bien', r ? 'r' : w ? 'w' : i ? 'i' : '']; }
+  if (id === 'pub') { if (need) return need; const off = d.commits.filter(c => !c.enLigne && !/^(Publier|Tester) : /.test(String(c.msg || ''))).length; return [(off ? off + ' pas encore en ligne' : 'tout est en ligne') + (d.attente.length ? ' · ' + d.attente.length + (d.attente.length > 1 ? ' branches en attente' : ' branche en attente') : ''), off || d.attente.length ? 'w' : '']; }
+  if (id === 'taches') { if (need) return need; const run = d.taches.filter(t => t.sommaire && !t.sommaire.fini); return [run.length ? run.length + ' en cours · ' + run.map(t => t.branche).slice(0, 3).join(', ') + (run.length > 3 ? '…' : '') : 'aucune en cours', run.length ? 'i' : '']; }
+  if (id === 'chantiers') { if (need) return need; const n = d.chantiers.length; return [n ? Math.round(d.chantiers.reduce((a, c) => a + (c.enLigne | 0), 0) / n) + ' % en ligne en moyenne, sur ' + n + ' chantiers' : 'fichier illisible', n ? '' : 'w']; }
+  if (id === 'decisions') { const n = tcDecisions().length; return [n ? n + (n > 1 ? ' t\'attendent' : ' t\'attend') : 'aucune en attente', n ? 'w' : '']; }
+  if (id === 'assets') { const a = tcAssetsOpen(); return [a.length ? a.length + (a.length > 1 ? ' à produire, dont ' : ' à produire, ') + a.filter(x => x.priorite === 1).length + ' qui se voient tout de suite' : 'rien à produire', a.some(x => x.priorite === 1) ? 'w' : '']; }
+  if (id === 'ouvrir') return ['Jouer, joueurs, variables, éditeurs', null];
+  if (id === 'chiffres') return [tcN(TUNE_DEF.length) + ' réglages · ' + (P.tests.rapides + P.tests.lents) + ' tests · ' + (P.publications.main + P.publications.bouton) + ' publications', null];
+  if (id === 'emboite') return ['src → build → www → site', null];
+  if (id === 'fichiers') return [(P.fichiers.length + P.autres.length) + ' fichiers, ' + tcN(P.lignes) + ' lignes', null];
+  return ['Dépôts, Cloudflare, documents, outils, compte Claude', null];
+}
+function tcBody(id, d) {
+  const T = tbS();
+  if (id === 'etat') return tcEtat(d);
+  if (id === 'decisions') return tcDecBody();
+  if (id === 'assets') return tcAssetsBody();
+  if (id === 'ouvrir') return tcOuvrir();
+  if (id === 'chiffres') return tcChiffres();
+  if (id === 'emboite') return tcEmboite();
+  if (id === 'fichiers') return tcFichiers();
+  if (id === 'liens') return tcLiens();
+  if (T.old) return id === 'pub' ? [tbOld()] : [h('p', { class: 'tb-note', text: 'Demande le service version 13 (voir la carte « Publication »).' })]; // the three cards read on GitHub by the service
+  if (!d) return [h('p', { class: 'tb-note', text: !SRV.url ? 'Cette page n\'a pas de service : rien à lire sur GitHub.' : T.err ? 'Pas encore lu : ' + T.err : 'Lecture de GitHub par le service…' })];
+  return id === 'pub' ? tbPub(d) : id === 'taches' ? tbTasks(d) : tbChantiers(d);
+}
+function tcCard(id, d) {
+  const def = tcDefs().find(x => x[0] === id), open = tcOpen(id), sum = tcSum(id, d);
+  const grip = h('button', { class: 'tc-grip', type: 'button', 'aria-label': 'Déplacer la carte « ' + def[1] + ' » : glisser, ou flèches haut et bas', title: 'Glisser pour déplacer' }, h('i'), h('i'), h('i'));
+  grip.addEventListener('pointerdown', e => tcDrag(e, id)); grip.addEventListener('keydown', e => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); tcMove(id, e.key === 'ArrowUp' ? -1 : 1); } });
+  return h('section', { class: 'adm-fam tc-card' + (open ? ' open' : ''), id: 'tc-' + id, 'data-c': id },
+    h('div', { class: 'tc-head' }, grip, h('button', { class: 'adm-head', type: 'button', 'aria-expanded': String(open), 'aria-controls': 'tc-in-' + id, onclick: () => tcSet(id, !open) },
+      h('span', { class: 'grow' }, h('b', { text: def[1] }), h('small', { class: 'tc-sum' }, sum[1] == null ? null : h('span', { class: 'tb-dot ' + sum[1] }), sum[0])), h('span', { class: 'adm-chev' }))),
+    open ? h('div', { class: 'tc-in', id: 'tc-in-' + id }, ...tcBody(id, d).filter(Boolean)) : null);
+}
+function tcCards(d) { tcCss(); return h('div', { class: 'tc-cards', id: 'tc-cards' }, ...tcOrdre().map(id => tcCard(id, d))); }
+
+// (the handle is on the left: the round button that scrolls the sheet floats over the right edge)
+// ---- the order of the cards, changed with a finger (or the mouse, or the arrows of the keyboard) and kept on the device
+function tcMove(id, by) {
+  const s = tcS(), o = tcOrdre(), i = o.indexOf(id), j = clamp(i + by, 0, o.length - 1); if (i < 0 || i === j) return;
+  o.splice(i, 1); o.splice(j, 0, id); s.ordre = o; tcKeep();
+  const root = $('tc-cards'), card = $('tc-' + id); if (root && card) { root.insertBefore(card, root.children[j + (j > i ? 1 : 0)] || null); const g = card.querySelector('.tc-grip'); if (g) g.focus(); }
+}
+// while a card is held, every card shows its title alone: the whole list fits under the finger
+function tcDrag(ev, id) {
+  const s = tcS(), root = $('tc-cards'), card = $('tc-' + id), grip = ev.currentTarget, body = $('sh-body'); if (!root || !card || s.drag || (ev.button | 0) > 0) return;
+  ev.preventDefault(); try { grip.setPointerCapture(ev.pointerId); } catch (e) { }
+  const top0 = card.getBoundingClientRect().top; s.drag = id; root.classList.add('tri'); card.classList.add('drag');
+  if (body) body.scrollTop += card.getBoundingClientRect().top - top0; // the held card stays under the finger when the others fold
+  let y = ev.clientY;
+  const place = () => {
+    let before = null;
+    for (const c of root.children) { if (c === card) continue; const r = c.getBoundingClientRect(); if (y < r.top + r.height / 2) { before = c; break; } }
+    if (before !== card.nextElementSibling || (!before && root.lastElementChild !== card)) root.insertBefore(card, before);
+  };
+  const move = e => { y = e.clientY; place(); };
+  // held near the top or the bottom of the sheet: the list scrolls by itself, even under a finger that does not move
+  const roll = setInterval(() => { if (!body) return; const r = body.getBoundingClientRect(), t = body.scrollTop; if (y < r.top + 56) body.scrollTop -= 12; else if (y > r.bottom - 56) body.scrollTop += 12; if (body.scrollTop !== t) place(); }, 30);
+  const end = () => {
+    clearInterval(roll); removeEventListener('pointermove', move, true); removeEventListener('pointerup', end, true); removeEventListener('pointercancel', end, true);
+    s.ordre = [...root.children].map(c => c.dataset.c); s.drag = ''; tcKeep(); root.classList.remove('tri'); card.classList.remove('drag');
+    card.scrollIntoView({ block: 'nearest' }); if (s.late) { s.late = false; tbPaint(); }
+  };
+  addEventListener('pointermove', move, true); addEventListener('pointerup', end, true); addEventListener('pointercancel', end, true); // on the window: a card moved in the page loses the hold of its own handle
+}
+
+function tcCss() {
+  if ($('tc-style')) return;
+  document.head.appendChild(h('style', { id: 'tc-style', text: '.tc-cards{display:flex;flex-direction:column;gap:10px;min-width:0}.tc-card{min-width:0}.tc-head{display:flex;align-items:stretch;min-width:0}.tc-head .adm-head{flex:1 1 0;min-width:0;width:auto;padding-left:2px}.tc-card.open>.tc-head .adm-head{padding-bottom:8px}'
+    + '.tc-sum{display:flex;align-items:center;gap:6px;min-width:0;overflow-wrap:anywhere}.tc-sum .tb-dot{margin-top:1px}'
+    // the dots of this page say a state, in three plain colours (the accent of the game is itself a green): good, to look at, to fix ; grey = not read yet
+    + '.tc-cards .tb-dot{background:#6fcf5f}.tc-cards .tb-dot.w{background:#f0a030}.tc-cards .tb-dot.r{background:#ef5a45}.tc-cards .tb-dot.i{background:#8f8a7c}'
+    + '.tc-grip{appearance:none;border:0;background:transparent;flex:none;width:44px;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:grab;touch-action:none;border-radius:var(--r-sm)}.tc-grip i{display:block;width:18px;height:2px;border-radius:2px;background:var(--dim)}.tc-grip:focus-visible{outline:2px solid var(--amber);outline-offset:-4px}'
+    + '.tc-cards.tri .tc-in{display:none}.tc-cards.tri .tc-card{opacity:.7}.tc-cards.tri .tc-card.drag{opacity:1;box-shadow:0 0 0 2px var(--amber),0 8px 22px rgba(0,0,0,.45);position:relative;z-index:2}.tc-cards.tri .tc-grip{cursor:grabbing}'
+    + '.tc-in{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}.tc-in .tb-card{background:transparent;border-radius:0;overflow:visible}.tc-in .tb-card>.adm-head{padding:4px 0 8px}.tc-in .tb-card>.tb-in{padding:0}.tc-in .tb-task,.tc-in .tb-row,.tc-in .tb-link{background:var(--bark-4)}.tc-in .tb-kv div{background:var(--well)}.tc-in .tb-link.main{background:var(--amber)}'
+    + '.tc-etat,.tc-decs,.tc-files,.tc-box ul{list-style:none;margin:0;padding:0}.tc-etat{display:grid;grid-template-columns:minmax(0,1fr);gap:0}.tc-etat li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.tc-etat li:first-child{border-top:0;padding-top:0}'
+    + '.tc-el{display:flex;flex-direction:column;gap:1px;min-width:0;overflow-wrap:anywhere}.tc-el small{font-size:11.5px;color:var(--dim);line-height:1.3}.tc-el>small:first-child{text-transform:uppercase;letter-spacing:.06em;font-weight:700;font-size:10.5px}.tc-el b{font-size:14px;line-height:1.3}.tc-sub{font-size:12px!important;color:var(--dim)}'
+    + '.tc-mini{min-height:36px;padding:6px 12px;font-size:12.5px;flex:none}'
+    + '.tc-ass{display:flex;flex-direction:column}.tc-as{padding:8px 0;border-top:1px solid var(--line)}.tc-as:first-child{border-top:0;padding-top:0}.tc-as summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;min-height:36px;flex-wrap:wrap}.tc-as summary::-webkit-details-marker{display:none}.tc-as summary b{font-size:14px;line-height:1.3}.tc-as summary small{color:var(--dim);font-size:11.5px}.tc-as .tc-el{padding:6px 0 2px 18px;gap:4px}.tc-as-l{font-size:12.5px;line-height:1.35}.tc-as-l b{color:var(--amber);font-size:12.5px}'
+    + '.tc-decs{display:flex;flex-direction:column}.tc-dec{display:grid;grid-template-columns:10px minmax(0,1fr);gap:10px;padding:10px 0;border-top:1px solid var(--line)}.tc-dec:first-child{border-top:0;padding-top:0}.tc-dec .tb-dot{margin-top:6px}.tc-dec .tc-el{gap:5px}.tc-dec .tc-el small{font-size:12.5px;text-transform:none!important;letter-spacing:0!important;font-weight:400!important}.tc-dec em{font-style:normal;font-weight:700;color:var(--cream)}.tc-done summary{cursor:pointer;font-size:12.5px;color:var(--dim)}.tc-done ul{margin-top:8px}'
+    + '.tc-figs{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}.tc-fig{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-left:3px solid var(--line);min-width:0}.tc-fig b{font:700 28px/1 var(--display);color:var(--amber);font-variant-numeric:tabular-nums}.tc-fig span{font-size:12px;color:var(--dim);line-height:1.25}'
+    + '.tc-flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px}.tc-pill{padding:5px 9px;border-radius:8px;background:var(--bark-4);font:500 12px ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}.tc-arr{color:var(--dim)}'
+    + '.tc-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}.tc-node{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:var(--r-sm);background:var(--bark-4);min-width:0}.tc-node .tb-lab{color:var(--amber)}.tc-node b{font-size:14px}.tc-node p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.4}'
+    + '.tc-files{display:flex;flex-direction:column}.tc-files li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1px 8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px;line-height:1.35}.tc-files li:first-child{border-top:0}.tc-files code{font:700 12px ui-monospace,Menlo,Consolas,monospace;color:var(--amber);overflow-wrap:anywhere}.tc-files span{grid-column:1/-1;grid-row:2;color:var(--dim);overflow-wrap:anywhere}.tc-files em{font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums;font-size:11.5px}'
+    + '.tc-boxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}.tc-box{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:var(--r-sm);background:var(--bark-4);min-width:0}.tc-box ul{display:flex;flex-direction:column;gap:2px}.tc-box a{display:flex;flex-direction:column;text-decoration:none;padding:5px 0;min-height:40px;justify-content:center}.tc-box a b{font-size:13.5px}.tc-box a span{font-size:12px;color:var(--dim);line-height:1.25;overflow-wrap:anywhere}.tc-box a:hover b,.tc-box a:focus-visible b{color:var(--amber)}'
+    + '.tc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-width:0}.tc-top .tb-cap{margin:0;flex:1 1 0;min-width:0}.tc-top .tb-btns{flex:none;flex-wrap:nowrap}'
+    + '@media (min-width:900px){#sheet.full .tc-etat{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}#sheet.full .tc-etat li:nth-child(2){border-top:0;padding-top:0}#sheet.full .tc-files{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}#sheet.full .tc-files li:nth-child(2){border-top:0}}' }));
+}
+
 /* ================= Une mise à jour arrive : les joueurs en ligne sont prévenus (10 October, Damien's request, branch publications-maj) =================
    « Un message prévenant les joueurs quand une mise à jour sera lancée, est en cours, et : cliquez ici pour actualiser le jeu
    (votre progression n'en sera pas impactée). »
@@ -16942,6 +17216,7 @@ function pubHisto(d) {
   return tbCard('Déjà publiées', pubs.length + (pubs.length > 1 ? ' mises en ligne' : ' mise en ligne') + ' depuis le bouton Publier · la plus récente d\'abord', 'tb-hist', ...kids);
 }
 
+function tcProjet() { return {"construit":"2026-10-10T20:15:17.318Z","commit":"4a268dc","fichiers":[["a0_icons.js","Fichier généré par tools/icones.mjs — ne pas le modifier à la main.",93],["a1_vignettes.js","Écrit par tools/vignettes.py à partir des modèles d'armes de Damien : ne pas modifier à la main.",22],["a2_icones_objets.js","Écrit par tools/icones_objets.py à partir des icônes d'objets de Damien (série 3) : ne pas modifier à la main.",35],["a_tune.js","the settings Damien can change himself (step 19, widened to every figure of the game in step 22a)",877],["a_core.js","utils",961],["b_game.js","state",726],["c_render.js","view: shared by the 3D renderer and the flat fallback",327],["e_gl.js","3D renderer (three.js): a pure view of the game state",829],["e2_modeles.js","Damien's models (3D only)",839],["e3_vfx.js","Effets de particules écrits par Damien (personnage/tinyknight_vfx.js dans le dépôt du site), repris tels quels :",251],["f_quests.js","quests",132],["g_serveur.js","the save kept online (standalone page only)",151],["h_creatif.js","the creative mode: to check everything without playing for hours",120],["i_admin.js","the hidden admin panel (step 19c)",380],["d_ui.js","icons",1049],["j_editeur.js","the level editor (20b)",796],["k_hud.js","the editor of the screen of play (22f)",156],["l_fichiers.js","the files sent to the service (24f)",93],["m_joueurs.js","players, security and figures (25b to 25d)",103],["n_roles.js","roles and proposals of maps (25f)",130],["o_blocs.js","the 3D blocks (35a): Damien's pieces instead of the textured cubes",161],["p_fond.js","The backdrop, the mood of each zone, the layered mist (step 36: « un fond derrière le niveau, des effets de zones »)",123],["q_formes.js","rounded reliefs instead of the wall cubes (36b: « plus de courbes et moins de cubes »)",210],["r_volume.js","the volume kit (step 36b): real modelled pieces on the rounded reliefs",223],["s_nuages.js","Clouds that pass, the light of a sky (« des nuages semblant passer devant l'écran », « des éclairages naturels »)",123],["t_groupe.js","the team as a group (8 October, Damien's request)",543],["u_notes.js","« Nouveautés » : what changed in the game, from the home screen (8 October, Damien's request)",120],["v_regles.js","« Règles » : the art direction and the rules of the files to import (8 October, Damien's request)",78],["w_retour.js","« Signaler un bug, faire un retour » (8 October, Damien's request)",298],["x_cles.js","« Les clés » : the workshop of the administration (9 October, Damien's request)",278],["x2_sable.js","« Les clés », tool 2 : the sandbox (9 October)",116],["x3_formes.js","« Les clés », tool 3 : pieces made of shapes (9 October)",135],["x4_anims.js","« Les clés », tool 4 : animations (9 October)",108],["x5_monde.js","« Les clés », tool 5 : a new world (9 October)",108],["x6_perso.js","« Les clés », tool 6 : the knight « de base », in pieces (9 October)",83],["x_vivants.js","« Niveaux vivants » (8 October, Damien's request) : prototypes, every one behind a setting that is OFF by default",384],["y_sol.js","scenery of the ground, proper to each world, and the reeds of the Marais (8 October, Damien's request)",121],["z_variables.js","the editor of variables, made handier (9 October, branch « variables », Damien's request)",226],["zz_sons.js","the music and the feel of the hits (9 October, Damien's request)",85],["zzz_xp.js","experience by knight (branch xp, 9 October, Damien's request)",373],["zz1_onglets.js","Réglages et Pause : un petit menu flottant à onglets (10 October, Damien's request)",115],["zz2_graphismes.js","Graphismes : des préréglages et de vraies options (10 October, Damien's request)",324],["zy_doigt.js","the level editor under a finger (9 October, Damien's request: « presque fun de créer des mondes »)",297],["zy2_casse.js","things to break, put by hand in the level editor (9 October, Damien's request)",114],["zy3_glisse.js","the dodge by a swipe (9 October, Damien's request ; setting dashSwipe, off by default)",42],["zw_precis.js","the level editor, finer under a finger (9 October, branch editeur ; after zy_doigt.js)",117],["zw2_cartes.js","large maps in the level editor: rooms ready to put, the check before a try, a map in a file (9 October, branch editeur)",202],["zw3_casse2.js","things to break, each with its own chances and its own end (9 October, branch editeur ; after zy2_casse.js)",49],["zw4_esquive.js","the dodge button of the classic game (9 October, Damien's request ; setting esquive, off by default)",107],["zv_entree.js","the level editor follows the hand: a mouse and a keyboard, or a finger (10 October, branch editeur-v3)",277],["zzv_vol.js","the flight of the creatures (10 October, branch vol-appareils, Damien's request)",161],["zzw_appareils.js","knights by device, devices by person (10 October, branch vol-appareils, Damien's request)",197],["zzb_ordres.js","the administrator's orders to this device (service version 12, branch joueurs-direct)",231],["zzc_fiche.js","a player's card, live (branch joueurs-direct, service version 12)",131],["zzd_spectateur.js","the spectator (branch joueurs-direct, service version 12)",137],["zze_danses.js","dances and emotes (branch joueurs-direct)",180],["zzt_tableau.js","the dashboard inside the administration (10 October, branch admin-tableau, service version 13)",234],["zzf_live.js","the spectator's command panel (branch spectateur-live, service version 12 as it is online)",194],["zzg_endirect.js","« En direct » : who plays now (branch spectateur-live, service version 12 as it is online)",108],["zzh_coop_carte.js","the same level for the whole team (10 October)",59],["zzi_inventaire.js","L'inventaire façon RPG (10 October, Damien's request, branch inventaire-rpg)",411],["zzj_hud_modeles.js","Trois modèles de HUD au choix du joueur (10 October, Damien's request, branch inventaire-rpg)",69],["zzx_complet.js","the complete dashboard (10 October, branch tableau-complet, service version 13 as it is online)",288],["zzk_maj.js","Une mise à jour arrive : les joueurs en ligne sont prévenus (10 October, Damien's request, branch publications-maj)",94],["zzl_publications.js","La liste des publications, triée (10 October, Damien's request, branch publications-maj)",81]],"autres":[["head.html","La page : styles et squelette des menus",888],["autonome.js","the standalone page: what Claude gives the game inside Claude, done without it",120]],"lignes":17193,"tests":{"rapides":81,"lents":12,"service":226},"modeles":243,"images":110,"sons":15,"musiques":15,"publications":{"main":26,"bouton":5},"decisions":[{"id":"relais-worker","question":"Le relais tinknight-relais a été déployé chez Cloudflare sans ton accord (9 octobre) : le garder en réserve ou le supprimer ?","recommandation":"Le garder : il ne coûte rien tant que le jeu ne l'utilise pas, et il est prêt le jour où le relais public de PeerJS retombe.","lien":"https://dash.cloudflare.com/","ajoutee":"2026-10-09","par":"Claude"},{"id":"licence-musique","question":"Musique d'AlkaKrab : le dépôt du site est public, donc les morceaux y sont téléchargeables tels quels. Demander l'accord de l'auteur, ou rendre le dépôt du site privé ?","recommandation":"Écrire à l'auteur d'abord (une ligne suffit) ; sans réponse, sortir les morceaux du dépôt public avant le Play Store.","lien":"https://alkakrab.itch.io/free-25-fantasy-rpg-game-tracks","ajoutee":"2026-10-09","par":"Claude"},{"id":"rpg-fil-rouge","question":"RPG en monde ouvert : quel est le fil rouge de l'histoire (ce que le chevalier cherche du début à la fin) ?","recommandation":"Le choisir avant d'écrire le moindre dialogue : les PNJ, les quêtes et le village hub en découlent. Une phrase suffit pour démarrer.","lien":"https://claude.ai/code/artifact/b9544276-d8f8-49b9-8ca6-64f305bcd294","ajoutee":"2026-10-10","par":"Claude"},{"id":"rpg-region-tranche","question":"Tranche verticale du RPG : dans quelle région la construire ?","recommandation":"Les Racines : c'est le monde le plus abouti (nuages, lumière, décors de sol), donc le moins de travail d'habillage pour juger le RPG lui-même.","lien":"https://github.com/Startupp/tinknight/blob/audit-fable/ROADMAP.md","ajoutee":"2026-10-10","par":"Claude"},{"id":"mode-arcade","question":"Le jeu actuel devient-il le « mode arcade », à côté d'une Campagne manuelle (deux manettes, boutons de sorts) ?","recommandation":"Oui pour le nom « arcade » (rien ne change pour les joueurs) ; la Campagne se décide après la tranche verticale du RPG, pour ne pas ouvrir deux gros chantiers à la fois.","lien":"https://github.com/Startupp/tinknight/blob/audit-fable/ROADMAP.md","ajoutee":"2026-10-07","par":"Claude"},{"id":"jeton-publier-date","question":"Jeton GitHub du bouton Publier (« TinKnight Publier ») : quelle est sa date d'expiration ? Le jour où il expire, le bouton Publier et ce tableau s'arrêtent (erreur 401).","recommandation":"La lire sur GitHub (Fine-grained tokens > « TinKnight Publier »), la noter dans ton agenda une semaine avant, puis toucher « Tranchée ». Ne l'écris pas dans le dépôt.","lien":"https://github.com/settings/personal-access-tokens","ajoutee":"2026-10-10","par":"tableau-complet"}],"archives":0,"assets":[{"id":"murs-textures-fondues","priorite":1,"nom":"Textures de murs qui se raccordent (sol, mur, dessus) pour que les cartes faites à la main n'aient plus l'air de cubes","pour":"Éditeur de niveaux, camp à la main","quoi":"Par zone : 3 textures carrées 256 × 256 (sol, mur, dessus) qui se répètent sans bord visible (« tileable »), sans ombre portée peinte, sans liseré ; les pièces de kit 1 × 1 (sol_1, mur_1…) sans biseau ni bordure sur leurs arêtes.","ou":"ASSETS - CONCEPTS - ARTS/01_textures/\u003czone>/ ; les kits de blocs : 02_modeles_3d/blocs/\u003czone>/","outil":"Textures : Krita ou Photoshop (filtre « décalage » pour vérifier le raccord) ; blocs : Blockbench (modèle 1 × 1, origine au milieu du sol, ~500 triangles, texture 256 px).","importer":"Administration > Bibliothèque > Textures (ou Blocs 3D) > Importer ; puis Éditeur de niveaux > Terrain > Textures (ou Blocs 3D) pour les poser, ou « sur toute la carte ».","verifier":"Éditeur de niveaux, réglage « Blocs 3D sur les murs » (famille Affichage) à 1 : les murs sont continus et portent la texture ; à 2 : chaque case est un bloc (c'est ce qui donne l'air « carré »).","publier":"Bouton Publier du tableau de bord (jeu seulement : aucun service).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/FORMATS.md","par":"Claude","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-cadres-rarete","priorite":1,"nom":"Cadres de rareté des tuiles de l'inventaire (Commun, Rare, Épique, Panoplie)","pour":"Inventaire RPG","quoi":"4 PNG transparents 96 × 96, découpe « 9 tranches » (coins de 24 px, centre vide).","ou":"ASSETS - CONCEPTS - ARTS/05_interface/","outil":"Krita, Photoshop ou Figma (export PNG).","importer":"Déposer dans pwa/modeles/ sous le nom indiqué par le document ; un pas de code (une demi-heure) les branche : le demander à Claude.","verifier":"Ouvrir l'inventaire : le cadre remplace le liseré de couleur.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-portraits-buste","priorite":1,"nom":"Portrait du chevalier en buste, un par thème d'icône","pour":"Inventaire RPG, profil","quoi":"PNG transparents 256 × 256, buste de face, sujet centré, lisible à 80 px.","ou":"ASSETS - CONCEPTS - ARTS/05_interface/portraits/","outil":"Krita ou Procreate ; ou un rendu Blender du modèle chevalier.glb (caméra de face, fond transparent).","importer":"Déposer dans pwa/modeles/ (k_\u003cthème>_buste.png) ; branché par un pas de code.","verifier":"Inventaire flottant, moitié « chevalier » : le buste remplace l'icône ronde agrandie.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-icones-objets","priorite":1,"nom":"Icônes des objets qui n'en ont pas : chapeaux, manteaux, lanternes, bottes, talismans","pour":"Inventaire RPG","quoi":"Comme les vignettes d'armes : PNG ou WebP transparents, même taille et même angle que les armes existantes.","ou":"ASSETS - CONCEPTS - ARTS/05_interface/objets/","outil":"Krita ; ou rendu Blender des objets si des modèles existent.","importer":"Déposer dans pwa/modeles/ avec le nom de l'objet ; la liste des noms est dans le document.","verifier":"Inventaire : chaque objet montre sa vignette au lieu du dessin simple.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-icones-stats","priorite":1,"nom":"Icônes des 8 statistiques (vie, dégâts, critique, cadence, vitesse, portée, vie par ennemi, pièces)","pour":"Inventaire RPG, profil","quoi":"8 SVG sur grille 24 × 24, au trait, une seule couleur (le jeu les teinte).","ou":"ASSETS - CONCEPTS - ARTS/05_interface/icones/","outil":"Figma, Inkscape ou Illustrator (export SVG propre, sans texte).","importer":"Les coller dans src/a0_icons.js sous leur nom : à demander à Claude, ou le faire sur GitHub en suivant le modèle des icônes voisines.","verifier":"Inventaire, moitié « chevalier » : les statistiques portent les nouvelles icônes.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"inv-sons","priorite":1,"nom":"Sons de l'inventaire : sac qui s'ouvre, objet pris, objet posé, fusion","pour":"Inventaire RPG","quoi":"4 bruitages .ogg et .mp3 (les deux), mono, 44,1 kHz, moins d'une seconde, −14 LUFS, sans silence au début : inv_ouvre, inv_prise, inv_pose, inv_fusion.","ou":"pwa/sons/, provenance notée dans CREDITS_SONS.md","outil":"Audacity (normaliser, couper le silence, exporter ogg + mp3) ; sources libres : freesound.org (licence CC0 ou CC-BY notée).","importer":"Déposer les fichiers dans pwa/sons/ ; le jeu les prend dès qu'ils portent le bon nom.","verifier":"Ouvrir l'inventaire, saisir, poser, fusionner : les bips de synthèse sont remplacés.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/audit/inventaire-rpg/ASSETS.md","par":"inventaire-rpg","ajoute":"2026-10-10","etat":"a_faire"},{"id":"tuto-pnj-bulles","priorite":2,"nom":"PNJ simples du tutoriel (3 habitants) et le second guerrier champignon (compagnon)","pour":"Tutoriel","quoi":"Modèles .glb low poly, ~800 triangles, même échelle que chevalier.glb, animations idle + marche + frappe (le compagnon) ; une bulle de parole est dessinée par le jeu.","ou":"ASSETS - CONCEPTS - ARTS/02_modeles_3d/personnages/","outil":"Blockbench (export glTF avec animations) ou Blender.","importer":"Administration > Bibliothèque > Importer un modèle (.glb) ; le tutoriel le prend par son nom (voir le document de la branche tutoriel).","verifier":"Rejouer le tutoriel (Réglages > Compte) : les PNJ et le compagnon portent les nouveaux modèles.","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/tutoriel/audit/tutoriel/ASSETS.md","par":"tutoriel","ajoute":"2026-10-10","etat":"a_faire"},{"id":"camp-presets-salles","priorite":2,"nom":"Modèles de salles et de camps prêts à poser (petit camp, village, arène, carrefour, salle au trésor)","pour":"Éditeur de niveaux, camp à la main","quoi":"Pas un fichier graphique : des morceaux de carte dessinés dans l'éditeur, 5 à 10 modèles de tailles différentes (aujourd'hui les 6 salles sont écrites dans le code, src/zw2_cartes.js).","ou":"Dans l'éditeur : dessiner la salle, Terrain > Copier > entourer > « Exporter » en fichier .json","outil":"L'éditeur de niveaux (souris + clavier sur grand écran).","importer":"Envoyer le fichier .json à Claude, qui l'ajoute aux salles prêtes ; le bouton « Enregistrer la sélection comme salle » reste à construire (petit).","verifier":"Éditeur > Terrain > Salles : la nouvelle salle est dans la liste ; la poser sur une carte vide, « Essayer ».","publier":"Bouton Publier du tableau de bord (jeu seulement).","doc":"https://github.com/Startupp/tinknight/blob/audit-fable/CLES_ADMINISTRATION.md","par":"Claude","ajoute":"2026-10-10","etat":"a_faire"}]}; }
 </script>
 </body>
 </html>
