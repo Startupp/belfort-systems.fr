@@ -902,7 +902,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "ba4f9d8";
+window.ecorceBuild = "84c053f";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -6378,7 +6378,7 @@ function admTag() {
 
 // ---- the entry in the settings
 // two entries (24a): the editor of models (levels, camp, then the libraries) and the editor of variables (every setting)
-const ADM_VIEWS = { mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'], joueurs: ['Joueurs et sécurité', 'equipe', 'Statistiques, joueurs et leurs personnages, journal de sécurité'], regles: ['Règles d\'import', 'quetes', 'Le style du jeu, les formats, Blender et Blockbench'], prop: ['Éditeur de niveaux', 'forge', 'Créer des cartes et les proposer'] };
+const ADM_VIEWS = { tableau: ['Tableau de bord', 'stats', 'Publication, tâches cloud, avancement par chantier'], mod: ['Éditeur de modèles', 'forge', 'Niveaux, camp, et bientôt armes, décors, textures, chevaliers, créatures'], var: ['Éditeur des variables', 'cadenas', 'Tous les chiffres du jeu : créatures, armes, butin, prix, quêtes…'], joueurs: ['Joueurs et sécurité', 'equipe', 'Statistiques, joueurs et leurs personnages, journal de sécurité'], regles: ['Règles d\'import', 'quetes', 'Le style du jeu, les formats, Blender et Blockbench'], prop: ['Éditeur de niveaux', 'forge', 'Créer des cartes et les proposer'] };
 function admCard() { // one door in the settings of a device already opened as admin (8 October: the three cards left the player's settings ; the administration has its door on the title screen and its own address)
   if (!ADM.shown) return null;
   const live = !!SRV.url;
@@ -6675,12 +6675,13 @@ function admBody(kids, foot) {
   }
   const mod = ADM.view === 'mod';
   // the three editors are tabs, always in the same order; the open one is marked and is not a button (36m: on a phone the buttons used to squeeze the sentence into a narrow column)
-  const tabs = { mod: 'Modèles', var: 'Variables', joueurs: 'Joueurs', regles: 'Règles' }; // four tabs: text alone, an icon beside each no longer fits a narrow phone
+  const tabs = { tableau: tbTab(), mod: 'Modèles', var: 'Variables', joueurs: 'Joueurs', regles: 'Règles' }; // four tabs: text alone, an icon beside each no longer fits a narrow phone
   kids.push(h('div', { class: 'adm-switch' },
-    h('div', { class: 'adm-tabs', role: 'tablist' }, ...['mod', 'var', 'joueurs', 'regles'].map(v => v === ADM.view ? h('span', { class: 'adm-tab on', role: 'tab', 'aria-selected': 'true' }, tabs[v])
+    h('div', { class: 'adm-tabs', role: 'tablist' }, ...['tableau', 'mod', 'var', 'joueurs', 'regles'].map(v => v === ADM.view ? h('span', { class: 'adm-tab on', role: 'tab', 'aria-selected': 'true' }, tabs[v])
       : h('button', { class: 'adm-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'aria-label': ADM_VIEWS[v][0], onclick: () => { ADM.view = v; ADM.msg = ''; renderSheet(); $('sh-body').scrollTop = 0; } }, tabs[v]))),
-    h('div', { class: 'adm-sub' }, h('p', { text: ADM.view === 'regles' ? 'À lire avant de dessiner ou d\'envoyer un fichier : le style du jeu, les formats, et les réglages de Blender et de Blockbench.' : ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
+    h('div', { class: 'adm-sub' }, h('p', { text: ADM.view === 'tableau' ? tbSub() : ADM.view === 'regles' ? 'À lire avant de dessiner ou d\'envoyer un fichier : le style du jeu, les formats, et les réglages de Blender et de Blockbench.' : ADM.view === 'joueurs' ? 'Ce que le service sait des joueurs : qui joue, où ils en sont, et ce qui a été refusé ou bloqué.' : mod ? 'Les cartes du jeu, faites à la main ou tirées au sort. Rien de ce qui se fait ici n\'entre dans ta partie.' : 'Ces réglages changent le jeu tout de suite, sur cet appareil seulement, tant qu\'ils ne sont pas publiés.' + (matchMedia('(pointer: coarse)').matches ? ' Touche un réglage pour débloquer son curseur.' : '') }),
       h('button', { class: 'btn small ghost', type: 'button', onclick: () => closeSheet() }, ic('aller'), 'Aller jouer'))));
+  if (ADM.view === 'tableau') { tbBody(kids); return; } // the dashboard (zzt_tableau.js, service version 13)
   if (ADM.view === 'regles') { reglesBody(kids); return; } // v_regles.js
   if (ADM.view === 'joueurs') { admJBody(kids); return; } // m_joueurs.js
   if (!mod) { varBody(kids, foot); return; } // the view « Variables »: z_variables.js
@@ -9029,6 +9030,7 @@ const OUTILS = {
   interface: () => hudEditStart('play'),
   administration: () => { ADM.view = 'mod'; ADM.big = true; document.title = 'Administration · TinKnight'; openSheet('adm'); }, // the whole administration alone on its page (8 October) : …/ecorce/?admin&outil=administration
   regles: () => { ADM.view = 'regles'; ADM.big = true; openSheet('adm'); },
+  tableau: () => { ADM.view = 'tableau'; ADM.big = true; openSheet('adm'); }, // the dashboard in the administration (zzt_tableau.js) : …/ecorce/?admin&outil=tableau
   bibliotheque: () => { ADM.view = 'mod'; openSheet('adm'); setTimeout(() => { const b = [...document.querySelectorAll('.adm-box b')].find(x => x.textContent === 'La bibliothèque'); if (b) b.scrollIntoView({ block: 'start' }); }, 50); },
 };
 function outilOpen(tries) {
@@ -15602,6 +15604,254 @@ function danseRows() {
   if (!TU.emotes) return [];
   const s = danseS();
   return [toggleRow('musique', 'Danses des chevaliers', s.pref, () => { s.pref = !s.pref; try { localStorage.setItem('tk-danses', s.pref ? '1' : '0'); } catch (e) { } if (!s.pref) { s.open = false; danseStop(); } renderSheet(); danseBtn(); })];
+}
+
+/* ================= the dashboard inside the administration (10 October, branch admin-tableau, service version 13) =================
+   Damien's request: « ajouter le dashboard dans un onglet de l'administration, afin que tout se passe dans la même fenêtre et que je
+   n'aie pas à changer d'application. » The first tab of the administration, « Tableau », shows what the claude.ai page showed:
+     « Publication »  the last commits of the work branch (on line or not yet), the branches that wait (to tick), « Publier »,
+                      « Seulement tester » with the groups of tests, and the last result;
+     « Tâches »       every cloud task from its summary avancement/<branche>.json: percent, steps, time, speed, what is left,
+                      commits, lines, last sending, and « arrêtée ? » after 40 minutes without one;
+     « Chantiers »    the progress by chantier (avancement/chantiers.json), worked out by the service;
+     « Raccourcis »   Joueurs, Variables, the editors, and the pages that stay outside the game.
+   The repository is private and the game holds NO token: the service reads and writes GitHub for the administrator (ops « tableau »
+   and « publier » of serveur/worker.js, behind the admin password, like every other op). Nothing here is kept on the device.
+   It reads again by itself every 60 seconds while the tab is on screen (20 seconds for 50 minutes after a request was sent), and
+   « Actualiser » reads at once (the service keeps its answer 30 seconds). A reading never blanks the tab: the new content is built
+   off screen and swapped in one go (tbPaint), and only when something changed.
+   A service still in version 12 answers an unknown op with the list of devices: the tab then says « Demande le service version 13 »
+   and gives the link to the claude.ai page.
+   Hooks elsewhere, one line each: src/i_admin.js (ADM_VIEWS, the tabs, tbBody), src/n_roles.js (?admin&outil=tableau), build.mjs.
+   Every top-level name here is a function: this file comes after d_ui.js. */
+function tbS() { return tbS.s || (tbS.s = { data: null, sig: '', lu: 0, tried: 0, busy: false, err: '', code: '', old: false, stop: false, mdp: '', sec: 'pub', pick: {}, tests: true, service: false, seul: '', armed: '', armT: 0, msg: null, sending: false, last: '', watch: 0, timer: 0, open: {} }); }
+function tbDash() { return 'https://claude.ai/artifact/9NHHtg1tdiymNCRHNoH6QV'; } // the page « Tableau de bord TinKnight » (private to Damien's account)
+function tbRepo() { return 'https://github.com/Startupp/tinknight'; }
+// the parts of the game a test run can be limited to (names of tests/tout.py) ; the same list as the claude.ai page
+function tbGroups() {
+  return [['Tout', ''], ['Coop', 'coop,coop_a_terre,coop_groupe,coop_reglages,sac_commun'], ['Administration', 'variables,reglages,reglages_ressenti,joueurs,retour,roles,fichiers,regles,creatif,tableau'],
+    ['Éditeur et atelier', 'editeur,editeur_tactile,atelier,cles_liens,cles_sable,cles_formes,cles_anims,cles_monde,cles_perso'], ['Niveaux', 'niveaux,mondes,zones,decors,coffres_enfouis,destructibles,mini_quetes,sol_vivant'],
+    ['Sauvegarde et service', 'serveur,sauvegarde_en_ligne,garde_fous,sceau'], ['Menus et accueil', 'accueil,accueil_bulles,nouveautes,hud,manette,boutique,chevaliers,classes'], ['Son', 'sons']];
+}
+function tbSecs() { return [['pub', 'nuage', 'Publication'], ['taches', 'temps', 'Tâches cloud'], ['chantiers', 'stats', 'Chantiers'], ['liens', 'aller', 'Raccourcis']]; }
+// the name of the tab (i_admin.js asks for it each time the tabs are drawn: the styles are there before the first drawing)
+function tbTab() { tbCss(); return 'Tableau'; }
+function tbSub() { return 'L\'état du projet, lu sur GitHub par le service : ce qui est en ligne, ce qui attend, les tâches cloud, et le bouton Publier.'; }
+function tbShown() { return sheetKind === 'adm' && ADM.view === 'tableau' && !!ADM.mdp && !!$('tb-root'); }
+function tbDate(v) { const d = new Date(v); return isNaN(d) ? '' : d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
+function tbAgo(ms) { const m = Math.max(0, Math.round(ms / 60000)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0'); }
+function tbClock(t) { return new Date(t).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+function tbLink(href, kids, cls) { return h('a', { href, target: '_blank', rel: 'noopener', class: cls || '' }, ...[].concat(kids)); }
+
+// ---- the service
+async function tbCall(op, more) {
+  try {
+    const r = await fetch(SRV.url + '/admin/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ op, mdp: ADM.mdp }, more)) });
+    const o = await r.json().catch(() => null);
+    return { status: r.status, o: o || { ok: false, pourquoi: 'Le service a répondu autre chose que prévu (code ' + r.status + ').' } };
+  } catch (e) { return { status: 0, o: { ok: false, pourquoi: 'Le service ne répond pas. Vérifie la connexion.' } }; }
+}
+async function tbLoad() {
+  const s = tbS(); if (s.busy || !SRV.url || !ADM.mdp) return;
+  s.busy = true; s.mdp = ADM.mdp; tbEtat();
+  const { status, o } = await tbCall('tableau'); s.busy = false; s.tried = Date.now();
+  if (o.ok && o.tableau === 1 && Array.isArray(o.commits)) {
+    const d = { commits: o.commits, attente: Array.isArray(o.attente) ? o.attente : [], taches: Array.isArray(o.taches) ? o.taches : [], chantiers: Array.isArray(o.chantiers) ? o.chantiers : [], resultat: o.resultat || null, travail: String(o.travail || 'audit-fable') };
+    const sig = JSON.stringify(d), same = sig === s.sig && !s.err && !s.old && !!s.data;
+    s.data = d; s.sig = sig; s.lu = Date.now(); s.err = ''; s.code = ''; s.old = false; s.stop = false;
+    for (const k of Object.keys(s.pick)) if (!d.attente.some(b => b.nom === k)) delete s.pick[k]; // a branch that left the list is no longer ticked
+    if (same) tbEtat(); else tbPaint(); // nothing changed: only the hour of the reading moves
+    return;
+  }
+  if (o.ok) { s.old = true; s.err = ''; s.code = ''; } // a service of before (version 12) answers an unknown op with the list of the devices
+  else { s.old = false; s.err = o.pourquoi || 'Lecture refusée.'; s.code = o.code || ''; s.stop = status === 403 || status === 429; } // a refused password is not sent again by itself (ten misses lock the door for a quarter of an hour)
+  tbPaint();
+}
+// every five seconds while the tab is on screen: is it time to read again ?
+function tbTick() {
+  const s = tbS();
+  if (!tbShown()) { clearInterval(s.timer); s.timer = 0; return; }
+  if (document.hidden || s.busy || s.stop || s.sending) return;
+  const every = s.old ? 300000 : Date.now() < s.watch ? 20000 : 60000;
+  if (Date.now() - s.tried >= every) tbLoad(); else tbEtat();
+}
+// the line that says when it was read: changed in place, nothing else moves
+function tbEtatTxt() {
+  const s = tbS(), nom = (tbSecs().find(x => x[0] === s.sec) || tbSecs()[0])[2];
+  const quand = s.busy ? (s.lu ? 'Lu à ' + tbClock(s.lu) + ' · mise à jour…' : 'Lecture…') : s.lu ? 'Lu à ' + tbClock(s.lu) + (Date.now() < s.watch ? ' · suivi rapproché' : '') : s.old ? 'Service version 12' : s.err ? 'Non lu' : '';
+  return [nom, quand];
+}
+function tbEtat() {
+  const e = $('tb-etat'), g = $('tb-go'), t = tbEtatTxt(); if (e) e.replaceChildren(h('b', { text: t[0] }), t[1] ? ' · ' + t[1] : '');
+  if (g) { g.disabled = tbS().busy; g.classList.toggle('busy', tbS().busy); }
+}
+// the new content is built off screen, then put in place in one go: nothing blanks out between two readings
+function tbPaint() {
+  const r = $('tb-root'); if (!r || sheetKind !== 'adm' || ADM.view !== 'tableau') return;
+  const f = document.createDocumentFragment(); f.append(...tbParts().filter(Boolean)); r.replaceChildren(f);
+}
+function tbGo(sec) { tbS().sec = sec; tbPaint(); const b = $('sh-body'); if (b) b.scrollTop = 0; }
+
+// ---- the tab (called by admBody, i_admin.js)
+function tbBody(kids) {
+  const s = tbS(); tbCss(); tbGenres();
+  if (s.mdp !== ADM.mdp) { s.stop = false; s.mdp = ADM.mdp; if (s.err) s.tried = 0; } // another password: one more try
+  kids.push(h('div', { id: 'tb-root', class: 'tb' }, ...tbParts().filter(Boolean)));
+  if (!s.timer) s.timer = setInterval(tbTick, 5000);
+  if (!s.busy && !s.stop && (!s.tried || Date.now() - s.tried >= 60000)) setTimeout(tbLoad, 0);
+}
+function tbParts() {
+  const s = tbS(), d = s.data, t = tbEtatTxt(), out = [];
+  out.push(h('div', { class: 'tb-top' },
+    h('div', { class: 'var-bulles', id: 'tb-bulles', role: 'tablist', 'aria-label': 'Panneaux du tableau de bord' }, ...tbSecs().map(([k, icon, lab]) => { const n = k === 'pub' && d ? d.commits.filter(c => !c.enLigne).length : k === 'taches' && d ? d.taches.filter(x => x.sommaire && !x.sommaire.fini).length : 0;
+      return h('button', { class: 'var-bulle', type: 'button', role: 'tab', 'data-t': k, 'aria-pressed': String(s.sec === k), 'aria-label': lab + (n ? ' (' + n + ')' : ''), title: lab, onclick: () => tbGo(k) }, h('span', { class: 'var-bic' }, ic(icon), h('i', { hidden: !n, text: n ? String(n) : '' })), h('small', { text: lab })); })),
+    h('button', { class: 'btn small line', id: 'tb-go', type: 'button', disabled: s.busy, 'aria-label': 'Actualiser', onclick: () => { s.stop = false; tbLoad(); } }, ic('recommencer'), 'Actualiser')));
+  out.push(h('p', { class: 'tb-cap', id: 'tb-etat', role: 'status' }, h('b', { text: t[0] }), t[1] ? ' · ' + t[1] : ''));
+  if (s.sec === 'liens') { out.push(...tbLinks()); return out; }
+  if (s.old) { out.push(tbOld()); return out; }
+  if (s.err) out.push(h('p', { class: 'tb-note err', id: 'tb-err', role: 'alert', text: s.err + (d ? ' Ce qui suit date de ' + tbClock(s.lu) + '.' : '') }),
+    d ? null : h('p', { class: 'tb-note' }, 'En attendant, la page claude.ai marche toujours : ', tbLink(tbDash(), 'ouvrir le tableau de bord')));
+  if (!d) { if (!s.err) out.push(h('p', { class: 'tb-note', text: 'Lecture de GitHub par le service…' })); return out; }
+  out.push(...(s.sec === 'taches' ? tbTasks(d) : s.sec === 'chantiers' ? tbChantiers(d) : tbPub(d)));
+  return out;
+}
+// a service of before: one plain sentence, and the page that still does the job
+function tbOld() {
+  return h('section', { class: 'adm-fam adm-box', id: 'tb-old' }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: 'Demande le service version 13' }))),
+    h('div', { class: 'tb-in' }, h('p', { class: 'tb-note', text: 'Le service en ligne est encore en version 12 : il ne sait pas lire GitHub pour le jeu. Rien d\'autre ne manque.' }),
+      h('p', { class: 'tb-note', text: 'Pour l\'avoir : publier la branche admin-tableau avec la case « service » cochée (serveur/LISEZMOI.md, « Version 13 »).' }),
+      h('div', { class: 'tb-btns' }, tbLink(tbDash(), 'Ouvrir le tableau de bord claude.ai', 'btn small'))));
+}
+function tbCard(title, sub, id, ...kids) {
+  return h('section', { class: 'adm-fam adm-box tb-card', id }, h('div', { class: 'adm-head', style: 'cursor:default' }, h('span', { class: 'grow' }, h('b', { text: title }), sub ? h('small', { text: sub }) : null)), h('div', { class: 'tb-in' }, ...kids));
+}
+
+// ---- « Publication »
+function tbPub(d) {
+  const s = tbS(), off = d.commits.filter(c => !c.enLigne).length;
+  const commits = tbCard('Dernières modifications', 'Version de travail (' + d.travail + ') · ' + (off ? off + ' pas encore en ligne' : 'tout est en ligne'), 'tb-commits',
+    h('ul', { class: 'tb-commits' }, ...(d.commits.length ? d.commits.map(c => h('li', null, h('code', { text: String(c.sha || '').slice(0, 7) }),
+      h('span', null, c.enLigne ? null : h('span', { class: 'tb-off', text: 'pas encore en ligne · ' }), String(c.msg || ''), h('small', { text: tbDate(c.quand) }))))
+      : [h('li', null, h('code', { text: '—' }), h('span', { text: 'Aucune modification lue.' }))])),
+    h('div', { class: 'tb-btns' }, tbLink(tbRepo() + '/commits/' + d.travail, 'Toutes, sur GitHub', 'tb-out')));
+  const branches = d.attente.length ? d.attente.map(b => { const cb = h('input', { type: 'checkbox', 'data-b': b.nom, 'aria-label': 'Ajouter la branche ' + b.nom }); cb.checked = !!s.pick[b.nom];
+    cb.addEventListener('change', () => { if (cb.checked) s.pick[b.nom] = true; else delete s.pick[b.nom]; tbDisarm(); });
+    return h('label', { class: 'tb-br' }, cb, h('b', { text: b.nom }), h('small', { text: (tbDate(b.quand) ? tbDate(b.quand) + ' · ' : '') + (b.msg || 'Dernière modification non lue') })); })
+    : [h('p', { class: 'tb-note', id: 'tb-none', text: 'Aucune branche en attente : tout est déjà dans la version de travail.' })];
+  const opt = (id, lab, key) => { const cb = h('input', { type: 'checkbox', id }); cb.checked = !!s[key]; cb.addEventListener('change', () => { s[key] = cb.checked; tbDisarm(); }); return h('label', null, cb, h('span', { text: lab })); };
+  const btn = (id, lab, online, cls) => h('button', { class: 'btn small' + cls + (s.armed === lab ? ' danger' : ''), id, type: 'button', disabled: s.sending, onclick: () => tbSend(online) }, s.sending && s.last === lab ? 'Envoi…' : s.armed === lab ? 'Confirmer' : lab);
+  const m = s.msg, r = d.resultat, bon = r && (r.etat === 'réussie' || r.etat === 'tests réussis');
+  const pub = tbCard('Publier', 'Coche les branches à mettre en ligne avec la version de travail. Ce qui n\'est pas coché reste de côté.', 'tb-pub',
+    h('div', { id: 'tb-branches' }, ...branches),
+    h('div', { class: 'tb-opts' }, opt('tb-tests', 'Lancer les tests avant (environ 20 min)', 'tests'), opt('tb-service', 'Autoriser un service (serveur, relais)', 'service')),
+    h('div', { class: 'tb-btns' }, btn('tb-publier', 'Publier', true, ''), btn('tb-tester', 'Seulement tester', false, ' line')),
+    h('span', { class: 'tb-lab', text: 'Tester sans publier' }),
+    h('p', { class: 'tb-note', text: 'Rien n\'est mis en ligne. Choisis une partie du jeu, ou laisse « Tout ».' }),
+    h('div', { class: 'tb-groups', id: 'tb-groups', role: 'group', 'aria-label': 'Tests à lancer' }, ...tbGroups().map(([n, v]) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(s.seul === v), onclick: () => { s.seul = v; tbDisarm(); tbPaint(); } }, n))),
+    h('p', { class: 'tb-note' + (m && m.k ? ' ' + m.k : ''), id: 'tb-msg', role: 'status' }, m ? m.t : '', m && m.suivre ? ' ' : null, m && m.suivre ? tbLink(tbRepo() + '/actions/workflows/publier.yml', 'Suivre sur GitHub') : null),
+    h('span', { class: 'tb-lab', text: 'Dernier résultat' }),
+    r ? h('p', { class: 'tb-note ' + (bon ? 'ok' : 'err'), id: 'tb-last' }, (r.publier ? 'Publication ' : 'Essai : ') + r.etat + ' le ' + tbDate(r.quand) + (r.branches && r.branches.length ? ' (avec ' + r.branches.join(', ') + ')' : '') + (r.seul ? ' · tests : ' + r.seul : '') + (r.par ? ' · ' + r.par : '') + '. ',
+      /^https:\/\/github\.com\//.test(String(r.details || '')) ? tbLink(r.details, 'Détails') : null) : h('p', { class: 'tb-note', id: 'tb-last', text: 'Aucun résultat lu pour l\'instant.' }));
+  return [h('div', { class: 'tb-two' }, commits, pub)];
+}
+// a choice changed while a button waited for its second touch: the wait is over (what would leave is no longer what was said)
+function tbDisarm() { const s = tbS(); if (!s.armed) return; s.armed = ''; clearTimeout(s.armT); s.msg = null; tbPaint(); }
+// the two buttons: a first touch says what will leave, a second one sends it. One file written on the work branch starts the action « Publier »
+async function tbSend(online) {
+  const s = tbS(), label = online ? 'Publier' : 'Seulement tester'; if (s.sending || !s.data) return;
+  const sel = s.data.attente.map(b => b.nom).filter(n => s.pick[n]), tests = online ? !!s.tests : true, groupe = (tbGroups().find(g => g[1] === s.seul) || ['Tout'])[0];
+  if (s.armed !== label) {
+    s.armed = label; clearTimeout(s.armT);
+    s.msg = { k: '', t: (online ? 'Va être mis en ligne : la version de travail' : 'Va être testé (' + groupe + '), sans rien mettre en ligne : la version de travail') + (sel.length ? ' + ' + sel.join(', ') : '') + (online ? (tests ? ', après les tests' : ', SANS tests') : '') + (s.service ? ', service autorisé' : '') + '. Touche encore pour confirmer.' };
+    s.armT = setTimeout(() => { if (s.armed === label) { s.armed = ''; s.msg = null; tbPaint(); } }, 8000);
+    tbPaint(); return;
+  }
+  s.armed = ''; clearTimeout(s.armT); s.sending = true; s.last = label; s.msg = { k: '', t: 'Envoi de la demande…' }; tbPaint();
+  const { o } = await tbCall('publier', Object.assign({ branches: sel, tests, service: !!s.service, publier: online }, online ? {} : { seul: s.seul }));
+  s.sending = false;
+  if (o.ok && o.demande) {
+    s.watch = Date.now() + 50 * 60000; // a closer watch while the action runs
+    s.msg = { k: 'ok', suivre: true, t: 'Demande envoyée. ' + (online ? 'La publication' : 'Le test') + ' tourne sur GitHub (environ ' + (tests && !s.seul ? '25' : online ? '5' : '10') + ' minutes) ; le résultat s\'affichera ici tout seul.' };
+    tbPaint(); tbLoad(); return;
+  }
+  s.msg = { k: 'err', t: o.ok ? 'Le service en ligne ne connaît pas cette demande (il est en version 12) : rien n\'est parti.' : (o.pourquoi || 'Demande refusée.') };
+  tbPaint();
+}
+
+// ---- « Tâches cloud »: one card per task, from its summary
+function tbTaskCard(t) {
+  const s = tbS(), f = t.sommaire, now = Date.now(), last = t.dernier ? new Date(t.dernier).getTime() : 0, lance = f && f.lance ? new Date(f.lance).getTime() : 0;
+  const steps = f ? f.etapes : [], pct = f ? Math.min(100, Math.round(steps.reduce((a, e) => a + (e.fait ? +e.poids || 0 : 0), 0))) : 0, fini = !!f && (f.fini || pct >= 100);
+  const fin = fini ? (f.fini_le ? new Date(f.fini_le).getTime() : last || now) : now, run = lance ? Math.max(0, fin - lance) : 0, rate = run > 0 ? pct / (run / 3600000) : 0, left = !fini && rate > 0 ? (100 - pct) / rate * 3600000 : 0;
+  const stale = !fini && last && now - last > 40 * 60000;
+  const state = t.enLigne ? ['', 'En ligne'] : fini ? ['', t.fusionnee ? 'Terminée, dans la version de travail' : 'Terminée, pas encore publiée'] : !t.commits && !t.fusionnee ? ['w', 'Démarrage, rien d\'envoyé'] : stale ? ['r', 'Rien depuis ' + tbAgo(now - last) + ' : arrêtée ?'] : ['i', 'En cours'];
+  const kv = (v, lab) => h('div', null, h('b', { text: v }), h('span', { text: lab }));
+  const card = h('div', { class: 'tb-task', 'data-b': t.branche },
+    h('div', { class: 'tb-trow' }, h('b', { class: 'tb-mono', text: t.branche }), h('span', { class: 'tb-st' }, h('span', { class: 'tb-dot ' + state[0] }), state[1])),
+    h('div', { class: 'tb-trow' }, h('span', { text: (f && f.tache) || '' }), h('span', { class: 'tb-big', text: f ? pct + ' %' : '—' })),
+    h('div', { class: 'tb-bar' }, h('i', { class: fini ? '' : 'w', style: 'width:' + pct + '%' })),
+    h('div', { class: 'tb-kv' }, kv(run ? tbAgo(run) : '—', fini ? 'durée' : 'depuis le lancement'), kv(rate ? Math.round(rate) + ' %/h' : '—', 'vitesse'), kv(fini ? '✓' : left ? '≈ ' + tbAgo(left) : '—', fini ? 'fini' : 'reste estimé'),
+      kv(String(t.commits | 0), 'commits à publier'), kv(f && f.lignes_plus != null ? '+' + f.lignes_plus + ' / −' + (f.lignes_moins || 0) : '—', 'lignes'), kv(last ? tbAgo(now - last) : '—', 'dernier envoi')));
+  if (steps.length) {
+    const ul = h('ul', { class: 'tb-steps' }, ...steps.map(e => h('li', { class: (e.fait ? 'f' : e.en_cours ? 'c' : '') + (String(e.id || '').split('.').length > 2 ? ' s2' : '') }, h('span', { text: e.fait ? '✓' : e.en_cours ? '▸' : '·' }), h('span', { text: e.titre }), h('em', { text: e.poids ? e.poids + ' %' : '' }))));
+    const det = h('details', null, h('summary', { text: steps.filter(e => e.fait && e.poids).length + ' / ' + steps.filter(e => e.poids).length + ' étapes · voir le sommaire' }), ul);
+    if (s.open[t.branche]) det.open = true; det.addEventListener('toggle', () => { if (det.open) s.open[t.branche] = true; else delete s.open[t.branche]; }); // an open summary stays open through the readings
+    card.append(det);
+  } else card.append(h('small', { class: 'tb-note', text: 'Pas de sommaire : cette tâche ne dit pas où elle en est.' }));
+  return card;
+}
+function tbTasks(d) {
+  return [h('p', { class: 'tb-note', text: 'Chaque tâche tient un sommaire de ses étapes et le met à jour à chaque étape envoyée. Rien n\'est en ligne avant publication.' }),
+    d.taches.length ? h('div', { class: 'tb-tasks', id: 'tb-tasks' }, ...d.taches.map(tbTaskCard)) : h('p', { class: 'tb-note', id: 'tb-tasks', text: 'Aucune tâche en cours.' })];
+}
+
+// ---- « Chantiers »: on line (plain), done on a branch not on line yet (hatched)
+function tbChantiers(d) {
+  return [h('div', { class: 'tb-legend' }, h('span', null, h('i', { style: 'background:var(--moss)' }), 'En ligne'), h('span', null, h('i', { class: 'tb-hatch' }), 'Fait sur une branche, pas encore en ligne')),
+    d.chantiers.length ? h('div', { class: 'tb-rows', id: 'tb-chantiers' }, ...d.chantiers.map(c => h('div', { class: 'tb-row' },
+      h('div', { class: 't' }, h('b', { text: c.nom }), c.detail ? h('small', { text: c.detail }) : null, h('small', { text: c.reste && c.reste.length ? 'Reste : ' + c.reste.slice(0, 3).join(' · ') + (c.reste.length > 3 ? ' …' : '') : 'Tout est en ligne' })),
+      h('span', { class: 'tb-pct', text: (c.enLigne | 0) + ' %' }),
+      h('div', { class: 'tb-bar', role: 'img', 'aria-label': c.nom + ' : ' + (c.enLigne | 0) + ' % en ligne, ' + (c.avecBranches | 0) + ' % avec les branches' }, h('u', { style: 'width:' + clamp(c.avecBranches | 0, 0, 100) + '%' }), h('i', { class: (c.enLigne | 0) < 30 ? 'w' : '', style: 'width:' + clamp(c.enLigne | 0, 0, 100) + '%' })))))
+      : h('p', { class: 'tb-note', id: 'tb-chantiers', text: 'Fichier avancement/chantiers.json illisible.' }),
+    h('p', { class: 'tb-note', text: 'Un élément compte quand il est en ligne ; une branche en cours compte pour son sommaire. Chaque tâche cloud ajoute les siens : personne ne coche rien à la main.' })];
+}
+
+// ---- « Raccourcis »: what stays in this window first, then the pages outside
+function tbLinks() {
+  const go = v => () => { ADM.view = v; ADM.msg = ''; renderSheet(); const b = $('sh-body'); if (b) b.scrollTop = 0; };
+  const inb = (lab, sub, fn, main, off) => h('button', { class: 'tb-link' + (main ? ' main' : ''), type: 'button', disabled: !!off, onclick: fn }, h('b', { text: lab }), h('span', { text: sub }));
+  const out = (lab, sub, href) => tbLink(href, [h('b', { text: lab }), h('span', { text: sub })], 'tb-link');
+  return [h('span', { class: 'tb-lab', text: 'Dans cette fenêtre' }),
+    h('div', { class: 'tb-links', id: 'tb-liens' }, inb('Joueurs et retours', 'Qui joue, fiches, bugs et idées', go('joueurs'), true), inb('Variables', 'Tous les chiffres du jeu', go('var')), inb('Éditeur de modèles', 'Cartes, camp, bibliothèque, atelier', go('mod')),
+      inb('Éditeur de niveaux', 'Niveau ' + (ADM.lv || 1) + ', à la main', () => { if (Net.room) return; if (!ADM.seed) ADM.seed = newSeed(0, false); edStart(ADM.lv || 1, ADM.seed); }, false, !!Net.room || !!LEVELS[(ADM.lv || 1) - 1].boss),
+      inb('Règles d\'import', 'Style, formats, Blender', go('regles'))),
+    h('span', { class: 'tb-lab', text: 'Ailleurs (nouvel onglet)' }),
+    h('div', { class: 'tb-links' }, out('Tableau de bord claude.ai', 'La page d\'origine', tbDash()), out('Publications', 'L\'action « Publier » sur GitHub', tbRepo() + '/actions/workflows/publier.yml'), out('Journal de bord', 'Ce qui a été fait, jour par jour', tbRepo() + '/blob/audit-fable/audit/JOURNAL.md'))];
+}
+// the two kinds the service writes in the security log (the list of names belongs to m_joueurs.js)
+function tbGenres() { if (typeof ADMJ_GENRES === 'undefined' || ADMJ_GENRES.publier) return; ADMJ_GENRES.publier = ['Demande de publication', 'calm']; ADMJ_GENRES.tableau = ['Tableau de bord lu', 'calm']; }
+function tbCss() {
+  if ($('tb-style')) return;
+  document.head.appendChild(h('style', { id: 'tb-style', text: '#sheet .adm-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}@media (max-width:420px){#sheet .adm-tab{font-size:11.5px;gap:0;padding:6px 1px}}' // (#sheet: the page's own styles come later in the page, a plain .adm-tabs would lose)
+    + '.tb{display:flex;flex-direction:column;gap:12px;flex:none;min-width:0}.tb a{color:inherit}.tb-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none}.tb-top .var-bulles{flex:1 1 0;min-width:0;width:auto;max-width:340px}#tb-go{flex:none}#tb-go.busy .ic{animation:tb-sp 1s linear infinite}@keyframes tb-sp{to{transform:rotate(360deg)}}'
+    + '.tb-cap{margin:-4px 0 0;font-size:12.5px;color:var(--dim);flex:none}.tb-cap b{color:var(--amber)}.tb-note{font-size:13px;color:var(--dim);margin:0;line-height:1.4;flex:none}.tb-note.err{color:var(--danger)}.tb-note.ok{color:var(--moss)}.tb-note:empty{display:none}'
+    + '.tb-in{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}.tb-two{display:flex;flex-direction:column;gap:12px}.tb-lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);font-weight:700}.tb-mono,.tb-commits code,.tb-br b{font:700 12.5px ui-monospace,Menlo,Consolas,monospace}'
+    + '.tb-commits{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}.tb-commits li{display:grid;grid-template-columns:60px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.35;overflow-wrap:anywhere}.tb-commits li:first-child{border-top:0;padding-top:0}.tb-commits code{color:var(--dim);font-weight:500}.tb-commits small{display:block;color:var(--dim);font-size:12px}.tb-off{color:var(--amber);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.tb-out{font-size:12.5px;color:var(--dim)!important}'
+    + '.tb-br{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:start;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}.tb-br:first-child{border-top:0;padding-top:0}.tb-br input,.tb-opts input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--amber);flex:none}.tb-br small{grid-column:2;color:var(--dim);font-size:12px;font-weight:400;overflow-wrap:anywhere}'
+    + '.tb-opts{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13.5px}.tb-opts label{display:inline-flex;gap:8px;align-items:flex-start;cursor:pointer;font-weight:400}.tb-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.tb-btns a.btn{text-decoration:none;display:inline-flex;align-items:center}.tb-groups{display:flex;flex-wrap:wrap;gap:6px}'
+    + '.tb-tasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.tb-task{padding:12px 14px;border-radius:var(--r-sm);background:var(--bark-3);display:flex;flex-direction:column;gap:8px;min-width:0}.tb-trow{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:13.5px}.tb-st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-align:right}'
+    + '.tb-dot{width:8px;height:8px;border-radius:50%;background:var(--moss);flex:none}.tb-dot.w{background:var(--amber)}.tb-dot.r{background:var(--danger)}.tb-dot.i{background:var(--dew)}.tb-big{font:700 28px/1 var(--display);color:var(--amber);white-space:nowrap}'
+    + '.tb-bar{height:10px;border-radius:99px;background:var(--well);overflow:hidden;position:relative}.tb-bar i,.tb-bar u{position:absolute;inset:0 auto 0 0;border-radius:99px}.tb-bar i{background:var(--moss)}.tb-bar i.w{background:var(--amber)}.tb-bar u,.tb-hatch{background:repeating-linear-gradient(45deg,var(--dew) 0 5px,transparent 5px 10px);opacity:.65}'
+    + '.tb-kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.tb-kv div{display:flex;flex-direction:column;background:var(--bark-4);border-radius:8px;padding:5px 8px;min-width:0}.tb-kv b{font-size:13.5px;font-variant-numeric:tabular-nums}.tb-kv span{font-size:11px;color:var(--dim);line-height:1.2}'
+    + '.tb-task summary{cursor:pointer;font-size:12.5px;color:var(--dim)}.tb-steps{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:12.5px}.tb-steps li{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:6px;color:var(--dim)}.tb-steps li.f{color:var(--cream)}.tb-steps li.c{color:var(--amber);font-weight:700}.tb-steps li.s2{padding-left:12px}.tb-steps em{font-style:normal;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}'
+    + '.tb-rows{display:flex;flex-direction:column;gap:8px}.tb-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;padding:10px 14px;border-radius:var(--r-sm);background:var(--bark-3)}.tb-row .t{display:flex;flex-direction:column;gap:1px;min-width:0}.tb-row .t b{font-size:14px}.tb-row .t small{color:var(--dim);font-size:12px;line-height:1.3}.tb-row .tb-bar{grid-column:1/-1}.tb-pct{font-weight:700;font-variant-numeric:tabular-nums}'
+    + '.tb-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--dim)}.tb-legend i{display:inline-block;width:18px;height:8px;border-radius:4px;margin-right:6px}'
+    + '.tb-links{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.tb-link{appearance:none;border:0;text-align:left;font:inherit;color:var(--cream);background:var(--bark-3);border-radius:var(--r-sm);padding:10px 12px;display:flex;flex-direction:column;gap:2px;cursor:pointer;text-decoration:none;min-width:0;min-height:54px}.tb-link b{font-size:14px}.tb-link span{font-size:12px;color:var(--dim);line-height:1.25}.tb-link.main{background:var(--amber);color:var(--ink)}.tb-link.main span{color:var(--ink);opacity:.8}.tb-link:disabled{opacity:.5;cursor:default}'
+    // docked (the short drawer of a phone, the panel on the right from 700 points) or on a narrow screen: « Actualiser » is a round button ; on a narrow screen the bubbles lose their names (the line under them names the open one)
+    + '#sheet.dock #tb-go,#sheet #tb-go.x{width:40px;min-height:40px;padding:0;justify-content:center;font-size:0;border-radius:50%}#sheet.dock #tb-go .ic,#sheet #tb-go.x .ic{font-size:18px;margin:0}'
+    + '@media (max-width:699px){#sheet .tb-top .var-bulles{display:flex;gap:6px;width:auto;flex:none}#sheet .tb-top .var-bulle small{display:none}#sheet .tb-top .var-bic{width:40px;height:40px;font-size:18px}#sheet #tb-go{width:40px;min-height:40px;padding:0;justify-content:center;font-size:0;border-radius:50%}#sheet #tb-go .ic{font-size:18px;margin:0}#sheet.dock .tb{gap:10px}#sheet.dock .tb-card>.adm-head small{display:none}}'
+    // the whole screen (« Agrandir »), wide: the commits beside the publication
+    + '@media (min-width:900px){#sheet.full .tb-two{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}}' }));
 }
 
 </script>
