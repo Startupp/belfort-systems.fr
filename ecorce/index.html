@@ -906,7 +906,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "72ddf48";
+window.ecorceBuild = "78a20ef";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -3109,7 +3109,7 @@ function startRun(seed, floor) {
   setGame(seedBig(seed) ? 1 : 0); // a level of the other game (a teammate may have chosen it) is played with that game's equipment
   run = { seed, floor, diff: seedDiff(seed), big: seedBig(seed), target: floor, t0: performance.now(), done: false, cele: 0, fwT: 0, time: 0, best: 0, stats: { ecl: 0, gem: 0, items: [], kills: 0 } };
   refreshStats(); P.hp = P.mhp; P.down = false; G.stop = 0; P.lanCd = 0; P.atkCd = 0; P.combo = 0; P.chain = 0; P.big = false; P.dance = 0; P.lunge = 0; P.dashT = 0; P.dashCd = 0; P.dodgeT = 0;
-  F = genFloor(seed, floor); nvLevel(); worldChanged(); // (nvLevel, x_vivants.js: what can be broken and the objectives of the level ; nothing unless their settings are on)
+  F = genFloor(seed, floor); nvLevel(); if (typeof ccMark === 'function') ccMark(); worldChanged(); // (ccMark: the level's fingerprint, compared within a team, zzh_coop_carte.js) // (nvLevel, x_vivants.js: what can be broken and the objectives of the level ; nothing unless their settings are on)
   P.x = F.start.x; P.y = F.start.y; P.face = Math.PI / 2; P.inv = TU.startInv; P.reviveT = 0; P.target = null;
   clearFx(); myD = {}; myKd = new Set(); Net.deadSummons = new Set(); Net.lastHK = -1;
   for (const v of Net.views.values()) { v.D = {}; v.init = false; }
@@ -3148,7 +3148,7 @@ function finishRun(kind) { // 'win' | 'dead' | 'quit'
   // (after a defeat or a quit as after a win, Damien's decision of 8 October: it used to be lost without a word)
   let left = 0; for (const p of pickups) if (p.kind === 'i') { left += itemScrap(p.item); run.leftItems.push(p.item); }
   if (left) { ME.ecl += left; run.stats.ecl += left; run.stats.left = left; }
-  nvFinish(kind); xpFinish(kind, unlockedNow !== 0); Net.ignoreSeed = run.seed; G.mode = 'end'; G.paused = false; P.down = false; wakeOff(); // (nvFinish: a level won pays its objectives, x_vivants.js)
+  nvFinish(kind); xpFinish(kind, unlockedNow !== 0); Net.ignoreSeed = run.seed; G.mode = 'end'; G.paused = false; P.down = false; wakeOff(); if (typeof ccInTeam === 'function' && ccInTeam()) ccRefresh(); // (fresh published settings and maps before the team's next level, zzh_coop_carte.js) // (nvFinish: a level won pays its objectives, x_vivants.js)
   grpEnd(kind); saveGame(true); sfx(win ? 520 : 140, .3, 'triangle', .06, win ? 400 : -60);
   endPick = -1; showResults(kind, unlockedNow); sendPresence(true); lobbyPresence();
 }
@@ -6367,7 +6367,7 @@ ADM.mdp = admRead('tk-admin-mdp', 's') || '';
 function admReapply() {
   if (admRead('tk-admin') !== '1') return;
   const raw = admRead(ADM_TRIAL); if (!raw) return;
-  try { const m = JSON.parse(raw); if (m && typeof m === 'object') { tuneSet(m, true); ADM.local = true; } } catch (e) { }
+  try { const m = JSON.parse(raw); if (m && typeof m === 'object' && !(typeof ccInTeam === 'function' && ccInTeam())) { tuneSet(m, true); ADM.local = true; } } catch (e) { } // (in a team the published settings apply, zzh_coop_carte.js)
   admTag(); for (const r of ADM.rows) r.sync();
   admFxAll();
 }
@@ -7424,7 +7424,7 @@ async function joinParty(code, create) {
     renderSheet(); return;
   }
   if (!room) { room = Net.lobby; code = 'commun'; } // named rooms refused: everyone shares one team
-  Net.room = room; Net.code = code; Net.joining = false; Net.views.clear(); Net.me = null; Net.ignoreSeed = null; grpReset(create); // the group: who created it is its chef (t_groupe.js)
+  Net.room = room; Net.code = code; Net.joining = false; Net.views.clear(); Net.me = null; Net.ignoreSeed = null; grpReset(create); if (typeof ccJoined === 'function') ccJoined(); // the group: who created it is its chef (t_groupe.js)
   try { Net.offPeers = room.onPeers(() => { }, () => { if (direct) toast('L\'équipe a été fermée'); dropParty(); }); } catch (e) { }
   sendPresence(true); lobbyPresence(); renderSheet();
 }
@@ -7437,7 +7437,7 @@ function leaveParty() {
 function dropParty() {
   grpSacDrop(); // what was promised and not confirmed comes back to my bag (t_groupe.js)
   for (const v of Net.views.values()) if (v.m && USE3D) freeModel(v.m);
-  Net.room = null; Net.code = null; Net.offPeers = null; Net.views.clear(); allies.length = 0; Net.amHost = true; Net.lead = null; Net.g = null;
+  Net.room = null; Net.code = null; Net.offPeers = null; Net.views.clear(); allies.length = 0; Net.amHost = true; Net.lead = null; Net.g = null; if (typeof ccLeft === 'function') ccLeft();
   if (G.mode === 'end' && run && $('end-team') && showResults.last) showResults(...showResults.last); // the results card loses the team's choices
   $('vote').hidden = true; lobbyPresence(); renderSheet();
 }
@@ -7471,7 +7471,7 @@ function sendPresence(force) {
   const patch = { n: cleanName(ME.name), c: ME.col, cl: clsOf(ME) || null, s, k: (Net.k = (Net.k + 1) % 100000), cp: camp ? 1 : null, dv: DEV.id, fx: ME.mod || SRV.bad || SRV.state === 'blocked' ? 1 : null };
   if (s || camp) { patch.x = Math.round(P.x); patch.y = Math.round(P.y); patch.a = Math.round(P.face * 100); patch.w = ST.kind; patch.hl = ST.lan + 1; patch.sw = P.swN; }
   else Object.assign(patch, { x: null, y: null, a: null, w: null, hl: null, sw: null });
-  grpPresence(patch); directPresence(patch); // the group (t_groupe.js): new fields only, beside these ; and what an order or a dance shows (zzb_ordres.js)
+  grpPresence(patch); directPresence(patch); if (typeof ccPresence === 'function') ccPresence(patch); // the group (t_groupe.js): new fields only, beside these ; and what an order or a dance shows (zzb_ordres.js)
   if (s && run) {
     patch.fl = run.floor; patch.nx = run.target; patch.sd = run.seed; patch.hp = Math.ceil(P.hp); patch.nh = now < Net.nhUntil ? 1 : null;
     patch.d = []; for (const id in myD) patch.d.push(+id, myD[id]); patch.kd = [...myKd];
@@ -7495,7 +7495,7 @@ function netFrame(dt) {
     if (!v) { v = { peer: p.peer, x: 0, y: 0, init: false, sw: -1, swingT: 0, D: {}, face: 0, mv: false, w: 1, lan: -1, m: null }; Net.views.set(p.peer, v); }
     v.seen = G.frame; v.name = cleanName(s.n); v.col = clamp(num(s.c) | 0, 0, 3); v.cls = clsOf({ cls: s.cl }); v.s = clamp(num(s.s) | 0, 0, 3); v.dv = typeof s.dv === 'string' && /^[0-9A-Z]{8}$/.test(s.dv) ? s.dv : ''; v.fx = s.fx === 1; // cls: its class, 0 when the field is missing (an older game)
     v.live = now - num(p.updatedAt, now) < 3500; v.sd = isInt(s.sd) ? s.sd : null; v.fl = isInt(s.fl) ? clamp(s.fl, 1, 999) : 0; v.nx = isInt(s.nx) ? s.nx : 0;
-    grpRead(v, s); directRead(v, s); // what the group says (t_groupe.js) ; the size given by an order, the dance (zzb_ordres.js)
+    grpRead(v, s); directRead(v, s); if (typeof ccRead === 'function') ccRead(v, s); // what the group says (t_groupe.js) ; the size given by an order, the dance (zzb_ordres.js)
     if ((v.s === 1 || v.s === 2) && v.live && v.sd !== null && v.fl >= 1) leads.push(v);
     if (playing && v.live && v.sd === run.seed && v.nx > run.floor) cleared = Math.max(cleared, v.nx);
     const inLevel = playing && v.sd === run.seed && v.fl === run.floor && (v.s === 1 || v.s === 2), inCamp = G.mode === 'hub' && v.s === 0 && s.cp === 1 && v.live;
@@ -7536,7 +7536,7 @@ function netFrame(dt) {
     // two teammates started at the same instant: the one with the smaller label wins, the other follows
     else if (playing && lead.sd !== run.seed && performance.now() - run.t0 < 5000 && Net.me !== null && lead.peer < Net.me) startRun(lead.sd, lead.fl);
   }
-  grpFrame();
+  grpFrame(); if (typeof ccFrame === 'function') ccFrame(); // (the same level for the whole team, zzh_coop_carte.js)
 }
 function initNet() {
   const c = window.claude;
@@ -7907,7 +7907,7 @@ function campApply(F0, p) {
 // the animals of the camp, moved by ox, oy tiles (their spot and the corner they wander in)
 function campShift(F0, ox, oy) { if (!ox && !oy) return; for (const c of F0.critters || []) { c.x += ox * T; c.y += oy * T; c.tx += ox * T; c.ty += oy * T; c.zone = [c.zone[0] + ox, c.zone[1] + oy, c.zone[2] + ox, c.zone[3] + oy]; } }
 // (x2_sable.js: clesSbPlanFor gives a level of the workshop's sandbox, for the seed of its try only)
-const planFor = (seed, floor) => { const p = (typeof clesSbPlanFor === 'function' && clesSbPlanFor(seed, floor)) || planOf(floor); return p && !p.big === !seedBig(seed) && !isBossFloor(floor) ? p : null; };
+const planFor = (seed, floor) => { const p = (typeof ccInTeam === 'function' && ccInTeam()) ? ccPlanFor(floor) : ((typeof clesSbPlanFor === 'function' && clesSbPlanFor(seed, floor)) || planOf(floor)); /* (in a team: the published maps only, zzh_coop_carte.js) */ return p && !p.big === !seedBig(seed) && !isBossFloor(floor) ? p : null; };
 
 /* ---------------- the editor itself ---------------- */
 // the layers of what is edited: each can be shown or hidden, and locked (then nothing on it can be picked)
@@ -10447,6 +10447,9 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 20, d: '10 octobre 2026', t: 'Le même niveau pour toute l\'équipe', l: [
+      'En équipe, chacun joue exactement le même niveau : les réglages publiés et les cartes publiées sont relus en rejoignant l\'équipe et entre deux niveaux.',
+      'Si un coéquipier joue une autre version du jeu, le jeu le dit : il suffit de recharger la page.'] },
     { id: 19, d: '10 octobre 2026', t: 'Barres de vie et danses', l: [
       'Une barre de vie au-dessus de ton chevalier et de chaque coéquipier, à sa couleur (Réglages pour les cacher).',
       'Des danses à lancer au camp, vues par toute l\'équipe.',
@@ -16160,6 +16163,65 @@ function admLiensList() { return [['Tableau de bord', 'https://claude.ai/artifac
 function admLiens() {
   if (!$('adm-liens-style')) document.head.appendChild(h('style', { id: 'adm-liens-style', text: '.adm-liens{flex:none;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12.5px;color:var(--dim)}.adm-liens a{display:inline-flex;align-items:center;min-height:36px;padding:4px 12px;border-radius:99px;box-shadow:inset 0 0 0 1px var(--line);color:var(--cream);font-weight:700;text-decoration:none}.adm-liens a:hover,.adm-liens a:focus-visible{box-shadow:inset 0 0 0 1px var(--amber)}' }));
   return h('nav', { class: 'adm-liens', id: 'adm-liens', 'aria-label': 'Tes deux pages' }, h('span', { text: 'Tes pages :' }), ...admLiensList().map(([n, u, t]) => h('a', { href: u, target: '_blank', rel: 'noopener', title: t, text: n + ' ↗' })));
+}
+
+/* ================= the same level for the whole team (10 October) =================
+   In a team every member draws the level from the same seed. The draw also depends on what the administrator published (settings, maps
+   made by hand) — and on nothing else: while in a team, the administrator's own trial (his unpublished settings, the maps of the editor,
+   the sandbox) is set aside, so that his device draws what the others draw. Joining a team, and each results screen, refresh the published
+   settings and maps from the service. Each member puts a fingerprint of its level in its presence (walls, creatures, chests, seals, things
+   to break): a member whose fingerprint differs from the reference member's refreshes and draws the level again once, early in the level,
+   and says so if it still differs (a copy of the game kept in cache from before, most often). Teammates on another version of the game are
+   named once. Every top-level name here is a function (this file comes after d_ui.js in the build). */
+function ccS() { return ccS.s || (ccS.s = { warned: '', redraw: '', said: '', busy: false, at: 0 }); }
+// the published maps only, while in a team (planFor, j_editeur.js): the editor's trial and the sandbox stay on their device
+function ccPlanFor(floor) { try { return (typeof PLANS_PUB !== 'undefined' && PLANS_PUB[floor]) || null; } catch (e) { return null; } }
+function ccInTeam() { try { return typeof Net !== 'undefined' && !!Net.room; } catch (e) { return false; } }
+function ccBuild() { try { return String(window.ecorceBuild || '').replace(/[^0-9a-z+]/gi, '').slice(0, 8) || null; } catch (e) { return null; } }
+// the fingerprint of the level just drawn (startRun, after nvLevel): kept on the run, before any summon or death changes the lists
+function ccPrint() {
+  if (!F || F.hub) return '';
+  let h = 2166136261 >>> 0; const mix = v => { v = v | 0; h ^= v & 0xffff; h = Math.imul(h, 16777619) >>> 0; h ^= (v >>> 16) & 0xffff; h = Math.imul(h, 16777619) >>> 0; };
+  mix(F.W); mix(F.H); for (let i = 0; i < F.g.length; i++) if (F.g[i]) mix(i);
+  for (const e of F.enemies) { mix(e.id); mix(e.type); mix(Math.round(e.x)); mix(Math.round(e.y)); }
+  for (const c of F.chests || []) { mix(Math.round(c.x)); mix(Math.round(c.y)); }
+  if (F.seals) for (const q of F.seals) { mix(Math.round(q.x)); mix(Math.round(q.y)); }
+  if (F.nv && F.nv.br) for (const b of F.nv.br) { mix(Math.round(b.x)); mix(Math.round(b.y)); }
+  if (F.start) { mix(Math.round(F.start.x)); mix(Math.round(F.start.y)); } if (F.lift) { mix(Math.round(F.lift.x)); mix(Math.round(F.lift.y)); }
+  return h.toString(36);
+}
+function ccMark() { try { if (run) run.fp = ccPrint(); } catch (e) { } }
+// what the presence carries: the fingerprint of the level being played, and the version of the game
+function ccPresence(patch) { try { patch.fp = (run && G.mode === 'play' && run.fp) || null; patch.bd = ccBuild(); } catch (e) { } }
+function ccRead(v, s) { v.fp = typeof s.fp === 'string' && s.fp.length < 16 ? s.fp : null; v.bd = typeof s.bd === 'string' && s.bd.length < 10 ? s.bd : null; }
+// the published settings and maps, read again from the service (a short wait, never blocking): at joining, and at each results screen
+function ccRefresh() {
+  const s = ccS(), now = Date.now(); if (s.busy || now - s.at < 4000 || typeof SRV === 'undefined' || !SRV.url) return Promise.resolve(); s.busy = true; s.at = now; // (no service: nothing to refresh)
+  const jobs = []; try { if (typeof srvTune === 'function') jobs.push(srvTune()); if (typeof srvMaps === 'function') jobs.push(srvMaps()); } catch (e) { }
+  return Promise.race([Promise.all(jobs), new Promise(r => setTimeout(r, 3000))]).catch(() => { }).then(() => { s.busy = false; });
+}
+// joining a team: the administrator's trial settings are set aside (the published ones apply, like for everyone), then a refresh
+function ccJoined() { try { tuneSet(TUNE_SHARED, true); if (typeof ADM !== 'undefined') ADM.local = false; } catch (e) { } ccRefresh(); }
+// leaving it: his trial comes back on his device
+function ccLeft() { try { if (typeof admReapply === 'function') admReapply(); } catch (e) { } }
+// each frame in a team (netFrame): teammates on another version, and the level compared to the reference member's
+function ccFrame() {
+  if (!ccInTeam() || typeof run === 'undefined' || !run) return; const s = ccS(), me = ccBuild();
+  for (const v of Net.views.values()) {
+    if (!v.live || !v.bd || !me || v.bd === me || s.warned.indexOf('|' + v.peer + '|') >= 0) continue;
+    s.warned += '|' + v.peer + '|'; toast((v.name || 'Un coéquipier') + ' joue une autre version du jeu : que chacun recharge la page.', 'var(--amber)');
+  }
+  if (G.mode !== 'play' || !run.fp) return;
+  // the reference: the member with the smallest label among those in the same level (the host of the creatures, the same way)
+  let ref = null; for (const v of Net.views.values()) if (v.live && (v.s === 1 || v.s === 2) && v.sd === run.seed && v.fl === run.floor && v.fp && (!ref || v.peer < ref.peer)) ref = v;
+  if (!ref || Net.me === null || !(ref.peer < Net.me) || ref.fp === run.fp) return;
+  const key = run.seed + ':' + run.floor, sd = run.seed, fl = run.floor;
+  if (s.redraw !== key) { // once per level: fresh settings and maps, then the level drawn again — early in the level, before anything happened
+    s.redraw = key;
+    if (performance.now() - run.t0 < 25000 && !(run.stats && run.stats.kills)) ccRefresh().then(() => { if (run && run.seed === sd && run.floor === fl && G.mode === 'play' && ccInTeam()) { Net.ignoreSeed = null; startRun(sd, fl); toast('Niveau redessiné pour être celui de l\'équipe', 'var(--amber)'); } });
+    return;
+  }
+  if (s.said !== key && performance.now() - run.t0 > 4000) { s.said = key; run.fpBad = true; toast('Ton niveau n\'est pas celui de l\'équipe : recharge le jeu (mise à jour).', 'var(--risk)'); }
 }
 
 </script>
