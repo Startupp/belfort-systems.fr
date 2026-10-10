@@ -906,7 +906,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "f427aa8";
+window.ecorceBuild = "d8845f3";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
@@ -2043,6 +2043,19 @@ Object.assign(FX, {
   invTeinte: v => v ? 'À l\'atelier, l\'image d\'un objet peut prendre une des cinq teintes.' : 'Pas de teinte à l\'atelier ; un objet déjà teint garde sa teinte, sans la montrer.',
   invTeinteCout: v => 'Teinter un objet coûte ' + fplu(v, 'gemme', 'gemmes') + (TU.invTeinte ? '.' : ' (sert quand « Teinte » est allumée).'),
   hudModele: v => 'Un joueur qui n\'a rien choisi joue avec l\'écran « ' + ['Épuré', 'Classique', 'Complet'][v] + ' » ; son propre choix (Réglages > Jeu) passe avant.',
+});
+// ---- a new version of the game is announced to the players on line (10 October, branch publications-maj; the code is src/zzk_maj.js)
+for (const d of [
+  ['majOn', 'aff', 'Annonce des mises à jour', 'Allumé : un joueur en ligne voit qu\'une mise à jour arrive, qu\'elle est en cours, puis un bouton pour actualiser le jeu (sa partie est sauvegardée avant).', 1, 0, 1, 'choice', { choices: ['Éteint', 'Allumé'], fx: 'majOn' }],
+  ['majChaque', 'aff', 'Annonce des mises à jour : relecture (minutes)', 'Toutes les combien de minutes le jeu regarde si une mise à jour est annoncée ou arrivée (chaque minute pendant une annonce).', 3, 1, 30, 'n', { fx: 'majChaque' }],
+  ['majRappel', 'aff', 'Annonce des mises à jour : rappel après « Plus tard » (minutes)', 'Le temps avant que le bouton « Actualiser » revienne quand le joueur a répondu « Plus tard ».', 10, 1, 120, 'n', { fx: 'majRappel' }],
+  ['majOubli', 'aff', 'Annonce des mises à jour : oubli (minutes)', 'Une annonce que rien n\'a suivie (publication interrompue) n\'est plus montrée après ce temps.', 90, 10, 600, 'n', { fx: 'majOubli' }],
+]) tuneAdd(d);
+Object.assign(FX, {
+  majOn: v => v ? 'Un joueur en ligne est prévenu d\'une mise à jour, puis invité à actualiser le jeu (sa partie est sauvegardée avant).' : 'Rien n\'est annoncé : la nouvelle version arrive au prochain lancement du jeu.',
+  majChaque: v => 'Le jeu regarde toutes les ' + fplu(v, 'minute', 'minutes') + ' si une mise à jour est annoncée ; chaque minute pendant une annonce.',
+  majRappel: v => 'Après « Plus tard », le bouton « Actualiser » revient au bout de ' + fplu(v, 'minute', 'minutes') + '.',
+  majOubli: v => 'Une annonce restée sans suite (publication interrompue) disparaît après ' + fplu(v, 'minute', 'minutes') + '.',
 });
 
 'use strict';
@@ -6845,6 +6858,7 @@ function uiFlash() { const f = $('flash'); f.classList.remove('go'); void f.offs
 function showUI() {
   const m = G.mode, sh = sheetOpen(); applyTheme(); if (m !== 'title') G.home = false;
   hudmApply(); // the model of screen the player chose (zzj_hud_modeles.js)
+  majUI(); // a new version of the game is announced, or on line (zzk_maj.js)
   if (m !== 'title') creating = false; $('scr-title').hidden = m !== 'title' || G.home || creating; $('scr-create').hidden = m !== 'title' || G.home || !creating; homeSync(); $('camp-top').hidden = m !== 'hub'; $('tabs').hidden = m !== 'hub' || sh;
   document.body.classList.toggle('lobby', lobbyOn()); // the home screen of a character: bubbles instead of a camp (27a)
   lobbyLay();
@@ -10485,6 +10499,10 @@ function grpSacBody(kids, foot) {
    last in ORDER, and nothing is read at load. */
 function notesList() {
   return [
+    { id: 22, d: '10 octobre 2026', t: 'Le jeu te prévient des mises à jour', l: [
+      'Quand une mise à jour arrive, le jeu te le dit : dans combien de temps, puis qu\'elle est en cours.',
+      'Une fois installée, un bouton « Actualiser » apparaît à l\'accueil et au camp, jamais en plein niveau.',
+      'Ta partie est sauvegardée juste avant : butin, pièces, XP et mondes ouverts sont gardés.'] },
     { id: 21, d: '10 octobre 2026', t: 'Un inventaire façon RPG', l: [
       'L\'inventaire s\'ouvre dans un cadre flottant : ton sac d\'un côté, ton chevalier, ses statistiques et son équipement de l\'autre. Plus d\'onglets.',
       'Glisse un objet sur ton chevalier pour l\'équiper, sur « Atelier » pour le renforcer, sur « Vendre » pour le vendre.',
@@ -15710,7 +15728,7 @@ async function tbLoad() {
   s.busy = true; s.mdp = ADM.mdp; tbEtat();
   const { status, o } = await tbCall('tableau'); s.busy = false; s.tried = Date.now();
   if (o.ok && o.tableau === 1 && Array.isArray(o.commits)) {
-    const d = { commits: o.commits, attente: Array.isArray(o.attente) ? o.attente : [], taches: Array.isArray(o.taches) ? o.taches : [], chantiers: Array.isArray(o.chantiers) ? o.chantiers : [], resultat: o.resultat || null, travail: String(o.travail || 'audit-fable') };
+    const d = { commits: o.commits, attente: Array.isArray(o.attente) ? o.attente : [], taches: Array.isArray(o.taches) ? o.taches : [], chantiers: Array.isArray(o.chantiers) ? o.chantiers : [], resultat: o.resultat || null, historique: Array.isArray(o.historique) ? o.historique : null, travail: String(o.travail || 'audit-fable') }; // (historique: zzl_publications.js ; null with a service that does not give it yet)
     const sig = JSON.stringify(d), same = sig === s.sig && !s.err && !s.old && !!s.data;
     s.data = d; s.sig = sig; s.lu = Date.now(); s.err = ''; s.code = ''; s.old = false; s.stop = false;
     for (const k of Object.keys(s.pick)) if (!d.attente.some(b => b.nom === k)) delete s.pick[k]; // a branch that left the list is no longer ticked
@@ -15788,9 +15806,9 @@ function tbPub(d) {
       h('span', null, c.enLigne ? null : h('span', { class: 'tb-off', text: 'pas encore en ligne · ' }), String(c.msg || ''), h('small', { text: tbDate(c.quand) }))))
       : [h('li', null, h('code', { text: '—' }), h('span', { text: 'Aucune modification lue.' }))])),
     h('div', { class: 'tb-btns' }, tbLink(tbRepo() + '/commits/' + d.travail, 'Toutes, sur GitHub', 'tb-out')));
-  const branches = d.attente.length ? d.attente.map(b => { const cb = h('input', { type: 'checkbox', 'data-b': b.nom, 'aria-label': 'Ajouter la branche ' + b.nom }); cb.checked = !!s.pick[b.nom];
+  const branches = d.attente.length ? pubGroupes(d, (b, c) => { const cb = h('input', { type: 'checkbox', 'data-b': b.nom, 'aria-label': 'Ajouter la branche ' + b.nom }); cb.checked = !!s.pick[b.nom];
     cb.addEventListener('change', () => { if (cb.checked) s.pick[b.nom] = true; else delete s.pick[b.nom]; tbDisarm(); });
-    return h('label', { class: 'tb-br' }, cb, h('b', { text: b.nom }), h('small', { text: (tbDate(b.quand) ? tbDate(b.quand) + ' · ' : '') + (b.msg || 'Dernière modification non lue') })); })
+    return h('label', { class: 'tb-br', 'data-g': String(c.g) }, cb, h('b', null, b.nom, pubChip(c)), h('small', { text: pubMots(b, c) })); }) // (sorted in two groups, each with its state: zzl_publications.js)
     : [h('p', { class: 'tb-note', id: 'tb-none', text: 'Aucune branche en attente : tout est déjà dans la version de travail.' })];
   const opt = (id, lab, key) => { const cb = h('input', { type: 'checkbox', id }); cb.checked = !!s[key]; cb.addEventListener('change', () => { s[key] = cb.checked; tbDisarm(); }); return h('label', null, cb, h('span', { text: lab })); };
   const btn = (id, lab, online, cls) => h('button', { class: 'btn small' + cls + (s.armed === lab ? ' danger' : ''), id, type: 'button', disabled: s.sending, onclick: () => tbSend(online) }, s.sending && s.last === lab ? 'Envoi…' : s.armed === lab ? 'Confirmer' : lab);
@@ -15806,7 +15824,7 @@ function tbPub(d) {
     h('span', { class: 'tb-lab', text: 'Dernier résultat' }),
     r ? h('p', { class: 'tb-note ' + (bon ? 'ok' : 'err'), id: 'tb-last' }, (r.publier ? 'Publication ' : 'Essai : ') + r.etat + ' le ' + tbDate(r.quand) + (r.branches && r.branches.length ? ' (avec ' + r.branches.join(', ') + ')' : '') + (r.seul ? ' · tests : ' + r.seul : '') + (r.par ? ' · ' + r.par : '') + '. ',
       /^https:\/\/github\.com\//.test(String(r.details || '')) ? tbLink(r.details, 'Détails') : null) : h('p', { class: 'tb-note', id: 'tb-last', text: 'Aucun résultat lu pour l\'instant.' }));
-  return [h('div', { class: 'tb-two' }, commits, pub)];
+  return [h('div', { class: 'tb-two' }, commits, pub), pubHisto(d)];
 }
 // a choice changed while a button waited for its second touch: the wait is over (what would leave is no longer what was said)
 function tbDisarm() { const s = tbS(); if (!s.armed) return; s.armed = ''; clearTimeout(s.armT); s.msg = null; tbPaint(); }
@@ -15838,7 +15856,7 @@ function tbTaskCard(t) {
   const steps = f ? f.etapes : [], pct = f ? Math.min(100, Math.round(steps.reduce((a, e) => a + (e.fait ? +e.poids || 0 : 0), 0))) : 0, fini = !!f && (f.fini || pct >= 100);
   const fin = fini ? (f.fini_le ? new Date(f.fini_le).getTime() : last || now) : now, run = lance ? Math.max(0, fin - lance) : 0, rate = run > 0 ? pct / (run / 3600000) : 0, left = !fini && rate > 0 ? (100 - pct) / rate * 3600000 : 0;
   const stale = !fini && last && now - last > 40 * 60000;
-  const state = t.enLigne ? ['', 'En ligne'] : fini ? ['', t.fusionnee ? 'Terminée, dans la version de travail' : 'Terminée, pas encore publiée'] : !t.commits && !t.fusionnee ? ['w', 'Démarrage, rien d\'envoyé'] : stale ? ['r', 'Rien depuis ' + tbAgo(now - last) + ' : arrêtée ?'] : ['i', 'En cours'];
+  const state = t.enLigne ? ['', 'En ligne'] : fini ? ['', t.fusionnee ? 'Terminée, dans la version de travail' : 'Terminée, pas encore publiée' + (s.data ? ({ oui: ', testée', part: ', testée en partie', rate: ', tests échoués', non: ', non testée' })[(pubClasse(t.branche, s.data).test || {}).k] || '' : '')] : !t.commits && !t.fusionnee ? ['w', 'Démarrage, rien d\'envoyé'] : stale ? ['r', 'Rien depuis ' + tbAgo(now - last) + ' : arrêtée ?'] : ['i', 'En cours'];
   const kv = (v, lab) => h('div', null, h('b', { text: v }), h('span', { text: lab }));
   const card = h('div', { class: 'tb-task', 'data-b': t.branche },
     h('div', { class: 'tb-trow' }, h('b', { class: 'tb-mono', text: t.branche }), h('span', { class: 'tb-st' }, h('span', { class: 'tb-dot ' + state[0] }), state[1])),
@@ -15856,7 +15874,7 @@ function tbTaskCard(t) {
 }
 function tbTasks(d) {
   return [h('p', { class: 'tb-note', text: 'Chaque tâche tient un sommaire de ses étapes et le met à jour à chaque étape envoyée. Rien n\'est en ligne avant publication.' }),
-    d.taches.length ? h('div', { class: 'tb-tasks', id: 'tb-tasks' }, ...d.taches.map(tbTaskCard)) : h('p', { class: 'tb-note', id: 'tb-tasks', text: 'Aucune tâche en cours.' })];
+    d.taches.length ? h('div', { class: 'tb-tasks', id: 'tb-tasks' }, ...pubTaches(d).map(tbTaskCard)) : h('p', { class: 'tb-note', id: 'tb-tasks', text: 'Aucune tâche en cours.' })];
 }
 
 // ---- « Chantiers »: on line (plain), done on a branch not on line yet (hatched)
@@ -16747,6 +16765,181 @@ function hudmRow() {
   const cur = hudmGet(), pv = n => h('span', { class: 'hudm-pv', 'aria-hidden': 'true' }, h('i', { class: 'v' }), n > 0 ? h('i', { class: 'x' }) : null, n > 1 ? h('i', { class: 'c' }) : null, n > 0 ? h('i', { class: 'p' }) : null, h('i', { class: 'b' }), h('i', { class: 'b2' }));
   return h('div', { class: 'choice hudm-row', id: 'hudm-row' }, h('span', { class: 'row', style: 'flex-wrap:nowrap' }, ic('ecran'), 'Écran de jeu'),
     h('div', { class: 'seg' }, ...hudmNames().map((n, i) => h('button', { class: 'chipbtn', type: 'button', 'aria-pressed': String(cur === i), 'aria-label': 'Écran de jeu ' + n, onclick: () => { hudmSet(i); renderSheet(); } }, pv(i), n))));
+}
+
+/* ================= Une mise à jour arrive : les joueurs en ligne sont prévenus (10 October, Damien's request, branch publications-maj) =================
+   « Un message prévenant les joueurs quand une mise à jour sera lancée, est en cours, et : cliquez ici pour actualiser le jeu
+   (votre progression n'en sera pas impactée). »
+   A small file, maj.json, sits beside the page of the game (never kept by the service worker, never by the cache of the browser):
+     { etat: 'publiee',  version: '<the commit this page was built from>', quand }    written by build.mjs with every build
+     { etat: 'annoncee', quand, duree: <minutes>, version: '<the one on line>' }      put on the site by the action « Publier » as soon
+                                                                                      as a publication starts, taken back if it fails
+   The page reads it again every few minutes (settings « majChaque »), more often while a publication is announced:
+     annoncee, time left      « Mise à jour dans environ N min »
+     annoncee, time is up     « Mise à jour en cours… »
+     publiee, another version « Mise à jour installée : touche ici pour actualiser le jeu » — the game is saved first, then the page
+                              is loaded again. Loot, coins, XP and the levels opened are in the save ; a level being played starts
+                              again from its beginning, which the message says when there is one.
+   The band shows on the home screen, at the camp and on the results: never over a level being played (a dot on the Pause button and
+   one line of text tell it there) nor over an open menu. Nothing here touches a save. The page published inside Claude has no
+   maj.json and no version: it never asks anything. Every top-level name is a function ; the state lives in majS().
+   Hooks: showUI (d_ui.js) calls majUI ; build.mjs writes www/maj.json ; pwa/sw.js lets it through. */
+function majS() { return majS.s || (majS.s = { on: false, info: null, lu: 0, busy: false, etat: '', n: 0, plusTard: 0, dit: '', ask: false, timer: 0, going: false }); }
+function majMine() { return typeof window.ecorceBuild === 'string' ? window.ecorceBuild.replace(/\+$/, '') : ''; }
+function majCss() {
+  return ['#maj{position:absolute;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:45;display:flex;justify-content:center;pointer-events:none}#maj[hidden]{display:none}#maj.bas{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 40px)}',
+    '.maj-b{pointer-events:auto;appearance:none;border:0;max-width:min(100%,460px);display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:var(--r-sm);background:var(--bark-3);color:var(--cream);box-shadow:0 0 0 2px var(--line),0 8px 24px rgba(0,0,0,.55);font:600 13.5px var(--ui);text-align:left;animation:ongIn .2s ease-out}',
+    'button.maj-b{cursor:pointer}.maj-b.pret{background:var(--amber);color:var(--ink);box-shadow:0 3px 0 var(--amber-deep),0 8px 24px rgba(0,0,0,.55)}.maj-b>.ic{font-size:22px;flex:none}.maj-b.cours>.ic{animation:majTourne 1.4s linear infinite}@keyframes majTourne{to{transform:rotate(360deg)}}',
+    '.maj-b span.t{display:grid;gap:1px;min-width:0}.maj-b b{font-size:14.5px;line-height:1.2}.maj-b small{font-size:12px;line-height:1.25;opacity:.85;font-weight:600}',
+    '.maj-x{appearance:none;border:0;flex:none;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.25);color:inherit;display:grid;place-items:center;cursor:pointer;padding:0}.maj-x .ic{font-size:14px}',
+    '.maj-ask{pointer-events:auto;max-width:min(100%,420px);display:grid;gap:10px;padding:14px;border-radius:var(--r-sm);background:var(--bark-3);color:var(--cream);box-shadow:0 0 0 2px var(--amber),0 10px 30px rgba(0,0,0,.6);font:600 13.5px var(--ui)}.maj-ask p{margin:0;font-weight:400;line-height:1.35}.maj-ask .row{display:flex;gap:8px;flex-wrap:nowrap}.maj-ask .btn{flex:1 1 0;min-height:44px;padding:8px 10px;font-size:14.5px;justify-content:center;min-width:0}',
+    '@media (prefers-reduced-motion:reduce){.maj-b,.maj-b>.ic{animation:none!important}}'].join('\n');
+}
+// read maj.json again (the tests call it to get an answer at once)
+function majRead() {
+  const s = majS(); if (s.busy || !majMine() || !TU.majOn) return Promise.resolve(s.etat);
+  s.busy = true; s.lu = Date.now();
+  return fetch('maj.json?t=' + s.lu, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => { s.info = j && typeof j === 'object' ? j : null; }, () => { /* no network: what was read stays */ })
+    .then(() => { s.busy = false; majUI(); return s.etat; });
+}
+// what there is to say now: '' nothing, 'bientot' (n minutes left), 'cours', 'pret'
+function majEtat() {
+  const s = majS(), i = s.info, mine = majMine(); s.n = 0; if (!i || !mine || !TU.majOn) return '';
+  const quand = new Date(i.quand).getTime() || 0, age = Date.now() - quand, v = String(i.version || '').replace(/\+$/, '');
+  if (i.etat === 'publiee') return v && v !== mine ? 'pret' : '';
+  if (i.etat !== 'annoncee' || !quand || age < -120000 || age > TU.majOubli * 60000) return ''; // an announcement nobody took back is forgotten after a while
+  if (v && v !== mine) return 'pret'; // this page is already older than the version on line
+  const left = clamp(+i.duree || 5, 1, 120) * 60000 - age; if (left > 60000) { s.n = Math.max(1, Math.round(left / 60000)); return 'bientot'; }
+  return 'cours';
+}
+function majQuiet() { return (G.mode === 'play' && !G.paused) || sheetOpen() || (typeof HUD !== 'undefined' && HUD.edit) || (typeof ED !== 'undefined' && ED.on); }
+// called by showUI, and after each reading: the band, or the dot on the Pause button while a level is played
+function majUI() {
+  const s = majS();
+  if (!s.on) { // the first call: the style, the band, the clock
+    if (!majMine()) return; s.on = true;
+    const st = document.createElement('style'); st.id = 'maj-css'; st.textContent = majCss(); document.body.append(st);
+    $('game').append(h('div', { id: 'maj', hidden: true, role: 'status', 'aria-live': 'polite' }));
+    s.timer = setInterval(majTick, 20000); document.addEventListener('visibilitychange', () => { if (!document.hidden) majTick(); });
+    try { const e = JSON.parse(sessionStorage.getItem('tk-maj-essai') || 'null'); if (e && e.de === majMine() && Date.now() - e.q < 180000) s.plusTard = e.q + TU.majRappel * 60000; } catch (e) { } // just reloaded and still the old page: the site is not up to date yet, ask again later
+    setTimeout(majRead, 1500);
+  }
+  const box = $('maj'); if (!box) return;
+  let quiet = false; try { quiet = majQuiet(); } catch (e) { quiet = true; }
+  const etat = majEtat(), tu = Date.now() < s.plusTard && etat !== 'bientot' && etat !== 'cours' ? '' : etat, key = tu + '|' + s.n + '|' + quiet + '|' + s.ask + '|' + !!Net.room + '|' + G.mode;
+  s.etat = etat; $('b-pause').classList.toggle('dot', etat === 'pret');
+  if (etat && etat !== s.dit && G.mode === 'play' && !G.paused) { s.dit = etat; const n = s.n; setTimeout(() => { if (G.mode === 'play' && majS().etat === etat) toast(etat === 'pret' ? 'Mise à jour installée : actualise après ce niveau' : etat === 'cours' ? 'Mise à jour du jeu en cours' : 'Mise à jour du jeu dans ' + n + ' min'); }, 2600); } // said once in a level (after the name of the level has had its turn)
+  if (!etat) s.dit = '';
+  if (key === s.key) return; s.key = key;
+  if (!tu || quiet || (s.fermee && s.fermee === (s.info && s.info.quand) && tu !== 'pret')) { box.hidden = true; box.replaceChildren(); return; }
+  const close = () => h('button', { class: 'maj-x', type: 'button', 'aria-label': 'Fermer ce message', onclick: e => { e.stopPropagation(); s.fermee = s.info && s.info.quand; s.key = ''; majUI(); } }, ic('fermer'));
+  let kid;
+  if (tu === 'bientot') kid = h('div', { class: 'maj-b', id: 'maj-b' }, ic('nuage'), h('span', { class: 't' }, h('b', { text: 'Mise à jour du jeu dans environ ' + s.n + ' min' }), h('small', { text: 'Tu peux continuer à jouer : rien ne sera perdu.' })), close());
+  else if (tu === 'cours') kid = h('div', { class: 'maj-b cours', id: 'maj-b' }, ic('recommencer'), h('span', { class: 't' }, h('b', { text: 'Mise à jour du jeu en cours…' }), h('small', { text: 'Encore une minute ou deux. Tu peux continuer à jouer.' })), close());
+  else if (s.ask) kid = h('div', { class: 'maj-ask', id: 'maj-ask', role: 'alertdialog', 'aria-label': 'Actualiser le jeu ?' }, h('b', { text: 'Actualiser le jeu maintenant ?' }),
+    h('p', { text: 'Ta progression est gardée : butin, pièces, XP, monde en cours.' + (Net.room ? ' Tu quitteras ton équipe : rejoins-la ensuite avec le même code.' : '') + (G.mode === 'play' ? ' Le niveau en cours repartira de son début.' : '') }),
+    h('div', { class: 'row' }, h('button', { class: 'btn shine', id: 'maj-oui', type: 'button', onclick: majGo }, ic('recommencer'), 'Actualiser'), h('button', { class: 'btn line back', id: 'maj-non', type: 'button', onclick: () => { s.ask = false; s.plusTard = Date.now() + TU.majRappel * 60000; s.key = ''; majUI(); } }, 'Plus tard')));
+  else kid = h('button', { class: 'maj-b pret', id: 'maj-b', type: 'button', onclick: () => { if (Net.room || G.mode === 'play') { s.ask = true; s.key = ''; majUI(); } else majGo(); } }, ic('recommencer'),
+    h('span', { class: 't' }, h('b', { text: 'Mise à jour installée : touche ici pour actualiser le jeu' }), h('small', { text: 'Ta progression est gardée : butin, XP, monde en cours.' })));
+  box.classList.toggle('bas', G.mode === 'title'); // on the home screen the band sits at the bottom, clear of the name of the game
+  box.replaceChildren(kid); box.hidden = false;
+}
+// every 20 seconds: read again when it is time (every « majChaque » minutes ; every minute while something is announced), and keep the minutes right
+function majTick() {
+  const s = majS(); if (document.hidden || !TU.majOn) { if (!TU.majOn) majUI(); return; }
+  const every = (s.etat === 'bientot' || s.etat === 'cours' ? 1 : TU.majChaque) * 60000;
+  if (Date.now() - s.lu >= every - 1000) majRead(); else majUI();
+}
+// « Actualiser » : the game is saved (on the device, and sent on line when there is a service), then the page is loaded again
+function majGo() {
+  const s = majS(); if (s.going) return; s.going = true;
+  try { saveGame(true); } catch (e) { }
+  try { sessionStorage.setItem('tk-maj-essai', JSON.stringify({ de: majMine(), q: Date.now() })); } catch (e) { }
+  const b = $('maj'); if (b) b.replaceChildren(h('div', { class: 'maj-b cours', id: 'maj-b' }, ic('recommencer'), h('span', { class: 't' }, h('b', { text: 'Partie sauvegardée, actualisation…' }))));
+  const reload = () => { try { location.reload(); } catch (e) { } };
+  try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => { }); } catch (e) { }
+  setTimeout(reload, 700); // the time for the save to be written and sent
+}
+
+/* ================= La liste des publications, triée (10 October, Damien's request, branch publications-maj) =================
+   « Trie par : tâches terminées, publiables mais non testées ; non commencées, 0 % d'avancement… et sépare ce qui est publiable ou
+   non ; mets aussi les mises à jour déjà publiées. » In the tab « Tableau » of the administration (src/zzt_tableau.js), bubble
+   « Publication », the branches to tick are no longer one flat list:
+     Publiables          finished (their summary says so), not on line yet: tested first, then tested in part, then not tested
+     Pas encore          still being worked on (the furthest first), stopped ?, not started (0 %), without a summary
+   and a third card, « Déjà publiées », lists what went on line and every trial, the latest first.
+   « Testée » is worked out, never ticked by hand: a run of the action « Publier » with its tests, successful, that held the branch,
+   later than the last change of the branch (publier/historique.json, kept by the action, given by the service in « historique »).
+   A service that does not give the history yet (deployed before this branch) : the list is still sorted, « testée » is left out, and
+   the third card says what is missing. It is read with the rest, every minute. Every top-level name is a function. */
+function pubCssOn() { if ($('pub-style')) return; const st = document.createElement('style'); st.id = 'pub-style'; st.textContent = pubCss(); document.body.append(st); }
+function pubCss() {
+  return '.tb-grp{display:flex;align-items:baseline;gap:8px;margin:10px 0 2px;font:700 12px var(--ui);text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}.tb-grp:first-child{margin-top:0}.tb-grp b{color:var(--cream);font-size:13px;text-transform:none;letter-spacing:0}.tb-grp.ok b{color:var(--moss)}'
+    + '.tb-chip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font:700 11px/1.5 var(--ui);background:var(--bark-4);color:var(--dim);white-space:nowrap;vertical-align:1px}.tb-chip.ok{background:var(--moss);color:#10200a}.tb-chip.w{background:#e8a23a;color:#2a1d08}.tb-chip.r{background:var(--danger);color:#2a0806}.tb-chip.i{background:var(--dew);color:#06202a}'
+    + '.tb-bilan{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 4px}.tb-bilan .tb-chip{margin-left:0;font-size:12px;padding:2px 10px}'
+    + '.tb-hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}.tb-hist li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.4;overflow-wrap:anywhere}.tb-hist li:first-child{border-top:0;padding-top:0}.tb-hist time{color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}.tb-hist small{display:block;color:var(--dim);font-size:12px}';
+}
+function pubPct(f) { return f ? Math.min(100, Math.round(f.etapes.reduce((a, e) => a + (e.fait ? +e.poids || 0 : 0), 0))) : 0; }
+// was this branch tested since its last change ? { k: 'oui' | 'part' | 'rate' | 'non' | '?', quand }
+function pubTest(nom, last, d) {
+  if (!Array.isArray(d.historique)) return { k: '?' };
+  for (const x of d.historique) {
+    const q = new Date(x.quand).getTime() || 0; if (!x.tests || !Array.isArray(x.branches) || !x.branches.includes(nom) || q < last - 60000) continue;
+    if (x.etat === 'tests réussis' || x.etat === 'réussie') return { k: x.seul ? 'part' : 'oui', quand: x.quand, seul: x.seul };
+    return { k: 'rate', quand: x.quand };
+  }
+  return { k: 'non' };
+}
+// where a branch stands: g the group (0 ready to publish, 1 not yet, 2 in the work version, 3 on line), o its place inside, chip [class, words]
+function pubClasse(nom, d) {
+  const t = d.taches.find(x => x.branche === nom), a = d.attente.find(x => x.nom === nom), f = t && t.sommaire, pct = pubPct(f), fini = !!f && (f.fini || pct >= 100);
+  const last = new Date((t && t.dernier) || (a && a.quand) || 0).getTime() || 0, stale = !fini && last && Date.now() - last > 40 * 60000;
+  if (t && t.enLigne) return { g: 3, o: 0, pct, chip: ['ok', 'En ligne'] };
+  if (t && t.fusionnee) return { g: 2, o: 0, pct, chip: ['i', 'Dans la version de travail'] };
+  if (fini) { const x = pubTest(nom, last, d);
+    return x.k === 'oui' ? { g: 0, o: 0, pct, test: x, chip: ['ok', 'Terminée · testée'] } : x.k === 'part' ? { g: 0, o: 1, pct, test: x, chip: ['w', 'Terminée · testée en partie'] }
+      : x.k === 'rate' ? { g: 0, o: 3, pct, test: x, chip: ['r', 'Terminée · tests échoués'] } : { g: 0, o: 2, pct, test: x, chip: ['w', x.k === '?' ? 'Terminée' : 'Terminée · non testée'] }; }
+  if (!f) return { g: 1, o: 300, pct: 0, chip: ['', 'Sans sommaire'] };
+  if (!pct && !(t && t.commits > 1)) return { g: 1, o: 200, pct: 0, chip: ['', 'Non commencée · 0 %'] };
+  return stale ? { g: 1, o: 150 - pct / 100, pct, chip: ['r', 'Arrêtée ? · ' + pct + ' %'] } : { g: 1, o: 100 - pct, pct, chip: ['i', 'En cours · ' + pct + ' %'] };
+}
+function pubChip(c) { return h('span', { class: 'tb-chip ' + c.chip[0], text: c.chip[1] }); }
+// the branches that wait, in two groups ; mk(b, classe) draws one line (zzt_tableau.js keeps the tick)
+function pubGroupes(d, mk) {
+  pubCssOn();
+  const L = d.attente.map(b => ({ b, c: pubClasse(b.nom, d) })).sort((x, y) => x.c.g - y.c.g || x.c.o - y.c.o), pr = L.filter(x => x.c.g === 0), pas = L.filter(x => x.c.g !== 0), n = k => pr.filter(x => x.c.test && x.c.test.k === k).length;
+  const bilan = h('div', { class: 'tb-bilan', id: 'tb-bilan' }, h('span', { class: 'tb-chip ' + (pr.length ? 'ok' : ''), text: pr.length + (pr.length > 1 ? ' publiables' : ' publiable') }),
+    Array.isArray(d.historique) && pr.length ? h('span', { class: 'tb-chip ' + (n('oui') === pr.length ? 'ok' : 'w'), text: n('oui') + (n('oui') > 1 ? ' testées' : ' testée') + ' sur ' + pr.length }) : null,
+    h('span', { class: 'tb-chip ' + (pas.some(x => x.c.chip[0] === 'i') ? 'i' : ''), text: pas.filter(x => x.c.chip[0] === 'i' || x.c.chip[0] === 'r').length + ' en cours' }), h('span', { class: 'tb-chip', text: pas.filter(x => !x.c.pct).length + ' non commencée' + (pas.filter(x => !x.c.pct).length > 1 ? 's' : '') + ' ou sans sommaire' }));
+  const out = [bilan];
+  out.push(h('div', { class: 'tb-grp ok', id: 'tb-g-pret' }, h('b', { text: 'Publiables' }), 'terminées, pas encore en ligne'));
+  if (pr.length) out.push(...pr.map(x => mk(x.b, x.c))); else out.push(h('p', { class: 'tb-note', text: 'Aucune tâche terminée n\'attend.' }));
+  if (pas.length) out.push(h('div', { class: 'tb-grp', id: 'tb-g-pas' }, h('b', { text: 'Pas encore publiables' }), 'en cours, arrêtées, non commencées'), ...pas.map(x => mk(x.b, x.c)));
+  return out;
+}
+// the words under the name of a branch that waits
+function pubMots(b, c) {
+  const t = c.test;
+  return (t && t.k === 'oui' ? 'Tests réussis le ' + tbDate(t.quand) + ' · ' : t && t.k === 'part' ? 'Tests réussis le ' + tbDate(t.quand) + ' (' + String(t.seul).split(',').slice(0, 3).join(', ') + '…) · ' : t && t.k === 'rate' ? 'Tests échoués le ' + tbDate(t.quand) + ' · ' : t && t.k === 'non' ? 'Pas testée depuis sa dernière modification · ' : '')
+    + (tbDate(b.quand) ? tbDate(b.quand) + ' · ' : '') + (b.msg || 'Dernière modification non lue');
+}
+// the tasks, in the order one deals with them: being worked on, stopped, finished to publish, in the work version, on line
+function pubTaches(d) { return d.taches.map(t => ({ t, c: pubClasse(t.branche, d) })).sort((x, y) => [1, 0, 2, 3][x.c.g] - [1, 0, 2, 3][y.c.g] || x.c.o - y.c.o).map(x => x.t); }
+// « Déjà publiées » : what went on line, then the trials and the failures
+function pubHisto(d) {
+  pubCssOn();
+  if (!Array.isArray(d.historique)) return tbCard('Déjà publiées', 'L\'historique des mises en ligne', 'tb-hist', h('p', { class: 'tb-note', id: 'tb-hist-vide', text: 'Le service en ligne ne donne pas encore l\'historique : publie la branche publications-maj avec la case « Autoriser un service » cochée. En attendant, la page claude.ai le montre.' }),
+    h('div', { class: 'tb-btns' }, tbLink(tbDash(), 'Ouvrir le tableau de bord claude.ai', 'tb-out')));
+  const ligne = x => { const bon = x.etat === 'réussie' || x.etat === 'tests réussis';
+    return h('li', null, h('time', { text: tbDate(x.quand) }), h('span', null, h('b', { text: (x.publier ? 'Publication ' : 'Essai : ') + x.etat }), h('span', { class: 'tb-chip ' + (bon ? 'ok' : 'r'), text: x.publier ? (bon ? 'en ligne' : 'pas en ligne') : (bon ? 'tests réussis' : 'tests échoués') }),
+      h('small', null, (x.branches && x.branches.length ? 'Avec ' + x.branches.join(', ') : 'La version de travail seule') + ' · ' + (x.tests ? (x.seul ? 'tests : ' + x.seul : 'tous les tests') : 'sans tests') + (x.commit ? ' · ' + x.commit : '') + (x.par ? ' · ' + x.par : '') + ' ',
+        /^https:\/\/github\.com\//.test(String(x.details || '')) ? tbLink(x.details, 'Détails') : null))); };
+  const pubs = d.historique.filter(x => x.publier && x.etat === 'réussie'), autres = d.historique.filter(x => !(x.publier && x.etat === 'réussie'));
+  const kids = [pubs.length ? h('ul', { class: 'tb-hist', id: 'tb-hist-pubs' }, ...pubs.map(ligne)) : h('p', { class: 'tb-note', id: 'tb-hist-pubs', text: 'Aucune mise en ligne dans l\'historique.' })];
+  if (autres.length) { const det = h('details', { id: 'tb-hist-autres' }, h('summary', { text: autres.length + (autres.length > 1 ? ' essais et publications échouées' : ' essai ou publication échouée') }), h('ul', { class: 'tb-hist' }, ...autres.map(ligne)));
+    const s = tbS(); if (s.open['*hist']) det.open = true; det.addEventListener('toggle', () => { if (det.open) s.open['*hist'] = true; else delete s.open['*hist']; }); kids.push(det); }
+  kids.push(h('p', { class: 'tb-note', text: 'Chaque appui sur « Publier » ou « Seulement tester » ajoute une ligne. Ce que les joueurs lisent est dans les « Nouveautés » du jeu.' }));
+  return tbCard('Déjà publiées', pubs.length + (pubs.length > 1 ? ' mises en ligne' : ' mise en ligne') + ' depuis le bouton Publier · la plus récente d\'abord', 'tb-hist', ...kids);
 }
 
 </script>
