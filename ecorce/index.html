@@ -292,6 +292,10 @@ input[type=text]{appearance:none;width:100%;min-height:48px;padding:10px 16px;bo
 #sh-body{overflow-y:auto;overflow-x:hidden;padding:4px 18px 18px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
 #sh-foot{flex:none;padding:14px 18px calc(16px + env(safe-area-inset-bottom,0px));border-radius:26px 26px 0 0;background:var(--bark-3);display:flex;flex-direction:column;gap:10px}
 #sh-foot:empty{display:none}
+/* 10 octobre : la fiche d'un objet (une légendaire a beaucoup de lignes) défile dans le pied, et ses boutons restent toujours visibles en bas */
+#sh-foot>:first-child:not(.btn):not(.acts):not(.row){max-height:38dvh;overflow-y:auto;overscroll-behavior:contain;flex:0 1 auto}
+#sh-foot{max-height:70dvh}
+#sheet::before{display:none} /* la petite barre grise faisait croire que la fenêtre s'étirait au doigt */
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .row > .grow{flex:1 1 0;min-width:0}
 .between{justify-content:space-between}
@@ -902,7 +906,7 @@ body.hudx-play #hud[hidden]{display:flex!important}body.hudx-play #pad[hidden]{d
 
 <script>
 window.ecorceServeur = "https://jeu-sauvegarde.damien-belfort.workers.dev";
-window.ecorceBuild = "84c053f";
+window.ecorceBuild = "59cf2e1";
 window.ecorceRelais = "";
 window.ecorceModeles = {"dir":"modeles/","js":"modeles.js"};
 /* ================= the standalone page: what Claude gives the game inside Claude, done without it =================
