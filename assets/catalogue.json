@@ -1,0 +1,49 @@
+{
+  "version": "2026-10-11",
+  "devise": "EUR",
+  "tva": "Franchise en base — TVA non applicable, art. 293 B du CGI",
+  "note": "Grille proposée à partir du tarif de référence de 35 € HT l'heure. Les montants marqués a_valider sont des propositions à confirmer par Damien.",
+  "taux_horaire": 35,
+  "zone": "Yvelines (78) et sud-ouest de l'Île-de-France ; déplacement offert dans un rayon de 20 km autour de Magny-les-Hameaux",
+  "prestations": [
+    {"id": "heure", "categorie": "Assistance", "nom": "Intervention sur site", "unite": "heure", "prix": 35, "min": 1,
+     "description": "Dépannage, installation, configuration, formation : toute intervention chez vous, décomptée à l'heure.", "a_valider": false},
+    {"id": "distance", "categorie": "Assistance", "nom": "Assistance à distance", "unite": "demi-heure", "prix": 15, "min": 1,
+     "description": "Prise en main à distance ou par téléphone, par tranche de 30 minutes.", "a_valider": false},
+    {"id": "deplacement", "categorie": "Assistance", "nom": "Forfait déplacement au-delà de 20 km", "unite": "forfait", "prix": 15,
+     "description": "Ajouté une fois par intervention au-delà de 20 km.", "a_valider": true},
+    {"id": "poste", "categorie": "Postes de travail", "nom": "Installation complète d'un ordinateur", "unite": "poste", "prix": 70,
+     "description": "Mise en route, comptes, messagerie, imprimantes, sauvegarde, transfert des données : environ 2 heures.", "a_valider": true},
+    {"id": "montage", "categorie": "Postes de travail", "nom": "Montage ou amélioration d'un ordinateur", "unite": "devis", "prix": null,
+     "description": "Choix des pièces, montage, installation. Les pièces sont facturées à part sur devis.", "a_valider": true},
+    {"id": "migration", "categorie": "Messagerie et Microsoft 365", "nom": "Migration de la messagerie vers Microsoft 365", "unite": "forfait", "prix": 390, "inclus": "jusqu'à 10 boîtes",
+     "supplement": {"nom": "boîte supplémentaire", "prix": 20},
+     "description": "Inventaire, bascule des boîtes et des agendas, installation d'Office, guides de prise en main, 30 jours de suivi.", "a_valider": true},
+    {"id": "audit", "categorie": "Conseil", "nom": "Audit informatique", "unite": "forfait", "prix": 175,
+     "description": "Une demi-journée sur place : état des lieux du parc, des accès, des sauvegardes et du réseau, rapport écrit avec priorités.", "a_valider": true},
+    {"id": "guides", "categorie": "Conseil", "nom": "Guides et procédures sur mesure", "unite": "heure", "prix": 35,
+     "description": "Fiches simples pour vos équipes : une page, sans jargon.", "a_valider": false},
+    {"id": "app", "categorie": "Outils sur mesure", "nom": "Espace client ou application simplifiée", "unite": "devis", "prix": 490, "prefixe": "à partir de",
+     "description": "Une page, une icône : vos outils regroupés dans une interface pensée pour des personnes non techniques.", "a_valider": true}
+  ],
+  "forfaits_mensuels": [
+    {"id": "tranquillite", "nom": "Tranquillité", "prix": 90, "heures": 3, "delai": "réponse sous 24 h ouvrées",
+     "inclus": ["3 heures d'assistance par mois", "Suivi des mises à jour et des sauvegardes", "Un point mensuel"],
+     "pour": "Une petite équipe qui veut un interlocuteur unique sans engagement lourd.", "a_valider": true},
+    {"id": "serenite", "nom": "Sérénité", "prix": 160, "heures": 6, "delai": "réponse sous 4 h ouvrées",
+     "inclus": ["6 heures d'assistance par mois", "Gestion des comptes et des licences Microsoft 365", "Suivi du site web (mises à jour, sauvegardes, petites modifications)", "Espace client en ligne"],
+     "pour": "Une structure de 10 à 30 personnes avec un site web et une messagerie à faire vivre.", "a_valider": true},
+    {"id": "autonomie", "nom": "Autonomie", "prix": 45, "heures": 1, "delai": "réponse sous 48 h ouvrées",
+     "inclus": ["1 heure d'assistance par mois", "Guides à jour", "Accès à l'espace client"],
+     "pour": "Après une migration : vous vous débrouillez, je reste joignable.", "a_valider": true}
+  ],
+  "site_web": {"id": "site", "nom": "Gestion de site WordPress", "prix": 120, "unite": "mois",
+    "inclus": ["Mises à jour et sauvegardes", "2 heures de modifications par mois", "Éditeur simplifié pour votre équipe"],
+    "a_valider": true},
+  "heure_supplementaire": 35,
+  "conditions": {
+    "paiement": "Paiement à 30 jours par virement.",
+    "retard": "Pénalités de retard au taux légal et indemnité forfaitaire de 40 € pour frais de recouvrement.",
+    "engagement": "Forfaits mensuels sans engagement, résiliables à tout moment avec un mois de préavis."
+  }
+}
