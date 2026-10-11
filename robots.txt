@@ -3,5 +3,7 @@ Allow: /
 Disallow: /clients/
 Disallow: /admin/
 Disallow: /factures/
+Disallow: /portail/
+Disallow: /haccp/
 
 Sitemap: https://belfort-systems.fr/sitemap.xml
