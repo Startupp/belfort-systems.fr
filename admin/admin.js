@@ -942,6 +942,7 @@
     toast('Dans la fenêtre d’impression, choisissez « Enregistrer au format PDF ».', 5000);
     setTimeout(function () { window.print(); setTimeout(function () { imp.hidden = true; imp.innerHTML = ''; }, 1000); }, 100);
   };
+  window.addEventListener('afterprint', function () { var imp = $('impression'); imp.hidden = true; imp.innerHTML = ''; });
   ACTIONS['facture-emettre'] = async function (d) {
     var f = etat.factureCourante;
     await action({ titre: 'Émettre la facture', apercu: [{ champ: 'Numéro', avant: 'brouillon', apres: 'attribué à l’émission (BS-' + (f.date || '').slice(0, 4) + '-NNN)' }, { champ: 'Statut', avant: 'Brouillon', apres: 'Envoyée' }, { champ: 'Montant', apres: euros(totalFacture(f)) }],

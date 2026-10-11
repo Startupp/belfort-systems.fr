@@ -145,7 +145,7 @@ var s=localStorage.getItem('bs-admin-taille');if(s)document.documentElement.data
 
 <!-- Boîte de dialogue partagée (confirmations, formulaires) -->
 <dialog id="dialogue" class="dialogue" aria-labelledby="dialogue-titre">
-  <form method="dialog" id="dialogue-form">
+  <form method="dialog" id="dialogue-form" novalidate>
     <h2 id="dialogue-titre"></h2>
     <div id="dialogue-corps"></div>
     <p class="err" id="dialogue-err" role="alert"></p>
