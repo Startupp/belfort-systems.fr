@@ -1,0 +1,50 @@
+{
+ "ok": true,
+ "contacts": [
+  {
+   "id": "c01",
+   "nom": "Marie Lefèvre",
+   "email": "marie.lefevre@exemple.fr",
+   "tel": "06 12 34 56 78",
+   "sujet": "Ordinateur très lent",
+   "message": "Bonjour, mon ordinateur portable met dix minutes à démarrer et se bloque souvent. Je suis à Chevreuse. Pourriez-vous passer un matin cette semaine ?",
+   "formule": "heure",
+   "creneau": "2026-10-14T09:00",
+   "statut": "nouveau",
+   "cree": "2026-10-11T08:42:00",
+   "rdv": {
+    "id": "r01",
+    "debut": "2026-10-14T09:00",
+    "fin": "2026-10-14T10:00",
+    "statut": "propose",
+    "note": "Demandé depuis le site"
+   }
+  },
+  {
+   "id": "c02",
+   "nom": "Julien Moreau — Boulangerie du Parc",
+   "email": "contact@boulangerie-du-parc.fr",
+   "tel": "01 30 00 00 00",
+   "sujet": "Migration de nos 4 adresses mail",
+   "message": "Nous avons 4 adresses chez OVH et voulons passer sur Microsoft 365 avec les agendas partagés. Quel délai et quel tarif ?",
+   "formule": "migration",
+   "creneau": null,
+   "statut": "lu",
+   "cree": "2026-10-09T17:15:00",
+   "rdv": null
+  },
+  {
+   "id": "c03",
+   "nom": "Sophie Garnier",
+   "email": "s.garnier@exemple.org",
+   "tel": "",
+   "sujet": "Sauvegarde des photos",
+   "message": "Je voudrais mettre en place une sauvegarde automatique de mes photos et documents. Est-ce que vous faites ça à distance ?",
+   "formule": "distance",
+   "creneau": null,
+   "statut": "repondu",
+   "cree": "2026-10-06T11:03:00",
+   "rdv": null
+  }
+ ]
+}
