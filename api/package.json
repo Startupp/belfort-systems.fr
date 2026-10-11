@@ -1,0 +1,21 @@
+{
+  "name": "belfort-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Service Cloudflare (Worker + D1 + KV) du site belfort-systems.fr",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "schema:local": "wrangler d1 execute belfort-systems --local --file=schema.sql",
+    "seed:build": "node seed/importer.mjs",
+    "seed:local": "wrangler d1 execute belfort-systems --local --file=seed/seed.sql",
+    "test": "node --test test/unitaires.test.mjs",
+    "test:local": "node test/local.mjs"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "wrangler": "^4.149.0"
+  }
+}
