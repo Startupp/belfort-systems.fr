@@ -1,0 +1,87 @@
+name: Déployer le service (Worker belfort-api)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - ".github/workflows/deploy-worker.yml"
+  workflow_dispatch:
+    inputs:
+      schema:
+        description: "Appliquer api/schema.sql sur la base D1 distante"
+        type: boolean
+        default: true
+      seed:
+        description: "Importer les données de départ (api/seed/seed.sql) — premier déploiement seulement"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: worker
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier les secrets GitHub
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          manque=0
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Secret CLOUDFLARE_API_TOKEN absent. Créez-le dans Settings → Secrets and variables → Actions avec un jeton Cloudflare (modèle « Edit Cloudflare Workers » + permissions D1 Edit et Workers KV Storage Edit) : https://dash.cloudflare.com/profile/api-tokens"
+            manque=1
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Secret CLOUDFLARE_ACCOUNT_ID absent. Créez-le avec l'identifiant de compte visible dans le tableau de bord Cloudflare (Workers & Pages → colonne de droite « Account ID »)."
+            manque=1
+          fi
+          if [ -z "$ADMIN_PASSWORD" ]; then
+            echo "::error::Secret ADMIN_PASSWORD absent. Créez-le avec le mot de passe du panneau d'administration (long et aléatoire) ; il sera transmis au Worker comme secret, jamais écrit dans le dépôt."
+            manque=1
+          fi
+          if [ "$manque" = "1" ]; then
+            echo "::error::Déploiement interrompu : voir api/NOTES.md pour la création des secrets."
+            exit 1
+          fi
+          echo "Les trois secrets sont présents."
+
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Appliquer le schéma D1
+        if: ${{ github.event_name == 'push' || inputs.schema }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: api
+          command: d1 execute belfort-systems --remote --file=schema.sql
+
+      - name: Importer les données de départ
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.seed }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: api
+          command: d1 execute belfort-systems --remote --file=seed/seed.sql
+
+      - name: Déployer le Worker et poser le secret ADMIN_PASSWORD
+        uses: cloudflare/wrangler-action@v3
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: api
+          command: deploy
+          secrets: |
+            ADMIN_PASSWORD

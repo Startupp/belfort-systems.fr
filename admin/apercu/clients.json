@@ -1,0 +1,23 @@
+{
+ "ok": true,
+ "clients": [
+  {
+   "id": "breteuil",
+   "slug": "breteuil",
+   "nom": "Château de Breteuil",
+   "contact": "Pauline de Breteuil",
+   "email": "finance@breteuil.fr",
+   "cree": "2026-06-12",
+   "projets": 1
+  },
+  {
+   "id": "exemple",
+   "slug": "exemple",
+   "nom": "Client d’exemple",
+   "contact": "—",
+   "email": "exemple@exemple.fr",
+   "cree": "2026-09-30",
+   "projets": 0
+  }
+ ]
+}

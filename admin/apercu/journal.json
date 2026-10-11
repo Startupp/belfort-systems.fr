@@ -1,0 +1,85 @@
+{
+ "ok": true,
+ "journal": [
+  {
+   "id": 10,
+   "quand": "2026-10-11T09:02",
+   "qui": "admin",
+   "action": "Brouillon de facture créé",
+   "cible": "factures:fa01",
+   "table": "factures"
+  },
+  {
+   "id": 9,
+   "quand": "2026-10-11T08:42",
+   "qui": "admin",
+   "action": "Nouveau message du site : Marie Lefèvre",
+   "cible": "contacts:c01",
+   "table": "contacts"
+  },
+  {
+   "id": 8,
+   "quand": "2026-10-10T18:20",
+   "qui": "admin",
+   "action": "Demande n° 24 : le client signale que ça ne marche toujours pas",
+   "cible": "demandes:d24",
+   "table": "demandes"
+  },
+  {
+   "id": 7,
+   "quand": "2026-10-10T09:10",
+   "qui": "admin",
+   "action": "Mail de Pauline : « reviens vers vous »",
+   "cible": "messages:m0",
+   "table": "messages"
+  },
+  {
+   "id": 6,
+   "quand": "2026-10-09T19:00",
+   "qui": "admin",
+   "action": "Journée sur place : prise en main, postes, passation",
+   "cible": "evenements:e29",
+   "table": "evenements"
+  },
+  {
+   "id": 5,
+   "quand": "2026-10-09T18:30",
+   "qui": "admin",
+   "action": "Demande n° 33 marquée comme faite",
+   "cible": "demandes:d33",
+   "table": "demandes"
+  },
+  {
+   "id": 4,
+   "quand": "2026-10-09T17:40",
+   "qui": "admin",
+   "action": "Message lu : Boulangerie du Parc",
+   "cible": "contacts:c02",
+   "table": "contacts"
+  },
+  {
+   "id": 3,
+   "quand": "2026-10-09T12:00",
+   "qui": "admin",
+   "action": "Demande n° 17 : le client signale que ça ne marche toujours pas",
+   "cible": "demandes:d17",
+   "table": "demandes"
+  },
+  {
+   "id": 2,
+   "quand": "2026-10-06T21:15",
+   "qui": "admin",
+   "action": "9 demandes créées depuis le Word du 6 octobre",
+   "cible": "demandes:d20",
+   "table": "demandes"
+  },
+  {
+   "id": 1,
+   "quand": "2026-10-06T11:30",
+   "qui": "admin",
+   "action": "Réponse envoyée à Sophie Garnier",
+   "cible": "contacts:c03",
+   "table": "contacts"
+  }
+ ]
+}
