@@ -1,0 +1,24 @@
+# Configuration du Worker « belfort-api » (service du site belfort-systems.fr).
+# Aucun secret ici : ADMIN_PASSWORD (et SESSION_SALT, facultatif) sont des secrets
+# Worker, posés par le workflow GitHub ou par `wrangler secret put`.
+
+name = "belfort-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Base D1 : clients, projets, demandes, factures, journal…
+[[d1_databases]]
+binding = "DB"
+database_name = "belfort-systems"
+database_id = "66de32b0-01d9-4f8e-a909-05598f941e41"
+
+# KV : sessions admin, limitation de débit, cache du catalogue.
+[[kv_namespaces]]
+binding = "KV"
+id = "24f34957a1644d729c773708e6e05088"
+
+# Variables publiques (non secrètes).
+[vars]
+# Origines autorisées pour CORS, séparées par des virgules. http://localhost:* est
+# toujours accepté en plus (développement).
+ORIGINES = "https://belfort-systems.fr"
