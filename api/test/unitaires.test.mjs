@@ -28,7 +28,7 @@ test("champ : email, date, dateheure, id, enum, entier, nombre", () => {
 
 test("validerLignes : totaux arrondis au centime", () => {
   const { lignes, total_ht } = validerLignes([
-    { designation: "Migration", quantite: 1, prix_unitaire: 250 },
+    { ref: "migration", designation: "Migration", quantite: 1, unite: "forfait", prix: 250 },
     { designation: "Heures", quantite: 1.5, prix_unitaire: 35 },
   ]);
   assert.equal(lignes.length, 2);

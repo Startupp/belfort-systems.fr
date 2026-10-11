@@ -32,7 +32,8 @@ const STATUTS_DEMANDE = ["nouveau", "lu", "en_cours", "repondu", "traite", "aban
 const TARIFS = ["forfait", "extra", "offert", "devis"];
 const TYPES_EVENEMENT = ["echange", "livrable", "site", "decision", "facture"];
 const STATUTS_CONTACT = ["nouveau", "lu", "repondu", "archive"];
-const STATUTS_PROJET = ["en_cours", "termine", "en_pause", "proposition"];
+const STATUTS_PROJET = ["nouveau", "en_cours", "termine", "en_pause", "proposition"];
+const STATUTS_RDV = ["propose", "confirme", "annule"];
 const CANAUX = ["Mail", "WhatsApp", "SMS", "Téléphone", "Sur place", "Teams", "Word", "Guide", "Portail"];
 const FORMULES = ["forfait", "heure", "abonnement", "devis", "autre"];
 
@@ -219,7 +220,8 @@ function champ(obj, nom, options = {}) {
 }
 
 /**
- * Valide les lignes d'une facture : [{designation, quantite, prix_unitaire}].
+ * Valide les lignes d'une facture : [{ref, designation, quantite, unite, prix}]
+ * (forme du panneau ; `prix_unitaire` accepté comme synonyme de `prix`).
  * Renvoie {lignes, total_ht}. Les montants sont arrondis au centime.
  */
 function validerLignes(brut) {
@@ -227,12 +229,13 @@ function validerLignes(brut) {
   if (brut.length > 100) throw err400("Une facture ne peut pas dépasser 100 lignes.");
   const lignes = brut.map((l, i) => {
     if (!l || typeof l !== "object") throw err400(`La ligne ${i + 1} est invalide.`);
+    const ref = champ(l, "ref", { max: 60, defaut: "" });
     const designation = champ(l, "designation", { requis: true, max: 500 });
     const quantite = champ(l, "quantite", { type: "nombre", defaut: 1 });
-    const prix_unitaire = champ(l, "prix_unitaire", { type: "nombre", requis: true });
+    const prix = l.prix !== undefined ? champ(l, "prix", { type: "nombre", requis: true }) : champ(l, "prix_unitaire", { type: "nombre", requis: true });
     const unite = champ(l, "unite", { max: 20, defaut: "" });
-    const total = Math.round(quantite * prix_unitaire * 100) / 100;
-    return { designation, quantite, prix_unitaire, unite, total };
+    const total = Math.round(quantite * prix * 100) / 100;
+    return { ref, designation, quantite, unite, prix, total };
   });
   const total_ht = Math.round(lignes.reduce((s, l) => s + l.total, 0) * 100) / 100;
   return { lignes, total_ht };
@@ -319,12 +322,12 @@ async function limiter(env, cle, max, fenetreS, { compterSeulementSi = true } = 
 // Authentification
 // ---------------------------------------------------------------------------
 
-/** Jeton Bearer de la requête (ou paramètre `jeton` pour EventSource). */
+/** Jeton Bearer de la requête (ou paramètre `t` / `jeton` pour EventSource). */
 function jetonDe(req, url) {
   const auth = req.headers.get("Authorization") || "";
   const m = /^Bearer\s+([A-Za-z0-9_-]{20,200})$/.exec(auth);
   if (m) return m[1];
-  const q = url?.searchParams.get("jeton");
+  const q = url?.searchParams.get("t") || url?.searchParams.get("jeton");
   return q && /^[A-Za-z0-9_-]{20,200}$/.test(q) ? q : null;
 }
 
@@ -477,7 +480,7 @@ route("POST", "/contact", "public", async ({ req, env, ip }) => {
   const tel = champ(corps, "tel", { max: 40 });
   const sujet = champ(corps, "sujet", { max: 200 });
   const message = champ(corps, "message", { requis: true, max: 4000, min: 2 });
-  const formule = champ(corps, "formule", { max: 100 });
+  const formule = champ(corps, "formule", { max: 300 });
   const creneau = champ(corps, "creneau", { type: "dateheure" });
 
   const id = nouvelId();
@@ -490,10 +493,10 @@ route("POST", "/contact", "public", async ({ req, env, ip }) => {
     stmtJournal(env, "public", "creer", "contacts", id),
   ];
   if (creneau) {
-    // Un créneau demandé devient un rdv « demande » d'une heure, à confirmer par l'admin.
+    // Un créneau demandé devient un rdv « propose » d'une heure, à confirmer par l'admin.
     const rdvId = nouvelId();
-    stmts.push(env.DB.prepare(`INSERT INTO rdv (id, contact_id, debut, fin, statut, note) VALUES (?, ?, ?, ?, 'demande', ?)`)
-      .bind(rdvId, id, creneau, finDeCreneau(creneau), `Demandé par ${nom}`));
+    stmts.push(env.DB.prepare(`INSERT INTO rdv (id, contact_id, debut, fin, statut, note) VALUES (?, ?, ?, ?, 'propose', ?)`)
+      .bind(rdvId, id, creneau, finDeCreneau(creneau), "Demandé depuis le site"));
     stmts.push(stmtJournal(env, "public", "creer", "rdv", rdvId));
   }
   await env.DB.batch(stmts);
@@ -612,21 +615,30 @@ route("POST", "/admin/logout", "admin", async ({ env, jeton }) => {
 // Admin : résumé, contacts, journal, flux
 // ---------------------------------------------------------------------------
 
-/** GET /admin/resume — compteurs du tableau de bord. */
+/**
+ * GET /admin/resume — compteurs du tableau de bord :
+ * {contacts_nouveaux, demandes_a_traiter, factures_en_attente, prochain_rdv:{debut,fin,avec,statut}, dernier_evenement:{date,titre}}
+ */
 route("GET", "/admin/resume", "admin", async ({ env }) => {
-  const [contacts, demandes, factures, rdv, dernier] = await env.DB.batch([
+  const { date: dateNow, heure: heureNow } = dateParis(new Date());
+  const now = `${dateNow}T${heureNow}`;
+  const [contacts, demandes, factures, rdvs, prochain, dernier] = await env.DB.batch([
     env.DB.prepare("SELECT COUNT(*) AS n FROM contacts WHERE statut = 'nouveau'"),
     env.DB.prepare("SELECT COUNT(*) AS n FROM demandes WHERE statut IN ('nouveau', 'lu', 'en_cours', 'partiel')"),
     env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(SUM(total_ht), 0) AS total FROM factures WHERE statut = 'envoyee'"),
-    env.DB.prepare("SELECT COUNT(*) AS n FROM rdv WHERE statut = 'demande'"),
-    env.DB.prepare("SELECT e.id, e.date, e.type, e.titre, e.projet_id FROM evenements e WHERE e.date IS NOT NULL AND e.date != '' ORDER BY e.date DESC LIMIT 1"),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM rdv WHERE statut = 'propose'"),
+    env.DB.prepare(`SELECT r.id, r.debut, r.fin, r.statut, r.note, COALESCE(c.nom, r.note, '') AS avec, r.contact_id
+                    FROM rdv r LEFT JOIN contacts c ON c.id = r.contact_id
+                    WHERE r.statut IN ('propose', 'confirme') AND r.fin >= ? ORDER BY r.debut LIMIT 1`).bind(now),
+    env.DB.prepare("SELECT e.id, e.date, e.type, e.titre, e.projet_id FROM evenements e WHERE e.date IS NOT NULL AND e.date != '' ORDER BY e.date DESC, e.id DESC LIMIT 1"),
   ]);
   return {
     contacts_nouveaux: contacts.results[0].n,
     demandes_a_traiter: demandes.results[0].n,
     factures_en_attente: factures.results[0].n,
     montant_en_attente: factures.results[0].total,
-    rdv_a_confirmer: rdv.results[0].n,
+    rdv_a_confirmer: rdvs.results[0].n,
+    prochain_rdv: prochain.results[0] || null,
     dernier_evenement: dernier.results[0] || null,
   };
 });
@@ -639,8 +651,11 @@ route("GET", "/admin/contacts", "admin", async ({ env, url }) => {
     ? env.DB.prepare("SELECT * FROM contacts WHERE statut = ? ORDER BY cree DESC LIMIT 200").bind(statut)
     : env.DB.prepare("SELECT * FROM contacts ORDER BY cree DESC LIMIT 200");
   const { results } = await q.all();
-  const { results: rdvs } = await env.DB.prepare("SELECT * FROM rdv WHERE statut != 'annule' ORDER BY debut").all();
-  return { contacts: results.map(({ ip_hash, ...c }) => c), rdv: rdvs };
+  const { results: rdvs } = await env.DB.prepare("SELECT * FROM rdv ORDER BY debut").all();
+  // Chaque contact porte son rendez-vous (le plus récent non annulé, sinon null).
+  const parContact = new Map();
+  for (const r of rdvs) if (r.contact_id && (r.statut !== "annule" || !parContact.has(r.contact_id))) parContact.set(r.contact_id, r);
+  return { contacts: results.map(({ ip_hash, ...c }) => ({ ...c, rdv: parContact.get(c.id) || null })), rdv: rdvs };
 });
 
 /** PATCH /admin/contacts/:id {statut} */
@@ -656,7 +671,7 @@ route("PATCH", "/admin/contacts/:id", "admin", async ({ req, env, params, qui })
 /** PATCH /admin/rdv/:id {statut, note} — confirmer / annuler un rendez-vous. */
 route("PATCH", "/admin/rdv/:id", "admin", async ({ req, env, params, qui }) => {
   const corps = await lireCorps(req);
-  const statut = champ(corps, "statut", { enum: ["demande", "confirme", "annule"] });
+  const statut = champ(corps, "statut", { enum: STATUTS_RDV });
   const note = champ(corps, "note", { max: 1000 });
   const sets = [], vals = [];
   if (statut) { sets.push("statut = ?"); vals.push(statut); }
@@ -672,14 +687,14 @@ route("PATCH", "/admin/rdv/:id", "admin", async ({ req, env, params, qui }) => {
 route("GET", "/admin/journal", "admin", async ({ env, url }) => {
   const limit = Math.min(500, Math.max(1, Number(url.searchParams.get("limit")) || 50));
   const { results } = await env.DB.prepare("SELECT * FROM journal ORDER BY id DESC LIMIT ?").bind(limit).all();
-  return { journal: results };
+  return { journal: results.map((l) => ({ ...l, table: String(l.cible || "").split(":")[0] || null })) };
 });
 
 /**
  * GET /admin/flux — Server-Sent Events : un événement `maj` {table, id, quand}
  * pour chaque nouvelle ligne du journal, relu toutes les 3 s ; fermeture à 25 min.
  * Le navigateur (EventSource) ne peut pas envoyer d'en-tête : le jeton est accepté
- * en paramètre `?jeton=`.
+ * en paramètre `?t=` (forme du panneau) ou `?jeton=`.
  */
 route("GET", "/admin/flux", "admin", async ({ env, ctx }) => {
   const dernier = await env.DB.prepare("SELECT COALESCE(MAX(id), 0) AS id FROM journal").first();
@@ -732,8 +747,10 @@ route("GET", "/admin/flux", "admin", async ({ env, ctx }) => {
 // ---------------------------------------------------------------------------
 
 route("GET", "/admin/clients", "admin", async ({ env }) => {
-  const { results } = await env.DB.prepare(
-    "SELECT id, slug, nom, contact, email, cree, (token_hash IS NOT NULL) AS a_jeton FROM clients ORDER BY nom").all();
+  const { results } = await env.DB.prepare(`
+    SELECT c.id, c.slug, c.nom, c.contact, c.email, c.cree, (c.token_hash IS NOT NULL) AS a_jeton,
+      (SELECT COUNT(*) FROM projets p WHERE p.client_id = c.id) AS projets
+    FROM clients c ORDER BY c.nom`).all();
   return { clients: results.map((c) => ({ ...c, a_jeton: !!c.a_jeton })) };
 });
 
@@ -757,7 +774,7 @@ route("POST", "/admin/clients", "admin", async ({ req, env, qui }) => {
     if (/UNIQUE/i.test(String(e.message))) throw err409("Un client avec cet identifiant ou ce slug existe déjà.");
     throw e;
   }
-  return { client: { id, slug, nom, contact, email, cree: quand }, jeton };
+  return { id, token: jeton, jeton, client: { id, slug, nom, contact, email, cree: quand } };
 });
 
 /** POST /admin/clients/:id/regenerer → nouveau jeton en clair, l'ancien est révoqué. */
@@ -766,7 +783,7 @@ route("POST", "/admin/clients/:id/regenerer", "admin", async ({ env, params, qui
   const r = await env.DB.prepare("UPDATE clients SET token_hash = ? WHERE id = ?").bind(await sha256(jeton), params.id).run();
   if (!r.meta.changes) throw err404("Client introuvable.");
   await journaliser(env, qui, "regenerer-jeton", "clients", params.id);
-  return { id: params.id, jeton };
+  return { id: params.id, token: jeton, jeton };
 });
 
 /** PATCH /admin/clients/:id {nom, contact, email} */
@@ -790,13 +807,23 @@ route("PATCH", "/admin/clients/:id", "admin", async ({ req, env, params, qui }) 
 // Admin : projets
 // ---------------------------------------------------------------------------
 
+/** GET /admin/projets → {projets:[{…projet, client:{…}, compteurs:{statut:n}, nb_demandes}]} */
 route("GET", "/admin/projets", "admin", async ({ env }) => {
-  const { results } = await env.DB.prepare(`
-    SELECT p.*, c.nom AS client_nom, c.slug AS client_slug,
-      (SELECT COUNT(*) FROM demandes d WHERE d.projet_id = p.id AND d.statut IN ('nouveau','lu','en_cours','partiel')) AS demandes_ouvertes,
-      (SELECT COUNT(*) FROM demandes d WHERE d.projet_id = p.id) AS demandes_total
-    FROM projets p LEFT JOIN clients c ON c.id = p.client_id ORDER BY p.maj DESC`).all();
-  return { projets: results };
+  const [projets, comptes] = await env.DB.batch([
+    env.DB.prepare(SELECT_PROJET + " ORDER BY p.maj DESC"),
+    env.DB.prepare("SELECT projet_id, statut, COUNT(*) AS n FROM demandes GROUP BY projet_id, statut"),
+  ]);
+  const parProjet = new Map();
+  for (const c of comptes.results) {
+    if (!parProjet.has(c.projet_id)) parProjet.set(c.projet_id, COMPTEURS_VIDES());
+    parProjet.get(c.projet_id)[c.statut] = c.n;
+  }
+  return {
+    projets: projets.results.map((p) => {
+      const compteurs = parProjet.get(p.id) || COMPTEURS_VIDES();
+      return { ...formerProjet(p), compteurs, nb_demandes: Object.values(compteurs).reduce((s, n) => s + n, 0) };
+    }),
+  };
 });
 
 /**
@@ -804,10 +831,9 @@ route("GET", "/admin/projets", "admin", async ({ env }) => {
  * Les demandes « nouveau » passent « lu » à cette première lecture par l'admin.
  */
 route("GET", "/admin/projets/:id", "admin", async ({ env, params, qui }) => {
-  const projet = await env.DB.prepare(
-    "SELECT p.*, c.nom AS client_nom, c.slug AS client_slug FROM projets p LEFT JOIN clients c ON c.id = p.client_id WHERE p.id = ?")
-    .bind(params.id).first();
-  if (!projet) throw err404("Projet introuvable.");
+  const ligne = await env.DB.prepare(SELECT_PROJET + " WHERE p.id = ?").bind(params.id).first();
+  if (!ligne) throw err404("Projet introuvable.");
+  const projet = formerProjet(ligne);
 
   // Marquage « lu » des demandes nouvelles, journalisé une à une.
   const { results: nouvelles } = await env.DB.prepare("SELECT id FROM demandes WHERE projet_id = ? AND statut = 'nouveau'").bind(params.id).all();
@@ -821,14 +847,21 @@ route("GET", "/admin/projets/:id", "admin", async ({ env, params, qui }) => {
 
   const [demandes, evenements, conversations, messages, fichiers] = await env.DB.batch([
     env.DB.prepare("SELECT * FROM demandes WHERE projet_id = ? ORDER BY n, cree").bind(params.id),
-    env.DB.prepare("SELECT * FROM evenements WHERE projet_id = ? ORDER BY (date IS NULL OR date = ''), date").bind(params.id),
+    env.DB.prepare("SELECT id, projet_id, COALESCE(date, '') AS date, type, titre, COALESCE(detail, '') AS detail FROM evenements WHERE projet_id = ? ORDER BY (date IS NULL OR date = ''), date, id").bind(params.id),
     env.DB.prepare("SELECT * FROM conversations WHERE projet_id = ? ORDER BY maj DESC").bind(params.id),
     env.DB.prepare("SELECT m.* FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.projet_id = ? ORDER BY m.date, m.id").bind(params.id),
     env.DB.prepare("SELECT * FROM fichiers WHERE projet_id = ? ORDER BY cree DESC").bind(params.id),
   ]);
+  // Messages imbriqués dans leur conversation (forme attendue par le panneau).
+  const parConv = new Map();
+  for (const m of messages.results) {
+    if (!parConv.has(m.conversation_id)) parConv.set(m.conversation_id, []);
+    parConv.get(m.conversation_id).push(m);
+  }
   return {
     projet, demandes: demandes.results, evenements: evenements.results,
-    conversations: conversations.results, messages: messages.results, fichiers: fichiers.results,
+    conversations: conversations.results.map((c) => ({ ...c, messages: parConv.get(c.id) || [] })),
+    fichiers: fichiers.results,
   };
 });
 
@@ -853,7 +886,7 @@ route("POST", "/admin/projets", "admin", async ({ req, env, qui }) => {
     if (/UNIQUE/i.test(String(e.message))) throw err409("Un projet avec cet identifiant existe déjà.");
     throw e;
   }
-  return { projet: { id, client_id, titre, statut, resume, cree: quand, maj: quand } };
+  return { id, projet: { id, client_id, titre, statut, resume, cree: quand, maj: quand } };
 });
 
 /** PATCH /admin/projets/:id {titre, statut, resume} */
@@ -877,6 +910,14 @@ route("PATCH", "/admin/projets/:id", "admin", async ({ req, env, params, qui }) 
 // ---------------------------------------------------------------------------
 // Admin : demandes
 // ---------------------------------------------------------------------------
+
+/** Ligne de projet jointe → {…projet, client:{id,slug,nom,contact,email}}. */
+function formerProjet(p) {
+  const { client_slug, client_nom, client_contact, client_email, ...reste } = p;
+  return { ...reste, client: p.client_id ? { id: p.client_id, slug: client_slug, nom: client_nom, contact: client_contact, email: client_email } : null };
+}
+const SELECT_PROJET = "SELECT p.*, c.slug AS client_slug, c.nom AS client_nom, c.contact AS client_contact, c.email AS client_email FROM projets p LEFT JOIN clients c ON c.id = p.client_id";
+const COMPTEURS_VIDES = () => ({ nouveau: 0, lu: 0, en_cours: 0, repondu: 0, traite: 0, abandonne: 0, partiel: 0 });
 
 /** Vérifie qu'un projet existe et renvoie sa ligne. */
 async function projetExistant(env, id) {
@@ -905,7 +946,7 @@ async function creerDemande(env, qui, corps, { projet_id, statut }) {
     env.DB.prepare("UPDATE projets SET maj = ? WHERE id = ?").bind(quand, projet_id),
     stmtJournal(env, qui, "creer", "demandes", id),
   ]);
-  return { id, projet_id, n: numero, groupe, titre, qui: demandeur, date_txt, statut, tarif, livre, reste, cree: quand, maj: quand };
+  return { id, projet_id, n: numero, groupe, titre, qui: demandeur, date_txt, statut, tarif, livre, reste, note: null, encore: 0, encore_le: null, cree: quand, maj: quand };
 }
 
 /** POST /admin/demandes {projet_id, titre, …} — créée par l'admin : statut « lu » (déjà vue). */
@@ -914,18 +955,24 @@ route("POST", "/admin/demandes", "admin", async ({ req, env, qui }) => {
   const projet_id = champ(corps, "projet_id", { requis: true, type: "id" });
   await projetExistant(env, projet_id);
   const statut = champ(corps, "statut", { enum: STATUTS_DEMANDE, defaut: "lu" });
-  return { demande: await creerDemande(env, qui, corps, { projet_id, statut }) };
+  const demande = await creerDemande(env, qui, corps, { projet_id, statut });
+  return { id: demande.id, demande };
 });
 
 /**
  * Applique une action métier à une demande :
  *  traiter → en_cours ; fait (solution obligatoire) → traite ;
  *  abandonner (motif obligatoire) → abandonne ; rouvrir → en_cours.
+ * Les champs `reste` et `note` du corps sont appliqués en même temps s'ils sont présents.
  */
 async function actionDemande(env, qui, id, action, corps) {
   const demande = await env.DB.prepare("SELECT * FROM demandes WHERE id = ?").bind(id).first();
   if (!demande) throw err404("Demande introuvable.");
   const sets = ["maj = ?"], vals = [maintenant()];
+  const reste = champ(corps, "reste", { max: 4000 });
+  if (reste !== undefined) { sets.push("reste = ?"); vals.push(reste); }
+  const note = champ(corps, "note", { max: 8000 });
+  if (note !== undefined) { sets.push("note = ?"); vals.push(note); }
   let statut;
   switch (action) {
     case "traiter":
@@ -935,7 +982,8 @@ async function actionDemande(env, qui, id, action, corps) {
       const solution = champ(corps, "solution", { max: 4000 });
       if (!solution) throw err400("Indiquez la solution apportée pour clore la demande.");
       statut = "traite";
-      sets.push("solution = ?", "reste = ''"); vals.push(solution);
+      sets.push("solution = ?"); vals.push(solution);
+      if (reste === undefined) sets.push("reste = ''");
       break;
     }
     case "abandonner": {
@@ -967,8 +1015,9 @@ route("POST", "/admin/demandes/:id/:action", "admin", async ({ req, env, params,
 });
 
 /**
- * PATCH /admin/demandes/:id {statut, solution, motif, reste, livre, titre, groupe, qui, date_txt, tarif, n}
- * Accepte aussi {action:"fait", solution} pour appliquer une action métier.
+ * PATCH /admin/demandes/:id {action?, statut, solution, motif, reste, note, livre, titre, groupe, qui, date_txt, tarif, n}
+ * Avec `action` ("traiter" | "fait" | "abandonner" | "rouvrir"), l'action métier prime
+ * (le `statut` envoyé en plus par le panneau est ignoré au profit de la règle).
  */
 route("PATCH", "/admin/demandes/:id", "admin", async ({ req, env, params, qui }) => {
   const corps = await lireCorps(req);
@@ -977,7 +1026,7 @@ route("PATCH", "/admin/demandes/:id", "admin", async ({ req, env, params, qui })
   const sets = [], vals = [];
   const texte = (nom, max) => { const v = champ(corps, nom, { max }); if (v !== undefined) { sets.push(`${nom} = ?`); vals.push(v); } };
   texte("titre", 300); texte("groupe", 200); texte("qui", 200); texte("date_txt", 100);
-  texte("livre", 4000); texte("reste", 4000); texte("solution", 4000); texte("motif", 4000);
+  texte("livre", 4000); texte("reste", 4000); texte("solution", 4000); texte("motif", 4000); texte("note", 8000);
   const statut = champ(corps, "statut", { enum: STATUTS_DEMANDE });
   if (statut) {
     if (statut === "traite" && !corps.solution) {
@@ -1021,13 +1070,14 @@ route("POST", "/admin/evenements", "admin", async ({ req, env, qui }) => {
     env.DB.prepare("UPDATE projets SET maj = ? WHERE id = ?").bind(maintenant(), projet_id),
     stmtJournal(env, qui, "creer", "evenements", id),
   ]);
-  return { evenement: { id, projet_id, date, type, titre, detail } };
+  return { id, evenement: { id, projet_id, date: date ?? "", type, titre, detail: detail ?? "" } };
 });
 
 route("PATCH", "/admin/evenements/:id", "admin", async ({ req, env, params, qui }) => {
   const corps = await lireCorps(req);
   const sets = [], vals = [];
-  const date = champ(corps, "date", { type: "date" });
+  // date "" = « à venir » (sans date)
+  const date = corps.date === "" ? "" : champ(corps, "date", { type: "date" });
   const type = champ(corps, "type", { enum: TYPES_EVENEMENT });
   const titre = champ(corps, "titre", { max: 300 });
   const detail = champ(corps, "detail", { max: 4000 });
@@ -1064,7 +1114,7 @@ route("POST", "/admin/conversations", "admin", async ({ req, env, qui }) => {
       .bind(id, projet_id, canal, titre ?? null, participants ?? null, quand),
     stmtJournal(env, qui, "creer", "conversations", id),
   ]);
-  return { conversation: { id, projet_id, canal, titre, participants, maj: quand } };
+  return { id, conversation: { id, projet_id, canal, titre, participants, maj: quand } };
 });
 
 /** Insère un message dans une conversation (admin ou client). */
@@ -1098,7 +1148,7 @@ route("POST", "/admin/messages", "admin", async ({ req, env, qui }) => {
     texte: champ(corps, "texte", { requis: true, max: 8000 }),
     piece: champ(corps, "piece", { max: 500 }),
   });
-  return { message };
+  return { id: message.id, message };
 });
 
 /** POST /admin/fichiers {projet_id, nom, type, taille, url, note} — métadonnées seulement. */
@@ -1110,7 +1160,7 @@ route("POST", "/admin/fichiers", "admin", async ({ req, env, qui }) => {
   const type = champ(corps, "type", { max: 100 });
   const taille = champ(corps, "taille", { type: "entier" });
   const url = champ(corps, "url", { max: 2000 });
-  if (url && !/^https?:\/\//.test(url)) throw err400("L'adresse du fichier doit commencer par http(s)://.");
+  if (url && !/^(https?:\/\/|\/)/.test(url)) throw err400("L'adresse du fichier doit commencer par http(s):// ou par /.");
   const note = champ(corps, "note", { max: 2000 });
   const id = nouvelId();
   const quand = maintenant();
@@ -1119,7 +1169,7 @@ route("POST", "/admin/fichiers", "admin", async ({ req, env, qui }) => {
       .bind(id, projet_id, nom, type ?? null, taille ?? null, url ?? null, note ?? null, quand),
     stmtJournal(env, qui, "creer", "fichiers", id),
   ]);
-  return { fichier: { id, projet_id, nom, type, taille, url, note, cree: quand } };
+  return { id, fichier: { id, projet_id, nom, type, taille, url, note, cree: quand } };
 });
 
 route("DELETE", "/admin/fichiers/:id", "admin", async ({ env, params, qui }) => {
@@ -1141,66 +1191,110 @@ function decoderFacture(f) {
   return { ...f, lignes };
 }
 
+const SELECT_FACTURE = "SELECT f.*, c.nom AS client_nom, c.contact AS client_contact, c.email AS client_email FROM factures f LEFT JOIN clients c ON c.id = f.client_id";
+
+/** GET /admin/factures[?statut=] → {factures:[{…, client_nom, client_contact, client_email, lignes:[…], type, reference}]} */
 route("GET", "/admin/factures", "admin", async ({ env, url }) => {
   const statut = url.searchParams.get("statut");
   if (statut && !["brouillon", "envoyee", "payee", "annulee"].includes(statut)) throw err400("Statut de facture inconnu.");
   const q = statut
-    ? env.DB.prepare("SELECT f.*, c.nom AS client_nom FROM factures f LEFT JOIN clients c ON c.id = f.client_id WHERE f.statut = ? ORDER BY f.cree DESC LIMIT 500").bind(statut)
-    : env.DB.prepare("SELECT f.*, c.nom AS client_nom FROM factures f LEFT JOIN clients c ON c.id = f.client_id ORDER BY f.cree DESC LIMIT 500");
+    ? env.DB.prepare(SELECT_FACTURE + " WHERE f.statut = ? ORDER BY f.cree DESC LIMIT 500").bind(statut)
+    : env.DB.prepare(SELECT_FACTURE + " ORDER BY f.cree DESC LIMIT 500");
   const { results } = await q.all();
   return { factures: results.map(decoderFacture) };
 });
 
 route("GET", "/admin/factures/:id", "admin", async ({ env, params }) => {
-  const f = await env.DB.prepare("SELECT f.*, c.nom AS client_nom, c.contact AS client_contact, c.email AS client_email FROM factures f LEFT JOIN clients c ON c.id = f.client_id WHERE f.id = ?").bind(params.id).first();
+  const f = await env.DB.prepare(SELECT_FACTURE + " WHERE f.id = ?").bind(params.id).first();
   if (!f) throw err404("Facture introuvable.");
   return { facture: decoderFacture(f) };
 });
 
-/** POST /admin/factures {client_id, lignes, date?, echeance?, tva?, note?} → brouillon. */
+/**
+ * Prépare un brouillon d'avoir à partir d'une facture d'origine (par identifiant ou par numéro).
+ * Renvoie {origine, lignes, total_ht, reference}. L'origine doit être émise ; un seul avoir par facture.
+ */
+async function preparerAvoir(env, { id, numero, lignesFournies }) {
+  const origine = id
+    ? await env.DB.prepare("SELECT * FROM factures WHERE id = ?").bind(id).first()
+    : await env.DB.prepare("SELECT * FROM factures WHERE numero = ?").bind(numero).first();
+  if (!origine) throw err404("Facture d'origine introuvable.");
+  if (!["envoyee", "payee"].includes(origine.statut)) throw err409("Un avoir ne peut être créé que sur une facture émise.");
+  if (origine.type === "avoir") throw err409("Impossible de créer un avoir sur un avoir.");
+  const existant = await env.DB.prepare("SELECT id FROM factures WHERE ref = ? AND statut != 'annulee'").bind(origine.id).first();
+  if (existant) throw err409("Un avoir existe déjà pour cette facture.");
+  // Lignes : celles fournies (déjà négatives ou non), sinon celles de l'origine, toujours mises en négatif.
+  const base = lignesFournies ? validerLignes(lignesFournies).lignes : JSON.parse(origine.lignes || "[]");
+  const lignes = base.map((l) => ({ ...l, prix: -Math.abs(l.prix), total: -Math.abs(l.total) }));
+  const total_ht = Math.round(lignes.reduce((s, l) => s + l.total, 0) * 100) / 100;
+  return { origine, lignes, total_ht, reference: origine.numero };
+}
+
+/**
+ * POST /admin/factures {client_id, lignes:[{ref,designation,quantite,unite,prix}], date?, echeance?, tva?, note?, objet?}
+ * → brouillon {id, facture}. Avec {type:"avoir", reference:"BS-AAAA-NNN"} : brouillon d'avoir lié
+ * à cette facture (lignes mises en négatif), l'origine passera « annulee » à l'émission de l'avoir.
+ */
 route("POST", "/admin/factures", "admin", async ({ req, env, qui }) => {
   const corps = await lireCorps(req);
-  const client_id = champ(corps, "client_id", { requis: true, type: "id" });
-  const client = await env.DB.prepare("SELECT id FROM clients WHERE id = ?").bind(client_id).first();
-  if (!client) throw err400("Client inconnu.");
-  const { lignes, total_ht } = validerLignes(corps.lignes ?? []);
+  const type = champ(corps, "type", { enum: ["facture", "avoir"], defaut: "facture" });
   const date = champ(corps, "date", { type: "date" });
   const echeance = champ(corps, "echeance", { type: "date" });
   const tva = champ(corps, "tva", { type: "entier", defaut: 0 });
   if (tva < 0 || tva > 100) throw err400("Le taux de TVA doit être entre 0 et 100.");
   const note = champ(corps, "note", { max: 2000 });
+  const objet = champ(corps, "objet", { max: 300 });
   const id = nouvelId();
   const quand = maintenant();
+
+  let client_id, lignes, total_ht, ref = null, reference = null;
+  if (type === "avoir") {
+    const reference_ = champ(corps, "reference", { requis: true, max: 20 });
+    const a = await preparerAvoir(env, { numero: reference_, lignesFournies: corps.lignes });
+    client_id = a.origine.client_id; lignes = a.lignes; total_ht = a.total_ht; ref = a.origine.id; reference = a.reference;
+  } else {
+    client_id = champ(corps, "client_id", { requis: true, type: "id" });
+    const client = await env.DB.prepare("SELECT id FROM clients WHERE id = ?").bind(client_id).first();
+    if (!client) throw err400("Client inconnu.");
+    ({ lignes, total_ht } = validerLignes(corps.lignes ?? []));
+  }
   await env.DB.batch([
-    env.DB.prepare(`INSERT INTO factures (id, numero, client_id, date, echeance, lignes, total_ht, tva, statut, note, cree, maj)
-                    VALUES (?, NULL, ?, ?, ?, ?, ?, ?, 'brouillon', ?, ?, ?)`)
-      .bind(id, client_id, date ?? null, echeance ?? null, JSON.stringify(lignes), total_ht, tva, note ?? null, quand, quand),
-    stmtJournal(env, qui, "creer", "factures", id),
+    env.DB.prepare(`INSERT INTO factures (id, numero, client_id, date, echeance, lignes, total_ht, tva, statut, note, type, ref, reference, objet, cree, maj)
+                    VALUES (?, NULL, ?, ?, ?, ?, ?, ?, 'brouillon', ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(id, client_id, date ?? null, echeance ?? null, JSON.stringify(lignes), total_ht, tva, note ?? null, type, ref, reference, objet ?? null, quand, quand),
+    stmtJournal(env, qui, type === "avoir" ? "creer-avoir" : "creer", "factures", id),
   ]);
-  return { facture: { id, numero: null, client_id, date, echeance, lignes, total_ht, tva, statut: "brouillon", note, cree: quand, maj: quand } };
+  const facture = await env.DB.prepare(SELECT_FACTURE + " WHERE f.id = ?").bind(id).first();
+  return { id, facture: decoderFacture(facture) };
 });
 
 /** PATCH /admin/factures/:id — seulement un brouillon est modifiable. */
 route("PATCH", "/admin/factures/:id", "admin", async ({ req, env, params, qui }) => {
   const corps = await lireCorps(req);
-  const f = await env.DB.prepare("SELECT id, statut FROM factures WHERE id = ?").bind(params.id).first();
+  const f = await env.DB.prepare("SELECT id, statut, type FROM factures WHERE id = ?").bind(params.id).first();
   if (!f) throw err404("Facture introuvable.");
   if (f.statut !== "brouillon") throw err409("Une facture émise ne se modifie plus : créez un avoir.");
   const sets = [], vals = [];
   if (corps.lignes !== undefined) {
-    const { lignes, total_ht } = validerLignes(corps.lignes);
+    let { lignes, total_ht } = validerLignes(corps.lignes);
+    if (f.type === "avoir") {
+      lignes = lignes.map((l) => ({ ...l, prix: -Math.abs(l.prix), total: -Math.abs(l.total) }));
+      total_ht = Math.round(lignes.reduce((s, l) => s + l.total, 0) * 100) / 100;
+    }
     sets.push("lignes = ?", "total_ht = ?"); vals.push(JSON.stringify(lignes), total_ht);
   }
   const date = champ(corps, "date", { type: "date" });
   const echeance = champ(corps, "echeance", { type: "date" });
   const tva = champ(corps, "tva", { type: "entier" });
   const note = champ(corps, "note", { max: 2000 });
+  const objet = champ(corps, "objet", { max: 300 });
   const client_id = champ(corps, "client_id", { type: "id" });
   if (date !== undefined) { sets.push("date = ?"); vals.push(date); }
   if (echeance !== undefined) { sets.push("echeance = ?"); vals.push(echeance); }
   if (tva !== undefined) { if (tva < 0 || tva > 100) throw err400("Le taux de TVA doit être entre 0 et 100."); sets.push("tva = ?"); vals.push(tva); }
   if (note !== undefined) { sets.push("note = ?"); vals.push(note); }
-  if (client_id !== undefined) {
+  if (objet !== undefined) { sets.push("objet = ?"); vals.push(objet); }
+  if (client_id !== undefined && f.type !== "avoir") {
     const c = await env.DB.prepare("SELECT id FROM clients WHERE id = ?").bind(client_id).first();
     if (!c) throw err400("Client inconnu.");
     sets.push("client_id = ?"); vals.push(client_id);
@@ -1249,49 +1343,46 @@ route("POST", "/admin/factures/:id/emettre", "admin", async ({ env, params, qui 
     stmts.push(stmtJournal(env, qui, "annuler-par-avoir", "factures", f.ref));
   }
   await env.DB.batch(stmts);
-  const maj = await env.DB.prepare("SELECT * FROM factures WHERE id = ?").bind(params.id).first();
-  return { facture: decoderFacture(maj) };
+  const maj = await env.DB.prepare(SELECT_FACTURE + " WHERE f.id = ?").bind(params.id).first();
+  return { id: params.id, facture: decoderFacture(maj) };
 });
 
-/** POST /admin/factures/:id/payee — seulement depuis « envoyee ». */
-route("POST", "/admin/factures/:id/payee", "admin", async ({ env, params, qui }) => {
+/** POST /admin/factures/:id/payee {date_paiement?} — seulement depuis « envoyee ». */
+route("POST", "/admin/factures/:id/payee", "admin", async ({ req, env, params, qui }) => {
+  const corps = await lireCorps(req);
+  const paye_le = champ(corps, "date_paiement", { type: "date", defaut: aujourdhui() });
   const f = await env.DB.prepare("SELECT id, statut FROM factures WHERE id = ?").bind(params.id).first();
   if (!f) throw err404("Facture introuvable.");
   if (f.statut !== "envoyee") throw err409("Seule une facture émise (envoyée) peut être marquée payée.");
   await env.DB.batch([
-    env.DB.prepare("UPDATE factures SET statut = 'payee', maj = ? WHERE id = ? AND statut = 'envoyee'").bind(maintenant(), params.id),
+    env.DB.prepare("UPDATE factures SET statut = 'payee', paye_le = ?, maj = ? WHERE id = ? AND statut = 'envoyee'").bind(paye_le, maintenant(), params.id),
     stmtJournal(env, qui, "payee", "factures", params.id),
   ]);
-  return { id: params.id, statut: "payee" };
+  return { id: params.id, statut: "payee", paye_le };
 });
 
 /**
- * POST /admin/factures/:id/avoir — crée un brouillon d'avoir (lignes négatives) lié
+ * POST /admin/factures/:id/avoir {motif?} — crée un brouillon d'avoir (lignes négatives) lié
  * à une facture émise. L'annulation effective a lieu à l'émission de l'avoir.
  * Une facture émise n'est jamais supprimée.
  */
 route("POST", "/admin/factures/:id/avoir", "admin", async ({ req, env, params, qui }) => {
   const corps = await lireCorps(req);
-  const f = await env.DB.prepare("SELECT * FROM factures WHERE id = ?").bind(params.id).first();
-  if (!f) throw err404("Facture introuvable.");
-  if (!["envoyee", "payee"].includes(f.statut)) throw err409("Un avoir ne peut être créé que sur une facture émise.");
-  if (f.total_ht < 0) throw err409("Impossible de créer un avoir sur un avoir.");
-  const existant = await env.DB.prepare("SELECT id FROM factures WHERE ref = ? AND statut != 'annulee'").bind(f.id).first();
-  if (existant) throw err409("Un avoir existe déjà pour cette facture.");
-  const lignes = JSON.parse(f.lignes || "[]").map((l) => ({ ...l, quantite: -Math.abs(l.quantite), total: -Math.abs(l.total) }));
-  const total_ht = Math.round(lignes.reduce((s, l) => s + l.total, 0) * 100) / 100;
+  const { origine, lignes, total_ht, reference } = await preparerAvoir(env, { id: params.id });
   const motif = champ(corps, "motif", { max: 2000, defaut: "" });
-  const note = `Avoir sur la facture ${f.numero}${motif ? " — " + motif : ""}`;
+  const note = `Avoir sur la facture ${reference}${motif ? " — " + motif : ""}`;
   const id = nouvelId();
   const quand = maintenant();
   await env.DB.batch([
-    env.DB.prepare(`INSERT INTO factures (id, numero, client_id, date, echeance, lignes, total_ht, tva, statut, note, ref, cree, maj)
-                    VALUES (?, NULL, ?, NULL, NULL, ?, ?, ?, 'brouillon', ?, ?, ?, ?)`)
-      .bind(id, f.client_id, JSON.stringify(lignes), total_ht, f.tva, note, f.id, quand, quand),
+    env.DB.prepare(`INSERT INTO factures (id, numero, client_id, date, echeance, lignes, total_ht, tva, statut, note, type, ref, reference, cree, maj)
+                    VALUES (?, NULL, ?, NULL, NULL, ?, ?, ?, 'brouillon', ?, 'avoir', ?, ?, ?, ?)`)
+      .bind(id, origine.client_id, JSON.stringify(lignes), total_ht, origine.tva, note, origine.id, reference, quand, quand),
     stmtJournal(env, qui, "creer-avoir", "factures", id),
   ]);
-  return { facture: { id, numero: null, client_id: f.client_id, lignes, total_ht, tva: f.tva, statut: "brouillon", note, ref: f.id, cree: quand, maj: quand } };
+  const facture = await env.DB.prepare(SELECT_FACTURE + " WHERE f.id = ?").bind(id).first();
+  return { id, facture: decoderFacture(facture) };
 });
+
 
 /** DELETE /admin/factures/:id — brouillon uniquement. */
 route("DELETE", "/admin/factures/:id", "admin", async ({ env, params, qui }) => {
@@ -1398,11 +1489,11 @@ route("POST", "/client/demandes/:id/encore", "client", async ({ req, env, client
   await creerMessage(env, qui, { conversation_id: conv, demande_id: d.id, de: client.nom, texte });
   const quand = maintenant();
   await env.DB.batch([
-    env.DB.prepare("UPDATE demandes SET statut = 'nouveau', maj = ? WHERE id = ?").bind(quand, d.id),
+    env.DB.prepare("UPDATE demandes SET statut = 'nouveau', encore = encore + 1, encore_le = ?, maj = ? WHERE id = ?").bind(aujourdhui(), quand, d.id),
     env.DB.prepare("UPDATE projets SET maj = ? WHERE id = ?").bind(quand, d.projet_id),
     stmtJournal(env, qui, "encore", "demandes", d.id),
   ]);
-  return { id: d.id, statut: "nouveau" };
+  return { id: d.id, statut: "nouveau", encore: (d.encore || 0) + 1 };
 });
 
 /** GET /client/evenements → événements des projets du client. */

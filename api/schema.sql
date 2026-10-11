@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS demandes (
   reste     TEXT,
   solution  TEXT,
   motif     TEXT,
+  note      TEXT,                          -- notes libres de l'admin (cumulées)
+  encore    INTEGER NOT NULL DEFAULT 0,    -- nombre de « ça ne marche toujours pas »
+  encore_le TEXT,                          -- date du dernier signalement
   cree      TEXT NOT NULL,
   maj       TEXT NOT NULL
 );
@@ -115,13 +118,13 @@ CREATE TABLE IF NOT EXISTS contacts (
 CREATE INDEX IF NOT EXISTS idx_contacts_statut ON contacts(statut);
 CREATE INDEX IF NOT EXISTS idx_contacts_cree   ON contacts(cree);
 
--- Rendez-vous : créneaux demandés / confirmés. statut ∈ demande|confirme|annule
+-- Rendez-vous : créneaux proposés / confirmés. statut ∈ propose|confirme|annule
 CREATE TABLE IF NOT EXISTS rdv (
   id         TEXT PRIMARY KEY,
   contact_id TEXT,
   debut      TEXT NOT NULL,
   fin        TEXT NOT NULL,
-  statut     TEXT NOT NULL DEFAULT 'demande',
+  statut     TEXT NOT NULL DEFAULT 'propose',
   note       TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_rdv_debut  ON rdv(debut);
@@ -129,7 +132,9 @@ CREATE INDEX IF NOT EXISTS idx_rdv_statut ON rdv(statut);
 
 -- Factures. statut ∈ brouillon|envoyee|payee|annulee
 -- Numérotation continue BS-AAAA-NNN attribuée à l'émission, jamais réutilisée.
--- `ref` : pour un avoir, identifiant de la facture d'origine (extension du contrat, nullable).
+-- Extensions du contrat (nullables) : `type` ∈ facture|avoir ; pour un avoir, `ref` = identifiant
+-- et `reference` = numéro de la facture d'origine ; `objet` = objet libre ; `paye_le` = date de paiement.
+-- lignes : JSON [{ref, designation, quantite, unite, prix, total}]
 CREATE TABLE IF NOT EXISTS factures (
   id        TEXT PRIMARY KEY,
   numero    TEXT UNIQUE,
@@ -141,7 +146,11 @@ CREATE TABLE IF NOT EXISTS factures (
   tva       INTEGER NOT NULL DEFAULT 0,
   statut    TEXT NOT NULL DEFAULT 'brouillon',
   note      TEXT,
+  type      TEXT NOT NULL DEFAULT 'facture',
   ref       TEXT,
+  reference TEXT,
+  objet     TEXT,
+  paye_le   TEXT,
   cree      TEXT NOT NULL,
   maj       TEXT NOT NULL
 );

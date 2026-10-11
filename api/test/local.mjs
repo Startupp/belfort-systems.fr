@@ -138,13 +138,24 @@ async function tests() {
     JSON.stringify(resume.corps));
 
   const projets = await appel("GET", "/admin/projets", { jeton });
-  verif("/admin/projets liste le projet breteuil-migration", projets.corps?.projets?.some((p) => p.id === "breteuil-migration"));
+  const pb = projets.corps?.projets?.find((p) => p.id === "breteuil-migration");
+  verif("/admin/projets : projet avec client imbriqué, compteurs et nb_demandes (forme du panneau)",
+    pb && pb.client?.nom === "Château de Breteuil" && pb.client.email === "finance@breteuil.fr" && pb.nb_demandes === 49
+    && pb.compteurs?.traite === 16 && pb.compteurs.nouveau === 1 && pb.compteurs.lu === 17 && pb.compteurs.en_cours === 7 && pb.compteurs.partiel === 7 && pb.compteurs.repondu === 1,
+    JSON.stringify(pb?.compteurs));
 
   const projet = await appel("GET", "/admin/projets/breteuil-migration", { jeton });
   verif("/admin/projets/:id renvoie 49 demandes", projet.corps?.demandes?.length === 49, "reçu " + projet.corps?.demandes?.length);
-  verif("/admin/projets/:id renvoie 36 événements et 7 conversations",
-    projet.corps?.evenements?.length === 36 && projet.corps?.conversations?.length === 7);
-  verif("/admin/projets/:id renvoie 90 messages rattachés", projet.corps?.messages?.length === 90, "reçu " + projet.corps?.messages?.length);
+  verif("/admin/projets/:id : projet.client imbriqué {id,slug,nom,contact,email}",
+    projet.corps?.projet?.client?.slug === "breteuil" && projet.corps.projet.client.contact === "Pauline de Breteuil");
+  verif("/admin/projets/:id renvoie 36 événements et 5 conversations (Mail, WhatsApp, SMS, Téléphone, Sur place)",
+    projet.corps?.evenements?.length === 36 && projet.corps?.conversations?.length === 5
+    && ["Mail", "WhatsApp", "SMS", "Téléphone", "Sur place"].every((c) => projet.corps.conversations.some((x) => x.canal === c)));
+  const nbMsg = (projet.corps?.conversations || []).reduce((s, c) => s + (c.messages?.length || 0), 0);
+  verif("messages imbriqués dans les conversations (90, dont « Document Word » en piece)", nbMsg === 90
+    && projet.corps.conversations.find((c) => c.canal === "Mail").messages.some((m) => m.piece === "Document Word"), "reçu " + nbMsg);
+  verif("événements « à venir » avec date \"\" (pas null)", projet.corps?.evenements?.some((e) => e.date === "") && !projet.corps.evenements.some((e) => e.date === null));
+  verif("demandes avec encore / encore_le / note", projet.corps?.demandes?.every((d) => d.encore === 0 && "encore_le" in d && "note" in d));
   verif("Les demandes « nouveau » sont passées « lu » à la lecture", !projet.corps?.demandes?.some((d) => d.statut === "nouveau"));
   const inconnu = await appel("GET", "/admin/projets/nexiste-pas", { jeton });
   verif("projet inconnu → 404", inconnu.status === 404);
@@ -161,15 +172,24 @@ async function tests() {
   verif("abandonner sans motif → 400", abandonSans.status === 400);
   const rouvrir = await appel("POST", `/admin/demandes/${demande.id}/rouvrir`, { jeton, corps: {} });
   verif("rouvrir → en_cours", rouvrir.corps?.statut === "en_cours");
-  const patchAction = await appel("PATCH", `/admin/demandes/${demande.id}`, { jeton, corps: { action: "abandonner", motif: "Reporté par le client." } });
-  verif("PATCH {action:abandonner, motif} → abandonne", patchAction.corps?.statut === "abandonne");
+  const patchAction = await appel("PATCH", `/admin/demandes/${demande.id}`, { jeton, corps: { action: "abandonner", statut: "abandonne", motif: "Reporté par le client." } });
+  verif("PATCH {action:abandonner, statut, motif} → abandonne (forme du panneau)", patchAction.corps?.statut === "abandonne");
+  const patchRouvrir = await appel("PATCH", `/admin/demandes/${demande.id}`, { jeton, corps: { action: "rouvrir", statut: "en_cours", reste: "Relancer en novembre." } });
+  const patchNote = await appel("PATCH", `/admin/demandes/${demande.id}`, { jeton, corps: { note: "11/10/2026 — Vu avec Pauline." } });
+  const relu = await appel("GET", "/admin/projets/breteuil-migration", { jeton });
+  const d6 = relu.corps?.demandes?.find((d) => d.id === demande.id);
+  verif("PATCH {action:rouvrir, reste} puis {note} → en_cours, reste et note enregistrés",
+    patchRouvrir.corps?.statut === "en_cours" && patchNote.status === 200 && d6?.reste === "Relancer en novembre." && d6?.note === "11/10/2026 — Vu avec Pauline.", JSON.stringify(d6));
   const nouvelle = await appel("POST", "/admin/demandes", { jeton, corps: { projet_id: "breteuil-migration", titre: "Test de création", tarif: "devis" } });
   verif("POST /admin/demandes crée une demande numérotée 50", nouvelle.corps?.demande?.n === 50, JSON.stringify(nouvelle.corps));
 
   // --- Factures --------------------------------------------------------------------
   const brouillon = await appel("POST", "/admin/factures", { jeton, corps: {
-    client_id: "breteuil", lignes: [{ designation: "Migration de la messagerie", quantite: 1, prix_unitaire: 250 }, { designation: "Heures", quantite: 1.5, prix_unitaire: 35 }] } });
-  verif("création d'un brouillon de facture (total 302,50)", brouillon.corps?.facture?.statut === "brouillon" && brouillon.corps.facture.total_ht === 302.5, JSON.stringify(brouillon.corps));
+    client_id: "breteuil", date: "2026-10-11", echeance: "2026-11-10", objet: "Migration", statut: "brouillon", tva: 0, total_ht: 302.5,
+    lignes: [{ ref: "migration", designation: "Migration de la messagerie", quantite: 1, unite: "forfait", prix: 250 }, { ref: "heure", designation: "Heures", quantite: 1.5, unite: "heure", prix: 35 }] } });
+  verif("création d'un brouillon de facture (forme du panneau : lignes {ref,designation,quantite,unite,prix}, total 302,50)",
+    brouillon.corps?.id && brouillon.corps?.facture?.statut === "brouillon" && brouillon.corps.facture.total_ht === 302.5 && brouillon.corps.facture.lignes[0].prix === 250, JSON.stringify(brouillon.corps));
+  verif("facture avec client_nom / client_email joints", brouillon.corps?.facture?.client_nom === "Château de Breteuil" && brouillon.corps.facture.client_email === "finance@breteuil.fr");
   const f1 = brouillon.corps.facture.id;
   const modif = await appel("PATCH", `/admin/factures/${f1}`, { jeton, corps: { note: "Merci de votre confiance." } });
   verif("brouillon modifiable (PATCH)", modif.status === 200);
@@ -177,24 +197,33 @@ async function tests() {
   verif("payee sur un brouillon → 409", payeeAvant.status === 409);
   const emise = await appel("POST", `/admin/factures/${f1}/emettre`, { jeton });
   verif("emettre → numéro BS-2026-001, statut envoyee", emise.corps?.facture?.numero === "BS-2026-001" && emise.corps.facture.statut === "envoyee", JSON.stringify(emise.corps));
-  verif("emettre : date = aujourd'hui, échéance = +30 jours",
-    emise.corps?.facture?.date && emise.corps.facture.echeance && (Date.parse(emise.corps.facture.echeance) - Date.parse(emise.corps.facture.date)) === 30 * 86400000);
+  verif("emettre : date et échéance du brouillon conservées (+30 jours)",
+    emise.corps?.facture?.date === "2026-10-11" && emise.corps.facture.echeance === "2026-11-10");
   const modifApres = await appel("PATCH", `/admin/factures/${f1}`, { jeton, corps: { note: "x" } });
   verif("facture émise non modifiable (409)", modifApres.status === 409);
   const suppr = await appel("DELETE", `/admin/factures/${f1}`, { jeton });
   verif("facture émise non supprimable (409)", suppr.status === 409);
-  const b2 = await appel("POST", "/admin/factures", { jeton, corps: { client_id: "breteuil", lignes: [{ designation: "Atelier OneDrive", quantite: 2, prix_unitaire: 35 }] } });
+  const b2 = await appel("POST", "/admin/factures", { jeton, corps: { client_id: "breteuil", lignes: [{ designation: "Atelier OneDrive", quantite: 2, unite: "heure", prix: 35 }] } });
   const e2 = await appel("POST", `/admin/factures/${b2.corps.facture.id}/emettre`, { jeton });
-  verif("deuxième émission → BS-2026-002", e2.corps?.facture?.numero === "BS-2026-002", JSON.stringify(e2.corps));
-  const payee = await appel("POST", `/admin/factures/${f1}/payee`, { jeton });
-  verif("payee depuis envoyee → payee", payee.corps?.statut === "payee");
+  verif("deuxième émission → BS-2026-002, date = aujourd'hui, échéance = +30 jours", e2.corps?.facture?.numero === "BS-2026-002"
+    && e2.corps.facture.date && (Date.parse(e2.corps.facture.echeance) - Date.parse(e2.corps.facture.date)) === 30 * 86400000, JSON.stringify(e2.corps));
+  const payee = await appel("POST", `/admin/factures/${f1}/payee`, { jeton, corps: { date_paiement: "2026-10-20" } });
+  verif("payee {date_paiement} depuis envoyee → payee, paye_le", payee.corps?.statut === "payee" && payee.corps.paye_le === "2026-10-20");
   const avoir = await appel("POST", `/admin/factures/${b2.corps.facture.id}/avoir`, { jeton, corps: { motif: "Erreur de quantité" } });
-  verif("avoir : brouillon négatif lié", avoir.corps?.facture?.statut === "brouillon" && avoir.corps.facture.total_ht === -70 && avoir.corps.facture.ref === b2.corps.facture.id, JSON.stringify(avoir.corps));
+  verif("avoir (route /avoir) : brouillon négatif lié, type avoir, reference = numéro d'origine",
+    avoir.corps?.facture?.statut === "brouillon" && avoir.corps.facture.total_ht === -70 && avoir.corps.facture.type === "avoir" && avoir.corps.facture.reference === "BS-2026-002", JSON.stringify(avoir.corps));
+  const avoirDoublon = await appel("POST", `/admin/factures/${b2.corps.facture.id}/avoir`, { jeton, corps: {} });
+  verif("un seul avoir par facture (409)", avoirDoublon.status === 409);
   const avoirEmis = await appel("POST", `/admin/factures/${avoir.corps.facture.id}/emettre`, { jeton });
   const origine = await appel("GET", `/admin/factures/${b2.corps.facture.id}`, { jeton });
   verif("émission de l'avoir → BS-2026-003 et facture d'origine annulee", avoirEmis.corps?.facture?.numero === "BS-2026-003" && origine.corps?.facture?.statut === "annulee");
+  // Avoir à la manière du panneau : POST /admin/factures {type:"avoir", reference, lignes négatives}
+  const avoirPanneau = await appel("POST", "/admin/factures", { jeton, corps: { client_id: "breteuil", type: "avoir", reference: "BS-2026-001", date: "2026-10-11", echeance: "2026-10-11",
+    lignes: [{ designation: "Migration de la messagerie", quantite: 1, unite: "forfait", prix: -250 }], note: "Avoir sur la facture BS-2026-001 — test", statut: "brouillon" } });
+  verif("POST /admin/factures {type:avoir, reference} (forme du panneau) → brouillon lié, total -250",
+    avoirPanneau.corps?.facture?.type === "avoir" && avoirPanneau.corps.facture.total_ht === -250 && avoirPanneau.corps.facture.ref === f1, JSON.stringify(avoirPanneau.corps));
   const liste = await appel("GET", "/admin/factures", { jeton });
-  verif("/admin/factures liste 3 factures", liste.corps?.factures?.length === 3);
+  verif("/admin/factures liste 4 factures avec client_nom", liste.corps?.factures?.length === 4 && liste.corps.factures.every((f) => f.client_nom === "Château de Breteuil"));
 
   // --- Contact et disponibilités ---------------------------------------------------
   const avant = await appel("GET", "/admin/contacts", { jeton });
@@ -212,14 +241,20 @@ async function tests() {
   const contacts = await appel("GET", "/admin/contacts", { jeton });
   const trouve = contacts.corps?.contacts?.find((c) => c.email === "jean@test.fr");
   verif("/contact valide → présent dans /admin/contacts (statut nouveau)", valide.status === 200 && trouve && trouve.statut === "nouveau" && !("ip_hash" in trouve));
-  const rdv = contacts.corps?.rdv?.find((r) => r.contact_id === trouve?.id);
-  verif("/contact avec créneau → rdv statut demande", rdv && rdv.statut === "demande" && rdv.debut === creneau && rdv.fin === "2030-01-07T10:00");
+  const rdv = trouve?.rdv;
+  verif("/contact avec créneau → contact.rdv joint {id,debut,fin,statut:propose,note}", rdv && rdv.statut === "propose" && rdv.debut === creneau && rdv.fin === "2030-01-07T10:00" && rdv.note, JSON.stringify(rdv));
+  verif("contact sans créneau → rdv: null", contacts.corps.contacts.every((c) => c.id === trouve.id || c.rdv === null));
+  const resume2 = await appel("GET", "/admin/resume", { jeton });
+  verif("/admin/resume : prochain_rdv {debut,fin,avec,statut} et dernier_evenement {date,titre}",
+    resume2.corps?.prochain_rdv?.debut === creneau && resume2.corps.prochain_rdv.avec === "Jean Test" && resume2.corps.prochain_rdv.statut === "propose"
+    && resume2.corps.dernier_evenement?.date && resume2.corps.dernier_evenement.titre, JSON.stringify(resume2.corps));
   const lu = await appel("PATCH", `/admin/contacts/${trouve?.id}`, { jeton, corps: { statut: "lu" } });
   verif("PATCH /admin/contacts/:id statut lu", lu.status === 200);
 
   const dispo = await appel("GET", "/disponibilites?semaine=2030-W02");
   verif("/disponibilites renvoie des créneaux (35 sur une semaine libre)", dispo.corps?.creneaux?.length === 35 && dispo.corps.lundi === "2030-01-07", "reçu " + dispo.corps?.creneaux?.length);
-  await appel("PATCH", `/admin/rdv/${rdv?.id}`, { jeton, corps: { statut: "confirme" } });
+  const conf = await appel("PATCH", `/admin/rdv/${rdv?.id}`, { jeton, corps: { statut: "confirme" } });
+  verif("PATCH /admin/rdv/:id {statut:confirme}", conf.status === 200);
   const dispo2 = await appel("GET", "/disponibilites?semaine=2030-W02");
   verif("/disponibilites retire le rdv confirmé (34 créneaux)", dispo2.corps?.creneaux?.length === 34 && !dispo2.corps.creneaux.some((c) => c.debut === creneau));
   const dispoPasse = await appel("GET", "/disponibilites?semaine=2020-W10");
@@ -229,12 +264,13 @@ async function tests() {
 
   // --- Clients et jetons ------------------------------------------------------------
   const client = await appel("POST", "/admin/clients", { jeton, corps: { slug: "test-client", nom: "Client de test", contact: "Jeanne", email: "j@test.fr" } });
-  verif("création d'un client → jeton en clair", client.status === 200 && typeof client.corps?.jeton === "string" && client.corps.jeton.length >= 40, JSON.stringify(client.corps));
-  const jetonClient = client.corps?.jeton;
+  verif("création d'un client → {id, token} en clair", client.status === 200 && client.corps?.id === "test-client" && typeof client.corps?.token === "string" && client.corps.token.length >= 40, JSON.stringify(client.corps));
+  const jetonClient = client.corps?.token;
   const doublon = await appel("POST", "/admin/clients", { jeton, corps: { slug: "test-client", nom: "Doublon" } });
   verif("client en doublon → 409", doublon.status === 409);
   const listeClients = await appel("GET", "/admin/clients", { jeton });
-  verif("/admin/clients ne renvoie jamais le jeton ni son hachage", listeClients.corps?.clients?.every((c) => !("token_hash" in c) && !("jeton" in c)) && listeClients.corps.clients.find((c) => c.slug === "breteuil")?.a_jeton === false);
+  verif("/admin/clients : compteur projets, jamais le jeton ni son hachage", listeClients.corps?.clients?.every((c) => !("token_hash" in c) && !("jeton" in c) && typeof c.projets === "number")
+    && listeClients.corps.clients.find((c) => c.slug === "breteuil")?.a_jeton === false && listeClients.corps.clients.find((c) => c.slug === "breteuil")?.projets === 1);
   const projetClient = await appel("POST", "/admin/projets", { jeton, corps: { client_id: "test-client", titre: "Projet de test" } });
   verif("POST /admin/projets", projetClient.status === 200 && projetClient.corps?.projet?.id);
 
@@ -247,20 +283,22 @@ async function tests() {
   const demCli = await appel("POST", "/client/demandes", { jeton: jetonClient, corps: { titre: "L'imprimante ne répond plus", texte: "Depuis ce matin, rien ne sort." } });
   verif("POST /client/demandes → demande nouveau + message", demCli.status === 200 && demCli.corps?.demande?.statut === "nouveau", JSON.stringify(demCli.corps));
   const encore = await appel("POST", `/client/demandes/${demCli.corps?.demande?.id}/encore`, { jeton: jetonClient, corps: {} });
-  verif("POST /client/demandes/:id/encore → nouveau", encore.corps?.statut === "nouveau");
+  const projetTest = await appel("GET", `/admin/projets/${projetClient.corps?.projet?.id}`, { jeton });
+  const demEncore = projetTest.corps?.demandes?.find((d) => d.id === demCli.corps?.demande?.id);
+  verif("POST /client/demandes/:id/encore → nouveau, encore = 1, encore_le = aujourd'hui", encore.corps?.statut === "nouveau" && demEncore?.encore === 1 && /^\d{4}-\d{2}-\d{2}$/.test(demEncore?.encore_le || ""), JSON.stringify(demEncore));
   const demAutre = await appel("POST", `/client/demandes/${demande.id}/messages`, { jeton: jetonClient, corps: { texte: "pirate" } });
   verif("un client ne peut pas écrire sur la demande d'un autre (404)", demAutre.status === 404);
   const regen = await appel("POST", "/admin/clients/test-client/regenerer", { jeton });
   const ancien = await appel("GET", "/client/moi", { jeton: jetonClient });
-  const nouveau = await appel("GET", "/client/moi", { jeton: regen.corps?.jeton });
+  const nouveau = await appel("GET", "/client/moi", { jeton: regen.corps?.token });
   verif("régénération : ancien jeton révoqué, nouveau accepté", ancien.status === 401 && nouveau.status === 200);
 
   // --- Journal et flux SSE --------------------------------------------------------------
   const journal = await appel("GET", "/admin/journal?limit=5", { jeton });
-  verif("/admin/journal renvoie des lignes d'audit", journal.corps?.journal?.length === 5 && journal.corps.journal[0].quand);
+  verif("/admin/journal renvoie des lignes d'audit avec `table`", journal.corps?.journal?.length === 5 && journal.corps.journal[0].quand && journal.corps.journal.every((l) => typeof l.table === "string"));
   const ctrl = new AbortController();
-  const flux = await fetch(`${BASE}/admin/flux?jeton=${jeton}`, { headers: { Origin: ORIGINE }, signal: ctrl.signal });
-  verif("/admin/flux renvoie text/event-stream", flux.status === 200 && (flux.headers.get("Content-Type") || "").startsWith("text/event-stream"));
+  const flux = await fetch(`${BASE}/admin/flux?t=${jeton}`, { headers: { Origin: ORIGINE }, signal: ctrl.signal });
+  verif("/admin/flux?t=<jeton> renvoie text/event-stream", flux.status === 200 && (flux.headers.get("Content-Type") || "").startsWith("text/event-stream"));
   const lecteur = flux.body.getReader();
   const dec = new TextDecoder();
   let recu = "";
@@ -278,6 +316,10 @@ async function tests() {
   ctrl.abort();
   const fluxSans = await appel("GET", "/admin/flux");
   verif("/admin/flux sans jeton → 401", fluxSans.status === 401);
+  const ctrl2 = new AbortController();
+  const flux2 = await fetch(`${BASE}/admin/flux?jeton=${jeton}`, { headers: { Origin: ORIGINE }, signal: ctrl2.signal });
+  verif("/admin/flux?jeton= accepté aussi", flux2.status === 200);
+  ctrl2.abort();
 
   // --- Déconnexion ----------------------------------------------------------------------
   const logout = await appel("POST", "/admin/logout", { jeton });
