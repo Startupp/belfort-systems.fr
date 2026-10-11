@@ -1,0 +1,16 @@
+{
+ "ok": true,
+ "contacts_nouveaux": 1,
+ "demandes_a_traiter": 32,
+ "factures_en_attente": 1,
+ "prochain_rdv": {
+  "debut": "2026-10-14T09:00",
+  "fin": "2026-10-14T10:00",
+  "avec": "Marie Lefèvre",
+  "statut": "propose"
+ },
+ "dernier_evenement": {
+  "date": "2026-10-11",
+  "titre": "Brouillon de facture de la migration préparé"
+ }
+}
