@@ -1,0 +1,67 @@
+{
+ "lisez_moi": "Les personnages KayKit (Adventurers 2.0, CC0, Kay Lousberg) : un seul squelette (Rig_Medium) pour tous, une bibliothèque d'animations partagée. Le jeu parle KayKit : chaque animation du jeu (à gauche) prend le premier clip KayKit de sa liste qui existe dans les fichiers d'animations chargés. Ajouter un fichier d'animations (par exemple Rig_Medium_CombatMelee.glb) dans ce dossier, avec son nom dans « fichiers », suffit : ses clips passent devant ceux de remplacement, sans toucher au code. Voir docs/KAYKIT.md. Les gestes de combat (coups, tirs, roulade) sont dans anims_combat.glb (fichiers_combat), lu après le personnage : en attendant, les clips de remplacement jouent. Une classe peut avoir ses propres clips (classes) : ils passent devant ceux d'animations.",
+ "squelette": "Rig_Medium",
+ "fichiers": ["Rig_Medium_General", "Rig_Medium_MovementBasic"],
+ "fichiers_lisez_moi": "Les fichiers d'animations lus, dans cet ordre (un clip déjà lu n'est pas remplacé). Pour en ajouter un (Rig_Medium_CombatMelee, Rig_Medium_CombatRanged, Rig_Medium_MovementAdvanced…) : poser le .glb dans ce dossier et ajouter son nom ici.",
+ "fichiers_combat": ["anims_combat"],
+ "fichiers_combat_lisez_moi": "Lus après les fichiers ci-dessus, seulement quand un personnage KayKit est là (jamais au démarrage du jeu). anims_combat.glb : les 24 clips utiles des fichiers KayKit Character Animations 1.1 (CombatMelee, CombatRanged, MovementAdvanced, General, MovementBasic), sans mannequin. Pour le refaire avec un clip de plus : docs/KAYKIT.md.",
+ "hauteur": 2.5,
+ "hauteur_lisez_moi": "La hauteur d'un personnage Rig_Medium dans ses propres unités (le Chevalier avec son casque : 2,5). Tous les personnages prennent la même échelle : le réglage « Personnages KayKit : taille » donne celle de ce personnage-là.",
+ "os": {
+  "main_d": "handslot.r",
+  "main_g": "handslot.l",
+  "tete": "head",
+  "torse": "chest",
+  "hanches": "hips"
+ },
+ "animations": {
+  "repos": ["Idle_A", "Idle_B"],
+  "marche": ["Walking_A", "Walking_B"],
+  "course": ["Running_A", "Running_B"],
+  "course_tir": ["Running_HoldingRifle"],
+  "touche": ["Hit_A", "Hit_B"],
+  "mort": ["Death_A", "Death_B"],
+  "esquive": ["Dodge_Forward", "Roll"],
+  "apparition": ["Spawn_Ground", "Spawn_Air"],
+  "joie": ["Cheer", "Interact"],
+  "epee": ["Melee_1H_Attack_Chop", "1H_Melee_Attack_Chop", "Throw"],
+  "epee_fort": ["Melee_2H_Attack_Chop"],
+  "jumelles": ["Melee_Dualwield_Attack_Chop", "Dualwield_Melee_Attack_Chop", "Throw"],
+  "jumelles_fort": ["Melee_Dualwield_Attack_Slice"],
+  "dague": ["Melee_1H_Attack_Stab", "1H_Melee_Attack_Stab", "Throw"],
+  "dague_fort": ["Melee_2H_Attack_Stab"],
+  "arbalete": ["Ranged_2H_Shoot", "2H_Ranged_Shoot", "Use_Item"],
+  "canon": ["Ranged_2H_Shoot", "2H_Ranged_Shoot", "Use_Item"]
+ },
+ "animations_lisez_moi": "Pour chaque animation du jeu, les clips KayKit à essayer dans l'ordre (le premier qui existe gagne). <arme>_fort : le grand coup (coup chargé) ; sans clip, le coup ordinaire. course_tir : la course avec une arme à distance en main ; sans clip, la course.",
+ "classes": {
+  "lisez_moi": "Les clips propres à une classe (Guerrier, Archer, Druide) : essayés avant ceux d'animations, pour la même animation du jeu. Une animation absente d'ici prend celle d'animations.",
+  "guerrier": {"epee": ["Melee_1H_Attack_Chop"], "epee_fort": ["Melee_2H_Attack_Chop"], "dague": ["Melee_1H_Attack_Slice_Diagonal"]},
+  "archer": {"arbalete": ["Ranged_2H_Shoot"], "canon": ["Ranged_2H_Shoot"], "course_tir": ["Running_HoldingRifle"], "epee": ["Melee_1H_Attack_Slice_Diagonal"]},
+  "druide": {"dague": ["Melee_1H_Attack_Stab"], "dague_fort": ["Melee_2H_Attack_Stab"], "epee": ["Melee_2H_Attack_Slice"]}
+ },
+ "morceaux": {
+  "lisez_moi": "La partie du clip jouée pour un coup, en secondes : [début, fin] ou [début, impact, fin]. L'impact est le moment où l'arme touche (la main va le plus vite) : il tombe à la part du coup donnée par le réglage « Personnages Kaykit : moment de l'impact ». Un clip absent d'ici est joué en entier.",
+  "Throw": [0.35, 1.0],
+  "Use_Item": [0.25, 0.95],
+  "Melee_1H_Attack_Chop": [0.18, 0.58, 1.0],
+  "Melee_1H_Attack_Slice_Diagonal": [0.05, 0.41, 0.86],
+  "Melee_1H_Attack_Slice_Horizontal": [0.0, 0.26, 0.75],
+  "Melee_1H_Attack_Stab": [0.05, 0.37, 0.85],
+  "Melee_2H_Attack_Chop": [0.3, 0.71, 1.2],
+  "Melee_2H_Attack_Slice": [0.05, 0.37, 0.85],
+  "Melee_2H_Attack_Stab": [0.05, 0.37, 0.85],
+  "Melee_Dualwield_Attack_Chop": [0.14, 0.54, 1.0],
+  "Melee_Dualwield_Attack_Slice": [0.14, 0.54, 1.0],
+  "Melee_Dualwield_Attack_Stab": [0.05, 0.37, 0.85],
+  "Ranged_2H_Shoot": [0.0, 0.16, 0.75],
+  "Ranged_1H_Shoot": [0.0, 0.11, 0.7],
+  "Ranged_Bow_Release": [0.0, 0.06, 0.7],
+  "Ranged_Magic_Shoot": [0.0, 0.07, 0.6]
+ },
+ "prise": {
+  "lisez_moi": "Où l'arme se tient dans la main (os handslot), en cases et en radians : pos [x, y, z], rot [x, y, z]. lame : épées, lames jumelles, dagues ; tir : arbalètes et canons. Au repos, l'axe y de handslot.r pointe devant le personnage et son axe x vers le sol : une lame (pointe en y) se tient devant lui, une arbalète (canon en z) est tournée pour que son canon suive l'axe x de handslot.r : c'est l'axe qui vise devant dans les tirs KayKit (Ranged_2H_Shoot) et qui croise le corps dans la course arme en main (Running_HoldingRifle) ; au repos ordinaire (Idle_A), l'arbalète pointe vers le sol, arme baissée.",
+  "lame": {"pos": [0, 0, 0], "rot": [0, 0, 0]},
+  "tir": {"pos": [0, 0, 0], "rot": [0, 1.5708, 0]}
+ }
+}

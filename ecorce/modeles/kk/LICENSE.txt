@@ -1,0 +1,8 @@
+Modèles et images de ce dossier (pwa/modeles/kk/) : KayKit, par Kay Lousberg (https://kaylousberg.com, https://kaylousberg.itch.io).
+Licence : Creative Commons Zero, CC0 1.0 Universal (domaine public) — https://creativecommons.org/publicdomain/zero/1.0/
+Usage personnel, éducatif et commercial permis ; aucune obligation de citer (une ligne « Modèles : KayKit, Kay Lousberg » dans les crédits est appréciée).
+
+Source : les packs KayKit rangés sur la branche main du dépôt (dossier kaykit-gltf/<pack>/), mis au format du jeu par
+tools/kaykit_import.mjs : chaque modèle écrit en .glb sans son image (l'image du pack est une seule fois dans atlas/), parties
+soudées, nombres entiers (prune + quantize). Les formes et les images ne sont pas retouchées.
+Dossiers : un par domaine (sols, decors, monstres, armes, objets, camp), chacun avec sa liste.json ; atlas/ : une image par pack.
