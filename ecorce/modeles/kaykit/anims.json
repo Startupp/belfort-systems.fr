@@ -4,9 +4,13 @@
  "fichiers": ["Rig_Medium_General", "Rig_Medium_MovementBasic"],
  "fichiers_lisez_moi": "Les fichiers d'animations lus, dans cet ordre (un clip déjà lu n'est pas remplacé). Pour en ajouter un (Rig_Medium_CombatMelee, Rig_Medium_CombatRanged, Rig_Medium_MovementAdvanced…) : poser le .glb dans ce dossier et ajouter son nom ici.",
  "fichiers_combat": ["anims_combat"],
- "fichiers_combat_lisez_moi": "Lus après les fichiers ci-dessus, seulement quand un personnage KayKit est là (jamais au démarrage du jeu). anims_combat.glb : les 24 clips utiles des fichiers KayKit Character Animations 1.1 (CombatMelee, CombatRanged, MovementAdvanced, General, MovementBasic), sans mannequin. Pour le refaire avec un clip de plus : docs/KAYKIT.md.",
+ "fichiers_combat_lisez_moi": "Lus après les fichiers ci-dessus, seulement quand un personnage KayKit est là (jamais au démarrage du jeu). anims_combat.glb : les 26 clips utiles des fichiers KayKit Character Animations 1.1 (CombatMelee, CombatRanged, MovementAdvanced, General, MovementBasic, et Simulation pour Cheering et Waving, branche effets), sans mannequin. Pour le refaire avec un clip de plus : docs/KAYKIT.md.",
  "hauteur": 2.5,
  "hauteur_lisez_moi": "La hauteur d'un personnage Rig_Medium dans ses propres unités (le Chevalier avec son casque : 2,5). Tous les personnages prennent la même échelle : le réglage « Personnages KayKit : taille » donne celle de ce personnage-là.",
+ "rig_large": {
+  "lisez_moi": "Le Grand barbare (Barbarian_Large) est sur le squelette Rig_Large : mêmes os et mêmes axes que Rig_Medium, os environ 2,5 fois plus longs. Il joue les clips Rig_Medium avec leurs rotations seulement ; la position des hanches est multipliée par « hanches » (hanches du Rig_Large 1,04 / du Rig_Medium 0,41), les autres positions d'os sont retirées (kkGrandClip, zzy1_kaykit.js).",
+  "hanches": 2.54
+ },
  "os": {
   "main_d": "handslot.r",
   "main_g": "handslot.l",
@@ -24,6 +28,10 @@
   "esquive": ["Dodge_Forward", "Roll"],
   "apparition": ["Spawn_Ground", "Spawn_Air"],
   "joie": ["Cheer", "Interact"],
+  "victoire": ["Cheering", "Cheer", "Victory", "Interact"],
+  "arrivee": ["Spawn_Air", "Jump_Land", "Spawn_Ground"],
+  "coffre": ["Interact", "PickUp"],
+  "regard": ["Idle_Look", "Idle_B"],
   "epee": ["Melee_1H_Attack_Chop", "1H_Melee_Attack_Chop", "Throw"],
   "epee_fort": ["Melee_2H_Attack_Chop"],
   "jumelles": ["Melee_Dualwield_Attack_Chop", "Dualwield_Melee_Attack_Chop", "Throw"],
@@ -33,7 +41,9 @@
   "arbalete": ["Ranged_2H_Shoot", "2H_Ranged_Shoot", "Use_Item"],
   "canon": ["Ranged_2H_Shoot", "2H_Ranged_Shoot", "Use_Item"]
  },
- "animations_lisez_moi": "Pour chaque animation du jeu, les clips KayKit à essayer dans l'ordre (le premier qui existe gagne). <arme>_fort : le grand coup (coup chargé) ; sans clip, le coup ordinaire. course_tir : la course avec une arme à distance en main ; sans clip, la course.",
+ "animations_lisez_moi": "Pour chaque animation du jeu, les clips KayKit à essayer dans l'ordre (le premier qui existe gagne). <arme>_fort : le grand coup (coup chargé) ; sans clip, le coup ordinaire. course_tir : la course avec une arme à distance en main ; sans clip, la course. Les gestes de la branche effets (réglage « Effets de rendu ») : victoire (fin d'étage), arrivee (début d'étage), coffre (un coffre ouvert tout près), regard (KayKit 1.1 n'a pas d'Idle_Look : Idle_B le remplace).",
+ "repos_varie": ["Idle_B", "Waving", "Idle_Look"],
+ "repos_varie_lisez_moi": "Les gestes du repos varié (zzz6_effets.js, réglage « Effets de rendu ») : un héros KayKit immobile en joue un, tous ceux de la liste qui existent à tour de rôle, une fois, toutes les 6 à 10 s (réglages « repos varié après au moins / au plus »), puis revient à son repos (Idle_A). Waving : anims_combat.glb (Rig_Medium_Simulation) ; Idle_B : Rig_Medium_General.",
  "classes": {
   "lisez_moi": "Les clips propres à une classe (Guerrier, Archer, Druide) : essayés avant ceux d'animations, pour la même animation du jeu. Une animation absente d'ici prend celle d'animations.",
   "guerrier": {"epee": ["Melee_1H_Attack_Chop"], "epee_fort": ["Melee_2H_Attack_Chop"], "dague": ["Melee_1H_Attack_Slice_Diagonal"]},
