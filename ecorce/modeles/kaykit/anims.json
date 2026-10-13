@@ -60,8 +60,9 @@
   "Ranged_Magic_Shoot": [0.0, 0.07, 0.6]
  },
  "prise": {
-  "lisez_moi": "Où l'arme se tient dans la main (os handslot), en cases et en radians : pos [x, y, z], rot [x, y, z]. lame : épées, lames jumelles, dagues ; tir : arbalètes et canons. Au repos, l'axe y de handslot.r pointe devant le personnage et son axe x vers le sol : une lame (pointe en y) se tient devant lui, une arbalète (canon en z) est tournée pour que son canon suive l'axe x de handslot.r : c'est l'axe qui vise devant dans les tirs KayKit (Ranged_2H_Shoot) et qui croise le corps dans la course arme en main (Running_HoldingRifle) ; au repos ordinaire (Idle_A), l'arbalète pointe vers le sol, arme baissée.",
+  "lisez_moi": "Où l'arme se tient dans la main (os handslot), en cases et en radians : pos [x, y, z], rot [x, y, z]. lame : épées, lames jumelles, dagues ; tir : arbalètes et canons. Au repos, l'axe y de handslot.r pointe devant le personnage et son axe x vers le sol : une lame (pointe en y) se tient devant lui, une arbalète (canon en z) est tournée pour que son canon suive l'axe x de handslot.r : c'est l'axe qui vise devant dans les tirs KayKit (Ranged_2H_Shoot) et qui croise le corps dans la course arme en main (Running_HoldingRifle) ; au repos ordinaire (Idle_A), l'axe x de handslot.r pointe vers le sol : tir_repos (même forme que tir) dit comment l'arbalète se tient alors (canon devant, un peu baissé, ailes à plat) ; le jeu passe de l'une à l'autre selon le poids du repos (kkTenue, zzy1_kaykit.js).",
   "lame": {"pos": [0, 0, 0], "rot": [0, 0, 0]},
-  "tir": {"pos": [0, 0, 0], "rot": [0, 1.5708, 0]}
+  "tir": {"pos": [0, 0, 0], "rot": [0, 1.5708, 0]},
+  "tir_repos": {"pos": [0, 0, 0], "rot": [-1.8326, 0.5236, 1.5708]}
  }
 }

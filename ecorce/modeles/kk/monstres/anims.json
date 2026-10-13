@@ -1,0 +1,182 @@
+{
+ "lisez_moi": "Les créatures Kaykit (squelettes Kaykit Skeletons 1.1, boss et champions des Mystery 5 et 6 ; CC0, Kay Lousberg). Deux squelettes : Rig_Medium (les squelettes, le Nécromancien, le Tiefling, le Vampire, le Caveman, la PlantWarrior, l'AvianSwordsman) et Rig_Large (le Golem, le FrostGolem, la Monstrosity, le Clanker, le BlackKnight, l'OrcBrute). Pour chaque animation du jeu (à gauche), les clips Kaykit à essayer dans l'ordre : le premier qui existe dans le fichier d'animations du squelette gagne. Quel corps, quelle arme et quelle animation pour quelle créature : src/zzy6_kk_monstres.js (kkMonPlan). Refaire les fichiers d'animations et les hauteurs : node audit/kaykit/monstres/fabrique_anims.mjs.",
+ "fichiers": {
+  "medium": "kk_animations_monstres_medium",
+  "large": "kk_animations_monstres_large"
+ },
+ "fichiers_lisez_moi": "Le fichier léger d'animations de chaque squelette (clips choisis, squelette seul, sans mannequin), dans ce dossier ; lu à la demande, seulement quand « Rendu Kaykit » est à Oui.",
+ "animations": {
+  "medium": {
+   "repos": [
+    "Idle_A"
+   ],
+   "repos_squelette": [
+    "Skeletons_Idle",
+    "Idle_A"
+   ],
+   "marche": [
+    "Walking_A"
+   ],
+   "marche_squelette": [
+    "Skeletons_Walking",
+    "Walking_A"
+   ],
+   "course": [
+    "Running_A",
+    "Walking_A"
+   ],
+   "coup": [
+    "Melee_1H_Attack_Chop"
+   ],
+   "coup_dague": [
+    "Melee_1H_Attack_Stab",
+    "Melee_1H_Attack_Chop"
+   ],
+   "coup_lourd": [
+    "Melee_2H_Attack_Chop",
+    "Melee_1H_Attack_Chop"
+   ],
+   "poings": [
+    "Melee_1H_Attack_Chop"
+   ],
+   "tir": [
+    "Ranged_1H_Shoot"
+   ],
+   "magie": [
+    "Ranged_Magic_Shoot"
+   ],
+   "touche": [
+    "Hit_A"
+   ],
+   "mort": [
+    "Death_A"
+   ]
+  },
+  "large": {
+   "repos": [
+    "Idle_A"
+   ],
+   "repos_squelette": [
+    "Idle_A"
+   ],
+   "marche": [
+    "Walking_A"
+   ],
+   "marche_squelette": [
+    "Walking_A"
+   ],
+   "course": [
+    "Running_A",
+    "Walking_A"
+   ],
+   "coup": [
+    "Melee_1H_Slash"
+   ],
+   "coup_dague": [
+    "Melee_1H_Slash"
+   ],
+   "coup_lourd": [
+    "Melee_2H_Attack",
+    "Melee_1H_Slash"
+   ],
+   "poings": [
+    "Melee_Unarmed_Punch"
+   ],
+   "tir": [
+    "Melee_1H_Slash"
+   ],
+   "magie": [
+    "Melee_Unarmed_Punch"
+   ],
+   "touche": [
+    "Hit_A"
+   ],
+   "mort": [
+    "Death_A"
+   ]
+  }
+ },
+ "animations_lisez_moi": "repos, marche (ou course pour ce qui charge), une attaque (coup, coup_dague, coup_lourd, poings, tir, magie), touche (coup reçu), mort (la chute). Les variantes « _squelette » : la démarche traînante des squelettes.",
+ "morceaux": {
+  "lisez_moi": "La partie du clip jouée pour une attaque, en secondes : [début, impact, fin]. L'élan de la créature (le temps où elle se prépare) va du début vers l'impact ; le coup part de l'impact au moment où le jeu frappe, puis va jusqu'à la fin.",
+  "Melee_1H_Attack_Chop": [
+   0.18,
+   0.58,
+   1.0
+  ],
+  "Melee_1H_Attack_Stab": [
+   0.05,
+   0.37,
+   0.85
+  ],
+  "Melee_2H_Attack_Chop": [
+   0.3,
+   0.71,
+   1.2
+  ],
+  "Ranged_1H_Shoot": [
+   0.0,
+   0.11,
+   0.7
+  ],
+  "Ranged_Magic_Shoot": [
+   0.0,
+   0.07,
+   0.6
+  ],
+  "Melee_1H_Slash": [
+   0.15,
+   0.55,
+   1.25
+  ],
+  "Melee_2H_Attack": [
+   0.15,
+   0.6,
+   1.15
+  ],
+  "Melee_Unarmed_Punch": [
+   0.1,
+   0.45,
+   1.0
+  ]
+ },
+ "prise": {
+  "lisez_moi": "Où une arme se tient dans la main (os handslot.r, handslot.l), en unités du personnage et en radians : pos [x, y, z], rot [x, y, z]. Les armes Kaykit sont faites pour se poser telles quelles sur l'os : rien à corriger par défaut."
+ },
+ "rigs": {
+  "kk_mystery5_blackknight": "large",
+  "kk_mystery5_caveman": "medium",
+  "kk_mystery5_clanker": "large",
+  "kk_mystery5_frostgolem": "large",
+  "kk_mystery5_tiefling": "medium",
+  "kk_mystery5_vampire": "medium",
+  "kk_mystery6_avianswordsman": "medium",
+  "kk_mystery6_monstrosity": "large",
+  "kk_mystery6_orcbrute": "large",
+  "kk_mystery6_plantwarrior": "medium",
+  "kk_skeletons_necromancer": "medium",
+  "kk_skeletons_skeleton_golem": "large",
+  "kk_skeletons_skeleton_mage": "medium",
+  "kk_skeletons_skeleton_minion": "medium",
+  "kk_skeletons_skeleton_rogue": "medium",
+  "kk_skeletons_skeleton_warrior": "medium"
+ },
+ "hauteurs": {
+  "kk_mystery5_blackknight": 4.69,
+  "kk_mystery5_caveman": 2.33,
+  "kk_mystery5_clanker": 3.79,
+  "kk_mystery5_frostgolem": 4.17,
+  "kk_mystery5_tiefling": 2.34,
+  "kk_mystery5_vampire": 2.22,
+  "kk_mystery6_avianswordsman": 2.32,
+  "kk_mystery6_monstrosity": 4.11,
+  "kk_mystery6_orcbrute": 4.19,
+  "kk_mystery6_plantwarrior": 2.57,
+  "kk_skeletons_necromancer": 2.44,
+  "kk_skeletons_skeleton_golem": 4.23,
+  "kk_skeletons_skeleton_mage": 2.17,
+  "kk_skeletons_skeleton_minion": 2.17,
+  "kk_skeletons_skeleton_rogue": 2.17,
+  "kk_skeletons_skeleton_warrior": 2.17
+ }
+}
