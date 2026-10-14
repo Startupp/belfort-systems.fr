@@ -39,9 +39,13 @@
   "dague": ["Melee_1H_Attack_Stab", "1H_Melee_Attack_Stab", "Throw"],
   "dague_fort": ["Melee_2H_Attack_Stab"],
   "arbalete": ["Ranged_2H_Shoot", "2H_Ranged_Shoot", "Use_Item"],
-  "canon": ["Ranged_2H_Shoot", "2H_Ranged_Shoot", "Use_Item"]
+  "canon": ["Ranged_2H_Shoot", "2H_Ranged_Shoot", "Use_Item"],
+  "grimpe": ["Climb", "Climbing", "Jump_Full_Short"],
+  "saut": ["Jump_Start"],
+  "chute": ["Jump_Idle", "Fall"],
+  "atterrit": ["Jump_Land", "Land"]
  },
- "animations_lisez_moi": "Pour chaque animation du jeu, les clips KayKit à essayer dans l'ordre (le premier qui existe gagne). <arme>_fort : le grand coup (coup chargé) ; sans clip, le coup ordinaire. course_tir : la course avec une arme à distance en main ; sans clip, la course. Les gestes de la branche effets (réglage « Effets de rendu ») : victoire (fin d'étage), arrivee (début d'étage), coffre (un coffre ouvert tout près), regard (KayKit 1.1 n'a pas d'Idle_Look : Idle_B le remplace).",
+ "animations_lisez_moi": "Pour chaque animation du jeu, les clips KayKit à essayer dans l'ordre (le premier qui existe gagne). <arme>_fort : le grand coup (coup chargé) ; sans clip, le coup ordinaire. course_tir : la course avec une arme à distance en main ; sans clip, la course. Les gestes de la branche effets (réglage « Effets de rendu ») : victoire (fin d'étage), arrivee (début d'étage), coffre (un coffre ouvert tout près), regard (KayKit 1.1 n'a pas d'Idle_Look : Idle_B le remplace). Le relief (branche relief, réglage « Relief : plateaux à grimper ») : grimpe (un rebord d'un cran, le clip suit l'avancée de la grimpe), saut (le départ, jusqu'au bord), chute (en l'air), atterrit (en bas) ; ces clips sont dans Rig_Medium_MovementBasic, déjà lu : rien à ajouter à anims_combat.glb. KayKit n'a pas de clip de grimpe : Climb est essayé d'abord, puis Jump_Full_Short.",
  "repos_varie": ["Idle_B", "Waving", "Idle_Look"],
  "repos_varie_lisez_moi": "Les gestes du repos varié (zzz6_effets.js, réglage « Effets de rendu ») : un héros KayKit immobile en joue un, tous ceux de la liste qui existent à tour de rôle, une fois, toutes les 6 à 10 s (réglages « repos varié après au moins / au plus »), puis revient à son repos (Idle_A). Waving : anims_combat.glb (Rig_Medium_Simulation) ; Idle_B : Rig_Medium_General.",
  "classes": {
