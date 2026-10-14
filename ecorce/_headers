@@ -1,0 +1,37 @@
+# TinKnight : les en-têtes que Cloudflare Pages ajoute aux fichiers du jeu (docs/CLOUDFLARE.md, « Les en-têtes »).
+# build.mjs copie ce fichier dans www/_headers. GitHub Pages l'ignore (il le sert comme un simple fichier) ; l'APK aussi.
+# Au plus 100 règles, 2 000 caractères par ligne (limites de Cloudflare Pages).
+
+# Partout : un peu de sécurité, sans rien casser (pas de règle « Content-Security-Policy » : le jeu a des scripts dans la page).
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# La page, le service worker et le fichier de version : toujours redemandés, pour qu'une mise à jour se voie tout de suite.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/maj.json
+  Cache-Control: no-store
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+# Les modèles 3D (KayKit et les autres) et les sons : gardés un jour, puis relus en arrière-plan.
+# (pas « immutable » : un modèle peut être remplacé sous le même nom)
+/modeles/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/sons/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/fonts/*
+  Cache-Control: public, max-age=604800
+/icons/*
+  Cache-Control: public, max-age=604800
+
+# Les adresses d'essai (aperçus par branche) ne sont pas proposées aux moteurs de recherche.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex
