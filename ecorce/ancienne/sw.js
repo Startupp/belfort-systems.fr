@@ -1,0 +1,24 @@
+// TinKnight — le « service worker » : il garde une copie du jeu sur l'appareil pour qu'il se lance sans réseau,
+// et c'est lui qui rend la page installable comme une application.
+// Ce fichier est un modèle : build.mjs y inscrit la version et la liste des fichiers, puis l'écrit dans www/sw.js.
+const CACHE = 'ecorce-d6651239a6';
+const FILES = ["index.html","three.min.js","peerjs.min.js","manifest.webmanifest","modeles.js","modeles/liste.json","modeles/chevalier.glb","fonts/figtree-latin-400-normal.woff2","fonts/figtree-latin-600-normal.woff2","fonts/figtree-latin-700-normal.woff2","fonts/fonts.css","fonts/grenze-gotisch-latin-500-normal.woff2","fonts/grenze-gotisch-latin-700-normal.woff2","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png"];
+self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
+self.addEventListener('activate', e => { // une nouvelle version : les anciennes copies sont jetées
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('ecorce-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', e => {
+  const r = e.request, u = new URL(r.url);
+  if (r.method !== 'GET' || u.origin !== location.origin) return;
+  // (12 octobre) les musiques du stockage en ligne (pwa/musiques.json) viennent d'une autre adresse : elles passent ici sans être touchées ni gardées
+  // au premier passage ; le navigateur garde lui-même ce qu'il a joué. Les fichiers de musique du jeu, eux, ne sont pas dans la liste de départ.
+  if (u.pathname.endsWith('/maj.json')) return; // la version en ligne (src/zzk_maj.js) : toujours demandée au réseau, jamais gardée
+  if (r.mode === 'navigate') { // la page : le réseau d'abord (une mise à jour se voit au lancement suivant), la copie si l'appareil est hors ligne
+    // (deux-pages) deux pages : le jeu (index.html, gardé d'avance) et l'administration (admin.html, gardée à la première ouverture : le joueur ne la télécharge jamais)
+    const cle = /\/admin\.html$/.test(u.pathname) ? 'admin.html' : 'index.html';
+    e.respondWith(fetch(r).then(res => { if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(cle, cp)); } return res; }).catch(() => caches.match(cle).then(hit => hit || caches.match('index.html'))));
+    return;
+  }
+  // le reste : la copie d'abord. Un modèle 3D (créature, arme) est gardé la première fois qu'il sert, pour rejouer hors ligne
+  e.respondWith(caches.match(r, { ignoreSearch: true }).then(hit => hit || fetch(r).then(res => { if (res.ok && u.pathname.includes('/modeles/')) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)); } return res; })));
+});
