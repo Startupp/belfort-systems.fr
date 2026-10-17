@@ -1,5 +1,5 @@
 {
-  "_aide": "Tuiles et fiches « comment faire » des panneaux Administration et Finance. codeEmpreinte = SHA-256 de « espace-breteuil:<code> » (voir docs/ESPACE-BRETEUIL.md). Ce code masque seulement l'écran : la vraie protection est la connexion Microsoft.",
+  "_aide": "Tuiles et fiches « comment faire » des panneaux Administration et Finance. codeEmpreinte = SHA-256 de « espace-breteuil:<code> » (voir docs/ESPACE-BRETEUIL.md). Ce code masque seulement l'écran : la vraie protection est la connexion Microsoft.",
 
   "admin": {
     "titre": "Administration",
@@ -19,49 +19,49 @@
       {
         "id": "arrivee", "titre": "Un salarié arrive", "icone": "arrivee",
         "etapes": [
-          "Ouvrez « Les personnes », puis cliquez sur « Ajouter un utilisateur ».",
-          "Écrivez le prénom et le nom. Gardez le même modèle d'adresse que les collègues (…@breteuil.fr). Choisissez la formule : Complète, Express ou Express + Teams.",
+          "Ouvrez « Les personnes », puis cliquez sur « Ajouter un utilisateur ».",
+          "Écrivez le prénom et le nom. Gardez le même modèle d'adresse que les collègues (…@breteuil.fr). Choisissez la formule : Complète, Express ou Express + Teams.",
           "Notez le mot de passe provisoire. Donnez-le de vive voix ou par WhatsApp, jamais par mail. Puis, si besoin, donnez-lui l'accès aux boîtes partagées (fiche plus bas)."
         ],
-        "lien": { "texte": "Ouvrir « Les personnes »", "url": "https://admin.microsoft.com/Adminportal/Home#/users" },
+        "lien": { "texte": "Ouvrir « Les personnes »", "url": "https://admin.microsoft.com/Adminportal/Home#/users" },
         "note": "Formule Complète = Business Standard. Express = Exchange Online (mail seul). Express + Teams = Business Basic."
       },
       {
         "id": "depart", "titre": "Un salarié part", "icone": "depart",
         "etapes": [
-          "Ouvrez « Les personnes », cliquez sur son nom, puis sur « Bloquer la connexion ». Il ne peut plus entrer, rien n'est effacé.",
-          "Dans sa fiche, onglet « Courrier », choisissez « Convertir en boîte aux lettres partagée ». Ses mails sont gardés. Donnez ensuite l'accès à un collègue (fiche « Boîte partagée »).",
-          "Onglet « OneDrive » : « Accéder aux fichiers » crée un lien vers ses documents. Une fois les fichiers récupérés, retirez sa licence (onglet « Licences et applications »)."
+          "Ouvrez « Les personnes », cliquez sur son nom, puis sur « Bloquer la connexion ». Il ne peut plus entrer, rien n'est effacé.",
+          "Dans sa fiche, onglet « Courrier », choisissez « Convertir en boîte aux lettres partagée ». Ses mails sont gardés. Donnez ensuite l'accès à un collègue (fiche « Boîte partagée »).",
+          "Onglet « OneDrive » : « Accéder aux fichiers » crée un lien vers ses documents. Une fois les fichiers récupérés, retirez sa licence (onglet « Licences et applications »)."
         ],
-        "lien": { "texte": "Ouvrir « Les personnes »", "url": "https://admin.microsoft.com/Adminportal/Home#/users" },
-        "note": "Ne supprimez pas le compte tout de suite : récupérez d'abord ses fichiers. Après suppression, Microsoft ne garde les données que 30 jours."
+        "lien": { "texte": "Ouvrir « Les personnes »", "url": "https://admin.microsoft.com/Adminportal/Home#/users" },
+        "note": "Ne supprimez pas le compte tout de suite : récupérez d'abord ses fichiers. Après suppression, Microsoft ne garde les données que 30 jours."
       },
       {
         "id": "licence", "titre": "Donner une licence", "icone": "badge",
         "etapes": [
-          "Ouvrez « Les licences » et cliquez sur la formule voulue.",
-          "Cliquez sur « Attribuer des licences », puis tapez le prénom de la personne.",
-          "Cliquez sur « Attribuer ». C'est actif en quelques minutes."
+          "Ouvrez « Les licences » et cliquez sur la formule voulue.",
+          "Cliquez sur « Attribuer des licences », puis tapez le prénom de la personne.",
+          "Cliquez sur « Attribuer ». C'est actif en quelques minutes."
         ],
-        "lien": { "texte": "Ouvrir « Les licences »", "url": "https://admin.microsoft.com/Adminportal/Home#/licenses" },
+        "lien": { "texte": "Ouvrir « Les licences »", "url": "https://admin.microsoft.com/Adminportal/Home#/licenses" },
         "note": "S'il ne reste plus de licence libre, il faut en acheter une (pack Finance) ou en retirer une à un compte qui n'en a plus besoin."
       },
       {
         "id": "boite", "titre": "Ouvrir une boîte partagée à quelqu'un", "icone": "boite",
         "etapes": [
-          "Ouvrez « Boîtes partagées » et cliquez sur la boîte (par exemple contact@).",
-          "Dans « Membres », cliquez sur « Modifier », puis « Ajouter des membres ».",
-          "Cochez la personne et cliquez sur « Enregistrer ». Elle doit fermer puis rouvrir Outlook : la boîte apparaît dans l'heure."
+          "Ouvrez « Boîtes partagées » et cliquez sur la boîte (par exemple contact@).",
+          "Dans « Membres », cliquez sur « Modifier », puis « Ajouter des membres ».",
+          "Cochez la personne et cliquez sur « Enregistrer ». Elle doit fermer puis rouvrir Outlook : la boîte apparaît dans l'heure."
         ],
-        "lien": { "texte": "Ouvrir « Boîtes partagées »", "url": "https://admin.microsoft.com/Adminportal/Home#/SharedMailbox" },
-        "note": "Une boîte partagée est gratuite : pas besoin de licence pour elle."
+        "lien": { "texte": "Ouvrir « Boîtes partagées »", "url": "https://admin.microsoft.com/Adminportal/Home#/SharedMailbox" },
+        "note": "Une boîte partagée est gratuite : pas besoin de licence pour elle."
       },
       {
         "id": "partage", "titre": "Partager un dossier", "icone": "dossier",
         "etapes": [
           "Ouvrez le dossier dans OneDrive ou dans le Dossier Commun.",
-          "Cliquez sur les « … » à côté du dossier, puis sur « Partager ».",
-          "Tapez le prénom des collègues, choisissez « Peut modifier » ou « Peut afficher », puis « Envoyer »."
+          "Cliquez sur les « … » à côté du dossier, puis sur « Partager ».",
+          "Tapez le prénom des collègues, choisissez « Peut modifier » ou « Peut afficher », puis « Envoyer »."
         ],
         "lien": { "texte": "Ouvrir mes fichiers", "url": "https://www.microsoft365.com/onedrive" },
         "note": "Tout ce qui est rangé dans un dossier partagé est partagé aussi. Pour un document privé, rangez-le ailleurs."
@@ -69,11 +69,11 @@
       {
         "id": "motdepasse", "titre": "Mot de passe oublié", "icone": "cle",
         "etapes": [
-          "Ouvrez « Les personnes » et cliquez sur la petite clé à côté du nom.",
-          "Laissez cocher « Créer automatiquement un mot de passe » et « Demander la modification à la prochaine connexion ».",
-          "Cliquez sur « Réinitialiser » et donnez le mot de passe provisoire de vive voix ou par WhatsApp."
+          "Ouvrez « Les personnes » et cliquez sur la petite clé à côté du nom.",
+          "Laissez cocher « Créer automatiquement un mot de passe » et « Demander la modification à la prochaine connexion ».",
+          "Cliquez sur « Réinitialiser » et donnez le mot de passe provisoire de vive voix ou par WhatsApp."
         ],
-        "lien": { "texte": "Ouvrir « Les personnes »", "url": "https://admin.microsoft.com/Adminportal/Home#/users" },
+        "lien": { "texte": "Ouvrir « Les personnes »", "url": "https://admin.microsoft.com/Adminportal/Home#/users" },
         "note": "Jamais de mot de passe par mail."
       }
     ]
@@ -84,7 +84,7 @@
     "sousTitre": "Les factures et abonnements Microsoft",
     "icone": "euro",
     "codeEmpreinte": "5557ee3a0352b11ba92396dae561adcdd998313ee3545b2c0c294f6ef60e4e62",
-    "avertissement": "Microsoft vous demandera de vous connecter. Si un message dit « pas d'autorisation », demandez à François de vous donner le rôle « Administrateur de facturation ».",
+    "avertissement": "Microsoft vous demandera de vous connecter. Si un message dit « pas d'autorisation », demandez à François de vous donner le rôle « Administrateur de facturation ».",
     "tuiles": [
       { "titre": "Les factures",        "texte": "Voir et télécharger",          "icone": "facture",  "url": "https://admin.microsoft.com/Adminportal/Home#/billoverview" },
       { "titre": "Moyens de paiement",  "texte": "Carte ou prélèvement",          "icone": "carte",    "url": "https://admin.microsoft.com/Adminportal/Home#/billoverview" },
@@ -97,51 +97,51 @@
       {
         "id": "facture", "titre": "Télécharger une facture", "icone": "facture",
         "etapes": [
-          "Ouvrez « Les factures ». Restez sur l'onglet « Factures ».",
-          "Choisissez la période en haut (par exemple « 3 derniers mois »).",
-          "Cliquez sur le numéro de la facture, puis sur « Télécharger le PDF »."
+          "Ouvrez « Les factures ». Restez sur l'onglet « Factures ».",
+          "Choisissez la période en haut (par exemple « 3 derniers mois »).",
+          "Cliquez sur le numéro de la facture, puis sur « Télécharger le PDF »."
         ],
-        "lien": { "texte": "Ouvrir « Les factures »", "url": "https://admin.microsoft.com/Adminportal/Home#/billoverview" },
-        "note": "Les factures arrivent aussi par mail, à l'adresse choisie dans « Où arrivent les factures »."
+        "lien": { "texte": "Ouvrir « Les factures »", "url": "https://admin.microsoft.com/Adminportal/Home#/billoverview" },
+        "note": "Les factures arrivent aussi par mail, à l'adresse choisie dans « Où arrivent les factures »."
       },
       {
         "id": "paiement", "titre": "Changer la carte ou passer au prélèvement", "icone": "carte",
         "etapes": [
-          "Ouvrez « Moyens de paiement » puis l'onglet « Moyens de paiement ».",
-          "Cliquez sur « Ajouter un moyen de paiement » et suivez les étapes (carte ou compte bancaire).",
-          "Dans « Abonnements », ouvrez chaque formule et choisissez ce nouveau moyen de paiement."
+          "Ouvrez « Moyens de paiement » puis l'onglet « Moyens de paiement ».",
+          "Cliquez sur « Ajouter un moyen de paiement » et suivez les étapes (carte ou compte bancaire).",
+          "Dans « Abonnements », ouvrez chaque formule et choisissez ce nouveau moyen de paiement."
         ],
-        "lien": { "texte": "Ouvrir « Moyens de paiement »", "url": "https://admin.microsoft.com/Adminportal/Home#/billoverview" },
-        "note": "Le prélèvement n'est pas toujours proposé : cela dépend du contrat Microsoft. La carte marche toujours."
+        "lien": { "texte": "Ouvrir « Moyens de paiement »", "url": "https://admin.microsoft.com/Adminportal/Home#/billoverview" },
+        "note": "Le prélèvement n'est pas toujours proposé : cela dépend du contrat Microsoft. La carte marche toujours."
       },
       {
         "id": "acheter", "titre": "Ajouter des licences", "icone": "panier",
         "etapes": [
-          "Ouvrez « Abonnements » et cliquez sur la formule voulue (Complète, Express…).",
-          "Cliquez sur « Acheter des licences » ou « Modifier la quantité ».",
+          "Ouvrez « Abonnements » et cliquez sur la formule voulue (Complète, Express…).",
+          "Cliquez sur « Acheter des licences » ou « Modifier la quantité ».",
           "Indiquez le nouveau nombre et validez. Le montant apparaît sur la prochaine facture."
         ],
-        "lien": { "texte": "Ouvrir « Abonnements »", "url": "https://admin.microsoft.com/Adminportal/Home#/subscriptions" },
-        "note": "Avant d'acheter, vérifiez avec François qu'aucune licence n'est libre (fiche « Donner une licence » côté Administration)."
+        "lien": { "texte": "Ouvrir « Abonnements »", "url": "https://admin.microsoft.com/Adminportal/Home#/subscriptions" },
+        "note": "Avant d'acheter, vérifiez avec François qu'aucune licence n'est libre (fiche « Donner une licence » côté Administration)."
       },
       {
-        "id": "retirer", "titre": "Payer moins : retirer des licences", "icone": "moins",
+        "id": "retirer", "titre": "Payer moins : retirer des licences", "icone": "moins",
         "etapes": [
-          "Ouvrez « Abonnements » et cliquez sur la formule.",
-          "Regardez le nombre de licences « disponibles » (achetées mais données à personne).",
-          "Cliquez sur « Supprimer des licences » et baissez le nombre d'autant."
+          "Ouvrez « Abonnements » et cliquez sur la formule.",
+          "Regardez le nombre de licences « disponibles » (achetées mais données à personne).",
+          "Cliquez sur « Supprimer des licences » et baissez le nombre d'autant."
         ],
-        "lien": { "texte": "Ouvrir « Abonnements »", "url": "https://admin.microsoft.com/Adminportal/Home#/subscriptions" },
+        "lien": { "texte": "Ouvrir « Abonnements »", "url": "https://admin.microsoft.com/Adminportal/Home#/subscriptions" },
         "note": "Un abonnement annuel ne baisse parfois qu'à sa date anniversaire."
       },
       {
         "id": "reception", "titre": "Recevoir les factures sur finance@", "icone": "mail",
         "etapes": [
-          "Ouvrez « Où arrivent les factures ».",
-          "Cliquez sur « Modifier » à côté des destinataires.",
+          "Ouvrez « Où arrivent les factures ».",
+          "Cliquez sur « Modifier » à côté des destinataires.",
           "Ajoutez finance@breteuil.fr et enregistrez."
         ],
-        "lien": { "texte": "Ouvrir « Où arrivent les factures »", "url": "https://admin.microsoft.com/Adminportal/Home#/BillingNotifications" },
+        "lien": { "texte": "Ouvrir « Où arrivent les factures »", "url": "https://admin.microsoft.com/Adminportal/Home#/BillingNotifications" },
         "note": "Plusieurs adresses sont possibles."
       }
     ]

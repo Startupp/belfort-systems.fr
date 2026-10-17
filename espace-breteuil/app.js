@@ -140,6 +140,7 @@
     var p = ICS.partiesDans(ms, TZ);
     return p.h + " h" + (p.mi ? " " + String(p.mi).padStart(2, "0") : "");
   }
+  function maj(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
   function jourLong(j) { return fmt(midi(j), { weekday: "long", day: "numeric", month: "long" }); }
   function jourAvecAnnee(j) { return fmt(midi(j), { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
 
@@ -347,7 +348,7 @@
 
     app.appendChild(h("div", { class: "entete" },
       h("img", { src: "icones/icon-192.png", alt: "", width: "64", height: "64" }),
-      h("div", null, h("h1", null, "Espace Breteuil"), h("p", null, jourLong(auj))),
+      h("div", null, h("h1", null, "Espace Breteuil"), h("p", null, maj(jourLong(auj)))),
       h("a", { class: "btn-rond", href: "#/reglages", "aria-label": "Réglages", title: "Réglages" }, icone("reglages"))));
 
     app.appendChild(h("a", { class: "tuile-planning", href: "#/planning" },
@@ -377,7 +378,7 @@
       h("a", { class: "tuile discrete", href: "#/reglages" }, h("span", { class: "pastille" }, icone("reglages")), h("b", null, "Réglages")),
     ];
     if (!estInstallee()) plus.push(h("a", { class: "tuile discrete", href: "#/installer" }, h("span", { class: "pastille" }, icone("installer")), h("b", null, "Installer l'appli")));
-    app.appendChild(h("section", { class: "section" }, h("h2", null, "Plus"), h("div", { class: "grille quatre" }, plus)));
+    app.appendChild(h("section", { class: "section" }, h("h2", null, "Plus"), h("div", { class: "grille quatre plus" }, plus)));
     app.appendChild(pied());
   }
 
@@ -410,12 +411,12 @@
     // Navigation dans le temps
     var titre, pas;
     var auj = aujourdhui();
-    if (v.vue === "jour") { titre = jourAvecAnnee(v.jour); pas = function (n) { v.jour = plusJours(v.jour, n); }; }
+    if (v.vue === "jour") { titre = maj(jourAvecAnnee(v.jour)); pas = function (n) { v.jour = plusJours(v.jour, n); }; }
     else if (v.vue === "semaine" || v.vue === "liste") {
       var l = lundiDe(v.jour), d = plusJours(l, 6);
-      titre = v.vue === "liste" ? "À partir du " + jourLong(v.jour) : "Semaine du " + fmt(midi(l), { day: "numeric", month: "long" }) + " au " + fmt(midi(d), { day: "numeric", month: "long" });
+      titre = v.vue === "liste" ? (cle(debutListe(v.jour)) < cle(v.jour) ? "Depuis le " : "À partir du ") + jourLong(debutListe(v.jour)) : "Semaine du " + fmt(midi(l), { day: "numeric", month: "long" }) + " au " + fmt(midi(d), { day: "numeric", month: "long" });
       pas = function (n) { v.jour = plusJours(v.jour, 7 * n); };
-    } else { titre = fmt(midi(v.jour), { month: "long", year: "numeric" }); pas = function (n) { v.jour = plusMois(v.jour, n); }; }
+    } else { titre = maj(fmt(midi(v.jour), { month: "long", year: "numeric" })); pas = function (n) { v.jour = plusMois(v.jour, n); }; }
 
     app.appendChild(h("div", { class: "nav-periode" },
       h("button", { class: "btn-rond", type: "button", "aria-label": "Précédent", onclick: function () { pas(-1); rendre(); } }, icone("gauche")),
@@ -452,7 +453,7 @@
         var evts = duJour(liste, jj);
         grille.appendChild(h("div", { class: "jour-boite" + (cle(jj) === auj ? " aujourdhui" : "") },
           h("button", { class: "jour-titre", type: "button", onclick: function () { vuePlanning.vue = "jour"; vuePlanning.jour = jj; rendre(); } },
-            fmt(midi(jj), { weekday: "long", day: "numeric" })),
+            maj(fmt(midi(jj), { weekday: "long", day: "numeric" }))),
           evts.length ? h("div", { class: "evts" }, evts.map(function (o) { return carteEvenement(o, jj); })) : h("p", { class: "rien" }, "—")));
       })(plusJours(l, i));
     }
@@ -483,10 +484,14 @@
     zone.appendChild(g);
   }
 
+  /** La liste démarre une semaine plus tôt quand on affiche les événements passés (vue d'aujourd'hui). */
+  function debutListe(j) {
+    return reglages.passes === "afficher" && cle(j) === cle(aujourdhui()) ? plusJours(j, -7) : j;
+  }
+
   function vueListe(zone, j, personne, nbJours, sansPasses) {
     nbJours = nbJours || 60;
-    var debut = j;
-    if (!sansPasses && reglages.passes === "afficher" && cle(j) === cle(aujourdhui())) debut = plusJours(j, -14);
+    var debut = sansPasses ? j : debutListe(j);
     var liste = occurrences(debutJour(debut), debutJour(plusJours(j, nbJours)), personne, sansPasses);
     if (sansPasses) { var t = Date.now(); liste = liste.filter(function (o) { return o.fin > t; }); }
     var auj = cle(aujourdhui());
@@ -497,7 +502,7 @@
       if (!evts.length) continue;
       jours++;
       zone.appendChild(h("section", { class: "liste-jour" + (cle(jj) === auj ? " aujourdhui" : "") },
-        h("h3", null, (cle(jj) === auj ? "Aujourd'hui — " : "") + jourLong(jj)),
+        h("h3", null, cle(jj) === auj ? "Aujourd'hui — " + jourLong(jj) : maj(jourLong(jj))),
         h("div", { class: "evts" }, evts.map(function (o) { return carteEvenement(o, jj); }))));
     }
     if (!jours) zone.appendChild(h("p", { class: "vide" }, "Rien de prévu sur cette période."));

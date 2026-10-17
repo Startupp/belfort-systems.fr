@@ -1,5 +1,5 @@
 {
-  "_aide": "Liste des tuiles de l'Espace Breteuil. Modifiable à la main : voir docs/ESPACE-BRETEUIL.md, section « Éditer personnes.json ». Prénoms seulement, aucune donnée privée : ce ne sont que des liens.",
+  "_aide": "Liste des tuiles de l'Espace Breteuil. Modifiable à la main : voir docs/ESPACE-BRETEUIL.md, section « Éditer personnes.json ». Prénoms seulement, aucune donnée privée : ce ne sont que des liens.",
 
   "liens": {
     "mail":       { "titre": "Mes mails",        "texte": "Ouvrir ma boîte Outlook",          "icone": "mail",     "url": "https://outlook.office.com/mail/",          "appli": "ms-outlook://" },

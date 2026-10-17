@@ -93,7 +93,8 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
   display: flex; align-items: center; gap: 12px; min-height: 68px;
 }
 @media (min-width: 720px) { .barre { margin: 0 -28px 28px; padding: 12px 28px; } }
-.barre h1 { font-size: 1.35rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barre h1 { font-size: 1.35rem; flex: 1; min-width: 0; overflow: hidden; overflow-wrap: break-word; hyphens: auto; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+@media (max-width: 480px) { .barre h1 { font-size: 1.12rem; } .btn-retour { padding: 0 14px 0 10px; } }
 .btn-retour {
   display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 18px 0 12px;
   border-radius: 100px; border: 2px solid var(--trait-fort); background: var(--surface);
@@ -112,7 +113,7 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
 .entete { display: flex; align-items: center; gap: 16px; padding: 24px 0 8px; }
 .entete img { width: 64px; height: 64px; border-radius: 16px; flex: none; box-shadow: var(--ombre); }
 .entete h1 { font-size: 1.9rem; color: var(--bordeaux); }
-.entete p { margin: 2px 0 0; color: var(--doux); font-size: 1.05rem; text-transform: capitalize; }
+.entete p { margin: 2px 0 0; color: var(--doux); font-size: 1.05rem; }
 .entete .btn-rond { margin-left: auto; }
 
 .section { margin-top: 32px; }
@@ -141,14 +142,20 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
 }
 .tuile .pastille svg.ic { font-size: 2rem; }
 .tuile .pastille.ronde { border-radius: 50%; color: #fff; }
-.tuile b { font-size: 1.15rem; line-height: 1.25; overflow-wrap: anywhere; }
-.tuile span.sous { color: var(--doux); font-size: .92rem; line-height: 1.35; overflow-wrap: anywhere; }
+.tuile b { font-size: 1.15rem; line-height: 1.25; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; min-width: 0; max-width: 100%; }
+.tuile span.sous { color: var(--doux); font-size: .92rem; line-height: 1.35; overflow-wrap: anywhere; max-width: 100%; }
+@media (max-width: 480px) {
+  .tuile { padding: 14px; }
+  .tuile b { font-size: 1.05rem; }
+  .segments { gap: 4px; padding: 4px; }
+  .segments button { font-size: .8rem; padding: 0; letter-spacing: -.01em; }
+}
 .tuile-lien { color: inherit; text-decoration: none; }
 .tuile-lien::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
 .tuile-appli {
   position: relative; z-index: 1; margin-top: auto; display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 14px; border-radius: 100px; background: var(--surface-2); border: 1px solid var(--trait-fort);
-  color: var(--encre); font-size: .85rem; font-weight: 600; text-decoration: none;
+  color: var(--encre); font-size: .85rem; font-weight: 600; text-decoration: none; white-space: nowrap;
 }
 .tuile.discrete { min-height: 0; flex-direction: row; align-items: center; padding: 14px 16px; }
 .tuile.discrete .pastille { width: 48px; height: 48px; }
@@ -184,6 +191,8 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
 :root[data-theme="sombre"] .btn { color: #1A0E11; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .btn { color: #1A0E11; } }
 .btn:hover { background: var(--bordeaux-d); }
+:root[data-theme="sombre"] .btn.secondaire { color: var(--encre); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .btn.secondaire { color: var(--encre); } }
 .btn svg.ic { font-size: 1.35rem; }
 .btn.secondaire { background: var(--surface); color: var(--encre); border: 2px solid var(--trait-fort); }
 .btn.secondaire:hover { border-color: var(--bordeaux); color: var(--bordeaux); }
@@ -201,7 +210,7 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
 /* Boutons à choix (segments) */
 .segments { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 6px; padding: 6px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--trait); }
 .segments button {
-  min-height: 52px; border: 0; border-radius: 12px; background: transparent; font-weight: 700; font-size: 1rem; cursor: pointer; color: var(--doux); padding: 0 6px;
+  min-height: 52px; overflow-wrap: normal; line-height: 1.15; border: 0; border-radius: 12px; background: transparent; font-weight: 700; font-size: 1rem; cursor: pointer; color: var(--doux); padding: 0 6px;
 }
 .segments button[aria-pressed="true"] { background: var(--surface); color: var(--bordeaux); box-shadow: var(--ombre); outline: 2px solid var(--bordeaux); }
 
@@ -210,7 +219,7 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
 /* ---------------------------------------------------------------- */
 .nav-periode { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; gap: 10px; align-items: center; margin: 14px 0 6px; }
 .nav-periode .btn-rond { width: 56px; height: 56px; }
-.nav-periode .titre-periode { text-align: center; font-family: var(--serif); font-size: 1.3rem; font-weight: 600; text-transform: capitalize; line-height: 1.2; }
+.nav-periode .titre-periode { text-align: center; font-family: var(--serif); font-size: 1.3rem; font-weight: 600; line-height: 1.2; }
 .ligne-aujourdhui { display: flex; justify-content: center; margin: 4px 0 16px; }
 .ligne-aujourdhui .btn { min-height: 50px; }
 .filtre-personne { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; padding: 12px 16px; border-radius: var(--rayon-petit); background: var(--bordeaux-clair); color: var(--encre); }
@@ -235,7 +244,7 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
 .semaine { display: grid; gap: 12px; }
 .jour-boite { background: var(--surface-2); border: 2px solid var(--trait); border-radius: var(--rayon); padding: 12px; }
 .jour-boite.aujourdhui { border-color: var(--bordeaux); background: var(--bordeaux-clair); }
-.jour-boite > button.jour-titre { all: unset; display: flex; align-items: baseline; gap: 8px; cursor: pointer; margin: 2px 4px 10px; font-weight: 700; font-size: 1.05rem; text-transform: capitalize; }
+.jour-boite > button.jour-titre { all: unset; display: flex; align-items: baseline; gap: 8px; cursor: pointer; margin: 2px 4px 10px; font-weight: 700; font-size: 1.05rem; }
 .jour-boite > button.jour-titre:focus-visible { outline: 3px solid var(--or); }
 .jour-boite .evts { gap: 8px; }
 .jour-boite .evt { padding: 10px 12px; box-shadow: none; }
@@ -275,7 +284,7 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
 
 /* Liste */
 .liste-jour { margin-bottom: 18px; }
-.liste-jour h3 { font-family: var(--sans); font-size: 1.02rem; font-weight: 700; color: var(--doux); text-transform: capitalize; margin: 0 0 8px; }
+.liste-jour h3 { font-family: var(--sans); font-size: 1.02rem; font-weight: 700; color: var(--doux); margin: 0 0 8px; }
 .liste-jour.aujourdhui h3 { color: var(--bordeaux); }
 
 /* Fenêtre de détail */
@@ -323,8 +332,17 @@ dialog.detail .btn { margin-top: 6px; }
 .reglage p { color: var(--doux); margin: 0 0 12px; font-size: .95rem; }
 
 .pied { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--trait); color: var(--doux); font-size: .92rem; text-align: center; }
-.pied a { font-weight: 700; }
+.pied a { font-weight: 700; white-space: nowrap; }
 
 .chargement { padding: 30px; text-align: center; color: var(--doux); }
+
+/* Petits écrans : la rangée « Plus » sur une colonne ; gros textes : choix sur 2 colonnes. */
+@media (max-width: 480px) {
+  .grille.plus { grid-template-columns: minmax(0, 1fr); }
+  :root[data-texte="grand"] .segments, :root[data-texte="tres-grand"] .segments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  :root[data-texte="tres-grand"] .segments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
