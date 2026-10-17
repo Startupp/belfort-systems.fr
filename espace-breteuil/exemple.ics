@@ -1,0 +1,131 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Belfort Systems//Espace Breteuil exemple//FR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Planning d'exemple (données fictives)
+X-WR-TIMEZONE:Europe/Paris
+BEGIN:VTIMEZONE
+TZID:Romance Standard Time
+BEGIN:STANDARD
+DTSTART:16010101T030000
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=-1SU;BYMONTH=10
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:16010101T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=-1SU;BYMONTH=3
+END:DAYLIGHT
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:exemple-reunion-lundi@espace-breteuil
+SUMMARY:Réunion d'équipe du lundi
+DESCRIPTION:Point de la semaine pour tout le monde.\nSalle du personnel.
+LOCATION:Salle du personnel
+DTSTART;TZID=Romance Standard Time:20260907T093000
+DTEND;TZID=Romance Standard Time:20260907T101500
+RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;UNTIL=20270628T220000Z
+EXDATE;TZID=Romance Standard Time:20261102T093000
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-reunion-lundi@espace-breteuil
+RECURRENCE-ID;TZID=Romance Standard Time:20261019T093000
+SUMMARY:Réunion d'équipe (décalée à 11 h)
+LOCATION:Salle du personnel
+DTSTART;TZID=Romance Standard Time:20261019T110000
+DTEND;TZID=Romance Standard Time:20261019T114500
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-tonte@espace-breteuil
+SUMMARY:Jardins : tonte des grands parterres
+DESCRIPTION:Équipe jardins (Marco\, Erwin\, Antonio\, Joao).
+LOCATION:Parterres
+DTSTART;TZID=Europe/Paris:20260908T080000
+DTEND;TZID=Europe/Paris:20260908T120000
+RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=TU,TH;COUNT=40
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-cloture@espace-breteuil
+SUMMARY:Finance : clôture du mois
+DESCRIPTION:Valérie D. — rapprochement et factures du mois.
+DTSTART;VALUE=DATE:20260930
+DTEND;VALUE=DATE:20261001
+RRULE:FREQ=MONTHLY;BYMONTHDAY=-1;COUNT=12
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-newsletter@espace-breteuil
+SUMMARY:Marketing : envoi de la lettre d'information
+DESCRIPTION:Guillaumette — relecture la veille.
+DTSTART;TZID=Europe/Paris:20261001T140000
+DURATION:PT1H
+RRULE:FREQ=MONTHLY;BYDAY=1TH
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-visite-scolaire@espace-breteuil
+SUMMARY:Visite d'un groupe scolaire (45 élèves)
+DESCRIPTION:Accueil : Fanny et Valérie L.\nDéjeuner tiré du sac dans le parc.
+LOCATION:Accueil du Château
+DTSTART:20261020T073000Z
+DTEND:20261020T113000Z
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-traiteur@espace-breteuil
+SUMMARY:Restauration : livraison du traiteur
+DESCRIPTION:Yara réceptionne la livraison.
+LOCATION:Cuisines
+DTSTART;TZID=Europe/Paris:20261022T070000
+DTEND;TZID=Europe/Paris:20261022T080000
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-mariage@espace-breteuil
+SUMMARY:Réception de mariage (Orangerie)
+DESCRIPTION:Restauration et accueil mobilisés.\nMise en place dès 14 h.
+LOCATION:Orangerie
+DTSTART;TZID=Europe/Paris:20261024T140000
+DTEND;TZID=Europe/Paris:20261025T020000
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-vacances@espace-breteuil
+SUMMARY:Vacances scolaires de la Toussaint (zone C)
+DTSTART;VALUE=DATE:20261017
+DTEND;VALUE=DATE:20261102
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-annule@espace-breteuil
+SUMMARY:Rendez-vous annulé (ne doit pas s'afficher)
+STATUS:CANCELLED
+DTSTART;TZID=Europe/Paris:20261021T100000
+DTEND;TZID=Europe/Paris:20261021T110000
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-halloween@espace-breteuil
+SUMMARY:Animation contes et citrouilles
+DESCRIPTION:Accueil renforcé. Marketing : photos pour les réseaux.
+LOCATION:Parc
+DTSTART;TZID=Europe/Paris:20261031T140000
+DTEND;TZID=Europe/Paris:20261031T173000
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Rappel
+TRIGGER:-PT30M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-licences@espace-breteuil
+SUMMARY:Direction : point licences Microsoft avec Damien
+DESCRIPTION:François\, Pauline — revue des licences et des factures.
+DTSTART;TZID=Europe/Paris:20261105T100000
+DTEND;TZID=Europe/Paris:20261105T110000
+END:VEVENT
+BEGIN:VEVENT
+UID:exemple-marche-noel@espace-breteuil
+SUMMARY:Marché de Noël au Château
+DESCRIPTION:Tout le monde est mobilisé.
+LOCATION:Cour d'honneur
+DTSTART;VALUE=DATE:20261205
+DTEND;VALUE=DATE:20261207
+END:VEVENT
+END:VCALENDAR
