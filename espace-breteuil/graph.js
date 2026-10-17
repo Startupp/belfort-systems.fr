@@ -118,7 +118,9 @@
       try { sessionStorage.setItem("eb:retour", location.hash || "#/"); } catch (e) {}
       return etat.pca.loginRedirect(demande);
     }
-    if (mode === "redirection" || estIosInstalle() || !etat.pca.loginPopup) return parRedirection();
+    // Connexion TOUJOURS par redirection pleine page : la fenêtre (popup) se perdait sur certains
+    // navigateurs (l'appli se rouvrait dans la fenêtre de connexion → « Connexion annulée »).
+    if (mode !== "popup") return parRedirection();
     return etat.pca.loginPopup(demande).then(function (r) {
       etat.compte = r.account; etat.vientDeSeConnecter = true;
       if (etat.pca.setActiveAccount) etat.pca.setActiveAccount(r.account);
