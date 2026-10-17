@@ -270,7 +270,7 @@ section.block { padding: clamp(60px, 8vw, 100px) 0; }
 .service .price small { display: block; color: var(--muted-2); }
 
 /* Formules */
-.plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
 .plan {
   position: relative; display: flex; flex-direction: column; min-width: 0;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 28px 24px;
@@ -374,6 +374,7 @@ section.block { padding: clamp(60px, 8vw, 100px) 0; }
 .field.full { grid-column: 1 / -1; }
 .field label { font-size: .88rem; font-weight: 600; color: var(--ink); }
 .field label .opt { font-weight: 400; color: var(--muted-2); }
+.field label .req, .panel .sub .req { color: var(--accent, #c0392b); font-weight: 700; }
 .field input, .field select, .field textarea {
   width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: var(--surface-2);
   border: 1.5px solid var(--line-2); border-radius: 12px; padding: 12px 14px; transition: border-color .2s, box-shadow .2s;

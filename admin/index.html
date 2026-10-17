@@ -86,9 +86,9 @@ var s=localStorage.getItem('bs-admin-taille');if(s)document.documentElement.data
       <h2>Créer un espace</h2>
       <p class="sub">Produit la page d’accueil chiffrée, le manifeste PWA, le service worker et les icônes.</p>
       <div class="field"><label for="nName">Nom du client</label>
-        <input id="nName" placeholder="Château de Breteuil"></div>
+        <input id="nName" placeholder="Nom du client"></div>
       <div class="field"><label for="nSlug">Identifiant d’espace (URL)</label>
-        <input id="nSlug" placeholder="chateau-de-breteuil" spellcheck="false"></div>
+        <input id="nSlug" placeholder="nom-du-client" spellcheck="false"></div>
       <div class="row">
         <div class="field"><label for="nColor">Couleur</label>
           <input id="nColor" type="color" value="#2E2760" style="height:48px;padding:5px"></div>
@@ -105,7 +105,7 @@ var s=localStorage.getItem('bs-admin-taille');if(s)document.documentElement.data
       <h2>Publier un document dans un espace</h2>
       <p class="sub">Le document est chiffré ici, puis déposé dans le dépôt. Personne ne peut le lire sans le mot de passe du client.</p>
       <div class="row">
-        <div class="field"><label for="dSlug">Espace</label><input id="dSlug" placeholder="chateau-de-breteuil" spellcheck="false"></div>
+        <div class="field"><label for="dSlug">Espace</label><input id="dSlug" placeholder="nom-du-client" spellcheck="false"></div>
         <div class="field"><label for="dFile">Nom du fichier</label><input id="dFile" placeholder="facture-2026-09.html" spellcheck="false"></div>
       </div>
       <div class="field"><label for="dTitle">Titre affiché avant déverrouillage</label>

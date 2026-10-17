@@ -17,6 +17,8 @@
     (children || []).forEach(function (c) { n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
     return n;
   };
+  // 45 -> « 45 », 22.5 -> « 22,50 » (virgule française, deux décimales seulement si nécessaire)
+  var nombre = function (n) { return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ","); };
   var euro = function (n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " €"; };
 
   /* ------------------------------------------------------------------
@@ -44,7 +46,7 @@
   function appliquerPrix() {
     $$("[data-prix]").forEach(function (node) {
       var v = prixDepuisCatalogue(node.getAttribute("data-prix"));
-      if (typeof v === "number") node.textContent = String(v);
+      if (typeof v === "number") node.textContent = nombre(v);
     });
     // Libellés des boutons « Choisir » : on reflète le prix du catalogue
     $$("[data-choisir]").forEach(function (a) {
@@ -53,7 +55,7 @@
       var id = plan.getAttribute("data-forfait");
       var prix = id === "site" ? prixDepuisCatalogue("site") : prixDepuisCatalogue("forfait." + id);
       var nom = $("h3", plan) ? $("h3", plan).textContent.trim() : id;
-      if (typeof prix === "number") a.setAttribute("data-choisir", (id === "site" ? "Gestion de site WordPress" : "Formule " + nom) + " (" + prix + " € HT / mois)");
+      if (typeof prix === "number") a.setAttribute("data-choisir", (id === "site" ? "Option Site WordPress (+" : "Formule " + nom + " (") + prix + " € HT / mois)");
     });
   }
 
@@ -61,20 +63,19 @@
     // Si le JSON ne se charge pas, on reconstruit le minimum depuis les valeurs déjà présentes dans la page.
     var lire = function (cle, defaut) { var n = $('[data-prix="' + cle + '"]'); var v = n ? parseFloat(n.textContent) : NaN; return isNaN(v) ? defaut : v; };
     return {
-      taux_horaire: lire("heure", 35),
-      heure_supplementaire: lire("heure_supplementaire", 35),
+      taux_horaire: lire("heure", 45),
+      heure_supplementaire: lire("heure_supplementaire", 45),
       prestations: [
-        { id: "heure", nom: "Intervention sur site", unite: "heure", prix: lire("heure", 35) },
-        { id: "distance", nom: "Assistance à distance", unite: "demi-heure", prix: lire("distance", 15) },
+        { id: "heure", nom: "Intervention ponctuelle", unite: "heure", prix: lire("heure", 45) },
+        { id: "tranche", nom: "Tranche de 30 minutes", unite: "tranche de 30 min", prix: 22.5 },
         { id: "migration", nom: "Migration de la messagerie vers Microsoft 365", unite: "forfait", prix: lire("migration", 390), inclus: "jusqu'à 10 boîtes", supplement: { nom: "boîte supplémentaire", prix: lire("migration.supplement", 20) } },
         { id: "audit", nom: "Audit informatique", unite: "forfait", prix: lire("audit", 175) }
       ],
       forfaits_mensuels: [
-        { id: "tranquillite", nom: "Tranquillité", prix: lire("forfait.tranquillite", 90), heures: 3, delai: "réponse sous 24 h ouvrées" },
-        { id: "serenite", nom: "Sérénité", prix: lire("forfait.serenite", 160), heures: 6, delai: "réponse sous 4 h ouvrées" },
-        { id: "autonomie", nom: "Autonomie", prix: lire("forfait.autonomie", 45), heures: 1, delai: "réponse sous 48 h ouvrées" }
+        { id: "essentiel", nom: "Essentiel", prix: lire("forfait.essentiel", 150), heures: 2, assistance: "2 h d'assistance à distance par mois", delai: "réponse le jour ouvré suivant" },
+        { id: "serenite", nom: "Sérénité", prix: lire("forfait.serenite", 290), heures: 5, assistance: "5 h d'assistance par mois", delai: "réponse dans la journée" }
       ],
-      site_web: { id: "site", nom: "Gestion de site WordPress", prix: lire("site", 120), unite: "mois" }
+      site_web: { id: "site", nom: "Option Site WordPress", prix: lire("site", 150), unite: "mois" }
     };
   }
 
@@ -94,53 +95,44 @@
   function recommander(r) {
     // r = {postes, messagerie, site, frequence}
     var reco = { type: "forfait", forfait: null, mensuel: 0, ponctuel: 0, lignes: [], texte: "", titre: "", formule: "" };
-    var tranq = forfait("tranquillite"), seren = forfait("serenite"), auto = forfait("autonomie");
+    var ess = forfait("essentiel"), seren = forfait("serenite");
     var heure = prestation("heure"), migration = prestation("migration"), siteWeb = catalogue.site_web;
 
-    // Forfait selon fréquence × taille
+    // Deux formules : Essentiel (gestion Microsoft 365, assistance à distance) ou Sérénité (suivi des postes, présence sur site)
     if (r.frequence === "rarement") {
       reco.type = "ponctuel";
     } else if (r.frequence === "mois") {
-      reco.forfait = r.postes === "1-3" ? auto : r.postes === "4-10" ? tranq : seren;
+      reco.forfait = r.postes === "11-30" ? seren : ess;
     } else { // chaque semaine
-      reco.forfait = r.postes === "1-3" ? tranq : seren;
+      reco.forfait = r.postes === "1-3" ? ess : seren;
     }
-    // Un site à faire vivre avec le forfait Autonomie : Tranquillité est plus cohérent, sinon on ajoute la gestion de site
-    if (reco.forfait && reco.forfait.id === "autonomie" && r.site === "vivre") reco.forfait = tranq;
 
     if (reco.type === "ponctuel") {
       reco.titre = "Des interventions à la demande";
-      reco.lignes.push("Intervention sur site : " + heure.prix + " € HT de l'heure, à distance " + prestation("distance").prix + " € HT la demi-heure");
+      reco.lignes.push("Intervention ponctuelle : " + nombre(heure.prix) + " € HT de l'heure, par tranches de 30 minutes (" + nombre(prestation("tranche").prix) + " €), sur site comme à distance ; 15 premières minutes à distance offertes");
       reco.texte = "Vous avez rarement besoin d'aide : pas de formule mensuelle, vous m'appelez quand il le faut et vous payez l'intervention. ";
-      reco.formule = "Interventions ponctuelles (" + heure.prix + " € HT / heure)";
+      reco.formule = "Interventions ponctuelles (" + nombre(heure.prix) + " € HT / heure)";
       if (r.site === "vivre") {
         reco.mensuel += siteWeb.prix;
-        reco.lignes.push("Gestion de site WordPress : " + siteWeb.prix + " € HT par mois");
-        reco.texte += "Votre site, lui, a besoin d'un suivi régulier (mises à jour, sauvegardes) : je propose la gestion mensuelle du site. ";
-        reco.formule += " + gestion de site WordPress (" + siteWeb.prix + " € HT / mois)";
+        reco.lignes.push("Option Site WordPress : " + siteWeb.prix + " € HT par mois");
+        reco.texte += "Votre site, lui, a besoin d'un suivi régulier (mises à jour, sauvegardes) : je propose l'option Site WordPress. ";
+        reco.formule += " + option Site WordPress (" + siteWeb.prix + " € HT / mois)";
       }
     } else {
       var f = reco.forfait;
       reco.titre = "Formule " + f.nom;
       reco.mensuel = f.prix;
-      reco.lignes.push(f.heures + " heure" + (f.heures > 1 ? "s" : "") + " d'assistance par mois, " + f.delai);
+      reco.lignes.push((f.assistance || (f.heures + " h d'assistance par mois")) + ", " + f.delai);
       reco.formule = "Formule " + f.nom + " (" + f.prix + " € HT / mois)";
-      if (f.id === "autonomie") reco.texte = "Peu de postes et des besoins mensuels légers : la formule Autonomie vous garde un interlocuteur joignable pour un petit budget. ";
-      if (f.id === "tranquillite") reco.texte = "La formule Tranquillité couvre les besoins courants d'une petite équipe, avec le suivi des mises à jour et des sauvegardes. ";
-      if (f.id === "serenite") reco.texte = "Avec cette taille d'équipe et ce rythme, la formule Sérénité donne la marge nécessaire, un délai de réponse court et la gestion des comptes Microsoft 365. ";
+      if (f.id === "essentiel") reco.texte = "La formule Essentiel prend en charge votre Microsoft 365 (arrivées et départs, licences, droits, boîtes partagées) et vérifie chaque mois la sécurité, la sauvegarde et les licences, avec un compte rendu. ";
+      if (f.id === "serenite") reco.texte = "Avec cette taille d'équipe et ce rythme, la formule Sérénité ajoute le suivi des postes, une demi-journée sur site par mois et une réponse dans la journée. ";
       if (r.site === "vivre") {
-        if (f.id === "serenite") {
-          reco.texte += "Le suivi de votre site web est inclus. ";
-        } else {
-          reco.mensuel += siteWeb.prix;
-          reco.lignes.push("Gestion de site WordPress : " + siteWeb.prix + " € HT par mois");
-          reco.texte += "J'ajoute la gestion mensuelle de votre site (mises à jour, sauvegardes, 2 heures de modifications). ";
-          reco.formule += " + gestion de site WordPress (" + siteWeb.prix + " € HT / mois)";
-        }
+        reco.mensuel += siteWeb.prix;
+        reco.lignes.push("Option Site WordPress : " + siteWeb.prix + " € HT par mois");
+        reco.texte += "J'ajoute l'option Site WordPress (mises à jour, sauvegardes, petites modifications). ";
+        reco.formule += " + option Site WordPress (" + siteWeb.prix + " € HT / mois)";
       }
-      if (r.frequence === "semaine" && f.id === "serenite" && r.postes === "11-30") {
-        reco.texte += "Au-delà des heures incluses, l'heure supplémentaire est à " + catalogue.heure_supplementaire + " € HT. ";
-      }
+      reco.texte += "Au-delà des heures incluses, l'heure supplémentaire est à " + catalogue.heure_supplementaire + " € HT ; les heures non utilisées ne sont pas reportées. ";
     }
 
     // Messagerie
@@ -152,7 +144,7 @@
       reco.lignes.push("Migration vers Microsoft 365, une fois : " + (boites > 10 ? "à partir de " : "") + prixMig + " € HT (" + migration.inclus + (boites > 10 ? ", puis " + sup + " € HT la boîte" : "") + ")");
       reco.texte += "Pour commencer, je migre votre messagerie vers Microsoft 365 : inventaire, bascule en une soirée, guides et 30 jours de suivi. ";
       reco.formule += " + migration Microsoft 365 (" + prixMig + " € HT, une fois)";
-      if (reco.type === "ponctuel") reco.texte += "Après la migration, la formule Autonomie (" + auto.prix + " € HT par mois) est une bonne suite si vous voulez rester accompagné. ";
+      if (reco.type === "ponctuel") reco.texte += "Après la migration, la formule Essentiel (" + ess.prix + " € HT par mois) est une bonne suite si vous voulez rester accompagné. ";
     } else if (r.messagerie === "m365") {
       reco.texte += "Votre messagerie est déjà sur Microsoft 365 : je peux en reprendre la gestion (comptes, licences, partages) dans la formule. ";
     } else {
@@ -169,7 +161,7 @@
     box.appendChild(el("h3", { text: reco.titre }));
     var amount = el("div", { class: "amount" });
     if (reco.mensuel > 0) {
-      amount.appendChild(document.createTextNode("à partir de " + euro(reco.mensuel) + " HT "));
+      amount.appendChild(document.createTextNode(euro(reco.mensuel) + " HT "));
       amount.appendChild(el("small", { text: "/ mois" }));
       if (reco.ponctuel > 0) {
         amount.appendChild(el("br"));
@@ -179,7 +171,7 @@
       amount.appendChild(document.createTextNode("à partir de " + euro(reco.ponctuel) + " HT "));
       amount.appendChild(el("small", { text: "une fois, puis à l'heure" }));
     } else {
-      amount.appendChild(document.createTextNode(prestation("heure").prix + " € HT "));
+      amount.appendChild(document.createTextNode(nombre(prestation("heure").prix) + " € HT "));
       amount.appendChild(el("small", { text: "/ heure d'intervention" }));
     }
     box.appendChild(amount);

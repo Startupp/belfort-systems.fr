@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_messages_demande      ON messages(demande_id);
 
--- Fichiers : métadonnées seulement (le contenu reste sur GitHub Pages / OneDrive / lien).
+-- Fichiers : métadonnées seulement (le contenu reste sur Cloudflare Pages / OneDrive / lien).
 CREATE TABLE IF NOT EXISTS fichiers (
   id        TEXT PRIMARY KEY,
   projet_id TEXT NOT NULL,
