@@ -104,7 +104,12 @@
   function expliquer(e, contexte) {
     e = e || {};
     contexte = contexte || {};
-    var brut = [e.errorCode, e.errorMessage, e.subError, e.message, e.detail, e.codeGraph].filter(Boolean).join(" | ");
+    var morceaux = [];
+    [e.errorCode, e.errorMessage, e.subError, e.message, e.detail, e.codeGraph].forEach(function (m) {
+      m = m == null ? "" : String(m);
+      if (m && !morceaux.some(function (x) { return x.indexOf(m) > -1; })) morceaux.push(m);
+    });
+    var brut = morceaux.join(" | ");
     var detail = nettoyer(brut);
     var res = null;
     var i;

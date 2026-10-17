@@ -61,6 +61,15 @@
       .filter(function (x) { return a.indexOf(x.toLowerCase()) < 0; });
   }
 
+  /** Détail technique : code (« HTTP 403 », « AADSTS65001 »…) + message, sans répétition. */
+  function detailDe(x, e) {
+    var d = (e && e.detail) || x.detail || "";
+    var code = String(x.code || "");
+    var http = /^HTTP \d+/.exec(code);
+    if (http) return [http[0], d].filter(Boolean).join(" — ");
+    return d.indexOf(code) > -1 ? d : [code, d].filter(Boolean).join(" — ");
+  }
+
   /**
    * Lance toutes les vérifications, une par une.
    * G : window.EBGraph (ou une imitation dans les tests) ; CFG : self.EB_CONFIG.
@@ -78,7 +87,7 @@
     function depuisErreur(id, e, gravite, contexte, texteSimple) {
       var x = e && e.explication && !contexte ? e.explication : E.expliquer(e, Object.assign({ horsLigne: env.horsLigne }, contexte || {}));
       poser(id, gravite || "rouge", texteSimple ? texteSimple + " " + x.titre : x.titre, x.action + (x.qui && x.qui !== "vous" ? " (à faire par : " + x.qui + ")" : ""),
-        [x.code, e && e.detail ? e.detail : x.detail].filter(Boolean).join(" — "), x.code);
+        detailDe(x, e), x.code);
     }
     function sauter(ids, pourquoi) { ids.forEach(function (id) { var x = r(id); x.statut = "gris"; x.texte = pourquoi; }); if (rappel) rappel(res); }
     function encours(id) { r(id).statut = "encours"; if (rappel) rappel(res); }
