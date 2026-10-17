@@ -56,6 +56,10 @@ espace-breteuil/            ← autonome : peut être servi tel quel sur un autr
   resume.js                 « Aujourd'hui au Château » : lecture des titres de l'accueil (testé)
   ics.js                    parseur ICS (testé)
   demo.js                   données fictives des écrans de démo (testé)
+  demos/                    écrans de démo de Gestion et Finance (voir « Écrans de démo ») :
+    donnees.js              données fictives et calculs purs (testé : tests/demos.test.mjs)
+    commun.js               outils communs (en-tête, bandeau « Démo », visages, assistants)
+    roles.js, equipe.js, boites.js, finance.js, securite.js, demos.css
   personnes.json, fiches.json, exemple.ics, exemple-accueil.ics
   _headers                  en-têtes de sécurité Cloudflare Pages (CSP, pas d'iframe, HSTS…)
   sw.js, manifest.webmanifest, icones/, polices/, vendor/msal-browser-3.30.0.min.js (MIT)
@@ -263,6 +267,85 @@ audience, rôle), journalise dans D1 et n'ouvre **aucune** écriture publique no
 authentifiée.
 
 
+## Écrans de démo (Gestion du Château et Finance)
+
+Les anciennes tuiles « Bientôt » ouvrent maintenant de vrais écrans, **tous en démo** : données
+fictives (prénoms de l'équipe), bandeau « Démo — données fictives » sur chaque écran, confirmation
+en 2 étapes pour toute modification, chaque changement noté dans l'**Historique**. Tout reste sur
+l'appareil (`localStorage` « eb:demos ») ; « Réglages → Remettre la démo à zéro » l'efface aussi.
+Point de départ : 12 licences (6 Formule Complète = Business Standard à 11,70 € HT, 6 Formule
+Express + Teams = Business Basic à 5,60 € HT, soit 103,80 € HT par mois — prix indicatifs) et
+8 boîtes partagées (contact, finance, restauration, marketing, jardins, intendance, HFB, Chanteclerc).
+
+Le code est dans `espace-breteuil/demos/` ; dans les fichiers existants, seuls quelques
+branchements : tuiles de `ecranGestion` / `ecranFinance`, un appel dans `ecranReglages`
+(`window.EBDemosReglages`), les balises dans `index.html`, la liste `COQUILLE` de `sw.js`.
+
+### 1. Rôles et délégations — `#/roles`, `#/historique`
+
+- **Démo** : une carte par rôle (Administrateur principal, Facturation, Responsable de pôle,
+  Accès à une boîte partagée), expliqué en une phrase. Toucher un visage retire le rôle, « Donner
+  ce rôle » l'ajoute. Garde-fous : jamais moins d'un administrateur principal, avertissement
+  au-delà de deux. Historique « qui a fait quoi ».
+- **Plus tard (réel)** : Graph délégué — rôles d'annuaire (`roleManagement/directory/roleAssignments`,
+  RoleManagement.ReadWrite.Directory, réservé à un administrateur général) ; responsables de pôle
+  = propriétaires des groupes Microsoft 365 (Group.ReadWrite.All). L'accès aux boîtes partagées
+  demande la brique serveur Exchange (voir 3). Historique : journal D1 du Worker, ou journal
+  d'audit Microsoft en lecture (AuditLog.Read.All).
+
+### 2. Arrivée, départ, absences — `#/arrivee/1…5`, `#/depart`, `#/absences`
+
+- **Démo** :
+  - arrivée en 4 étapes (identité, poste et pôle, licence avec son coût mensuel, boîtes et
+    dossiers pré-cochés selon le pôle) + récapitulatif ; mot de passe provisoire d'exemple
+    « à transmettre de vive voix ou par WhatsApp, jamais par mail » ;
+  - départ : bloquer le compte (tout de suite ou le jour du départ), transmettre la boîte au
+    responsable, récupérer les fichiers de travail, garder ou rendre la licence ; mention
+    claire « on ne parcourt pas les fichiers personnels » ;
+  - absences : congés, absence ou télétravail sur une frise d'équipe à la semaine, sans motif.
+- **Plus tard (réel)** : Graph délégué — `POST /users`, `assignLicense`, `accountEnabled=false`,
+  `revokeSignInSessions` (User.ReadWrite.All + rôle Administrateur des utilisateurs) ; membres des
+  groupes et droits des dossiers comme le dossier commun actuel. Transmettre la boîte et convertir
+  en boîte partagée : brique serveur Exchange. Fichiers de travail : copie d'un dossier précis de
+  son OneDrive vers le dossier commun, **sans lister le reste**. Absences partagées : un calendrier
+  Outlook dédié (Calendars.ReadWrite) ou D1 via le Worker.
+
+### 3. Boîtes mail — `#/boites`, `#/boites/<id>`, `#/boites/perso/<id>`
+
+- **Démo** : boîtes personnelles et partagées avec leur photo ; changer la photo d'une boîte
+  partagée (appareil photo ou galerie, recadrage carré au doigt avec zoom, aperçu rond, image
+  256 px gardée sur l'appareil) ; qui peut **ouvrir** la boîte et qui peut **envoyer en son nom**
+  (interrupteurs, confirmation en 2 étapes).
+- **Plus tard (réel)** : Graph délégué ne sait ni lister ces accès ni changer la photo d'une boîte
+  partagée. Il faut la **brique serveur Exchange** : le Worker (identité d'application avec
+  certificat, rôle Exchange limité) appelle `Add/Remove-MailboxPermission` (FullAccess),
+  `Add-RecipientPermission` (SendAs) ou `GrantSendOnBehalfTo`, et `Set-UserPhoto` ; il valide
+  le jeton Entra de la personne, vérifie son rôle et journalise dans D1.
+
+### 4. Pack Finance — `#/licences`, `#/simulateur`, `#/factures`, `#/paiement`
+
+- **Démo** : licences et coût mensuel / annuel par formule (achetées, attribuées, libres) ;
+  simulateur « ajouter ou retirer une licence » avec impact mois et an, refus sous le nombre
+  attribué ; factures fictives avec aperçu et **exemple PDF** généré sur l'appareil (marqué
+  EXEMPLE) ; moyen de paiement (carte ou prélèvement) et adresse qui reçoit les factures.
+- **Plus tard (réel)** : licences en lecture via Graph (`subscribedSkus`, déjà utilisé dans
+  « Les vraies licences ») ; factures en lecture par l'API Billing (rôle Facturation) ;
+  achat / retrait et changement de moyen de paiement : centre d'administration Microsoft
+  (lien direct), l'appli ne voit jamais de numéro de carte.
+
+### 5. Double authentification — `#/securite`, `#/securite/guide/1…4`, `/sms`
+
+- **Démo** : désactivée par défaut ; l'administrateur l'active dans **Réglages → Sécurité**
+  (visible seulement si « Gestion du Château » est ouverte sur l'appareil). Ensuite : tableau
+  de suivi pour François (anneau « 4 / 11 protégés », état de chacun, « Envoyer un rappel »,
+  « Relancer tous ») et lien « Sécuriser mon compte » dans « Mon espace ». Guide pas à pas
+  (installer Microsoft Authenticator, scanner le QR code, tester) avec alternative SMS ; liens
+  réels vers les magasins d'applications et la page « Mes informations de sécurité ».
+- **Plus tard (réel)** : qui l'a activée : Graph `reports/authenticationMethods/userRegistrationDetails`
+  (AuditLog.Read.All) ; activation : stratégie d'accès conditionnel ou « paramètres de sécurité
+  par défaut » dans Entra (centre d'administration) ; rappels : mail envoyé par Graph
+  (`sendMail`, Mail.Send) au nom de l'administrateur.
+
 ## Checklist de test
 
 Automatique :
@@ -287,3 +370,6 @@ Version connectée : voir la checklist de [ESPACE-BRETEUIL-CONNEXION.md](ESPACE-
 - [ ] Mise à jour : changer `version.js`, publier, rouvrir l'appli → nouvelle version
       active ; appli ouverte pendant la publication → bandeau « Mettre à jour ».
 - [ ] Largeur 375 px : pas de défilement horizontal, boutons ≥ 44 px.
+- [ ] Écrans de démo : rôles (retirer / donner), arrivée complète, départ complet, absence
+      déclarée puis retirée, photo d'une boîte partagée (appareil photo et galerie), simulateur,
+      exemple PDF, activation de la double authentification dans Réglages puis rappel.
