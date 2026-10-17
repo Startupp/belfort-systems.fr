@@ -17,15 +17,9 @@
     window.EBDemo.reinitialiser = function () { D.effacer(); etat = D.base(); return avant.apply(this, arguments); };
   }
 
-  /* Retour vers le bon panneau : Gestion du Château ou Finance. */
-  var hub = "#/gestion";
-  function suivreHub() {
-    if (/^#\/finance/.test(location.hash)) hub = "#/finance";
-    else if (/^#\/gestion/.test(location.hash)) hub = "#/gestion";
-  }
-  window.addEventListener("hashchange", suivreHub);
-  suivreHub();
-  function retourHub() { return { href: hub, texte: hub === "#/finance" ? "Finance" : "Gestion" }; }
+  /* Retour : les écrans de gestion (démo) sont dans l'onglet Équipe ; ceux de Finance passent
+   * leur propre retour (« Finance »). Un seul endroit par fonction. */
+  function retourHub() { return { href: "#/equipe", texte: "Équipe" }; }
 
   function quiAgit() {
     var r = EB.lire("eb:reglages", {}) || {};

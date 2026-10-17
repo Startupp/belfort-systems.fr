@@ -1,7 +1,7 @@
 // Vérification visuelle de l'écran « Vérifier la connexion » en mode maquette (aucune connexion réelle).
 // Lancer depuis la racine du dépôt :
 //   NODE_PATH=$(npm root -g) node espace-breteuil/tests/diagnostic.playwright.mjs [dossier-captures]
-// Scénarios : tout vert, consentement manquant, CORS refusé, non propriétaire (+ Réglages).
+// Scénarios : tout vert, consentement manquant, CORS refusé, non propriétaire (+ onglet Plus).
 // Les réponses Graph et SharePoint sont maquettées ; ?maquette=1 n'agit que sur localhost.
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
@@ -97,14 +97,14 @@ try {
       await contexte.close();
     }
   }
-  // Réglages : le lien « Vérifier la connexion », en sombre et très grand texte.
+  // Onglet Plus : la tuile « Vérifier la connexion », en sombre et très grand texte.
   for (const [nom, vp] of [["mobile", { width: 375, height: 812 }], ["bureau", { width: 1280, height: 900 }]]) {
     const contexte = await navigateur.newContext({ viewport: vp, deviceScaleFactor: 2, serviceWorkers: "block", colorScheme: "dark", locale: "fr-FR" });
     await preparer(contexte, "", {});
     const page = await contexte.newPage();
-    await page.goto(BASE + "#/reglages");
+    await page.goto(BASE + "#/plus");
     await page.waitForSelector("text=Vérifier la connexion");
-    await page.screenshot({ path: `${SORTIE}/reglages-lien-diagnostic-sombre-${nom}.png`, fullPage: true });
+    await page.screenshot({ path: `${SORTIE}/plus-lien-diagnostic-sombre-${nom}.png`, fullPage: true });
     await page.click("text=Vérifier la connexion");
     await page.waitForSelector(".diag-actions button");
     await page.evaluate(() => document.documentElement.setAttribute("data-texte", "tres-grand"));

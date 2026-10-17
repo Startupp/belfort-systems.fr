@@ -104,13 +104,8 @@
     var bo = D.boite(etat, boiteChoisie);
     app.appendChild(carteRole(R.boite, [puces,
       h("p", { class: "petit" }, "Qui peut ouvrir ", h("b", null, bo.adresse), " :"),
-      visages("boite", boiteChoisie), boutonDonner("boite", boiteChoisie, "Donner l'accès"),
-      h("a", { class: "lien-action", href: "#/boites/" + encodeURIComponent(bo.id) }, "Régler aussi « envoyer au nom de » et la photo ›")]));
+      visages("boite", boiteChoisie), boutonDonner("boite", boiteChoisie, "Donner l'accès")]));
 
-    app.appendChild(h("section", { class: "section" },
-      h("h2", null, EB.emoji("🕘"), " Qui a fait quoi"),
-      h("ul", { class: "liste-histo" }, etat.historique.slice(0, 5).map(X.ligneHistorique)),
-      h("div", { class: "actions" }, h("a", { class: "btn secondaire", href: "#/historique" }, "Tout l'historique"))));
     app.appendChild(EB.pied());
   }
 

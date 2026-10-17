@@ -317,7 +317,7 @@
     var CFG = self.EB_CONFIG || {};
     var gen = ++generation;
     try { localStorage.setItem("eb:diagnostic-vu", "1"); } catch (e) {} // simple drapeau, pas un jeton
-    app.appendChild(EB.barre("Vérifier la connexion", { href: "#/reglages", texte: "Réglages" }));
+    app.appendChild(EB.barre("Vérifier la connexion", { href: "#/plus", texte: "Plus" }));
     app.appendChild(h("p", { class: "aide-ecran" }, "L'appli teste une à une les étapes de la connexion au Château. Si quelque chose coince, elle dit quoi faire et qui peut le régler."));
     var entete = h("div", { class: "diag-bilan gris", role: "status" }, h("span", { class: "diag-pastille gris", "aria-hidden": "true" }), h("div", null, h("b", null, "Vérification en cours…")));
     var liste = h("ol", { class: "diag-liste" });
@@ -357,7 +357,7 @@
       if (!G.estConnecte() && G.estConfigure()) boutons.appendChild(h("button", { class: "btn large", type: "button", onclick: function () { G.connecter(); } }, emoji("🔐"), "Se connecter avec Microsoft"));
       boutons.appendChild(h("button", { class: "btn" + (G.estConnecte() ? "" : " secondaire"), type: "button", onclick: copier }, icone("coche"), "Copier le rapport"));
       boutons.appendChild(h("button", { class: "btn secondaire", type: "button", onclick: function () { EB.rendre(); } }, icone("actualiser"), "Relancer la vérification"));
-      if (b.statut === "vert") boutons.appendChild(h("a", { class: "btn secondaire", href: "#/monchateau" }, emoji("🏰"), "Aller au Château"));
+      if (b.statut === "vert") boutons.appendChild(h("a", { class: "btn secondaire", href: "#/dossiers" }, icone("dossier"), "Aller aux dossiers"));
     }
     function copier() {
       var texte = dernierRapport;

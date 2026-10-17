@@ -1,6 +1,6 @@
 /*
  * Espace Breteuil — démo « Double authentification ».
- * Désactivée par défaut ; l'administrateur l'active dans Réglages.
+ * Désactivée par défaut ; l'administrateur l'active dans cet écran (onglet Équipe › Double auth.).
  * #/securite : suivi pour François (qui l'a activée, « Envoyer un rappel »).
  * #/securite/guide/1…4 et /sms : guide pas à pas pour chaque collaborateur (libre d'accès).
  */
@@ -24,14 +24,14 @@
       app.appendChild(h("div", { class: "etape-guide" }, EB.emoji("🛡️"),
         h("h2", null, "Pas encore activée"),
         h("p", null, "Elle protège chaque compte avec le téléphone : même avec le mot de passe, personne ne peut entrer sans le téléphone de la personne."),
-        h("p", { class: "petit" }, "Seul l'administrateur peut l'activer, dans Réglages."),
-        h("div", { class: "actions" }, h("a", { class: "btn", href: "#/reglages" }, EB.icone("reglages"), "Ouvrir les Réglages"))));
+        blocActivation()));
       app.appendChild(h("div", { class: "actions-liste section" },
         EB.action("#/securite/guide/1", "📖", "Voir le guide pour l'équipe", "Ce que chacun fera, pas à pas.")));
       app.appendChild(EB.pied());
       return;
     }
     var s = D.statsMfa(etat), auj = D.jourIso();
+    app.appendChild(blocActivation());
     app.appendChild(h("div", { class: "anneau", style: { "--p": String(s.pourcent) }, role: "img", "aria-label": s.protegees + " comptes protégés sur " + s.total },
       h("span", null, s.protegees + " / " + s.total, h("small", null, "protégés"))));
     app.appendChild(h("p", { class: "centre phrase-jour" }, s.protegees === s.total ? "Bravo : toute l'équipe est protégée." : (s.total - s.protegees) + " personne" + (s.total - s.protegees > 1 ? "s ne l'ont" : " ne l'a") + " pas encore activée."));
@@ -129,37 +129,28 @@
   /* ------------------------------------------------------------------ */
   /* Réglages : activer / désactiver (réservé à l'administrateur)       */
   /* ------------------------------------------------------------------ */
-  window.EBDemosReglages = function (app) {
+  /* Activer / désactiver : dans cet écran (réservé à l'administrateur), et nulle part ailleurs. */
+  function blocActivation() {
     var m = X.etat().mfa;
-    app.appendChild(h("h2", { class: "titre-groupe" }, "Sécurité"));
-    var boite = h("div", { class: "boite reglage" }, h("h2", null, "🛡️ Double authentification"),
-      h("p", null, "Chaque collaborateur confirmera ses connexions avec son téléphone. " + (m.activee ? "Activée (démo)." : "Désactivée pour l'instant.")));
-    if (!EB.estOuvert("admin")) {
-      boite.appendChild(h("p", { class: "petit" }, "Réservé à l'administrateur : ouvrez d'abord « Gestion du Château » avec son code."));
-      boite.appendChild(h("a", { class: "btn secondaire", href: "#/gestion" }, EB.icone("cle"), "Gestion du Château"));
-    } else {
-      var seg = h("div", { class: "segments", role: "group", "aria-label": "Double authentification", style: { "--n": "2" } });
-      [[true, "Activée"], [false, "Désactivée"]].forEach(function (o) {
-        seg.appendChild(h("button", { type: "button", "aria-pressed": String(m.activee === o[0]), onclick: function () {
-          if (m.activee === o[0]) return;
-          EB.confirmer(o[0] ? { emoji: "🛡️", titre: "Activer la double authentification ?", phrase: "Chacun devra installer l'appli sur son téléphone. Le guide pas à pas est prêt.",
-            consequence: "Vous pourrez suivre qui l'a fait et envoyer des rappels. En démo, rien ne change chez Microsoft.", bouton: "Oui, activer" }
-            : { emoji: "⚠️", titre: "Désactiver la double authentification ?", phrase: "Les comptes ne seront plus protégés par le téléphone.",
-              consequence: "C'est déconseillé. En démo, rien ne change chez Microsoft.", bouton: "Oui, désactiver" }).then(function (ok) {
-            if (!ok) return;
-            m.activee = o[0];
-            X.sauver("Double authentification", o[0] ? "Activée" : "Désactivée");
-            synchroniser();
-            EB.toast(o[0] ? "Activée. Suivi dans Gestion du Château." : "Désactivée.");
-            EB.rendre();
-          });
-        } }, o[1]));
-      });
-      boite.appendChild(seg);
-      if (m.activee) boite.appendChild(h("div", { class: "actions" }, h("a", { class: "btn secondaire", href: "#/securite" }, "Voir qui l'a activée")));
-    }
-    app.appendChild(boite);
-  };
+    var seg = h("div", { class: "segments", role: "group", "aria-label": "Double authentification", style: { "--n": "2" } });
+    [[true, "Activée"], [false, "Désactivée"]].forEach(function (o) {
+      seg.appendChild(h("button", { type: "button", "aria-pressed": String(m.activee === o[0]), onclick: function () {
+        if (m.activee === o[0]) return;
+        EB.confirmer(o[0] ? { emoji: "🛡️", titre: "Activer la double authentification ?", phrase: "Chacun devra installer l'appli sur son téléphone. Le guide pas à pas est prêt.",
+          consequence: "Vous pourrez suivre qui l'a fait et envoyer des rappels. En démo, rien ne change chez Microsoft.", bouton: "Oui, activer" }
+          : { emoji: "⚠️", titre: "Désactiver la double authentification ?", phrase: "Les comptes ne seront plus protégés par le téléphone.",
+            consequence: "C'est déconseillé. En démo, rien ne change chez Microsoft.", bouton: "Oui, désactiver" }).then(function (ok) {
+          if (!ok) return;
+          m.activee = o[0];
+          X.sauver("Double authentification", o[0] ? "Activée" : "Désactivée");
+          synchroniser();
+          EB.toast(o[0] ? "Activée : le suivi est ci-dessous." : "Désactivée.");
+          EB.rendre();
+        });
+      } }, o[1]));
+    });
+    return h("div", { class: "boite reglage" }, h("h2", null, "Pour toute l'équipe"), seg);
+  }
 
   EB.ecran("securite", ecranSecurite);
 })();

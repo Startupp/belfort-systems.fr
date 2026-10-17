@@ -32,10 +32,6 @@
         h("div", { class: "visages petits" }, qui.map(function (p) { return h("span", { class: "visage" }, EB.avatar(p), h("span", null, p.prenom)); })),
         h("p", { class: "petit" }, "Coût : " + D.euros(ach * F.prix) + " HT par mois.")));
     });
-    app.appendChild(h("div", { class: "actions-liste section" },
-      EB.action("#/simulateur", "➕", "Ajouter ou retirer une licence", "Voir le nouveau prix avant de décider."),
-      EB.action("#/factures", "🧾", "Les factures", "Les factures Microsoft, mois par mois."),
-      EB.action("#/paiement", "💳", "Moyen de paiement", "Carte bancaire ou prélèvement.")));
     app.appendChild(h("p", { class: "petit" }, "Prix indicatifs, engagement d'un an. Le montant exact figure sur la facture Microsoft."));
     app.appendChild(EB.pied());
   }

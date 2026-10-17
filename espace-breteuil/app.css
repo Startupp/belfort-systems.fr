@@ -638,6 +638,24 @@ ul.plans { columns: 2; font-size: .8rem; color: var(--texte-2); }
 .action.bientot .etiquette { margin-left: auto; }
 
 /* ---------------------------------------------------------------- */
+/* v3 : réglages en grille, petites pastilles, écrans d'onglet        */
+/* ---------------------------------------------------------------- */
+.grille-reglages { display: grid; gap: 8px; }
+.grille-reglages > .boite + .boite { margin-top: 0; }
+@media (min-width: 720px) { .grille-reglages { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.reglage { padding: 10px 12px; }
+.reglage p { margin: 0 0 8px; }
+.pastille-demo { margin: 0 0 10px; padding: 4px 10px; font-size: .8rem; }
+.pastille-demo.mini { margin: 0; padding: 1px 8px; font-size: .68rem; text-transform: none; letter-spacing: 0; }
+.filtre-personne { padding: 6px 6px 6px 12px; margin-bottom: 10px; font-size: .9rem; }
+.filtre-personne .btn { margin-left: auto; }
+.plein-ecran .barre { justify-content: center; }
+.zone-aujourdhui .bandeau { margin-bottom: 10px; }
+.bloc-planning .bandeau { margin-bottom: 10px; }
+.pied { margin-top: 18px; padding-top: 10px; font-size: .82rem; }
+.etape-guide .boite { margin-top: 12px; text-align: left; }
+
+/* ---------------------------------------------------------------- */
 /* Mouvement réduit : aucune animation ni transition                 */
 /* ---------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
