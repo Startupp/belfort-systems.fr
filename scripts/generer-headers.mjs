@@ -56,14 +56,23 @@ const SECTIONS = {
     robots: true,
   },
   "/portail/": { nom: "Portail client (connexion)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, robots: true },
-  "/factures/": { nom: "Factures (espace chiffré)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, robots: true },
-  "/clients/": { nom: "Espaces clients (chiffrés)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, connect: [...API], robots: true },
+  // Coffres chiffrés : après le mot de passe, la page déchiffre un document HTML et l'injecte
+  // (document.write / DOMParser) avec SES PROPRES scripts, dont on ne peut pas connaître les
+  // empreintes au build (contenu chiffré). Exception assumée : 'unsafe-inline' pour les scripts,
+  // images https. Raison de plus pour retirer ces pages du site (docs/INVENTAIRE-PUBLIC.md).
+  "/factures/": { nom: "Factures (coffre chiffré)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, inlineLibre: true, img: ["https:"], robots: true },
+  "/clients/": { nom: "Espaces clients (coffres chiffrés)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, connect: [...API], inlineLibre: true, img: ["https:"], robots: true },
   "/haccp/": {
     nom: "Achille HACCP (PWA hors ligne, scan de codes-barres)",
     style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, media: ["blob:"],
     permissions: { camera: "(self)" }, robots: true,
   },
   "/ecorce/": { nom: "TinKnight a déménagé (page de renvoi)" },
+  "/ecorce/ancienne/concepts/": {
+    // Planche de concepts : vignettes hébergées chez Higgsfield (CloudFront), polices Google.
+    nom: "TinKnight, planche de concepts",
+    img: ["https://d8j0ntlcm91z4.cloudfront.net"], style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font,
+  },
   "/ecorce/ancienne/": {
     nom: "TinKnight, ancienne version (jeu 3D, sauvegardes, multijoueur PeerJS)",
     script: ["https://cdn.jsdelivr.net"],
@@ -91,7 +100,9 @@ function section(chemin) {
 const sha = (s) => "'sha256-" + createHash("sha256").update(s, "utf8").digest("base64") + "'";
 const decoder = (s) => s.replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
-function empreintes(html) {
+function empreintes(brut) {
+  // Le navigateur normalise les fins de ligne (CRLF et CR → LF) avant de calculer l'empreinte.
+  const html = brut.replace(/\r\n?/g, "\n");
   const scripts = new Set();
   const gestionnaires = new Set();
   // Scripts inline exécutables (on ignore src=… et les blocs de données JSON-LD / JSON).
@@ -113,8 +124,10 @@ function empreintes(html) {
 
 function csp(sec, emp) {
   const s = (base, extra = []) => [...base, ...extra].join(" ");
-  const script = ["'self'", ...emp.scripts, ...(sec.script || [])];
-  if (emp.gestionnaires.length) script.push("'unsafe-hashes'", ...emp.gestionnaires);
+  // Avec une empreinte présente, le navigateur ignore 'unsafe-inline' : on n'en met donc pas
+  // dans les sections « inlineLibre ».
+  const script = sec.inlineLibre ? ["'self'", "'unsafe-inline'", ...(sec.script || [])] : ["'self'", ...emp.scripts, ...(sec.script || [])];
+  if (!sec.inlineLibre && emp.gestionnaires.length) script.push("'unsafe-hashes'", ...emp.gestionnaires);
   const d = [
     "default-src 'self'",
     "script-src " + script.join(" "),
