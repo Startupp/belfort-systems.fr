@@ -48,3 +48,29 @@ test("mot de passe provisoire : forme lisible", () => {
   const pw = D.motDePasseProvisoire(() => [0.1, 0.5, 0.9, 0.3][i++ % 4]);
   assert.match(pw, /^[A-Z][a-z]+-[A-Z][a-z]+-[A-Z][a-z]+-\d{2}$/);
 });
+
+test("dossier commun : héritage des droits et exception", () => {
+  const h = D.accesEffectifs(B, "fin-2026");
+  assert.equal(h.herite, true);
+  assert.equal(h.depuis.id, "finance");
+  const e = D.accesEffectifs(B, "fin-paie");
+  assert.equal(e.herite, false, "Paie a ses propres droits (exception)");
+  assert.equal(e.acces.pauline, undefined);
+  assert.deepEqual(D.cheminDossier(B, "fin-2026").map((d) => d.nom), ["Finance", "Factures fournisseurs", "2026"]);
+});
+
+test("dossier commun : déplacements interdits dans soi-même ou un sous-dossier", () => {
+  assert.equal(D.peutDeplacer(B, "finance", "fin-2026"), false);
+  assert.equal(D.peutDeplacer(B, "finance", "finance"), false);
+  assert.equal(D.peutDeplacer(B, "fin-2026", "marketing"), true);
+  assert.equal(D.peutDeplacer(B, "mkt-photos", null), true);
+  assert.deepEqual(D.enfants(B, null).map((d) => d.id).slice(0, 3), ["accueil", "direction", "evenements"]);
+});
+
+test("qui a accès à quoi : ressources d'une personne", () => {
+  const r = D.ressourcesDe(B, "pauline");
+  assert.ok(r.some((x) => x.type === "boite" && x.id === "contact" && x.niveau === "modifier"));
+  assert.ok(r.some((x) => x.type === "perso" && x.id === "francois" && x.niveau === "lire"));
+  assert.ok(r.some((x) => x.type === "dossier" && x.id === "finance" && x.niveau === "lire"));
+  assert.equal(B.mfa.obligatoire, false, "double authentification désactivée par défaut");
+});
