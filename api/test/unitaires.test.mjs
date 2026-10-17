@@ -194,3 +194,34 @@ test("planning : une page HTML renvoyée par la source est refusée", async () =
     globalThis.fetch = fetchOrigine;
   }
 });
+
+test("planning : plusieurs sources (BRETEUIL_ICS_URL_2), liste des sources sans les adresses", async () => {
+  const fetchOrigine = globalThis.fetch;
+  const vus = [];
+  globalThis.fetch = async (url) => { vus.push(String(url)); return new Response(ICS_OK, { status: 200 }); };
+  try {
+    assert.equal(W.secretPlanning(1), "BRETEUIL_ICS_URL");
+    assert.equal(W.secretPlanning(2), "BRETEUIL_ICS_URL_2");
+    const env = envPlanning({ BRETEUIL_ICS_URL_2: "https://calendar.google.com/calendar/ical/x/private-y/basic.ics" });
+    const req2 = new Request("https://api.exemple/breteuil/planning/2.ics", { headers: { Origin: "https://belfort-systems.fr" } });
+    let r = await worker.fetch(req2, env, {});
+    assert.equal(r.status, 200);
+    assert.equal(vus.at(-1), "https://calendar.google.com/calendar/ical/x/private-y/basic.ics");
+    assert.ok(env.KV.m.has("breteuil:planning:2"));
+
+    const req3 = new Request("https://api.exemple/breteuil/planning/3.ics", { headers: { Origin: "https://belfort-systems.fr" } });
+    r = await worker.fetch(req3, env, {});
+    assert.equal(r.status, 503);
+
+    const req9 = new Request("https://api.exemple/breteuil/planning/9.ics", { headers: { Origin: "https://belfort-systems.fr" } });
+    assert.equal((await worker.fetch(req9, env, {})).status, 404);
+
+    const reqS = new Request("https://api.exemple/breteuil/sources", { headers: { Origin: "https://belfort-systems.fr" } });
+    r = await worker.fetch(reqS, env, {});
+    const j = await r.json();
+    assert.deepEqual(j.sources, [1, 2]);
+    assert.ok(!JSON.stringify(j).includes("google"));
+  } finally {
+    globalThis.fetch = fetchOrigine;
+  }
+});
