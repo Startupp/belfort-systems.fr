@@ -60,7 +60,7 @@
     }
     function vider(zone, titre) { zone.textContent = ""; zone.appendChild(h("h2", null, titre)); }
     function dessinerProp(c, v) {
-      var l = ((v && v.value) || []).filter(function (u) { return u.PrincipalType == null || u.PrincipalType === 1; });
+      var l = ((v && v.value) || []).filter(function (u) { return (u.PrincipalType == null || u.PrincipalType === 1) && !/sharepoint\\system|^app@sharepoint/i.test(u.LoginName || "") && !/^(compte syst[eè]me|system account)$/i.test(u.Title || ""); });
       var ids = l.map(function (u) { return u.Id; }), moi = c.moiSp && c.moiSp.Id;
       vider(zoneProp, "Propriétaires du site du Château");
       zoneProp.appendChild(h("p", { class: "aide-ecran" }, "Ils décident qui a accès au dossier commun et à chaque dossier."));

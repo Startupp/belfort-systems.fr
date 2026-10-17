@@ -70,9 +70,15 @@
       c.proprietaires = c.proprietairesSp.map(function (u) { return D.adresseDe(u); }).filter(Boolean);
       var compte = G.compte() || {};
       c.moi = (c.moiSp && D.adresseDe(c.moiSp)) || String(compte.username || "").toLowerCase();
-      c.estProprietaire = c.proprietaires.indexOf(c.moi) > -1 || (!!c.moiSp && c.proprietairesSp.some(function (u) { return u.Id === c.moiSp.Id; }));
-      ctx = c;
-      return c;
+      // Propriétaires réels : on déplie le groupe Microsoft 365 du site (sinon Pauline, propriétaire
+      // via ce groupe, ne serait pas reconnue comme propriétaire).
+      return deplierGroupe(c.proprietairesSp).catch(function () { return { personnes: [] }; }).then(function (res) {
+        res.personnes.forEach(function (p) { var a = String(p.mail || "").toLowerCase(); if (a && c.proprietaires.indexOf(a) === -1) c.proprietaires.push(a); });
+        c.proprietairesNoms = res.personnes.map(function (p) { return p.nom; });
+        c.estProprietaire = c.proprietaires.indexOf(c.moi) > -1 || (!!c.moiSp && c.proprietairesSp.some(function (u) { return u.Id === c.moiSp.Id; }));
+        ctx = c;
+        return c;
+      });
     });
     promesseCtx.catch(function () { promesseCtx = null; });
     return promesseCtx;
@@ -534,15 +540,61 @@
     d.appendChild(h("div", { class: "contenu" }, h("h2", { id: "detail-titre" }, nomMembre(m)), liste, ok));
     EB.ouvrirDialogue(d, ok);
     if (D.typeDe(m, optsType()) === "lien") { liste.textContent = ""; liste.appendChild(h("p", null, "Un lien de partage : toute personne qui a reçu ce lien (et qui y a droit) peut ouvrir le dossier.")); return; }
-    G.sp("GET", "/_api/web/sitegroups/getbyid(" + m.Id + ")/users?$select=Id,Title,Email,LoginName,PrincipalType").then(function (r) {
+    // Groupe SharePoint (8) : on lit ses membres ; groupe de l'annuaire ou « Tout le monde » (4) : on le déplie directement.
+    (m.PrincipalType === 8
+      ? G.sp("GET", "/_api/web/sitegroups/getbyid(" + m.Id + ")/users?$select=Id,Title,Email,LoginName,PrincipalType").then(function (r) { return (r && r.value) || []; })
+      : Promise.resolve([m])
+    ).then(deplierGroupe).then(function (res) {
       liste.textContent = "";
-      var u = (r && r.value) || [];
-      if (!u.length) liste.appendChild(h("p", { class: "vide-doux" }, "Ce groupe est vide."));
-      u.forEach(function (x) {
-        liste.appendChild(h("div", { class: "carte-acces" }, avatarPersonne({ Title: x.Title, displayName: x.Title }),
-          h("span", { class: "qui" }, h("b", null, x.Title), h("small", null, D.adresseDe(x)), h("span", { class: "etiquettes" }, etiquette(D.typeDe(x, optsType()))))));
+      if (!res.personnes.length && !res.tous.length) liste.appendChild(h("p", { class: "vide-doux" }, "Personne pour l'instant."));
+      res.tous.forEach(function (t) {
+        liste.appendChild(h("div", { class: "carte-acces" }, h("span", { class: "avatar", style: { background: "#6E5A8C" } }, "🏰"),
+          h("span", { class: "qui" }, h("b", null, t.titre), h("small", null, t.sous))));
+      });
+      res.personnes.forEach(function (x) {
+        liste.appendChild(h("div", { class: "carte-acces" }, avatarPersonne({ Title: x.nom, displayName: x.nom }),
+          h("span", { class: "qui" }, h("b", null, x.nom), h("small", null, x.mail), h("span", { class: "etiquettes" }, etiquette(D.typeDe(x.brut, optsType()))))));
       });
     }).catch(function (e) { liste.textContent = ""; liste.appendChild(blocErreur(e)); });
+  }
+
+  /**
+   * Remplace les entrées techniques d'un groupe SharePoint par de vraies personnes :
+   * - « Compte système » : masqué (compte interne de SharePoint) ;
+   * - groupe Microsoft 365 du site (…federateddirectoryclaimprovider|<id>, « _o » = propriétaires) : ses personnes ;
+   * - groupe de sécurité (c:0t.c|tenant|<id>) : ses membres ;
+   * - « Tout le monde (sauf les externes) » : une ligne claire, sans adresse.
+   */
+  function deplierGroupe(entrees) {
+    var personnes = [], tous = [], vus = {};
+    function ajouter(nom, mail, brut) {
+      var cle = String(mail || nom || "").toLowerCase();
+      if (!cle || vus[cle]) return;
+      vus[cle] = 1;
+      personnes.push({ nom: nom || mail, mail: mail || "", brut: brut });
+    }
+    var attentes = entrees.map(function (x) {
+      var login = String(x.LoginName || "").toLowerCase();
+      if (/sharepoint\\system|^app@sharepoint/.test(login) || /^(compte syst[eè]me|system account)$/i.test(x.Title || "")) return null;
+      if (/spo-grid-all-users/.test(login)) { tous.push({ titre: "Tout le personnel du Château", sous: "Chaque personne qui a un compte du Château (pas les personnes extérieures)." }); return null; }
+      if (/^c:0\(\.s\|true/.test(login) || /^tout le monde$|^everyone$/i.test(x.Title || "")) { tous.push({ titre: "Tout le personnel du Château", sous: "Chaque personne qui a un compte du Château." }); return null; }
+      var m365 = /federateddirectoryclaimprovider\|([0-9a-f-]{36})(_o)?/.exec(login);
+      var secu = /^c:0t\.c\|tenant\|([0-9a-f-]{36})/.exec(login);
+      var id = m365 ? m365[1] : secu ? secu[1] : null;
+      if (id) {
+        var quoi = m365 && m365[2] ? "owners" : "members";
+        return G.graphTout("/groups/" + id + "/" + quoi + "?$select=id,displayName,mail,userPrincipalName,userType").then(function (l) {
+          l.forEach(function (u) { if (u["@odata.type"] && !/user$/i.test(u["@odata.type"])) return; ajouter(u.displayName, u.mail || u.userPrincipalName, u); });
+        }).catch(function () { tous.push({ titre: "Groupe de l'équipe du site", sous: "Impossible d'afficher son contenu pour l'instant." }); });
+      }
+      ajouter(x.Title, D.adresseDe(x), x);
+      return null;
+    });
+    return Promise.all(attentes).then(function () {
+      personnes.sort(function (a, b) { return a.nom.localeCompare(b.nom, "fr"); });
+      var t = {}; tous = tous.filter(function (x) { if (t[x.titre]) return false; t[x.titre] = 1; return true; });
+      return { personnes: personnes, tous: tous };
+    });
   }
 
   /* --- Choisir une personne (équipe ou adresse extérieure) --- */
@@ -883,14 +935,14 @@
     }
     return Promise.all([utilisateurs(), contexte(),
       rolesAnnuaire().catch(function () { return []; }),
-      G.sp("GET", "/_api/web/associatedownergroup/users?$select=Title").catch(function () { return { value: [] }; })]).then(function (r) {
+      ]).then(function (r) {
       var u = r[0].liste;
       var noms = { "62e90394-69f5-4237-9190-012177145e10": "Administrateur", "b0f54661-2d74-4c50-afa3-1ec803f12efe": "Facturation", "fe930be7-5e62-47db-91af-98c3a49a38b1": "Gestion des comptes" };
       return {
         exemple: false,
         personnes: u.filter(function (x) { return x.profil !== "boite"; }),
         boites: u.filter(function (x) { return x.profil === "boite"; }).map(function (x) { return { nom: x.displayName, adresse: x.mail, emoji: "📬", qui: null }; }),
-        site: r[1].site.displayName, proprietaires: ((r[3] && r[3].value) || []).map(function (x) { return x.Title; }),
+        site: r[1].site.displayName, proprietaires: r[1].proprietairesNoms || [],
         roles: r[2].filter(function (x) { return noms[x.roleTemplateId]; }).map(function (x) { return { nom: noms[x.roleTemplateId], qui: (x.members || []).map(function (m) { return m.displayName; }) }; }),
       };
     });

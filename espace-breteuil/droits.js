@@ -92,7 +92,7 @@
     if (/visiteurs|visitors/i.test(t)) return "Visiteurs du site";
     if (/membres|members/i.test(t)) return "Membres du site";
     if (/^sharinglinks\./i.test(t)) return /anonymous/i.test(t) ? "Lien ouvert à tous" : /organization/i.test(t) ? "Lien pour l'entreprise" : "Lien pour des personnes précises";
-    if (/^tout le monde|everyone/i.test(t)) return "Tout le monde dans l'entreprise";
+    if (/^tout le monde|everyone/i.test(t)) return "Tout le personnel du Château";
     return t;
   }
 
