@@ -15,11 +15,16 @@
  * (REST SharePoint : breakroleinheritance, ensureuser + addroleassignment, retrait,
  * resetroleinheritance ; Graph « invite » pour une adresse extérieure).
  * Garde-fou : jamais de retrait de la personne connectée ni des propriétaires du site.
+ *
+ * v4 : réponses gardées en mémoire pour la session (cache.js) : chaque écran s'affiche
+ * aussitôt avec le dernier état connu puis se met à jour sans redessiner tout l'écran ;
+ * appels lancés en parallèle ; « Qui a accès ? » visible seulement avec le droit réel
+ * ManagePermissions (acces.js).
  */
 (function () {
   "use strict";
 
-  var EB = window.EB, G = window.EBGraph, D = window.EBDroits;
+  var EB = window.EB, G = window.EBGraph, D = window.EBDroits, C = window.EBCache;
   var CFG = self.EB_CONFIG || {};
   var h = EB.h, icone = EB.icone, emoji = EB.emoji;
   var RACINE = "~racine";
@@ -28,7 +33,7 @@
   /* Contexte (chargé une fois par session)                              */
   /* ------------------------------------------------------------------ */
   var ctx = null, promesseCtx = null, generation = 0;
-  var cacheUtilisateurs = null, cachePhotos = {};
+  var cachePhotos = {};
 
   function siteParts() {
     var u = new URL(CFG.sharepoint.site);
@@ -36,37 +41,54 @@
   }
   function nomCommun() { return (CFG.sharepoint && CFG.sharepoint.dossierCommun) || "Commun"; }
 
+  /** Contexte SharePoint : chaîne Graph (site → Documents → liste, Commun) et REST en PARALLÈLE. */
   function contexte() {
     if (ctx) return Promise.resolve(ctx);
     if (promesseCtx) return promesseCtx;
     var s = siteParts(), c = {};
-    promesseCtx = G.graph("GET", "/sites/" + s.hote + ":" + s.chemin + "?$select=id,displayName,webUrl").then(function (site) {
+    var chaineGraph = G.graph("GET", "/sites/" + s.hote + ":" + s.chemin + "?$select=id,displayName,webUrl").then(function (site) {
       c.site = site;
       return G.graph("GET", "/sites/" + site.id + "/drive?$select=id,name,webUrl");
     }).then(function (drive) {
       c.drive = drive;
       return Promise.all([
         G.graph("GET", "/drives/" + drive.id + "/list?$select=id"),
-        G.graph("GET", "/drives/" + drive.id + "/root:/" + encodeURIComponent(nomCommun()) + "?$select=id,name,webUrl").catch(function () { return null; }),
-        G.sp("GET", "/_api/web/currentuser?$select=Id,Email,LoginName,Title").catch(function () { return null; }),
-        G.sp("GET", "/_api/web/associatedownergroup?$select=Id,Title").catch(function () { return null; }),
-        G.sp("GET", "/_api/web/associatedownergroup/users?$select=Id,Email,LoginName,Title").catch(function () { return { value: [] }; }),
+        G.graph("GET", "/drives/" + drive.id + "/root:/" + encodeURIComponent(nomCommun()) + "?$select=id,name,webUrl,folder").catch(function () { return null; }),
       ]);
-    }).then(function (r) {
-      c.listId = r[0].id;
-      c.commun = r[1];
-      c.moiSp = r[2];
-      c.groupeProprietaires = r[3];
-      c.proprietaires = ((r[4] && r[4].value) || []).map(function (u) { return D.adresseDe(u); }).filter(Boolean);
+    });
+    promesseCtx = Promise.all([
+      chaineGraph,
+      G.sp("GET", "/_api/web/currentuser?$select=Id,Email,LoginName,Title,IsSiteAdmin").catch(function () { return null; }),
+      G.sp("GET", "/_api/web/associatedownergroup?$select=Id,Title").catch(function () { return null; }),
+      G.sp("GET", "/_api/web/associatedownergroup/users?$select=Id,Email,LoginName,Title").catch(function () { return { value: [] }; }),
+    ]).then(function (r) {
+      c.listId = r[0][0].id;
+      c.commun = r[0][1];
+      c.moiSp = r[1];
+      c.groupeProprietaires = r[2];
+      c.proprietairesSp = (r[3] && r[3].value) || [];
+      c.proprietaires = c.proprietairesSp.map(function (u) { return D.adresseDe(u); }).filter(Boolean);
       var compte = G.compte() || {};
       c.moi = (c.moiSp && D.adresseDe(c.moiSp)) || String(compte.username || "").toLowerCase();
-      c.estProprietaire = c.proprietaires.indexOf(c.moi) > -1;
+      c.estProprietaire = c.proprietaires.indexOf(c.moi) > -1 || (!!c.moiSp && c.proprietairesSp.some(function (u) { return u.Id === c.moiSp.Id; }));
       ctx = c;
       return c;
     });
     promesseCtx.catch(function () { promesseCtx = null; });
     return promesseCtx;
   }
+  function oublierContexte() { ctx = null; promesseCtx = null; }
+  /** Données d'un écran : dernier état connu tout de suite, puis mise à jour de la zone seule. */
+  function avecMaj(cle, chargeur, gen, zone, dessiner, ttl) {
+    return C.obtenir(cle, chargeur, { ttl: ttl == null ? 30000 : ttl, surMaj: function (v) { if (toujoursLa(gen, zone)) dessiner(v, true); } })
+      .then(function (v) { if (toujoursLa(gen, zone)) dessiner(v, false); return v; });
+  }
+  /** Droit réel de gérer les accès (ManagePermissions / propriétaire), d'après acces.js. */
+  function peutGererDroits() {
+    var r = window.EBAcces && window.EBAcces.resultat();
+    return !!(r && r.droits.gererDroits);
+  }
+
   function garde(m) {
     return D.estProtege(m, { moi: ctx.moi, moiId: ctx.moiSp && ctx.moiSp.Id, groupeProprietairesId: ctx.groupeProprietaires && ctx.groupeProprietaires.Id, proprietaires: ctx.proprietaires });
   }
@@ -81,7 +103,9 @@
 
   /* Utilisateurs du tenant + licences (lecture). */
   function utilisateurs() {
-    if (cacheUtilisateurs) return Promise.resolve(cacheUtilisateurs);
+    return C.obtenir("annuaire:utilisateurs", chargerUtilisateurs, { ttl: 5 * 60000 });
+  }
+  function chargerUtilisateurs() {
     return Promise.all([
       G.graphTout("/users?$select=id,displayName,givenName,mail,userPrincipalName,userType,accountEnabled,assignedLicenses,jobTitle,department&$top=999"),
       G.graphTout("/subscribedSkus?$select=skuId,skuPartNumber,prepaidUnits,consumedUnits"),
@@ -93,8 +117,7 @@
         var p = D.profilDe(u, skuNoms, boites);
         return Object.assign({}, u, { profil: p, type: D.typeDe(u, optsType()), prenom: u.givenName || (u.displayName || "").split(" ")[0] || "?" });
       }).sort(function (a, b) { return String(a.displayName).localeCompare(String(b.displayName), "fr"); });
-      cacheUtilisateurs = { liste: liste, skus: r[1], skuNoms: skuNoms };
-      return cacheUtilisateurs;
+      return { liste: liste, skus: r[1], skuNoms: skuNoms };
     });
   }
   function boitesConnues() {
@@ -114,10 +137,17 @@
   /** Règle unique : toute personne sans adresse @breteuil.fr est « Externe ». */
   function optsType() { return { domainesInternes: CFG.domainesInternes || [] }; }
 
+  /** Rôles d'annuaire activés et leurs membres (lecture, Directory.Read.All), gardés 5 min. */
+  function rolesAnnuaire() {
+    return C.obtenir("annuaire:roles", function () { return G.graphTout("/directoryRoles?$select=id,displayName,roleTemplateId&$expand=members($select=id,displayName,userPrincipalName,mail)"); }, { ttl: 5 * 60000 });
+  }
+
   /* ------------------------------------------------------------------ */
   /* Journal local                                                       */
   /* ------------------------------------------------------------------ */
   function noter(action, cible) {
+    // Une modification vient d'être faite : les listes gardées en mémoire sont à relire.
+    C.oublier("enfants:*"); C.oublier("droits:*");
     var j = EB.lire("eb:journal", []);
     j.unshift({ quand: new Date().toISOString(), qui: (G.compte() || {}).username || "", action: action, cible: cible });
     if (j.length > 300) j.length = 300;
@@ -136,7 +166,7 @@
       h("strong", null, (e && e.message) || "Une erreur est survenue."),
       e && e.action ? h("span", null, e.action) : null,
       e && e.detail ? h("small", { class: "detail-technique" }, e.detail) : null,
-      e && (e.statut === 401 || e.statut === 403 || e.cors) ? h("a", { class: "btn petit secondaire", href: "#/verifier" }, "Vérifier la connexion") : null,
+      e && (e.statut === 401 || e.cors) ? h("a", { class: "btn petit secondaire", href: "#/details" }, "Détails techniques") : null,
       reessayer ? h("div", { class: "actions" }, h("button", { class: "btn secondaire", type: "button", onclick: reessayer }, icone("actualiser"), "Réessayer")) : null));
   }
   /** Étiquette (« Externe » en gras) ; au toucher ou au survol, une phrase d'explication. */
@@ -180,7 +210,6 @@
       h("p", null, "Avec votre adresse du Château (par exemple pdebreteuil@breteuil.fr). L'appli agit uniquement avec vos droits Microsoft."),
       G.erreur() ? h("p", { class: "erreur" }, G.erreur()) : null,
       h("button", { class: "btn large", type: "button", onclick: function () { G.connecter(); } }, emoji("🔐"), "Se connecter avec Microsoft"),
-      G.erreur() ? h("a", { class: "btn secondaire large", href: "#/verifier" }, emoji("🩺"), "Vérifier la connexion") : null,
       h("p", { class: "petit" }, "Vous restez connecté tant que l'appli (ou l'onglet) reste ouverte. En la fermant, tout est effacé de ce téléphone."));
   }
 
@@ -190,15 +219,46 @@
   function ecranDossiers(app) {
     app.appendChild(EB.barre("Dossiers", null));
     if (!G.estConnecte()) { app.appendChild(panneauConnexion()); return; }
-    var c = G.compte() || {};
-    app.appendChild(h("p", { class: "pastille-demo reel" }, icone("coche"), "Connecté : " + (c.name || c.username || "") + " — vous agissez avec vos droits"));
-    app.appendChild(EB.tuiles([
-      { href: "#/commun", icone: "dossier", libelle: "Dossier commun", aide: "Voir, créer, renommer et ranger les dossiers de l'équipe" },
-      { href: "#/acces/" + encodeURIComponent(nomCommun()), icone: "cadenas", libelle: "Qui a accès", aide: "Voir et changer qui peut voir ou modifier le dossier commun" },
-      { href: "#/journal", icone: "horloge", libelle: "Ce que j'ai fait", aide: "Les changements faits depuis ce téléphone" },
-    ]));
+    var A = window.EBAcces;
+    // Message clair à l'endroit concerné (au lieu d'un écran de vérification obligatoire).
+    var alerte = h("div", { class: "zone-alerte" });
+    app.appendChild(alerte);
+    function dessinerAlerte() {
+      alerte.textContent = "";
+      var site = A && A.sonde("site"), commun = A && A.sonde("commun"), sp = A && A.sonde("sp");
+      var pb = site && site.etat === "erreur" ? site : commun && commun.etat === "erreur" ? commun : null;
+      if (pb) alerte.appendChild(h("div", { class: "bandeau erreur", role: "alert" }, icone("exemple"), h("div", null, h("strong", null, pb.message),
+        h("span", null, pb === commun ? "Vérifiez qu'il est bien à la racine de la bibliothèque Documents (ou corrigez « dossierCommun » dans config.js)." : "Prévenez Damien : l'adresse du site est peut-être à corriger."),
+        pb === commun ? h("a", { class: "btn petit secondaire", href: hashChemin("commun", []) }, "Voir toute la bibliothèque") : null)));
+      if (!pb && sp && sp.etat === "erreur" && peutGererDroits()) alerte.appendChild(h("div", { class: "bandeau info", role: "note" }, icone("info"), h("div", null, h("strong", null, sp.message))));
+    }
+    dessinerAlerte();
+    if (A) A.surChangement(function () { if (document.body.contains(alerte)) dessinerAlerte(); });
+    var tuilesL = [{ href: "#/commun", icone: "dossier", libelle: "Dossier commun", aide: "Voir, créer, renommer et ranger les dossiers de l'équipe" }];
+    if (peutGererDroits()) tuilesL.push({ href: "#/acces/" + encodeURIComponent(nomCommun()), icone: "cadenas", libelle: "Qui a accès", aide: "Voir et changer qui peut voir ou modifier le dossier commun" });
+    tuilesL.push({ href: "#/journal", icone: "horloge", libelle: "Ce que j'ai fait", aide: "Les changements faits depuis ce téléphone" });
+    app.appendChild(EB.tuiles(tuilesL));
+    // Aperçu du dossier commun (dernier état connu, puis mis à jour).
+    var zone = h("section", { class: "section" }, h("h2", null, "Dans « " + nomCommun() + " »"), chargement(4, "tuiles"));
+    app.appendChild(zone);
+    var gen = demarrerEcran();
+    contexte().then(function (c) {
+      if (!c.commun) { zone.remove(); return; }
+      return avecMaj("enfants:" + nomCommun(), function () { return chargerEnfants(c, [nomCommun()]); }, gen, zone, function (enfants) {
+        zone.textContent = "";
+        zone.appendChild(h("h2", null, "Dans « " + nomCommun() + " »"));
+        var dossiers = enfants.filter(function (x) { return x.folder; }).sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); });
+        if (!dossiers.length) { zone.appendChild(h("p", { class: "vide" }, "Ce dossier est vide.")); return; }
+        zone.appendChild(EB.tuiles(dossiers.slice(0, 8).map(function (d) {
+          return { href: hashChemin("commun", [nomCommun(), d.name]), icone: "dossier", libelle: d.name, aide: "Ouvrir le dossier " + d.name };
+        })));
+      });
+    }).catch(function () { if (toujoursLa(gen, zone)) zone.remove(); });
   }
-  function oublier() { ctx = null; promesseCtx = null; cacheUtilisateurs = null; cachePhotos = {}; }
+  function chargerEnfants(c, segs) {
+    return G.graphTout(urlItem(c.drive.id, segs, "children") + "?$select=id,name,folder,file,webUrl,size,lastModifiedDateTime&$top=500");
+  }
+  function oublier() { ctx = null; promesseCtx = null; cachePhotos = {}; C.oublier(); }
 
   /* ------------------------------------------------------------------ */
   /* #/commun : le dossier commun                                        */
@@ -238,16 +298,25 @@
     app.appendChild(zone);
 
     contexte().then(function (c) {
-      return G.graphTout(urlItem(c.drive.id, segs, "children") + "?$select=id,name,folder,file,webUrl,size,lastModifiedDateTime&$top=500").then(function (enfants) { return { c: c, enfants: enfants }; });
-    }).then(function (r) {
+      return avecMaj("enfants:" + segs.join("/"), function () { return chargerEnfants(c, segs); }, gen, zone, function (enfants) { dessinerCommun({ c: c, enfants: enfants }); });
+    }).catch(function (e) {
       if (!toujoursLa(gen, zone)) return;
+      zone.textContent = "";
+      zone.appendChild(blocErreur(e, EB.rendre));
+      if (e.statut === 404 && segs.length === 1 && segs[0] === nomCommun()) {
+        if (window.EBAcces) window.EBAcces.signaler("commun", "erreur", "Le dossier commun est introuvable.");
+        zone.appendChild(h("p", { class: "aide-ecran" }, "Le dossier « " + nomCommun() + " » n'a pas été trouvé à la racine de la bibliothèque."));
+        zone.appendChild(h("a", { class: "btn", href: hashChemin("commun", []) }, "Voir toute la bibliothèque"));
+      }
+    });
+    function dessinerCommun(r) {
       zone.textContent = "";
       var dossiers = r.enfants.filter(function (x) { return x.folder; }).sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); });
       var fichiers = r.enfants.filter(function (x) { return x.file; }).sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); });
 
       var actions = h("div", { class: "actions" },
         h("button", { class: "btn", type: "button", onclick: function () { nouveauDossier(segs); } }, icone("plus"), "Nouveau dossier"),
-        h("a", { class: "btn secondaire", href: hashChemin("acces", segs) }, emoji("🔐"), "Qui a accès ?"));
+        peutGererDroits() ? h("a", { class: "btn secondaire", href: hashChemin("acces", segs) }, emoji("🔐"), "Qui a accès ?") : null);
       zone.appendChild(actions);
       if (!segs.length) zone.appendChild(h("p", { class: "aide-ecran" }, "📚 Vous êtes tout en haut de la bibliothèque du site. Le dossier « " + nomCommun() + " » est rangé ici."));
 
@@ -264,15 +333,7 @@
         h("div", { class: "liste-fichiers" }, fichiers.map(function (f) {
           return h("a", EBlien(f.webUrl), emoji(emojiFichier(f.name)), h("span", null, f.name), icone("ouvrir"));
         }))));
-    }).catch(function (e) {
-      if (!toujoursLa(gen, zone)) return;
-      zone.textContent = "";
-      zone.appendChild(blocErreur(e, EB.rendre));
-      if (e.statut === 404 && segs.length === 1 && segs[0] === nomCommun()) {
-        zone.appendChild(h("p", { class: "aide-ecran" }, "Le dossier « " + nomCommun() + " » n'a pas été trouvé à la racine de la bibliothèque."));
-        zone.appendChild(h("a", { class: "btn", href: hashChemin("commun", []) }, "Voir toute la bibliothèque"));
-      }
-    });
+    }
   }
   function EBlien(url) { return { href: url, target: "_blank", rel: "noopener noreferrer", class: "fichier" }; }
   function emojiFichier(nom) {
@@ -335,10 +396,10 @@
   function menuDossier(d, segsParent, segsD) {
     EB.choisir("« " + d.name + " »", [
       { valeur: "ouvrir", emoji: "📂", titre: "Ouvrir" },
-      { valeur: "acces", emoji: "🔐", titre: "Qui a accès ?", sous: "Voir et changer les droits" },
+      peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Qui a accès ?", sous: "Voir et changer les droits" } : null,
       { valeur: "renommer", emoji: "✏️", titre: "Renommer" },
       { valeur: "deplacer", emoji: "📦", titre: "Déplacer vers…", sous: "Le ranger dans un autre dossier" },
-    ]).then(function (v) {
+    ].filter(Boolean)).then(function (v) {
       if (v === "ouvrir") location.hash = hashChemin("commun", segsD);
       else if (v === "acces") location.hash = hashChemin("acces", segsD);
       else if (v === "renommer") renommer(d, segsParent);
@@ -470,8 +531,7 @@
     app.appendChild(filAriane(segs, "acces"));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
-    lireDroits(segs).then(function (r) {
-      if (!toujoursLa(gen, zone)) return;
+    avecMaj("droits:" + segs.join("/"), function () { return lireDroits(segs); }, gen, zone, function (r) {
       zone.textContent = "";
       var parent = segs.length > 1 ? "« " + segs[segs.length - 2] + " »" : segs.length === 1 ? "la bibliothèque Documents" : "le site du Château";
       zone.appendChild(h("h2", { class: "titre-objet" }, emoji(segs.length ? "📁" : "📚"), " ", nom));
@@ -661,7 +721,7 @@
     app.appendChild(EB.barre("Partager uniquement avec…", { href: hashChemin("acces", segs), texte: "Annuler" }));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
-    lireDroits(segs).then(function (r) {
+    C.obtenir("droits:" + segs.join("/"), function () { return lireDroits(segs); }, { ttl: 30000 }).then(function (r) {
       if (!toujoursLa(gen, zone)) return;
       zone.textContent = "";
       zone.appendChild(h("h2", { class: "titre-objet" }, emoji("✋"), " Qui garde l'accès à « " + r.o.nom + " » ?"));
@@ -724,9 +784,9 @@
   var filtrePersonnes = "tous";
   function ecranPersonnes(app, chemin) {
     if (chemin[1]) return fichePersonne(app, chemin[1]);
-    if (!exigerConnexion(app, "Personnes", { href: "#/equipe", texte: "Équipe" })) return;
+    if (!exigerConnexion(app, "Personnes", EB.hub())) return;
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Personnes", { href: "#/equipe", texte: "Équipe" }));
+    app.appendChild(EB.barre("Personnes", EB.hub()));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     utilisateurs().then(function (u) {
@@ -770,7 +830,7 @@
   }
 
   function fichePersonne(app, id) {
-    if (!exigerConnexion(app, "Fiche", { href: "#/equipe", texte: "Équipe" })) return;
+    if (!exigerConnexion(app, "Fiche", EB.hub())) return;
     var gen = demarrerEcran();
     app.appendChild(EB.barre("Ce que je peux utiliser", { href: "#/personnes", texte: "Retour" }));
     var zone = h("div", null, chargement());
@@ -810,9 +870,9 @@
   /* #/licences-reel                                                     */
   /* ------------------------------------------------------------------ */
   function ecranLicences(app) {
-    if (!exigerConnexion(app, "Licences", { href: "#/equipe", texte: "Équipe" })) return;
+    if (!exigerConnexion(app, "Licences", EB.hub())) return;
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Licences", { href: "#/equipe", texte: "Équipe" }));
+    app.appendChild(EB.barre("Licences", EB.hub()));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     utilisateurs().then(function (u) {
@@ -836,7 +896,7 @@
       zone.appendChild(h("div", { class: "carte-profil boite" },
         h("div", { class: "tete" }, emoji("📬", "grand"), h("div", null, h("b", null, "Boîte partagée"), h("span", null, D.PROFILS.boite.phrase))),
         h("ul", { class: "outils" }, D.PROFILS.boite.outils.map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); }))));
-      zone.appendChild(h("p", { class: "aide-ecran" }, "Lecture seule : pour acheter ou retirer une licence, voir le pack Finance."));
+      zone.appendChild(h("p", { class: "aide-ecran" }, "Lecture seule : pour acheter ou retirer une licence, passer par le centre d'administration Microsoft (lien dans Finance)."));
     }).catch(function (e) { if (toujoursLa(gen, zone)) { zone.textContent = ""; zone.appendChild(blocErreur(e, EB.rendre)); } });
   }
 
@@ -857,7 +917,7 @@
       });
     }
     return Promise.all([utilisateurs(), contexte(),
-      G.graphTout("/directoryRoles?$expand=members($select=id,displayName)").catch(function () { return []; }),
+      rolesAnnuaire().catch(function () { return []; }),
       G.sp("GET", "/_api/web/associatedownergroup/users?$select=Title").catch(function () { return { value: [] }; })]).then(function (r) {
       var u = r[0].liste;
       var noms = { "62e90394-69f5-4237-9190-012177145e10": "Administrateur", "b0f54661-2d74-4c50-afa3-1ec803f12efe": "Facturation", "fe930be7-5e62-47db-91af-98c3a49a38b1": "Gestion des comptes" };
@@ -882,7 +942,7 @@
 
   function ecranOrganisation(app) {
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Organisation", { href: "#/equipe", texte: "Équipe" }));
+    app.appendChild(EB.barre("Organisation", EB.hub()));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     donneesOrganisation().then(function (o) {
@@ -972,16 +1032,25 @@
   EB.ecran("licences-reel", ecranLicences);
   EB.ecran("organisation", ecranOrganisation);
   EB.ecran("journal", ecranJournal);
-  if (window.EBDiagnostic) EB.ecran("verifier", window.EBDiagnostic.ecran);
 
   window.EBConnecte = {
-    /** Juste après la PREMIÈRE connexion sur cet appareil : proposer la vérification. */
+    /** Après une connexion : droits réels en arrière-plan, puis l'appli (onglet Planning). */
     apresConnexion: function () {
-      var premiere = G.vientDeSeConnecter && G.vientDeSeConnecter() && !EB.lire("eb:diagnostic-vu", null);
-      if (premiere && window.EBDiagnostic) { location.hash = "#/verifier"; return; } // hashchange → rendu
-      EB.rendre();
+      if (window.EBAcces) window.EBAcces.charger();
+      var hash = location.hash || "#/";
+      if (hash === "#/" || hash === "#" || hash === "#/accueil") location.hash = "#/planning"; // hashchange → rendu
+      else EB.rendre();
     },
     oublier: oublier,
+    oublierContexte: oublierContexte,
+    contexte: contexte,
+    utilisateurs: utilisateurs,
+    rolesAnnuaire: rolesAnnuaire,
+    choisirPersonne: choisirPersonne,
+    avatarPersonne: avatarPersonne,
+    blocErreur: blocErreur,
+    afficherErreur: afficherErreur,
+    noter: noter,
     annuairePourDemo: function () { return Promise.reject(new Error("non utilisé")); },
     chargerPhotos: function () { return Promise.resolve(); },
   };
