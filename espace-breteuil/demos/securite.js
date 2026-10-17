@@ -102,14 +102,14 @@
   ];
 
   function ecranGuide(app, n) {
-    app.appendChild(EB.barre("Sécuriser mon compte", { href: "#/", texte: "Accueil" }));
+    app.appendChild(EB.barre("Sécuriser mon compte", { href: "#/demos", texte: "Démos" }));
     app.appendChild(EB.bandeauDemo("Démo — données fictives"));
     if (n === "sms") return guideSms(app);
     n = Math.min(Math.max(+n || 1, 1), ETAPES.length);
     var e = ETAPES[n - 1];
     app.appendChild(X.progression(n, ETAPES.length, e.titre));
     app.appendChild(h("div", { class: "etape-guide" }, EB.emoji(e.emoji), h("h2", null, e.titre), e.corps()));
-    app.appendChild(X.navAssistant(n > 1 ? "#/securite/guide/" + (n - 1) : null, n < ETAPES.length ? "#/securite/guide/" + (n + 1) : "#/", n < ETAPES.length ? "Étape suivante" : "Terminer"));
+    app.appendChild(X.navAssistant(n > 1 ? "#/securite/guide/" + (n - 1) : null, n < ETAPES.length ? "#/securite/guide/" + (n + 1) : "#/demos", n < ETAPES.length ? "Étape suivante" : "Terminer"));
     if (n < 4) app.appendChild(h("div", { class: "actions-liste section" },
       EB.action("#/securite/guide/sms", "💬", "Pas de smartphone ?", "Recevoir un code par SMS à la place.")));
   }

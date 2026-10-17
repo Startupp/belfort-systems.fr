@@ -14,6 +14,13 @@
  *
  * Mode maquette (tests hors ligne) : ?maquette=1 sur localhost UNIQUEMENT. Aucune
  * connexion : les appels partent vers les vraies adresses, que le test intercepte.
+ * self.EB_MAQUETTE (posé par le test) : { compte, deconnecte, permissions: [scopes en plus] }.
+ *
+ * v4 :
+ * - consentement INCRÉMENTAL : une permission rare (RoleManagement.ReadWrite.Directory, écran
+ *   « Déléguer ») n'est PAS demandée à la connexion, seulement quand on en a besoin
+ *   (aLaPermission → demanderPermission, par redirection) ;
+ * - surResultat(fn) : chaque appel réel prévient la pastille d'état (succès / échec).
  */
 (function () {
   "use strict";
@@ -21,6 +28,9 @@
   var GRAPH = "https://graph.microsoft.com/v1.0";
   var MSAL_SRC = "vendor/msal-browser-3.30.0.min.js";
   var etat = { pca: null, compte: null, pret: false, erreur: "", erreurDetail: null, maquette: false, vientDeSeConnecter: false };
+  var ecouteursResultat = [];
+  function signaler(r) { ecouteursResultat.forEach(function (fn) { try { fn(r); } catch (e) {} }); }
+  function maquette() { return self.EB_MAQUETTE || {}; }
   var E = self.EBErreurs;
   var REESSAIS = 3;
 
@@ -72,8 +82,9 @@
     }
     if (estMaquette()) {
       etat.maquette = true; etat.pret = true;
-      etat.compte = { name: "Pauline (maquette)", username: "pdebreteuil@breteuil.fr", localAccountId: "moi" };
-      return Promise.resolve(true);
+      var m = maquette();
+      etat.compte = m.deconnecte ? null : (m.compte || { name: "Pauline (maquette)", username: "pdebreteuil@breteuil.fr", localAccountId: "moi" });
+      return Promise.resolve(!!etat.compte);
     }
     if (!estConfigure()) return Promise.resolve(false);
     var c = config();
@@ -91,7 +102,10 @@
       });
       return etat.pca.initialize();
     }).then(function () { return etat.pca.handleRedirectPromise(); }).then(function (r) {
-      if (r && r.account) { etat.compte = r.account; etat.vientDeSeConnecter = true; if (etat.pca.setActiveAccount) etat.pca.setActiveAccount(r.account); }
+      var demande = lireSession("eb:consentement-demande");
+      if (demande) { ecrireSession("eb:consentement-demande", null); ecrireSession("eb:consentement-refuse", null); }
+      if (r && r.account && !demande) { etat.compte = r.account; etat.vientDeSeConnecter = true; }
+      if (r && r.account && etat.pca.setActiveAccount) etat.pca.setActiveAccount(r.account);
       choisirCompte();
       etat.pret = true;
       try {
@@ -100,7 +114,12 @@
       } catch (e) {}
       return !!etat.compte;
     }).catch(function (e) {
-      retenirErreur(e);
+      var demande = lireSession("eb:consentement-demande");
+      if (demande) {
+        // Retour d'une demande de permission en plus (consentement incrémental) refusée ou impossible.
+        ecrireSession("eb:consentement-demande", null);
+        ecrireSession("eb:consentement-refuse", JSON.stringify({ permission: demande, code: String((e && (e.errorCode || e.message)) || "").slice(0, 160) }));
+      } else retenirErreur(e);
       try { choisirCompte(); } catch (x) {}
       etat.pret = true;
       return !!etat.compte;
@@ -108,8 +127,15 @@
   }
 
   /** Connexion : popup d'abord, redirection en repli (ou directement sur iPhone installé). */
+  function lireSession(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  function ecrireSession(k, v) { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} }
+
   function connecter(mode) {
-    if (etat.maquette) return Promise.resolve();
+    if (etat.maquette) {
+      etat.compte = maquette().compte || { name: "Pauline (maquette)", username: "pdebreteuil@breteuil.fr", localAccountId: "moi" };
+      if (window.EBConnecte) window.EBConnecte.apresConnexion();
+      return Promise.resolve();
+    }
     if (!etat.pca) return Promise.reject(new Error("Connexion pas prête"));
     etat.erreur = ""; etat.erreurDetail = null;
     var sp = scopeSharePoint();
@@ -150,9 +176,17 @@
    * opts.silencieux : ne jamais rediriger (écran de diagnostic) ; l'erreur est renvoyée.
    */
   function jeton(ressource, opts) {
-    if (etat.maquette) { var em = erreurMaquette(ressource); return em ? Promise.reject(em) : Promise.resolve("maquette"); }
+    opts = opts || {};
+    if (etat.maquette) {
+      var em = erreurMaquette(ressource); if (em) return Promise.reject(em);
+      var manque = (opts.scopes || []).filter(function (s) { return (maquette().permissions || []).indexOf(s) < 0; });
+      if (manque.length) { var ec = new Error("consent_required: " + manque.join(" ")); ec.errorCode = "consent_required"; ec.ressource = "msal"; ec.permissionManquante = manque[0]; return Promise.reject(ec); }
+      return Promise.resolve("maquette");
+    }
     if (!etat.pca || !etat.compte) return Promise.reject(erreur(401, "Vous n'êtes pas connecté."));
-    var scopes = ressource === "sp" ? [scopeSharePoint()] : scopesGraph();
+    var scopes = opts.scopes ? opts.scopes : ressource === "sp" ? [scopeSharePoint()] : scopesGraph();
+    // Une permission en plus ne déclenche JAMAIS de redirection d'elle-même : l'écran le propose.
+    if (opts.scopes) opts = Object.assign({}, opts, { silencieux: true });
     return etat.pca.acquireTokenSilent({ scopes: scopes, account: etat.compte }).then(function (r) { return r.accessToken; })
       .catch(function (e) {
         e.ressource = "msal";
@@ -166,6 +200,40 @@
   }
 
   /** Permissions réellement accordées dans le jeton (claim « scp »), sans jamais exposer le jeton. */
+  /** Décode le claim « scp » d'un jeton (jamais exposé ni gardé). */
+  function scpDe(t) {
+    try {
+      var p = t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (p.length % 4) p += "=";
+      var json = JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(p), function (c) { return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2); }).join("")));
+      return String(json.scp || "").split(" ").filter(Boolean);
+    } catch (e) { return null; }
+  }
+  /** La permission Graph « permission » est-elle accordée ? (sans aucune fenêtre ni redirection) */
+  function aLaPermission(permission) {
+    if (etat.maquette) return Promise.resolve((maquette().permissions || []).indexOf(permission) > -1);
+    return jeton("graph", { scopes: [permission], silencieux: true }).then(function (t) {
+      var scp = scpDe(t);
+      return !scp || scp.map(function (x) { return x.toLowerCase(); }).indexOf(permission.toLowerCase()) > -1;
+    }, function () { return false; });
+  }
+  /** Demande une permission en plus (consentement incrémental), par redirection pleine page. */
+  function demanderPermission(permission) {
+    ecrireSession("eb:consentement-refuse", null);
+    if (etat.maquette) {
+      var m = self.EB_MAQUETTE = self.EB_MAQUETTE || {};
+      if (m.refuserConsentement) { ecrireSession("eb:consentement-refuse", JSON.stringify({ permission: permission, code: "AADSTS65001" })); return Promise.resolve(false); }
+      m.permissions = (m.permissions || []).concat([permission]);
+      return Promise.resolve(true);
+    }
+    if (!etat.pca || !etat.compte) return Promise.reject(erreur(401, "Vous n'êtes pas connecté."));
+    ecrireSession("eb:consentement-demande", permission);
+    ecrireSession("eb:retour", location.hash || "#/");
+    return etat.pca.acquireTokenRedirect({ scopes: [permission], account: etat.compte });
+  }
+  /** Dernier refus de consentement (retour de redirection), ou null. */
+  function consentementRefuse() { try { return JSON.parse(lireSession("eb:consentement-refuse") || "null"); } catch (e) { return null; } }
+
   function scopesAccordes(ressource) {
     if (etat.maquette) {
       var m = self.EB_MAQUETTE && self.EB_MAQUETTE.scopes && self.EB_MAQUETTE.scopes[ressource];
@@ -218,6 +286,7 @@
         var hors = typeof navigator !== "undefined" && navigator.onLine === false;
         var ex = E.expliquer({ cors: true, ressource: ressource, message: String(x && x.message || x) }, { horsLigne: hors });
         var e = erreur(0, ex.titre); e.cors = true; e.ressource = ressource; e.action = ex.action; e.explication = ex;
+        signaler({ ressource: ressource, ok: false, statut: 0, cors: true, methode: methode });
         e.detail = E.nettoyer((hors ? "Hors ligne. " : "Requête bloquée avant réponse (CORS ou réseau) : ") + methode + " " + url.split("?")[0] + " — " + (x && x.message || x));
         throw e;
       }).then(function (r) {
@@ -229,6 +298,7 @@
       });
     }
     return jeton(ressource, opts).then(envoyer).then(function (r) {
+      signaler({ ressource: ressource, ok: r.ok, statut: r.status, methode: methode });
       if (!r.ok) {
         return r.text().then(function (t) {
           var detail = "", codeG = "";
@@ -249,7 +319,7 @@
   }
 
   /** Graph : GET/POST/PATCH/DELETE. Chemin relatif à /v1.0. */
-  function graph(methode, chemin, corps, opts) { return appel("graph", methode, GRAPH + chemin, corps, null, opts); }
+  function graph(methode, chemin, corps, opts) { return appel("graph", methode, /^https:/.test(chemin) ? chemin : GRAPH + chemin, corps, null, opts); }
   /** Graph : toutes les pages d'une liste (@odata.nextLink), 5000 éléments au plus. */
   function graphTout(chemin) {
     var resultats = [];
@@ -267,6 +337,40 @@
       .then(function (r) { return r.ok ? r.blob().then(function (b) { return URL.createObjectURL(b); }) : null; })
       .catch(function () { return null; });
   }
+  /**
+   * Téléverse un fichier (v4, permissions déjà en place : Files.ReadWrite.All).
+   * chemin : « /drives/<id>/root:/<dossier>/<nom> » (sans « :/content »). ≤ 4 Mo : un seul PUT ;
+   * au-delà : session de téléversement par morceaux de 3,75 Mio (multiple de 320 Kio).
+   * Un fichier du même nom n'est jamais écrasé (conflictBehavior=rename).
+   */
+  var MORCEAU = 320 * 1024 * 12;
+  function televerser(chemin, fichier, progres) {
+    progres = progres || function () {};
+    if (fichier.size <= 4 * 1024 * 1024) {
+      return jeton("graph").then(function (t) {
+        return fetch(GRAPH + chemin + ":/content?@microsoft.graph.conflictBehavior=rename", { method: "PUT",
+          headers: { Authorization: "Bearer " + t, "Content-Type": fichier.type || "application/octet-stream" }, body: fichier });
+      }).then(function (r) {
+        signaler({ ressource: "graph", ok: r.ok, statut: r.status, methode: "PUT" });
+        if (!r.ok) return r.text().then(function (x) { var c = ""; try { c = JSON.parse(x).error.code; } catch (e) {} throw erreurHttp(r.status, "graph", c, String(x).slice(0, 200)); });
+        progres(1); return r.json();
+      });
+    }
+    return graph("POST", chemin + ":/createUploadSession", { item: { "@microsoft.graph.conflictBehavior": "rename" } }).then(function (session) {
+      var debut = 0;
+      function suivant() {
+        var fin = Math.min(debut + MORCEAU, fichier.size);
+        // L'adresse de session est pré-autorisée : surtout PAS d'en-tête Authorization.
+        return fetch(session.uploadUrl, { method: "PUT", headers: { "Content-Range": "bytes " + debut + "-" + (fin - 1) + "/" + fichier.size }, body: fichier.slice(debut, fin) }).then(function (r) {
+          if (!r.ok) throw erreurHttp(r.status, "graph", "", "Téléversement interrompu à " + debut + " octets.");
+          debut = fin; progres(debut / fichier.size);
+          return debut < fichier.size ? suivant() : r.json();
+        });
+      }
+      return suivant();
+    });
+  }
+
   /** SharePoint REST : chemin relatif au site (« /_api/web/… ») ou adresse complète. */
   function sp(methode, chemin, corps, entetes, opts) {
     var site = (self.EB_CONFIG.sharepoint.site || "").replace(/\/+$/, "");
@@ -286,10 +390,12 @@
     /** Vrai une seule fois juste après une connexion interactive (pour proposer le diagnostic). */
     vientDeSeConnecter: function () { var v = etat.vientDeSeConnecter; etat.vientDeSeConnecter = false; return v; },
     estIosInstalle: estIosInstalle,
+    aLaPermission: aLaPermission, demanderPermission: demanderPermission, consentementRefuse: consentementRefuse,
+    surResultat: function (fn) { ecouteursResultat.push(fn); },
     jeton: function (ressource) { return jeton(ressource, { silencieux: true }).then(function () { return true; }); },
     scopesAccordes: scopesAccordes,
     config: config,
-    graph: graph, graphTout: graphTout, graphPhoto: graphPhoto, sp: sp,
+    graph: graph, graphTout: graphTout, graphPhoto: graphPhoto, sp: sp, televerser: televerser,
     origineSharePoint: origineSharePoint,
     // Compatibilité avec l'annuaire de démo (app.js) : voir connecte.js.
     chargerAnnuaire: function () { return window.EBConnecte ? window.EBConnecte.annuairePourDemo() : Promise.reject(new Error("indisponible")); },

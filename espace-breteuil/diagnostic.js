@@ -1,5 +1,7 @@
 /*
- * Espace Breteuil — écran « Vérifier la connexion » (#/verifier).
+ * Espace Breteuil — écran « Détails techniques » (#/details, Réglages → Détails techniques).
+ * v4 : ce n'est plus un passage obligé ; la pastille de l'en-tête suit l'état en direct
+ * (acces.js). Cet écran reste le diagnostic complet, pour Damien.
  *
  * Teste un à un tout ce qui doit marcher pour le premier essai réel sur le tenant du
  * Château, et dit en français simple ce qui coince et qui peut le régler :
@@ -317,7 +319,7 @@
     var CFG = self.EB_CONFIG || {};
     var gen = ++generation;
     try { localStorage.setItem("eb:diagnostic-vu", "1"); } catch (e) {} // simple drapeau, pas un jeton
-    app.appendChild(EB.barre("Vérifier la connexion", { href: "#/plus", texte: "Plus" }));
+    app.appendChild(EB.barre("Détails techniques", { href: "#/reglages", texte: "Réglages" }));
     app.appendChild(h("p", { class: "aide-ecran" }, "L'appli teste une à une les étapes de la connexion au Château. Si quelque chose coince, elle dit quoi faire et qui peut le régler."));
     var entete = h("div", { class: "diag-bilan gris", role: "status" }, h("span", { class: "diag-pastille gris", "aria-hidden": "true" }), h("div", null, h("b", null, "Vérification en cours…")));
     var liste = h("ol", { class: "diag-liste" });

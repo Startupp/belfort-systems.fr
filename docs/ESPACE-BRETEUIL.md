@@ -1,54 +1,91 @@
-# Espace Breteuil — application (V3)
+# Espace Breteuil — application (v4.0.0)
 
-Application installable (PWA) pour l'équipe du Château de Breteuil, **sur mobile
-d'abord**. Elle s'adresse à des personnes qui ne sont pas du tout techniques :
+Application installable (PWA) pour l'équipe du Château de Breteuil, **sur mobile d'abord**,
+branchée sur le vrai tenant Microsoft. Pour des personnes non techniques : écrans courts,
+cibles tactiles d'au moins 44 px, confirmation avant chaque changement.
 
-- des écrans courts, séparés (pas une longue page) ;
-- de petites tuiles (icône + libellé court), mais des cibles tactiles d'au moins 44 px ;
-- une barre de 5 onglets en bas de l'écran et un en-tête bleu avec bouton retour ;
-- une confirmation en 2 étapes avant chaque changement.
+## Ce que voit chacun (v4 : selon les DROITS RÉELS)
 
-## Navigation (v3)
+**Pas connecté (première ouverture)** : seulement 2 gros boutons.
 
-**Une fonction = un seul endroit.** Chaque écran tient autant que possible sur un écran de
-téléphone. Couleurs : variables CSS en tête de `app.css` (bleu profond, clair et sombre, AA).
+- **Voir le calendrier** : le planning seul, mémorisé sur l'appareil, avec un petit lien
+  « Revenir à l'accueil ».
+- **Se connecter** : connexion Microsoft par redirection pleine page.
 
-| Onglet | Contenu |
+**Connecté** : l'appli lit en arrière-plan, en parallèle, ce que la personne peut faire
+(`acces.js`, logique pure et testée dans `profil.js`) :
+
+| Information | Appel | Sert à |
+|---|---|---|
+| Rôles d'annuaire | Graph `/me/transitiveMemberOf/microsoft.graph.directoryRole` (repli `/me/memberOf`) | Administrateur général, de facturation, des utilisateurs, Exchange |
+| Propriétaire du site | REST `associatedownergroup/users` (+ `IsSiteAdmin`) | Équipe, droits des dossiers |
+| Droit de gérer les accès | REST `effectivebasepermissions` (ManagePermissions) | « Qui a accès ? » |
+| Licences | Graph `/me/licenseDetails` | « Ce que je peux utiliser » (Moi) |
+
+Une information illisible vaut « non » : l'appli n'affiche jamais plus que ce qui est sûr.
+
+| Profil | Onglets (4 au plus) |
 |---|---|
-| **Accueil** `#/` | « Aujourd'hui au Château » (absents, congés, télétravail, permanence, 4 rendez-vous du jour) et « Mon espace » (une tuile par personne → raccourcis, boîtes partagées, mon planning 7 jours) |
-| **Planning** `#/planning` | Jour / Semaine / Mois / Liste ; changer de vue ne redessine que le planning |
-| **Dossiers** `#/dossiers` | Connexion Microsoft, puis Dossier commun, Qui a accès, Ce que j'ai fait |
-| **Équipe** `#/equipe` | Annuaire Microsoft (Personnes, Licences, Qui a quoi) et Gestion du Château en démo (Absences, Arrivée, Départ, Rôles, Boîtes mail, Double auth., Historique, Guides) |
-| **Plus** `#/plus` | Finance (code), Réglages (dont compte Microsoft et déconnexion), Vérifier la connexion, Installer, Appeler Damien |
+| Administrateur général (François, Damien) | Planning · Fichiers · **Gérer** (Administration avec **Déléguer**, Équipe, Finance) · Moi |
+| Propriétaire du site (Pauline) | Planning · Fichiers (avec « Qui a accès ? ») · **Équipe** · Moi |
+| Administrateur de facturation (Valérie) | Planning · Fichiers · **Finance** · Moi |
+| Simple collaborateur | Planning · Fichiers · Moi |
 
-Anciennes adresses redirigées : `#/aujourdhui` → Accueil, `#/gestion` → Équipe,
-`#/monchateau` → Dossiers. Transitions : glissement de 200 ms quand on descend ou remonte dans
-un onglet, fondu de 160 ms entre onglets, rien si « réduire les animations » est activé.
+Plusieurs rôles à la fois (ex. propriétaire + facturation) : un seul onglet **Gérer**. Une route
+réservée ouverte sans le droit renvoie au Planning. **Finance** n'est visible que par un
+administrateur général ou de facturation ; il n'y a plus de code d'écran (« direction »).
 
-Vérification automatique : `tests/navigation.playwright.mjs` (375 et 1280 px, clair et sombre :
-pas de défilement horizontal, aucune erreur console, pas de doublon entre écrans d'onglet,
-cibles ≥ 44 px, transitions).
+- **Planning** : « Mes épingles » (connecté) puis le calendrier, **en lecture seule**. Plus de
+  bandeau d'absences ni de pointage. Grille **dézoomable** : « Ajuster à l'écran » par défaut
+  (la semaine tient en entier de 320 à 1280 px), boutons − / + et pincement (le défilement se
+  fait alors dans la grille, jamais la page). Zoom mémorisé sur l'appareil.
+- **Mes épingles** : chacun épingle une boîte partagée (`boites-partagees.json`), l'agenda
+  Outlook, le dossier commun, « Mes fichiers » ou un dossier (menu ⋯). Gardées sur l'appareil
+  (`eb:epingles`) ; glisser pour réordonner (clavier : Alt + flèches), appui long pour retirer
+  (clavier : Suppr). Une boîte épinglée est un **raccourci** : web
+  `https://outlook.office.com/mail/<adresse>/`, téléphone : l'appli Outlook si elle s'ouvre
+  (`ms-outlook://`, il faut alors choisir la boîte dans l'appli), sinon le web. **Aucune
+  permission mail.**
+- **Fichiers** (un seul écran) : **Récents** (`/me/drive/recent`), **Mes fichiers** (OneDrive),
+  **Dossier commun** (SharePoint, droits déjà en place). Ouvrir dans Word, Excel, PowerPoint
+  (`ms-word:ofe|u|…`) ou sur le web, créer un dossier, **téléverser** (≤ 4 Mo en un envoi,
+  au-delà par morceaux ; jamais d'écrasement), **copier un lien de partage interne**
+  (`createLink`, portée « organisation »). Permissions déjà accordées : Files.ReadWrite.All,
+  Sites.ReadWrite.All.
+- **Moi** : identité, mes droits, ce que je peux utiliser, mes outils Microsoft, Réglages,
+  Appeler Damien, Se déconnecter.
+- **Déléguer** (administrateur général) : voir [ESPACE-BRETEUIL-CONNEXION.md](ESPACE-BRETEUIL-CONNEXION.md) § 3 bis.
+
+**Pastille d'état** dans l'en-tête, alimentée par les appels réels : vert = connecté, orange =
+une partie ne répond pas, rouge = problème (session expirée, Microsoft injoignable), gris =
+vérification en cours. Le message apparaît aussi **à l'endroit concerné** (ex. Fichiers : « Le
+dossier commun est introuvable »). Le diagnostic complet reste dans **Réglages → Détails
+techniques** (il n'est plus un passage obligé).
+
+**Réactivité** : réponses Microsoft gardées **en mémoire** pour la session (`cache.js`) : un écran
+déjà vu s'affiche aussitôt avec le dernier état connu, se rafraîchit en arrière-plan et ne se
+redessine que si quelque chose a changé ; appels lancés en parallèle ; squelettes de
+chargement ; la barre d'onglets n'est reconstruite que si la liste change ; transitions de
+140 à 200 ms (aucune si « réduire les animations »).
+
+**Thème** : fond blanc crème, praline (brun rosé) et touches de **doré** — le doré ne sert qu'aux
+accents (bordures, soulignés, points), jamais pour du texte sur fond crème ; mode sombre
+chocolat et doré. Toutes les couleurs sont des variables CSS en tête de `app.css`, contrastes
+du texte ≥ 4,5:1 (AA) vérifiés. Icônes colorées : une teinte douce par service (praline, doré,
+sauge, ciel, lavande, corail).
+
+**Démos** : les écrans fictifs (arrivée, départ, rôles, boîtes, double authentification,
+historique, coût, simulateur, factures, paiement) sont cachés derrière **Réglages → Afficher les
+démos** (désactivé par défaut), puis regroupés dans **Moi → Démos**. L'écran Absences est retiré.
+
+Vérification automatique : `tests/v4.playwright.mjs` (premier lancement, 4 profils maquettés,
+Fichiers, épingles, Déléguer, problème réel, semaine à 320/375/414/768/1280 px).
 
 Adresses :
 
 - `/espace-breteuil/` sur belfort-systems.fr ;
 - un projet Cloudflare Pages séparé pour la version connectée
   (voir **[ESPACE-BRETEUIL-CONNEXION.md](ESPACE-BRETEUIL-CONNEXION.md)**).
-
-## Ce qui est réel, ce qui est démo
-
-| Fonction | Sans connexion | Connecté à Microsoft (Pauline, François) |
-|---|---|---|
-| Planning (plusieurs calendriers colorés), « Aujourd'hui au Château » | **Réel** (calendriers publiés en ICS, relayés par le Worker) ; exemple fictif tant que non branché | idem |
-| Dossier commun : naviguer, créer (dans Commun ou juste au-dessus), renommer, déplacer | — | **Réel** (Graph, délégué) |
-| Qui a accès : hérité / personnalisé, « Partager uniquement avec… », ajouter, retirer, rétablir | — | **Réel** (REST SharePoint, délégué) |
-| Personnes, « Ce que je peux utiliser », licences, étiquette **EXTERNE** | — | **Réel** (lecture seule) |
-| Comprendre l'organisation | Exemple fictif | **Réel** |
-| Gestion du Château et Finance (équipe, rôles, boîtes, arrivées, départs, absences, factures…) | **Démo** (données fictives, pastille « Démo ») | Démo |
-
-Règle « Externe » : **toute personne sans adresse @breteuil.fr est considérée comme
-externe**. Une seule étiquette, en gras, qui s'explique au toucher. Il n'y a rien à
-configurer.
 
 ## Choix du chemin
 
@@ -72,7 +109,13 @@ espace-breteuil/            ← autonome : peut être servi tel quel sur un autr
   config.js                 Worker, calendriers, connexion Microsoft, site SharePoint (aucun secret)
   app.js                    cœur : accueil (Aujourd'hui), planning, Mon espace, Équipe, Plus, Finance,
                             réglages, onglets, transitions, mises à jour
-  diagnostic.js/.css        « Vérifier la connexion » (onglet Plus)
+  diagnostic.js/.css        « Détails techniques » (Réglages)
+  cache.js                  cache de session en mémoire (dernier état connu puis mise à jour, testé)
+  profil.js                 droits réels → profil, onglets, garde-fous, pastille (testé)
+  acces.js                  détection des droits en arrière-plan, sondes, pastille d'état
+  deleguer.js               écran « Déléguer » (propriétaires du site, rôles d'annuaire)
+  fichiers.js               onglet Fichiers (Récents, Mes fichiers, Dossier commun)
+  epingles.js               « Mes épingles » ; boites-partagees.json = boîtes proposées
   erreurs.js                erreurs Microsoft en français simple (testé)
   demos/                    écrans de démo (rôles, arrivée/départ, absences, boîtes, Finance, double auth.)
   connecte.js               onglet Dossiers et écrans connectés (dossier commun, accès, personnes, organisation)
@@ -137,18 +180,7 @@ l'agenda, sur ordinateur) :
 Google ne met à jour son fichier ICS qu'environ toutes les heures. Le Worker garde un
 cache de 10 min.
 
-**« Aujourd'hui au Château »** classe les événements du jour d'après leur titre (sans
-accents ni majuscules) :
-
-- « absent », « malade », « repos », « récup » → **Absents** ;
-- « congé », « vacances », « CP », « RTT » → **En congé** ;
-- « télétravail », « TT » → **Télétravail** ;
-- « permanence », « présent » → **De permanence** ;
-- le reste → **Rendez-vous** (avec une heure) ou **À savoir** (journée entière).
-
-Le prénom est reconnu tel qu'il figure dans `personnes.json` (« Valérie D. » ou
-« Valérie L. » : en cas de doute, personne n'est reconnu plutôt que la mauvaise personne).
-**Rien n'est demandé à l'accueil** : il suffit d'écrire « Marco absent » comme d'habitude.
+*(v4 : le résumé « Aujourd'hui au Château » — absents, congés, télétravail — n'est plus affiché ; `resume.js` reste dans le dépôt mais n'est plus utilisé à l'écran.)*
 
 Vérification :
 `curl -i -H "Origin: https://belfort-systems.fr" https://belfort-api.damien-belfort.workers.dev/breteuil/sources`
@@ -174,7 +206,7 @@ Côté utilisateurs :
   disponible — Mettre à jour » (un toucher = rechargement) ;
 - une version prête **au lancement** s'installe d'elle-même, sauf si l'utilisateur est en
   train de saisir quelque chose ;
-- le numéro est visible dans **Plus → Réglages** (bouton « Rechercher une mise à jour »).
+- le numéro est visible dans **Moi → Réglages** (bouton « Rechercher une mise à jour »).
 
 
 ## Éditer `personnes.json`
@@ -217,21 +249,9 @@ le prénom ou le pôle dans le titre** des rendez-vous du calendrier Contact
 - `tuiles` : liens profonds vers le centre d'administration Microsoft 365.
 - `fiches` : « comment faire » en 3 étapes (`etapes`), un bouton (`lien`) et une
   `note`.
-- `codeEmpreinte` : empreinte SHA-256 du code d'écran. Code par défaut communiqué
-  par Damien ; **à changer avant de diffuser** :
-
-  ```bash
-  printf 'espace-breteuil:MON-NOUVEAU-CODE' | sha256sum
-  ```
-
-  Coller le résultat (64 caractères) dans `codeEmpreinte` (admin et/ou finance).
-  Changer le code reverrouille les appareils déjà ouverts.
-
-> **Ce code n'est PAS une sécurité.** Il masque seulement l'écran aux curieux
-> (le contenu de `fiches.json` est public, comme tout le dépôt). Il ne contient
-> que des liens et des procédures. La vraie sécurité, c'est la connexion
-> Microsoft : sans compte administrateur (ou « Administrateur de facturation »
-> pour Valérie D.), les liens n'affichent rien.
+- `codeEmpreinte` : **plus utilisé depuis la v4** (le code d'écran de Finance et de Gestion est
+  supprimé). Ce que l'on voit dépend des droits Microsoft réels. Le champ peut rester, il est
+  ignoré.
 
 Les liens profonds `admin.microsoft.com/Adminportal/Home#/…` (users, licenses,
 SharedMailbox, groups, billoverview, subscriptions, catalog, BillingNotifications)
@@ -240,20 +260,23 @@ tombe sur l'accueil de l'admin, corriger l'adresse dans `fiches.json`.
 
 ## Réglages mémorisés sur l'appareil
 
-`localStorage` (lu et écrit dans des `try/catch` ; en navigation privée, l'appli
-marche avec les réglages par défaut) :
+`localStorage` (lu et écrit dans des `try/catch` ; en navigation privée, l'appli marche avec les
+réglages par défaut) :
 
-- `eb:reglages` : vue du planning au départ, taille du texte (normal / grand /
-  très grand), thème (auto / clair / sombre), événements passés (afficher /
-  masquer), espace ouvert au démarrage ;
-- `eb:ouvert:admin`, `eb:ouvert:finance` : écran déverrouillé sur cet appareil.
+- `eb:reglages` : **taille de l'interface** (petit / normal / grand / très grand), thème (auto /
+  clair / sombre), vue du planning au départ, événements passés, zoom de la grille, mode
+  « calendrier seul », « Afficher les démos » ;
+- `eb:epingles` : les épingles de l'accueil ;
+- `eb:journal` : « Ce que j'ai fait » (dossiers, droits, délégations).
+
+Pour la session de l'onglet seulement (`sessionStorage`) : jetons MSAL et dernier profil connu
+(uniquement des rôles, pour afficher les bons onglets tout de suite).
 
 ## Mode « calendrier seul »
 
-**Plus → Réglages → Mode « calendrier seul » → Activé.** Ensuite, chaque ouverture affiche
-directement le planning en plein écran, avec seulement le choix de la vue, les flèches et
-« Aujourd'hui ». Le petit lien « Revenir à l'appli complète », en bas, désactive ce mode
-après une confirmation. *(Le pointage des présences a été retiré à la demande de Damien.)*
+Premier écran → **Voir le calendrier**. Ensuite chaque ouverture affiche directement le planning
+(vue, flèches, « Aujourd'hui », zoom). Le petit lien « Revenir à l'accueil », en bas, ramène aux
+2 boutons. *(Le pointage des présences et le bandeau d'absences sont retirés.)*
 
 ## Limites connues
 
@@ -297,7 +320,7 @@ authentifiée.
 Les anciennes tuiles « Bientôt » ouvrent maintenant de vrais écrans, **tous en démo** : données
 fictives (prénoms de l'équipe), bandeau « Démo — données fictives » sur chaque écran, confirmation
 en 2 étapes pour toute modification, chaque changement noté dans l'**Historique**. Tout reste sur
-l'appareil (`localStorage` « eb:demos ») ; « Plus → Réglages → Remettre la démo à zéro » l'efface aussi.
+l'appareil (`localStorage` « eb:demos ») ; « Moi → Réglages → Remettre la démo à zéro » (visible si « Afficher les démos » est activé) l'efface aussi.
 Point de départ : 12 licences (6 Formule Complète = Business Standard à 11,70 € HT, 6 Formule
 Express + Teams = Business Basic à 5,60 € HT, soit 103,80 € HT par mois — prix indicatifs) et
 8 boîtes partagées (contact, finance, restauration, marketing, jardins, intendance, HFB, Chanteclerc).
@@ -376,26 +399,30 @@ branchements : tuiles de `ecranGestion` / `ecranFinance`, un appel dans `ecranRe
 Automatique :
 
 - [ ] `for f in espace-breteuil/tests/*.test.mjs; do node --test "$f"; done` : parseur ICS,
-      démo, « Aujourd'hui », droits, tous verts
-- [ ] `cd api && npm test` → 14/14, dont 5 pour le relais des calendriers
+      démo, droits, profil (droits réels → onglets, garde-fous), cache, garde-fous v4, tous verts
+- [ ] `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node espace-breteuil/tests/v4.playwright.mjs <captures>`
+- [ ] `… node espace-breteuil/tests/diagnostic.playwright.mjs <captures>` (Détails techniques)
+- [ ] `cd api && npm test`
 
 Version connectée : voir la checklist de [ESPACE-BRETEUIL-CONNEXION.md](ESPACE-BRETEUIL-CONNEXION.md).
 
 À la main (téléphone + ordinateur) :
 
-- [ ] Ouvrir l'appli : aucune demande de connexion. Barre d'onglets en bas (Accueil,
-      Planning, Dossiers, Équipe, Plus), en-tête bleu avec bouton retour.
+- [ ] Ouvrir l'appli : 2 boutons seulement. « Voir le calendrier », fermer, rouvrir : le
+      calendrier revient ; « Revenir à l'accueil ».
+- [ ] Se connecter (Pauline, François, Valérie, un collaborateur) : onglets du tableau
+      « Ce que voit chacun », pastille verte.
 - [ ] Installer sur l'écran d'accueil (iPhone, Android, ordinateur).
-- [ ] Accueil, « Aujourd'hui au Château » : absents, congés et télétravail avec les visages,
+- [ ] Planning : épingler contact@ et un dossier, réordonner, retirer ; − / + et pincement ;
       rendez-vous du jour, couleurs par calendrier.
 - [ ] Planning : Jour / Semaine / Mois / Liste, « Aujourd'hui », détail d'un rendez-vous.
 - [ ] Mode avion : dernière version enregistrée, bandeau « Pas de connexion ».
-- [ ] Plus → Réglages : texte très grand, thème sombre, mode calendrier seul (activer, rouvrir
+- [ ] Moi → Réglages : taille de l'interface, thème sombre, Afficher les démos (activer, rouvrir
       l'appli, revenir).
 - [ ] Mise à jour : changer `version.js`, publier, rouvrir l'appli → nouvelle version
       active ; appli ouverte pendant la publication → bandeau « Mettre à jour ».
 - [ ] Largeur 375 px : pas de défilement horizontal, boutons ≥ 44 px
-      (automatique : `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node espace-breteuil/tests/navigation.playwright.mjs`).
-- [ ] Écrans de démo : rôles (retirer / donner), arrivée complète, départ complet, absence
-      déclarée puis retirée, photo d'une boîte partagée (appareil photo et galerie), simulateur,
-      exemple PDF, activation de la double authentification (Équipe → Double auth.) puis rappel.
+      (automatique : `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node espace-breteuil/tests/v4.playwright.mjs`).
+- [ ] Écrans de démo (si activés) : rôles (retirer / donner), arrivée complète, départ complet,
+      photo d'une boîte partagée (appareil photo et galerie), simulateur,
+      exemple PDF, activation de la double authentification (Moi → Démos → Double auth.) puis rappel.

@@ -5,9 +5,12 @@
 > 2. Entra : inscription SPA + permissions + consentement (§ 2 et 3).
 > 3. Entra : **affectation requise** → Pauline, François, Damien (§ 3).
 > 4. GitHub, dans le navigateur : coller le `clientId` dans `config.js` (§ 2.6).
-> 5. Ouvrir l'appli → **Plus → Vérifier la connexion** (§ 6). Tout doit être vert.
->    Sinon : « Copier le rapport » et le coller dans un message.
-> 6. Seulement ensuite, le test avec Pauline (§ 7).
+> 5. Ouvrir l'appli → **Se connecter**. La **pastille de l'en-tête** doit passer au vert.
+>    Orange ou rouge : la toucher, ou **Moi → Réglages → Détails techniques** (§ 6) →
+>    « Copier le rapport » et le coller dans un message.
+> 6. v4 : pour l'écran **Déléguer**, ajouter la permission **RoleManagement.ReadWrite.Directory**
+>    (§ 3 bis). Ce n'est pas nécessaire pour le reste de l'appli.
+> 7. Seulement ensuite, le test avec Pauline (§ 7).
 
 Objectif : que Pauline se connecte avec **pdebreteuil@breteuil.fr** et utilise pour de
 vrai :
@@ -169,6 +172,62 @@ Les jetons déjà émis expirent en une heure au plus.
 
 ---
 
+## 3 bis. v4 : la permission de l'écran « Déléguer » (5 min, seulement pour l'administrateur général)
+
+L'écran **Gérer → Déléguer** (visible uniquement par un administrateur général : François,
+Damien) permet, pour de vrai :
+
+- de **rendre une personne propriétaire du site SharePoint du Château**, ou de lui retirer ce
+  rôle : REST SharePoint sur le groupe des propriétaires du site, avec les permissions
+  **déjà en place** (`AllSites.FullControl`) — rien à ajouter ;
+- de **donner ou retirer un rôle d'annuaire** : Administrateur de facturation, Administrateur des
+  utilisateurs, Administrateur Exchange (et Administrateur général) — Graph
+  `roleManagement/directory/roleAssignments`. Cela demande **une permission déléguée
+  nouvelle** :
+
+| Permission (Microsoft Graph, déléguée) | Pourquoi |
+|---|---|
+| `RoleManagement.ReadWrite.Directory` | Créer et supprimer des attributions de rôle d'annuaire (`POST` / `DELETE roleAssignments`). Aucune permission déjà accordée ne le permet : `Directory.Read.All` ne fait que lire. |
+
+**Pourquoi elle n'est pas demandée à la connexion** : c'est une permission très puissante, utile
+à une ou deux personnes, quelques fois par an. L'appli la demande **seulement au moment
+d'utiliser l'écran Déléguer** (« consentement incrémental », bouton **Autoriser la gestion des
+rôles**, par redirection). Pour tous les autres, rien ne change. Et comme toute permission
+**déléguée**, elle ne donne jamais plus que les droits de la personne : chez Microsoft, seul un
+administrateur général (ou « Administrateur des rôles privilégiés ») peut attribuer des rôles.
+
+À faire par Damien :
+
+1. Entra → **Inscriptions d'applications** → `Espace Breteuil` → **API autorisées** →
+   **Ajouter une autorisation** → Microsoft Graph → **Autorisations déléguées** →
+   `RoleManagement.ReadWrite.Directory` → Ajouter.
+2. **Accorder un consentement d'administrateur pour Château de Breteuil** (avec l'accord de
+   François) → la ligne passe au vert « Accordé ».
+3. Dans l'appli : **Gérer → Déléguer → Autoriser la gestion des rôles**. Les boutons « Donner ce
+   rôle… » et « Retirer » s'activent.
+
+Tant que ce n'est pas fait, l'écran l'affiche clairement : « Damien doit ajouter la permission
+RoleManagement.ReadWrite.Directory dans Entra, puis accorder le consentement ». La liste des
+titulaires reste lisible (`/directoryRoles`, `Directory.Read.All`).
+
+**Garde-fous** (testés : `tests/profil.test.mjs`) : impossible de retirer son propre rôle
+d'administrateur général ; impossible de retirer le dernier administrateur général ; impossible
+de se retirer soi-même ou de retirer le dernier propriétaire du site ; **confirmation en 2
+étapes** ; chaque action est notée dans le **journal des délégations** (sur l'appareil) — la
+trace officielle reste le journal d'audit d'Entra. Un rôle attribué par un groupe ou en
+« éligible » (PIM) ne se retire pas depuis l'appli : elle le dit et renvoie vers Entra.
+
+**Note** : si le site du Château est relié à un groupe Microsoft 365, « propriétaire du site »
+dans l'appli = membre du groupe SharePoint des propriétaires ; cela ne rend pas propriétaire du
+groupe Microsoft 365 (gestion des groupes : pas pour l'instant).
+
+**Aucune autre permission n'est ajoutée en v4** : les épingles de boîtes partagées sont de
+simples liens (aucune lecture ni envoi de mails) ; l'onglet Fichiers utilise
+`Files.ReadWrite.All` et `Sites.ReadWrite.All`, déjà accordées ; le planning reste en lecture
+(l'écriture dans l'agenda viendra plus tard).
+
+---
+
 ## 4. Vérifier que Pauline est « Propriétaire » du site SharePoint (5 min)
 
 Sans ce rôle, elle peut voir et créer des dossiers, mais **pas gérer les droits**.
@@ -200,15 +259,17 @@ fonctionne.
 
 ---
 
-## 6. Commencer par « Vérifier la connexion » (5 min)
+## 6. La pastille d'état et les « Détails techniques » (5 min)
 
-Avant tout test « pour de vrai », sur la Surface puis sur le téléphone :
+v4 : plus d'écran de vérification obligatoire. Une **pastille** dans l'en-tête suit les appels
+réels : 🟢 connecté, 🟠 une partie ne répond pas, 🔴 problème (session expirée, Microsoft
+injoignable), gris = vérification en cours. La toucher explique le problème ; le message
+apparaît aussi à l'endroit concerné (ex. Fichiers : « Le dossier commun est introuvable »).
 
-1. Ouvrir `https://espace-breteuil.pages.dev/` → onglet **Plus** → **Vérifier la connexion**
-   (l'écran s'ouvre aussi tout seul juste après la toute première connexion).
-2. **Se connecter avec Microsoft**. Sur ordinateur, une petite fenêtre s'ouvre ; si le
-   navigateur la bloque, l'appli passe par une redirection. Sur iPhone avec l'appli
-   installée, c'est directement une redirection.
+Le diagnostic complet, pour Damien :
+
+1. Ouvrir `https://espace-breteuil.pages.dev/` → **Se connecter** (redirection pleine page).
+2. **Moi → Réglages → Détails techniques**.
 3. Lire les 14 lignes. Chaque ligne a une pastille et un mot :
 
    | Pastille | Sens |
@@ -257,8 +318,10 @@ ou l'appli installée reste ouvert**, sans se reconnecter à chaque écran.
   et tout texte venant de Microsoft est inséré comme texte, jamais comme HTML.
 - Les jetons d'accès durent **1 heure au plus**. « Se déconnecter de l'appli » vide le
   cache MSAL de l'onglet. Pour couper tout de suite : § 3 « Révoquer à tout moment ».
-- Seul autre élément conservé sur l'appareil : le drapeau `eb:diagnostic-vu` (« la
-  vérification a déjà été proposée »), qui ne contient aucune donnée personnelle.
+- v4 : les réponses Microsoft sont gardées **en mémoire** le temps de la session (rien sur
+  le disque) ; `sessionStorage` garde aussi le dernier profil connu (uniquement les rôles,
+  pour afficher les bons onglets tout de suite). Sur l'appareil (`localStorage`) : réglages,
+  épingles (adresses de boîtes partagées, liens de dossiers) et journal « Ce que j'ai fait ».
 
 ---
 
@@ -266,9 +329,9 @@ ou l'appli installée reste ouvert**, sans se reconnecter à chaque écran.
 
 Sur son téléphone, dans Safari ou Chrome :
 
-- [ ] Ouvrir `https://espace-breteuil.pages.dev/`, puis onglet **Dossiers** →
-      **Se connecter avec Microsoft** → `pdebreteuil@breteuil.fr` (+ 2ᵉ facteur s'il est
-      actif). Retour dans l'appli, « Connecté à Microsoft ».
+- [ ] Ouvrir `https://espace-breteuil.pages.dev/` → **Se connecter** →
+      `pdebreteuil@breteuil.fr` (+ 2ᵉ facteur s'il est actif). Retour dans l'appli : onglets
+      Planning, Fichiers, Équipe, Moi ; pastille verte ; **Fichiers** → Dossier commun.
 - [ ] **Le dossier commun** : les dossiers de « Commun » apparaissent en grosses tuiles,
       et le fil d'Ariane indique « Documents › Commun ».
 - [ ] **Nouveau dossier** → « Dans Commun » → `Test Pauline` → Continuer → 2
@@ -313,7 +376,7 @@ sur localhost uniquement), à 375 px et 1280 px, en thème sombre et en très gr
 
 **Pas testé en réel** (pas d'accès au tenant de mon côté) :
 
-- connexion MSAL et consentement (à vérifier avec l'écran « Vérifier la connexion ») ;
+- connexion MSAL et consentement (pastille d'état et Réglages → Détails techniques) ;
 - réponses réelles de Graph et SharePoint : formes exactes, `sharePointIds`, groupes
   `SharingLinks` ;
 - CORS de l'API REST SharePoint avec un jeton OAuth (normalement accepté, à confirmer au
@@ -322,10 +385,19 @@ sur localhost uniquement), à 375 px et 1280 px, en thème sombre et en très gr
   tenant ;
 - suffisance de `AllSites.Manage`.
 
-**Testé hors ligne aussi** : l'écran « Vérifier la connexion » dans 4 cas maquettés
+**Testé hors ligne aussi** : l'écran « Détails techniques » dans 4 cas maquettés
 (tout vert, consentement manquant, CORS refusé, non propriétaire), à 375 px et 1280 px :
 `NODE_PATH=$(npm root -g) node espace-breteuil/tests/diagnostic.playwright.mjs`.
 
 En cas d'erreur, l'appli affiche un message simple, l'action à faire et le détail technique
-en petit : ouvrir **Plus → Vérifier la connexion → Copier le rapport** et l'envoyer à
+en petit : ouvrir **Moi → Réglages → Détails techniques → Copier le rapport** et l'envoyer à
 Damien.
+
+**v4, testé hors ligne** (`tests/v4.playwright.mjs`, `?maquette=1`) : premier lancement, 4 profils
+maquettés (administrateur général, propriétaire du site, facturation, simple collaborateur) à
+375 et 1280 px — onglets attendus seulement, routes réservées refusées, aucune erreur console ;
+Déléguer (permission absente puis accordée, garde-fous, corps exact du `POST roleAssignments`) ;
+Fichiers (`createLink` interne, téléversement) ; épingles ; dossier commun introuvable (pastille
+orange et message) ; semaine « ajustée » à 320, 375, 414, 768 et 1280 px. **Pas testé en réel** :
+`/me/transitiveMemberOf` et `roleAssignments` sur le tenant, le consentement incrémental, l'ouverture
+de l'appli Outlook sur téléphone.

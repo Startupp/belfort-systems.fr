@@ -11,8 +11,8 @@ self.EB_CONFIG = {
    * (1 → secret BRETEUIL_ICS_URL, 2 → BRETEUIL_ICS_URL_2…). exemple = données fictives
    * montrées tant que la source n'est pas branchée. */
   calendriers: [
-    { n: 1, nom: "Calendrier du Château", couleur: "#1F4BA8", exemple: "exemple.ics" },
-    { n: 2, nom: "Équipe du jour (accueil)", couleur: "#0F766E", exemple: "exemple-accueil.ics" },
+    { n: 1, nom: "Calendrier du Château", couleur: "#8A4C45", exemple: "exemple.ics" },
+    { n: 2, nom: "Équipe du jour (accueil)", couleur: "#2F6B5A", exemple: "exemple-accueil.ics" },
   ],
 
   /* Connexion Microsoft. clientId VIDE = mode démo (aucune connexion possible).

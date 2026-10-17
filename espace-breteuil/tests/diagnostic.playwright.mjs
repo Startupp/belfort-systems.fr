@@ -97,15 +97,15 @@ try {
       await contexte.close();
     }
   }
-  // Onglet Plus : la tuile « Vérifier la connexion », en sombre et très grand texte.
+  // v4 : Réglages → « Détails techniques », en sombre et très grand texte.
   for (const [nom, vp] of [["mobile", { width: 375, height: 812 }], ["bureau", { width: 1280, height: 900 }]]) {
     const contexte = await navigateur.newContext({ viewport: vp, deviceScaleFactor: 2, serviceWorkers: "block", colorScheme: "dark", locale: "fr-FR" });
     await preparer(contexte, "", {});
     const page = await contexte.newPage();
-    await page.goto(BASE + "#/plus");
-    await page.waitForSelector("text=Vérifier la connexion");
-    await page.screenshot({ path: `${SORTIE}/plus-lien-diagnostic-sombre-${nom}.png`, fullPage: true });
-    await page.click("text=Vérifier la connexion");
+    await page.goto(BASE + "#/reglages");
+    await page.waitForSelector("text=Détails techniques");
+    await page.screenshot({ path: `${SORTIE}/reglages-lien-diagnostic-sombre-${nom}.png`, fullPage: true });
+    await page.click("text=Détails techniques");
     await page.waitForSelector(".diag-actions button");
     await page.evaluate(() => document.documentElement.setAttribute("data-texte", "tres-grand"));
     await page.screenshot({ path: `${SORTIE}/diagnostic-tout-vert-sombre-tres-grand-${nom}.png`, fullPage: true });
