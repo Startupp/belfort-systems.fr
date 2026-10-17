@@ -1,0 +1,3 @@
+Écrans de démonstration (données fictives) de l'Espace Breteuil :
+rôles et délégations, arrivée / départ / absences, boîtes mail, pack Finance,
+double authentification. Voir docs/ESPACE-BRETEUIL.md, section « Écrans de démo ».
