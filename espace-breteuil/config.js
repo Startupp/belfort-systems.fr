@@ -18,7 +18,7 @@ self.EB_CONFIG = {
   /* Connexion Microsoft. clientId VIDE = mode démo (aucune connexion possible).
    * clientId et tenantId ne sont pas des secrets (ils sont visibles dans toute appli SPA). */
   microsoft: {
-    clientId: "",
+    clientId: "a60beae2-3bae-4f85-b729-8275b500ebae",
     tenantId: "breteuil02.onmicrosoft.com",
     // Vide = l'adresse de l'appli elle-même (à déclarer dans Entra, plateforme « SPA »).
     redirectUri: "",
