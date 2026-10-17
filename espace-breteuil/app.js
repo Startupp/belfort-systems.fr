@@ -838,7 +838,7 @@
       action("#/depart", "🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
       action("#/absences", "🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
       bientot("🔑", "Mot de passe oublié", "Donner un mot de passe provisoire."),
-      bientot("🛡️", "Double authentification", "Protéger les comptes avec le téléphone."),
+      action("#/securite", "🛡️", "Double authentification", "Protéger les comptes avec le téléphone."),
       action("#/historique", "🕘", "Historique", "Qui a fait quoi, et quand."),
       action("#/guides/admin", "📖", "Guides Microsoft", "Les mêmes gestes, pas à pas, sur le site de Microsoft.")));
     app.appendChild(pied());
@@ -913,6 +913,7 @@
     app.appendChild(choix("Affichage au départ", null, "vue", VUES));
     app.appendChild(choix("Rendez-vous passés", null, "passes", [["afficher", "Afficher"], ["masquer", "Masquer"]]));
 
+    if (window.EBDemosReglages) window.EBDemosReglages(app); // demos/securite.js
     app.appendChild(h("h2", { class: "titre-groupe" }, "Démo"));
     app.appendChild(h("div", { class: "boite reglage" },
       h("p", null, "Les essais faits dans la démo (accès, dossiers, photos…) restent sur ce téléphone."),

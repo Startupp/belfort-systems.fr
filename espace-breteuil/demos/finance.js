@@ -105,7 +105,7 @@
   function voirFacture(f) {
     var etat = X.etat(), d = EB.dialogue();
     var lignes = D.ORDRE.map(function (k) {
-      var n = etat.licences[k], F = D.FORMULES[k];
+      var n = (f.licences || etat.licences)[k], F = D.FORMULES[k];
       return h("tr", null, h("td", null, n + " × " + F.produit), h("td", null, D.euros(n * F.prix)));
     });
     var telecharger = h("button", { class: "btn large", type: "button", onclick: function () {

@@ -116,7 +116,7 @@
       var t = new Date(Date.UTC(+auj.slice(0, 4), +auj.slice(5, 7) - 1 - i, 5));
       var date = iso(t);
       if (date > auj) continue;
-      factures.push({ numero: "E0" + (2614 - i) + "7Q" + String(40 + i), date: date, ht: montant, tva: arrondi(montant * 0.2), ttc: arrondi(montant * 1.2), statut: "Payée" });
+      factures.push({ numero: "E0" + (2614 - i) + "7Q" + String(40 + i), date: date, ht: montant, tva: arrondi(montant * 0.2), ttc: arrondi(montant * 1.2), statut: "Payée", licences: { standard: 6, basic: 6 } });
     }
     return {
       version: 1,
@@ -313,7 +313,7 @@
     ];
     var y = 620;
     ORDRE.forEach(function (k) {
-      var n = (licences && licences[k]) || 0;
+      var n = ((f.licences || licences) || {})[k] || 0;
       L.push([11, y, n + " x " + FORMULES[k].produit + " à " + euros(FORMULES[k].prix) + " = " + euros(n * FORMULES[k].prix) + " HT"]);
       y -= 18;
     });
