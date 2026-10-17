@@ -23,7 +23,7 @@
   {
    "id": "c02",
    "nom": "Julien Moreau — Boulangerie du Parc",
-   "email": "contact@boulangerie-du-parc.fr",
+   "email": "contact@boulangerie-du-parc.example",
    "tel": "01 30 00 00 00",
    "sujet": "Migration de nos 4 adresses mail",
    "message": "Nous avons 4 adresses chez OVH et voulons passer sur Microsoft 365 avec les agendas partagés. Quel délai et quel tarif ?",

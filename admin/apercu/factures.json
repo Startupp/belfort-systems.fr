@@ -4,30 +4,30 @@
   {
    "id": "fa01",
    "numero": null,
-   "client_id": "breteuil",
-   "client_nom": "Château de Breteuil",
+   "client_id": "tilleuls",
+   "client_nom": "Domaine des Tilleuls",
    "date": "2026-10-11",
    "echeance": "2026-11-10",
    "lignes": [
     {
      "ref": "migration",
-     "designation": "Migration de la messagerie vers Microsoft 365 (17 boîtes, inventaire, guides, 30 jours de suivi)",
+     "designation": "Migration de la messagerie vers Microsoft 365 (exemple fictif)",
      "quantite": 1,
      "unite": "forfait",
-     "prix": 250
+     "prix": 199
     },
     {
      "ref": "",
-     "designation": "Demi-journée d’accompagnement du 9 octobre",
+     "designation": "Demi-journée d'accompagnement (exemple, offerte)",
      "quantite": 1,
      "unite": "forfait",
      "prix": 0
     }
    ],
-   "total_ht": 250,
+   "total_ht": 199,
    "tva": 0,
    "statut": "brouillon",
-   "note": "Prestation conforme à l’accord du 17 juillet (250 € quelle que soit la durée).",
+   "note": "Facture fictive de démonstration (données d'exemple).",
    "cree": "2026-10-11T09:00:00",
    "maj": "2026-10-11T09:00:00"
   },

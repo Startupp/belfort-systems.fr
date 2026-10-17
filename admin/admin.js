@@ -141,7 +141,7 @@
     if (c === '/admin/resume') return chargerApercu('resume');
     if (c === '/admin/contacts') return chargerApercu('contacts');
     if (c === '/admin/projets') return chargerApercu('projets');
-    if (/^\/admin\/projets\/[^/]+$/.test(c)) return chargerApercu('projet-breteuil');
+    if (/^\/admin\/projets\/[^/]+$/.test(c)) return chargerApercu('projet-exemple');
     if (c === '/admin/factures') return chargerApercu('factures');
     if (c === '/admin/clients') return chargerApercu('clients');
     if (c === '/admin/journal') return chargerApercu('journal');
@@ -730,7 +730,7 @@
     var P = etat.projetCourant; var groupes = []; P.demandes.forEach(function (d) { if (groupes.indexOf(d.groupe) < 0) groupes.push(d.groupe); });
     await action({ titre: 'Nouvelle demande', champs: [
       { id: 'titre', label: 'Titre', requis: true }, { id: 'groupe', label: 'Groupe', requis: true, valeur: groupes[0] || '', aide: 'Groupes existants : ' + groupes.join(', ') },
-      { id: 'qui', label: 'Qui', placeholder: 'Pauline' }, { id: 'tarif', label: 'Tarif', type: 'select', options: Object.keys(TARIFS).map(function (k) { return { valeur: k, libelle: TARIFS[k] }; }) },
+      { id: 'qui', label: 'Qui', placeholder: 'Claire' }, { id: 'tarif', label: 'Tarif', type: 'select', options: Object.keys(TARIFS).map(function (k) { return { valeur: k, libelle: TARIFS[k] }; }) },
       { id: 'reste', label: 'À faire', type: 'textarea' }], valider: 'Créer',
       action: function (v) { return api('/admin/demandes', { method: 'POST', body: { projet_id: P.id, titre: v.titre, groupe: v.groupe, qui: v.qui, tarif: v.tarif, reste: v.reste, statut: 'nouveau', date_txt: fmtJour(aujourdhuiISO()) } }); }, succes: 'Demande créée.' });
   };
@@ -980,7 +980,7 @@
           <div class="field"><label for="fa-date">Date</label><input id="fa-date" type="date" data-fact="date" value="${F.date}"></div>
           <div class="field"><label for="fa-ech">Échéance</label><input id="fa-ech" type="date" data-fact="echeance" value="${F.echeance}"></div>
         </div>
-        <div class="field"><label for="fa-objet">Objet (facultatif)</label><input id="fa-objet" data-fact="objet" value="${F.objet || ''}" placeholder="Migration de la messagerie — Château de Breteuil"></div>
+        <div class="field"><label for="fa-objet">Objet (facultatif)</label><input id="fa-objet" data-fact="objet" value="${F.objet || ''}" placeholder="Migration de la messagerie — Domaine des Tilleuls"></div>
         <h2>Lignes</h2>
         <div id="fa-lignes">${F.lignes.map(function (l, i) { return ligneEditeur(l, i, opts); })}</div>
         <div class="actions"><button type="button" class="btn ghost sm" data-act="ligne-ajouter">Ajouter une prestation du catalogue</button><button type="button" class="btn ghost sm" data-act="ligne-ajouter" data-libre="1">Ajouter une ligne libre</button></div>
@@ -1086,8 +1086,8 @@
   }
   ACTIONS['client-creer'] = async function () {
     await action({ titre: 'Nouveau client', champs: [
-      { id: 'nom', label: 'Nom', requis: true, placeholder: 'Château de Breteuil' }, { id: 'slug', label: 'Identifiant (URL)', requis: true, placeholder: 'breteuil', aide: 'Lettres, chiffres, tirets : /clients/<identifiant>/' },
-      { id: 'contact', label: 'Contact', placeholder: 'Pauline de Breteuil' }, { id: 'email', label: 'E-mail', type: 'email' }], valider: 'Créer et générer le jeton',
+      { id: 'nom', label: 'Nom', requis: true, placeholder: 'Domaine des Tilleuls' }, { id: 'slug', label: 'Identifiant (URL)', requis: true, placeholder: 'tilleuls', aide: 'Lettres, chiffres, tirets : /clients/<identifiant>/' },
+      { id: 'contact', label: 'Contact', placeholder: 'Claire Martin' }, { id: 'email', label: 'E-mail', type: 'email' }], valider: 'Créer et générer le jeton',
       action: async function (v) {
         var r = await api('/admin/clients', { method: 'POST', body: { slug: slugify(v.slug), nom: v.nom, contact: v.contact, email: v.email } });
         if (r && r.token) await montrerJeton(v.nom, r.token);

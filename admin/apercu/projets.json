@@ -2,18 +2,18 @@
  "ok": true,
  "projets": [
   {
-   "id": "breteuil-migration",
-   "client_id": "breteuil",
+   "id": "tilleuls-migration",
+   "client_id": "tilleuls",
    "client": {
-    "id": "breteuil",
-    "slug": "breteuil",
-    "nom": "Château de Breteuil",
-    "contact": "Pauline de Breteuil",
-    "email": "finance@breteuil.fr"
+    "id": "tilleuls",
+    "slug": "tilleuls",
+    "nom": "Domaine des Tilleuls",
+    "contact": "Claire Martin",
+    "email": "contact@domaine-tilleuls.example"
    },
    "titre": "Migration de la messagerie et prise en main",
    "statut": "en_cours",
-   "resume": "17 boîtes migrées d’O2Switch vers Microsoft 365 le 10 septembre. Prise en main des équipes, OneDrive, agendas, puis passation à François. Reprise du site web en discussion.",
+   "resume": "Données de démonstration fictives : 12 boîtes migrées vers Microsoft 365, prise en main des équipes, OneDrive, agendas, puis passation. Reprise du site web en discussion.",
    "cree": "2026-06-12",
    "maj": "2026-10-11",
    "compteurs": {
