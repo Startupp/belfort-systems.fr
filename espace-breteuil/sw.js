@@ -1,34 +1,35 @@
-/* Espace Breteuil — service worker (portée /espace-breteuil/).
- * - Coquille de l'appli mise en cache à l'installation : l'appli s'ouvre hors ligne.
- * - Pages et fichiers JSON : réseau d'abord, cache en secours.
- * - Autres fichiers (CSS, JS, icônes, polices) : cache d'abord, rafraîchi en arrière-plan.
- * Le planning (autre domaine : le Worker) est mis en cache par l'appli elle-même
- * dans le cache « eb-planning », que ce service worker ne supprime jamais.
+/* Espace Breteuil — service worker.
+ * - Le numéro de version vient de version.js : le changer = nouvelle version publiée.
+ * - Une nouvelle version s'installe en arrière-plan puis ATTEND : l'appli affiche
+ *   « Nouvelle version disponible — Mettre à jour » (message SKIP_WAITING), ou
+ *   l'active d'elle-même au lancement suivant (voir app.js).
+ * - Coquille en cache : l'appli s'ouvre hors ligne.
+ * - Pages, JSON, ICS : réseau d'abord, cache en secours. Le reste : cache d'abord.
+ * Le planning (autre domaine : le Worker) est gardé par l'appli dans « eb-planning ».
+ * Chemins relatifs : fonctionne sous /espace-breteuil/ comme sur un sous-domaine.
  */
-var VERSION = "eb-v1";
+importScripts("version.js");
+var VERSION = "eb-v" + (self.EB_VERSION || "0");
 var COQUILLE = [
-  "./",
-  "./index.html",
-  "./app.css",
-  "./app.js",
-  "./ics.js",
-  "./personnes.json",
-  "./fiches.json",
-  "./exemple.ics",
-  "./manifest.webmanifest",
-  "./icones/icon-192.png",
-  "./icones/icon.svg",
-  "/assets/config.js",
-  "/assets/fonts/archivo-latin-400-normal.woff2",
-  "/assets/fonts/archivo-latin-600-normal.woff2",
-  "/assets/fonts/archivo-latin-700-normal.woff2",
-  "/assets/fonts/spectral-latin-600-normal.woff2",
+  "./", "./index.html", "./app.css", "./prechargement.js", "./version.js", "./config.js",
+  "./ics.js", "./demo.js", "./graph.js", "./app.js", "./ecrans-gestion.js",
+  "./personnes.json", "./fiches.json", "./exemple.ics", "./manifest.webmanifest",
+  "./icones/icon-192.png", "./icones/icon.svg",
+  "./polices/archivo-latin-400-normal.woff2", "./polices/archivo-latin-600-normal.woff2",
+  "./polices/archivo-latin-700-normal.woff2", "./polices/spectral-latin-600-normal.woff2",
 ];
+var PORTEE = new URL("./", self.location).pathname;
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) {
     return Promise.allSettled(COQUILLE.map(function (u) { return c.add(new Request(u, { cache: "reload" })); }));
-  }).then(function () { return self.skipWaiting(); }));
+  }));
+  // Pas de skipWaiting ici : c'est l'appli qui décide du bon moment.
+});
+
+self.addEventListener("message", function (e) {
+  if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
+  if (e.data && e.data.type === "VERSION" && e.ports && e.ports[0]) e.ports[0].postMessage(self.EB_VERSION);
 });
 
 self.addEventListener("activate", function (e) {
@@ -50,12 +51,10 @@ self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
   var url = new URL(req.url);
-  if (url.origin !== location.origin) return;
-  var dansAppli = url.pathname.indexOf("/espace-breteuil/") === 0;
-  var partage = url.pathname.indexOf("/assets/") === 0;
-  if (!dansAppli && !partage) return;
+  if (url.origin !== location.origin || url.pathname.indexOf(PORTEE) !== 0) return;
+  if (/\/(sw|version)\.js$/.test(url.pathname)) return; // toujours le réseau
 
-  var reseauDabord = req.mode === "navigate" || /\.(json|ics|webmanifest)$/.test(url.pathname) || url.pathname.endsWith("/");
+  var reseauDabord = req.mode === "navigate" || /\.(json|ics|webmanifest)$/.test(url.pathname) || /\/(config)\.js$/.test(url.pathname) || url.pathname.endsWith("/");
   if (reseauDabord) {
     e.respondWith(fetch(req).then(function (r) { return mettreEnCache(req, r); }).catch(function () {
       return caches.match(req, { ignoreSearch: true }).then(function (m) {
@@ -65,9 +64,8 @@ self.addEventListener("fetch", function (e) {
     return;
   }
 
-  e.respondWith(caches.match(req).then(function (m) {
-    var reseau = fetch(req).then(function (r) { return mettreEnCache(req, r); });
-    if (m) { e.waitUntil(reseau.catch(function () {})); return m; }
-    return reseau;
+  // Cache de CETTE version d'abord (cohérence des fichiers), puis réseau.
+  e.respondWith(caches.open(VERSION).then(function (c) { return c.match(req); }).then(function (m) {
+    return m || fetch(req).then(function (r) { return mettreEnCache(req, r); });
   }));
 });
