@@ -62,6 +62,11 @@ function reponses(nomProfil, variante) {
       { id: "r1", displayName: "Global Administrator", roleTemplateId: GA, members: [{ "@odata.type": "#microsoft.graph.user", id: "u2", displayName: "François de Breteuil", mail: "fdebreteuil@breteuil.fr" }, { "@odata.type": "#microsoft.graph.user", id: "u6", displayName: "Damien Belfort", userPrincipalName: "damien@breteuil02.onmicrosoft.com" }] },
       { id: "r2", displayName: "Billing Administrator", roleTemplateId: BILLING, members: [{ "@odata.type": "#microsoft.graph.user", id: "u3", displayName: "Valérie Durand", mail: "vdurand@breteuil.fr" }] }] },
     "/v1.0/users/fmartin@breteuil.fr": { id: "u4", displayName: "Fanny Martin" },
+    "/v1.0/me/drive": { id: "od1", webUrl: "https://breteuil02-my.sharepoint.com/personal/x" },
+    "/v1.0/me/drive/recent": { value: [
+      { id: "rf1", name: "Menu de Noël.docx", file: {}, webUrl: "https://breteuil02.sharepoint.com/Menu.docx", lastModifiedDateTime: "2026-10-16T10:00:00Z", remoteItem: { id: "rf1", parentReference: { driveId: "drive1" } } },
+      { id: "rf2", name: "Budget 2027.xlsx", file: {}, webUrl: "https://breteuil02-my.sharepoint.com/Budget.xlsx", lastModifiedDateTime: "2026-10-15T10:00:00Z", remoteItem: { id: "rf2", parentReference: { driveId: "od1" } } }] },
+    "/v1.0/me/drive/root/children": { value: [{ id: "o1", name: "Notes", folder: { childCount: 2 } }, { id: "o2", name: "Photo façade.jpg", file: {}, webUrl: "https://breteuil02-my.sharepoint.com/p.jpg", parentReference: { driveId: "od1" } }] },
     "/v1.0/sites/breteuil02.sharepoint.com:/sites/ChateaudeBreteuil": { id: "site1", displayName: "Château de Breteuil", webUrl: "https://breteuil02.sharepoint.com/sites/ChateaudeBreteuil" },
     "/v1.0/sites/site1/drive": { id: "drive1", name: "Documents" },
     "/v1.0/drives/drive1/list": { id: "list1" },
@@ -93,7 +98,9 @@ async function preparer(contexte, nomProfil, opts = {}) {
       const req = route.request(), url = new URL(req.url()), chemin = decodeURIComponent(url.pathname);
       if (/\/photos\//.test(url.pathname)) return route.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "image/png" }, body: PNG });
       if (req.method() !== "GET") {
-        journal.push({ methode: req.method(), chemin, corps: req.postData() });
+        journal.push({ methode: req.method(), chemin, corps: req.method() === "PUT" ? null : req.postData() });
+        if (/\/createLink$/.test(chemin)) return route.fulfill({ status: 200, headers: CORS, body: JSON.stringify({ link: { webUrl: "https://breteuil02.sharepoint.com/:w:/s/lien-interne" } }) });
+        if (req.method() === "PUT") return route.fulfill({ status: 201, headers: CORS, body: JSON.stringify({ id: "nouveau", name: "x" }) });
         return route.fulfill({ status: req.method() === "POST" ? 201 : 204, headers: CORS, body: req.method() === "POST" ? JSON.stringify({ id: "ra-nouveau" }) : "" });
       }
       const v = r[chemin];
@@ -182,10 +189,12 @@ try {
         await controlesCommuns(page, `${nom} ${onglet} ${taille}`);
         await capturer(page, `${nom}-${onglet}-${taille}`);
       }
-      // Dossiers : « Qui a accès ? » seulement avec ManagePermissions.
-      await page.goto(BASE + "#/dossiers");
-      await page.waitForSelector(".tuiles");
-      const quiAcces = await page.$$eval(".tuiles a", (l) => l.some((a) => /Qui a accès/.test(a.textContent)));
+      // Fichiers : 3 sections ; « Qui a accès ? » seulement avec ManagePermissions.
+      await page.goto(BASE + "#/fichiers");
+      await page.waitForSelector('[data-fichier="Menu de Noël.docx"]');
+      await page.waitForSelector('#t-commun ~ div .tuiles, .section-fichiers .tuiles');
+      assert.deepEqual(await page.$$eval(".section-fichiers h2", (l) => l.map((x) => x.textContent)), ["Récents", "Mes fichiers", "Dossier commun"]);
+      const quiAcces = !!(await page.$('a[href^="#/acces"]'));
       assert.equal(quiAcces, nom === "proprietaire" || nom === "admin", `${nom} : « Qui a accès » selon le droit réel`);
       for (const route of p.interdits) {
         await page.goto(BASE + "#/" + route);
@@ -195,6 +204,41 @@ try {
         await page.goto(BASE + "#/" + route);
         await page.waitForTimeout(300);
         if ((await page.evaluate(() => location.hash)) !== "#/" + route) problemes.push(`${nom} : #/${route} aurait dû être permis`);
+      }
+      if (nom === "collaborateur") {
+        // Fichiers : lien de partage interne, ouverture dans Office, téléversement.
+        await page.goto(BASE + "#/fichiers");
+        await page.click('[data-fichier="Menu de Noël.docx"]');
+        assert.ok(await page.isVisible('dialog .choix:has-text("Ouvrir dans Word")'), "ouvrir dans Office");
+        await page.click('dialog .choix:has-text("Copier un lien de partage")');
+        await page.waitForFunction(() => /Lien copié|Sélectionnez/.test((document.getElementById("toast")?.textContent || "") + (document.querySelector("dialog[open]")?.textContent || "")));
+        const lien = journal.find((x) => x.methode === "POST" && /\/createLink$/.test(x.chemin));
+        assert.ok(lien, "createLink envoyé"); assert.deepEqual(JSON.parse(lien.corps), { type: "view", scope: "organization" });
+        await page.keyboard.press("Escape");
+        const [choixFichier] = await Promise.all([page.waitForEvent("filechooser"), page.click('[data-action="televerser-moi"]')]);
+        await choixFichier.setFiles({ name: "Compte rendu.txt", mimeType: "text/plain", buffer: Buffer.from("bonjour") });
+        await page.click('dialog button:has-text("Oui, téléverser")');
+        await page.waitForFunction(() => /téléversé/.test(document.getElementById("toast")?.textContent || ""));
+        assert.ok(journal.some((x) => x.methode === "PUT" && x.chemin === "/v1.0/drives/od1/root:/Compte rendu.txt:/content"), "PUT de téléversement");
+        await capturer(page, `collaborateur-fichiers-televerse-${taille}`);
+        // Épingles : boîte partagée → Outlook web, ordre au clavier, retrait.
+        await page.goto(BASE + "#/planning");
+        await page.click('[data-action="epingler"]');
+        await page.click('dialog .choix:has-text("contact@breteuil.fr")');
+        await page.click('[data-action="epingler"]');
+        await page.click('dialog .choix:has-text("finance@breteuil.fr")');
+        let ep = await page.evaluate(() => window.EBEpingles.lire());
+        assert.deepEqual(ep.map((e) => e.url), ["https://outlook.office.com/mail/contact%40breteuil.fr/", "https://outlook.office.com/mail/finance%40breteuil.fr/"]);
+        await page.focus('[data-epingle="https://outlook.office.com/mail/finance%40breteuil.fr/"]');
+        await page.keyboard.press("Alt+ArrowLeft");
+        ep = await page.evaluate(() => window.EBEpingles.lire());
+        assert.equal(ep[0].adresse, "finance@breteuil.fr", "réordonner");
+        await capturer(page, `collaborateur-epingles-${taille}`);
+        await page.focus('[data-epingle="https://outlook.office.com/mail/contact%40breteuil.fr/"]');
+        await page.keyboard.press("Delete");
+        await page.click('dialog button:has-text("Oui, retirer")');
+        assert.equal((await page.evaluate(() => window.EBEpingles.lire())).length, 1, "retirer");
+        assert.ok(!journal.some((x) => /mail|messages|sendMail/i.test(x.chemin)), "aucun appel de messagerie");
       }
       if (nom === "admin") {
         await page.goto(BASE + "#/deleguer");
@@ -223,9 +267,11 @@ try {
     }
 
     /* ---------- Problème réel : dossier commun introuvable ---------- */
+    // (voir plus bas)
+
     {
       const { contexte, page, erreurs } = await nouvellePage(vp, "collaborateur", { variante: "commun-introuvable" });
-      await page.goto(BASE + "#/dossiers");
+      await page.goto(BASE + "#/fichiers");
       await page.waitForSelector(".pastille-etat.orange", { timeout: 8000 });
       await page.waitForSelector('.zone-alerte .bandeau.erreur:has-text("Le dossier commun est introuvable")');
       await capturer(page, `probleme-commun-introuvable-${taille}`);
@@ -235,9 +281,28 @@ try {
       await contexte.close();
     }
   }
+  /* ---------- Calendrier « ajuster à l'écran » : la semaine tient en entier ---------- */
+  for (const w of [320, 375, 414, 768, 1280]) {
+    const { contexte, page, erreurs } = await nouvellePage({ width: w, height: 800 }, null);
+    await page.goto(BASE);
+    await page.click('[data-action="calendrier"]');
+    await page.waitForSelector(".zone-planning.ajuster .semaine .jour-boite");
+    const m = await page.evaluate(() => { const j = [...document.querySelectorAll(".semaine .jour-boite")];
+      return { lignes: new Set(j.map((x) => Math.round(x.getBoundingClientRect().top))).size, droite: Math.max(...j.map((x) => x.getBoundingClientRect().right)), page: document.documentElement.scrollWidth }; });
+    if (m.lignes !== 1 || m.droite > w || m.page > w + 1) problemes.push(`semaine ${w} px : ne tient pas (${JSON.stringify(m)})`);
+    await capturer(page, `calendrier-semaine-${w}`);
+    await page.click('[data-zoom="plus"]');
+    const z = await page.evaluate(() => ({ page: document.documentElement.scrollWidth, interne: document.querySelector(".zone-planning").scrollWidth > document.querySelector(".zone-planning").clientWidth }));
+    if (z.page > w + 1) problemes.push(`zoom + ${w} px : la page défile`);
+    if (w < 1280 && !z.interne) problemes.push(`zoom + ${w} px : la grille devrait défiler`);
+    await page.click('[data-zoom="ajuster"]');
+    await page.waitForSelector(".zone-planning.ajuster");
+    if (erreurs.length) problemes.push(`calendrier ${w} : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
+  }
 } finally {
   await navigateur.close();
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 4 profils + problème réel, à 375 et 1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 4 profils + Fichiers + épingles + problème réel (375 et 1280 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);

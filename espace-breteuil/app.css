@@ -760,7 +760,6 @@ button.action { width: 100%; font: inherit; color: inherit; text-align: left; cu
 .t .ico.c-lavande { background: var(--c-lavande-f); color: var(--c-lavande); }
 .t .ico.c-corail { background: var(--c-corail-f); color: var(--c-corail); }
 .t .ico { box-shadow: inset 0 -2px 0 rgba(201,160,74,.35); } /* liseré doré discret */
-.onglets a.actif svg.ic { color: var(--primaire); }
 .onglets a.actif { box-shadow: inset 0 -3px 0 var(--or); }
 
 /* ---------------------------------------------------------------- */
@@ -821,7 +820,7 @@ button.fichier, a.fichier { display: flex; align-items: center; gap: 10px; width
   border: 1px solid var(--trait); background: var(--surface); color: var(--texte); font: inherit; text-align: left; cursor: pointer; text-decoration: none; }
 button.fichier > span:not(.emoji):not(.fleche) { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 button.fichier small { display: block; color: var(--texte-2); font-size: .8rem; }
-button.fichier .fleche { color: var(--texte-3); font-size: 1.3rem; }
+button.fichier .fleche, .fichier > span.fleche { flex: none; margin-left: auto; color: var(--texte-3); font-size: 1.3rem; }
 button.fichier:hover { border-color: var(--primaire); }
 .lien-discret a { color: var(--texte-2); display: inline-flex; min-height: 44px; align-items: center; }
 
