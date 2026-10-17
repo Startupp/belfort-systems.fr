@@ -5,7 +5,7 @@
 > 2. Entra : inscription SPA + permissions + consentement (§ 2 et 3).
 > 3. Entra : **affectation requise** → Pauline, François, Damien (§ 3).
 > 4. GitHub, dans le navigateur : coller le `clientId` dans `config.js` (§ 2.6).
-> 5. Ouvrir l'appli → **Réglages → Vérifier la connexion** (§ 6). Tout doit être vert.
+> 5. Ouvrir l'appli → **Plus → Vérifier la connexion** (§ 6). Tout doit être vert.
 >    Sinon : « Copier le rapport » et le coller dans un message.
 > 6. Seulement ensuite, le test avec Pauline (§ 7).
 
@@ -204,7 +204,7 @@ fonctionne.
 
 Avant tout test « pour de vrai », sur la Surface puis sur le téléphone :
 
-1. Ouvrir `https://espace-breteuil.pages.dev/` → **Réglages** → **Vérifier la connexion**
+1. Ouvrir `https://espace-breteuil.pages.dev/` → onglet **Plus** → **Vérifier la connexion**
    (l'écran s'ouvre aussi tout seul juste après la toute première connexion).
 2. **Se connecter avec Microsoft**. Sur ordinateur, une petite fenêtre s'ouvre ; si le
    navigateur la bloque, l'appli passe par une redirection. Sur iPhone avec l'appli
@@ -266,7 +266,7 @@ ou l'appli installée reste ouvert**, sans se reconnecter à chaque écran.
 
 Sur son téléphone, dans Safari ou Chrome :
 
-- [ ] Ouvrir `https://espace-breteuil.pages.dev/`, puis onglet **Château** →
+- [ ] Ouvrir `https://espace-breteuil.pages.dev/`, puis onglet **Dossiers** →
       **Se connecter avec Microsoft** → `pdebreteuil@breteuil.fr` (+ 2ᵉ facteur s'il est
       actif). Retour dans l'appli, « Connecté à Microsoft ».
 - [ ] **Le dossier commun** : les dossiers de « Commun » apparaissent en grosses tuiles,
@@ -327,5 +327,5 @@ sur localhost uniquement), à 375 px et 1280 px, en thème sombre et en très gr
 `NODE_PATH=$(npm root -g) node espace-breteuil/tests/diagnostic.playwright.mjs`.
 
 En cas d'erreur, l'appli affiche un message simple, l'action à faire et le détail technique
-en petit : ouvrir **Réglages → Vérifier la connexion → Copier le rapport** et l'envoyer à
+en petit : ouvrir **Plus → Vérifier la connexion → Copier le rapport** et l'envoyer à
 Damien.

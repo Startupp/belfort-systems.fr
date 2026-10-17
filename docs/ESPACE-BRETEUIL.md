@@ -1,12 +1,33 @@
-# Espace Breteuil — application (V2)
+# Espace Breteuil — application (V3)
 
 Application installable (PWA) pour l'équipe du Château de Breteuil, **sur mobile
 d'abord**. Elle s'adresse à des personnes qui ne sont pas du tout techniques :
 
-- gros boutons ;
-- un pictogramme et une phrase par action ;
-- une barre d'onglets en bas de l'écran ;
+- des écrans courts, séparés (pas une longue page) ;
+- de petites tuiles (icône + libellé court), mais des cibles tactiles d'au moins 44 px ;
+- une barre de 5 onglets en bas de l'écran et un en-tête bleu avec bouton retour ;
 - une confirmation en 2 étapes avant chaque changement.
+
+## Navigation (v3)
+
+**Une fonction = un seul endroit.** Chaque écran tient autant que possible sur un écran de
+téléphone. Couleurs : variables CSS en tête de `app.css` (bleu profond, clair et sombre, AA).
+
+| Onglet | Contenu |
+|---|---|
+| **Accueil** `#/` | « Aujourd'hui au Château » (absents, congés, télétravail, permanence, 4 rendez-vous du jour) et « Mon espace » (une tuile par personne → raccourcis, boîtes partagées, mon planning 7 jours) |
+| **Planning** `#/planning` | Jour / Semaine / Mois / Liste ; changer de vue ne redessine que le planning |
+| **Dossiers** `#/dossiers` | Connexion Microsoft, puis Dossier commun, Qui a accès, Ce que j'ai fait |
+| **Équipe** `#/equipe` | Annuaire Microsoft (Personnes, Licences, Qui a quoi) et Gestion du Château en démo (Absences, Arrivée, Départ, Rôles, Boîtes mail, Double auth., Historique, Guides) |
+| **Plus** `#/plus` | Finance (code), Réglages (dont compte Microsoft et déconnexion), Vérifier la connexion, Installer, Appeler Damien |
+
+Anciennes adresses redirigées : `#/aujourdhui` → Accueil, `#/gestion` → Équipe,
+`#/monchateau` → Dossiers. Transitions : glissement de 200 ms quand on descend ou remonte dans
+un onglet, fondu de 160 ms entre onglets, rien si « réduire les animations » est activé.
+
+Vérification automatique : `tests/navigation.playwright.mjs` (375 et 1280 px, clair et sombre :
+pas de défilement horizontal, aucune erreur console, pas de doublon entre écrans d'onglet,
+cibles ≥ 44 px, transitions).
 
 Adresses :
 
@@ -49,8 +70,12 @@ espace-breteuil/            ← autonome : peut être servi tel quel sur un autr
   prechargement.js          thème et taille du texte avant le 1er affichage
   version.js                NUMÉRO DE VERSION (à incrémenter à chaque publication)
   config.js                 Worker, calendriers, connexion Microsoft, site SharePoint (aucun secret)
-  app.js                    cœur : planning, Aujourd'hui, accueil, réglages, onglets, mises à jour
-  connecte.js               écrans connectés (dossier commun, accès, personnes, organisation)
+  app.js                    cœur : accueil (Aujourd'hui), planning, Mon espace, Équipe, Plus, Finance,
+                            réglages, onglets, transitions, mises à jour
+  diagnostic.js/.css        « Vérifier la connexion » (onglet Plus)
+  erreurs.js                erreurs Microsoft en français simple (testé)
+  demos/                    écrans de démo (rôles, arrivée/départ, absences, boîtes, Finance, double auth.)
+  connecte.js               onglet Dossiers et écrans connectés (dossier commun, accès, personnes, organisation)
   graph.js                  MSAL (jetons en mémoire), Graph, REST SharePoint, mode maquette local
   droits.js                 traduction en clair : niveaux, Externe, licences, garde-fous (testé)
   resume.js                 « Aujourd'hui au Château » : lecture des titres de l'accueil (testé)
@@ -135,7 +160,7 @@ Vérification :
 ## Mises à jour : publier une nouvelle version
 
 1. Modifier les fichiers de `espace-breteuil/`.
-2. **Incrémenter `espace-breteuil/version.js`** (par exemple `2.0.0` → `2.0.1`).
+2. **Incrémenter `espace-breteuil/version.js`** (par exemple `3.0.0` → `3.0.1`).
    C'est obligatoire : c'est ce changement que le service worker détecte.
 3. Si un **nouveau fichier** est ajouté, l'ajouter aussi à la liste `COQUILLE` de `sw.js`
    (fonctionnement hors ligne).
@@ -149,7 +174,7 @@ Côté utilisateurs :
   disponible — Mettre à jour » (un toucher = rechargement) ;
 - une version prête **au lancement** s'installe d'elle-même, sauf si l'utilisateur est en
   train de saisir quelque chose ;
-- le numéro est visible dans **Réglages** (bouton « Rechercher une mise à jour »).
+- le numéro est visible dans **Plus → Réglages** (bouton « Rechercher une mise à jour »).
 
 
 ## Éditer `personnes.json`
@@ -225,7 +250,7 @@ marche avec les réglages par défaut) :
 
 ## Mode « calendrier seul »
 
-**Réglages → Mode « calendrier seul » → Activé.** Ensuite, chaque ouverture affiche
+**Plus → Réglages → Mode « calendrier seul » → Activé.** Ensuite, chaque ouverture affiche
 directement le planning en plein écran, avec seulement le choix de la vue, les flèches et
 « Aujourd'hui ». Le petit lien « Revenir à l'appli complète », en bas, désactive ce mode
 après une confirmation. *(Le pointage des présences a été retiré à la demande de Damien.)*
@@ -267,12 +292,12 @@ audience, rôle), journalise dans D1 et n'ouvre **aucune** écriture publique no
 authentifiée.
 
 
-## Écrans de démo (Gestion du Château et Finance)
+## Écrans de démo (onglet Équipe et espace Finance)
 
 Les anciennes tuiles « Bientôt » ouvrent maintenant de vrais écrans, **tous en démo** : données
 fictives (prénoms de l'équipe), bandeau « Démo — données fictives » sur chaque écran, confirmation
 en 2 étapes pour toute modification, chaque changement noté dans l'**Historique**. Tout reste sur
-l'appareil (`localStorage` « eb:demos ») ; « Réglages → Remettre la démo à zéro » l'efface aussi.
+l'appareil (`localStorage` « eb:demos ») ; « Plus → Réglages → Remettre la démo à zéro » l'efface aussi.
 Point de départ : 12 licences (6 Formule Complète = Business Standard à 11,70 € HT, 6 Formule
 Express + Teams = Business Basic à 5,60 € HT, soit 103,80 € HT par mois — prix indicatifs) et
 8 boîtes partagées (contact, finance, restauration, marketing, jardins, intendance, HFB, Chanteclerc).
@@ -335,8 +360,8 @@ branchements : tuiles de `ecranGestion` / `ecranFinance`, un appel dans `ecranRe
 
 ### 5. Double authentification — `#/securite`, `#/securite/guide/1…4`, `/sms`
 
-- **Démo** : désactivée par défaut ; l'administrateur l'active dans **Réglages → Sécurité**
-  (visible seulement si « Gestion du Château » est ouverte sur l'appareil). Ensuite : tableau
+- **Démo** : désactivée par défaut ; l'administrateur l'active dans l'écran lui-même
+  (**Équipe → Double auth.**, code « Gestion » demandé). Ensuite : tableau
   de suivi pour François (anneau « 4 / 11 protégés », état de chacun, « Envoyer un rappel »,
   « Relancer tous ») et lien « Sécuriser mon compte » dans « Mon espace ». Guide pas à pas
   (installer Microsoft Authenticator, scanner le QR code, tester) avec alternative SMS ; liens
@@ -359,17 +384,18 @@ Version connectée : voir la checklist de [ESPACE-BRETEUIL-CONNEXION.md](ESPACE-
 À la main (téléphone + ordinateur) :
 
 - [ ] Ouvrir l'appli : aucune demande de connexion. Barre d'onglets en bas (Accueil,
-      Aujourd'hui, Planning, Château, Réglages).
+      Planning, Dossiers, Équipe, Plus), en-tête bleu avec bouton retour.
 - [ ] Installer sur l'écran d'accueil (iPhone, Android, ordinateur).
-- [ ] « Aujourd'hui au Château » : absents, congés et télétravail avec les visages,
+- [ ] Accueil, « Aujourd'hui au Château » : absents, congés et télétravail avec les visages,
       rendez-vous du jour, couleurs par calendrier.
 - [ ] Planning : Jour / Semaine / Mois / Liste, « Aujourd'hui », détail d'un rendez-vous.
 - [ ] Mode avion : dernière version enregistrée, bandeau « Pas de connexion ».
-- [ ] Réglages : texte très grand, thème sombre, mode calendrier seul (activer, rouvrir
+- [ ] Plus → Réglages : texte très grand, thème sombre, mode calendrier seul (activer, rouvrir
       l'appli, revenir).
 - [ ] Mise à jour : changer `version.js`, publier, rouvrir l'appli → nouvelle version
       active ; appli ouverte pendant la publication → bandeau « Mettre à jour ».
-- [ ] Largeur 375 px : pas de défilement horizontal, boutons ≥ 44 px.
+- [ ] Largeur 375 px : pas de défilement horizontal, boutons ≥ 44 px
+      (automatique : `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node espace-breteuil/tests/navigation.playwright.mjs`).
 - [ ] Écrans de démo : rôles (retirer / donner), arrivée complète, départ complet, absence
       déclarée puis retirée, photo d'une boîte partagée (appareil photo et galerie), simulateur,
-      exemple PDF, activation de la double authentification dans Réglages puis rappel.
+      exemple PDF, activation de la double authentification (Équipe → Double auth.) puis rappel.
