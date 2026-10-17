@@ -1,7 +1,7 @@
 /*
  * Espace Breteuil — écrans CONNECTÉS (vraies données Microsoft, droits de la personne connectée).
  *
- *   #/monchateau              accueil connecté (ou bouton « Se connecter »)
+ *   #/dossiers                onglet Dossiers : accueil connecté (ou bouton « Se connecter »)
  *   #/commun[/chemin…]        dossier commun : grosses tuiles, fil d'Ariane, créer, renommer, déplacer
  *   #/acces/chemin…           qui a accès (bibliothèque : #/acces/~racine) + gérer les accès
  *   #/restreindre/chemin…     « Partager uniquement avec… »
@@ -129,11 +129,14 @@
   /* ------------------------------------------------------------------ */
   function demarrerEcran() { return ++generation; }
   function toujoursLa(gen, el) { return gen === generation && document.body.contains(el); }
-  function chargement(texte) { return h("p", { class: "chargement" }, texte || "Chargement…"); }
+  /** Squelette pendant les appels Microsoft (plutôt qu'un simple « Chargement… »). */
+  function chargement(n, forme) { return EB.squelette(n || 4, forme); }
   function blocErreur(e, reessayer) {
     return h("div", { class: "bandeau erreur", role: "alert" }, icone("exemple"), h("div", null,
       h("strong", null, (e && e.message) || "Une erreur est survenue."),
+      e && e.action ? h("span", null, e.action) : null,
       e && e.detail ? h("small", { class: "detail-technique" }, e.detail) : null,
+      e && (e.statut === 401 || e.statut === 403 || e.cors) ? h("a", { class: "btn petit secondaire", href: "#/verifier" }, "Vérifier la connexion") : null,
       reessayer ? h("div", { class: "actions" }, h("button", { class: "btn secondaire", type: "button", onclick: reessayer }, icone("actualiser"), "Réessayer")) : null));
   }
   /** Étiquette (« Externe » en gras) ; au toucher ou au survol, une phrase d'explication. */
@@ -156,13 +159,13 @@
     if (id) photo(id).then(function (url) { if (url) { el.textContent = ""; el.appendChild(h("img", { src: url, alt: "" })); } });
     return el;
   }
-  var PALETTE = ["#6B1524", "#1D6B52", "#2E5A8A", "#7A3E8E", "#8A4B00", "#35601A", "#3A6EA5", "#8A2B3B"];
+  var PALETTE = ["#1F4BA8", "#1D6B52", "#2E5A8A", "#7A3E8E", "#8A4B00", "#35601A", "#3A6EA5", "#8A2B3B"];
   function couleurDe(s) { var n = 0; String(s || "").split("").forEach(function (c) { n = (n * 31 + c.charCodeAt(0)) >>> 0; }); return PALETTE[n % PALETTE.length]; }
 
   /** Écran réservé : connexion Microsoft nécessaire. Renvoie vrai si connecté. */
   function exigerConnexion(app, titre, retour) {
     if (G.estConnecte()) return true;
-    app.appendChild(EB.barre(titre, retour || { href: "#/monchateau", texte: "Retour" }));
+    app.appendChild(EB.barre(titre, retour || { href: "#/dossiers", texte: "Dossiers" }));
     app.appendChild(panneauConnexion());
     return false;
   }
@@ -170,44 +173,32 @@
     if (!G.estConfigure()) {
       return h("div", { class: "boite centre" }, emoji("🔌", "grand"),
         h("h2", null, "Connexion pas encore activée"),
-        h("p", null, "Damien doit d'abord déclarer l'appli chez Microsoft (une seule fois). En attendant, vous pouvez explorer l'exemple."),
-        h("a", { class: "btn large", href: "#/organisation" }, emoji("💡"), "Voir l'exemple « Comprendre l'organisation »"));
+        h("p", null, "Damien doit d'abord déclarer l'appli chez Microsoft (une seule fois). En attendant, l'exemple « Organisation » est dans l'onglet Équipe."));
     }
     return h("div", { class: "boite centre microsoft" }, emoji("🔐", "grand"),
       h("h2", null, "Connectez-vous"),
       h("p", null, "Avec votre adresse du Château (par exemple pdebreteuil@breteuil.fr). L'appli agit uniquement avec vos droits Microsoft."),
       G.erreur() ? h("p", { class: "erreur" }, G.erreur()) : null,
       h("button", { class: "btn large", type: "button", onclick: function () { G.connecter(); } }, emoji("🔐"), "Se connecter avec Microsoft"),
-      h("p", { class: "petit" }, "Rien n'est enregistré sur ce téléphone : il faudra vous reconnecter à la prochaine ouverture."));
+      G.erreur() ? h("a", { class: "btn secondaire large", href: "#/verifier" }, emoji("🩺"), "Vérifier la connexion") : null,
+      h("p", { class: "petit" }, "Vous restez connecté tant que l'appli (ou l'onglet) reste ouverte. En la fermant, tout est effacé de ce téléphone."));
   }
 
   /* ------------------------------------------------------------------ */
-  /* #/monchateau                                                        */
+  /* #/dossiers (onglet Dossiers)                                        */
   /* ------------------------------------------------------------------ */
-  function ecranMonChateau(app) {
-    app.appendChild(EB.barre("Mon Château", null));
-    if (!G.estConnecte()) {
-      app.appendChild(panneauConnexion());
-      app.appendChild(h("section", { class: "section" }, h("div", { class: "actions-liste" },
-        EB.action("#/organisation", "💡", "Comprendre l'organisation", "Qui a quoi, en un schéma (exemple)."),
-        EB.action("#/gestion", "🏰", "Gestion du Château (démo)", "Les écrans de démonstration, données fictives."))));
-      return;
-    }
+  function ecranDossiers(app) {
+    app.appendChild(EB.barre("Dossiers", null));
+    if (!G.estConnecte()) { app.appendChild(panneauConnexion()); return; }
     var c = G.compte() || {};
-    app.appendChild(h("div", { class: "bonjour" }, h("span", { class: "avatar grand", style: { background: "#6B1524" } }, EB.initiales(c.name || "?")),
-      h("div", null, h("h2", null, "Bonjour " + String(c.name || "").split(" ")[0]), h("p", null, c.username || ""))));
-    app.appendChild(h("p", { class: "pastille-demo reel" }, icone("coche"), "Connecté à Microsoft — vous agissez avec vos droits"));
-    app.appendChild(h("div", { class: "actions-liste" },
-      EB.action("#/commun", "🗂️", "Le dossier commun", "Voir, créer et ranger les dossiers de l'équipe."),
-      EB.action("#/acces/" + encodeURIComponent(nomCommun()), "🔐", "Qui a accès au dossier commun", "Voir et changer qui peut voir ou modifier."),
-      EB.action("#/personnes", "👥", "Les personnes", "L'équipe, les boîtes partagées, les externes."),
-      EB.action("#/licences-reel", "🎫", "Les licences", "Les 2 licences du Château expliquées."),
-      EB.action("#/organisation", "💡", "Comprendre l'organisation", "Le schéma de qui a quoi."),
-      EB.action("#/journal", "🕘", "Ce que j'ai fait", "Les changements faits depuis ce téléphone.")));
-    app.appendChild(h("div", { class: "actions" }, h("button", { class: "btn secondaire", type: "button", onclick: function () {
-      G.oublier(); ctx = null; promesseCtx = null; cacheUtilisateurs = null; EB.rendre();
-    } }, "Se déconnecter de l'appli")));
+    app.appendChild(h("p", { class: "pastille-demo reel" }, icone("coche"), "Connecté : " + (c.name || c.username || "") + " — vous agissez avec vos droits"));
+    app.appendChild(EB.tuiles([
+      { href: "#/commun", icone: "dossier", libelle: "Dossier commun", aide: "Voir, créer, renommer et ranger les dossiers de l'équipe" },
+      { href: "#/acces/" + encodeURIComponent(nomCommun()), icone: "cadenas", libelle: "Qui a accès", aide: "Voir et changer qui peut voir ou modifier le dossier commun" },
+      { href: "#/journal", icone: "horloge", libelle: "Ce que j'ai fait", aide: "Les changements faits depuis ce téléphone" },
+    ]));
   }
+  function oublier() { ctx = null; promesseCtx = null; cacheUtilisateurs = null; cachePhotos = {}; }
 
   /* ------------------------------------------------------------------ */
   /* #/commun : le dossier commun                                        */
@@ -241,10 +232,9 @@
     if (segs === null) { segs = [nomCommun()]; history.replaceState(null, "", hashChemin("commun", segs)); }
     var titre = segs.length ? segs[segs.length - 1] : "Documents";
     var gen = demarrerEcran();
-    app.appendChild(EB.barre(titre, { href: segs.length ? hashChemin("commun", segs.slice(0, -1)) : "#/monchateau", texte: "Retour" },
-      h("a", { class: "btn-rond", href: hashChemin("acces", segs), "aria-label": "Qui a accès", title: "Qui a accès" }, icone("cadenas"))));
+    app.appendChild(EB.barre(titre, { href: segs.length > 1 ? hashChemin("commun", segs.slice(0, -1)) : "#/dossiers", texte: segs.length > 1 ? "Retour" : "Dossiers" }));
     app.appendChild(filAriane(segs, "commun"));
-    var zone = h("div", null, chargement());
+    var zone = h("div", null, chargement(4, "tuiles"));
     app.appendChild(zone);
 
     contexte().then(function (c) {
@@ -421,7 +411,8 @@
     var d = EB.dialogue();
     var ok = h("button", { class: "btn large", type: "button", onclick: function () { EB.fermerDialogue(); EB.rendre(); } }, "Compris");
     d.appendChild(h("div", { class: "contenu centre" }, emoji("⚠️", "grand"), h("h2", { id: "detail-titre" }, "Ça n'a pas marché"),
-      h("p", { class: "phrase" }, e.message || "Erreur inconnue."), e.detail ? h("p", { class: "detail-technique" }, e.detail) : null, ok));
+      h("p", { class: "phrase" }, e.message || "Erreur inconnue."), e.action ? h("p", { class: "phrase" }, e.action) : null,
+      e.detail ? h("p", { class: "detail-technique" }, e.detail) : null, ok));
     EB.ouvrirDialogue(d, ok);
   }
 
@@ -733,9 +724,9 @@
   var filtrePersonnes = "tous";
   function ecranPersonnes(app, chemin) {
     if (chemin[1]) return fichePersonne(app, chemin[1]);
-    if (!exigerConnexion(app, "Les personnes")) return;
+    if (!exigerConnexion(app, "Personnes", { href: "#/equipe", texte: "Équipe" })) return;
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Les personnes", { href: "#/monchateau", texte: "Retour" }));
+    app.appendChild(EB.barre("Personnes", { href: "#/equipe", texte: "Équipe" }));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     utilisateurs().then(function (u) {
@@ -743,7 +734,12 @@
       zone.textContent = "";
       var FILTRES = [["tous", "Tous"], ["equipe", "L'équipe"], ["boite", "Boîtes partagées"], ["externe", "Externes"]];
       var seg = h("div", { class: "segments", role: "group", "aria-label": "Afficher", style: { "--n": "4" } });
-      FILTRES.forEach(function (f) { seg.appendChild(h("button", { type: "button", "aria-pressed": String(filtrePersonnes === f[0]), onclick: function () { filtrePersonnes = f[0]; EB.rendre(); } }, f[1])); });
+      // Filtre : seule la liste est redessinée (pas l'écran, pas de nouvel appel Microsoft).
+      FILTRES.forEach(function (f) { seg.appendChild(h("button", { type: "button", "aria-pressed": String(filtrePersonnes === f[0]), onclick: function () {
+        filtrePersonnes = f[0];
+        Array.prototype.forEach.call(seg.children, function (b, i) { b.setAttribute("aria-pressed", String(FILTRES[i][0] === f[0])); });
+        remplir();
+      } }, f[1])); });
       zone.appendChild(seg);
       var recherche = h("input", { class: "champ recherche", type: "search", placeholder: "Chercher…", "aria-label": "Chercher une personne" });
       zone.appendChild(recherche);
@@ -770,13 +766,11 @@
       recherche.addEventListener("input", remplir);
       remplir();
       zone.appendChild(liste);
-      zone.appendChild(h("div", { class: "actions-liste" },
-        EB.action("#/licences-reel", "🎫", "Voir les licences", "Les 2 licences du Château et combien chacune en a.")));
     }).catch(function (e) { if (toujoursLa(gen, zone)) { zone.textContent = ""; zone.appendChild(blocErreur(e, EB.rendre)); } });
   }
 
   function fichePersonne(app, id) {
-    if (!exigerConnexion(app, "Fiche")) return;
+    if (!exigerConnexion(app, "Fiche", { href: "#/equipe", texte: "Équipe" })) return;
     var gen = demarrerEcran();
     app.appendChild(EB.barre("Ce que je peux utiliser", { href: "#/personnes", texte: "Retour" }));
     var zone = h("div", null, chargement());
@@ -794,7 +788,6 @@
         h("div", { class: "tete" }, emoji(P.emoji, "grand"), h("div", null, h("b", null, P.nom), h("span", null, P.phrase))),
         h("ul", { class: "outils" }, P.outils.map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); }))));
       if (x.mail) zone.appendChild(h("p", { class: "aide-ecran" }, "Adresse : " + x.mail));
-      zone.appendChild(h("div", { class: "actions-liste" }, EB.action("#/licences-reel", "🎫", "Voir les licences", "Ce que permet chaque licence, et combien il en reste.")));
       if ((x.assignedLicenses || []).length) {
         var details = h("details", { class: "boite details" }, h("summary", null, "Détail technique des licences"), chargement());
         details.addEventListener("toggle", function () {
@@ -817,9 +810,9 @@
   /* #/licences-reel                                                     */
   /* ------------------------------------------------------------------ */
   function ecranLicences(app) {
-    if (!exigerConnexion(app, "Les licences")) return;
+    if (!exigerConnexion(app, "Licences", { href: "#/equipe", texte: "Équipe" })) return;
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Les licences", { href: "#/personnes", texte: "Retour" }));
+    app.appendChild(EB.barre("Licences", { href: "#/equipe", texte: "Équipe" }));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     utilisateurs().then(function (u) {
@@ -889,7 +882,7 @@
 
   function ecranOrganisation(app) {
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Comprendre l'organisation", { href: "#/monchateau", texte: "Retour" }));
+    app.appendChild(EB.barre("Organisation", { href: "#/equipe", texte: "Équipe" }));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     donneesOrganisation().then(function (o) {
@@ -956,7 +949,7 @@
   /* #/journal                                                           */
   /* ------------------------------------------------------------------ */
   function ecranJournal(app) {
-    app.appendChild(EB.barre("Ce que j'ai fait", { href: "#/monchateau", texte: "Retour" }));
+    app.appendChild(EB.barre("Ce que j'ai fait", { href: "#/dossiers", texte: "Dossiers" }));
     app.appendChild(h("p", { class: "aide-ecran" }, "Les changements faits depuis ce téléphone (gardés sur ce téléphone)."));
     var j = EB.lire("eb:journal", []);
     if (!j.length) { app.appendChild(h("p", { class: "vide" }, "Rien pour l'instant.")); return; }
@@ -971,7 +964,7 @@
   /* ------------------------------------------------------------------ */
   /* Enregistrement des écrans                                           */
   /* ------------------------------------------------------------------ */
-  EB.ecran("monchateau", ecranMonChateau);
+  EB.ecran("dossiers", ecranDossiers);
   EB.ecran("commun", ecranCommun);
   EB.ecran("acces", ecranAcces);
   EB.ecran("restreindre", ecranRestreindre);
@@ -979,9 +972,16 @@
   EB.ecran("licences-reel", ecranLicences);
   EB.ecran("organisation", ecranOrganisation);
   EB.ecran("journal", ecranJournal);
+  if (window.EBDiagnostic) EB.ecran("verifier", window.EBDiagnostic.ecran);
 
   window.EBConnecte = {
-    apresConnexion: function () { EB.rendre(); },
+    /** Juste après la PREMIÈRE connexion sur cet appareil : proposer la vérification. */
+    apresConnexion: function () {
+      var premiere = G.vientDeSeConnecter && G.vientDeSeConnecter() && !EB.lire("eb:diagnostic-vu", null);
+      if (premiere && window.EBDiagnostic) { location.hash = "#/verifier"; return; } // hashchange → rendu
+      EB.rendre();
+    },
+    oublier: oublier,
     annuairePourDemo: function () { return Promise.reject(new Error("non utilisé")); },
     chargerPhotos: function () { return Promise.resolve(); },
   };

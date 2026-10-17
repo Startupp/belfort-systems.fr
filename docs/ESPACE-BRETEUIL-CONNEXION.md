@@ -1,4 +1,13 @@
-# Espace Breteuil — mise en service de la version connectée (ce soir)
+# Espace Breteuil — mise en service de la version connectée (test réel)
+
+> **Ordre pour le premier essai** (depuis la Surface, sans rien installer) :
+> 1. Pages : projet `espace-breteuil`, branche de production **`main`** (§ 1).
+> 2. Entra : inscription SPA + permissions + consentement (§ 2 et 3).
+> 3. Entra : **affectation requise** → Pauline, François, Damien (§ 3).
+> 4. GitHub, dans le navigateur : coller le `clientId` dans `config.js` (§ 2.6).
+> 5. Ouvrir l'appli → **Plus → Vérifier la connexion** (§ 6). Tout doit être vert.
+>    Sinon : « Copier le rapport » et le coller dans un message.
+> 6. Seulement ensuite, le test avec Pauline (§ 7).
 
 Objectif : que Pauline se connecte avec **pdebreteuil@breteuil.fr** et utilise pour de
 vrai :
@@ -11,10 +20,11 @@ vrai :
 - « Comprendre l'organisation ».
 
 L'appli agit **uniquement avec les droits de Pauline** (permissions déléguées). Les jetons
-restent **en mémoire** et ne sont jamais enregistrés sur le téléphone. Aucun secret
-n'est dans le dépôt : `clientId` et `tenantId` ne sont pas des secrets.
+sont gardés **le temps de la session de l'onglet** (voir « Session et sécurité » plus bas),
+jamais dans `localStorage`. Aucun secret n'est dans le dépôt : `clientId` et `tenantId` ne
+sont pas des secrets.
 
-Durée estimée : 30 à 45 minutes. Ordre : 1 → 2 → 3 → 4 → 5 → 6.
+Durée estimée : 30 à 45 minutes. Ordre : 1 → 2 → 3 → 4 → 5 → 6 → 7.
 
 ---
 
@@ -31,7 +41,7 @@ de belfort-systems.fr.
    | Champ | Valeur |
    |---|---|
    | Nom du projet | `espace-breteuil` (l'adresse sera `https://espace-breteuil.pages.dev`) |
-   | Branche de production | `feat/espace-breteuil-v1` pour le test de ce soir (puis `main` après la fusion) |
+   | Branche de production | **`main`** (les PR #7, #8 et #9 sont fusionnées) |
    | Préréglage du framework | Aucun |
    | Commande de build | *(vide)* |
    | Répertoire de sortie du build | `espace-breteuil` |
@@ -46,8 +56,15 @@ de belfort-systems.fr.
    ```
 
    La CSP n'autorise que : le site lui-même, `login.microsoftonline.com`,
-   `graph.microsoft.com`, `*.sharepoint.com` et le Worker `belfort-api`. Aucune iframe
-   (`frame-ancestors 'none'`, `X-Frame-Options: DENY`) et aucun script externe.
+   `graph.microsoft.com`, `breteuil02.sharepoint.com`, `breteuil02-my.sharepoint.com`
+   (et `*.sharepoint.com` pour les redirections de contenu Graph) et le Worker
+   `belfort-api`. Aucune iframe chez autrui (`frame-ancestors 'none'`,
+   `X-Frame-Options: DENY`) et aucun script externe. Le test `tests/csp.test.mjs` vérifie
+   que la CSP couvre bien tout ce que `config.js` utilise.
+
+   Si le projet existe déjà sur `feat/espace-breteuil-v1` : projet Pages → **Paramètres →
+   Builds et déploiements → Branche de production** → `main` → Enregistrer, puis
+   **Déploiements → Réessayer le déploiement** sur le dernier commit de `main`.
 
 **Plus tard, le sous-domaine** : projet Pages → **Domaines personnalisés** →
 `breteuil.belfort-systems.fr`. La zone est chez Cloudflare, donc le CNAME est créé tout
@@ -72,18 +89,26 @@ Se connecter sur <https://entra.microsoft.com> avec le compte d'administration d
 
    Laisser **décochés** « Jetons d'accès » et « Jetons d'ID » (flux implicite inutile).
    Laisser « Autoriser les flux de clients publics » sur **Non**.
-5. **Vue d'ensemble** : copier l'**ID d'application (client)**.
-6. Dans le dépôt, fichier `espace-breteuil/config.js`, renseigner :
+5. **Vue d'ensemble** : copier l'**ID d'application (client)** (icône Copier à droite).
+   Pas l'« ID d'objet », pas l'« ID de l'annuaire (locataire) ».
+6. **Coller le clientId depuis la Surface, sans rien installer (interface web GitHub)** :
+   1. Ouvrir <https://github.com/Startupp/belfort-systems.fr/blob/main/espace-breteuil/config.js>.
+   2. Cliquer sur le **crayon** ✏️ (« Edit this file »), en haut à droite du fichier.
+   3. Repérer l'encadré `👉👉👉 À REMPLIR PAR DAMIEN`. Juste dessous, coller le code
+      **entre les guillemets** :
 
-   ```js
-   microsoft: {
-     clientId: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",   // ← ID d'application (client)
-     tenantId: "breteuil02.onmicrosoft.com",             // déjà rempli
-     ...
-   ```
+      ```js
+      clientId: "1a2b3c4d-1234-5678-9abc-def012345678",
+      ```
 
-   Faire un commit sur `feat/espace-breteuil-v1` : Pages redéploie tout seul en environ
-   1 minute. Tant que `clientId` est vide, l'appli reste en mode démo.
+      Ne rien changer d'autre (garder la virgule finale).
+   4. Bouton vert **Commit changes…** → message « Espace Breteuil : clientId » →
+      **Commit directly to the main branch** → **Commit changes**.
+   5. Pages redéploie tout seul en environ 1 minute (Cloudflare → projet → Déploiements :
+      le dernier doit être « Réussi »).
+
+   Tant que `clientId` est vide, l'appli reste en mode démo et l'écran « Vérifier la
+   connexion » le dit en rouge dès la 1ʳᵉ ligne.
 
 ---
 
@@ -121,10 +146,16 @@ lecture des droits marchera ; leur modification renverra « Vous n'avez pas le d
 consentement d'administrateur pour Château de Breteuil** → Oui. Toutes les lignes doivent
 passer au vert « Accordé ».
 
-**Recommandé : limiter l'appli à Pauline et François.**
-**Applications d'entreprise** → `Espace Breteuil` → **Propriétés** → **Affectation
-requise : Oui** → **Utilisateurs et groupes** → ajouter Pauline et François. Les autres
-comptes ne pourront pas s'y connecter.
+**À faire : limiter l'appli à Pauline, François et Damien (affectation requise).**
+
+1. **Applications d'entreprise** → `Espace Breteuil` → **Propriétés** → **Affectation
+   requise ?** : **Oui** → Enregistrer.
+2. **Utilisateurs et groupes** → **Ajouter un utilisateur/groupe** → sélectionner
+   **Pauline**, **François** et **Damien** (le compte de Damien dans le tenant du Château)
+   → Attribuer.
+
+Tout autre compte du Château verra l'erreur **AADSTS50105** ; l'appli l'explique en clair
+(« Votre compte n'est pas autorisé… ») avec la marche à suivre.
 
 **Révoquer à tout moment** (du plus doux au plus radical) :
 
@@ -153,25 +184,89 @@ Sans ce rôle, elle peut voir et créer des dossiers, mais **pas gérer les droi
 
 ---
 
-## 5. Planning sur la nouvelle adresse (facultatif ce soir)
+## 5. Planning sur la nouvelle adresse (facultatif)
 
-Le Worker `belfort-api` n'accepte que les origines listées. Ajouter l'adresse Pages dans
+Le Worker `belfort-api` n'accepte que les origines listées. C'est déjà fait dans
 `api/wrangler.toml` :
 
 ```toml
-ORIGINES = "https://belfort-systems.fr,https://espace-breteuil.pages.dev"
+ORIGINES = "https://belfort-systems.fr,https://espace-breteuil.pages.dev,https://breteuil.belfort-systems.fr"
 ```
 
-Puis déployer le Worker (`cd api && npx wrangler deploy`, ou fusionner). Sans cela,
-l'appli affiche le planning d'exemple, clairement marqué, et tout le reste fonctionne.
+(`breteuil.belfort-systems.fr` est prévu pour le futur sous-domaine.) Il reste à
+redéployer le Worker (workflow GitHub après fusion, ou `cd api && npx wrangler deploy`).
+Sans cela, l'appli affiche le planning d'exemple, clairement marqué, et tout le reste
+fonctionne.
 
 ---
 
-## 6. Test avec Pauline (15 min)
+## 6. Commencer par « Vérifier la connexion » (5 min)
+
+Avant tout test « pour de vrai », sur la Surface puis sur le téléphone :
+
+1. Ouvrir `https://espace-breteuil.pages.dev/` → onglet **Plus** → **Vérifier la connexion**
+   (l'écran s'ouvre aussi tout seul juste après la toute première connexion).
+2. **Se connecter avec Microsoft**. Sur ordinateur, une petite fenêtre s'ouvre ; si le
+   navigateur la bloque, l'appli passe par une redirection. Sur iPhone avec l'appli
+   installée, c'est directement une redirection.
+3. Lire les 14 lignes. Chaque ligne a une pastille et un mot :
+
+   | Pastille | Sens |
+   |---|---|
+   | 🟢 **OK** | ça marche |
+   | 🟠 **À regarder** | l'appli marche en partie (ex. : pas propriétaire → « Qui a accès ? » en lecture seule) |
+   | 🔴 **Bloquant** | à corriger avant d'aller plus loin ; la ligne dit **quoi faire et qui** |
+   | ⚪ **Pas testé** | une étape précédente bloque |
+
+   Les étapes : configuration → connexion → permissions accordées (lues dans le jeton) →
+   Graph `/me`, `/users`, `/subscribedSkus`, `/directoryRoles` → site SharePoint → Documents
+   → Commun → jeton SharePoint → REST `_api/web/currentuser` (vérifie le CORS) →
+   propriétaire du site (`IsSiteAdmin` + groupe des propriétaires) → droit
+   `ManagePermissions` (`effectivebasepermissions`).
+4. **Copier le rapport** et le coller dans un message à Damien. Il ne contient ni jeton,
+   ni mot de passe, ni adresse mail complète (`p•••@breteuil.fr`).
+
+**Les blocages les plus probables et leur remède :**
+
+| Message de l'appli | Code | Remède |
+|---|---|---|
+| « L'appli n'a pas encore été autorisée pour le Château » | AADSTS65001 | § 3 : consentement administrateur (François) |
+| « L'adresse de l'appli n'est pas déclarée chez Microsoft » | AADSTS50011 | § 2.3 : URI exacte, barre oblique finale comprise |
+| « …déclarée avec le mauvais type de plateforme » | AADSTS9002326 | § 2.3 : plateforme **SPA**, pas « Web » |
+| « Votre compte n'est pas autorisé à utiliser cette appli » | AADSTS50105 | § 3 : ajouter le compte dans Utilisateurs et groupes |
+| « Microsoft ne trouve pas l'appli dans le Château » | AADSTS700016 | § 2.6 : mauvais `clientId` (ID d'objet collé ?) |
+| « Une permission n'a pas été accordée à l'appli » | HTTP 403 | § 3 : permission manquante ou non accordée |
+| « SharePoint refuse : votre compte n'a pas ce droit » | HTTP 403 (SP) | § 4 : devenir Propriétaire du site |
+| « SharePoint refuse de répondre à l'appli (CORS) » | CORS | ouvrir l'adresse officielle ; vérifier CSP et permission SharePoint |
+| « Le site SharePoint du Château est introuvable » | HTTP 404 | adresse `site` dans `config.js` |
+| « Microsoft est très sollicité » | HTTP 429 | rien : l'appli réessaie seule (3 fois), puis réessayer plus tard |
+
+---
+
+## Session et sécurité (compromis assumé)
+
+MSAL garde les jetons dans **`sessionStorage`** : la connexion tient **tant que l'onglet
+ou l'appli installée reste ouvert**, sans se reconnecter à chaque écran.
+
+- **Effacé** dès qu'on ferme l'onglet ou qu'on quitte vraiment l'appli (glisser vers le
+  haut sur iPhone). Rien ne reste sur le téléphone d'un jour à l'autre.
+- **Jamais `localStorage`** pour les jetons (il survivrait à la fermeture).
+- **Risque accepté** : pendant que l'onglet est ouvert, un script malveillant exécuté
+  dans la page pourrait lire `sessionStorage`. Parade : la CSP n'autorise **que** les
+  scripts du site (`script-src 'self'`, aucun script externe, MSAL livré dans `vendor/`),
+  et tout texte venant de Microsoft est inséré comme texte, jamais comme HTML.
+- Les jetons d'accès durent **1 heure au plus**. « Se déconnecter de l'appli » vide le
+  cache MSAL de l'onglet. Pour couper tout de suite : § 3 « Révoquer à tout moment ».
+- Seul autre élément conservé sur l'appareil : le drapeau `eb:diagnostic-vu` (« la
+  vérification a déjà été proposée »), qui ne contient aucune donnée personnelle.
+
+---
+
+## 7. Test avec Pauline (15 min)
 
 Sur son téléphone, dans Safari ou Chrome :
 
-- [ ] Ouvrir `https://espace-breteuil.pages.dev/`, puis onglet **Château** →
+- [ ] Ouvrir `https://espace-breteuil.pages.dev/`, puis onglet **Dossiers** →
       **Se connecter avec Microsoft** → `pdebreteuil@breteuil.fr` (+ 2ᵉ facteur s'il est
       actif). Retour dans l'appli, « Connecté à Microsoft ».
 - [ ] **Le dossier commun** : les dossiers de « Commun » apparaissent en grosses tuiles,
@@ -218,7 +313,7 @@ sur localhost uniquement), à 375 px et 1280 px, en thème sombre et en très gr
 
 **Pas testé en réel** (pas d'accès au tenant de mon côté) :
 
-- connexion MSAL et consentement ;
+- connexion MSAL et consentement (à vérifier avec l'écran « Vérifier la connexion ») ;
 - réponses réelles de Graph et SharePoint : formes exactes, `sharePointIds`, groupes
   `SharingLinks` ;
 - CORS de l'API REST SharePoint avec un jeton OAuth (normalement accepté, à confirmer au
@@ -227,5 +322,10 @@ sur localhost uniquement), à 375 px et 1280 px, en thème sombre et en très gr
   tenant ;
 - suffisance de `AllSites.Manage`.
 
-En cas d'erreur, l'appli affiche un message simple et le détail technique en petit :
-faire une capture et l'envoyer à Damien.
+**Testé hors ligne aussi** : l'écran « Vérifier la connexion » dans 4 cas maquettés
+(tout vert, consentement manquant, CORS refusé, non propriétaire), à 375 px et 1280 px :
+`NODE_PATH=$(npm root -g) node espace-breteuil/tests/diagnostic.playwright.mjs`.
+
+En cas d'erreur, l'appli affiche un message simple, l'action à faire et le détail technique
+en petit : ouvrir **Plus → Vérifier la connexion → Copier le rapport** et l'envoyer à
+Damien.
