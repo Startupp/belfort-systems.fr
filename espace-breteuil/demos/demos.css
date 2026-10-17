@@ -123,8 +123,8 @@ button.frise-ligne:hover { background: var(--surface-2); }
 .liste-absences { display: grid; gap: 8px; }
 .absence { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; align-items: center; padding: 12px 14px; border-radius: var(--rayon-petit); background: var(--surface); border: 1px solid var(--trait); border-left: 6px solid var(--trait-fort); }
 .absence .avatar { width: 42px; height: 42px; font-size: .9rem; grid-row: span 2; }
-.absence b, .absence span { overflow-wrap: anywhere; }
-.absence span { color: var(--doux); font-size: .92rem; }
+.absence b, .absence > span:not(.avatar) { overflow-wrap: anywhere; }
+.absence > span:not(.avatar) { color: var(--doux); font-size: .92rem; }
 .absence .btn { grid-column: 2; justify-self: start; }
 
 /* Boîtes mail */
@@ -227,3 +227,23 @@ button.frise-ligne:hover { background: var(--surface-2); }
 .etape-guide ol { text-align: left; margin: 10px 0 0; padding-left: 1.3em; display: grid; gap: 8px; }
 .etape-guide .actions { justify-content: center; }
 .pictogramme-qr { width: 120px; height: 120px; margin: 6px auto 10px; display: block; color: var(--encre); }
+
+/* Compléments assistants et absences */
+.visages.grands { gap: 10px 8px; margin-bottom: 14px; }
+.champ-titre { margin: 4px 0 8px; }
+.deux-champs { display: grid; gap: 0 12px; }
+@media (min-width: 560px) { .deux-champs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.actions.haut { margin: 0 0 8px; }
+.depart-qui { margin: 0 0 14px; padding: 12px 14px; border-radius: var(--rayon); background: var(--surface-2); }
+.depart-qui h2 { font-size: 1.35rem; }
+.depart-qui p { overflow-wrap: anywhere; }
+
+/* Frise sur téléphone : le prénom au-dessus des 7 cases, jamais coupé */
+@media (max-width: 559px) {
+  .frise-ligne { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .frise-ligne.tete > span:first-child { display: none; }
+  .frise-nom { grid-column: 1 / -1; padding: 4px 2px 0; }
+  .frise-nom span:last-child { white-space: normal; font-size: .92rem; }
+  button.frise-ligne { padding: 4px 0 6px; }
+}
+.action > span:not(.emoji):not(.fleche):not(.etiquette) { min-width: 0; overflow-wrap: anywhere; }
