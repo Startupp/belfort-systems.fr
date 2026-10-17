@@ -522,14 +522,14 @@
       <div class="contact-grid">
         <form class="panel" id="contact-form" method="post" action="https://belfort-api.damien-belfort.workers.dev/contact" novalidate>
           <h3>Écrivez-moi</h3>
-          <p class="sub">Tous les champs sont obligatoires sauf le téléphone.</p>
+          <p class="sub">Les champs marqués <span class="req" aria-hidden="true">*</span> sont obligatoires.</p>
           <div class="form-grid">
             <div class="field">
-              <label for="c-nom">Votre nom</label>
+              <label for="c-nom">Votre nom <span class="req" aria-hidden="true">*</span></label>
               <input id="c-nom" name="nom" type="text" autocomplete="name" required maxlength="120">
             </div>
             <div class="field">
-              <label for="c-email">Votre e-mail</label>
+              <label for="c-email">Votre e-mail <span class="req" aria-hidden="true">*</span></label>
               <input id="c-email" name="email" type="email" autocomplete="email" required maxlength="200" inputmode="email">
             </div>
             <div class="field">
@@ -537,7 +537,7 @@
               <input id="c-tel" name="tel" type="tel" autocomplete="tel" maxlength="30" inputmode="tel">
             </div>
             <div class="field">
-              <label for="c-sujet">Sujet</label>
+              <label for="c-sujet">Sujet <span class="req" aria-hidden="true">*</span></label>
               <select id="c-sujet" name="sujet" required>
                 <option value="">Choisir…</option>
                 <option>Dépannage ou assistance</option>
@@ -553,7 +553,7 @@
               <input id="c-formule" name="formule" type="text" maxlength="200">
             </div>
             <div class="field full">
-              <label for="c-message">Votre message</label>
+              <label for="c-message">Votre message <span class="req" aria-hidden="true">*</span></label>
               <textarea id="c-message" name="message" required maxlength="4000" placeholder="Votre structure, le nombre de postes, ce qui ne va pas ou ce que vous voulez mettre en place…"></textarea>
             </div>
           </div>
