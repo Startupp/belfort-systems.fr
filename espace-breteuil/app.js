@@ -582,6 +582,8 @@
     app.appendChild(h("section", { class: "section" },
       h("h2", null, "Pour la direction"),
       h("div", { class: "actions-liste" },
+        action("#/monchateau", "🔐", "Mon Château (connexion Microsoft)", "Le vrai dossier commun, qui a accès, les personnes et leurs licences."),
+        action("#/organisation", "💡", "Comprendre l'organisation", "Qui a quoi, en un schéma à toucher."),
         action("#/gestion", "🏰", "Gestion du Château", "L'équipe, les accès, les boîtes mail, le dossier commun."),
         action("#/finance", "💶", "Finance", "Licences, factures et moyen de paiement."))));
     if (!estInstallee()) app.appendChild(h("section", { class: "section" }, h("div", { class: "actions-liste" },
@@ -1007,7 +1009,7 @@
     { id: "", nom: "Accueil", icone: "maison", rubriques: ["", "personne", "installer"] },
     { id: "aujourdhui", nom: "Aujourd'hui", icone: "soleil", rubriques: ["aujourdhui"] },
     { id: "planning", nom: "Planning", icone: "agenda", rubriques: ["planning"] },
-    { id: "equipe", nom: "Équipe", icone: "personnes", rubriques: ["equipe", "gestion", "finance", "acces", "roles", "boites", "dossiers", "arrivee", "depart", "absences", "motdepasse", "securite", "historique", "guides", "licences", "simulateur", "factures", "paiement"] },
+    { id: "monchateau", nom: "Château", icone: "couronne", rubriques: ["monchateau", "commun", "acces", "restreindre", "personnes", "licences-reel", "organisation", "journal", "equipe", "gestion", "finance", "acces", "roles", "boites", "dossiers", "arrivee", "depart", "absences", "motdepasse", "securite", "historique", "guides", "licences", "simulateur", "factures", "paiement"] },
     { id: "reglages", nom: "Réglages", icone: "reglages", rubriques: ["reglages"] },
   ];
   function rendreOnglets(ecran, masquer) {
