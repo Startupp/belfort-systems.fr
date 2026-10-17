@@ -909,6 +909,11 @@
     app.appendChild(choix("Mode « calendrier seul »", "L'appli s'ouvre directement sur le planning, en plein écran, sans rien d'autre. Un petit lien en bas permet de revenir.",
       "calendrierSeul", [[true, "Activé"], [false, "Désactivé"]], function (v) { if (v) location.hash = "#/"; }));
 
+    if (window.EBGraph && window.EBDiagnostic) {
+      app.appendChild(h("h2", { class: "titre-groupe" }, "Connexion Microsoft"));
+      app.appendChild(h("div", { class: "actions-liste" }, action("#/verifier", "🩺", "Vérifier la connexion", "Tester pas à pas la connexion au Château et copier un rapport pour Damien.")));
+    }
+
     app.appendChild(h("h2", { class: "titre-groupe" }, "Planning"));
     app.appendChild(choix("Affichage au départ", null, "vue", VUES));
     app.appendChild(choix("Rendez-vous passés", null, "passes", [["afficher", "Afficher"], ["masquer", "Masquer"]]));

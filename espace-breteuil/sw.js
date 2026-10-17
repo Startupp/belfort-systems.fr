@@ -12,7 +12,7 @@ importScripts("version.js");
 var VERSION = "eb-v" + (self.EB_VERSION || "0");
 var COQUILLE = [
   "./", "./index.html", "./app.css", "./prechargement.js", "./version.js", "./config.js",
-  "./ics.js", "./demo.js", "./resume.js", "./droits.js", "./graph.js", "./app.js", "./connecte.js",
+  "./ics.js", "./demo.js", "./resume.js", "./droits.js", "./erreurs.js", "./graph.js", "./diagnostic.js", "./diagnostic.css", "./app.js", "./connecte.js",
   "./personnes.json", "./fiches.json", "./exemple.ics", "./exemple-accueil.ics", "./manifest.webmanifest",
   "./icones/icon-192.png", "./icones/icon.svg",
   "./polices/archivo-latin-400-normal.woff2", "./polices/archivo-latin-600-normal.woff2",
