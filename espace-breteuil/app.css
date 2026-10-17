@@ -4,13 +4,13 @@
  * Pensé pour des personnes non techniques : gros textes, grosses cibles, « boîtes ». */
 
 @font-face { font-family: "Spectral"; font-weight: 600; font-display: swap;
-  src: url("/assets/fonts/spectral-latin-600-normal.woff2") format("woff2"); }
+  src: url("polices/spectral-latin-600-normal.woff2") format("woff2"); }
 @font-face { font-family: "Archivo"; font-weight: 400; font-display: swap;
-  src: url("/assets/fonts/archivo-latin-400-normal.woff2") format("woff2"); }
+  src: url("polices/archivo-latin-400-normal.woff2") format("woff2"); }
 @font-face { font-family: "Archivo"; font-weight: 600; font-display: swap;
-  src: url("/assets/fonts/archivo-latin-600-normal.woff2") format("woff2"); }
+  src: url("polices/archivo-latin-600-normal.woff2") format("woff2"); }
 @font-face { font-family: "Archivo"; font-weight: 700; font-display: swap;
-  src: url("/assets/fonts/archivo-latin-700-normal.woff2") format("woff2"); }
+  src: url("polices/archivo-latin-700-normal.woff2") format("woff2"); }
 
 :root {
   --bordeaux: #6B1524;
