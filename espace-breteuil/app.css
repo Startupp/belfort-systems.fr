@@ -570,3 +570,5 @@ ul.plans { columns: 2; font-size: .8rem; color: var(--doux); }
 .onglets[hidden] { display: none; }
 .jour-boite > button.jour-titre { min-height: 44px; display: flex; align-items: center; }
 .etiquette.externe { min-height: 44px; padding: 0 14px; }
+.action.bientot { opacity: .6; box-shadow: none; border-style: dashed; cursor: default; }
+.action.bientot .etiquette { margin-left: auto; }
