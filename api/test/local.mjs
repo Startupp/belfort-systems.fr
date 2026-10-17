@@ -138,16 +138,16 @@ async function tests() {
     JSON.stringify(resume.corps));
 
   const projets = await appel("GET", "/admin/projets", { jeton });
-  const pb = projets.corps?.projets?.find((p) => p.id === "breteuil-migration");
+  const pb = projets.corps?.projets?.find((p) => p.id === "tilleuls-migration");
   verif("/admin/projets : projet avec client imbriqué, compteurs et nb_demandes (forme du panneau)",
-    pb && pb.client?.nom === "Château de Breteuil" && pb.client.email === "finance@breteuil.fr" && pb.nb_demandes === 49
+    pb && pb.client?.nom === "Domaine des Tilleuls" && pb.client.email === "contact@domaine-tilleuls.example" && pb.nb_demandes === 49
     && pb.compteurs?.traite === 16 && pb.compteurs.nouveau === 1 && pb.compteurs.lu === 17 && pb.compteurs.en_cours === 7 && pb.compteurs.partiel === 7 && pb.compteurs.repondu === 1,
     JSON.stringify(pb?.compteurs));
 
-  const projet = await appel("GET", "/admin/projets/breteuil-migration", { jeton });
+  const projet = await appel("GET", "/admin/projets/tilleuls-migration", { jeton });
   verif("/admin/projets/:id renvoie 49 demandes", projet.corps?.demandes?.length === 49, "reçu " + projet.corps?.demandes?.length);
   verif("/admin/projets/:id : projet.client imbriqué {id,slug,nom,contact,email}",
-    projet.corps?.projet?.client?.slug === "breteuil" && projet.corps.projet.client.contact === "Pauline de Breteuil");
+    projet.corps?.projet?.client?.slug === "tilleuls" && projet.corps.projet.client.contact === "Claire Martin");
   verif("/admin/projets/:id renvoie 36 événements et 5 conversations (Mail, WhatsApp, SMS, Téléphone, Sur place)",
     projet.corps?.evenements?.length === 36 && projet.corps?.conversations?.length === 5
     && ["Mail", "WhatsApp", "SMS", "Téléphone", "Sur place"].every((c) => projet.corps.conversations.some((x) => x.canal === c)));
@@ -175,21 +175,21 @@ async function tests() {
   const patchAction = await appel("PATCH", `/admin/demandes/${demande.id}`, { jeton, corps: { action: "abandonner", statut: "abandonne", motif: "Reporté par le client." } });
   verif("PATCH {action:abandonner, statut, motif} → abandonne (forme du panneau)", patchAction.corps?.statut === "abandonne");
   const patchRouvrir = await appel("PATCH", `/admin/demandes/${demande.id}`, { jeton, corps: { action: "rouvrir", statut: "en_cours", reste: "Relancer en novembre." } });
-  const patchNote = await appel("PATCH", `/admin/demandes/${demande.id}`, { jeton, corps: { note: "11/10/2026 — Vu avec Pauline." } });
-  const relu = await appel("GET", "/admin/projets/breteuil-migration", { jeton });
+  const patchNote = await appel("PATCH", `/admin/demandes/${demande.id}`, { jeton, corps: { note: "11/10/2026 — Vu avec Claire." } });
+  const relu = await appel("GET", "/admin/projets/tilleuls-migration", { jeton });
   const d6 = relu.corps?.demandes?.find((d) => d.id === demande.id);
   verif("PATCH {action:rouvrir, reste} puis {note} → en_cours, reste et note enregistrés",
-    patchRouvrir.corps?.statut === "en_cours" && patchNote.status === 200 && d6?.reste === "Relancer en novembre." && d6?.note === "11/10/2026 — Vu avec Pauline.", JSON.stringify(d6));
-  const nouvelle = await appel("POST", "/admin/demandes", { jeton, corps: { projet_id: "breteuil-migration", titre: "Test de création", tarif: "devis" } });
+    patchRouvrir.corps?.statut === "en_cours" && patchNote.status === 200 && d6?.reste === "Relancer en novembre." && d6?.note === "11/10/2026 — Vu avec Claire.", JSON.stringify(d6));
+  const nouvelle = await appel("POST", "/admin/demandes", { jeton, corps: { projet_id: "tilleuls-migration", titre: "Test de création", tarif: "devis" } });
   verif("POST /admin/demandes crée une demande numérotée 50", nouvelle.corps?.demande?.n === 50, JSON.stringify(nouvelle.corps));
 
   // --- Factures --------------------------------------------------------------------
   const brouillon = await appel("POST", "/admin/factures", { jeton, corps: {
-    client_id: "breteuil", date: "2026-10-11", echeance: "2026-11-10", objet: "Migration", statut: "brouillon", tva: 0, total_ht: 302.5,
+    client_id: "tilleuls", date: "2026-10-11", echeance: "2026-11-10", objet: "Migration", statut: "brouillon", tva: 0, total_ht: 302.5,
     lignes: [{ ref: "migration", designation: "Migration de la messagerie", quantite: 1, unite: "forfait", prix: 250 }, { ref: "heure", designation: "Heures", quantite: 1.5, unite: "heure", prix: 35 }] } });
   verif("création d'un brouillon de facture (forme du panneau : lignes {ref,designation,quantite,unite,prix}, total 302,50)",
     brouillon.corps?.id && brouillon.corps?.facture?.statut === "brouillon" && brouillon.corps.facture.total_ht === 302.5 && brouillon.corps.facture.lignes[0].prix === 250, JSON.stringify(brouillon.corps));
-  verif("facture avec client_nom / client_email joints", brouillon.corps?.facture?.client_nom === "Château de Breteuil" && brouillon.corps.facture.client_email === "finance@breteuil.fr");
+  verif("facture avec client_nom / client_email joints", brouillon.corps?.facture?.client_nom === "Domaine des Tilleuls" && brouillon.corps.facture.client_email === "contact@domaine-tilleuls.example");
   const f1 = brouillon.corps.facture.id;
   const modif = await appel("PATCH", `/admin/factures/${f1}`, { jeton, corps: { note: "Merci de votre confiance." } });
   verif("brouillon modifiable (PATCH)", modif.status === 200);
@@ -203,7 +203,7 @@ async function tests() {
   verif("facture émise non modifiable (409)", modifApres.status === 409);
   const suppr = await appel("DELETE", `/admin/factures/${f1}`, { jeton });
   verif("facture émise non supprimable (409)", suppr.status === 409);
-  const b2 = await appel("POST", "/admin/factures", { jeton, corps: { client_id: "breteuil", lignes: [{ designation: "Atelier OneDrive", quantite: 2, unite: "heure", prix: 35 }] } });
+  const b2 = await appel("POST", "/admin/factures", { jeton, corps: { client_id: "tilleuls", lignes: [{ designation: "Atelier OneDrive", quantite: 2, unite: "heure", prix: 35 }] } });
   const e2 = await appel("POST", `/admin/factures/${b2.corps.facture.id}/emettre`, { jeton });
   verif("deuxième émission → BS-2026-002, date = aujourd'hui, échéance = +30 jours", e2.corps?.facture?.numero === "BS-2026-002"
     && e2.corps.facture.date && (Date.parse(e2.corps.facture.echeance) - Date.parse(e2.corps.facture.date)) === 30 * 86400000, JSON.stringify(e2.corps));
@@ -218,12 +218,12 @@ async function tests() {
   const origine = await appel("GET", `/admin/factures/${b2.corps.facture.id}`, { jeton });
   verif("émission de l'avoir → BS-2026-003 et facture d'origine annulee", avoirEmis.corps?.facture?.numero === "BS-2026-003" && origine.corps?.facture?.statut === "annulee");
   // Avoir à la manière du panneau : POST /admin/factures {type:"avoir", reference, lignes négatives}
-  const avoirPanneau = await appel("POST", "/admin/factures", { jeton, corps: { client_id: "breteuil", type: "avoir", reference: "BS-2026-001", date: "2026-10-11", echeance: "2026-10-11",
+  const avoirPanneau = await appel("POST", "/admin/factures", { jeton, corps: { client_id: "tilleuls", type: "avoir", reference: "BS-2026-001", date: "2026-10-11", echeance: "2026-10-11",
     lignes: [{ designation: "Migration de la messagerie", quantite: 1, unite: "forfait", prix: -250 }], note: "Avoir sur la facture BS-2026-001 — test", statut: "brouillon" } });
   verif("POST /admin/factures {type:avoir, reference} (forme du panneau) → brouillon lié, total -250",
     avoirPanneau.corps?.facture?.type === "avoir" && avoirPanneau.corps.facture.total_ht === -250 && avoirPanneau.corps.facture.ref === f1, JSON.stringify(avoirPanneau.corps));
   const liste = await appel("GET", "/admin/factures", { jeton });
-  verif("/admin/factures liste 4 factures avec client_nom", liste.corps?.factures?.length === 4 && liste.corps.factures.every((f) => f.client_nom === "Château de Breteuil"));
+  verif("/admin/factures liste 4 factures avec client_nom", liste.corps?.factures?.length === 4 && liste.corps.factures.every((f) => f.client_nom === "Domaine des Tilleuls"));
 
   // --- Contact et disponibilités ---------------------------------------------------
   const avant = await appel("GET", "/admin/contacts", { jeton });
@@ -270,7 +270,7 @@ async function tests() {
   verif("client en doublon → 409", doublon.status === 409);
   const listeClients = await appel("GET", "/admin/clients", { jeton });
   verif("/admin/clients : compteur projets, jamais le jeton ni son hachage", listeClients.corps?.clients?.every((c) => !("token_hash" in c) && !("jeton" in c) && typeof c.projets === "number")
-    && listeClients.corps.clients.find((c) => c.slug === "breteuil")?.a_jeton === false && listeClients.corps.clients.find((c) => c.slug === "breteuil")?.projets === 1);
+    && listeClients.corps.clients.find((c) => c.slug === "tilleuls")?.a_jeton === false && listeClients.corps.clients.find((c) => c.slug === "tilleuls")?.projets === 1);
   const projetClient = await appel("POST", "/admin/projets", { jeton, corps: { client_id: "test-client", titre: "Projet de test" } });
   verif("POST /admin/projets", projetClient.status === 200 && projetClient.corps?.projet?.id);
 
@@ -305,7 +305,7 @@ async function tests() {
   const premier = await lecteur.read();
   recu += dec.decode(premier.value);
   // Une écriture pendant la connexion doit produire un événement « maj ».
-  await appel("POST", "/admin/evenements", { jeton, corps: { projet_id: "breteuil-migration", type: "livrable", titre: "Événement de test", date: "2026-10-11" } });
+  await appel("POST", "/admin/evenements", { jeton, corps: { projet_id: "tilleuls-migration", type: "livrable", titre: "Événement de test", date: "2026-10-11" } });
   const limite = Date.now() + 8000;
   while (!/event: maj/.test(recu) && Date.now() < limite) {
     const { value, done } = await lecteur.read();
