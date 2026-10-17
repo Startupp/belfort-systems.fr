@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Espace Breteuil</title>
+<meta name="description" content="Le planning du Château de Breteuil, l'équipe et les accès, en un seul endroit.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#6B1524">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Breteuil">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icones/icon-180.png">
+<link rel="preload" href="polices/archivo-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="app.css">
+<script src="prechargement.js"></script>
+</head>
+<body>
+<div id="maj" class="maj" role="status" hidden></div>
+<main id="app" class="page" aria-live="polite">
+  <p class="chargement">Chargement de l'Espace Breteuil…</p>
+</main>
+<nav id="onglets" class="onglets" aria-label="Navigation principale" hidden></nav>
+<noscript><p class="page">L'Espace Breteuil a besoin de JavaScript. Ouvrez-le dans Safari, Chrome ou Edge.</p></noscript>
+
+<dialog class="detail" id="detail" aria-labelledby="detail-titre"></dialog>
+
+<script src="version.js"></script>
+<script src="config.js"></script>
+<script src="ics.js"></script>
+<script src="demo.js"></script>
+<script src="resume.js"></script>
+<script src="droits.js"></script>
+<script src="graph.js"></script>
+<script src="app.js"></script>
+<script src="connecte.js"></script>
+</body>
+</html>

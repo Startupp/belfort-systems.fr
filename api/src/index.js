@@ -459,6 +459,122 @@ export default {
 
 route("GET", "/", "public", async () => ({ service: "belfort-api", version: 1 }));
 
+// ---------------------------------------------------------------------------
+// Espace Breteuil : planning partagé (calendrier « Contact » publié en ICS)
+// ---------------------------------------------------------------------------
+
+/** Durée de fraîcheur du planning en cache (10 min). */
+const PLANNING_TTL_S = 600;
+/** Taille maximale acceptée pour l'ICS distant (5 Mo). */
+const PLANNING_MAX_OCTETS = 5 * 1024 * 1024;
+/** Préfixe des clés KV de la dernière version reçue (une par source). */
+const PLANNING_CLE_KV = "breteuil:planning";
+/** Nombre maximal de calendriers relayés (BRETEUIL_ICS_URL, BRETEUIL_ICS_URL_2 … _4). */
+const PLANNING_MAX_SOURCES = 4;
+
+/** Nom du secret de la source n : 1 → BRETEUIL_ICS_URL, n ≥ 2 → BRETEUIL_ICS_URL_n. */
+function secretPlanning(n) {
+  return n === 1 ? "BRETEUIL_ICS_URL" : `BRETEUIL_ICS_URL_${n}`;
+}
+
+/** URL ICS de la source n, normalisée (webcal:// → https://) ; null si absente ou invalide. */
+function urlPlanning(env, n = 1) {
+  const brute = String(env[secretPlanning(n)] || "").trim();
+  if (!brute) return null;
+  const u = brute.replace(/^webcals?:\/\//i, "https://");
+  try {
+    const x = new URL(u);
+    return x.protocol === "https:" ? x.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Le texte ressemble-t-il à un calendrier ICS ? */
+function estUnIcs(texte) {
+  return /^\s*BEGIN:VCALENDAR/i.test(texte || "") && /END:VCALENDAR\s*$/i.test(texte || "");
+}
+
+/** Réponse text/calendar avec l'état du cache (frais / source / ancien). */
+function reponsePlanning(texte, etat, quand) {
+  return new Response(texte, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/calendar; charset=utf-8",
+      "Cache-Control": `public, max-age=${PLANNING_TTL_S}`,
+      "X-Content-Type-Options": "nosniff",
+      "X-Planning-Etat": etat,
+      "X-Planning-Date": new Date(quand).toISOString(),
+      "Access-Control-Expose-Headers": "X-Planning-Etat, X-Planning-Date",
+    },
+  });
+}
+
+/** Origine obligatoire et autorisée (le relais ne sert que les pages du site). */
+function exigerOriginePlanning(req, env) {
+  if (!origineAutorisee(req.headers.get("Origin"), env)) {
+    throw new ErreurHttp(403, "Planning réservé à l'Espace Breteuil (belfort-systems.fr).");
+  }
+}
+
+/**
+ * Relais d'une source ICS (Outlook « Publier un calendrier » ou adresse secrète
+ * Google Agenda). Les adresses restent des secrets du Worker, jamais dans le dépôt.
+ * Cache KV de 10 min ; si la source échoue, la dernière version connue est servie.
+ */
+async function relaisPlanning(env, n) {
+  const source = urlPlanning(env, n);
+  if (!source) {
+    return json({ ok: false, code: "non_configure", erreur: `Calendrier ${n} non configuré (secret ${secretPlanning(n)} absent).` }, 503);
+  }
+  const cle = n === 1 ? PLANNING_CLE_KV : `${PLANNING_CLE_KV}:${n}`;
+  const cache = env.KV ? await env.KV.get(cle, "json") : null;
+  if (cache && cache.texte && Date.now() - cache.quand < PLANNING_TTL_S * 1000) {
+    return reponsePlanning(cache.texte, "cache", cache.quand);
+  }
+
+  try {
+    const r = await fetch(source, {
+      headers: { "Accept": "text/calendar, text/plain;q=0.8, */*;q=0.1", "User-Agent": "belfort-api (Espace Breteuil)" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!r.ok) throw new Error(`source HTTP ${r.status}`);
+    const texte = await r.text();
+    if (texte.length > PLANNING_MAX_OCTETS) throw new Error("source trop volumineuse");
+    if (!estUnIcs(texte)) throw new Error("la source n'est pas un calendrier ICS");
+    const quand = Date.now();
+    if (env.KV) await env.KV.put(cle, JSON.stringify({ texte, quand }));
+    return reponsePlanning(texte, "source", quand);
+  } catch (e) {
+    console.error(`Planning Breteuil (source ${n}) :`, e && e.message);
+    if (cache && cache.texte) return reponsePlanning(cache.texte, "ancien", cache.quand);
+    return json({ ok: false, code: "source_indisponible", erreur: "Le calendrier du Château ne répond pas pour le moment." }, 502);
+  }
+}
+
+/** GET /breteuil/planning.ics — première source (compatibilité V1). */
+route("GET", "/breteuil/planning.ics", "public", async ({ req, env }) => {
+  exigerOriginePlanning(req, env);
+  return relaisPlanning(env, 1);
+});
+
+/** GET /breteuil/planning/:n.ics — source n (1 à 4), chacune avec son secret. */
+route("GET", "/breteuil/planning/:n.ics", "public", async ({ req, env, params }) => {
+  exigerOriginePlanning(req, env);
+  const n = Number(params.n);
+  if (!Number.isInteger(n) || n < 1 || n > PLANNING_MAX_SOURCES) throw new ErreurHttp(404, "Calendrier inconnu.");
+  return relaisPlanning(env, n);
+});
+
+/** GET /breteuil/sources — numéros des calendriers configurés (jamais leurs adresses). */
+route("GET", "/breteuil/sources", "public", async ({ req, env }) => {
+  exigerOriginePlanning(req, env);
+  const sources = [];
+  for (let n = 1; n <= PLANNING_MAX_SOURCES; n++) if (urlPlanning(env, n)) sources.push(n);
+  return { sources };
+});
+
 /**
  * POST /contact — formulaire public.
  * Pot-de-miel `website` (doit rester vide) et délai minimal 3 s (`t` = horodatage
@@ -1511,5 +1627,5 @@ route("GET", "/client/evenements", "client", async ({ env, client }) => {
 export const _interne = {
   champ, validerLignes, resoudre, routes, pbkdf2, egalConstant, sha256, base64url, hex,
   origineAutorisee, enTetesCors, lundiDeSemaine, finDeCreneau, ajouterJours, semaineCourante,
-  ErreurHttp, jetonDe, dateParis,
+  ErreurHttp, jetonDe, dateParis, urlPlanning, estUnIcs, secretPlanning,
 };

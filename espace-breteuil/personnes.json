@@ -1,0 +1,104 @@
+{
+  "_aide": "Liste des tuiles de l'Espace Breteuil. Modifiable à la main : voir docs/ESPACE-BRETEUIL.md, section « Éditer personnes.json ». Prénoms seulement, aucune donnée privée : ce ne sont que des liens.",
+
+  "liens": {
+    "mail":       { "titre": "Mes mails",        "texte": "Ouvrir ma boîte Outlook",          "icone": "mail",     "url": "https://outlook.office.com/mail/",          "appli": "ms-outlook://" },
+    "agenda":     { "titre": "Mon agenda",       "texte": "Mon calendrier Outlook",           "icone": "agenda",   "url": "https://outlook.office.com/calendar/",      "appli": "ms-outlook://" },
+    "onedrive":   { "titre": "Mes fichiers",     "texte": "Mon OneDrive personnel",           "icone": "nuage",    "url": "https://www.microsoft365.com/onedrive",    "appli": "ms-onedrive://" },
+    "commun":     { "titre": "Dossier Commun",   "texte": "Les fichiers partagés du Château", "icone": "dossier",  "url": "https://breteuil02.sharepoint.com/sites/Commun" },
+    "teams":      { "titre": "Teams",            "texte": "Discussions et visios",            "icone": "bulles",   "url": "https://teams.microsoft.com/",             "appli": "msteams://" },
+    "office":     { "titre": "Tout Microsoft 365", "texte": "Word, Excel, et le reste",       "icone": "grille",   "url": "https://www.microsoft365.com/" }
+  },
+
+  "boitesPartagees": {
+    "contact":        { "nom": "Contact",        "adresse": "contact@breteuil.fr" },
+    "finance":        { "nom": "Finance",        "adresse": "finance@breteuil.fr" },
+    "restauration":   { "nom": "Restauration",   "adresse": "restauration@breteuil.fr" },
+    "marketing":      { "nom": "Marketing",      "adresse": "marketing@breteuil.fr" },
+    "newsletter":     { "nom": "Lettre d'info",  "adresse": "newsletter@breteuil.fr" },
+    "escapegame":     { "nom": "Escape game",    "adresse": "escapegame@breteuil.fr" },
+    "jardins":        { "nom": "Jardins",        "adresse": "jardins@breteuil.fr" },
+    "intendance":     { "nom": "Intendance",     "adresse": "intendance@breteuil.fr" },
+    "fetpdebreteuil": { "nom": "F. et P. de Breteuil", "adresse": "fetpdebreteuil@breteuil.fr" }
+  },
+
+  "personnes": [
+    {
+      "id": "francois", "prenom": "François", "role": "Direction", "icone": "couronne", "couleur": "#6B1524",
+      "motsCles": ["François", "Direction", "licence"],
+      "raccourcis": ["mail", "agenda", "onedrive", "commun", "teams"],
+      "boites": ["contact", "fetpdebreteuil"],
+      "packs": ["admin", "finance"]
+    },
+    {
+      "id": "pauline", "prenom": "Pauline", "role": "Direction", "icone": "couronne", "couleur": "#8A2B3B",
+      "motsCles": ["Pauline", "Direction"],
+      "raccourcis": ["mail", "agenda", "onedrive", "commun", "teams"],
+      "boites": ["contact", "fetpdebreteuil"],
+      "packs": []
+    },
+    {
+      "id": "valerie-d", "prenom": "Valérie D.", "role": "Finance", "icone": "euro", "couleur": "#1D6B52",
+      "motsCles": ["Valérie D", "Finance", "factur", "comptab"],
+      "raccourcis": ["mail", "agenda", "onedrive", "commun"],
+      "boites": ["finance"],
+      "packs": ["finance"]
+    },
+    {
+      "id": "guillaumette", "prenom": "Guillaumette", "role": "Marketing", "icone": "megaphone", "couleur": "#8A4B00",
+      "motsCles": ["Guillaumette", "Marketing", "lettre d'information", "newsletter"],
+      "raccourcis": ["mail", "agenda", "onedrive", "commun", "teams"],
+      "boites": ["marketing", "newsletter"],
+      "packs": []
+    },
+    {
+      "id": "fanny", "prenom": "Fanny", "role": "Accueil", "icone": "accueil", "couleur": "#2E5A8A",
+      "motsCles": ["Fanny", "Accueil", "visite", "groupe"],
+      "raccourcis": ["mail", "agenda", "commun"],
+      "boites": ["contact", "escapegame"],
+      "packs": []
+    },
+    {
+      "id": "valerie-l", "prenom": "Valérie L.", "role": "Accueil", "icone": "accueil", "couleur": "#3A6EA5",
+      "motsCles": ["Valérie L", "Accueil", "visite", "groupe"],
+      "raccourcis": ["mail", "agenda", "commun"],
+      "boites": ["contact", "escapegame"],
+      "packs": []
+    },
+    {
+      "id": "yara", "prenom": "Yara", "role": "Restauration", "icone": "couverts", "couleur": "#7A3E8E",
+      "motsCles": ["Yara", "Restauration", "traiteur", "réception", "mariage"],
+      "raccourcis": ["mail", "agenda", "onedrive", "commun"],
+      "boites": ["restauration"],
+      "packs": []
+    },
+    {
+      "id": "marco", "prenom": "Marco", "role": "Jardins (saison)", "icone": "feuille", "couleur": "#3F6B1F",
+      "motsCles": ["Marco", "Jardins", "jardin"],
+      "raccourcis": ["mail"],
+      "boites": ["jardins"],
+      "packs": []
+    },
+    {
+      "id": "erwin", "prenom": "Erwin", "role": "Jardins (saison)", "icone": "feuille", "couleur": "#4A7A26",
+      "motsCles": ["Erwin", "Jardins", "jardin"],
+      "raccourcis": ["mail"],
+      "boites": ["jardins"],
+      "packs": []
+    },
+    {
+      "id": "antonio", "prenom": "Antonio", "role": "Jardins (saison)", "icone": "feuille", "couleur": "#55862D",
+      "motsCles": ["Antonio", "Jardins", "jardin"],
+      "raccourcis": ["mail"],
+      "boites": ["jardins"],
+      "packs": []
+    },
+    {
+      "id": "joao", "prenom": "Joao", "role": "Jardins (saison)", "icone": "feuille", "couleur": "#35601A",
+      "motsCles": ["Joao", "Jardins", "jardin", "travaux"],
+      "raccourcis": ["mail"],
+      "boites": ["jardins", "intendance"],
+      "packs": []
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 # Configuration du Worker « belfort-api » (service du site belfort-systems.fr).
 # Aucun secret ici : ADMIN_PASSWORD (et SESSION_SALT, facultatif) sont des secrets
 # Worker, posés par le workflow GitHub ou par `wrangler secret put`.
+# BRETEUIL_ICS_URL (adresse ICS publiée du calendrier « Contact » du Château, pour
+# l'Espace Breteuil) se pose à la main : `npx wrangler secret put BRETEUIL_ICS_URL`.
+# Calendriers supplémentaires (ex. Google Agenda tenu par l'accueil) : BRETEUIL_ICS_URL_2 … _4.
 
 name = "belfort-api"
 main = "src/index.js"
