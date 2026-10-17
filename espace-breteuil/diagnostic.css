@@ -1,0 +1,41 @@
+/* Espace Breteuil — écran « Vérifier la connexion » (chargé par diagnostic.js).
+ * Pastilles : vert = OK, orange = à regarder, rouge = bloquant, gris = pas testé.
+ * La couleur n'est jamais seule : chaque pastille a aussi un mot (« OK », « Bloquant »…). */
+:root { --diag-vert: #1D6B52; --diag-orange: #B45309; --diag-rouge: #A3201A; --diag-gris: #8C7E81; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) { --diag-vert: #6FD0A8; --diag-orange: #F6AD55; --diag-rouge: #FF8A80; --diag-gris: #9C8F8B; } }
+:root[data-theme="sombre"] { --diag-vert: #6FD0A8; --diag-orange: #F6AD55; --diag-rouge: #FF8A80; --diag-gris: #9C8F8B; }
+
+.diag-pastille { flex: none; width: 1.15em; height: 1.15em; border-radius: 50%; margin-top: .2em; background: var(--diag-gris); box-shadow: 0 0 0 4px color-mix(in srgb, var(--diag-gris) 18%, transparent); }
+.diag-pastille.vert { background: var(--diag-vert); box-shadow: 0 0 0 4px color-mix(in srgb, var(--diag-vert) 18%, transparent); }
+.diag-pastille.orange { background: var(--diag-orange); box-shadow: 0 0 0 4px color-mix(in srgb, var(--diag-orange) 20%, transparent); }
+.diag-pastille.rouge { background: var(--diag-rouge); box-shadow: 0 0 0 4px color-mix(in srgb, var(--diag-rouge) 20%, transparent); }
+.diag-pastille.encours { background: transparent; border: 3px solid var(--diag-gris); border-top-color: transparent; box-shadow: none; animation: diag-tourne 1s linear infinite; }
+@keyframes diag-tourne { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .diag-pastille.encours { animation: none; } }
+
+.diag-bilan { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; margin: 0 0 14px; border-radius: var(--rayon); border: 2px solid var(--diag-gris); background: var(--surface); box-shadow: var(--ombre); }
+.diag-bilan b { display: block; font-size: 1.15rem; margin-bottom: 2px; }
+.diag-bilan span:not(.diag-pastille) { color: var(--doux); }
+.diag-bilan.vert { border-color: var(--diag-vert); background: color-mix(in srgb, var(--diag-vert) 9%, var(--surface)); }
+.diag-bilan.orange { border-color: var(--diag-orange); background: color-mix(in srgb, var(--diag-orange) 9%, var(--surface)); }
+.diag-bilan.rouge { border-color: var(--diag-rouge); background: color-mix(in srgb, var(--diag-rouge) 8%, var(--surface)); }
+
+.diag-actions { margin-bottom: 16px; }
+.diag-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.diag-etape { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; background: var(--surface); border: 2px solid var(--trait); border-radius: var(--rayon-petit); }
+.diag-etape.rouge { border-color: color-mix(in srgb, var(--diag-rouge) 55%, var(--trait)); }
+.diag-etape.orange { border-color: color-mix(in srgb, var(--diag-orange) 55%, var(--trait)); }
+.diag-etape.gris { opacity: .78; }
+.diag-corps { min-width: 0; flex: 1; }
+.diag-titre { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; }
+.diag-etat { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--diag-gris); }
+.diag-etat.vert { color: var(--diag-vert); }
+.diag-etat.orange { color: var(--diag-orange); }
+.diag-etat.rouge { color: var(--diag-rouge); }
+.diag-texte { margin: 4px 0 0; }
+.diag-action { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); font-weight: 600; }
+.diag-detail { margin-top: 8px; font-size: .85rem; color: var(--doux); }
+.diag-detail summary { cursor: pointer; min-height: 32px; }
+.diag-detail code { display: block; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; padding: 8px; border-radius: 8px; background: var(--surface-2); }
+.diag-rapport { width: 100%; min-height: 12em; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem; margin-bottom: 16px; }
+.diag-note { margin-top: 16px; }
