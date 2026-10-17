@@ -1,37 +1,34 @@
 /*
- * Espace Breteuil — connexion Microsoft (LECTURE SEULE) via MSAL.js et Microsoft Graph.
+ * Espace Breteuil — connexion Microsoft (MSAL.js) et accès à Microsoft Graph et à SharePoint.
  *
- * Inactif tant que config.js n'a pas de clientId ET de tenantId (mode démo).
- * - MSAL 3.30.0 est servi depuis vendor/ (pas de CDN : compatible CSP script-src 'self').
- * - Jetons en MÉMOIRE uniquement (cacheLocation "memoryStorage") : rien n'est écrit
- *   sur l'appareil ; à chaque ouverture de l'appli il faut se reconnecter (ou la
- *   session Microsoft du navigateur le fait en un clic).
- * - Uniquement des requêtes GET. Aucune écriture vers Microsoft 365 n'existe dans ce code.
+ * - Inactif tant que config.js n'a pas de clientId (mode démo).
+ * - MSAL 3.30.0 servi depuis vendor/ (pas de CDN : compatible CSP script-src 'self').
+ * - Jetons en MÉMOIRE uniquement (cacheLocation "memoryStorage") : rien n'est écrit sur
+ *   l'appareil ; il faut se reconnecter à chaque ouverture (un clic si la session
+ *   Microsoft du navigateur est encore ouverte).
+ * - Permissions DÉLÉGUÉES : l'appli agit uniquement avec les droits de la personne connectée.
+ *
+ * Mode maquette (tests hors ligne) : ?maquette=1 sur localhost UNIQUEMENT. Aucune
+ * connexion : les appels partent vers les vraies adresses, que le test intercepte.
  */
 (function () {
   "use strict";
 
   var GRAPH = "https://graph.microsoft.com/v1.0";
   var MSAL_SRC = "vendor/msal-browser-3.30.0.min.js";
-
-  /* Rôles d'annuaire Microsoft (identifiants de modèle fixes) → rôles de l'appli. */
-  var ROLES_MICROSOFT = {
-    "62e90394-69f5-4237-9190-012177145e10": "admin",        // Global Administrator
-    "b0f54661-2d74-4c50-afa3-1ec803f12efe": "facturation",  // Billing Administrator
-    "fe930be7-5e62-47db-91af-98c3a49a38b1": "utilisateurs", // User Administrator
-  };
-  /* Références de licences Microsoft → formules du Château. */
-  var SKUS = {
-    "O365_BUSINESS_PREMIUM": "complete",      // Microsoft 365 Business Standard
-    "O365_BUSINESS_ESSENTIALS": "express-teams", // Microsoft 365 Business Basic
-    "EXCHANGESTANDARD": "express",            // Exchange Online (Plan 1)
-  };
-
-  var etat = { pca: null, compte: null, pret: false, erreur: "" };
+  var etat = { pca: null, compte: null, pret: false, erreur: "", maquette: false };
 
   function config() { return (self.EB_CONFIG && self.EB_CONFIG.microsoft) || {}; }
-  function estConfigure() { var c = config(); return !!(c.clientId && c.tenantId); }
-  function scopes() { return config().scopes || ["User.Read"]; }
+  function estMaquette() {
+    return /[?&]maquette=1\b/.test(location.search) && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  }
+  function estConfigure() { var c = config(); return estMaquette() || !!(c.clientId && c.tenantId); }
+  function scopesGraph() { return config().scopes || ["User.Read"]; }
+  function scopeSharePoint() { return config().sharepointScope || ""; }
+  function origineSharePoint() {
+    var s = (self.EB_CONFIG && self.EB_CONFIG.sharepoint && self.EB_CONFIG.sharepoint.site) || "";
+    try { return new URL(s).origin; } catch (e) { return ""; }
+  }
 
   function chargerScript(src) {
     return new Promise(function (ok, ko) {
@@ -42,171 +39,147 @@
     });
   }
 
-  /** Prépare MSAL et récupère la réponse d'une connexion par redirection. */
   function init() {
+    if (estMaquette()) {
+      etat.maquette = true; etat.pret = true;
+      etat.compte = { name: "Pauline (maquette)", username: "pdebreteuil@breteuil.fr", localAccountId: "moi" };
+      return Promise.resolve(true);
+    }
     if (!estConfigure()) return Promise.resolve(false);
     var c = config();
+    var adresse = c.redirectUri || (location.origin + location.pathname);
     return chargerScript(MSAL_SRC).then(function () {
       etat.pca = new window.msal.PublicClientApplication({
         auth: {
           clientId: c.clientId,
           authority: "https://login.microsoftonline.com/" + c.tenantId,
-          redirectUri: c.redirectUri || (location.origin + location.pathname),
-          postLogoutRedirectUri: c.redirectUri || (location.origin + location.pathname),
-          navigateToLoginRequestUrl: false,
+          redirectUri: adresse, postLogoutRedirectUri: adresse, navigateToLoginRequestUrl: false,
         },
         cache: { cacheLocation: "memoryStorage", storeAuthStateInCookie: false },
         system: { allowNativeBroker: false },
       });
       return etat.pca.initialize();
-    }).then(function () {
-      return etat.pca.handleRedirectPromise();
-    }).then(function (r) {
+    }).then(function () { return etat.pca.handleRedirectPromise(); }).then(function (r) {
       if (r && r.account) etat.compte = r.account;
       etat.pret = true;
-      // Retour à l'écran d'où l'on est parti avant la redirection.
       try {
         var retour = sessionStorage.getItem("eb:retour");
         if (retour) { sessionStorage.removeItem("eb:retour"); if (r) history.replaceState(null, "", retour); }
       } catch (e) {}
       return !!etat.compte;
     }).catch(function (e) {
-      etat.erreur = (e && (e.errorMessage || e.message)) || "Connexion impossible";
+      etat.erreur = traduireErreur(e);
       etat.pret = true;
       return false;
     });
   }
 
   function connecter() {
-    if (!etat.pca) return Promise.reject(new Error("MSAL non prêt"));
+    if (etat.maquette) return Promise.resolve();
+    if (!etat.pca) return Promise.reject(new Error("Connexion pas prête"));
     try { sessionStorage.setItem("eb:retour", location.hash || "#/"); } catch (e) {}
-    return etat.pca.loginRedirect({ scopes: scopes(), prompt: "select_account" });
+    var sp = scopeSharePoint();
+    return etat.pca.loginRedirect({ scopes: scopesGraph(), extraScopesToConsent: sp ? [sp] : [], prompt: "select_account" });
   }
 
-  /** Oublie la session dans l'appli (jetons en mémoire) sans déconnecter tout Microsoft. */
   function oublier() {
     etat.compte = null;
     if (etat.pca && etat.pca.clearCache) { try { etat.pca.clearCache(); } catch (e) {} }
   }
 
-  function jeton() {
-    if (!etat.pca || !etat.compte) return Promise.reject(new Error("Non connecté"));
-    return etat.pca.acquireTokenSilent({ scopes: scopes(), account: etat.compte }).then(function (r) { return r.accessToken; })
+  /** Jeton pour Graph (« graph ») ou pour SharePoint (« sp »). */
+  function jeton(ressource) {
+    if (etat.maquette) return Promise.resolve("maquette");
+    if (!etat.pca || !etat.compte) return Promise.reject(erreur(401, "Vous n'êtes pas connecté."));
+    var scopes = ressource === "sp" ? [scopeSharePoint()] : scopesGraph();
+    return etat.pca.acquireTokenSilent({ scopes: scopes, account: etat.compte }).then(function (r) { return r.accessToken; })
       .catch(function (e) {
         if (window.msal && e instanceof window.msal.InteractionRequiredAuthError) {
-          return etat.pca.acquireTokenRedirect({ scopes: scopes(), account: etat.compte });
+          try { sessionStorage.setItem("eb:retour", location.hash || "#/"); } catch (x) {}
+          return etat.pca.acquireTokenRedirect({ scopes: scopes, account: etat.compte });
         }
         throw e;
       });
   }
 
-  /** GET Graph (lecture seule). `toutes` suit la pagination @odata.nextLink. */
-  function lire(chemin, toutes) {
-    return jeton().then(function (t) {
-      var resultats = [];
-      function page(url) {
-        return fetch(url, { headers: { Authorization: "Bearer " + t } }).then(function (r) {
-          if (!r.ok) throw new Error("Graph " + r.status + " sur " + chemin.split("?")[0]);
-          return r.json();
-        }).then(function (j) {
-          if (!toutes) return j;
-          resultats = resultats.concat(j.value || []);
-          return j["@odata.nextLink"] && resultats.length < 5000 ? page(j["@odata.nextLink"]) : resultats;
+  function erreur(statut, message) { var e = new Error(message); e.statut = statut; return e; }
+  function traduireErreur(e) {
+    var m = (e && (e.errorMessage || e.message)) || "";
+    if (/AADSTS65001|consent/i.test(m)) return "L'appli n'a pas encore été autorisée par l'administrateur du Château.";
+    if (/AADSTS50011|redirect/i.test(m)) return "Adresse de l'appli non déclarée dans Microsoft (URI de redirection).";
+    if (/user_cancelled|AADSTS50058/i.test(m)) return "Connexion annulée.";
+    return m ? "Connexion impossible : " + m.split("\n")[0].slice(0, 160) : "Connexion impossible.";
+  }
+  /** Message simple selon le code HTTP. */
+  function messageHttp(statut, defaut) {
+    if (statut === 401) return "Votre connexion a expiré. Reconnectez-vous.";
+    if (statut === 403) return "Vous n'avez pas le droit de faire cela (droits Microsoft de votre compte).";
+    if (statut === 404) return "Élément introuvable (supprimé ou déplacé ?).";
+    if (statut === 409) return "Un élément porte déjà ce nom.";
+    if (statut === 429 || statut === 503) return "Microsoft est occupé : réessayez dans une minute.";
+    return defaut || "Microsoft a répondu par une erreur (" + statut + ").";
+  }
+
+  function appel(ressource, methode, url, corps, entetes) {
+    return jeton(ressource).then(function (t) {
+      var h = Object.assign({ Authorization: "Bearer " + t }, entetes || {});
+      if (ressource === "sp") h.Accept = "application/json;odata=nometadata";
+      if (corps !== undefined) h["Content-Type"] = ressource === "sp" ? "application/json;odata=nometadata" : "application/json";
+      return fetch(url, { method: methode, headers: h, body: corps === undefined ? undefined : JSON.stringify(corps) });
+    }).then(function (r) {
+      if (!r.ok) {
+        return r.text().then(function (t) {
+          var detail = "";
+          try { var j = JSON.parse(t); detail = (j.error && (j.error.message && (j.error.message.value || j.error.message))) || j["odata.error"] && j["odata.error"].message.value || ""; } catch (e) {}
+          var e = erreur(r.status, messageHttp(r.status));
+          e.detail = typeof detail === "string" ? detail : "";
+          throw e;
         });
       }
-      return page(GRAPH + chemin);
+      if (r.status === 204) return null;
+      var type = r.headers.get("Content-Type") || "";
+      return /json/.test(type) ? r.json() : r.text().then(function (t) { try { return JSON.parse(t); } catch (e) { return t || null; } });
     });
   }
 
-  function photo(id) {
-    return jeton().then(function (t) {
-      return fetch(GRAPH + "/users/" + encodeURIComponent(id) + "/photos/64x64/$value", { headers: { Authorization: "Bearer " + t } });
-    }).then(function (r) { return r.ok ? r.blob().then(function (b) { return URL.createObjectURL(b); }) : null; })
+  /** Graph : GET/POST/PATCH/DELETE. Chemin relatif à /v1.0. */
+  function graph(methode, chemin, corps) { return appel("graph", methode, GRAPH + chemin, corps); }
+  /** Graph : toutes les pages d'une liste (@odata.nextLink), 5000 éléments au plus. */
+  function graphTout(chemin) {
+    var resultats = [];
+    function page(url) {
+      return appel("graph", "GET", url).then(function (j) {
+        resultats = resultats.concat((j && j.value) || []);
+        return j && j["@odata.nextLink"] && resultats.length < 5000 ? page(j["@odata.nextLink"]) : resultats;
+      });
+    }
+    return page(GRAPH + chemin);
+  }
+  /** Graph : image (photo de profil) → adresse locale blob:, ou null. */
+  function graphPhoto(chemin) {
+    return jeton("graph").then(function (t) { return fetch(GRAPH + chemin, { headers: { Authorization: "Bearer " + t } }); })
+      .then(function (r) { return r.ok ? r.blob().then(function (b) { return URL.createObjectURL(b); }) : null; })
       .catch(function () { return null; });
   }
-
-  /**
-   * Annuaire réel : collaborateurs (poste, service, responsable, licence, compte bloqué),
-   * rôles d'administration, groupes (équipes / sites) et licences achetées / attribuées.
-   * Même forme que les données de démo, pour que les écrans n'aient pas à changer.
-   */
-  function chargerAnnuaire() {
-    var utilisateurs, skus, roles, groupes;
-    return Promise.all([
-      lire("/users?$select=id,displayName,givenName,jobTitle,department,userType,accountEnabled,assignedLicenses&$expand=manager($select=id)&$top=999", true).then(function (v) { utilisateurs = v; }),
-      lire("/subscribedSkus", true).then(function (v) { skus = v; }),
-      lire("/directoryRoles?$expand=members($select=id)", true).then(function (v) { roles = v; }),
-      lire("/groups?$select=id,displayName,groupTypes,mailEnabled,securityEnabled&$expand=members($select=id)&$top=999", true)
-        .then(function (v) { groupes = v; }, function () { groupes = []; }),
-    ]).then(function () {
-      var formuleDeSku = {}, nomDeSku = {};
-      var achetees = { "complete": 0, "express-teams": 0, "express": 0 };
-      skus.forEach(function (s) {
-        var f = SKUS[s.skuPartNumber];
-        formuleDeSku[s.skuId] = f || null;
-        nomDeSku[s.skuId] = s.skuPartNumber;
-        if (f) achetees[f] += (s.prepaidUnits && s.prepaidUnits.enabled) || 0;
-      });
-      var couleurs = ["#6B1524", "#1D6B52", "#2E5A8A", "#7A3E8E", "#8A4B00", "#35601A", "#3A6EA5", "#8A2B3B"];
-      var collaborateurs = utilisateurs.filter(function (u) { return u.userType !== "Guest"; }).map(function (u, i) {
-        var lic = (u.assignedLicenses || []).map(function (l) { return formuleDeSku[l.skuId]; }).filter(Boolean);
-        return {
-          id: u.id,
-          prenom: u.givenName || u.displayName || "(sans nom)",
-          nomAffiche: u.displayName || "",
-          poste: u.jobTitle || "",
-          pole: u.department || "",
-          responsable: (u.manager && u.manager.id) || "",
-          licence: lic[0] || "aucune",
-          licencesBrutes: (u.assignedLicenses || []).map(function (l) { return nomDeSku[l.skuId] || l.skuId; }),
-          boites: null, // non lisible via Graph (droits Exchange) : phase 3
-          bloque: u.accountEnabled === false,
-          couleur: couleurs[i % couleurs.length],
-          photo: null,
-        };
-      }).sort(function (a, b) { return a.prenom.localeCompare(b.prenom, "fr"); });
-
-      var r = { admin: [], facturation: [], utilisateurs: [] };
-      roles.forEach(function (role) {
-        var cle = ROLES_MICROSOFT[role.roleTemplateId];
-        if (cle) r[cle] = (role.members || []).map(function (m) { return m.id; });
-      });
-      var g = groupes.map(function (gr) {
-        var m = {};
-        (gr.members || []).forEach(function (x) { m[x.id] = "membre"; });
-        return { id: gr.id, nom: gr.displayName, membres: m, microsoft365: (gr.groupTypes || []).indexOf("Unified") > -1 };
-      }).sort(function (a, b) { return a.nom.localeCompare(b.nom, "fr"); });
-
-      return { collaborateurs: collaborateurs, roles: r, dossiers: g, achetees: achetees };
-    });
-  }
-
-  /** Photos chargées petit à petit (4 à la fois) ; `rappel` est appelé à chaque photo. */
-  function chargerPhotos(collaborateurs, rappel) {
-    var file = collaborateurs.slice(), actifs = 0;
-    return new Promise(function (fini) {
-      function suite() {
-        if (!file.length && !actifs) return fini();
-        while (actifs < 4 && file.length) {
-          var c = file.shift(); actifs++;
-          photo(c.id).then(function (c) { return function (url) { if (url) { c.photo = url; rappel && rappel(c); } }; }(c))
-            .then(function () { actifs--; suite(); });
-        }
-      }
-      suite();
-    });
+  /** SharePoint REST : chemin relatif au site (« /_api/web/… ») ou adresse complète. */
+  function sp(methode, chemin, corps, entetes) {
+    var site = (self.EB_CONFIG.sharepoint.site || "").replace(/\/+$/, "");
+    return appel("sp", methode, /^https:/.test(chemin) ? chemin : site + chemin, corps, entetes);
   }
 
   window.EBGraph = {
     estConfigure: estConfigure,
+    estMaquette: function () { return etat.maquette; },
     init: init,
     connecter: connecter,
     oublier: oublier,
     estConnecte: function () { return !!etat.compte; },
     compte: function () { return etat.compte; },
     erreur: function () { return etat.erreur; },
-    chargerAnnuaire: chargerAnnuaire,
-    chargerPhotos: chargerPhotos,
-    _SKUS: SKUS, _ROLES: ROLES_MICROSOFT,
+    graph: graph, graphTout: graphTout, graphPhoto: graphPhoto, sp: sp,
+    origineSharePoint: origineSharePoint,
+    // Compatibilité avec l'annuaire de démo (app.js) : voir connecte.js.
+    chargerAnnuaire: function () { return window.EBConnecte ? window.EBConnecte.annuairePourDemo() : Promise.reject(new Error("indisponible")); },
+    chargerPhotos: function (liste, rappel) { return window.EBConnecte ? window.EBConnecte.chargerPhotos(liste, rappel) : Promise.resolve(); },
   };
 })();

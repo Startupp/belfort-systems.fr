@@ -511,23 +511,18 @@
       var c = G.compte();
       return h("div", { class: "bandeau info" }, icone("coche"), h("div", null,
         h("strong", null, "Connecté à Microsoft" + (c && c.name ? " : " + c.name : "")),
-        "L'équipe, les licences et les rôles affichés sont les vrais (lecture seule).",
+        "L'appli agit avec vos droits Microsoft, ni plus ni moins.",
         h("div", { class: "actions" }, h("button", { class: "btn secondaire", type: "button", onclick: function () { G.oublier(); reel = null; rendre(); } }, "Se déconnecter de l'appli"))));
     }
     return h("div", { class: "boite microsoft" },
-      h("h3", null, "Voir les vraies informations"),
-      h("p", null, "Connectez-vous avec votre compte du Château pour voir la vraie équipe, les licences et les rôles. L'appli ne peut rien modifier."),
+      h("h3", null, "Se connecter pour de vrai"),
+      h("p", null, "Avec votre compte du Château (…@breteuil.fr), l'appli montre le vrai dossier commun, les vraies personnes et leurs licences. Elle agit uniquement avec vos droits."),
       G.erreur() ? h("p", { class: "erreur" }, G.erreur()) : null,
       h("button", { class: "btn large", type: "button", onclick: function () { G.connecter(); } }, emoji("🔐"), "Se connecter avec Microsoft"));
   }
   function chargerReel() {
-    var G = window.EBGraph;
-    if (!G || !G.estConnecte()) return Promise.resolve();
-    return G.chargerAnnuaire().then(function (r) {
-      reel = r;
-      rendre();
-      G.chargerPhotos(r.collaborateurs, function () { rendrePlusTard(); });
-    }).catch(function (e) { toast("Microsoft ne répond pas : " + (e && e.message || "erreur")); });
+    if (window.EBConnecte) window.EBConnecte.apresConnexion();
+    return Promise.resolve();
   }
   var attenteRendu = null;
   function rendrePlusTard() { clearTimeout(attenteRendu); attenteRendu = setTimeout(rendre, 400); }
@@ -1063,6 +1058,9 @@
     collaborateurs: collaborateurs, collaborateurParId: collaborateurParId, personnes: function () { return donnees.personnes; },
     jourCourt: jourCourt, versIso: versIso, depuisIso: depuisIso, aujourdhui: aujourdhui, plusJours: plusJours, lundiDe: lundiDe, fmt: fmt, midi: midi, maj: maj,
     ecran: function (nom, fn) { ecrans[nom] = fn; },
+    definirReel: function (r) { reel = r; },
+    onglet: function (id, nom, ic, rubriques) { ONGLETS.forEach(function (o) { if (o.id === id) { o.rubriques = o.rubriques.concat(rubriques || []); } }); },
+    jourLong: jourLong, heure: heure,
   };
 
   /* ------------------------------------------------------------------ */

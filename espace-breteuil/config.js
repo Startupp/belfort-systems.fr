@@ -1,17 +1,44 @@
-/* Espace Breteuil — configuration publique (aucun secret ici).
+/* Espace Breteuil — configuration publique (AUCUN secret ici).
  *
- * api : adresse du Worker belfort-api (planning ICS).
- * microsoft : laisser clientId et tenantId VIDES = mode démo (aucune connexion).
- *   Une fois l'application inscrite dans Entra ID (voir docs/ESPACE-BRETEUIL.md),
- *   renseigner l'ID d'application (client) et l'ID de locataire (tenant) :
- *   ce ne sont pas des secrets. L'appli passe alors en LECTURE SEULE réelle. */
+ * Le dépôt est public : ne jamais écrire ici de mot de passe, d'adresse ICS secrète
+ * ni d'adresse mail personnelle. Voir docs/ESPACE-BRETEUIL-CONNEXION.md.
+ */
 self.EB_CONFIG = {
+  /* Worker belfort-api : relais des calendriers (adresses ICS = secrets du Worker). */
   api: "https://belfort-api.damien-belfort.workers.dev",
+
+  /* Calendriers affichés, chacun avec sa couleur. n = numéro de la source côté Worker
+   * (1 → secret BRETEUIL_ICS_URL, 2 → BRETEUIL_ICS_URL_2…). exemple = données fictives
+   * montrées tant que la source n'est pas branchée. */
+  calendriers: [
+    { n: 1, nom: "Calendrier du Château", couleur: "#6B1524", exemple: "exemple.ics" },
+    { n: 2, nom: "Équipe du jour (accueil)", couleur: "#2E5A8A", exemple: "exemple-accueil.ics" },
+  ],
+
+  /* Connexion Microsoft. clientId VIDE = mode démo (aucune connexion possible).
+   * clientId et tenantId ne sont pas des secrets (ils sont visibles dans toute appli SPA). */
   microsoft: {
     clientId: "",
-    tenantId: "",
-    // Vide = l'adresse de l'appli elle-même (doit être déclarée dans Entra, type SPA).
+    tenantId: "breteuil02.onmicrosoft.com",
+    // Vide = l'adresse de l'appli elle-même (à déclarer dans Entra, plateforme « SPA »).
     redirectUri: "",
-    scopes: ["User.Read", "User.ReadBasic.All", "User.Read.All", "Directory.Read.All", "GroupMember.Read.All"],
+    // Microsoft Graph (délégué) : l'appli agit uniquement avec les droits de la personne connectée.
+    scopes: ["User.Read", "User.ReadBasic.All", "User.Read.All", "Directory.Read.All", "Files.ReadWrite.All", "Sites.ReadWrite.All"],
+    // SharePoint (délégué) : nécessaire pour lire et changer les droits d'un dossier.
+    sharepointScope: "https://breteuil02.sharepoint.com/AllSites.FullControl",
   },
+
+  /* Le dossier commun : site SharePoint du Château, bibliothèque « Documents », dossier « Commun ». */
+  sharepoint: {
+    site: "https://breteuil02.sharepoint.com/sites/ChateaudeBreteuil",
+    dossierCommun: "Commun",
+  },
+
+  /* Domaines de l'entreprise : toute autre adresse est « externe ». */
+  domainesInternes: ["breteuil.fr", "breteuil02.onmicrosoft.com"],
+
+  /* Collaborateurs SANS compte @breteuil.fr (adresses perso). NE PAS les écrire ici
+   * (dépôt public) : la liste se gère dans l'appli, écran « Personnes » → « Collaborateurs
+   * sans compte », et elle est rangée dans le SharePoint du Château. */
+  collaborateursSansCompte: [],
 };
