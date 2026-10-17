@@ -85,7 +85,7 @@ Toute réponse d'erreur : `{ok:false, erreur:"phrase en français"}` avec le bon
 ## 5. Données de départ (`api/seed/`)
 
 - Client `breteuil` (Château de Breteuil, contact Pauline de Breteuil, e-mail finance@breteuil.fr à confirmer).
-- Projet `breteuil-migration` « Migration de la messagerie et prise en main » : les 49 demandes et 36 événements du suivi actuel (copies JSON dans `api/seed/demandes/*.json` et `api/seed/evenements/*.json`, même format que l'artefact de suivi : `n,g,t,who,d,s,p,l,r,c[]`) ; chaque entrée `c[]` d'une demande devient un message de la conversation du canal correspondant (Mail / WhatsApp / SMS / Téléphone / Sur place) et un rattachement `demande_id`.
+- Projet de démonstration `tilleuls-migration` « Migration de la messagerie et prise en main » (données FICTIVES ; les vraies restent hors dépôt dans `api/seed/prive/`) : 49 demandes et 36 événements (copies JSON dans `api/seed/demandes/*.json` et `api/seed/evenements/*.json`, même format que l'artefact de suivi : `n,g,t,who,d,s,p,l,r,c[]`) ; chaque entrée `c[]` d'une demande devient un message de la conversation du canal correspondant (Mail / WhatsApp / SMS / Téléphone / Sur place) et un rattachement `demande_id`.
 - `api/seed/importer.mjs` : transforme ces JSON en `api/seed/seed.sql` (idempotent, `INSERT OR IGNORE`). L'import en production se fait par le workflow (`wrangler d1 execute belfort-systems --remote --file=api/seed/seed.sql`) seulement au premier déploiement (étape manuelle `workflow_dispatch` avec case « seed »).
 
 ## 6. Pages

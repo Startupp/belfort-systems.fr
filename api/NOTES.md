@@ -45,7 +45,16 @@ Tests :
 node api/seed/importer.mjs   # relit seed/demandes/*.json et seed/evenements/*.json → seed/seed.sql
 ```
 
-`seed.sql` est commité ; en production, cochez `seed` dans le workflow (une seule fois ; rejouer ne crée pas de doublons). Le client `breteuil` est créé **sans jeton** : générez-le depuis le panneau (`POST /admin/clients/breteuil/regenerer`), il n'est montré qu'une fois.
+**Les données commitées sont FICTIVES** (client de démonstration `tilleuls`, « Domaine des Tilleuls ») : le dépôt est public, aucune vraie donnée client ne doit y entrer. Elles servent aux tests (`npm run test:local`) et au mode aperçu du panneau. **Ne cochez pas `seed` en production** : cela créerait le client fictif dans la vraie base.
+
+Vraies données (hors dépôt) : placez-les dans `api/seed/prive/` (ignoré par git) — `demandes/*.json`, `evenements/*.json` et un `client.json` facultatif `{client:{id,slug,nom,contact,email}, projet:{id,titre,resume}, participants, prenoms:[…]}` — puis :
+
+```bash
+node api/seed/importer.mjs --source api/seed/prive      # écrit api/seed/prive/seed.sql
+cd api && npx wrangler d1 execute belfort-systems --remote --file=seed/prive/seed.sql
+```
+
+Le client est créé **sans jeton** : générez-le depuis le panneau (`POST /admin/clients/<id>/regenerer`), il n'est montré qu'une fois.
 
 ## 4. Décisions prises (points du contrat adaptés)
 
@@ -60,7 +69,7 @@ node api/seed/importer.mjs   # relit seed/demandes/*.json et seed/evenements/*.j
 - **Limitation du login** : 5 tentatives par IP et 15 min via KV (cohérence différée : limite indicative). Une connexion réussie remet le compteur à zéro. Pendant le blocage, même le bon mot de passe reçoit 429.
 - **Formulaire `/contact`** : pot-de-miel rempli ou envoi en moins de 3 s (`t` manquant ou trop récent) → réponse `200 {ok:true}` silencieuse sans insertion (ne pas renseigner les robots). 10 envois par IP et par heure ensuite.
 - **Origine inconnue** : toute requête de navigateur dont l'`Origin` n'est ni `ORIGINES` ni `http://localhost:*` reçoit 403 (CORS strict). Les appels sans `Origin` (curl, serveurs) passent, l'authentification faisant le tri.
-- **Seed** — même table de conversion que l'aperçu du panneau (`admin/NOTES.md`) : statuts `fait→traite`, `afaire→lu` (sauf les demandes venues du Word du 06/10 → `nouveau`), `aconfirmer→en_cours`, `partiel→partiel`, `attente→repondu` ; tarif `hors` (hors forfait) → `extra` ; types d'événement `jalon→decision`, `incident→echange` (detail « Incident »), `avenir→decision` avec `date:""` ; canaux `Sur site→Sur place`, `Teams→Téléphone`, `Word`/`Guide`→`Mail` avec `piece` « Document Word » / « Guide PDF » (5 conversations). Résultat : 16 traitées, 7 en cours, 17 lues, 7 partielles, 1 nouvelle, 1 répondue — identique à `admin/apercu/projet-breteuil.json`. Les 36 événements sont rattachés au seul projet `breteuil-migration` (chantier « site » indiqué dans `detail`). Auteur des messages : « Damien » si le texte commence par Ta/Ton/Tu ou est un envoi évident, « Château » sinon — simple repère.
+- **Seed** — même table de conversion que l'aperçu du panneau (`admin/NOTES.md`) : statuts `fait→traite`, `afaire→lu` (sauf les demandes venues du Word du 06/10 → `nouveau`), `aconfirmer→en_cours`, `partiel→partiel`, `attente→repondu` ; tarif `hors` (hors forfait) → `extra` ; types d'événement `jalon→decision`, `incident→echange` (detail « Incident »), `avenir→decision` avec `date:""` ; canaux `Sur site→Sur place`, `Teams→Téléphone`, `Word`/`Guide`→`Mail` avec `piece` « Document Word » / « Guide PDF » (5 conversations). Résultat : 16 traitées, 7 en cours, 17 lues, 7 partielles, 1 nouvelle, 1 répondue — identique à `admin/apercu/projet-exemple.json`. Les 36 événements sont rattachés au seul projet `tilleuls-migration` (chantier « site » indiqué dans `detail`). Auteur des messages : « Damien » si le texte commence par Ta/Ton/Tu ou est un envoi évident, « Client » sinon — simple repère.
 - **Première lecture** : `GET /admin/projets/:id` passe les demandes `nouveau` en `lu` (journalisé). Un message ou un « encore » du client sur une demande close la remet en `nouveau`.
 - **Mot de passe admin** : PBKDF2-SHA256 100 000 itérations sur le mot de passe fourni et sur `ADMIN_PASSWORD`, comparaison à temps constant ; l'empreinte attendue est calculée une fois par isolat.
 

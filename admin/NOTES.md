@@ -18,7 +18,7 @@ Routes appelées et **forme de réponse** (confirmées côté Worker, voir `api/
 | `PATCH /admin/contacts/:id {statut}` | `{ok:true}` |
 | `PATCH /admin/rdv/:id {statut:"confirme"}` | `{ok:true}` ; statuts `propose|confirme|annule` (route ajoutée au Worker) |
 | `GET /admin/projets` | `{projets:[{…projet, client:{nom,…}, compteurs:{statut:n}, nb_demandes}]}` |
-| `GET /admin/projets/:id` | `{projet:{…, client:{id,slug,nom,contact,email}}, demandes:[…], evenements:[…], conversations:[{…, messages:[…]}], fichiers:[…]}` — voir `admin/apercu/projet-breteuil.json` pour la forme exacte |
+| `GET /admin/projets/:id` | `{projet:{…, client:{id,slug,nom,contact,email}}, demandes:[…], evenements:[…], conversations:[{…, messages:[…]}], fichiers:[…]}` — voir `admin/apercu/projet-exemple.json` pour la forme exacte |
 | `POST/PATCH /admin/projets` | champs `client_id, titre, resume, statut` |
 | `PATCH /admin/demandes/:id` | corps `{action:"traiter"|"fait"|"abandonner"|"rouvrir", statut, solution, motif, reste, note}` ; l'UI envoie aussi `statut` cible pour lever toute ambiguïté. Champs supplémentaires utilisés : `note` (texte libre cumulé), `encore` (nombre de « ça ne marche toujours pas », alimenté par `/client/demandes/:id/encore`), `encore_le` (date du dernier signalement) |
 | `POST /admin/demandes` | `{projet_id, titre, groupe, qui, tarif, reste, statut:"nouveau", date_txt}` |

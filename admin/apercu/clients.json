@@ -2,11 +2,11 @@
  "ok": true,
  "clients": [
   {
-   "id": "breteuil",
-   "slug": "breteuil",
-   "nom": "Château de Breteuil",
-   "contact": "Pauline de Breteuil",
-   "email": "finance@breteuil.fr",
+   "id": "tilleuls",
+   "slug": "tilleuls",
+   "nom": "Domaine des Tilleuls",
+   "contact": "Claire Martin",
+   "email": "contact@domaine-tilleuls.example",
    "cree": "2026-06-12",
    "projets": 1
   },

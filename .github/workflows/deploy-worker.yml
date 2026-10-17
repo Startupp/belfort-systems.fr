@@ -13,7 +13,7 @@ on:
         type: boolean
         default: true
       seed:
-        description: "Importer les données de départ (api/seed/seed.sql) — premier déploiement seulement"
+        description: "Importer api/seed/seed.sql — données FICTIVES de démonstration : ne pas cocher en production"
         type: boolean
         default: false
 
