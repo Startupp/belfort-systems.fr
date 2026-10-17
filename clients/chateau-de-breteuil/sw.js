@@ -1,5 +1,5 @@
 /* Espace client chateau-de-breteuil — cache applicatif */
-var CACHE = 'bsv-chateau-de-breteuil-v1';
+var CACHE = 'bsv-chateau-de-breteuil-v2';
 var SHELL = ['./', './manifest.webmanifest', './icon-192.png', './icon-512.png', '/favicon.svg'];
 
 self.addEventListener('install', function (e) {
