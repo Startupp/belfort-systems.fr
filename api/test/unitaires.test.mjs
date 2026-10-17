@@ -102,3 +102,95 @@ test("dates : semaine ISO, créneaux, ajout de jours", () => {
   assert.equal(finDeCreneau("2026-10-12T17:00"), "2026-10-12T18:00");
   assert.equal(ajouterJours("2026-12-15", 30), "2027-01-14");
 });
+
+// ---------------------------------------------------------------------------
+// Espace Breteuil : relais du planning ICS (GET /breteuil/planning.ics)
+// ---------------------------------------------------------------------------
+
+import worker from "../src/index.js";
+
+const ICS_OK = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:a\r\nSUMMARY:Test\r\nDTSTART:20261020T080000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+function kvMemoire() {
+  const m = new Map();
+  return {
+    m,
+    async get(k, type) { const v = m.get(k); return v == null ? null : type === "json" ? JSON.parse(v) : v; },
+    async put(k, v) { m.set(k, v); },
+  };
+}
+function envPlanning(extra = {}) {
+  return { ORIGINES: "https://belfort-systems.fr", KV: kvMemoire(), BRETEUIL_ICS_URL: "webcal://exemple.invalid/cal.ics", ...extra };
+}
+function requete(origine = "https://belfort-systems.fr") {
+  const h = origine ? { Origin: origine } : {};
+  return new Request("https://api.exemple/breteuil/planning.ics", { headers: h });
+}
+
+test("planning : urlPlanning normalise webcal:// et refuse http://", () => {
+  assert.equal(W.urlPlanning({ BRETEUIL_ICS_URL: "webcal://a.fr/x.ics" }), "https://a.fr/x.ics");
+  assert.equal(W.urlPlanning({ BRETEUIL_ICS_URL: "http://a.fr/x.ics" }), null);
+  assert.equal(W.urlPlanning({}), null);
+  assert.ok(W.estUnIcs(ICS_OK));
+  assert.ok(!W.estUnIcs("<html>"));
+});
+
+test("planning : sans Origin autorisée → 403 ; sans secret → 503 non_configure", async () => {
+  let r = await worker.fetch(requete(null), envPlanning(), {});
+  assert.equal(r.status, 403);
+  r = await worker.fetch(requete("https://pirate.exemple"), envPlanning(), {});
+  assert.equal(r.status, 403);
+  r = await worker.fetch(requete(), envPlanning({ BRETEUIL_ICS_URL: "" }), {});
+  assert.equal(r.status, 503);
+  assert.equal((await r.json()).code, "non_configure");
+  assert.equal(r.headers.get("Access-Control-Allow-Origin"), "https://belfort-systems.fr");
+});
+
+test("planning : source relayée puis servie depuis le cache, ancienne version si la source tombe", async () => {
+  const fetchOrigine = globalThis.fetch;
+  let appels = 0, panne = false;
+  globalThis.fetch = async (url) => {
+    appels++;
+    assert.equal(String(url), "https://exemple.invalid/cal.ics");
+    if (panne) throw new Error("réseau");
+    return new Response(ICS_OK, { status: 200 });
+  };
+  try {
+    const env = envPlanning();
+    let r = await worker.fetch(requete(), env, {});
+    assert.equal(r.status, 200);
+    assert.equal(r.headers.get("X-Planning-Etat"), "source");
+    assert.match(r.headers.get("Content-Type"), /text\/calendar/);
+    assert.equal(r.headers.get("Access-Control-Allow-Origin"), "https://belfort-systems.fr");
+    assert.equal(await r.text(), ICS_OK);
+
+    r = await worker.fetch(requete(), env, {});
+    assert.equal(r.headers.get("X-Planning-Etat"), "cache");
+    assert.equal(appels, 1);
+
+    // Cache périmé + source en panne → dernière version connue.
+    const c = JSON.parse(env.KV.m.get("breteuil:planning"));
+    env.KV.m.set("breteuil:planning", JSON.stringify({ ...c, quand: Date.now() - 3600 * 1000 }));
+    panne = true;
+    r = await worker.fetch(requete(), env, {});
+    assert.equal(r.status, 200);
+    assert.equal(r.headers.get("X-Planning-Etat"), "ancien");
+
+    // Ni cache ni source → 502.
+    r = await worker.fetch(requete(), envPlanning(), {});
+    assert.equal(r.status, 502);
+  } finally {
+    globalThis.fetch = fetchOrigine;
+  }
+});
+
+test("planning : une page HTML renvoyée par la source est refusée", async () => {
+  const fetchOrigine = globalThis.fetch;
+  globalThis.fetch = async () => new Response("<html>connexion</html>", { status: 200 });
+  try {
+    const r = await worker.fetch(requete(), envPlanning(), {});
+    assert.equal(r.status, 502);
+  } finally {
+    globalThis.fetch = fetchOrigine;
+  }
+});
