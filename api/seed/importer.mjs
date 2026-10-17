@@ -5,27 +5,49 @@
  * Lit `api/seed/demandes/*.json` et `api/seed/evenements/*.json` (format de
  * l'artefact de suivi : n, g, t, who, d, s, p, l, r, c[]) et produit
  * `api/seed/seed.sql`, idempotent (INSERT OR IGNORE) :
- *   - client `breteuil` (token_hash NULL : à générer depuis le panneau) ;
- *   - projet `breteuil-migration` ;
+ *   - client de démonstration `tilleuls` (FICTIF ; token_hash NULL : à générer depuis le panneau) ;
+ *   - projet `tilleuls-migration` ;
  *   - les demandes, les événements ;
  *   - une conversation par canal rattachée au projet, et un message par
  *     entrée `c[]` d'une demande (rattaché à la demande).
  *
- * Usage : node api/seed/importer.mjs   (depuis la racine du dépôt ou depuis api/)
+ * Les données commitées sont FICTIVES (dépôt public). Pour de vraies données client,
+ * les garder hors dépôt dans `api/seed/prive/` (ignoré par git) :
+ *   api/seed/prive/demandes/*.json, api/seed/prive/evenements/*.json,
+ *   api/seed/prive/client.json  { client:{id,slug,nom,contact,email}, projet:{id,titre,resume},
+ *                                 participants, prenoms:[…] }   (facultatif)
+ * puis : node api/seed/importer.mjs --source api/seed/prive   → écrit api/seed/prive/seed.sql
+ *
+ * Usage : node api/seed/importer.mjs [--source <dossier>]   (depuis la racine du dépôt ou depuis api/)
  */
 
 import { readdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
+const iSource = process.argv.indexOf("--source");
+const SOURCE = iSource > 0 && process.argv[iSource + 1] ? resolve(process.argv[iSource + 1]) : ICI;
 const ANNEE = "2026";                     // les dates « jj/mm » des JSON sont en 2026
-const CLIENT_ID = "breteuil";
-const PROJET_ID = "breteuil-migration";
 const QUAND = "2026-10-11T00:00:00.000Z"; // horodatage figé : seed reproductible
 
-// Prénoms du château : un texte « Prénom : … » est une parole du client.
-const PRENOMS_CHATEAU = ["Pauline", "François", "Francois", "Fanny", "Guillaumette", "Valérie", "Valerie", "Erwin", "Amélie", "Paula", "Joao", "M. Defecques"];
+// Client et projet de démonstration (FICTIFS). Remplaçables par SOURCE/client.json (hors dépôt).
+const CONFIG = {
+  client: { id: "tilleuls", slug: "tilleuls", nom: "Domaine des Tilleuls", contact: "Claire Martin", email: "contact@domaine-tilleuls.example" },
+  projet: { id: "tilleuls-migration", titre: "Migration de la messagerie et prise en main",
+    resume: "Données de démonstration fictives : migration de 12 boîtes vers Microsoft 365, OneDrive, agendas, passation ; chantiers suivants (site, postes)." },
+  participants: "Damien, Claire Martin, Hugo Lambert",
+  // Prénoms côté client : un texte « Prénom : … » est une parole du client.
+  prenoms: ["Claire", "Hugo", "Inès", "Nadia", "Paul"],
+};
+if (existsSync(join(SOURCE, "client.json"))) {
+  const perso = JSON.parse(await readFile(join(SOURCE, "client.json"), "utf8"));
+  Object.assign(CONFIG, perso, { client: { ...CONFIG.client, ...perso.client }, projet: { ...CONFIG.projet, ...perso.projet } });
+}
+const CLIENT_ID = CONFIG.client.id;
+const PROJET_ID = CONFIG.projet.id;
+const PRENOMS_CLIENT = CONFIG.prenoms;
 
 /**
  * Statut du JSON → statut du contrat (même table que l'aperçu du panneau, admin/NOTES.md) :
@@ -95,17 +117,17 @@ function dateIso(d) {
 
 /**
  * Auteur probable d'un message : « Damien » si le texte commence par « Ta », « Ton »,
- * « Tu » (ou « Ta réponse »…) ; « Château » si un prénom du château précède « : » ;
- * sinon « Château » (dans le doute, ce n'est qu'un repère).
+ * « Tu » (ou « Ta réponse »…) ; « Client » si un prénom du client précède « : » ;
+ * sinon « Client » (dans le doute, ce n'est qu'un repère).
  */
 function auteur(texte) {
   const t = String(texte || "").trim();
   if (/^(Ta|Ton|Tes|Tu)\b/.test(t)) return "Damien";
-  for (const p of PRENOMS_CHATEAU) {
-    if (new RegExp(`^${p.replace(".", "\\.")}[^:]{0,40}:`).test(t)) return "Château";
+  for (const p of PRENOMS_CLIENT) {
+    if (new RegExp(`^${p.replace(".", "\\.")}[^:]{0,40}:`).test(t)) return "Client";
   }
   if (/^(Envoi|Réponse|Explication|Procédure|Lien|Carte|Invitation|Planning|Correction|Analyse|Vérification|Présentation|Grille|Quatre documents|Mini-guide|Exporter|Annexe|Réglage fait|Liste des accès|Accès reçus)/.test(t)) return "Damien";
-  return "Château";
+  return "Client";
 }
 
 /** Échappe une valeur SQL (NULL, nombre ou texte entre apostrophes). */
@@ -117,7 +139,7 @@ function sql(v) {
 
 /** Lit tous les JSON d'un dossier, triés par nom. */
 async function lireDossier(nom) {
-  const dossier = join(ICI, nom);
+  const dossier = join(SOURCE, nom);
   const fichiers = (await readdir(dossier)).filter((f) => f.endsWith(".json")).sort();
   const out = [];
   for (const f of fichiers) out.push({ fichier: f, ...JSON.parse(await readFile(join(dossier, f), "utf8")) });
@@ -131,16 +153,15 @@ async function principal() {
   const ins = (table, cols, vals) => lignes.push(`INSERT OR IGNORE INTO ${table} (${cols.join(", ")}) VALUES (${vals.map(sql).join(", ")});`);
 
   lignes.push("-- Données de départ générées par api/seed/importer.mjs — ne pas modifier à la main.");
+  if (SOURCE === ICI) lignes.push("-- Données FICTIVES de démonstration (dépôt public) : aucun vrai client. Vraies données : voir api/seed/prive/ (hors dépôt).");
   lignes.push(`-- ${demandes.length} demandes, ${evenements.length} événements. Idempotent (INSERT OR IGNORE).`);
   lignes.push("");
 
   // Client et projet
   ins("clients", ["id", "slug", "nom", "contact", "email", "token_hash", "cree"],
-    [CLIENT_ID, "breteuil", "Château de Breteuil", "Pauline de Breteuil", "finance@breteuil.fr", null, QUAND]);
+    [CLIENT_ID, CONFIG.client.slug, CONFIG.client.nom, CONFIG.client.contact, CONFIG.client.email, null, QUAND]);
   ins("projets", ["id", "client_id", "titre", "statut", "resume", "cree", "maj"],
-    [PROJET_ID, CLIENT_ID, "Migration de la messagerie et prise en main", "en_cours",
-      "Migration des 17 boîtes O2Switch vers Microsoft 365, OneDrive/SharePoint, calendriers, passation ; chantiers suivants (site, postes).",
-      QUAND, QUAND]);
+    [PROJET_ID, CLIENT_ID, CONFIG.projet.titre, "en_cours", CONFIG.projet.resume, QUAND, QUAND]);
   lignes.push("");
 
   // Conversations : une par canal rencontré (identifiant stable « conv-<canal> »).
@@ -155,7 +176,7 @@ async function principal() {
   }
   for (const [c, id] of conversations) {
     ins("conversations", ["id", "projet_id", "canal", "titre", "participants", "maj"],
-      [id, PROJET_ID, c, c, "Damien, Pauline de Breteuil, François de Breteuil", QUAND]);
+      [id, PROJET_ID, c, c, CONFIG.participants, QUAND]);
   }
   lignes.push("");
 
@@ -189,7 +210,7 @@ async function principal() {
     [QUAND, "seed", "importer", `projets:${PROJET_ID}`].map(sql).join(", ") + ");");
   lignes.push("");
 
-  const sortie = join(ICI, "seed.sql");
+  const sortie = join(SOURCE, "seed.sql");
   await writeFile(sortie, lignes.join("\n"), "utf8");
   console.log(`seed.sql écrit : ${demandes.length} demandes, ${evenements.length} événements, ${conversations.size} conversations, ${nbMessages} messages.`);
 }

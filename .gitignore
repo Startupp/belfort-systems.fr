@@ -1,3 +1,8 @@
 .claude/
 # Artefact de déploiement construit par .github/workflows/deploy-pages.yml
 _site/
+# Vraies données client : jamais dans le dépôt public (voir api/seed/importer.mjs)
+api/seed/prive/
+admin/apercu/prive/
+*.prive.json
+*.prive.sql
