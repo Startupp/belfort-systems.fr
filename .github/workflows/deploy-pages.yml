@@ -35,18 +35,18 @@ jobs:
           rm -rf _site && mkdir _site
           # Fichiers racine
           for f in index.html 404.html CNAME .nojekyll favicon.svg robots.txt sitemap.xml; do
-            [ -e "$f" ] && cp "$f" _site/
+            if [ -e "$f" ]; then cp "$f" _site/; fi
           done
           # Dossiers publics (copiés sans les fichiers de développement)
           PUBLIC="assets qui-suis-je portail clients factures haccp ecorce espace-breteuil"
           for d in $PUBLIC; do
-            [ -d "$d" ] || continue
-            rsync -a \
-              --exclude='*.md' --exclude='tests/' --exclude='test/' --exclude='*.test.mjs' --exclude='*.test.js' \
-              --exclude='*.sh' --exclude='*.py' --exclude='node_modules/' --exclude='.DS_Store' \
-              --exclude='package.json' --exclude='package-lock.json' \
-              "$d/" "_site/$d/"
+            if [ ! -d "$d" ]; then echo "::warning::Dossier $d absent"; continue; fi
+            cp -a "$d" "_site/$d"
           done
+          # Retrait des fichiers de développement dans les dossiers copiés
+          find _site -depth \( -name tests -o -name test -o -name node_modules \) -type d -exec rm -rf {} +
+          find _site -type f \( -name '*.md' -o -name '*.test.mjs' -o -name '*.test.js' -o -name '*.sh' -o -name '*.py' \
+            -o -name 'package.json' -o -name 'package-lock.json' -o -name '.DS_Store' \) -delete
           # Panneau admin : le code seulement (pas admin/apercu/, pas les notes)
           mkdir -p _site/admin
           cp admin/index.html admin/admin.css admin/admin.js _site/admin/
