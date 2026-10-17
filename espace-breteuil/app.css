@@ -467,7 +467,7 @@ dialog.detail form.contenu label { font-weight: 700; }
 .liste-fichiers { display: grid; gap: 8px; }
 .fichier { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; border-radius: var(--rayon-petit); background: var(--surface); border: 2px solid var(--trait); color: var(--encre); text-decoration: none; }
 .fichier .emoji { font-size: 1.5rem; }
-.fichier span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.fichier > span:not(.emoji) { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .fichier svg.ic { color: var(--pale); }
 
 /* Qui a accès */
