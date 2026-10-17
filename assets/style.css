@@ -270,7 +270,7 @@ section.block { padding: clamp(60px, 8vw, 100px) 0; }
 .service .price small { display: block; color: var(--muted-2); }
 
 /* Formules */
-.plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
 .plan {
   position: relative; display: flex; flex-direction: column; min-width: 0;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 28px 24px;
