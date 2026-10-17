@@ -1,0 +1,11 @@
+{
+  "_note": "Boîtes partagées proposées à l'épinglage (Planning → Mes épingles). Raccourcis seulement : l'appli ne lit ni n'envoie aucun mail. Adresses de démonstration, à vérifier par Damien.",
+  "boites": [
+    { "id": "contact", "nom": "Contact", "adresse": "contact@breteuil.fr" },
+    { "id": "finance", "nom": "Finance", "adresse": "finance@breteuil.fr" },
+    { "id": "restauration", "nom": "Restauration", "adresse": "restauration@breteuil.fr" },
+    { "id": "marketing", "nom": "Marketing", "adresse": "marketing@breteuil.fr" },
+    { "id": "jardins", "nom": "Jardins", "adresse": "jardins@breteuil.fr" },
+    { "id": "intendance", "nom": "Intendance", "adresse": "intendance@breteuil.fr" }
+  ]
+}

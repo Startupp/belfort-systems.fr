@@ -811,3 +811,34 @@ button.action { width: 100%; font: inherit; color: inherit; text-align: left; cu
 .zone-planning.ajuster .mois { gap: 2px; }
 .zone-planning.ajuster .mois .case { min-width: 0; }
 
+/* Fichiers : sections, lignes de fichiers (cibles ≥ 44 px) */
+.entete-section { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.entete-section h2 { margin: 0; }
+.acts-section { display: flex; gap: 6px; flex-wrap: wrap; }
+.acts-section .btn.petit, .entete-section .btn.petit { min-height: 44px; }
+.liste-fichiers { display: grid; gap: 6px; }
+button.fichier, a.fichier { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 6px 12px; border-radius: var(--rayon-petit);
+  border: 1px solid var(--trait); background: var(--surface); color: var(--texte); font: inherit; text-align: left; cursor: pointer; text-decoration: none; }
+button.fichier > span:not(.emoji):not(.fleche) { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+button.fichier small { display: block; color: var(--texte-2); font-size: .8rem; }
+button.fichier .fleche { color: var(--texte-3); font-size: 1.3rem; }
+button.fichier:hover { border-color: var(--primaire); }
+.lien-discret a { color: var(--texte-2); display: inline-flex; min-height: 44px; align-items: center; }
+
+/* Mes épingles */
+.epingles { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.epingle { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 10px; border-radius: var(--rayon-petit); border: 1px solid var(--trait);
+  border-bottom: 2px solid var(--or); background: var(--surface); color: var(--texte); font: inherit; text-align: left; cursor: pointer;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: transform 120ms, box-shadow 120ms; }
+.epingle .ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.epingle .ico.c-praline { background: var(--c-praline-f); color: var(--c-praline); }
+.epingle .ico.c-dore { background: var(--c-dore-f); color: var(--c-dore); }
+.epingle .ico.c-ciel { background: var(--c-ciel-f); color: var(--c-ciel); }
+.epingle .ico svg.ic { font-size: 1.2rem; }
+.epingle .lib { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.epingle small { display: none; }
+@media (min-width: 720px) { .epingle { flex-wrap: wrap; } .epingle small { display: block; width: 100%; color: var(--texte-2); font-size: .78rem; overflow-wrap: anywhere; } }
+.epingle.glisse { z-index: 5; position: relative; box-shadow: var(--ombre-forte); transition: none; }
+.epingle.cible { outline: 2px dashed var(--or); }
+.zone-epingles .petit { margin: 6px 0 0; color: var(--texte-2); font-size: .8rem; }
+

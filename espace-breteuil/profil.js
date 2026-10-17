@@ -79,7 +79,7 @@
 
   /** 4 onglets au plus : Planning, Dossiers, [Équipe | Finance | Gérer], Moi. */
   function onglets(sections) {
-    var l = [{ id: "planning", nom: "Planning", icone: "agenda" }, { id: "dossiers", nom: "Dossiers", icone: "dossier" }];
+    var l = [{ id: "planning", nom: "Planning", icone: "agenda" }, { id: "fichiers", nom: "Fichiers", icone: "dossier" }];
     if (sections.length === 1 && sections[0] === "equipe") l.push({ id: "equipe", nom: "Équipe", icone: "personnes" });
     else if (sections.length === 1 && sections[0] === "finance") l.push({ id: "finance", nom: "Finance", icone: "euro" });
     else if (sections.length > 1) l.push({ id: "gerer", nom: "Gérer", icone: "etoile" });
@@ -109,7 +109,7 @@
   }
   /** Onglet (id) qui contient une route. */
   function ongletDe(route, r) {
-    var map = { planning: "planning", "": "planning", dossiers: "dossiers", commun: "dossiers", acces: "dossiers", restreindre: "dossiers", journal: "dossiers",
+    var map = { planning: "planning", "": "planning", fichiers: "fichiers", onedrive: "fichiers", dossiers: "fichiers", commun: "fichiers", acces: "fichiers", restreindre: "fichiers", journal: "fichiers",
       moi: "moi", reglages: "moi", details: "moi", verifier: "moi", installer: "moi", demos: "moi" };
     if (map[route] != null) return map[route];
     var ids = (r ? r.onglets : onglets([])).map(function (o) { return o.id; });

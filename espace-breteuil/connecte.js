@@ -1,7 +1,7 @@
 /*
  * Espace Breteuil — écrans CONNECTÉS (vraies données Microsoft, droits de la personne connectée).
  *
- *   #/dossiers                onglet Dossiers : accueil connecté (ou bouton « Se connecter »)
+ *   (v4 : l'onglet est « Fichiers », fichiers.js ; #/dossiers y renvoie)
  *   #/commun[/chemin…]        dossier commun : grosses tuiles, fil d'Ariane, créer, renommer, déplacer
  *   #/acces/chemin…           qui a accès (bibliothèque : #/acces/~racine) + gérer les accès
  *   #/restreindre/chemin…     « Partager uniquement avec… »
@@ -147,7 +147,7 @@
   /* ------------------------------------------------------------------ */
   function noter(action, cible) {
     // Une modification vient d'être faite : les listes gardées en mémoire sont à relire.
-    C.oublier("enfants:*"); C.oublier("droits:*");
+    C.oublier("enfants:*"); C.oublier("droits:*"); C.oublier("fichiers:*");
     var j = EB.lire("eb:journal", []);
     j.unshift({ quand: new Date().toISOString(), qui: (G.compte() || {}).username || "", action: action, cible: cible });
     if (j.length > 300) j.length = 300;
@@ -195,7 +195,7 @@
   /** Écran réservé : connexion Microsoft nécessaire. Renvoie vrai si connecté. */
   function exigerConnexion(app, titre, retour) {
     if (G.estConnecte()) return true;
-    app.appendChild(EB.barre(titre, retour || { href: "#/dossiers", texte: "Dossiers" }));
+    app.appendChild(EB.barre(titre, retour || { href: "#/fichiers", texte: "Fichiers" }));
     app.appendChild(panneauConnexion());
     return false;
   }
@@ -213,48 +213,6 @@
       h("p", { class: "petit" }, "Vous restez connecté tant que l'appli (ou l'onglet) reste ouverte. En la fermant, tout est effacé de ce téléphone."));
   }
 
-  /* ------------------------------------------------------------------ */
-  /* #/dossiers (onglet Dossiers)                                        */
-  /* ------------------------------------------------------------------ */
-  function ecranDossiers(app) {
-    app.appendChild(EB.barre("Dossiers", null));
-    if (!G.estConnecte()) { app.appendChild(panneauConnexion()); return; }
-    var A = window.EBAcces;
-    // Message clair à l'endroit concerné (au lieu d'un écran de vérification obligatoire).
-    var alerte = h("div", { class: "zone-alerte" });
-    app.appendChild(alerte);
-    function dessinerAlerte() {
-      alerte.textContent = "";
-      var site = A && A.sonde("site"), commun = A && A.sonde("commun"), sp = A && A.sonde("sp");
-      var pb = site && site.etat === "erreur" ? site : commun && commun.etat === "erreur" ? commun : null;
-      if (pb) alerte.appendChild(h("div", { class: "bandeau erreur", role: "alert" }, icone("exemple"), h("div", null, h("strong", null, pb.message),
-        h("span", null, pb === commun ? "Vérifiez qu'il est bien à la racine de la bibliothèque Documents (ou corrigez « dossierCommun » dans config.js)." : "Prévenez Damien : l'adresse du site est peut-être à corriger."),
-        pb === commun ? h("a", { class: "btn petit secondaire", href: hashChemin("commun", []) }, "Voir toute la bibliothèque") : null)));
-      if (!pb && sp && sp.etat === "erreur" && peutGererDroits()) alerte.appendChild(h("div", { class: "bandeau info", role: "note" }, icone("info"), h("div", null, h("strong", null, sp.message))));
-    }
-    dessinerAlerte();
-    if (A) A.surChangement(function () { if (document.body.contains(alerte)) dessinerAlerte(); });
-    var tuilesL = [{ href: "#/commun", icone: "dossier", libelle: "Dossier commun", aide: "Voir, créer, renommer et ranger les dossiers de l'équipe" }];
-    if (peutGererDroits()) tuilesL.push({ href: "#/acces/" + encodeURIComponent(nomCommun()), icone: "cadenas", libelle: "Qui a accès", aide: "Voir et changer qui peut voir ou modifier le dossier commun" });
-    tuilesL.push({ href: "#/journal", icone: "horloge", libelle: "Ce que j'ai fait", aide: "Les changements faits depuis ce téléphone" });
-    app.appendChild(EB.tuiles(tuilesL));
-    // Aperçu du dossier commun (dernier état connu, puis mis à jour).
-    var zone = h("section", { class: "section" }, h("h2", null, "Dans « " + nomCommun() + " »"), chargement(4, "tuiles"));
-    app.appendChild(zone);
-    var gen = demarrerEcran();
-    contexte().then(function (c) {
-      if (!c.commun) { zone.remove(); return; }
-      return avecMaj("enfants:" + nomCommun(), function () { return chargerEnfants(c, [nomCommun()]); }, gen, zone, function (enfants) {
-        zone.textContent = "";
-        zone.appendChild(h("h2", null, "Dans « " + nomCommun() + " »"));
-        var dossiers = enfants.filter(function (x) { return x.folder; }).sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); });
-        if (!dossiers.length) { zone.appendChild(h("p", { class: "vide" }, "Ce dossier est vide.")); return; }
-        zone.appendChild(EB.tuiles(dossiers.slice(0, 8).map(function (d) {
-          return { href: hashChemin("commun", [nomCommun(), d.name]), icone: "dossier", libelle: d.name, aide: "Ouvrir le dossier " + d.name };
-        })));
-      });
-    }).catch(function () { if (toujoursLa(gen, zone)) zone.remove(); });
-  }
   function chargerEnfants(c, segs) {
     return G.graphTout(urlItem(c.drive.id, segs, "children") + "?$select=id,name,folder,file,webUrl,size,lastModifiedDateTime&$top=500");
   }
@@ -292,7 +250,7 @@
     if (segs === null) { segs = [nomCommun()]; history.replaceState(null, "", hashChemin("commun", segs)); }
     var titre = segs.length ? segs[segs.length - 1] : "Documents";
     var gen = demarrerEcran();
-    app.appendChild(EB.barre(titre, { href: segs.length > 1 ? hashChemin("commun", segs.slice(0, -1)) : "#/dossiers", texte: segs.length > 1 ? "Retour" : "Dossiers" }));
+    app.appendChild(EB.barre(titre, { href: segs.length > 1 ? hashChemin("commun", segs.slice(0, -1)) : "#/fichiers", texte: segs.length > 1 ? "Retour" : "Fichiers" }));
     app.appendChild(filAriane(segs, "commun"));
     var zone = h("div", null, chargement(4, "tuiles"));
     app.appendChild(zone);
@@ -316,6 +274,9 @@
 
       var actions = h("div", { class: "actions" },
         h("button", { class: "btn", type: "button", onclick: function () { nouveauDossier(segs); } }, icone("plus"), "Nouveau dossier"),
+        window.EBFichiers ? h("button", { class: "btn secondaire", type: "button", "data-action": "televerser-commun", onclick: function () {
+          window.EBFichiers.televerser("« " + (segs[segs.length - 1] || "Documents") + " »", function (n) { return "/drives/" + r.c.drive.id + "/root:/" + segs.concat([n]).map(encodeURIComponent).join("/"); }, EB.rendre);
+        } }, icone("installer"), "Téléverser") : null,
         peutGererDroits() ? h("a", { class: "btn secondaire", href: hashChemin("acces", segs) }, emoji("🔐"), "Qui a accès ?") : null);
       zone.appendChild(actions);
       if (!segs.length) zone.appendChild(h("p", { class: "aide-ecran" }, "📚 Vous êtes tout en haut de la bibliothèque du site. Le dossier « " + nomCommun() + " » est rangé ici."));
@@ -331,7 +292,7 @@
       })));
       if (fichiers.length) zone.appendChild(h("section", { class: "section" }, h("h2", null, "Fichiers"),
         h("div", { class: "liste-fichiers" }, fichiers.map(function (f) {
-          return h("a", EBlien(f.webUrl), emoji(emojiFichier(f.name)), h("span", null, f.name), icone("ouvrir"));
+          return window.EBFichiers ? window.EBFichiers.ligne(Object.assign({ parentReference: { driveId: r.c.drive.id } }, f)) : h("a", EBlien(f.webUrl), emoji(emojiFichier(f.name)), h("span", null, f.name), icone("ouvrir"));
         }))));
     }
   }
@@ -399,11 +360,15 @@
       peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Qui a accès ?", sous: "Voir et changer les droits" } : null,
       { valeur: "renommer", emoji: "✏️", titre: "Renommer" },
       { valeur: "deplacer", emoji: "📦", titre: "Déplacer vers…", sous: "Le ranger dans un autre dossier" },
+      { valeur: "lien", emoji: "🔗", titre: "Copier un lien de partage", sous: "Interne : seules les personnes du Château l'ouvrent" },
+      window.EBEpingles ? { valeur: "epingler", emoji: "📌", titre: "Épingler sur l'accueil", sous: "Un raccourci en haut du Planning" } : null,
     ].filter(Boolean)).then(function (v) {
       if (v === "ouvrir") location.hash = hashChemin("commun", segsD);
       else if (v === "acces") location.hash = hashChemin("acces", segsD);
       else if (v === "renommer") renommer(d, segsParent);
       else if (v === "deplacer") deplacer(d, segsParent);
+      else if (v === "lien") contexte().then(function (c) { window.EBFichiers.copierLien({ driveId: c.drive.id, id: d.id, nom: d.name }); });
+      else if (v === "epingler") window.EBEpingles.ajouter({ type: "dossier", titre: d.name, url: hashChemin("commun", segsD) });
     });
   }
 
@@ -1009,7 +974,7 @@
   /* #/journal                                                           */
   /* ------------------------------------------------------------------ */
   function ecranJournal(app) {
-    app.appendChild(EB.barre("Ce que j'ai fait", { href: "#/dossiers", texte: "Dossiers" }));
+    app.appendChild(EB.barre("Ce que j'ai fait", { href: "#/fichiers", texte: "Fichiers" }));
     app.appendChild(h("p", { class: "aide-ecran" }, "Les changements faits depuis ce téléphone (gardés sur ce téléphone)."));
     var j = EB.lire("eb:journal", []);
     if (!j.length) { app.appendChild(h("p", { class: "vide" }, "Rien pour l'instant.")); return; }
@@ -1024,7 +989,6 @@
   /* ------------------------------------------------------------------ */
   /* Enregistrement des écrans                                           */
   /* ------------------------------------------------------------------ */
-  EB.ecran("dossiers", ecranDossiers);
   EB.ecran("commun", ecranCommun);
   EB.ecran("acces", ecranAcces);
   EB.ecran("restreindre", ecranRestreindre);
@@ -1044,6 +1008,11 @@
     oublier: oublier,
     oublierContexte: oublierContexte,
     contexte: contexte,
+    chargerEnfants: chargerEnfants,
+    nomCommun: nomCommun,
+    hashChemin: hashChemin,
+    demanderNom: demanderNom,
+    peutGererDroits: peutGererDroits,
     utilisateurs: utilisateurs,
     rolesAnnuaire: rolesAnnuaire,
     choisirPersonne: choisirPersonne,

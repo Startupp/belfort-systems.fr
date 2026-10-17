@@ -12,7 +12,7 @@ test("administrateur général : tout, 4 onglets dont Gérer (Équipe, Finance, 
   const r = P.deduire({ roles: [R.admin.id], proprietaire: false, gererDroits: false });
   assert.equal(r.profil, "admin");
   assert.deepEqual(r.sections, ["equipe", "finance", "deleguer"]);
-  assert.deepEqual(ids(r), ["planning", "dossiers", "gerer", "moi"]);
+  assert.deepEqual(ids(r), ["planning", "fichiers", "gerer", "moi"]);
   for (const route of ["gerer", "deleguer", "personnes", "organisation", "licences-reel"]) assert.ok(P.routePermise(route, r), route);
   assert.equal(P.routePermise("equipe", r), false, "pas de doublon : Équipe est dans Gérer");
   assert.equal(P.routePermise("finance", r), false, "pas de doublon : Finance est dans Gérer");
@@ -21,7 +21,7 @@ test("administrateur général : tout, 4 onglets dont Gérer (Équipe, Finance, 
 test("propriétaire du site : Planning, Dossiers (avec droits), Équipe, Moi", () => {
   const r = P.deduire({ roles: [], proprietaire: true, gererDroits: true });
   assert.equal(r.profil, "proprietaire");
-  assert.deepEqual(ids(r), ["planning", "dossiers", "equipe", "moi"]);
+  assert.deepEqual(ids(r), ["planning", "fichiers", "equipe", "moi"]);
   assert.ok(P.routePermise("acces", r));
   assert.ok(P.routePermise("personnes", r));
   assert.equal(P.routePermise("deleguer", r), false);
@@ -31,7 +31,7 @@ test("propriétaire du site : Planning, Dossiers (avec droits), Équipe, Moi", (
 test("administrateur de facturation : Finance seulement en plus", () => {
   const r = P.deduire({ roles: [R.facturation.id.toUpperCase()] });
   assert.equal(r.profil, "facturation");
-  assert.deepEqual(ids(r), ["planning", "dossiers", "finance", "moi"]);
+  assert.deepEqual(ids(r), ["planning", "fichiers", "finance", "moi"]);
   assert.ok(P.routePermise("finance", r));
   assert.ok(P.routePermise("licences-reel", r));
   assert.equal(P.routePermise("acces", r), false);
@@ -41,17 +41,17 @@ test("administrateur de facturation : Finance seulement en plus", () => {
 test("simple collaborateur : Planning, Dossiers, Moi", () => {
   const r = P.deduire({ roles: ["autre-role"], licences: ["O365_BUSINESS_ESSENTIALS"] });
   assert.equal(r.profil, "collaborateur");
-  assert.deepEqual(ids(r), ["planning", "dossiers", "moi"]);
+  assert.deepEqual(ids(r), ["planning", "fichiers", "moi"]);
   for (const route of ["equipe", "gerer", "finance", "deleguer", "acces", "restreindre", "personnes"]) assert.equal(P.routePermise(route, r), false, route);
-  for (const route of ["planning", "dossiers", "commun", "moi", "reglages", "journal"]) assert.ok(P.routePermise(route, r), route);
+  for (const route of ["planning", "fichiers", "commun", "moi", "reglages", "journal"]) assert.ok(P.routePermise(route, r), route);
 });
 
 test("propriétaire ET facturation : regroupés sous Gérer, jamais plus de 4 onglets", () => {
   const r = P.deduire({ roles: [R.facturation.id], proprietaire: true });
-  assert.deepEqual(ids(r), ["planning", "dossiers", "gerer", "moi"]);
+  assert.deepEqual(ids(r), ["planning", "fichiers", "gerer", "moi"]);
   assert.ok(ids(r).length <= 4);
   assert.equal(P.ongletDe("personnes", r), "gerer");
-  assert.equal(P.ongletDe("commun", r), "dossiers");
+  assert.equal(P.ongletDe("commun", r), "fichiers");
   assert.equal(P.ongletDe("reglages", r), "moi");
 });
 

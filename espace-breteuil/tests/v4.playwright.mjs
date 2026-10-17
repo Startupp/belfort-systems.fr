@@ -40,13 +40,13 @@ const AVEC_GERER = { High: "432", Low: String(2 ** 24 + 0xFFFF) }, SANS_GERER = 
 
 const PROFILS = {
   admin: { user: "u2", roles: [{ id: "r1", displayName: "Global Administrator", roleTemplateId: GA }], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "dossiers", "gerer", "moi"], interdits: [], autorises: ["deleguer", "personnes", "licences-reel"] },
+    attendus: ["planning", "fichiers", "gerer", "moi"], interdits: [], autorises: ["deleguer", "personnes", "licences-reel"] },
   proprietaire: { user: "u1", roles: [], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "dossiers", "equipe", "moi"], interdits: ["deleguer", "finance", "gerer"], autorises: ["personnes", "acces/Commun"] },
+    attendus: ["planning", "fichiers", "equipe", "moi"], interdits: ["deleguer", "finance", "gerer"], autorises: ["personnes", "acces/Commun"] },
   facturation: { user: "u3", roles: [{ id: "r2", displayName: "Billing Administrator", roleTemplateId: BILLING }], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "dossiers", "finance", "moi"], interdits: ["deleguer", "personnes", "acces/Commun", "gerer"], autorises: ["licences-reel"] },
+    attendus: ["planning", "fichiers", "finance", "moi"], interdits: ["deleguer", "personnes", "acces/Commun", "gerer"], autorises: ["licences-reel"] },
   collaborateur: { user: "u4", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"],
-    attendus: ["planning", "dossiers", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "absences"], autorises: [] },
+    attendus: ["planning", "fichiers", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "absences"], autorises: [] },
 };
 
 function reponses(nomProfil, variante) {

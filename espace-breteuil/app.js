@@ -637,6 +637,7 @@
   function ecranPlanning(app) {
     var actualiser = h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", title: "Actualiser", onclick: actualiserPlanning }, icone("actualiser"));
     app.appendChild(barre("Planning", null, actualiser, maj(jourLong(aujourdhui()))));
+    if (connecte() && window.EBEpingles) app.appendChild(window.EBEpingles.section()); // raccourcis de chacun
     blocPlanning(app, null); // v4 : plus de bandeau d'absences ni de pointage (planning en lecture seule)
   }
 
@@ -983,7 +984,7 @@
     reglages: ecranReglages, installer: ecranInstaller, guides: ecranGuides, details: ecranDetails,
   };
   /* Anciennes adresses (v2, v3) → leur seul endroit en v4. */
-  var ALIAS = { "": "planning", accueil: "planning", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "dossiers", plus: "moi", verifier: "details" };
+  var ALIAS = { "": "planning", accueil: "planning", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "fichiers", dossiers: "fichiers", plus: "moi", verifier: "details" };
   function ongletsActuels() { var r = resultat(); return r ? r.onglets : window.EBProfil.onglets([]); }
   function ongletDe(ecran) {
     if (ECRANS_DEMO.indexOf(ecran) > -1) return "moi";
@@ -994,6 +995,7 @@
   function niveauDe(chemin) {
     var e = chemin[0] || "";
     if (ongletsActuels().some(function (o) { return o.id === e; }) && chemin.length < 2) return 0;
+    if (e === "onedrive" && chemin.length < 2) return 1;
     if (e === "demos" || e === "reglages" || e === "installer" || e === "deleguer" || e === "personnes" && chemin.length < 2) return 1;
     if (e === "details") return 2;
     return Math.max(1, chemin.filter(Boolean).length);
@@ -1088,7 +1090,7 @@
   function droitsChanges() {
     if (!connecte()) return;
     var e = cheminActuel()[0] || "";
-    var dependants = ["moi", "gerer", "equipe", "finance", "dossiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre"];
+    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre"];
     if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
     else rendreOnglets(ongletDe(e), false);
   }

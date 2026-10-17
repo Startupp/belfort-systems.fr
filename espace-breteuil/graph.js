@@ -337,6 +337,40 @@
       .then(function (r) { return r.ok ? r.blob().then(function (b) { return URL.createObjectURL(b); }) : null; })
       .catch(function () { return null; });
   }
+  /**
+   * Téléverse un fichier (v4, permissions déjà en place : Files.ReadWrite.All).
+   * chemin : « /drives/<id>/root:/<dossier>/<nom> » (sans « :/content »). ≤ 4 Mo : un seul PUT ;
+   * au-delà : session de téléversement par morceaux de 3,75 Mio (multiple de 320 Kio).
+   * Un fichier du même nom n'est jamais écrasé (conflictBehavior=rename).
+   */
+  var MORCEAU = 320 * 1024 * 12;
+  function televerser(chemin, fichier, progres) {
+    progres = progres || function () {};
+    if (fichier.size <= 4 * 1024 * 1024) {
+      return jeton("graph").then(function (t) {
+        return fetch(GRAPH + chemin + ":/content?@microsoft.graph.conflictBehavior=rename", { method: "PUT",
+          headers: { Authorization: "Bearer " + t, "Content-Type": fichier.type || "application/octet-stream" }, body: fichier });
+      }).then(function (r) {
+        signaler({ ressource: "graph", ok: r.ok, statut: r.status, methode: "PUT" });
+        if (!r.ok) return r.text().then(function (x) { var c = ""; try { c = JSON.parse(x).error.code; } catch (e) {} throw erreurHttp(r.status, "graph", c, String(x).slice(0, 200)); });
+        progres(1); return r.json();
+      });
+    }
+    return graph("POST", chemin + ":/createUploadSession", { item: { "@microsoft.graph.conflictBehavior": "rename" } }).then(function (session) {
+      var debut = 0;
+      function suivant() {
+        var fin = Math.min(debut + MORCEAU, fichier.size);
+        // L'adresse de session est pré-autorisée : surtout PAS d'en-tête Authorization.
+        return fetch(session.uploadUrl, { method: "PUT", headers: { "Content-Range": "bytes " + debut + "-" + (fin - 1) + "/" + fichier.size }, body: fichier.slice(debut, fin) }).then(function (r) {
+          if (!r.ok) throw erreurHttp(r.status, "graph", "", "Téléversement interrompu à " + debut + " octets.");
+          debut = fin; progres(debut / fichier.size);
+          return debut < fichier.size ? suivant() : r.json();
+        });
+      }
+      return suivant();
+    });
+  }
+
   /** SharePoint REST : chemin relatif au site (« /_api/web/… ») ou adresse complète. */
   function sp(methode, chemin, corps, entetes, opts) {
     var site = (self.EB_CONFIG.sharepoint.site || "").replace(/\/+$/, "");
@@ -361,7 +395,7 @@
     jeton: function (ressource) { return jeton(ressource, { silencieux: true }).then(function () { return true; }); },
     scopesAccordes: scopesAccordes,
     config: config,
-    graph: graph, graphTout: graphTout, graphPhoto: graphPhoto, sp: sp,
+    graph: graph, graphTout: graphTout, graphPhoto: graphPhoto, sp: sp, televerser: televerser,
     origineSharePoint: origineSharePoint,
     // Compatibilité avec l'annuaire de démo (app.js) : voir connecte.js.
     chargerAnnuaire: function () { return window.EBConnecte ? window.EBConnecte.annuairePourDemo() : Promise.reject(new Error("indisponible")); },
