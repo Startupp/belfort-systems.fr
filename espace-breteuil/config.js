@@ -18,6 +18,18 @@ self.EB_CONFIG = {
   /* Connexion Microsoft. clientId VIDE = mode démo (aucune connexion possible).
    * clientId et tenantId ne sont pas des secrets (ils sont visibles dans toute appli SPA). */
   microsoft: {
+    /* ================================================================================
+     * 👉👉👉  À REMPLIR PAR DAMIEN — LA SEULE LIGNE À CHANGER POUR LE TEST RÉEL  👈👈👈
+     *
+     *  Où le trouver : entra.microsoft.com → Inscriptions d'applications → « Espace Breteuil »
+     *                  → Vue d'ensemble → « ID d'application (client) » → icône Copier.
+     *  Quoi coller   : ce code (36 caractères, forme xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+     *                  ENTRE LES GUILLEMETS ci-dessous. Exemple :
+     *                      clientId: "1a2b3c4d-1234-5678-9abc-def012345678",
+     *  À NE PAS coller : l'« ID d'objet », l'« ID de l'annuaire (locataire) », ni un secret.
+     *  Ensuite        : bouton vert « Commit changes… » → « Commit changes ». Pages republie
+     *                   en 1 minute environ. Ouvrir l'appli → Réglages → « Vérifier la connexion ».
+     * ================================================================================ */
     clientId: "",
     tenantId: "breteuil02.onmicrosoft.com",
     // Vide = l'adresse de l'appli elle-même (à déclarer dans Entra, plateforme « SPA »).
