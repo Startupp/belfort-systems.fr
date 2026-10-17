@@ -2,9 +2,15 @@
  * Espace Breteuil — cœur de l'application (sans dépendance, sans compte).
  *
  * Ce fichier : outils communs (window.EB), planning (plusieurs calendriers),
- * « Aujourd'hui au Château », accueil, Mon espace, réglages, mode « calendrier seul »,
- * mises à jour, barre d'onglets, verrou des espaces Gestion / Finance.
- * Onglets (v3) : Accueil, Planning, Dossiers (connecte.js), Équipe, Plus. Écrans de démo : demos/.
+ * « Aujourd'hui au Château », premier écran, Moi, Gérer, réglages, mode « calendrier seul »,
+ * mises à jour, barre d'onglets.
+ *
+ * v4 :
+ *   - pas connecté : premier écran à 2 boutons (« Voir le calendrier », « Se connecter »),
+ *     ou le calendrier seul si ce mode a été choisi sur l'appareil ;
+ *   - connecté : onglets selon les DROITS RÉELS (profil.js, acces.js) — 4 au plus :
+ *     Planning, Dossiers, [Équipe | Finance | Gérer], Moi ;
+ *   - écrans de démo cachés derrière Réglages → « Afficher les démos ».
  *
  * Tout ce qui vient d'un calendrier ou d'une saisie est inséré comme TEXTE.
  */
@@ -28,10 +34,10 @@
     try { if (valeur == null) localStorage.removeItem(cle); else localStorage.setItem(cle, JSON.stringify(valeur)); return true; } catch (e) { return false; }
   }
 
-  var REGLAGES_DEFAUT = { vue: "semaine", texte: "normal", theme: "auto", passes: "afficher", moi: "", ouvrirMonEspace: false, calendrierSeul: false };
+  var REGLAGES_DEFAUT = { vue: "semaine", texte: "normal", theme: "auto", passes: "afficher", mode: "", demos: false };
   var reglages = Object.assign({}, REGLAGES_DEFAUT, lire("eb:reglages", {}));
-  if (reglages.monEspace && !reglages.moi) { reglages.moi = reglages.monEspace; reglages.ouvrirMonEspace = true; } // reprise V1
-  delete reglages.monEspace;
+  if (reglages.calendrierSeul) reglages.mode = "calendrier"; // reprise v3
+  ["calendrierSeul", "monEspace", "moi", "ouvrirMonEspace"].forEach(function (k) { delete reglages[k]; });
   function sauverReglages() { ecrire("eb:reglages", reglages); appliquerAffichage(); }
   function appliquerAffichage() {
     var r = document.documentElement;
@@ -182,8 +188,8 @@
   }
   function sauverDemo() { window.EBDemo.sauver(demo); }
   function quiAgit() {
-    var p = reglages.moi && personneParId(reglages.moi);
-    return p ? p.prenom : "Gestion";
+    var c = window.EBGraph && window.EBGraph.compte();
+    return c && c.name ? String(c.name).split(" ")[0] : "Démo";
   }
   function journal(action, detail) {
     window.EBDemo.journal(demo, quiAgit(), action + (reel ? " (simulation)" : ""), detail);
@@ -307,7 +313,8 @@
     return h("header", { class: "barre" },
       retour ? h("a", { class: "btn-retour", href: retour.href, "aria-label": "Retour : " + (retour.texte || "page précédente") }, icone("retour"), h("span", { class: "txt" }, retour.texte || "Retour")) : null,
       h("h1", null, titre, sousTitre ? h("small", null, sousTitre) : null),
-      droite || null);
+      droite || null,
+      window.EBAcces ? window.EBAcces.pastille() : null); // état de la connexion, en direct
   }
 
   /**
@@ -490,107 +497,44 @@
    * encore pied() reçoivent un fragment vide (compatibilité avec les modules). */
   function pied() { return document.createDocumentFragment(); }
 
-  /* ------------------------------------------------------------------ */
-  /* Verrou des espaces Gestion / Finance (masque l'écran, pas sécurité) */
-  /* ------------------------------------------------------------------ */
-  function empreinte(texte) {
-    if (!window.crypto || !crypto.subtle || !window.TextEncoder) return Promise.reject(new Error("crypto"));
-    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(texte)).then(function (buf) {
-      return Array.prototype.map.call(new Uint8Array(buf), function (b) { return b.toString(16).padStart(2, "0"); }).join("");
-    });
-  }
-  function estOuvert(k) {
-    var pack = donnees.fiches && donnees.fiches[k];
-    return !!pack && (!pack.codeEmpreinte || lire("eb:ouvert:" + k, "") === pack.codeEmpreinte);
-  }
-  /** Vrai si l'un des espaces est ouvert ; sinon affiche le verrou du premier et renvoie faux. */
-  function exiger(app, packs, retour) {
-    for (var i = 0; i < packs.length; i++) if (estOuvert(packs[i])) return true;
-    ecranVerrou(app, packs[0], retour);
-    return false;
-  }
-  function ecranVerrou(app, k, retour) {
-    var pack = donnees.fiches && donnees.fiches[k];
-    app.appendChild(barre(pack ? pack.titre : "Espace réservé", retour || { href: "#/", texte: "Accueil" }));
-    var champ = h("input", { class: "champ", type: "password", id: "code", autocomplete: "off", autocapitalize: "none", spellcheck: "false", inputmode: "text", "aria-describedby": "code-aide" });
-    var erreur = h("p", { class: "erreur", role: "alert" });
-    app.appendChild(h("div", { class: "verrou boite" },
-      emoji("🔒", "grand"),
-      h("h2", null, pack ? pack.titre : "Espace réservé"),
-      h("p", null, "Tapez le code donné par Damien."),
-      h("form", { onsubmit: function (e) {
-        e.preventDefault();
-        empreinte("espace-breteuil:" + champ.value.trim()).then(function (x) {
-          if (pack && x === pack.codeEmpreinte) { ecrire("eb:ouvert:" + k, x); rendre(); }
-          else { erreur.textContent = "Ce n'est pas le bon code."; champ.select(); }
-        }, function () { erreur.textContent = "Ce navigateur ne permet pas de vérifier le code."; });
-      } },
-        h("label", { class: "sr", for: "code" }, "Code"), champ, erreur,
-        h("button", { class: "btn large", type: "submit" }, icone("cle"), "Ouvrir")),
-      h("p", { class: "petit", id: "code-aide" }, "Ce code cache seulement l'écran. La vraie protection, c'est votre connexion Microsoft.")));
-    setTimeout(function () { champ.focus(); }, 50);
-  }
+  /* v4 : l'ancien code d'écran (fiches.json → codeEmpreinte) n'est plus utilisé. Ce que l'on voit
+   * dépend des droits réels Microsoft ; les démos dépendent du réglage « Afficher les démos ». */
+  function exiger() { return true; }
+  function estOuvert() { return true; }
 
-  /* ------------------------------------------------------------------ */
-  /* Connexion Microsoft (lecture seule) — invisible si non configurée   */
-  /* ------------------------------------------------------------------ */
-  /** Compte Microsoft (Réglages, un seul endroit) : état de la connexion, se déconnecter. */
-  function blocMicrosoft() {
-    var G = window.EBGraph;
-    if (!G || !G.estConfigure()) return null;
-    if (G.estConnecte()) {
-      var c = G.compte();
-      return h("div", { class: "boite reglage" }, h("h2", null, "Connecté" + (c && c.name ? " : " + c.name : "")),
-        h("p", null, "L'appli agit avec vos droits Microsoft, ni plus ni moins."),
-        h("button", { class: "btn secondaire", type: "button", onclick: function () { G.oublier(); reel = null; if (window.EBConnecte && window.EBConnecte.oublier) window.EBConnecte.oublier(); rendre(); } }, "Se déconnecter de l'appli"));
-    }
-    return h("div", { class: "boite reglage" }, h("h2", null, "Pas connecté"),
-      h("p", null, "La connexion se fait depuis l'onglet Dossiers, avec votre adresse du Château."),
-      G.erreur() ? h("p", { class: "erreur" }, G.erreur()) : null);
-  }
-  function chargerReel() {
-    if (window.EBConnecte) window.EBConnecte.apresConnexion();
-    return Promise.resolve();
-  }
-  var attenteRendu = null;
-  function rendrePlusTard() { clearTimeout(attenteRendu); attenteRendu = setTimeout(rendre, 400); }
-
-  /* ------------------------------------------------------------------ */
-  /* Écran : accueil                                                     */
-  /* ------------------------------------------------------------------ */
   var invitationInstallation = null;
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); invitationInstallation = e; });
   function estInstallee() {
     return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
   }
-
   function resumeDuJour() {
     var auj = aujourdhui();
     return window.EBResume.resumer(occurrences(debutJour(auj), debutJour(plusJours(auj, 1)), null, true), donnees.personnes);
   }
+  function G() { return window.EBGraph; }
+  function connecte() { return !!(G() && G().estConnecte()); }
+  function resultat() { return window.EBAcces ? window.EBAcces.resultat() : null; }
 
   /* ------------------------------------------------------------------ */
-  /* Onglet Accueil : « Aujourd'hui au Château » + « Qui êtes-vous ? »   */
-  /* (l'ancien écran « Aujourd'hui » est fusionné ici : un seul endroit) */
+  /* Premier écran (pas connecté) : 2 gros boutons, rien d'autre         */
   /* ------------------------------------------------------------------ */
-  function ecranAccueil(app) {
-    var auj = aujourdhui();
-    app.appendChild(barre("Espace Breteuil", null,
-      h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", title: "Actualiser", onclick: actualiserPlanning }, icone("actualiser")),
-      maj(jourLong(auj))));
-    var zone = h("section", { class: "zone-aujourdhui", "aria-label": "Aujourd'hui au Château" });
-    app.appendChild(zone);
-    surPlanning(zone, function () { dessinerAujourdhui(zone); });
-    dessinerAujourdhui(zone);
-
-    // Qui êtes-vous ? → Mon espace (raccourcis, boîtes, mon planning)
-    var moi = reglages.moi;
-    app.appendChild(h("section", { class: "section" },
-      h("h2", null, "Mon espace"),
-      tuiles(donnees.personnes.map(function (p) {
-        return { href: "#/personne/" + encodeURIComponent(p.id), couleur: p.couleur || "#1F4BA8", icone: p.icone, libelle: p.prenom,
-          aide: "Mon espace : raccourcis, boîtes mail et planning de " + p.prenom + " (" + p.role + ")", choisi: moi === p.id };
-      }), { class: "tuiles personnes-accueil" })));
+  function ecranPremier(app) {
+    var g = G(), configure = g && g.estConfigure();
+    app.appendChild(h("div", { class: "premier" },
+      h("div", { class: "premier-tete" },
+        h("img", { class: "premier-logo", src: "icones/icon.svg", alt: "", width: "64", height: "64" }),
+        h("h1", null, "Espace Breteuil"),
+        h("p", null, "Château de Breteuil")),
+      h("div", { class: "premier-boutons" },
+        h("button", { class: "gros-bouton", type: "button", "data-action": "calendrier", onclick: function () {
+          reglages.mode = "calendrier"; sauverReglages(); rendre();
+        } }, icone("agenda"), h("span", null, h("b", null, "Voir le calendrier"), h("small", null, "Sans compte, sur cet appareil"))),
+        h("button", { class: "gros-bouton principal", type: "button", "data-action": "connexion", disabled: !configure, onclick: function () {
+          this.disabled = true; this.classList.add("en-cours");
+          var b = this;
+          Promise.resolve(g.connecter()).catch(function () {}).then(function () { b.disabled = false; b.classList.remove("en-cours"); });
+        } }, icone("cle"), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre compte Microsoft du Château" : "Connexion pas encore activée")))),
+      g && g.erreur() ? h("p", { class: "erreur premier-erreur", role: "alert" }, g.erreur()) : null));
   }
 
   /** Contenu « Aujourd'hui » : redessiné seul quand le planning arrive (pas tout l'écran). */
@@ -622,17 +566,6 @@
         groupe("presents", "🛎️", "Permanence", r.presents, "—")));
     zone.appendChild(carte);
 
-    // Rendez-vous du jour et « À savoir » : 4 lignes au plus, la suite dans le planning du jour.
-    var lignes = r.rendezVous.concat(r.infos);
-    var MAX = 4;
-    zone.appendChild(h("section", { class: "section" },
-      h("h2", null, "Rendez-vous du jour"),
-      lignes.length ? h("div", { class: "liste-rdv" }, lignes.slice(0, MAX).map(function (o) {
-        return h("button", { class: "ligne-rdv" + (o.journee ? " journee" : ""), type: "button", style: { borderLeftColor: o.couleur || "" }, onclick: function () { ouvrirDetail(o); } },
-          h("span", { class: "heure" }, o.journee ? "Journée" : heure(o.debut)), h("span", { class: "quoi" }, o.titre));
-      })) : h("p", { class: "vide" }, "Aucun rendez-vous aujourd'hui."),
-      lignes.length > MAX ? h("a", { class: "lien-plus", href: "#/planning", onclick: function () { vuePlanning.vue = "jour"; vuePlanning.jour = aujourdhui(); } },
-        "+ " + (lignes.length - MAX) + " autre" + (lignes.length - MAX > 1 ? "s" : "") + " dans le planning du jour ›") : null));
   }
 
   function actualiserPlanning() {
@@ -701,25 +634,24 @@
     dessiner();
   }
 
-  function ecranPlanning(app, chemin) {
-    var personne = chemin[1] ? personneParId(chemin[1]) : null;
+  /** Onglet Planning : « Aujourd'hui au Château » puis le planning (un seul endroit). */
+  function ecranPlanning(app) {
     var actualiser = h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", title: "Actualiser", onclick: actualiserPlanning }, icone("actualiser"));
-    app.appendChild(barre(personne ? "Planning de " + personne.prenom : "Planning",
-      personne ? { href: "#/personne/" + encodeURIComponent(personne.id), texte: "Mon espace" } : null, actualiser));
-    if (personne) app.appendChild(h("div", { class: "filtre-personne" },
-      h("span", null, "Seulement ce qui concerne ", h("b", null, personne.prenom), "."),
-      h("a", { class: "btn secondaire petit", href: "#/planning" }, "Tout voir")));
-    blocPlanning(app, personne);
+    app.appendChild(barre("Planning", null, actualiser, maj(jourLong(aujourdhui()))));
+    var zone = h("section", { class: "zone-aujourdhui", "aria-label": "Aujourd'hui au Château" });
+    app.appendChild(zone);
+    surPlanning(zone, function () { dessinerAujourdhui(zone); });
+    dessinerAujourdhui(zone);
+    blocPlanning(app, null);
   }
 
-  /* Mode « calendrier seul » : le planning en plein écran, rien d'autre. */
+  /* Mode « calendrier seul » (choisi sur le premier écran, mémorisé sur l'appareil). */
   function ecranCalendrierSeul(app) {
     app.appendChild(barre("Planning du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", onclick: actualiserPlanning }, icone("actualiser"))));
     blocPlanning(app, null);
-    app.appendChild(h("p", { class: "lien-discret" }, h("button", { type: "button", onclick: function () {
-      confirmer({ emoji: "🏠", titre: "Revenir à l'appli complète ?", phrase: "L'appli s'ouvrira de nouveau sur l'accueil, avec toutes les rubriques.", bouton: "Oui, appli complète", deuxEtapes: false })
-        .then(function (ok) { if (ok) { reglages.calendrierSeul = false; sauverReglages(); location.hash = "#/"; rendre(); } });
-    } }, "Revenir à l'appli complète")));
+    app.appendChild(h("p", { class: "lien-discret" }, h("button", { type: "button", "data-action": "accueil", onclick: function () {
+      reglages.mode = ""; sauverReglages(); rendre();
+    } }, "Revenir à l'accueil")));
   }
 
   function vueJour(zone, j, personne) {
@@ -779,110 +711,123 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Écran : Mon espace                                                  */
+  /* Onglet Moi : qui je suis, mes droits, ce que je peux utiliser       */
   /* ------------------------------------------------------------------ */
-  function ecranPersonne(app, chemin) {
-    var p = personneParId(chemin[1]);
-    if (!p) { location.hash = "#/"; return; }
-    app.appendChild(barre("Bonjour " + p.prenom, { href: "#/", texte: "Accueil" }, null, "Mon espace · " + p.role));
+  var DROITS_TEXTE = {
+    proprietaire: ["🏰", "Propriétaire du site", "Décide qui a accès au dossier commun et à chaque dossier."],
+    collaborateur: ["👤", "Collaborateur", "Planning, dossier commun (selon vos accès) et vos outils Microsoft."],
+  };
+  function puceDroit(emo, titre, phrase) {
+    return h("li", { class: "droit" }, emoji(emo), h("span", null, h("b", null, titre), h("small", null, phrase)));
+  }
+  function ecranMoi(app) {
+    var g = G(), c = (g && g.compte()) || {}, A = window.EBAcces, r = resultat();
+    var me = A && A.me();
+    app.appendChild(barre("Moi", null));
+    var nom = (me && me.displayName) || c.name || "";
+    app.appendChild(h("div", { class: "bonjour" }, avatar({ prenom: nom || "?", couleur: "#1F4BA8" }, "grand"),
+      h("div", null, h("h2", null, nom || "Mon compte"), h("p", null, (me && (me.mail || me.userPrincipalName)) || c.username || ""))));
 
-    // Raccourcis Microsoft : petites tuiles ; « dans l'appli » (téléphone) regroupé en une ligne.
-    var raccourcis = (p.raccourcis || []).map(function (k) { return donnees.liens[k]; }).filter(Boolean);
-    var mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (raccourcis.length) {
-      var applis = [], vues = {};
-      raccourcis.forEach(function (l) { if (mobile && l.appli && !vues[l.appli]) { vues[l.appli] = 1; applis.push(l); } });
-      app.appendChild(h("section", { class: "section" },
-        h("h2", null, "Mes raccourcis"),
-        tuiles(raccourcis.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; })),
-        applis.length ? h("div", { class: "puces-appli" }, "Dans l'appli :", applis.map(function (l) {
-          return h("a", { class: "tuile-appli", href: l.appli }, icone("ouvrir"), { "ms-outlook://": "Outlook", "ms-onedrive://": "OneDrive", "msteams://": "Teams" }[l.appli] || l.titre);
-        })) : null));
+    var P = window.EBProfil, D = window.EBDroits;
+    var zone = h("section", { class: "section", "aria-busy": r ? "false" : "true" }, h("h2", null, "Mes droits"));
+    app.appendChild(zone);
+    if (!r) zone.appendChild(squelette(2));
+    else {
+      var l = h("ul", { class: "droits" });
+      r.roles.forEach(function (k) { var x = P.ROLES[k]; l.appendChild(puceDroit(k === "facturation" ? "💶" : "🔑", x.nom, x.phrase)); });
+      if (r.droits.proprietaire) l.appendChild(puceDroit.apply(null, DROITS_TEXTE.proprietaire));
+      if (!r.roles.length && !r.droits.proprietaire) l.appendChild(puceDroit.apply(null, DROITS_TEXTE.collaborateur));
+      zone.appendChild(l);
+      // Ce que je peux utiliser (licence)
+      var profils = r.droits.licences.map(function (sku) { return D.SKUS[sku]; }).filter(Boolean);
+      var ordre = ["standard", "basic", "exchange"], pr = ordre.filter(function (x) { return profils.indexOf(x) > -1; })[0];
+      var PR = D.PROFILS[pr || "aucune"];
+      if (PR) app.appendChild(h("section", { class: "section" }, h("h2", null, "Ce que je peux utiliser"),
+        h("div", { class: "carte-profil " + (pr || "aucune") },
+          h("div", { class: "tete" }, emoji(PR.emoji, "grand"), h("div", null, h("b", null, PR.nom), h("span", null, PR.phrase))),
+          h("ul", { class: "outils" }, (PR.outils || []).map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); })))));
     }
-
-    var boites = (p.boites || []).map(function (k) { return donnees.boites[k]; }).filter(Boolean);
-    if (boites.length) app.appendChild(h("section", { class: "section" },
-      h("h2", null, "Boîtes partagées"),
-      tuiles(boites.map(function (b) {
-        return { href: "https://outlook.office.com/mail/" + encodeURIComponent(b.adresse) + "/", externe: true, icone: "mail", libelle: b.nom,
-          aide: "Ouvrir la boîte partagée " + b.adresse + " (une adresse que plusieurs personnes lisent)" };
-      }))));
-
-    if (demo.mfa && demo.mfa.obligatoire) app.appendChild(h("section", { class: "section" }, h("div", { class: "actions-liste" },
-      action("#/securite/guide", "🛡️", "Sécuriser mon compte", "Activer la double authentification en 3 étapes."))));
-
-    var zone = h("div", null);
-    function dessinerMonPlanning() {
-      zone.textContent = "";
-      ajouter(zone, bandeauPlanning());
-      if (planning) vueListe(zone, aujourdhui(), p, 7, true);
-      else zone.appendChild(squelette(2));
-    }
-    surPlanning(zone, dessinerMonPlanning);
-    dessinerMonPlanning();
-    app.appendChild(h("section", { class: "section" },
-      h("h2", null, "Mon planning — 7 jours"), zone,
-      h("a", { class: "lien-plus", href: "#/planning/" + encodeURIComponent(p.id) }, "Mon planning complet ›")));
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Onglets Équipe et Plus, espace Finance, guides                      */
-  /* Chaque fonction n'est accessible qu'à UN endroit (voir la PR v3).   */
-  /* ------------------------------------------------------------------ */
-  function verrouiller(k, retour) {
-    var pack = donnees.fiches && donnees.fiches[k];
-    if (!pack || !pack.codeEmpreinte || !estOuvert(k)) return null;
-    return h("button", { class: "btn-rond", type: "button", "aria-label": "Verrouiller cet écran", title: "Verrouiller",
-      onclick: function () { ecrire("eb:ouvert:" + k, null); toast("Écran verrouillé sur ce téléphone."); location.hash = retour || "#/"; } }, icone("cadenas"));
-  }
-  function ecranEquipe(app) {
-    app.appendChild(barre("Équipe", null, verrouiller("admin", "#/equipe")));
-    app.appendChild(h("section", { class: "section" }, h("h2", null, "Annuaire Microsoft"),
-      tuiles([
-        { href: "#/personnes", icone: "personnes", libelle: "Personnes", aide: "L'équipe, les boîtes partagées et les externes (étiquette EXTERNE)" },
-        { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Qui a quelle licence Microsoft, combien il en reste" },
-        { href: "#/organisation", icone: "reseau", libelle: "Qui a quoi", aide: "Organisation : comprendre qui a quoi, en un schéma à toucher" },
-      ])));
-    app.appendChild(h("section", { class: "section" }, h("h2", null, "Gestion du Château", h("span", { class: "pastille-demo mini" }, "Démo")),
-      tuiles([
-        { href: "#/absences", icone: "palmier", libelle: "Absences", aide: "Congés, absences et télétravail de l'équipe" },
-        { href: "#/arrivee/1", icone: "arrivee", libelle: "Arrivée", aide: "Quelqu'un arrive : créer son compte en 4 étapes" },
-        { href: "#/depart", icone: "depart", libelle: "Départ", aide: "Quelqu'un part : bloquer son compte et transmettre son travail" },
-        { href: "#/roles", icone: "etoile", libelle: "Rôles", aide: "Rôles et délégations : qui peut gérer quoi" },
-        { href: "#/boites", icone: "mail", libelle: "Boîtes mail", aide: "Les boîtes de chacun et les boîtes partagées, avec leur photo" },
-        { href: "#/securite", icone: "bouclier", libelle: "Double auth.", aide: "Double authentification : activer, suivre, relancer" },
-        { href: "#/historique", icone: "horloge", libelle: "Historique", aide: "Qui a fait quoi, et quand" },
-        { href: "#/guides/admin", icone: "livre", libelle: "Guides", aide: "Les mêmes gestes, pas à pas, sur le site de Microsoft" },
-        { bientot: true, icone: "cle", libelle: "Mot de passe", aide: "Donner un mot de passe provisoire" },
-      ])));
-  }
-  function ecranPlus(app) {
-    app.appendChild(barre("Plus", null));
-    app.appendChild(tuiles([
-      { href: "#/finance", icone: "euro", libelle: "Finance", aide: "Coût des licences, factures, moyen de paiement" },
-      { href: "#/reglages", icone: "reglages", libelle: "Réglages", aide: "Texte, couleurs, ce téléphone, planning, compte Microsoft" },
-      window.EBDiagnostic ? { href: "#/verifier", icone: "pouls", libelle: "Vérifier la connexion", aide: "Tester pas à pas la connexion au Château et copier un rapport pour Damien" } : null,
-      estInstallee() ? null : { href: "#/installer", icone: "installer", libelle: "Installer l'appli", aide: "Une icône sur l'écran d'accueil, sans compte" },
-      { href: "tel:+33609897443", icone: "telephone", libelle: "Appeler Damien", aide: "Besoin d'aide ? Damien, Belfort Systems, 06 09 89 74 43" },
-    ]));
+    var liens = ["mail", "agenda", "onedrive", "teams"].map(function (k) { return donnees.liens[k]; }).filter(Boolean);
+    if (liens.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mes outils Microsoft"),
+      tuiles(liens.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; }))));
+    app.appendChild(h("div", { class: "actions-liste" },
+      action("#/reglages", "⚙️", "Réglages", "Texte, couleurs, planning, démos, détails techniques"),
+      reglages.demos ? action("#/demos", "🧪", "Démos", "Écrans d'essai, données fictives") : null,
+      estInstallee() ? null : action("#/installer", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil"),
+      h("a", { class: "action", href: "tel:+33609897443" }, emoji("📞"), h("span", null, h("b", null, "Appeler Damien"), h("small", null, "Belfort Systems · 06 09 89 74 43")), h("span", { class: "fleche", "aria-hidden": "true" }, "›")),
+      h("button", { class: "action", type: "button", "data-action": "deconnexion", onclick: deconnecter }, emoji("🚪"), h("span", null, h("b", null, "Se déconnecter"), h("small", null, "Efface la session de cet appareil")), h("span", { class: "fleche", "aria-hidden": "true" }, "›"))));
     app.appendChild(h("p", { class: "pied" }, "Espace Breteuil · version " + VERSION + " · Belfort Systems"));
   }
-  function ecranFinance(app) {
-    if (!exiger(app, ["finance"], { href: "#/plus", texte: "Plus" })) return;
-    app.appendChild(barre("Finance", { href: "#/plus", texte: "Plus" }, verrouiller("finance", "#/plus")));
-    app.appendChild(bandeauDemo("Démo — données fictives"));
+  function deconnecter() {
+    if (window.EBAcces) window.EBAcces.oublier();
+    if (G()) G().oublier();
+    if (window.EBConnecte && window.EBConnecte.oublier) window.EBConnecte.oublier();
+    reglages.mode = ""; sauverReglages();
+    liensOnglets = null; signatureOnglets = "";
+    history.replaceState(null, "", "#/");
+    rendre();
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Onglet Équipe / Finance / Gérer : uniquement les sections permises  */
+  /* ------------------------------------------------------------------ */
+  function ongletGestion() {
+    var r = resultat(), o = r ? r.onglets : [];
+    return o.length === 4 ? o[2] : null;
+  }
+  /** Retour vers l'onglet de gestion (Équipe, Finance ou Gérer selon le profil). */
+  function hub() { var o = ongletGestion(); return o ? { href: "#/" + o.id, texte: o.nom } : { href: "#/moi", texte: "Moi" }; }
+  function ecranGerer(app) {
+    var r = resultat(), o = ongletGestion();
+    app.appendChild(barre(o ? o.nom : "Gérer", null));
+    if (!r) { app.appendChild(squelette(4, "tuiles")); return; }
+    var sec = r.sections, fiches = donnees.fiches || {};
+    var lienFin = function (titre) { var t = ((fiches.finance || {}).tuiles || []).filter(function (x) { return x.titre === titre; })[0]; return t && t.url; };
+    if (sec.indexOf("deleguer") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Administration"),
+      tuiles([
+        { href: "#/deleguer", icone: "etoile", libelle: "Déléguer", aide: "Donner ou retirer un rôle : propriétaire du site, facturation, utilisateurs, Exchange" },
+        { href: "#/guides/admin", icone: "livre", libelle: "Guides", aide: "Les gestes d'administration, pas à pas, sur le site de Microsoft" },
+        { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Centre d'admin", aide: "Ouvrir le centre d'administration Microsoft 365" },
+      ])));
+    if (sec.indexOf("equipe") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Équipe"),
+      tuiles([
+        { href: "#/personnes", icone: "personnes", libelle: "Personnes", aide: "L'équipe, les boîtes partagées et les externes (étiquette EXTERNE)" },
+        { href: "#/organisation", icone: "reseau", libelle: "Qui a quoi", aide: "Organisation : qui a quoi, en un schéma à toucher" },
+        sec.indexOf("finance") < 0 ? { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Qui a quelle licence Microsoft, combien il en reste" } : null,
+      ])));
+    if (sec.indexOf("finance") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Finance"),
+      tuiles([
+        { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Licences achetées, utilisées et libres (données réelles)" },
+        { href: lienFin("Les factures") || "https://admin.microsoft.com/Adminportal/Home#/billoverview", externe: true, icone: "facture", libelle: "Factures", aide: "Les factures Microsoft, dans le centre d'administration" },
+        { href: lienFin("Abonnements") || "https://admin.microsoft.com/Adminportal/Home#/subscriptions", externe: true, icone: "carte", libelle: "Abonnements", aide: "Abonnements et moyen de paiement, dans le centre d'administration" },
+        { href: "#/guides/finance", icone: "livre", libelle: "Guides", aide: "Les gestes de facturation, pas à pas" },
+      ])));
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Démos (Réglages → « Afficher les démos ») : données fictives        */
+  /* ------------------------------------------------------------------ */
+  var ECRANS_DEMO = ["demos", "absences", "arrivee", "depart", "roles", "boites", "securite", "historique", "licences", "simulateur", "factures", "paiement"];
+  function ecranDemos(app) {
+    app.appendChild(barre("Démos", { href: "#/moi", texte: "Moi" }));
+    app.appendChild(bandeauDemo("Démo — données fictives, rien n'est modifié chez Microsoft"));
     app.appendChild(tuiles([
-      { href: "#/licences", icone: "euro", libelle: "Coût", aide: "Licences et coût par mois : combien on paie, pour qui" },
-      { href: "#/simulateur", icone: "calcul", libelle: "Simulateur", aide: "Acheter ou retirer des licences : voir le nouveau prix avant de décider" },
-      { href: "#/factures", icone: "facture", libelle: "Factures", aide: "Les factures Microsoft, mois par mois" },
-      { href: "#/paiement", icone: "carte", libelle: "Paiement", aide: "Moyen de paiement : carte bancaire ou prélèvement" },
-      { href: "#/guides/finance", icone: "livre", libelle: "Guides", aide: "Les mêmes gestes sur le site de Microsoft" },
+      { href: "#/absences", icone: "palmier", libelle: "Absences", aide: "Congés, absences et télétravail de l'équipe" },
+      { href: "#/arrivee/1", icone: "arrivee", libelle: "Arrivée", aide: "Quelqu'un arrive : créer son compte en 4 étapes" },
+      { href: "#/depart", icone: "depart", libelle: "Départ", aide: "Quelqu'un part : bloquer son compte et transmettre son travail" },
+      { href: "#/roles", icone: "etoile", libelle: "Rôles", aide: "Rôles et délégations (démo)" },
+      { href: "#/boites", icone: "mail", libelle: "Boîtes mail", aide: "Boîtes partagées, photo et accès (démo)" },
+      { href: "#/securite", icone: "bouclier", libelle: "Double auth.", aide: "Double authentification : activer, suivre, relancer" },
+      { href: "#/historique", icone: "horloge", libelle: "Historique", aide: "Qui a fait quoi (démo)" },
+      { href: "#/licences", icone: "euro", libelle: "Coût", aide: "Licences et coût par mois (démo)" },
+      { href: "#/simulateur", icone: "calcul", libelle: "Simulateur", aide: "Acheter ou retirer des licences (démo)" },
+      { href: "#/factures", icone: "facture", libelle: "Factures", aide: "Factures fictives et exemple PDF" },
+      { href: "#/paiement", icone: "carte", libelle: "Paiement", aide: "Moyen de paiement (démo)" },
     ]));
   }
   function ecranGuides(app, chemin) {
     var k = chemin[1] === "finance" ? "finance" : "admin";
-    var retourHub = k === "admin" ? { href: "#/equipe", texte: "Équipe" } : { href: "#/finance", texte: "Finance" };
-    if (!exiger(app, [k], retourHub)) return;
+    var retourHub = hub();
     var pack = donnees.fiches[k], idFiche = chemin[2];
     if (idFiche) {
       var f = (pack.fiches || []).filter(function (x) { return x.id === idFiche; })[0];
@@ -919,45 +864,39 @@
   }
 
   function ecranReglages(app) {
-    app.appendChild(barre("Réglages", { href: "#/plus", texte: "Plus" }, null, "Gardés sur ce téléphone uniquement"));
+    app.appendChild(barre("Réglages", { href: "#/moi", texte: "Moi" }, null, "Gardés sur cet appareil uniquement"));
     app.appendChild(h("h2", { class: "titre-groupe" }, "Affichage"));
     app.appendChild(h("div", { class: "grille-reglages" },
       choix("Taille du texte", null, "texte", [["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
       choix("Couleurs", null, "theme", [["auto", "Auto"], ["clair", "Clair"], ["sombre", "Sombre"]])));
-
-    app.appendChild(h("h2", { class: "titre-groupe" }, "Ce téléphone"));
-    var select = h("select", { class: "champ", id: "moi", onchange: function () { reglages.moi = this.value; if (!this.value) reglages.ouvrirMonEspace = false; sauverReglages(); rendre(); } },
-      h("option", { value: "" }, "Personne en particulier"),
-      donnees.personnes.map(function (p) { return h("option", { value: p.id, selected: reglages.moi === p.id }, p.prenom + " (" + p.role + ")"); }));
-    app.appendChild(h("div", { class: "grille-reglages" },
-      h("div", { class: "boite reglage" }, h("h2", null, h("label", { for: "moi" }, "C'est le téléphone de…")), select),
-      reglages.moi ? choix("Ouvrir mon espace au démarrage", null, "ouvrirMonEspace", [[true, "Oui"], [false, "Non"]]) : null,
-      choix("Mode « calendrier seul »", "Ouvre directement le planning en plein écran. Un petit lien en bas permet de revenir.",
-        "calendrierSeul", [[true, "Activé"], [false, "Désactivé"]], function (v) { if (v) location.hash = "#/"; }, { structure: true })));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Planning"));
     app.appendChild(h("div", { class: "grille-reglages" },
       choix("Affichage au départ", null, "vue", VUES),
       choix("Rendez-vous passés", null, "passes", [["afficher", "Afficher"], ["masquer", "Masquer"]])));
 
-    var compte = blocMicrosoft();
-    if (compte) { app.appendChild(h("h2", { class: "titre-groupe" }, "Compte Microsoft")); app.appendChild(compte); }
-
-    app.appendChild(h("h2", { class: "titre-groupe" }, "Démo et version"));
+    app.appendChild(h("h2", { class: "titre-groupe" }, "Démos et version"));
     app.appendChild(h("div", { class: "grille-reglages" },
-      h("div", { class: "boite reglage" },
-        h("p", null, "Les essais faits dans la démo restent sur ce téléphone."),
+      choix("Afficher les démos", "Écrans d'essai avec des données fictives (rien n'est modifié chez Microsoft). Ils apparaissent dans Moi → Démos.",
+        "demos", [[false, "Non"], [true, "Oui"]], null, { structure: true }),
+      reglages.demos ? h("div", { class: "boite reglage" },
+        h("p", null, "Les essais faits dans la démo restent sur cet appareil."),
         h("button", { class: "btn secondaire", type: "button", onclick: function () {
           confirmer({ emoji: "🧹", titre: "Effacer les essais de la démo ?", phrase: "La démo revient comme au premier jour. Les vrais comptes Microsoft ne sont pas concernés.", bouton: "Oui, tout remettre", deuxEtapes: false })
             .then(function (ok) { if (ok) { demo = window.EBDemo.reinitialiser(); toast("La démo est remise à zéro."); rendre(); } });
-        } }, "Remettre la démo à zéro")),
+        } }, "Remettre la démo à zéro")) : null,
       h("div", { class: "boite reglage version" },
         h("h2", null, "Version " + VERSION),
         h("p", null, "L'appli se met à jour toute seule."),
         h("button", { class: "btn secondaire", type: "button", onclick: function () { verifierMiseAJour(true); } }, icone("actualiser"), "Rechercher une mise à jour"))));
+
+    app.appendChild(h("h2", { class: "titre-groupe" }, "Pour Damien"));
+    app.appendChild(h("div", { class: "actions-liste" },
+      action("#/details", "🩺", "Détails techniques", "Diagnostic complet de la connexion, rapport à copier")));
     app.appendChild(h("div", { class: "actions" },
       h("button", { class: "btn secondaire", type: "button", onclick: function () {
-        reglages = Object.assign({}, REGLAGES_DEFAUT); vuePlanning.vue = reglages.vue; sauverReglages(); rendre();
+        var mode = reglages.mode;
+        reglages = Object.assign({}, REGLAGES_DEFAUT, { mode: mode }); vuePlanning.vue = reglages.vue; sauverReglages(); rendre();
       } }, "Remettre les réglages d'origine")));
   }
 
@@ -965,7 +904,7 @@
   /* Écran : installer                                                   */
   /* ------------------------------------------------------------------ */
   function ecranInstaller(app) {
-    app.appendChild(barre("Installer l'appli", { href: "#/plus", texte: "Plus" }));
+    app.appendChild(barre("Installer l'appli", { href: "#/moi", texte: "Moi" }));
     if (estInstallee()) { app.appendChild(h("div", { class: "boite" }, h("p", null, "C'est fait : l'Espace Breteuil est installé sur ce téléphone."))); return; }
     app.appendChild(h("p", { class: "aide-ecran" }, "L'Espace Breteuil s'installe comme une appli, sans compte et sans mot de passe."));
     if (invitationInstallation) app.appendChild(h("div", { class: "actions" }, h("button", { class: "btn large", type: "button", onclick: function () {
@@ -1037,93 +976,126 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Navigation par ÉCRANS séparés + barre d'onglets (5 au plus)        */
+  /* Navigation par ÉCRANS séparés + onglets selon les droits réels       */
   /* ------------------------------------------------------------------ */
+  function ecranDetails(app) {
+    if (window.EBDiagnostic) window.EBDiagnostic.ecran(app);
+    else app.appendChild(barre("Détails techniques", { href: "#/reglages", texte: "Réglages" }));
+  }
   var ecrans = {
-    "": ecranAccueil, planning: ecranPlanning, personne: ecranPersonne, equipe: ecranEquipe, plus: ecranPlus,
-    reglages: ecranReglages, installer: ecranInstaller, finance: ecranFinance, guides: ecranGuides,
+    planning: ecranPlanning, moi: ecranMoi, equipe: ecranGerer, finance: ecranGerer, gerer: ecranGerer, demos: ecranDemos,
+    reglages: ecranReglages, installer: ecranInstaller, guides: ecranGuides, details: ecranDetails,
   };
-  /* Anciennes adresses (v2) → leur seul endroit en v3. */
-  var ALIAS = { aujourdhui: "", gestion: "equipe", monchateau: "dossiers" };
-  var ONGLETS = [
-    { id: "", nom: "Accueil", icone: "maison", rubriques: ["", "personne"] },
-    { id: "planning", nom: "Planning", icone: "agenda", rubriques: ["planning"] },
-    { id: "dossiers", nom: "Dossiers", icone: "dossier", rubriques: ["dossiers", "commun", "acces", "restreindre", "journal"] },
-    { id: "equipe", nom: "Équipe", icone: "personnes", rubriques: ["equipe", "personnes", "licences-reel", "organisation", "absences", "arrivee", "depart", "roles", "boites", "securite", "historique", "motdepasse"] },
-    { id: "plus", nom: "Plus", icone: "points", rubriques: ["plus", "reglages", "verifier", "installer", "finance", "licences", "simulateur", "factures", "paiement"] },
-  ];
-  function ongletDe(ecran, chemin) {
-    if (ecran === "guides") return chemin[1] === "finance" ? "plus" : "equipe";
-    for (var i = 0; i < ONGLETS.length; i++) if (ONGLETS[i].rubriques.indexOf(ecran) > -1) return ONGLETS[i].id;
-    return "";
+  /* Anciennes adresses (v2, v3) → leur seul endroit en v4. */
+  var ALIAS = { "": "planning", accueil: "planning", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "dossiers", plus: "moi", verifier: "details" };
+  function ongletsActuels() { var r = resultat(); return r ? r.onglets : window.EBProfil.onglets([]); }
+  function ongletDe(ecran) {
+    if (ECRANS_DEMO.indexOf(ecran) > -1) return "moi";
+    if (ecran === "guides") { var o = ongletGestion(); return o ? o.id : "moi"; }
+    return window.EBProfil.ongletDe(ecran, resultat());
   }
   /** Profondeur d'un écran : 0 = écran d'onglet ; sert au sens du glissement. */
   function niveauDe(chemin) {
     var e = chemin[0] || "";
-    if (ONGLETS.some(function (o) { return o.id === e; }) && chemin.length < 2) return 0;
-    if (e === "finance" || e === "reglages" || e === "verifier" || e === "installer" || e === "personne") return 1;
+    if (ongletsActuels().some(function (o) { return o.id === e; }) && chemin.length < 2) return 0;
+    if (e === "demos" || e === "reglages" || e === "installer" || e === "deleguer" || e === "personnes" && chemin.length < 2) return 1;
+    if (e === "details") return 2;
     return Math.max(1, chemin.filter(Boolean).length);
   }
-  var liensOnglets = null;
-  /** La barre est construite une seule fois ; ensuite on ne change que l'onglet actif. */
+  var liensOnglets = null, signatureOnglets = "";
+  /** La barre n'est reconstruite que si la LISTE des onglets change ; sinon seul l'onglet actif change. */
   function rendreOnglets(onglet, masquer) {
     var nav = document.getElementById("onglets");
     nav.hidden = !!masquer;
     document.body.classList.toggle("avec-onglets", !masquer);
     if (masquer) return;
-    if (!liensOnglets) {
-      liensOnglets = {};
-      ONGLETS.forEach(function (o) {
-        liensOnglets[o.id] = h("a", { href: "#/" + o.id }, icone(o.icone), h("span", null, o.nom));
+    var liste = ongletsActuels(), sig = liste.map(function (o) { return o.id; }).join(",");
+    if (!liensOnglets || sig !== signatureOnglets) {
+      liensOnglets = {}; signatureOnglets = sig; nav.textContent = "";
+      nav.style.setProperty("--n", String(liste.length));
+      liste.forEach(function (o) {
+        liensOnglets[o.id] = h("a", { href: "#/" + o.id, "data-onglet": o.id }, icone(o.icone), h("span", null, o.nom));
         nav.appendChild(liensOnglets[o.id]);
       });
     }
-    ONGLETS.forEach(function (o) {
+    liste.forEach(function (o) {
       var a = liensOnglets[o.id], actif = o.id === onglet;
       a.classList.toggle("actif", actif);
       if (actif) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
   }
 
-  var dernierEcran = null, dernierOnglet = null, dernierNiveau = 0;
+  /** Écran réservé dont on ne connaît pas encore les droits : squelette, puis l'écran. */
+  function ecranAttente(app) {
+    app.appendChild(barre("Un instant…", null));
+    app.appendChild(squelette(4, "tuiles"));
+  }
+
+  var dernierEcran = null, dernierOnglet = null, dernierNiveau = 0, enAttenteDroits = false;
+  function cheminActuel() {
+    return (location.hash || "#/").replace(/^#\/?/, "").split("/").map(function (x) { try { return decodeURIComponent(x); } catch (e) { return x; } });
+  }
   function rendre() {
     var app = document.getElementById("app");
-    var chemin = (location.hash || "#/").replace(/^#\/?/, "").split("/").map(function (x) { try { return decodeURIComponent(x); } catch (e) { return x; } });
-    if (ALIAS.hasOwnProperty(chemin[0])) {
-      chemin = [ALIAS[chemin[0]]].concat(chemin.slice(1));
-      history.replaceState(null, "", "#/" + chemin.map(encodeURIComponent).join("/"));
-    }
-    var ecran = chemin[0] || "";
-    var cleEcran = chemin.join("/");
-    var memeEcran = cleEcran === dernierEcran, y = window.scrollY;
-    var onglet = ongletDe(ecran, chemin), niveau = niveauDe(chemin);
-    // Transition : glissement si on descend ou remonte dans un onglet, fondu si on change d'onglet,
-    // rien quand c'est le même écran (mise à jour) ou au premier affichage.
-    var anim = memeEcran || dernierEcran === null ? "sans-anim"
-      : onglet !== dernierOnglet ? "" : niveau > dernierNiveau ? "avant" : niveau < dernierNiveau ? "arriere" : "";
-    var vue = h("div", { class: "ecran " + anim });
-    if (reglages.calendrierSeul) {
+    var chemin = cheminActuel();
+    var vue, ecran, onglet = "", niveau = 0, cleEcran;
+    enAttenteDroits = false;
+    if (!connecte()) {
+      // Pas connecté : 2 boutons, ou le calendrier seul. Rien d'autre (ni onglets, ni démo).
+      cleEcran = reglages.mode === "calendrier" ? "~calendrier" : "~premier";
+      vue = h("div", { class: "ecran " + (cleEcran === dernierEcran || dernierEcran === null ? "sans-anim" : "") });
       rendreOnglets("", true);
       app.classList.add("plein-ecran");
-      ecranCalendrierSeul(vue);
+      if (reglages.mode === "calendrier") ecranCalendrierSeul(vue); else ecranPremier(vue);
+      if (chemin.join("/") !== "") history.replaceState(null, "", location.pathname + location.search);
+      ecran = "";
     } else {
+      if (ALIAS.hasOwnProperty(chemin[0])) {
+        chemin = [ALIAS[chemin[0]]].concat(chemin.slice(1));
+        history.replaceState(null, "", "#/" + chemin.map(encodeURIComponent).join("/"));
+      }
+      ecran = chemin[0];
+      var r = resultat(), P = window.EBProfil;
+      var demoInterdite = ECRANS_DEMO.indexOf(ecran) > -1 && !reglages.demos;
+      var reserve = !P.routePermise(ecran, null) || ecran === "guides";
+      if (demoInterdite || (reserve && r && !(ecran === "guides" ? r.sections.length : P.routePermise(ecran, r)))) {
+        history.replaceState(null, "", "#/planning");
+        chemin = ["planning"]; ecran = "planning";
+      }
+      cleEcran = chemin.join("/");
+      onglet = ongletDe(ecran); niveau = niveauDe(chemin);
+      var memeEcran = cleEcran === dernierEcran;
+      var anim = memeEcran || dernierEcran === null ? "sans-anim"
+        : onglet !== dernierOnglet ? "" : niveau > dernierNiveau ? "avant" : niveau < dernierNiveau ? "arriere" : "";
+      vue = h("div", { class: "ecran " + anim });
       app.classList.remove("plein-ecran");
       rendreOnglets(onglet, false);
-      (ecrans[ecran] || ecranAccueil)(vue, chemin);
+      if (reserve && !r) { enAttenteDroits = true; ecranAttente(vue); }
+      else (ecrans[ecran] || ecranPlanning)(vue, chemin);
     }
+    var y = window.scrollY, memeE = cleEcran === dernierEcran;
     app.textContent = "";
     app.appendChild(vue);
     var t = vue.querySelector("h1");
     document.title = ecran && t ? t.firstChild.textContent + " — Espace Breteuil" : "Espace Breteuil";
-    if (memeEcran) window.scrollTo(0, y);
+    if (memeE) window.scrollTo(0, y);
     else {
       window.scrollTo(0, 0);
-      // Lecteurs d'écran : annoncer le nouvel écran (titre) sans faire défiler.
       if (t && dernierEcran !== null) { t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); }
     }
     dernierEcran = cleEcran; dernierOnglet = onglet; dernierNiveau = niveau;
   }
   window.addEventListener("hashchange", rendre);
+
+  /** Les droits réels viennent d'arriver (ou ont changé) : onglets mis à jour, et l'écran
+   * courant redessiné SEULEMENT s'il en dépend. */
+  function droitsChanges() {
+    if (!connecte()) return;
+    var e = cheminActuel()[0] || "";
+    var dependants = ["moi", "gerer", "equipe", "finance", "dossiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre"];
+    if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
+    else rendreOnglets(ongletDe(e), false);
+  }
 
   /* ------------------------------------------------------------------ */
   /* Outils exposés aux autres écrans (connecte.js, demos/…)             */
@@ -1131,7 +1103,7 @@
   window.EB = {
     h: h, icone: icone, emoji: emoji, avatar: avatar, initiales: initiales, barre: barre, pied: pied, action: action,
     tuile: tuile, tuiles: tuiles, squelette: squelette,
-    bandeauDemo: bandeauDemo, bandeauSimulation: bandeauSimulation, blocMicrosoft: blocMicrosoft,
+    bandeauDemo: bandeauDemo, bandeauSimulation: bandeauSimulation,
     confirmer: confirmer, choisir: choisir, toast: toast, dialogue: dialogue, ouvrirDialogue: ouvrirDialogue, fermerDialogue: fermerDialogue,
     exiger: exiger, estOuvert: estOuvert, rendre: rendre, lire: lire, ecrire: ecrire,
     demo: function () { return demo; }, sauverDemo: sauverDemo, journal: journal, reel: function () { return reel; },
@@ -1139,8 +1111,8 @@
     jourCourt: jourCourt, versIso: versIso, depuisIso: depuisIso, aujourdhui: aujourdhui, plusJours: plusJours, lundiDe: lundiDe, fmt: fmt, midi: midi, maj: maj,
     ecran: function (nom, fn) { ecrans[nom] = fn; },
     definirReel: function (r) { reel = r; },
-    onglet: function (id, nom, ic, rubriques) { ONGLETS.forEach(function (o) { if (o.id === id) { o.rubriques = o.rubriques.concat(rubriques || []); } }); },
-    jourLong: jourLong, heure: heure,
+    onglet: function () {},
+    jourLong: jourLong, heure: heure, hub: hub, reglages: function () { return reglages; },
   };
 
   /* ------------------------------------------------------------------ */
@@ -1148,17 +1120,21 @@
   /* ------------------------------------------------------------------ */
   function demarrer() {
     appliquerAffichage();
-    if ((!location.hash || location.hash === "#/" || location.hash === "#") && reglages.moi && reglages.ouvrirMonEspace && !reglages.calendrierSeul) {
-      history.replaceState(null, "", "#/personne/" + encodeURIComponent(reglages.moi));
-    }
     var graph = window.EBGraph ? window.EBGraph.init() : Promise.resolve(false);
-    Promise.all([
+    if (window.EBAcces) window.EBAcces.surChangement(droitsChanges);
+    var json = Promise.all([
       chargerJson("personnes.json").then(function (j) { donnees.personnes = j.personnes || []; donnees.liens = j.liens || {}; donnees.boites = j.boitesPartagees || {}; }),
       chargerJson("fiches.json").then(function (j) { donnees.fiches = j; }),
-    ]).catch(function (e) { console.error("Espace Breteuil :", e); }).then(function () {
-      rendre();
-      graph.then(function (connecte) { if (connecte) chargerReel(); });
-      return chargerPlanning();
+    ]).catch(function (e) { console.error("Espace Breteuil :", e); });
+    var planningPromis = chargerPlanning(); // en parallèle de la connexion
+    // Calendrier seul : pas besoin d'attendre Microsoft.
+    if (reglages.mode === "calendrier") json.then(function () { if (dernierEcran === null) rendre(); });
+    Promise.all([json, graph.catch(function () { return false; })]).then(function (r) {
+      var estCo = r[1];
+      if (estCo && window.EBAcces) window.EBAcces.charger(); // droits réels, en arrière-plan
+      if (estCo && (!location.hash || location.hash === "#/" || location.hash === "#")) history.replaceState(null, "", "#/planning");
+      if (estCo || dernierEcran === null) rendre(); // calendrier seul déjà affiché : rien à refaire
+      return planningPromis;
     }).then(planningPret); // seules les parties qui affichent le planning sont redessinées
     window.addEventListener("load", demarrerMisesAJour);
   }

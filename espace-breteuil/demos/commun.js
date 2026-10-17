@@ -17,9 +17,9 @@
     window.EBDemo.reinitialiser = function () { D.effacer(); etat = D.base(); return avant.apply(this, arguments); };
   }
 
-  /* Retour : les écrans de gestion (démo) sont dans l'onglet Équipe ; ceux de Finance passent
-   * leur propre retour (« Finance »). Un seul endroit par fonction. */
-  function retourHub() { return { href: "#/equipe", texte: "Équipe" }; }
+  /* Retour : v4, tous les écrans de démo sont regroupés dans Moi → Démos (réglage « Afficher
+   * les démos »). Un seul endroit par fonction. */
+  function retourHub() { return { href: "#/demos", texte: "Démos" }; }
 
   function quiAgit() {
     var r = EB.lire("eb:reglages", {}) || {};

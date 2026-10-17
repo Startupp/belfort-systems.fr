@@ -8,7 +8,7 @@
   if (!EB || !D || !X) return;
   var h = EB.h;
   var PACKS = ["finance", "admin"];
-  var retourFinance = { href: "#/finance", texte: "Finance" };
+  var retourFinance = { href: "#/demos", texte: "Démos" };
 
   /* ------------------------------------------------------------------ */
   /* Licences et coût                                                    */
