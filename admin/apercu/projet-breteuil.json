@@ -2111,46 +2111,6 @@
  ],
  "fichiers": [
   {
-   "id": "f01",
-   "projet_id": "breteuil-migration",
-   "nom": "Récapitulatif technique",
-   "type": "HTML",
-   "taille": 48200,
-   "url": "/clients/chateau-de-breteuil/resume-technique.html",
-   "note": "Publié dans l’espace client",
-   "cree": "2026-07-04"
-  },
-  {
-   "id": "f02",
-   "projet_id": "breteuil-migration",
-   "nom": "Guide administrateur",
-   "type": "HTML",
-   "taille": 61400,
-   "url": "/clients/chateau-de-breteuil/guide-admin.html",
-   "note": "Pour François",
-   "cree": "2026-07-04"
-  },
-  {
-   "id": "f03",
-   "projet_id": "breteuil-migration",
-   "nom": "Planning de migration",
-   "type": "HTML",
-   "taille": 39100,
-   "url": "/clients/chateau-de-breteuil/planning-migration.html",
-   "note": "",
-   "cree": "2026-09-05"
-  },
-  {
-   "id": "f04",
-   "projet_id": "breteuil-migration",
-   "nom": "Infrastructure",
-   "type": "HTML",
-   "taille": 44800,
-   "url": "/clients/chateau-de-breteuil/infrastructure.html",
-   "note": "",
-   "cree": "2026-07-04"
-  },
-  {
    "id": "f05",
    "projet_id": "breteuil-migration",
    "nom": "Audit du site breteuil.fr",
