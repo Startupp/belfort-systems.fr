@@ -87,7 +87,8 @@
   color-scheme: dark;
 }
 
-/* Taille du texte : normal / grand / très grand. */
+/* Taille de l'interface : petit / normal / grand / très grand (mémorisée sur l'appareil). */
+:root[data-texte="petit"] { --echelle: .9; }
 :root[data-texte="grand"] { --echelle: 1.18; }
 :root[data-texte="tres-grand"] { --echelle: 1.36; }
 html { font-size: calc(17px * var(--echelle)); -webkit-text-size-adjust: 100%; touch-action: manipulation; }

@@ -42,7 +42,7 @@
   function appliquerAffichage() {
     var r = document.documentElement;
     if (reglages.theme === "clair" || reglages.theme === "sombre") r.setAttribute("data-theme", reglages.theme); else r.removeAttribute("data-theme");
-    if (reglages.texte === "grand" || reglages.texte === "tres-grand") r.setAttribute("data-texte", reglages.texte); else r.removeAttribute("data-texte");
+    if (reglages.texte === "petit" || reglages.texte === "grand" || reglages.texte === "tres-grand") r.setAttribute("data-texte", reglages.texte); else r.removeAttribute("data-texte");
   }
 
   /* ------------------------------------------------------------------ */
@@ -515,10 +515,6 @@
   function estInstallee() {
     return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
   }
-  function resumeDuJour() {
-    var auj = aujourdhui();
-    return window.EBResume.resumer(occurrences(debutJour(auj), debutJour(plusJours(auj, 1)), null, true), donnees.personnes);
-  }
   function G() { return window.EBGraph; }
   function connecte() { return !!(G() && G().estConnecte()); }
   function resultat() { return window.EBAcces ? window.EBAcces.resultat() : null; }
@@ -543,37 +539,6 @@
           Promise.resolve(g.connecter()).catch(function () {}).then(function () { b.disabled = false; b.classList.remove("en-cours"); });
         } }, icone("cle"), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre compte Microsoft du Château" : "Connexion pas encore activée")))),
       g && g.erreur() ? h("p", { class: "erreur premier-erreur", role: "alert" }, g.erreur()) : null));
-  }
-
-  /** Contenu « Aujourd'hui » : redessiné seul quand le planning arrive (pas tout l'écran). */
-  function dessinerAujourdhui(zone) {
-    var auj = aujourdhui();
-    zone.textContent = "";
-    var b = bandeauPlanning(); if (b) zone.appendChild(b);
-    if (!planning) { zone.appendChild(squelette(3)); return; }
-    var r = resumeDuJour();
-    var absents = r.absents.concat(r.conges);
-    function groupe(cls, pictogramme, titre, liste, vide) {
-      return h("div", { class: "groupe-jour " + cls },
-        h("h3", null, emoji(pictogramme), titre, h("span", { class: "compte" }, String(liste.length))),
-        liste.length ? h("div", { class: "visages" }, liste.map(function (x) {
-          var c = collaborateurParId(x.personne.id) || x.personne;
-          return h("button", { class: "visage", type: "button", "aria-label": x.personne.prenom + " : " + x.evenement.titre, onclick: function () { ouvrirDetail(x.evenement); } },
-            avatar(Object.assign({}, c, { couleur: c.couleur || x.personne.couleur })), h("span", { "aria-hidden": "true" }, x.personne.prenom));
-        })) : h("p", { class: "vide-doux" }, vide));
-    }
-    var carte = h("div", { class: "carte-aujourdhui" },
-      h("p", { class: "phrase-jour" }, h("span", null, absents.length ? "Toute l'équipe est là, sauf " + absents.map(function (x) { return x.personne.prenom; }).join(", ") + "." : "Toute l'équipe est là aujourd'hui."),
-        h("button", { class: "btn-info", type: "button", "aria-label": "Comment ce résumé est fait", onclick: function () {
-          toast("Ce résumé lit le calendrier tenu par l'accueil : « Marco absent », « Yara congé » ou « Valérie D. télétravail » suffit.");
-        } }, icone("info"))),
-      h("div", { class: "groupes-jour" },
-        groupe("absents", "🚫", "Absents", r.absents, "Personne"),
-        groupe("conges", "🌴", "En congé", r.conges, "Personne"),
-        groupe("teletravail", "🏠", "Télétravail", r.teletravail, "Personne"),
-        groupe("presents", "🛎️", "Permanence", r.presents, "—")));
-    zone.appendChild(carte);
-
   }
 
   function actualiserPlanning() {
@@ -642,15 +607,11 @@
     dessiner();
   }
 
-  /** Onglet Planning : « Aujourd'hui au Château » puis le planning (un seul endroit). */
+  /** Onglet Planning : épingles (connecté), puis le planning, en lecture seule. */
   function ecranPlanning(app) {
     var actualiser = h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", title: "Actualiser", onclick: actualiserPlanning }, icone("actualiser"));
     app.appendChild(barre("Planning", null, actualiser, maj(jourLong(aujourdhui()))));
-    var zone = h("section", { class: "zone-aujourdhui", "aria-label": "Aujourd'hui au Château" });
-    app.appendChild(zone);
-    surPlanning(zone, function () { dessinerAujourdhui(zone); });
-    dessinerAujourdhui(zone);
-    blocPlanning(app, null);
+    blocPlanning(app, null); // v4 : plus de bandeau d'absences ni de pointage (planning en lecture seule)
   }
 
   /* Mode « calendrier seul » (choisi sur le premier écran, mémorisé sur l'appareil). */
@@ -815,12 +776,12 @@
   /* ------------------------------------------------------------------ */
   /* Démos (Réglages → « Afficher les démos ») : données fictives        */
   /* ------------------------------------------------------------------ */
-  var ECRANS_DEMO = ["demos", "absences", "arrivee", "depart", "roles", "boites", "securite", "historique", "licences", "simulateur", "factures", "paiement"];
+  var ABSENCES_RETIREES = ["absences"]; // v4 : aucune fonction d'absence ni de pointage visible
+  var ECRANS_DEMO = ["demos", "arrivee", "depart", "roles", "boites", "securite", "historique", "licences", "simulateur", "factures", "paiement"];
   function ecranDemos(app) {
     app.appendChild(barre("Démos", { href: "#/moi", texte: "Moi" }));
     app.appendChild(bandeauDemo("Démo — données fictives, rien n'est modifié chez Microsoft"));
     app.appendChild(tuiles([
-      { href: "#/absences", icone: "palmier", libelle: "Absences", aide: "Congés, absences et télétravail de l'équipe" },
       { href: "#/arrivee/1", icone: "arrivee", libelle: "Arrivée", aide: "Quelqu'un arrive : créer son compte en 4 étapes" },
       { href: "#/depart", icone: "depart", libelle: "Départ", aide: "Quelqu'un part : bloquer son compte et transmettre son travail" },
       { href: "#/roles", icone: "etoile", libelle: "Rôles", aide: "Rôles et délégations (démo)" },
@@ -875,7 +836,7 @@
     app.appendChild(barre("Réglages", { href: "#/moi", texte: "Moi" }, null, "Gardés sur cet appareil uniquement"));
     app.appendChild(h("h2", { class: "titre-groupe" }, "Affichage"));
     app.appendChild(h("div", { class: "grille-reglages" },
-      choix("Taille du texte", null, "texte", [["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
+      choix("Taille de l'interface", "Texte, boutons et tuiles, ensemble.", "texte", [["petit", "Petit"], ["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
       choix("Couleurs", null, "theme", [["auto", "Auto"], ["clair", "Clair"], ["sombre", "Sombre"]])));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Planning"));
@@ -1064,7 +1025,7 @@
       }
       ecran = chemin[0];
       var r = resultat(), P = window.EBProfil;
-      var demoInterdite = ECRANS_DEMO.indexOf(ecran) > -1 && !reglages.demos;
+      var demoInterdite = (ECRANS_DEMO.indexOf(ecran) > -1 && !reglages.demos) || ABSENCES_RETIREES.indexOf(ecran) > -1;
       var reserve = !P.routePermise(ecran, null) || ecran === "guides";
       if (demoInterdite || (reserve && r && !(ecran === "guides" ? r.sections.length : P.routePermise(ecran, r)))) {
         history.replaceState(null, "", "#/planning");
