@@ -831,15 +831,15 @@
       action("#/organisation", "💡", "Comprendre l'organisation", "Qui a quoi, en un schéma à toucher."),
       bientot("👥", "L'équipe", "Qui fait quoi, et qui dépend de qui."),
       bientot("🔐", "Qui a accès à quoi", "Boîtes mail et dossiers : voir, donner, retirer."),
-      bientot("🎖️", "Les rôles", "Qui peut gérer quoi : administrateur, facturation…"),
-      bientot("📬", "Les boîtes mail", "Les boîtes de chacun et les boîtes partagées, avec leur photo."),
+      action("#/roles", "🎖️", "Rôles et délégations", "Qui peut gérer quoi : administrateur, facturation, pôles, boîtes."),
+      action("#/boites", "📬", "Les boîtes mail", "Les boîtes de chacun et les boîtes partagées, avec leur photo."),
       bientot("🗂️", "Le dossier commun", "Ranger, créer, partager les dossiers de l'équipe."),
-      bientot("👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
-      bientot("🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
-      bientot("🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
+      action("#/arrivee/1", "👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
+      action("#/depart", "🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
+      action("#/absences", "🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
       bientot("🔑", "Mot de passe oublié", "Donner un mot de passe provisoire."),
-      bientot("🛡️", "Double authentification", "Protéger les comptes avec le téléphone."),
-      bientot("🕘", "Historique", "Qui a fait quoi, et quand."),
+      action("#/securite", "🛡️", "Double authentification", "Protéger les comptes avec le téléphone."),
+      action("#/historique", "🕘", "Historique", "Qui a fait quoi, et quand."),
       action("#/guides/admin", "📖", "Guides Microsoft", "Les mêmes gestes, pas à pas, sur le site de Microsoft.")));
     app.appendChild(pied());
   }
@@ -849,14 +849,14 @@
     var m = blocMicrosoft(); if (m) app.appendChild(m);
     app.appendChild(h("div", { class: "actions-liste" },
       action("#/monchateau", "🎫", "Les vraies licences", "Avec votre compte Microsoft : qui a quelle licence."),
-      bientot("💶", "Licences et coût par mois", "Combien on paie, pour qui."),
-      bientot("➕", "Acheter ou retirer des licences", "Voir le nouveau prix avant de décider."),
-      bientot("🧾", "Les factures", "Les factures Microsoft, mois par mois."),
-      bientot("💳", "Moyen de paiement", "Carte bancaire ou prélèvement."),
-      bientot("👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
-      bientot("🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
-      bientot("🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
-      bientot("🕘", "Historique", "Qui a fait quoi, et quand."),
+      action("#/licences", "💶", "Licences et coût par mois", "Combien on paie, pour qui."),
+      action("#/simulateur", "➕", "Acheter ou retirer des licences", "Voir le nouveau prix avant de décider."),
+      action("#/factures", "🧾", "Les factures", "Les factures Microsoft, mois par mois."),
+      action("#/paiement", "💳", "Moyen de paiement", "Carte bancaire ou prélèvement."),
+      action("#/arrivee/1", "👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
+      action("#/depart", "🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
+      action("#/absences", "🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
+      action("#/historique", "🕘", "Historique", "Qui a fait quoi, et quand."),
       action("#/guides/finance", "📖", "Guides Microsoft", "Les mêmes gestes sur le site de Microsoft.")));
     app.appendChild(pied());
   }
@@ -918,6 +918,7 @@
     app.appendChild(choix("Affichage au départ", null, "vue", VUES));
     app.appendChild(choix("Rendez-vous passés", null, "passes", [["afficher", "Afficher"], ["masquer", "Masquer"]]));
 
+    if (window.EBDemosReglages) window.EBDemosReglages(app); // demos/securite.js
     app.appendChild(h("h2", { class: "titre-groupe" }, "Démo"));
     app.appendChild(h("div", { class: "boite reglage" },
       h("p", null, "Les essais faits dans la démo (accès, dossiers, photos…) restent sur ce téléphone."),
