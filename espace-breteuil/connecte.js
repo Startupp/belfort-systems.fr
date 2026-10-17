@@ -189,7 +189,7 @@
     if (id) photo(id).then(function (url) { if (url) { el.textContent = ""; el.appendChild(h("img", { src: url, alt: "" })); } });
     return el;
   }
-  var PALETTE = ["#1F4BA8", "#1D6B52", "#2E5A8A", "#7A3E8E", "#8A4B00", "#35601A", "#3A6EA5", "#8A2B3B"];
+  var PALETTE = ["#8A4C45", "#2F6B5A", "#6C3832", "#6E4F86", "#7A5710", "#4F6B3A", "#3F6683", "#8A2B3B"];
   function couleurDe(s) { var n = 0; String(s || "").split("").forEach(function (c) { n = (n * 31 + c.charCodeAt(0)) >>> 0; }); return PALETTE[n % PALETTE.length]; }
 
   /** Écran réservé : connexion Microsoft nécessaire. Renvoie vrai si connecté. */
@@ -598,7 +598,7 @@
           var items = personnes.map(function (u) { return { valeur: { type: u.type === "externe" ? "externe" : "interne", upn: u.userPrincipalName, mail: u.mail, nom: u.displayName, typeAff: u.type }, titre: u.displayName, sous: u.mail || u.userPrincipalName, u: u }; });
           items.filter(function (x) { return !q || (x.titre + " " + x.sous).toLowerCase().indexOf(q) > -1; }).slice(0, 60).forEach(function (x) {
             liste.appendChild(h("button", { class: "choix", type: "button", onclick: function () { terminer(x.valeur); } },
-              x.u ? avatarPersonne(x.u) : h("span", { class: "avatar", style: { background: "#2E5A8A" } }, EB.initiales(x.titre)),
+              x.u ? avatarPersonne(x.u) : h("span", { class: "avatar", style: { background: "#6C3832" } }, EB.initiales(x.titre)),
               h("span", null, h("b", null, x.titre), h("small", null, x.sous), etiquette(x.valeur.typeAff))));
           });
           if (!liste.childNodes.length) liste.appendChild(h("p", { class: "vide-doux" }, "Personne ne correspond."));
@@ -737,7 +737,7 @@
       })));
       zone.appendChild(h("section", { class: "section" }, h("h2", null, "Ajouter aussi"),
         brouillon.ajouts.length ? h("div", { class: "liste-acces" }, brouillon.ajouts.map(function (a, i) {
-          return h("div", { class: "carte-acces" }, h("span", { class: "avatar", style: { background: "#2E5A8A" } }, EB.initiales(a.p.nom)),
+          return h("div", { class: "carte-acces" }, h("span", { class: "avatar", style: { background: "#6C3832" } }, EB.initiales(a.p.nom)),
             h("span", { class: "qui" }, h("b", null, a.p.nom), h("span", { class: "etiquettes" }, etiquette(a.p.typeAff))), pastilleNiveau(a.niveau),
             h("span", { class: "acts" }, h("button", { class: "btn petit secondaire", type: "button", onclick: function () { brouillon.ajouts.splice(i, 1); EB.rendre(); } }, "Enlever")));
         })) : null,

@@ -201,7 +201,7 @@
   /* ------------------------------------------------------------------ */
   function calendriers() {
     return CONFIG.calendriers && CONFIG.calendriers.length ? CONFIG.calendriers
-      : [{ n: 1, nom: "Calendrier du Château", couleur: "#1F4BA8", exemple: "exemple.ics" }];
+      : [{ n: 1, nom: "Calendrier du Château", couleur: "#8A4C45", exemple: "exemple.ics" }];
   }
 
   function sauverPlanningLocal(n, texte, quand) {
@@ -321,8 +321,16 @@
    * Tuile compacte (4 par ligne sur téléphone) : icône + libellé court.
    * t : { href | onclick, icone, libelle, aide (phrase lue par les lecteurs d'écran), demo, bientot, couleur, avatar }.
    */
+  /* Une couleur douce par service (thème crème, praline et doré). */
+  var TEINTES = {
+    agenda: "praline", mail: "ciel", boite: "ciel", dossier: "dore", nuage: "ciel", bulles: "lavande", grille: "sauge",
+    personnes: "sauge", personne: "sauge", reseau: "lavande", badge: "dore", euro: "dore", facture: "dore", carte: "dore", calcul: "dore",
+    etoile: "praline", cle: "praline", livre: "lavande", ouvrir: "praline", cadenas: "corail", horloge: "lavande", bouclier: "corail",
+    arrivee: "sauge", depart: "corail", palmier: "sauge", telephone: "sauge", reglages: "lavande", installer: "ciel",
+  };
   function tuile(t) {
-    var ico = t.avatar ? t.avatar : h("span", { class: "ico" + (t.couleur ? " ronde" : ""), style: t.couleur ? { background: t.couleur } : null }, icone(t.icone));
+    var teinte = TEINTES[t.icone] || "praline";
+    var ico = t.avatar ? t.avatar : h("span", { class: "ico" + (t.couleur ? " ronde" : " c-" + teinte), style: t.couleur ? { background: t.couleur } : null }, icone(t.icone));
     var contenu = [ico, h("span", { class: "lib" }, t.libelle), t.sous ? h("span", { class: "sous" }, t.sous) : null,
       t.aide ? h("span", { class: "sr" }, " — " + t.aide) : null,
       t.demo ? h("span", { class: "marque", "aria-hidden": "true" }, "Démo") : null,
@@ -476,7 +484,7 @@
 
   /** Pastille de personne : photo, sinon initiales sur sa couleur. */
   function avatar(c, taille) {
-    var el = h("span", { class: "avatar" + (taille ? " " + taille : ""), style: { background: (c && c.couleur) || "#1F4BA8" }, "aria-hidden": "true" });
+    var el = h("span", { class: "avatar" + (taille ? " " + taille : ""), style: { background: (c && c.couleur) || "#8A4C45" }, "aria-hidden": "true" });
     if (c && c.photo) el.appendChild(h("img", { src: c.photo, alt: "" }));
     else el.appendChild(document.createTextNode(initiales(c ? c.prenom : "?")));
     return el;
@@ -725,7 +733,7 @@
     var me = A && A.me();
     app.appendChild(barre("Moi", null));
     var nom = (me && me.displayName) || c.name || "";
-    app.appendChild(h("div", { class: "bonjour" }, avatar({ prenom: nom || "?", couleur: "#1F4BA8" }, "grand"),
+    app.appendChild(h("div", { class: "bonjour" }, avatar({ prenom: nom || "?", couleur: "#8A4C45" }, "grand"),
       h("div", null, h("h2", null, nom || "Mon compte"), h("p", null, (me && (me.mail || me.userPrincipalName)) || c.username || ""))));
 
     var P = window.EBProfil, D = window.EBDroits;
