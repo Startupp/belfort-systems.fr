@@ -1,7 +1,7 @@
 {
   "name": "Espace Breteuil",
   "short_name": "Breteuil",
-  "description": "Le planning du Château de Breteuil et les raccourcis de chacun, en un seul endroit.",
+  "description": "Le planning du Château de Breteuil, l'équipe et les accès, en un seul endroit.",
   "lang": "fr",
   "dir": "ltr",
   "id": "./",
@@ -40,14 +40,14 @@
   ],
   "shortcuts": [
     {
+      "name": "Aujourd'hui au Château",
+      "short_name": "Aujourd'hui",
+      "url": "./#/aujourdhui"
+    },
+    {
       "name": "Le planning",
       "short_name": "Planning",
       "url": "./#/planning"
-    },
-    {
-      "name": "Présences du jour",
-      "short_name": "Présences",
-      "url": "./#/presences"
     }
   ]
 }

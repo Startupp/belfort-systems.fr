@@ -38,14 +38,9 @@ test("organigramme : arbre et refus des boucles", () => {
   assert.equal(D.peutEtreResponsable(B.collaborateurs, "marco", "marco"), false);
 });
 
-test("absences et export CSV des présences", () => {
+test("absences : qui est absent tel jour", () => {
   assert.equal(D.absenceDu(B.absences, "guillaumette", "2026-10-20").type, "conge");
   assert.equal(D.absenceDu(B.absences, "guillaumette", "2026-10-17"), null);
-  const csv = D.csvPresences([{ id: "fanny", prenom: "Fanny" }, { id: "yara", prenom: "Yara; R" }],
-    { "2026-10-17": { fanny: { statut: "present" }, yara: { statut: "declare" } } }, ["2026-10-17"]);
-  assert.ok(csv.startsWith("﻿Prénom;2026-10-17\r\n"));
-  assert.match(csv, /Fanny;Présent/);
-  assert.match(csv, /"Yara; R";Déclaré \(à valider\)/);
 });
 
 test("mot de passe provisoire : forme lisible", () => {

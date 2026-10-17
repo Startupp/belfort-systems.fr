@@ -45,14 +45,6 @@
     teletravail: { nom: "Télétravail", couleur: "#1D6B52" },
   };
 
-  var STATUTS_PRESENCE = {
-    present: { nom: "Présent" },
-    absent: { nom: "Absent" },
-    teletravail: { nom: "Télétravail" },
-    conge: { nom: "Congé" },
-    declare: { nom: "Déclaré" },
-  };
-
   /* ------------------------------------------------------------------ */
   /* Dates simples (AAAA-MM-JJ, calendrier civil)                        */
   /* ------------------------------------------------------------------ */
@@ -198,23 +190,6 @@
     return null;
   }
 
-  /** Export CSV (séparateur « ; » pour Excel en français, BOM UTF-8). */
-  function csvPresences(personnes, presences, jours) {
-    function cellule(v) { v = String(v == null ? "" : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
-    var lignes = [["Prénom"].concat(jours).map(cellule).join(";")];
-    personnes.forEach(function (p) {
-      var l = [p.prenom];
-      jours.forEach(function (j) {
-        var e = presences[j] && presences[j][p.id];
-        var nom = e ? (STATUTS_PRESENCE[e.statut] || {}).nom || e.statut : "";
-        if (e && e.statut === "declare") nom = "Déclaré (à valider)";
-        l.push(nom);
-      });
-      lignes.push(l.map(cellule).join(";"));
-    });
-    return "﻿" + lignes.join("\r\n") + "\r\n";
-  }
-
   /** Mot de passe provisoire lisible (démo) : 3 mots + 2 chiffres. */
   function motDePasseProvisoire(alea) {
     var mots = ["Chateau", "Parc", "Rose", "Allee", "Tilleul", "Bassin", "Orangerie", "Verger", "Lierre", "Cedre"];
@@ -226,7 +201,7 @@
   /* ------------------------------------------------------------------ */
   /* Stockage local de la démo                                           */
   /* ------------------------------------------------------------------ */
-  var CLE = "eb:demo", CLE_PRESENCES = "eb:presences";
+  var CLE = "eb:demo";
   function lireLocal(cle) { try { var v = localStorage.getItem(cle); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
   function ecrireLocal(cle, v) { try { localStorage.setItem(cle, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function effacerLocal(cle) { try { localStorage.removeItem(cle); } catch (e) {} }
@@ -236,7 +211,7 @@
     return e && e.version === 1 && Array.isArray(e.collaborateurs) ? e : base();
   }
   function sauver(etat) { return ecrireLocal(CLE, etat); }
-  function reinitialiser() { effacerLocal(CLE); effacerLocal(CLE_PRESENCES); return base(); }
+  function reinitialiser() { effacerLocal(CLE); return base(); }
 
   function journal(etat, qui, action, detail) {
     var maintenant = new Date();
@@ -245,22 +220,13 @@
     if (etat.historique.length > 200) etat.historique.length = 200;
   }
 
-  function chargerPresences() { return lireLocal(CLE_PRESENCES) || {}; }
-  function sauverPresences(p) {
-    // On ne garde que les 120 derniers jours.
-    var cles = Object.keys(p).sort();
-    while (cles.length > 120) delete p[cles.shift()];
-    return ecrireLocal(CLE_PRESENCES, p);
-  }
-
   var api = {
     FORMULES: FORMULES, ORDRE_FORMULES: ORDRE_FORMULES, ROLES: ROLES, BOITES: BOITES,
-    TYPES_ABSENCE: TYPES_ABSENCE, STATUTS_PRESENCE: STATUTS_PRESENCE,
+    TYPES_ABSENCE: TYPES_ABSENCE,
     base: base, charger: charger, sauver: sauver, reinitialiser: reinitialiser, journal: journal,
-    chargerPresences: chargerPresences, sauverPresences: sauverPresences,
     attribuees: attribuees, coutMensuel: coutMensuel, simuler: simuler, euros: euros,
     peutEtreResponsable: peutEtreResponsable, arbre: arbre, absenceDu: absenceDu,
-    csvPresences: csvPresences, motDePasseProvisoire: motDePasseProvisoire,
+    motDePasseProvisoire: motDePasseProvisoire,
     jourIso: jourIso, ajouterJours: ajouterJours, lundi: lundi,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
