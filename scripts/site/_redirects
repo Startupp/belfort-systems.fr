@@ -1,0 +1,13 @@
+# Redirections Cloudflare Pages (copié dans _site/_redirects par scripts/build-site.sh).
+# Format : <source> <destination> <code>. Limites : 2 000 statiques + 100 dynamiques.
+# GitHub Pages ignore ce fichier. La redirection www → belfort-systems.fr ne se fait PAS ici
+# (Pages ne redirige que des chemins) : voir docs/MIGRATION-CLOUDFLARE-PAGES.md, étape C.
+
+# Ancienne adresse de la page « concepts » du jeu (déplacée dans ecorce/ancienne/).
+/ecorce/concepts      /ecorce/ancienne/concepts/  301
+/ecorce/concepts/     /ecorce/ancienne/concepts/  301
+
+# Le jour où l'Espace Breteuil ne sera plus servi que par son propre projet Pages,
+# retirer espace-breteuil de PUBLIC (scripts/build-site.sh) et décommenter :
+# /espace-breteuil      https://espace-breteuil.pages.dev/         302
+# /espace-breteuil/*    https://espace-breteuil.pages.dev/:splat   302

@@ -25,39 +25,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      # Liste d'AUTORISATION : seul ce qui est copié ici est publié sur belfort-systems.fr.
-      # Tout le reste du dépôt (api/, docs/, admin/apercu/, *.md, .github/, tests, scripts,
-      # « ASSETS - CONCEPTS - ARTS »…) n'est jamais mis en ligne.
-      # Ajouter une page publique = l'ajouter à PUBLIC ci-dessous.
+      # Construction de _site/ (liste d'autorisation + garde-fou) : même script que Cloudflare Pages.
+      # Ce workflow reste actif jusqu'à la bascule vers Cloudflare Pages ; pour le désactiver ensuite,
+      # voir docs/MIGRATION-CLOUDFLARE-PAGES.md, étape E.
       - name: Construire _site/ (liste d'autorisation)
-        run: |
-          set -euo pipefail
-          rm -rf _site && mkdir _site
-          # Fichiers racine
-          for f in index.html 404.html CNAME .nojekyll favicon.svg robots.txt sitemap.xml; do
-            if [ -e "$f" ]; then cp "$f" _site/; fi
-          done
-          # Dossiers publics (copiés sans les fichiers de développement)
-          PUBLIC="assets qui-suis-je portail clients factures haccp ecorce espace-breteuil"
-          for d in $PUBLIC; do
-            if [ ! -d "$d" ]; then echo "::warning::Dossier $d absent"; continue; fi
-            cp -a "$d" "_site/$d"
-          done
-          # Retrait des fichiers de développement dans les dossiers copiés
-          find _site -depth \( -name tests -o -name test -o -name node_modules \) -type d -exec rm -rf {} +
-          find _site -type f \( -name '*.md' -o -name '*.test.mjs' -o -name '*.test.js' -o -name '*.sh' -o -name '*.py' \
-            -o -name 'package.json' -o -name 'package-lock.json' -o -name '.DS_Store' \) -delete
-          # Panneau admin : le code seulement (pas admin/apercu/, pas les notes)
-          mkdir -p _site/admin
-          cp admin/index.html admin/admin.css admin/admin.js _site/admin/
-          # Garde-fou : échoue si un chemin interdit s'est glissé dans l'artefact
-          interdit=$(cd _site && find . \( -path './api*' -o -path './docs*' -o -path './admin/apercu*' -o -path './.github*' \
-            -o -path './ASSETS*' -o -name '*.md' -o -name '*.sql' -o -path '*/tests/*' \) -print | head -20)
-          if [ -n "$interdit" ]; then echo "::error::Fichiers interdits dans _site/ :"; echo "$interdit"; exit 1; fi
-          if grep -rIl --include='*.json' --include='*.html' --include='*.js' '@breteuil\.fr' _site/ | grep -v '^_site/espace-breteuil/' ; then
-            echo "::warning::Adresse @breteuil.fr trouvée dans un fichier publié (hors espace-breteuil) : vérifier."
-          fi
-          du -sh _site
+        run: bash scripts/build-site.sh
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
