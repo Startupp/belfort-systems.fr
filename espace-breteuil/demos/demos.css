@@ -248,3 +248,4 @@ button.frise-ligne:hover { background: var(--surface-2); }
 }
 .action > span:not(.emoji):not(.fleche):not(.etiquette) { min-width: 0; overflow-wrap: anywhere; }
 .section-proche { margin-top: 14px; }
+.btn:disabled { opacity: .45; cursor: default; }
