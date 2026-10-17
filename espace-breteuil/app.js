@@ -832,7 +832,7 @@
       bientot("👥", "L'équipe", "Qui fait quoi, et qui dépend de qui."),
       bientot("🔐", "Qui a accès à quoi", "Boîtes mail et dossiers : voir, donner, retirer."),
       action("#/roles", "🎖️", "Rôles et délégations", "Qui peut gérer quoi : administrateur, facturation, pôles, boîtes."),
-      bientot("📬", "Les boîtes mail", "Les boîtes de chacun et les boîtes partagées, avec leur photo."),
+      action("#/boites", "📬", "Les boîtes mail", "Les boîtes de chacun et les boîtes partagées, avec leur photo."),
       bientot("🗂️", "Le dossier commun", "Ranger, créer, partager les dossiers de l'équipe."),
       action("#/arrivee/1", "👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
       action("#/depart", "🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),

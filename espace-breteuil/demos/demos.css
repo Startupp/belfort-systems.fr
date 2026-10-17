@@ -247,3 +247,4 @@ button.frise-ligne:hover { background: var(--surface-2); }
   button.frise-ligne { padding: 4px 0 6px; }
 }
 .action > span:not(.emoji):not(.fleche):not(.etiquette) { min-width: 0; overflow-wrap: anywhere; }
+.section-proche { margin-top: 14px; }
