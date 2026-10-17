@@ -34,11 +34,7 @@ self.EB_CONFIG = {
     dossierCommun: "Commun",
   },
 
-  /* Domaines de l'entreprise : toute autre adresse est « externe ». */
+  /* Domaines de l'entreprise : toute personne sans adresse de ces domaines est « Externe ». */
   domainesInternes: ["breteuil.fr", "breteuil02.onmicrosoft.com"],
 
-  /* Collaborateurs SANS compte @breteuil.fr (adresses perso). NE PAS les écrire ici
-   * (dépôt public) : la liste se gère dans l'appli, écran « Personnes » → « Collaborateurs
-   * sans compte », et elle est rangée dans le SharePoint du Château. */
-  collaborateursSansCompte: [],
 };

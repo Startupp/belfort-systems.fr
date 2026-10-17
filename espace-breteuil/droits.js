@@ -32,12 +32,11 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Qui est qui : interne, externe, collaborateur sans compte…          */
+  /* Qui est qui : équipe ou externe (sans adresse @breteuil.fr)         */
   /* ------------------------------------------------------------------ */
   var TYPES = {
     interne: { nom: "Équipe", classe: "interne" },
-    externe: { nom: "Externe à l'entreprise", classe: "externe" },
-    collaborateur: { nom: "Collaborateur sans compte @breteuil.fr", classe: "collaborateur" },
+    externe: { nom: "Externe", classe: "externe", aide: "Toute personne sans adresse @breteuil.fr est considérée comme externe." },
     lien: { nom: "Lien de partage", classe: "lien" },
     groupe: { nom: "Groupe", classe: "groupe" },
   };
@@ -58,7 +57,8 @@
 
   /**
    * Type d'une personne / d'un groupe pour l'affichage.
-   * membre : objet SharePoint (Member) ou Graph (user). opts : { domainesInternes, collaborateurs }.
+   * membre : objet SharePoint (Member) ou Graph (user). opts : { domainesInternes }.
+   * Règle unique : toute personne sans adresse d'un domaine de l'entreprise est « Externe ».
    */
   function typeDe(membre, opts) {
     opts = opts || {};
@@ -68,8 +68,6 @@
     var pt = membre.PrincipalType;
     if (pt === 4 || pt === 8) return "groupe";
     var adresse = adresseDe(membre);
-    var collab = (opts.collaborateurs || []).map(minuscule);
-    if (adresse && collab.indexOf(adresse) > -1) return "collaborateur";
     if (/#ext#|urn%3aspo%3aguest|urn:spo:guest/.test(login) || membre.userType === "Guest") return "externe";
     var internes = (opts.domainesInternes || []).map(minuscule);
     if (adresse && internes.length && internes.indexOf(domaine(adresse)) === -1) return "externe";

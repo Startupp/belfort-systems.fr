@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const D = require("../droits.js");
-const OPTS = { domainesInternes: ["breteuil.fr", "breteuil02.onmicrosoft.com"], collaborateurs: ["amelie.exemple@gmail.com"] };
+const OPTS = { domainesInternes: ["breteuil.fr", "breteuil02.onmicrosoft.com"] };
 
 test("niveaux simples d'après les rôles SharePoint", () => {
   assert.deepEqual(D.niveauDeRoles([{ RoleTypeKind: 2, Name: "Lecture" }]), { niveau: "voir", controleTotal: false });
@@ -17,12 +17,14 @@ test("niveaux simples d'après les rôles SharePoint", () => {
   assert.equal(D.niveauDeRoles([{ RoleTypeKind: 0, Name: "Restricted View" }]).niveau, "voir");
 });
 
-test("types : équipe, externe (#EXT#, autre domaine), collaborateur sans compte, lien, groupe", () => {
+test("types : équipe, externe (#EXT#, autre domaine, adresse perso), lien, groupe", () => {
   assert.equal(D.typeDe({ PrincipalType: 1, LoginName: "i:0#.f|membership|pdebreteuil@breteuil.fr", Email: "pdebreteuil@breteuil.fr" }, OPTS), "interne");
   assert.equal(D.typeDe({ PrincipalType: 1, LoginName: "i:0#.f|membership|jean_agence.fr#ext#@breteuil02.onmicrosoft.com" }, OPTS), "externe");
   assert.equal(D.adresseDe({ LoginName: "i:0#.f|membership|jean_agence.fr#ext#@breteuil02.onmicrosoft.com" }), "jean@agence.fr");
-  assert.equal(D.typeDe({ PrincipalType: 1, LoginName: "i:0#.f|membership|amelie.exemple_gmail.com#ext#@breteuil02.onmicrosoft.com" }, OPTS), "collaborateur");
-  assert.equal(D.typeDe({ userType: "Guest", mail: "Amelie.Exemple@gmail.com" }, OPTS), "collaborateur");
+  assert.equal(D.typeDe({ PrincipalType: 1, LoginName: "i:0#.f|membership|amelie.exemple_gmail.com#ext#@breteuil02.onmicrosoft.com" }, OPTS), "externe");
+  assert.equal(D.typeDe({ userType: "Member", mail: "Amelie.Exemple@gmail.com" }, OPTS), "externe", "adresse perso = externe");
+  assert.equal(D.TYPES.externe.nom, "Externe");
+  assert.equal(D.TYPES.externe.aide, "Toute personne sans adresse @breteuil.fr est considérée comme externe.");
   assert.equal(D.typeDe({ userType: "Guest", mail: "x@traiteur.fr" }, OPTS), "externe");
   assert.equal(D.typeDe({ PrincipalType: 1, Email: "x@traiteur.fr", LoginName: "i:0#.f|membership|urn%3aspo%3aguest#x@traiteur.fr" }, OPTS), "externe");
   assert.equal(D.typeDe({ PrincipalType: 8, Title: "SharingLinks.abc.OrganizationEdit.123" }, OPTS), "lien");

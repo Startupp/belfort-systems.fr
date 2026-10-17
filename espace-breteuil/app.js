@@ -336,13 +336,14 @@
   }
 
   /* Fenêtre (dialog) réutilisable */
-  function dialogue() { var d = document.getElementById("detail"); d.textContent = ""; return d; }
+  function dialogue() { var d = document.getElementById("detail"); d.textContent = ""; d.oncancel = null; return d; }
   function ouvrirDialogue(d, focus) {
     if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute("open", "");
     if (focus) setTimeout(function () { focus.focus(); }, 30);
   }
   function fermerDialogue() { var d = document.getElementById("detail"); if (d.open) d.close(); }
-  document.addEventListener("click", function (e) { var d = document.getElementById("detail"); if (d && e.target === d) d.close(); });
+  /* Clic sur le fond ou touche Échap : comme « Annuler » (l'événement cancel ne part pas lors d'une fermeture par le code). */
+  document.addEventListener("click", function (e) { var d = document.getElementById("detail"); if (d && e.target === d) { if (d.oncancel) d.oncancel(); if (d.open) d.close(); } });
 
   function ouvrirDetail(o) {
     var d = dialogue();
@@ -370,7 +371,7 @@
     return new Promise(function (fin) {
       var d = dialogue(), fini = false;
       function terminer(v) { if (fini) return; fini = true; fermerDialogue(); fin(v); }
-      d.onclose = function () { terminer(false); };
+      d.oncancel = function () { terminer(false); };
       function etape1() {
         d.textContent = "";
         var suite = h("button", { class: "btn large", type: "button", onclick: function () { opts.deuxEtapes === false ? terminer(true) : etape2(); } },
@@ -405,7 +406,7 @@
     return new Promise(function (fin) {
       var d = dialogue(), fini = false;
       function terminer(v) { if (fini) return; fini = true; fermerDialogue(); fin(v); }
-      d.onclose = function () { terminer(null); };
+      d.oncancel = function () { terminer(null); };
       var liste = h("div", { class: "choix-liste" }, elements.map(function (e) {
         return h("button", { class: "choix", type: "button", onclick: function () { terminer(e.valeur); } },
           e.avatar || (e.emoji ? emoji(e.emoji) : null),
@@ -454,6 +455,13 @@
     return h("a", { class: "action", href: href },
       emoji(pictogramme), h("span", null, h("b", null, titre), phrase ? h("small", null, phrase) : null),
       h("span", { class: "fleche", "aria-hidden": "true" }, "›"));
+  }
+
+  /** Action pas encore disponible : grisée, avec « Bientôt ». */
+  function bientot(pictogramme, titre, phrase) {
+    return h("div", { class: "action bientot", "aria-disabled": "true" },
+      emoji(pictogramme), h("span", null, h("b", null, titre), phrase ? h("small", null, phrase) : null),
+      h("span", { class: "etiquette" }, "Bientôt"));
   }
 
   function pied() {
@@ -582,6 +590,8 @@
     app.appendChild(h("section", { class: "section" },
       h("h2", null, "Pour la direction"),
       h("div", { class: "actions-liste" },
+        action("#/monchateau", "🔐", "Mon Château (connexion Microsoft)", "Le vrai dossier commun, qui a accès, les personnes et leurs licences."),
+        action("#/organisation", "💡", "Comprendre l'organisation", "Qui a quoi, en un schéma à toucher."),
         action("#/gestion", "🏰", "Gestion du Château", "L'équipe, les accès, les boîtes mail, le dossier commun."),
         action("#/finance", "💶", "Finance", "Licences, factures et moyen de paiement."))));
     if (!estInstallee()) app.appendChild(h("section", { class: "section" }, h("div", { class: "actions-liste" },
@@ -626,7 +636,7 @@
     if (r.infos.length) app.appendChild(h("section", { class: "section" },
       h("h2", null, emoji("📌"), " À savoir"),
       h("div", { class: "evts" }, r.infos.map(function (o) { return carteEvenement(o, auj); }))));
-    app.appendChild(legendeSources());
+    ajouter(app, legendeSources());
     app.appendChild(h("div", { class: "note" }, icone("info"), h("span", null,
       "Ce résumé lit simplement le calendrier tenu par l'accueil : un titre comme « Marco absent », « Yara congé » ou « Valérie D. télétravail » suffit.")));
   }
@@ -657,7 +667,7 @@
       h("button", { class: "btn-rond", type: "button", "aria-label": "Suivant", onclick: function () { pas(1); rendre(); } }, icone("droite"))));
     app.appendChild(h("div", { class: "ligne-aujourdhui" },
       h("button", { class: "btn" + (cle(v.jour) === cle(auj) ? " secondaire" : ""), type: "button", onclick: function () { v.jour = aujourdhui(); rendre(); } }, icone("agenda"), "Aujourd'hui")));
-    app.appendChild(legendeSources());
+    ajouter(app, legendeSources());
     var zone = h("div", { class: "zone-planning" });
     if (!planning) zone.appendChild(h("p", { class: "chargement" }, "Chargement du planning…"));
     else if (v.vue === "jour") vueJour(zone, v.jour, personne);
@@ -815,37 +825,38 @@
   function ecranGestion(app) {
     if (!exiger(app, ["admin"])) return;
     app.appendChild(barre("Gestion du Château", { href: "#/", texte: "Accueil" }, verrouiller("admin")));
-    app.appendChild(bandeauDemo("Démo — données fictives, rien n'est modifié chez Microsoft"));
     var m = blocMicrosoft(); if (m) app.appendChild(m);
     app.appendChild(h("div", { class: "actions-liste" },
-      action("#/equipe", "👥", "L'équipe", "Qui fait quoi, et qui dépend de qui."),
-      action("#/acces", "🔐", "Qui a accès à quoi", "Boîtes mail et dossiers : voir, donner, retirer."),
-      action("#/roles", "🎖️", "Les rôles", "Qui peut gérer quoi : administrateur, facturation…"),
-      action("#/boites", "📬", "Les boîtes mail", "Les boîtes de chacun et les boîtes partagées, avec leur photo."),
-      action("#/dossiers", "🗂️", "Le dossier commun", "Ranger, créer, partager les dossiers de l'équipe."),
-      action("#/arrivee", "👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
-      action("#/depart", "🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
-      action("#/absences", "🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
-      action("#/motdepasse", "🔑", "Mot de passe oublié", "Donner un mot de passe provisoire."),
-      action("#/securite", "🛡️", "Double authentification", "Protéger les comptes avec le téléphone."),
-      action("#/historique", "🕘", "Historique", "Qui a fait quoi, et quand."),
+      action("#/monchateau", "🔐", "Le vrai dossier commun et ses accès", "Avec votre compte Microsoft du Château."),
+      action("#/organisation", "💡", "Comprendre l'organisation", "Qui a quoi, en un schéma à toucher."),
+      bientot("👥", "L'équipe", "Qui fait quoi, et qui dépend de qui."),
+      bientot("🔐", "Qui a accès à quoi", "Boîtes mail et dossiers : voir, donner, retirer."),
+      bientot("🎖️", "Les rôles", "Qui peut gérer quoi : administrateur, facturation…"),
+      bientot("📬", "Les boîtes mail", "Les boîtes de chacun et les boîtes partagées, avec leur photo."),
+      bientot("🗂️", "Le dossier commun", "Ranger, créer, partager les dossiers de l'équipe."),
+      bientot("👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
+      bientot("🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
+      bientot("🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
+      bientot("🔑", "Mot de passe oublié", "Donner un mot de passe provisoire."),
+      bientot("🛡️", "Double authentification", "Protéger les comptes avec le téléphone."),
+      bientot("🕘", "Historique", "Qui a fait quoi, et quand."),
       action("#/guides/admin", "📖", "Guides Microsoft", "Les mêmes gestes, pas à pas, sur le site de Microsoft.")));
     app.appendChild(pied());
   }
   function ecranFinance(app) {
     if (!exiger(app, ["finance"])) return;
     app.appendChild(barre("Finance", { href: "#/", texte: "Accueil" }, verrouiller("finance")));
-    app.appendChild(bandeauDemo("Démo — données fictives, rien n'est modifié chez Microsoft"));
     var m = blocMicrosoft(); if (m) app.appendChild(m);
     app.appendChild(h("div", { class: "actions-liste" },
-      action("#/licences", "💶", "Licences et coût par mois", "Combien on paie, pour qui."),
-      action("#/simulateur", "➕", "Acheter ou retirer des licences", "Voir le nouveau prix avant de décider."),
-      action("#/factures", "🧾", "Les factures", "Les factures Microsoft, mois par mois."),
-      action("#/paiement", "💳", "Moyen de paiement", "Carte bancaire ou prélèvement."),
-      action("#/arrivee", "👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
-      action("#/depart", "🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
-      action("#/absences", "🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
-      action("#/historique", "🕘", "Historique", "Qui a fait quoi, et quand."),
+      action("#/monchateau", "🎫", "Les vraies licences", "Avec votre compte Microsoft : qui a quelle licence."),
+      bientot("💶", "Licences et coût par mois", "Combien on paie, pour qui."),
+      bientot("➕", "Acheter ou retirer des licences", "Voir le nouveau prix avant de décider."),
+      bientot("🧾", "Les factures", "Les factures Microsoft, mois par mois."),
+      bientot("💳", "Moyen de paiement", "Carte bancaire ou prélèvement."),
+      bientot("👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
+      bientot("🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
+      bientot("🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
+      bientot("🕘", "Historique", "Qui a fait quoi, et quand."),
       action("#/guides/finance", "📖", "Guides Microsoft", "Les mêmes gestes sur le site de Microsoft.")));
     app.appendChild(pied());
   }
@@ -1007,7 +1018,7 @@
     { id: "", nom: "Accueil", icone: "maison", rubriques: ["", "personne", "installer"] },
     { id: "aujourdhui", nom: "Aujourd'hui", icone: "soleil", rubriques: ["aujourdhui"] },
     { id: "planning", nom: "Planning", icone: "agenda", rubriques: ["planning"] },
-    { id: "equipe", nom: "Équipe", icone: "personnes", rubriques: ["equipe", "gestion", "finance", "acces", "roles", "boites", "dossiers", "arrivee", "depart", "absences", "motdepasse", "securite", "historique", "guides", "licences", "simulateur", "factures", "paiement"] },
+    { id: "monchateau", nom: "Château", icone: "couronne", rubriques: ["monchateau", "commun", "acces", "restreindre", "personnes", "licences-reel", "organisation", "journal", "equipe", "gestion", "finance", "acces", "roles", "boites", "dossiers", "arrivee", "depart", "absences", "motdepasse", "securite", "historique", "guides", "licences", "simulateur", "factures", "paiement"] },
     { id: "reglages", nom: "Réglages", icone: "reglages", rubriques: ["reglages"] },
   ];
   function rendreOnglets(ecran, masquer) {

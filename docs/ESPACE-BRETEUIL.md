@@ -1,13 +1,33 @@
-# Espace Breteuil — application publique (V1)
+# Espace Breteuil — application (V2)
 
-Application installable (PWA) pour l'équipe du Château de Breteuil : le planning
-partagé, une tuile par personne avec ses raccourcis Microsoft, et deux panneaux
-de liens pour la direction (Administration) et la comptabilité (Finance).
+Application installable (PWA) pour l'équipe du Château de Breteuil, **sur mobile
+d'abord**. Elle s'adresse à des personnes qui ne sont pas du tout techniques :
 
-Public visé : personnes **pas du tout techniques**. Grosses tuiles, gros textes,
-français simple, navigation minimale (bouton « Retour » toujours en haut à gauche).
+- gros boutons ;
+- un pictogramme et une phrase par action ;
+- une barre d'onglets en bas de l'écran ;
+- une confirmation en 2 étapes avant chaque changement.
 
-Adresse : **https://belfort-systems.fr/espace-breteuil/**
+Adresses :
+
+- `/espace-breteuil/` sur belfort-systems.fr ;
+- un projet Cloudflare Pages séparé pour la version connectée
+  (voir **[ESPACE-BRETEUIL-CONNEXION.md](ESPACE-BRETEUIL-CONNEXION.md)**).
+
+## Ce qui est réel, ce qui est démo
+
+| Fonction | Sans connexion | Connecté à Microsoft (Pauline, François) |
+|---|---|---|
+| Planning (plusieurs calendriers colorés), « Aujourd'hui au Château » | **Réel** (calendriers publiés en ICS, relayés par le Worker) ; exemple fictif tant que non branché | idem |
+| Dossier commun : naviguer, créer (dans Commun ou juste au-dessus), renommer, déplacer | — | **Réel** (Graph, délégué) |
+| Qui a accès : hérité / personnalisé, « Partager uniquement avec… », ajouter, retirer, rétablir | — | **Réel** (REST SharePoint, délégué) |
+| Personnes, « Ce que je peux utiliser », licences, étiquette **EXTERNE** | — | **Réel** (lecture seule) |
+| Comprendre l'organisation | Exemple fictif | **Réel** |
+| Gestion du Château et Finance (équipe, rôles, boîtes, arrivées, départs, absences, factures…) | **Démo** (données fictives, pastille « Démo ») | Démo |
+
+Règle « Externe » : **toute personne sans adresse @breteuil.fr est considérée comme
+externe**. Une seule étiquette, en gras, qui s'explique au toucher. Il n'y a rien à
+configurer.
 
 ## Choix du chemin
 
@@ -24,73 +44,109 @@ n'est modifié (seul ajout hors du dossier : une route dans le Worker).
 ## Architecture
 
 ```
-espace-breteuil/
-  index.html            coquille (charge /assets/config.js, ics.js, app.js)
-  app.js                l'application (écrans, navigation par #/…)
-  app.css               styles (polices locales /assets/fonts, thème clair/sombre)
-  ics.js                parseur ICS léger (navigateur + Node)
-  personnes.json        tuiles par personne, liens, boîtes partagées   ← à éditer
-  fiches.json           tuiles et fiches Administration / Finance       ← à éditer
-  exemple.ics           planning FICTIF (affiché si le vrai n'est pas branché)
-  manifest.webmanifest  + icones/   installation sur l'écran d'accueil
-  sw.js                 service worker (hors ligne)
-  tests/ics.test.mjs    tests du parseur
+espace-breteuil/            ← autonome : peut être servi tel quel sur un autre domaine
+  index.html                coquille (aucun script en ligne : CSP stricte possible)
+  prechargement.js          thème et taille du texte avant le 1er affichage
+  version.js                NUMÉRO DE VERSION (à incrémenter à chaque publication)
+  config.js                 Worker, calendriers, connexion Microsoft, site SharePoint (aucun secret)
+  app.js                    cœur : planning, Aujourd'hui, accueil, réglages, onglets, mises à jour
+  connecte.js               écrans connectés (dossier commun, accès, personnes, organisation)
+  graph.js                  MSAL (jetons en mémoire), Graph, REST SharePoint, mode maquette local
+  droits.js                 traduction en clair : niveaux, Externe, licences, garde-fous (testé)
+  resume.js                 « Aujourd'hui au Château » : lecture des titres de l'accueil (testé)
+  ics.js                    parseur ICS (testé)
+  demo.js                   données fictives des écrans de démo (testé)
+  personnes.json, fiches.json, exemple.ics, exemple-accueil.ics
+  _headers                  en-têtes de sécurité Cloudflare Pages (CSP, pas d'iframe, HSTS…)
+  sw.js, manifest.webmanifest, icones/, polices/, vendor/msal-browser-3.30.0.min.js (MIT)
+  tests/                    node --test espace-breteuil/tests/*.test.mjs
 
-api/src/index.js        route GET /breteuil/planning.ics (Worker belfort-api)
+api/src/index.js            GET /breteuil/planning.ics, /breteuil/planning/:n.ics, /breteuil/sources
 ```
 
-Flux du planning :
+MSAL est livré dans le dépôt (version figée, SHA-256
+`273d446b381814e563442267a072904fb3b7fd0164f4a688ede80f0d74565b3e`) et non chargé depuis un
+CDN, pour que la CSP puisse s'en tenir à `script-src 'self'`.
 
+
+## Brancher les calendriers (à faire par Damien)
+
+L'accueil (Fanny) tient déjà chaque jour un calendrier d'équipe. Avant, c'était un Google
+Agenda ; c'est peut-être aujourd'hui le calendrier Outlook de contact@. L'appli **lit ce
+calendrier tel quel** et ne demande aucun travail en plus. Chaque source a sa couleur
+(`config.js` → `calendriers`) et son secret dans le Worker :
+
+| Source | Secret du Worker | Exemple affiché tant qu'il est vide |
+|---|---|---|
+| 1 — Calendrier du Château (Outlook contact@) | `BRETEUIL_ICS_URL` | `exemple.ics` |
+| 2 — Équipe du jour (calendrier de l'accueil) | `BRETEUIL_ICS_URL_2` | `exemple-accueil.ics` |
+| 3, 4 — au besoin | `BRETEUIL_ICS_URL_3`, `_4` | — |
+
+```bash
+cd api
+npx wrangler secret put BRETEUIL_ICS_URL      # coller l'adresse ICS Outlook
+npx wrangler secret put BRETEUIL_ICS_URL_2    # coller l'adresse ICS secrète Google (ou Outlook)
 ```
-Outlook (calendrier « Contact » publié en ICS)
-   │  adresse secrète BRETEUIL_ICS_URL (jamais dans le dépôt)
-   ▼
-Worker belfort-api  GET /breteuil/planning.ics
-   │  cache KV 10 min ; si Outlook ne répond pas → dernière version connue
-   │  réservé aux pages de belfort-systems.fr (en-tête Origin vérifié, CORS)
-   ▼
-Espace Breteuil (navigateur)
-   │  analyse l'ICS (ics.js), affiche Jour / Semaine / Mois / Liste
-   │  garde une copie sur l'appareil (Cache API « eb-planning »)
-   ▼
-Hors ligne : dernière copie + bandeau « Pas de connexion »
-Non configuré (503 non_configure) : exemple.ics + bandeau « EXEMPLE »
-```
 
-Écrans : `#/` accueil · `#/planning` (et `#/planning/<id>` filtré pour une
-personne) · `#/personne/<id>` « Mon espace » · `#/admin`, `#/finance` et
-`#/admin/fiche/<id>` · `#/reglages` · `#/installer`.
+**Adresse ICS d'un calendrier Outlook** : Outlook web connecté à la boîte → Paramètres →
+Calendrier → Calendriers partagés → **Publier un calendrier** → choisir le calendrier,
+« Peut afficher tous les détails » → Publier → copier le lien **ICS**.
 
-Aucun compte, aucune connexion côté Espace Breteuil : les tuiles sont de simples
-liens. La connexion se fait chez Microsoft quand on ouvre un lien.
+**Adresse ICS secrète d'un Google Agenda** (à faire par la personne propriétaire de
+l'agenda, sur ordinateur) :
 
-## Brancher le vrai planning (à faire par Damien)
+1. <https://calendar.google.com> → à gauche, survoler l'agenda → **⋮** →
+   **Paramètres et partage**.
+2. Descendre jusqu'à **Intégrer l'agenda** → **Adresse secrète au format iCal**. Elle se
+   termine par `/private-…/basic.ics`.
+3. Cliquer sur **Copier**. Ne jamais la mettre dans le dépôt ni l'envoyer par mail :
+   elle donne accès à tout l'agenda. La coller directement dans
+   `wrangler secret put BRETEUIL_ICS_URL_2`.
+4. Pour la changer (fuite, départ) : même écran → **Réinitialiser**, puis remettre la
+   nouvelle adresse dans le secret.
 
-1. Dans Outlook (web) connecté à la boîte **contact@** : Paramètres → Calendrier →
-   Calendriers partagés → **Publier un calendrier** → choisir le calendrier,
-   « Peut afficher tous les détails » (ou « titres et lieux » si l'on veut moins
-   de détails) → Publier → copier le lien **ICS**.
-2. Poser le secret sur le Worker (le lien ne doit jamais être écrit dans le dépôt) :
+Google ne met à jour son fichier ICS qu'environ toutes les heures. Le Worker garde un
+cache de 10 min.
 
-   ```bash
-   cd api
-   npx wrangler secret put BRETEUIL_ICS_URL
-   # coller le lien ICS (https://outlook.office365.com/owa/calendar/…/calendar.ics)
-   ```
+**« Aujourd'hui au Château »** classe les événements du jour d'après leur titre (sans
+accents ni majuscules) :
 
-   Un lien `webcal://` est accepté (converti en `https://`).
-3. Déployer le Worker : fusionner la PR (le workflow `deploy-worker.yml` se lance
-   car `api/**` change) ou `cd api && npx wrangler deploy`.
-   Le secret est conservé d'un déploiement à l'autre.
-4. Vérifier : ouvrir l'Espace Breteuil → le bandeau jaune « EXEMPLE » disparaît.
-   En ligne de commande :
-   `curl -i -H "Origin: https://belfort-systems.fr" https://belfort-api.damien-belfort.workers.dev/breteuil/planning.ics`
-   → `200`, `Content-Type: text/calendar`, `X-Planning-Etat: source` puis `cache`.
+- « absent », « malade », « repos », « récup » → **Absents** ;
+- « congé », « vacances », « CP », « RTT » → **En congé** ;
+- « télétravail », « TT » → **Télétravail** ;
+- « permanence », « présent » → **De permanence** ;
+- le reste → **Rendez-vous** (avec une heure) ou **À savoir** (journée entière).
 
-> Le lien ICS publié est lisible par quiconque le connaît : c'est pour ça qu'il
-> reste un secret du Worker. Le relais n'ajoute pas de vraie protection (l'en-tête
-> `Origin` se falsifie) : ne publiez dans ce calendrier que ce que toute l'équipe
-> peut voir. Pour revenir en arrière : « Annuler la publication » dans Outlook.
+Le prénom est reconnu tel qu'il figure dans `personnes.json` (« Valérie D. » ou
+« Valérie L. » : en cas de doute, personne n'est reconnu plutôt que la mauvaise personne).
+**Rien n'est demandé à l'accueil** : il suffit d'écrire « Marco absent » comme d'habitude.
+
+Vérification :
+`curl -i -H "Origin: https://belfort-systems.fr" https://belfort-api.damien-belfort.workers.dev/breteuil/sources`
+→ `{"ok":true,"sources":[1,2]}`. Les adresses ne sont jamais renvoyées.
+
+> Le relais n'ajoute pas de vraie protection (l'en-tête `Origin` se falsifie). Il ne faut
+> mettre dans ces calendriers que ce que toute l'équipe peut voir.
+
+## Mises à jour : publier une nouvelle version
+
+1. Modifier les fichiers de `espace-breteuil/`.
+2. **Incrémenter `espace-breteuil/version.js`** (par exemple `2.0.0` → `2.0.1`).
+   C'est obligatoire : c'est ce changement que le service worker détecte.
+3. Si un **nouveau fichier** est ajouté, l'ajouter aussi à la liste `COQUILLE` de `sw.js`
+   (fonctionnement hors ligne).
+4. Publier (fusion ou push sur la branche suivie par Pages).
+
+Côté utilisateurs :
+
+- l'appli vérifie les mises à jour à l'ouverture, au retour sur l'appli (toutes les
+  30 min au plus) et toutes les heures ;
+- une version prête **pendant l'utilisation** affiche le bandeau « ✨ Nouvelle version
+  disponible — Mettre à jour » (un toucher = rechargement) ;
+- une version prête **au lancement** s'installe d'elle-même, sauf si l'utilisateur est en
+  train de saisir quelque chose ;
+- le numéro est visible dans **Réglages** (bouton « Rechercher une mise à jour »).
+
 
 ## Éditer `personnes.json`
 
@@ -163,67 +219,71 @@ marche avec les réglages par défaut) :
   masquer), espace ouvert au démarrage ;
 - `eb:ouvert:admin`, `eb:ouvert:finance` : écran déverrouillé sur cet appareil.
 
-## Limites connues (V1)
+## Mode « calendrier seul »
 
-- **Récurrences** : gérées — FREQ=DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, COUNT,
-  UNTIL, BYDAY (hebdo ; mensuel « 1er lundi », « dernier vendredi »), BYMONTHDAY,
-  EXDATE, occurrences déplacées (RECURRENCE-ID), annulées (STATUS:CANCELLED).
-  Ignorées : BYSETPOS, BYWEEKNO, BYYEARDAY, BYHOUR, RDATE ; YEARLY+BYMONTH ne
-  garde que le mois de départ. Cas rares dans un agenda de bureau.
-- **Fuseaux** : IANA et noms Windows d'Outlook (« Romance Standard Time »…) ;
-  un fuseau inconnu est lu comme Europe/Paris. Tout est affiché à l'heure de Paris.
-- « Mon planning » repose sur des **mots-clés** (pas sur les participants : le
-  calendrier publié par Outlook ne les contient pas).
-- Les liens « Dans l'appli » (ms-outlook://…) n'apparaissent que sur téléphone et
-  ne marchent que si l'appli Microsoft est installée.
-- Pas de notification ni de rappel.
-- Fenêtre de calcul : chaque vue développe uniquement la période affichée ;
-  une récurrence très ancienne (plus de 5 000 périodes) est tronquée.
+**Réglages → Mode « calendrier seul » → Activé.** Ensuite, chaque ouverture affiche
+directement le planning en plein écran, avec seulement le choix de la vue, les flèches et
+« Aujourd'hui ». Le petit lien « Revenir à l'appli complète », en bas, désactive ce mode
+après une confirmation. *(Le pointage des présences a été retiré à la demande de Damien.)*
 
-## Phase 2 (prévue, non faite)
+## Limites connues
 
-1. **Connexion Microsoft Entra ID** (MSAL.js, application « SPA » inscrite dans le
-   tenant du Château, consentement administrateur) : l'appli sait qui est
-   connecté → plus besoin de choisir sa tuile, plus de code d'écran.
-2. **Microsoft Graph** via le Worker (jetons jamais stockés dans le dépôt) :
-   - licences en direct (`/subscribedSkus`, `/users?$select=assignedLicenses`) ;
-   - boîtes partagées accessibles réellement par la personne ;
-   - son vrai agenda et le calendrier Contact (`/users/{id}/calendarView`) au lieu
-     de l'ICS publié — plus besoin de lien public ;
-   - factures et abonnements (API Billing / Commerce, rôle Administrateur de
-     facturation) affichés dans le pack Finance.
-3. **Rôles** : direction (Administration + Finance), finance, équipe, saisonniers ;
-   menus construits à partir des groupes Entra.
-4. Actions simples sans passer par le centre d'admin (débloquer un compte,
-   ajouter un membre à une boîte partagée), toutes journalisées dans D1.
+- **Récurrences ICS** gérées :
+  - FREQ, INTERVAL, COUNT, UNTIL ;
+  - BYDAY, y compris en mensuel (« 1er lundi », « dernier vendredi ») ;
+  - BYMONTHDAY, EXDATE, RECURRENCE-ID, STATUS:CANCELLED.
+
+  Ignorées : BYSETPOS, BYWEEKNO, BYYEARDAY, BYHOUR, RDATE.
+- **Fuseaux** : noms IANA et noms Windows d'Outlook. Un fuseau inconnu est lu comme
+  Europe/Paris.
+- **« Mon planning »** et « Aujourd'hui » reposent sur les **titres** des événements.
+  Le calendrier publié ne contient pas les participants.
+- **Version connectée** : jetons en mémoire, donc il faut se reconnecter à chaque
+  ouverture. Pas de suppression de dossier dans l'appli (volontairement).
+- **Boîtes partagées** : Microsoft Graph délégué ne dit pas **qui** peut ouvrir une boîte
+  partagée, et ne permet pas d'en changer la **photo** (c'est du ressort d'Exchange). Ces
+  écrans restent en démo.
+
+## Feuille de route : version connectée
+
+| Fonction | Faisable en Graph / SharePoint **délégué** (comme aujourd'hui) | Demande une **brique serveur** |
+|---|---|---|
+| Dossier commun, droits des dossiers | ✅ fait (Graph + REST SharePoint) | — |
+| Personnes, licences (lecture), rôles d'administration (lecture) | ✅ fait | — |
+| Attribuer ou retirer une licence | Graph `assignLicense` (User.ReadWrite.All) | — |
+| Créer ou bloquer un compte, réinitialiser un mot de passe | Graph (User.ReadWrite.All, rôle Administrateur des utilisateurs) | — |
+| Groupes et équipes (membres) | Graph (GroupMember.ReadWrite.All) | — |
+| Double authentification : qui l'a activée | Graph `authentication/methods` (UserAuthenticationMethod.Read.All) | — |
+| Boîtes partagées : qui y a accès, « envoyer au nom de », photo de la boîte | ✗ | Exchange Online PowerShell / API Exchange, via le Worker avec une identité d'application (certificat) et un journal d'audit |
+| Factures, moyens de paiement | Lecture partielle (API Billing) | Changement de moyen de paiement : centre d'administration seulement |
+| Absences partagées entre téléphones | Un calendrier Outlook dédié (Calendars.ReadWrite) | ou D1 via le Worker, avec validation du jeton Entra |
+
+Pour toute écriture côté serveur : le Worker valide le jeton Entra (signature JWKS,
+audience, rôle), journalise dans D1 et n'ouvre **aucune** écriture publique non
+authentifiée.
+
 
 ## Checklist de test
 
 Automatique :
 
-- [ ] `node --test espace-breteuil/tests/ics.test.mjs` → 10 tests OK
-- [ ] `cd api && npm test` → tests du Worker OK (dont 4 pour le planning)
+- [ ] `for f in espace-breteuil/tests/*.test.mjs; do node --test "$f"; done` : parseur ICS,
+      démo, « Aujourd'hui », droits, tous verts
+- [ ] `cd api && npm test` → 14/14, dont 5 pour le relais des calendriers
+
+Version connectée : voir la checklist de [ESPACE-BRETEUIL-CONNEXION.md](ESPACE-BRETEUIL-CONNEXION.md).
 
 À la main (téléphone + ordinateur) :
 
-- [ ] Ouvrir `/espace-breteuil/` : aucune demande de connexion ; bandeau
-      « EXEMPLE » tant que le secret n'est pas posé.
-- [ ] Installer : iPhone (Safari → Partager → Sur l'écran d'accueil), Android
-      (Chrome → Installer l'application), ordinateur (Chrome/Edge, icône dans la
-      barre d'adresse). L'icône château apparaît, l'appli s'ouvre en plein écran.
-- [ ] Planning : Jour / Semaine / Mois / Liste, flèches, « Aujourd'hui », toucher
-      un rendez-vous ouvre le détail, « Fermer » le referme.
-- [ ] Après `wrangler secret put BRETEUIL_ICS_URL` + déploiement : les vrais
-      rendez-vous apparaissent, heures justes (comparer avec Outlook, y compris
-      un rendez-vous récurrent et un sur la journée).
-- [ ] Mode avion : l'appli s'ouvre, le planning affiche « Pas de connexion » et la
-      dernière version.
-- [ ] Tuile d'une personne : raccourcis (Outlook web, OneDrive, Commun), boîtes
-      partagées, « Mon planning » filtré, « Ouvrir mon espace au démarrage ».
-- [ ] Tuile « Visiteur » : ouvre directement le planning.
-- [ ] Administration / Finance : mauvais code refusé, bon code accepté, cadenas
-      pour reverrouiller ; chaque tuile ouvre la bonne page Microsoft (vérifier
-      les liens profonds) ; fiches lisibles.
-- [ ] Réglages : texte très grand, thème sombre, masquer les événements passés,
-      vue par défaut — conservés après fermeture de l'appli.
-- [ ] Largeur 375 px : aucun défilement horizontal.
+- [ ] Ouvrir l'appli : aucune demande de connexion. Barre d'onglets en bas (Accueil,
+      Aujourd'hui, Planning, Château, Réglages).
+- [ ] Installer sur l'écran d'accueil (iPhone, Android, ordinateur).
+- [ ] « Aujourd'hui au Château » : absents, congés et télétravail avec les visages,
+      rendez-vous du jour, couleurs par calendrier.
+- [ ] Planning : Jour / Semaine / Mois / Liste, « Aujourd'hui », détail d'un rendez-vous.
+- [ ] Mode avion : dernière version enregistrée, bandeau « Pas de connexion ».
+- [ ] Réglages : texte très grand, thème sombre, mode calendrier seul (activer, rouvrir
+      l'appli, revenir).
+- [ ] Mise à jour : changer `version.js`, publier, rouvrir l'appli → nouvelle version
+      active ; appli ouverte pendant la publication → bandeau « Mettre à jour ».
+- [ ] Largeur 375 px : pas de défilement horizontal, boutons ≥ 44 px.
