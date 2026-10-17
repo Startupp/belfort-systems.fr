@@ -74,6 +74,7 @@ function reponses(nomProfil, variante) {
     "/v1.0/drives/drive1/root:/Commun:/children": { value: [{ id: "d1", name: "Accueil", folder: { childCount: 12 } }, { id: "d2", name: "Finance", folder: { childCount: 30 } },
       { id: "d3", name: "Jardins", folder: { childCount: 5 } }, { id: "d4", name: "Restauration", folder: { childCount: 8 } },
       { id: "f1", name: "Planning été.xlsx", file: {}, webUrl: "https://breteuil02.sharepoint.com/x.xlsx" }] },
+    "/v1.0/drives/drive1/root:/Commun/Finance:/children": { value: [{ id: "f9", name: "Factures 2026.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/f.pdf" }] },
     "/v1.0/drives/drive1/root/children": { value: [{ id: "c1", name: "Commun", folder: { childCount: 4 } }] },
     "/v1.0/drives/drive1/root:/Commun:": { id: "c1", name: "Commun", listItem: { id: "5" } },
     "/sites/ChateaudeBreteuil/_api/web/currentuser": { Id: SP[p.user], Title: moi.displayName, Email: moi.mail, LoginName: "i:0#.f|membership|" + moi.mail, IsSiteAdmin: false },
@@ -128,6 +129,7 @@ async function nouvellePage(vp, nomProfil, opts) {
   const erreurs = [];
   page.on("console", (m) => { if (m.type() === "error") erreurs.push(m.text()); });
   page.on("pageerror", (e) => erreurs.push(String(e)));
+  page.on("response", (r) => { if (r.status() >= 400 && process.env.EB_DEBUG) console.log("HTTP", r.status(), r.url()); });
   return { contexte, page, erreurs, journal };
 }
 async function capturer(page, nom) {
@@ -261,6 +263,18 @@ try {
         assert.ok(post, "POST roleAssignments envoyé");
         assert.deepEqual(JSON.parse(post.corps), { "@odata.type": "#microsoft.graph.unifiedRoleAssignment", roleDefinitionId: BILLING, principalId: "u4", directoryScopeId: "/" });
         await page.waitForSelector(".journal .ligne-journal");
+        // Tous les écrans de l'administrateur (et les démos, une fois le réglage activé) s'ouvrent sans erreur.
+        await page.evaluate(() => { const r = JSON.parse(localStorage.getItem("eb:reglages") || "{}"); r.demos = true; localStorage.setItem("eb:reglages", JSON.stringify(r)); });
+        await page.reload();
+        for (const route of ["gerer", "personnes", "personnes/u4", "organisation", "licences-reel", "guides/admin", "guides/finance", "commun", "commun/Commun/Finance", "acces/Commun",
+          "onedrive", "journal", "reglages", "details", "installer", "demos", "arrivee/1", "depart", "roles", "boites", "securite", "historique", "licences", "simulateur", "factures", "paiement"]) {
+          await page.goto(BASE + "#/" + route);
+          await page.waitForSelector(".barre h1");
+          await page.waitForTimeout(150);
+          if (!(await page.evaluate(() => location.hash)).startsWith("#/" + route)) problemes.push(`admin : #/${route} redirigé`);
+        }
+        await page.goto(BASE + "#/absences");
+        await page.waitForFunction(() => location.hash === "#/planning").catch(() => problemes.push("#/absences devrait être retiré"));
       }
       if (erreurs.length) problemes.push(`${nom} ${taille} : erreurs console ${erreurs.join(" | ")}`);
       await contexte.close();
