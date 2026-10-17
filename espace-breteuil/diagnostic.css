@@ -1,9 +1,9 @@
 /* Espace Breteuil — écran « Vérifier la connexion » (chargé par diagnostic.js).
  * Pastilles : vert = OK, orange = à regarder, rouge = bloquant, gris = pas testé.
  * La couleur n'est jamais seule : chaque pastille a aussi un mot (« OK », « Bloquant »…). */
-:root { --diag-vert: #1D6B52; --diag-orange: #B45309; --diag-rouge: #A3201A; --diag-gris: #8C7E81; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) { --diag-vert: #6FD0A8; --diag-orange: #F6AD55; --diag-rouge: #FF8A80; --diag-gris: #9C8F8B; } }
-:root[data-theme="sombre"] { --diag-vert: #6FD0A8; --diag-orange: #F6AD55; --diag-rouge: #FF8A80; --diag-gris: #9C8F8B; }
+:root { --diag-vert: #1D6B52; --diag-orange: #B45309; --diag-rouge: #A3201A; --diag-gris: #5F6E84; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) { --diag-vert: #6FD0A8; --diag-orange: #F6AD55; --diag-rouge: #FF8A80; --diag-gris: #93A3BC; } }
+:root[data-theme="sombre"] { --diag-vert: #6FD0A8; --diag-orange: #F6AD55; --diag-rouge: #FF8A80; --diag-gris: #93A3BC; }
 
 .diag-pastille { flex: none; width: 1.15em; height: 1.15em; border-radius: 50%; margin-top: .2em; background: var(--diag-gris); box-shadow: 0 0 0 4px color-mix(in srgb, var(--diag-gris) 18%, transparent); }
 .diag-pastille.vert { background: var(--diag-vert); box-shadow: 0 0 0 4px color-mix(in srgb, var(--diag-vert) 18%, transparent); }
@@ -15,7 +15,7 @@
 
 .diag-bilan { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; margin: 0 0 14px; border-radius: var(--rayon); border: 2px solid var(--diag-gris); background: var(--surface); box-shadow: var(--ombre); }
 .diag-bilan b { display: block; font-size: 1.15rem; margin-bottom: 2px; }
-.diag-bilan span:not(.diag-pastille) { color: var(--doux); }
+.diag-bilan span:not(.diag-pastille) { color: var(--texte-2); }
 .diag-bilan.vert { border-color: var(--diag-vert); background: color-mix(in srgb, var(--diag-vert) 9%, var(--surface)); }
 .diag-bilan.orange { border-color: var(--diag-orange); background: color-mix(in srgb, var(--diag-orange) 9%, var(--surface)); }
 .diag-bilan.rouge { border-color: var(--diag-rouge); background: color-mix(in srgb, var(--diag-rouge) 8%, var(--surface)); }
@@ -34,7 +34,7 @@
 .diag-etat.rouge { color: var(--diag-rouge); }
 .diag-texte { margin: 4px 0 0; }
 .diag-action { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); font-weight: 600; }
-.diag-detail { margin-top: 8px; font-size: .85rem; color: var(--doux); }
+.diag-detail { margin-top: 8px; font-size: .85rem; color: var(--texte-2); }
 .diag-detail summary { cursor: pointer; min-height: 32px; }
 .diag-detail code { display: block; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; padding: 8px; border-radius: 8px; background: var(--surface-2); }
 .diag-rapport { width: 100%; min-height: 12em; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem; margin-bottom: 16px; }
