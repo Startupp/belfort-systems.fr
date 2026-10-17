@@ -831,7 +831,7 @@
       action("#/organisation", "💡", "Comprendre l'organisation", "Qui a quoi, en un schéma à toucher."),
       bientot("👥", "L'équipe", "Qui fait quoi, et qui dépend de qui."),
       bientot("🔐", "Qui a accès à quoi", "Boîtes mail et dossiers : voir, donner, retirer."),
-      bientot("🎖️", "Les rôles", "Qui peut gérer quoi : administrateur, facturation…"),
+      action("#/roles", "🎖️", "Rôles et délégations", "Qui peut gérer quoi : administrateur, facturation, pôles, boîtes."),
       bientot("📬", "Les boîtes mail", "Les boîtes de chacun et les boîtes partagées, avec leur photo."),
       bientot("🗂️", "Le dossier commun", "Ranger, créer, partager les dossiers de l'équipe."),
       bientot("👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
@@ -839,7 +839,7 @@
       bientot("🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
       bientot("🔑", "Mot de passe oublié", "Donner un mot de passe provisoire."),
       bientot("🛡️", "Double authentification", "Protéger les comptes avec le téléphone."),
-      bientot("🕘", "Historique", "Qui a fait quoi, et quand."),
+      action("#/historique", "🕘", "Historique", "Qui a fait quoi, et quand."),
       action("#/guides/admin", "📖", "Guides Microsoft", "Les mêmes gestes, pas à pas, sur le site de Microsoft.")));
     app.appendChild(pied());
   }
@@ -856,7 +856,7 @@
       bientot("👋", "Quelqu'un arrive", "Créer son compte en 4 étapes."),
       bientot("🚪", "Quelqu'un part", "Bloquer son compte et transmettre son travail."),
       bientot("🌴", "Les absences", "Congés, absences et télétravail de l'équipe."),
-      bientot("🕘", "Historique", "Qui a fait quoi, et quand."),
+      action("#/historique", "🕘", "Historique", "Qui a fait quoi, et quand."),
       action("#/guides/finance", "📖", "Guides Microsoft", "Les mêmes gestes sur le site de Microsoft.")));
     app.appendChild(pied());
   }
