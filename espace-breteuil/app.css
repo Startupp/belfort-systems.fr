@@ -655,6 +655,21 @@ ul.plans { columns: 2; font-size: .8rem; color: var(--texte-2); }
 .pied { margin-top: 18px; padding-top: 10px; font-size: .82rem; }
 .etape-guide .boite { margin-top: 12px; text-align: left; }
 
+/* Listes : jamais plus larges que l'écran ; semaine compacte sur téléphone */
+.liste-rdv, .evts, .semaine, .liste-personnes, .actions-liste { grid-template-columns: minmax(0, 1fr); }
+.barre h1:focus { outline: none; }
+.legende { font-size: .78rem; gap: 4px 12px; margin: 0 0 8px; }
+.t .lib { overflow-wrap: break-word; }
+@media (max-width: 719px) {
+  .semaine .evt { padding: 6px 10px; gap: 2px 10px; box-shadow: none; }
+  .semaine .evt .ou { display: none; }
+  .semaine .evt .quoi { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .semaine .evt .heure { min-width: 3.6em; }
+  .jour-boite > button.jour-titre { min-height: 44px; margin: 0 4px; }
+  .jour-boite .rien { display: none; }
+  .jour-boite:has(.rien) { padding-bottom: 0; }
+}
+
 /* ---------------------------------------------------------------- */
 /* Mouvement réduit : aucune animation ni transition                 */
 /* ---------------------------------------------------------------- */

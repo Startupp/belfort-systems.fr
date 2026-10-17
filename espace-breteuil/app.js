@@ -346,7 +346,7 @@
     var m = planning.mode;
     var date = planning.quand ? jourLong(jourDe(planning.quand)) + " à " + heure(planning.quand) : "";
     if (m === "exemple") return h("div", { class: "bandeau exemple", role: "note" }, icone("exemple"),
-      h("div", null, h("strong", null, "EXEMPLE — données fictives"), "Les vrais calendriers du Château ne sont pas encore branchés."));
+      h("div", null, h("strong", null, "Exemple — données fictives"), "Calendriers du Château pas encore branchés."));
     if (m === "exemple-panne") return h("div", { class: "bandeau exemple", role: "note" }, icone("exemple"),
       h("div", null, h("strong", null, "EXEMPLE — données fictives"), "Les calendriers ne répondent pas et rien n'est encore enregistré sur ce téléphone."));
     if (m === "hors-ligne") return h("div", { class: "bandeau info", role: "note" }, icone("horsligne"),
@@ -673,7 +673,7 @@
       else if (v.vue === "semaine" || v.vue === "liste") {
         var l = lundiDe(v.jour), d = plusJours(l, 6);
         titre = v.vue === "liste" ? (cle(debutListe(v.jour)) < cle(v.jour) ? "Depuis le " : "À partir du ") + jourLong(debutListe(v.jour)) :
-          "Semaine du " + fmt(midi(l), { day: "numeric", month: "long" }) + " au " + fmt(midi(d), { day: "numeric", month: "long" });
+          fmt(midi(l), { day: "numeric", month: l.m === d.m ? undefined : "short" }) + " – " + fmt(midi(d), { day: "numeric", month: "short", year: "numeric" });
         pas = function (n) { v.jour = plusJours(v.jour, 7 * n); };
       } else { titre = maj(fmt(midi(v.jour), { month: "long", year: "numeric" })); pas = function (n) { v.jour = plusMois(v.jour, n); }; }
       var estAuj = cle(v.jour) === cle(auj);
@@ -841,7 +841,7 @@
       tuiles([
         { href: "#/personnes", icone: "personnes", libelle: "Personnes", aide: "L'équipe, les boîtes partagées et les externes (étiquette EXTERNE)" },
         { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Qui a quelle licence Microsoft, combien il en reste" },
-        { href: "#/organisation", icone: "reseau", libelle: "Organisation", aide: "Comprendre qui a quoi, en un schéma à toucher" },
+        { href: "#/organisation", icone: "reseau", libelle: "Qui a quoi", aide: "Organisation : comprendre qui a quoi, en un schéma à toucher" },
       ])));
     app.appendChild(h("section", { class: "section" }, h("h2", null, "Gestion du Château", h("span", { class: "pastille-demo mini" }, "Démo")),
       tuiles([
