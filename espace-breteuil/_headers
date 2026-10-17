@@ -1,8 +1,14 @@
 # En-têtes de sécurité pour Cloudflare Pages (projet *.pages.dev, puis sous-domaine).
 # CSP stricte : seuls Microsoft (connexion, Graph, SharePoint du Château) et le Worker sont joignables.
+#   connect-src : login.microsoftonline.com (jetons MSAL), graph.microsoft.com, breteuil02.sharepoint.com
+#                 (REST SharePoint : droits des dossiers), breteuil02-my.sharepoint.com (OneDrive, liens
+#                 de fichiers), *.sharepoint.com (redirections de contenu Graph), le Worker belfort-api.
+#   frame-src   : login.microsoftonline.com (renouvellement silencieux du jeton par MSAL).
+#   La connexion par fenêtre (popup) n'a pas besoin de règle CSP ; COOP same-origin-allow-popups
+#   la laisse communiquer avec l'appli. Vérifié par tests/csp.test.mjs.
 # Sans effet sur GitHub Pages (fichier ignoré). Voir docs/ESPACE-BRETEUIL.md.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://belfort-api.damien-belfort.workers.dev https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com; frame-src https://login.microsoftonline.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://belfort-api.damien-belfort.workers.dev https://login.microsoftonline.com https://graph.microsoft.com https://breteuil02.sharepoint.com https://breteuil02-my.sharepoint.com https://*.sharepoint.com; frame-src https://login.microsoftonline.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

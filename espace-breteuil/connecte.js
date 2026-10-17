@@ -133,7 +133,9 @@
   function blocErreur(e, reessayer) {
     return h("div", { class: "bandeau erreur", role: "alert" }, icone("exemple"), h("div", null,
       h("strong", null, (e && e.message) || "Une erreur est survenue."),
+      e && e.action ? h("span", null, e.action) : null,
       e && e.detail ? h("small", { class: "detail-technique" }, e.detail) : null,
+      e && (e.statut === 401 || e.statut === 403 || e.cors) ? h("a", { class: "btn petit secondaire", href: "#/verifier" }, "Vérifier la connexion") : null,
       reessayer ? h("div", { class: "actions" }, h("button", { class: "btn secondaire", type: "button", onclick: reessayer }, icone("actualiser"), "Réessayer")) : null));
   }
   /** Étiquette (« Externe » en gras) ; au toucher ou au survol, une phrase d'explication. */
@@ -178,7 +180,8 @@
       h("p", null, "Avec votre adresse du Château (par exemple pdebreteuil@breteuil.fr). L'appli agit uniquement avec vos droits Microsoft."),
       G.erreur() ? h("p", { class: "erreur" }, G.erreur()) : null,
       h("button", { class: "btn large", type: "button", onclick: function () { G.connecter(); } }, emoji("🔐"), "Se connecter avec Microsoft"),
-      h("p", { class: "petit" }, "Rien n'est enregistré sur ce téléphone : il faudra vous reconnecter à la prochaine ouverture."));
+      G.erreur() ? h("a", { class: "btn secondaire large", href: "#/verifier" }, emoji("🩺"), "Vérifier la connexion") : null,
+      h("p", { class: "petit" }, "Vous restez connecté tant que l'appli (ou l'onglet) reste ouverte. En la fermant, tout est effacé de ce téléphone."));
   }
 
   /* ------------------------------------------------------------------ */
@@ -203,7 +206,8 @@
       EB.action("#/personnes", "👥", "Les personnes", "L'équipe, les boîtes partagées, les externes."),
       EB.action("#/licences-reel", "🎫", "Les licences", "Les 2 licences du Château expliquées."),
       EB.action("#/organisation", "💡", "Comprendre l'organisation", "Le schéma de qui a quoi."),
-      EB.action("#/journal", "🕘", "Ce que j'ai fait", "Les changements faits depuis ce téléphone.")));
+      EB.action("#/journal", "🕘", "Ce que j'ai fait", "Les changements faits depuis ce téléphone."),
+      EB.action("#/verifier", "🩺", "Vérifier la connexion", "Tester pas à pas que tout marche, et envoyer un rapport à Damien.")));
     app.appendChild(h("div", { class: "actions" }, h("button", { class: "btn secondaire", type: "button", onclick: function () {
       G.oublier(); ctx = null; promesseCtx = null; cacheUtilisateurs = null; EB.rendre();
     } }, "Se déconnecter de l'appli")));
@@ -421,7 +425,8 @@
     var d = EB.dialogue();
     var ok = h("button", { class: "btn large", type: "button", onclick: function () { EB.fermerDialogue(); EB.rendre(); } }, "Compris");
     d.appendChild(h("div", { class: "contenu centre" }, emoji("⚠️", "grand"), h("h2", { id: "detail-titre" }, "Ça n'a pas marché"),
-      h("p", { class: "phrase" }, e.message || "Erreur inconnue."), e.detail ? h("p", { class: "detail-technique" }, e.detail) : null, ok));
+      h("p", { class: "phrase" }, e.message || "Erreur inconnue."), e.action ? h("p", { class: "phrase" }, e.action) : null,
+      e.detail ? h("p", { class: "detail-technique" }, e.detail) : null, ok));
     EB.ouvrirDialogue(d, ok);
   }
 
@@ -979,9 +984,15 @@
   EB.ecran("licences-reel", ecranLicences);
   EB.ecran("organisation", ecranOrganisation);
   EB.ecran("journal", ecranJournal);
+  if (window.EBDiagnostic) { EB.ecran("verifier", window.EBDiagnostic.ecran); EB.onglet("reglages", null, null, ["verifier"]); }
 
   window.EBConnecte = {
-    apresConnexion: function () { EB.rendre(); },
+    /** Juste après la PREMIÈRE connexion sur cet appareil : proposer la vérification. */
+    apresConnexion: function () {
+      var premiere = G.vientDeSeConnecter && G.vientDeSeConnecter() && !EB.lire("eb:diagnostic-vu", null);
+      if (premiere && window.EBDiagnostic) { location.hash = "#/verifier"; return; } // hashchange → rendu
+      EB.rendre();
+    },
     annuairePourDemo: function () { return Promise.reject(new Error("non utilisé")); },
     chargerPhotos: function () { return Promise.resolve(); },
   };
