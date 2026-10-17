@@ -336,13 +336,14 @@
   }
 
   /* Fenêtre (dialog) réutilisable */
-  function dialogue() { var d = document.getElementById("detail"); d.textContent = ""; return d; }
+  function dialogue() { var d = document.getElementById("detail"); d.textContent = ""; d.oncancel = null; return d; }
   function ouvrirDialogue(d, focus) {
     if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute("open", "");
     if (focus) setTimeout(function () { focus.focus(); }, 30);
   }
   function fermerDialogue() { var d = document.getElementById("detail"); if (d.open) d.close(); }
-  document.addEventListener("click", function (e) { var d = document.getElementById("detail"); if (d && e.target === d) d.close(); });
+  /* Clic sur le fond ou touche Échap : comme « Annuler » (l'événement cancel ne part pas lors d'une fermeture par le code). */
+  document.addEventListener("click", function (e) { var d = document.getElementById("detail"); if (d && e.target === d) { if (d.oncancel) d.oncancel(); if (d.open) d.close(); } });
 
   function ouvrirDetail(o) {
     var d = dialogue();
@@ -370,7 +371,7 @@
     return new Promise(function (fin) {
       var d = dialogue(), fini = false;
       function terminer(v) { if (fini) return; fini = true; fermerDialogue(); fin(v); }
-      d.onclose = function () { terminer(false); };
+      d.oncancel = function () { terminer(false); };
       function etape1() {
         d.textContent = "";
         var suite = h("button", { class: "btn large", type: "button", onclick: function () { opts.deuxEtapes === false ? terminer(true) : etape2(); } },
@@ -405,7 +406,7 @@
     return new Promise(function (fin) {
       var d = dialogue(), fini = false;
       function terminer(v) { if (fini) return; fini = true; fermerDialogue(); fin(v); }
-      d.onclose = function () { terminer(null); };
+      d.oncancel = function () { terminer(null); };
       var liste = h("div", { class: "choix-liste" }, elements.map(function (e) {
         return h("button", { class: "choix", type: "button", onclick: function () { terminer(e.valeur); } },
           e.avatar || (e.emoji ? emoji(e.emoji) : null),
@@ -628,7 +629,7 @@
     if (r.infos.length) app.appendChild(h("section", { class: "section" },
       h("h2", null, emoji("📌"), " À savoir"),
       h("div", { class: "evts" }, r.infos.map(function (o) { return carteEvenement(o, auj); }))));
-    app.appendChild(legendeSources());
+    ajouter(app, legendeSources());
     app.appendChild(h("div", { class: "note" }, icone("info"), h("span", null,
       "Ce résumé lit simplement le calendrier tenu par l'accueil : un titre comme « Marco absent », « Yara congé » ou « Valérie D. télétravail » suffit.")));
   }
@@ -659,7 +660,7 @@
       h("button", { class: "btn-rond", type: "button", "aria-label": "Suivant", onclick: function () { pas(1); rendre(); } }, icone("droite"))));
     app.appendChild(h("div", { class: "ligne-aujourdhui" },
       h("button", { class: "btn" + (cle(v.jour) === cle(auj) ? " secondaire" : ""), type: "button", onclick: function () { v.jour = aujourdhui(); rendre(); } }, icone("agenda"), "Aujourd'hui")));
-    app.appendChild(legendeSources());
+    ajouter(app, legendeSources());
     var zone = h("div", { class: "zone-planning" });
     if (!planning) zone.appendChild(h("p", { class: "chargement" }, "Chargement du planning…"));
     else if (v.vue === "jour") vueJour(zone, v.jour, personne);

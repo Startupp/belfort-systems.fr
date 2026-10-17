@@ -295,7 +295,7 @@
     return new Promise(function (fin) {
       var d = EB.dialogue(), fini = false;
       function terminer(v) { if (fini) return; fini = true; EB.fermerDialogue(); fin(v); }
-      d.onclose = function () { terminer(null); };
+      d.oncancel = function () { terminer(null); };
       var champ = h("input", { class: "champ", type: "text", id: "nom", value: valeur || "", autocomplete: "off", maxlength: "120" });
       var err = h("p", { class: "erreur", role: "alert" });
       d.appendChild(h("form", { class: "contenu", onsubmit: function (e) {
@@ -374,7 +374,7 @@
     return new Promise(function (fin) {
       var d = EB.dialogue(), fini = false, courant = depart.slice();
       function terminer(v) { if (fini) return; fini = true; EB.fermerDialogue(); fin(v); }
-      d.onclose = function () { terminer(null); };
+      d.oncancel = function () { terminer(null); };
       function afficher() {
         d.textContent = "";
         var liste = h("div", { class: "choix-liste" }, chargement());
@@ -535,7 +535,7 @@
       return new Promise(function (fin) {
         var d = EB.dialogue(), fini = false;
         function terminer(v) { if (fini) return; fini = true; EB.fermerDialogue(); fin(v); }
-        d.onclose = function () { terminer(null); };
+        d.oncancel = function () { terminer(null); };
         var personnes = r[0].liste.filter(function (u) { return u.profil !== "boite" && u.accountEnabled !== false; });
         var recherche = h("input", { class: "champ", type: "search", placeholder: "Chercher un prénom…", "aria-label": "Chercher une personne", oninput: function () { remplir(); } });
         var liste = h("div", { class: "choix-liste" });
