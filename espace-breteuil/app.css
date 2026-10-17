@@ -763,3 +763,51 @@ button.action { width: 100%; font: inherit; color: inherit; text-align: left; cu
 .onglets a.actif svg.ic { color: var(--primaire); }
 .onglets a.actif { box-shadow: inset 0 -3px 0 var(--or); }
 
+/* ---------------------------------------------------------------- */
+/* Calendrier dézoomable (semaine, mois)                             */
+/* 0 « ajuster » : la semaine tient en entier, quelle que soit la    */
+/* largeur ; 1 à 3 : colonnes plus larges, défilement DANS la grille. */
+/* ---------------------------------------------------------------- */
+.zoom-planning { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 10px; }
+.zoom-planning .btn { min-height: 44px; padding: 0 14px; font-size: .85rem; }
+.zoom-planning .btn[aria-pressed="true"] { border-color: var(--or); }
+.zone-planning { touch-action: pan-x pan-y; }
+.zone-planning.defile { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+.jour-titre .court { display: none; }
+.zone-planning.ajuster .semaine { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.zone-planning.ajuster .semaine .jour-boite { padding: 2px; min-height: 160px; border-radius: 8px; min-width: 0; overflow: hidden; }
+.zone-planning.ajuster .semaine .evts { gap: 3px; }
+.zone-planning.ajuster .semaine .evt { display: block; padding: 3px 4px; border-left-width: 3px; border-radius: 6px; min-height: 44px; min-width: 0; box-shadow: none; }
+.zone-planning.ajuster .semaine .evt .heure { display: block; min-width: 0; font-size: .68rem; font-weight: 700; }
+.zone-planning.ajuster .semaine .evt .quoi { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;
+  font-size: .7rem; line-height: 1.2; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+.zone-planning.ajuster .semaine .evt.journee .heure { display: none; }
+@media (max-width: 420px) {
+  .zone-planning.ajuster .semaine .evt { padding: 3px 2px 3px 3px; }
+  .zone-planning.ajuster .semaine .evt .quoi { font-size: .62rem; letter-spacing: -.01em; }
+  .zone-planning.ajuster .semaine .evt .heure { font-size: .6rem; }
+  .segments button { padding-left: 2px; padding-right: 2px; font-size: .85rem; }
+}
+.zone-planning.ajuster .semaine .evt .ou { display: none; }
+.zone-planning.ajuster .semaine .rien { display: block; text-align: center; margin: 4px 0; font-size: .8rem; }
+.zone-planning.ajuster .semaine .jour-titre { margin: 0; justify-content: center; text-align: center; font-size: .78rem; min-height: 44px; flex-direction: column; gap: 0; line-height: 1.1; }
+.zone-planning.ajuster .semaine .jour-titre .long { display: none; }
+.zone-planning.ajuster .semaine .jour-titre .court { display: block; }
+.zone-planning.ajuster .semaine .jour-titre .court b { display: block; font-size: 1rem; }
+@media (min-width: 900px) {
+  .zone-planning.ajuster .semaine .jour-titre .long { display: inline; }
+  .zone-planning.ajuster .semaine .jour-titre .court { display: none; }
+  .zone-planning.ajuster .semaine .evt .heure { font-size: .82rem; }
+  .zone-planning.ajuster .semaine .evt .quoi { font-size: .88rem; }
+  .zone-planning.ajuster .semaine { gap: 8px; }
+  .zone-planning.ajuster .semaine .jour-boite { padding: 6px; min-height: 240px; }
+}
+.zone-planning.zoom-1 .semaine, .zone-planning.zoom-1 .mois { --col: 130px; }
+.zone-planning.zoom-2 .semaine, .zone-planning.zoom-2 .mois { --col: 180px; }
+.zone-planning.zoom-3 .semaine, .zone-planning.zoom-3 .mois { --col: 240px; }
+.zone-planning.defile .semaine, .zone-planning.defile .mois { grid-template-columns: repeat(7, minmax(var(--col), 1fr)); width: max-content; min-width: 100%; gap: 6px; }
+.zone-planning.defile .semaine .jour-boite { min-height: 240px; }
+.zone-planning.defile .semaine .evt .ou { display: none; }
+.zone-planning.ajuster .mois { gap: 2px; }
+.zone-planning.ajuster .mois .case { min-width: 0; }
+

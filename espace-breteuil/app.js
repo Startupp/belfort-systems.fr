@@ -34,7 +34,7 @@
     try { if (valeur == null) localStorage.removeItem(cle); else localStorage.setItem(cle, JSON.stringify(valeur)); return true; } catch (e) { return false; }
   }
 
-  var REGLAGES_DEFAUT = { vue: "semaine", texte: "normal", theme: "auto", passes: "afficher", mode: "", demos: false };
+  var REGLAGES_DEFAUT = { vue: "semaine", texte: "normal", theme: "auto", passes: "afficher", mode: "", demos: false, zoom: 0 };
   var reglages = Object.assign({}, REGLAGES_DEFAUT, lire("eb:reglages", {}));
   if (reglages.calendrierSeul) reglages.mode = "calendrier"; // reprise v3
   ["calendrierSeul", "monEspace", "moi", "ouvrirMonEspace"].forEach(function (k) { delete reglages[k]; });
@@ -549,6 +549,7 @@
   /* ------------------------------------------------------------------ */
   /* Écran : planning                                                    */
   /* ------------------------------------------------------------------ */
+  var ZOOM_MAX = 3;
   var VUES = [["jour", "Jour"], ["semaine", "Semaine"], ["mois", "Mois"], ["liste", "Liste"]];
   var redessinerPlanning = function () {};
 
@@ -589,7 +590,14 @@
         h("button", { class: "btn-rond", type: "button", "aria-label": "Suivant", "data-nav": "suiv", onclick: function () { pas(1); dessiner("suiv"); } }, icone("droite")),
         h("button", { class: "btn" + (estAuj ? " secondaire" : ""), type: "button", "data-nav": "auj", onclick: function () { v.jour = aujourdhui(); dessiner("auj"); } }, "Aujourd'hui")));
       ajouter(bloc, legendeSources());
-      var zone = h("div", { class: "zone-planning" });
+      // Zoom de la grille (semaine, mois) : 0 = « ajuster à l'écran » (la semaine tient en entier).
+      var grilleZoomable = v.vue === "semaine" || v.vue === "mois";
+      if (grilleZoomable) bloc.appendChild(h("div", { class: "zoom-planning", role: "group", "aria-label": "Taille de la grille" },
+        h("button", { class: "btn-rond", type: "button", "aria-label": "Réduire la grille", "data-zoom": "moins", disabled: !reglages.zoom, onclick: function () { zoomer(-1); } }, icone("moins")),
+        h("button", { class: "btn secondaire", type: "button", "data-zoom": "ajuster", "aria-pressed": String(!reglages.zoom), onclick: function () { zoomer(-9); } }, "Ajuster à l'écran"),
+        h("button", { class: "btn-rond", type: "button", "aria-label": "Agrandir la grille", "data-zoom": "plus", disabled: reglages.zoom >= ZOOM_MAX, onclick: function () { zoomer(1); } }, icone("plus"))));
+      var zone = h("div", { class: "zone-planning" + (grilleZoomable ? " zoom-" + (reglages.zoom || 0) + (reglages.zoom ? " defile" : " ajuster") : "") });
+      if (grilleZoomable) pincement(zone);
       if (!planning) zone.appendChild(squelette(4));
       else if (v.vue === "jour") vueJour(zone, v.jour, personne);
       else if (v.vue === "semaine") vueSemaine(zone, v.jour, personne);
@@ -598,9 +606,27 @@
       bloc.appendChild(zone);
       // Garder le focus sur le bouton touché (clavier, lecteurs d'écran).
       if (focus) {
-        var cible = focus.indexOf("vue-") === 0 ? bloc.querySelector('[data-vue="' + focus.slice(4) + '"]') : bloc.querySelector('[data-nav="' + focus + '"]');
+        var cible = focus.indexOf("zoom-") === 0 ? bloc.querySelector('[data-zoom="' + focus.slice(5) + '"]:not([disabled])') || bloc.querySelector('[data-zoom="ajuster"]') : focus.indexOf("vue-") === 0 ? bloc.querySelector('[data-vue="' + focus.slice(4) + '"]') : bloc.querySelector('[data-nav="' + focus + '"]');
         if (cible) cible.focus({ preventScroll: true });
       }
+    }
+    function zoomer(n) {
+      var z = Math.max(0, Math.min(ZOOM_MAX, (reglages.zoom || 0) + n));
+      if (z === (reglages.zoom || 0)) return;
+      reglages.zoom = z; sauverReglages(); dessiner(n > 0 ? "zoom-plus" : "zoom-moins");
+    }
+    /** Pincement à deux doigts sur la grille : écarter = agrandir, pincer = réduire. */
+    function pincement(zone) {
+      var points = {}, depart = 0;
+      function ecart() { var p = Object.keys(points).map(function (k) { return points[k]; }); return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); }
+      zone.addEventListener("pointerdown", function (e) { if (e.pointerType !== "touch") return; points[e.pointerId] = { x: e.clientX, y: e.clientY }; depart = ecart(); });
+      zone.addEventListener("pointermove", function (e) {
+        if (!points[e.pointerId]) return;
+        points[e.pointerId] = { x: e.clientX, y: e.clientY };
+        var d = ecart(); if (!depart || !d) return;
+        if (d / depart > 1.3) { depart = d; zoomer(1); } else if (d / depart < 0.75) { depart = d; zoomer(-1); }
+      });
+      ["pointerup", "pointercancel", "pointerleave"].forEach(function (t) { zone.addEventListener(t, function (e) { delete points[e.pointerId]; depart = ecart(); }); });
     }
     redessinerPlanning = function () { if (document.body.contains(bloc)) dessiner(); };
     surPlanning(bloc, function () { dessiner(); });
@@ -636,7 +662,8 @@
       var evts = duJour(liste, jj);
       grille.appendChild(h("div", { class: "jour-boite" + (cle(jj) === auj ? " aujourdhui" : "") },
         h("button", { class: "jour-titre", type: "button", onclick: function () { vuePlanning.vue = "jour"; vuePlanning.jour = jj; redessinerPlanning(); } },
-          maj(fmt(midi(jj), { weekday: "long", day: "numeric" }))),
+          h("span", { class: "long" }, maj(fmt(midi(jj), { weekday: "long", day: "numeric" }))),
+          h("span", { class: "court", "aria-hidden": "true" }, maj(fmt(midi(jj), { weekday: "short" })).replace(".", ""), h("b", null, String(jj.d)))),
         evts.length ? h("div", { class: "evts" }, evts.map(function (o) { return carteEvenement(o, jj); })) : h("p", { class: "rien" }, "—")));
     })(plusJours(l, i));
     zone.appendChild(grille);
