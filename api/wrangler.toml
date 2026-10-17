@@ -24,4 +24,7 @@ id = "24f34957a1644d729c773708e6e05088"
 [vars]
 # Origines autorisées pour CORS, séparées par des virgules. http://localhost:* est
 # toujours accepté en plus (développement).
-ORIGINES = "https://belfort-systems.fr"
+# - espace-breteuil.pages.dev : appli Espace Breteuil (Cloudflare Pages, branche main) ;
+# - breteuil.belfort-systems.fr : futur sous-domaine de la même appli (prévu à l'avance,
+#   sans effet tant que le domaine n'est pas branché).
+ORIGINES = "https://belfort-systems.fr,https://espace-breteuil.pages.dev,https://breteuil.belfort-systems.fr"
