@@ -22,7 +22,7 @@ const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 const RACINE = fileURLToPath(new URL("../", import.meta.url));
 const SORTIE = process.argv[2] || "";
-const PORT = 8768;
+const PORT = Number(process.env.EB_PORT) || 8768; // EB_PORT : autre port si un autre test tourne déjà
 const BASE = `http://localhost:${PORT}/?maquette=1`;
 if (SORTIE) mkdirSync(SORTIE, { recursive: true });
 const ICS = readFileSync(RACINE + "exemple.ics", "utf8");
