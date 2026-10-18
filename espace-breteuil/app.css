@@ -897,3 +897,19 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
     radial-gradient(34% 30% at 82% 72%, var(--halo-2), transparent 70%),
     radial-gradient(30% 22% at 60% 40%, var(--halo-3), transparent 70%);
   animation: eb-derive 22s ease-in-out infinite alternate; }
+
+/* En-tête praline + filet doré qui coule + titre serif */
+.barre { background: linear-gradient(180deg, color-mix(in srgb, var(--entete) 97%, transparent), color-mix(in srgb, var(--entete) 92%, transparent));
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.barre::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #C9A04A 30%, #F1DFC6 50%, #C9A04A 70%, transparent);
+  background-size: 200% 100%; animation: eb-filet 6s linear infinite; }
+.barre h1 { font-family: var(--serif); font-weight: 600; font-size: 1.3rem; letter-spacing: -.01em; }
+.barre h1 small { font-family: var(--sans); font-weight: 400; letter-spacing: 0; margin-top: 1px; }
+/* Pastille de connexion qui respire (vert seulement) */
+.pastille-etat.vert i { animation: eb-respire 2.8s ease-out infinite; }
+
+/* Reflet doré qui passe sur un titre (le texte reste lisible : base = couleur du texte) */
+.reflet { background: linear-gradient(100deg, var(--reflet-base) 42%, var(--reflet-or) 50%, var(--reflet-base) 58%); background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; animation: eb-reflet-or 9s ease-in-out infinite; }
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) { .reflet { color: var(--texte); -webkit-text-fill-color: currentColor; background: none; } }
