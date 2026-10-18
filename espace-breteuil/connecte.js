@@ -947,7 +947,7 @@
         exemple: true,
         personnes: d.collaborateurs.map(function (c) { return { id: c.id, displayName: c.prenom, prenom: c.prenom, profil: map[c.licence] || "aucune", couleur: c.couleur, type: "interne" }; })
           .concat([{ id: "agence", displayName: "Agence photo", prenom: "Agence", profil: "externe", type: "externe" }]),
-        boites: d.boites.map(function (b) { return { nom: b.nom, adresse: b.adresse, emoji: b.emoji, qui: Object.keys(b.acces).map(function (k) { var c = d.collaborateurs.filter(function (x) { return x.id === k; })[0]; return c ? c.prenom : k; }) }; }),
+        boites: d.boites.map(function (b) { return { nom: b.nom, adresse: b.adresse, emoji: b.emoji, qui: Object.keys(b.acces).map(function (k) { var c = d.collaborateurs.filter(function (x) { return x.id === k; })[0]; return c ? { nom: c.prenom, couleur: c.couleur } : { nom: k }; }) }; }),
         site: "Château de Breteuil", proprietaires: ["François", "Pauline"],
         roles: [{ nom: "Administrateur", qui: ["François", "Damien"] }, { nom: "Facturation", qui: ["Valérie D."] }],
       });
@@ -1006,15 +1006,10 @@
       }).filter(Boolean);
       schema.appendChild(h("section", { class: "zone-schema personnes" }, h("h2", null, emoji("👥"), " Les personnes"), groupes));
 
-      // 2. Les boîtes partagées
-      schema.appendChild(h("section", { class: "zone-schema boites" }, h("h2", null, emoji("📬"), " Les boîtes partagées"),
-        h("p", { class: "phrase" }, "Des adresses lues à plusieurs, sans licence."),
-        h("div", { class: "puces" }, o.boites.map(function (b) {
-          return h("button", { class: "puce", type: "button", onclick: function () {
-            expliquer(b.emoji || "📬", b.nom, [b.adresse || "", D.PROFILS.boite.phrase,
-              b.qui ? "Peuvent l'ouvrir : " + b.qui.join(", ") + "." : "La liste des personnes qui peuvent l'ouvrir se règle dans Exchange (pas encore visible dans l'appli)."]);
-          } }, emoji(b.emoji || "📬"), b.nom);
-        }))));
+      // 2. Les boîtes partagées : une ligne par boîte (nom, adresse, qui y a accès, Ouvrir, Épingler).
+      schema.appendChild(h("section", { class: "zone-schema boites", "aria-labelledby": "t-boites" }, h("h2", { id: "t-boites" }, emoji("📬"), " Les boîtes partagées"),
+        h("p", { class: "phrase" }, "Des adresses lues à plusieurs, sans licence. « Ouvrir » l'affiche dans Outlook."),
+        window.EBListeBoites ? window.EBListeBoites.liste(o.boites, { epingler: !o.exemple }) : null));
 
       // 3. Le dossier commun
       schema.appendChild(h("section", { class: "zone-schema dossier" }, h("h2", null, emoji("🗂️"), " Le dossier commun"),

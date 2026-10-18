@@ -1329,3 +1329,33 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
   --commun-1: #14213D; --commun-2: #1F3A68; --commun-doux: #DCE5F5; --ombre-commun: 0 20px 44px -18px rgba(0,0,0,.6);
   --onde: rgba(157,180,224,.45); --voile: rgba(0,0,0,.6); --ombre-onglets-bas: 0 -4px 16px rgba(0,0,0,.3);
 }
+
+/* ================================================================ */
+/* Liste des boîtes partagées (« Qui a quoi ») — une ligne par boîte */
+/* Étroit (téléphone, colonne) : deux niveaux ; large : une ligne.   */
+/* ================================================================ */
+.zone-schema.boites { grid-column: 1 / -1; }
+.zone-liste-boites { container-type: inline-size; }
+.liste-boites { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ligne-boite { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "ico quoi quoi" "qui qui actes"; align-items: center; column-gap: 12px; row-gap: 10px;
+  padding: 10px 12px; border-radius: 16px; background: var(--verre); border: 1px solid var(--verre-trait); box-shadow: var(--ombre-verre); min-width: 0; }
+.ligne-boite > .eb-anneau { grid-area: ico; width: 44px; height: 44px; --fi: var(--c-ciel-f); color: var(--c-ciel); }
+.ligne-boite .quoi { grid-area: quoi; min-width: 0; display: grid; }
+.ligne-boite .quoi b { font-size: 1.02rem; overflow-wrap: anywhere; }
+.ligne-boite .quoi small { color: var(--texte-2); font-size: .82rem; overflow-wrap: anywhere; }
+.ligne-boite .qui-boite { grid-area: qui; justify-self: start; min-width: 0; }
+.ligne-boite .actes { grid-area: actes; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; min-width: 0; }
+.ligne-boite .actes .btn { min-height: 44px; padding: 0 14px; white-space: nowrap; }
+.ligne-boite .actes .btn:disabled { opacity: 1; color: var(--or-texte); border-color: color-mix(in srgb, var(--or) 60%, transparent); cursor: default; }
+.qui-boite { display: inline-flex; align-items: center; min-height: 32px; font-size: .82rem; color: var(--texte-2); white-space: nowrap; }
+.qui-boite.personne, .qui-boite.inconnu { font-style: italic; }
+.qui-boite.inconnu { white-space: normal; line-height: 1.2; }
+.pastille-initiales { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #FFFFFF; font-weight: 700; font-size: .72rem;
+  border: 2px solid var(--surface); margin-left: -8px; }
+.pastille-initiales:first-child { margin-left: 0; }
+.pastille-initiales.plus { background: var(--primaire-pale); color: var(--primaire-fort); }
+@container (min-width: 640px) {
+  .ligne-boite { grid-template-columns: 44px minmax(0, 1fr) auto auto; grid-template-areas: "ico quoi qui actes"; padding: 8px 12px; }
+  .ligne-boite .qui-boite { justify-self: end; }
+  .qui-boite.inconnu { max-width: 10em; text-align: right; }
+}

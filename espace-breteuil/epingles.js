@@ -151,5 +151,5 @@
     return zone;
   }
 
-  window.EBEpingles = { section: section, ajouter: ajouter, lire: lire, urlBoite: urlBoite, chargerBoites: chargerBoites };
+  window.EBEpingles = { section: section, ajouter: ajouter, lire: lire, urlBoite: urlBoite, chargerBoites: chargerBoites, ouvrir: ouvrir };
 })();
