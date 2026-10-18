@@ -133,7 +133,7 @@
         h("div", { class: "tete-projet" }, h("h3", null, p.titre), h("span", { class: "pastille-statut " + c }, p.statut)),
         p.resume ? h("p", null, p.resume) : null,
         p.prochaineEtape ? h("p", { class: "prochaine-etape" }, h("b", null, "Prochaine étape : "), p.prochaineEtape) : null,
-        docs.length ? h("ul", { class: "docs-frise" }, docs.map(function (x) {
+        docs.length ? h("ul", { class: "docs-projet" }, docs.map(function (x) {
           return h("li", null, h("span", { class: "nom-doc" }, emoji("📄"), h("span", null, x.titre)),
             x.url ? h("a", lienPdf(x.url, { class: "btn petit", "aria-label": "Ouvrir « " + x.titre + " » (nouvel onglet)" }), icone("ouvrir"), "Ouvrir")
               : h("span", { class: "a-venir" }, "document à venir"));

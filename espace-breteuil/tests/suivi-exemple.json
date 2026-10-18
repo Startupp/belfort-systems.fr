@@ -20,5 +20,12 @@
     { "fichier": "Memo Messagerie.pdf", "titre": "Mémo messagerie (1 page)", "pour": "tous" },
     { "fichier": "Plan de bascule.pdf", "titre": "Plan de bascule et coûts", "pour": "gestion" },
     { "fichier": "Devis matériel.pdf", "titre": "Devis postes et sauvegarde", "pour": "gestion" }
+  ],
+  "projets": [
+    { "titre": "Archivage des anciens messages", "statut": "Terminé", "resume": "Les messages de plus de cinq ans ont été rangés à part. Données entièrement fictives." },
+    { "titre": "Renouvellement d'un poste", "statut": "Proposition envoyée", "resume": "Un poste de l'accueil à remplacer ; la préparation est faite sur place.",
+      "prochaineEtape": "Choisir le modèle dans la proposition.", "documents": ["Plan de bascule.pdf", "Devis matériel.pdf"] },
+    { "titre": "Sauvegarde sur place", "statut": "à l'étude", "resume": "Une copie automatique chaque nuit, gardée dans les murs. <b>reste du texte</b>",
+      "prochaineEtape": "Confirmer le besoin, puis devis." }
   ]
 }

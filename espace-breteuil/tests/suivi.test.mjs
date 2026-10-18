@@ -25,6 +25,7 @@ test("validation : schéma attendu, entrées invalides ignorées une à une", ()
   assert.deepEqual(r.donnees.prestataire, { nom: "Jean Exemple — Atelier Fictif", telephone: "01 23 45 67 89", mail: "jean@exemple.test" });
   assert.equal(r.donnees.miseEnPlace.length, 3);
   assert.equal(r.donnees.guides.length, 4);
+  assert.equal(r.donnees.projets.length, 3);
   assert.equal(r.donnees.misAJour, "2026-10-12");
 });
 
@@ -157,6 +158,62 @@ test("PDF non décrits : 01–09 → pour tous, 10 et plus ou sans numéro → g
   assert.equal(P.pourDuNumero("10 - x.pdf"), "gestion");
   assert.equal(P.pourDuNumero("00 - x.pdf"), "gestion");
   assert.equal(P.pourDuNumero("x.pdf"), "gestion");
+});
+
+test("projets à venir : validation, longueurs, statut inconnu → « À confirmer »", () => {
+  const d = P.valider(EXEMPLE).donnees;
+  assert.equal(d.projets.length, 3);
+  assert.equal(P.valider({}).donnees.projets, null, "clé absente → null (section masquée)");
+  assert.deepEqual(P.valider({ projets: [] }).donnees.projets, [], "liste vide → section affichée, vide");
+  const pasTableau = P.valider({ projets: "texte" });
+  assert.equal(pasTableau.donnees.projets, null);
+  assert.equal(pasTableau.ignores, 1);
+  const long = "x".repeat(10000);
+  const r = P.valider({ projets: [
+    { titre: long, statut: "Proposition envoyée", resume: long, prochaineEtape: long, documents: ["../secret.pdf", "a/b.pdf", 3, "ok.pdf"] },
+    { titre: "", statut: "En cours" }, "texte", { resume: "sans titre" },
+    { titre: "Statut absent" }, { titre: "Statut inconnu", statut: "Bientôt" }, { titre: "Pas une chaîne", statut: 42 },
+    { titre: "Casse et accents", statut: "en COURS" }, { titre: "Sans accent", statut: "Termine" }, { titre: "Envoyée", statut: "proposition envoyee" },
+  ] });
+  const l = r.donnees.projets;
+  assert.equal(l.length, 7);
+  assert.ok(l[0].titre.length <= P.MAX.titre && l[0].resume.length <= P.MAX.resume && l[0].prochaineEtape.length <= P.MAX.point);
+  assert.deepEqual(l[0].documents, ["ok.pdf"], "pas de chemin, pas de « .. »");
+  assert.ok(r.ignores >= 6, "3 projets + 3 documents ignorés");
+  const statuts = Object.fromEntries(l.map((p) => [p.titre, p.statut]));
+  assert.equal(statuts["Statut absent"], "À confirmer");
+  assert.equal(statuts["Statut inconnu"], "À confirmer");
+  assert.equal(statuts["Pas une chaîne"], "À confirmer");
+  assert.equal(statuts["Casse et accents"], "En cours");
+  assert.equal(statuts["Sans accent"], "Terminé");
+  assert.equal(statuts["Envoyée"], "Proposition envoyée");
+  assert.equal(l.find((p) => p.titre === "Statut absent").prochaineEtape, "", "prochaine étape facultative");
+  assert.deepEqual(l.find((p) => p.titre === "Statut absent").documents, [], "documents facultatifs");
+  assert.equal(P.statut("<b>En cours</b>"), "À confirmer");
+  const trop = P.valider({ projets: Array.from({ length: 80 }, (_, i) => ({ titre: "p" + i })) });
+  assert.equal(trop.donnees.projets.length, P.MAX.projets);
+});
+
+test("projets à venir : ordre du fichier, « Terminé » en bas", () => {
+  assert.deepEqual(P.valider(EXEMPLE).donnees.projets.map((p) => [p.titre, p.statut]), [
+    ["Renouvellement d'un poste", "Proposition envoyée"], ["Sauvegarde sur place", "À confirmer"], ["Archivage des anciens messages", "Terminé"]]);
+  const l = P.valider({ projets: [{ titre: "T1", statut: "Terminé" }, { titre: "A", statut: "En cours" }, { titre: "T2", statut: "Terminé" },
+    { titre: "B", statut: "À confirmer" }, { titre: "C", statut: "Proposition envoyée" }] }).donnees.projets;
+  assert.deepEqual(l.map((p) => p.titre), ["A", "B", "C", "T1", "T2"], "tri stable : les terminés gardent leur ordre");
+});
+
+test("projets à venir : documents reliés comme l'historique (numéro en tête, puis nom normalisé)", () => {
+  const d = P.valider(EXEMPLE).donnees;
+  const docs = P.documentsDe(d.projets[0], d, FICHIERS);
+  assert.deepEqual(docs, [{ nom: "Plan de bascule.pdf", titre: "Plan de bascule et coûts", url: "https://exemple.sharepoint.com/g3.pdf" },
+    { nom: "Devis matériel.pdf", titre: "Devis postes et sauvegarde", url: "" }], "nom normalisé ; absent → « document à venir »");
+  const fichiers = [{ name: "21 - Proposition renommée.pdf", webUrl: "https://exemple.sharepoint.com/p21.pdf" },
+    { name: "Mémo Réseau.PDF", webUrl: "https://exemple.sharepoint.com/memo.pdf" }];
+  const v = P.valider({ projets: [{ titre: "P", statut: "Proposition envoyée", documents: ["21 - Proposition postes (exemple).pdf", "memo reseau.pdf", "Absent.pdf"] }] }).donnees;
+  const r = P.documentsDe(v.projets[0], v, fichiers);
+  assert.deepEqual(r.map((x) => x.url), ["https://exemple.sharepoint.com/p21.pdf", "https://exemple.sharepoint.com/memo.pdf", ""], "numéro en tête, puis sans casse ni accents");
+  assert.equal(r[0].titre, "Proposition renommée", "PDF renommé : titre tiré du nom réel");
+  assert.deepEqual(P.documentsDe(v.projets[0], v, [{ name: "21 - x.pdf", webUrl: "javascript:alert(1)" }]).map((x) => x.url), ["", "", ""], "https seulement");
 });
 
 test("petits outils : taille, lien tel:", () => {
