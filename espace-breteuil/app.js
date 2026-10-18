@@ -803,7 +803,9 @@
   function puceDroit(emo, titre, phrase) {
     return h("li", { class: "droit" }, emoji(emo), h("span", null, h("b", null, titre), h("small", null, phrase)));
   }
-  function ecranMoi(app) {
+  function ecranMoi(app, chemin) {
+    // v5.2 : Moi → Guides (#/moi/guides), pour tout le monde.
+    if (chemin && chemin[1] === "guides" && window.EBSuiviEcrans) { window.EBSuiviEcrans.guides(app); return; }
     var g = G(), c = (g && g.compte()) || {}, A = window.EBAcces, r = resultat();
     var me = A && A.me();
     app.appendChild(barre("Moi", null));
@@ -839,6 +841,7 @@
     if (liens.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mes outils Microsoft"),
       tuiles(liens.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; }))));
     app.appendChild(h("div", { class: "actions-liste" },
+      window.EBSuiviEcrans ? action("#/moi/guides", "📘", "Guides", "Guides PDF et pas-à-pas pour vous") : null,
       action("#/reglages", "⚙️", "Réglages", "Texte, couleurs, planning, démos, détails techniques"),
       reglages.demos ? action("#/demos", "🧪", "Démos", "Écrans d'essai, données fictives") : null,
       estInstallee() ? null : action("#/installer", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil"),
@@ -870,6 +873,7 @@
     app.appendChild(barre(o ? o.nom : "Gérer", null));
     if (!r) { app.appendChild(squelette(4, "tuiles")); return; }
     var sec = r.sections, fiches = donnees.fiches || {};
+    if (window.EBSuiviEcrans && window.EBProfil.routePermise("suivi", r)) app.appendChild(h("div", { class: "actions-liste tete-suivi" }, window.EBSuiviEcrans.tuile()));
     var lienFin = function (titre) { var t = ((fiches.finance || {}).tuiles || []).filter(function (x) { return x.titre === titre; })[0]; return t && t.url; };
     if (sec.indexOf("deleguer") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Administration"),
       tuilesTrois([
@@ -1078,7 +1082,7 @@
     reglages: ecranReglages, installer: ecranInstaller, guides: ecranGuides, details: ecranDetails,
   };
   /* Anciennes adresses (v2, v3) → leur seul endroit en v4. */
-  var ALIAS = { "": "planning", accueil: "planning", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "fichiers", dossiers: "fichiers", plus: "moi", verifier: "details" };
+  var ALIAS = { "": "planning", accueil: "planning", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "fichiers", dossiers: "fichiers", plus: "moi", verifier: "details", pilotage: "suivi" }; // v5.2 : #/pilotage → #/suivi
   function ongletsActuels() { var r = resultat(); return r ? r.onglets : window.EBProfil.onglets([]); }
   function ongletDe(ecran) {
     if (ECRANS_DEMO.indexOf(ecran) > -1) return "moi";
@@ -1185,7 +1189,7 @@
   function droitsChanges() {
     if (!connecte()) return;
     var e = cheminActuel()[0] || "";
-    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "site", "liens"];
+    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "site", "liens", "suivi"];
     if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
     else rendreOnglets(ongletDe(e), false);
   }

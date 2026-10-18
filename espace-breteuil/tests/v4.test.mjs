@@ -28,4 +28,4 @@ test("tous les scripts de index.html sont dans la coquille hors ligne (sw.js)", 
   assert.ok(sw.includes('"./boites-partagees.json"'));
 });
 
-test("version 5.x (5.1 : section Site web)", () => { assert.match(lire("version.js"), /EB_VERSION = "5\.\d+\.\d+"/); });
+test("version 5.x (5.2 : Pilotage)", () => { assert.match(lire("version.js"), /EB_VERSION = "5\.\d+\.\d+"/); });

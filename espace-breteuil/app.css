@@ -1241,6 +1241,69 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .btn.petit:not(.secondaire) { color: var(--sur-primaire); } /* « .petit » (texte gris) ne doit pas griser un bouton plein */
 
 /* ================================================================ */
+/* v5.2 : Suivi informatique (#/suivi) et Moi → Guides (#/moi/guides)       */
+/* Frise verticale : ligne dorée, points, cartes en verre (style v5). */
+/* ================================================================ */
+.tete-suivi { margin: 4px 0 6px; grid-template-columns: minmax(0, 1fr) !important; }
+.carte-suivi { min-height: 72px; padding: 12px 16px; border: 1px solid color-mix(in srgb, var(--or) 55%, var(--verre-trait));
+  background-image: linear-gradient(120deg, color-mix(in srgb, var(--exemple-fond) 75%, transparent), transparent 70%); }
+.carte-suivi .eb-anneau { color: var(--or-texte); }
+.carte-suivi b { font-family: var(--serif); font-size: 1.08rem; font-weight: 600; }
+.zone-suivi .aide-ecran { margin-bottom: 10px; }
+.maj-suivi { display: block; margin-top: 4px; font-size: .82rem; color: var(--texte-3); }
+.sommaire-suivi { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; }
+.section-suivi { scroll-margin-top: 76px; }
+.section-suivi > h2:focus { outline: none; }
+.zone-suivi .rien, .section-suivi .rien { color: var(--texte-3); margin: 4px 0; }
+
+.frise-suivi { list-style: none; margin: 0; padding: 0 0 0 26px; position: relative; display: grid; gap: 14px; }
+.frise-suivi::before { content: ""; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 2px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--or), var(--an-5) 70%, transparent); transform-origin: top; animation: eb-trace 1.6s cubic-bezier(.2,.7,.2,1) .2s both; }
+.etape-frise { position: relative; }
+.etape-frise .point { position: absolute; left: -25px; top: 20px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--or); }
+.etape-frise:first-child .point { border-color: var(--primaire); animation: eb-onde 2.6s ease-out infinite; }
+.carte-frise { padding: 14px 16px; border-radius: 20px; background: var(--verre); border: 1px solid var(--verre-trait); box-shadow: var(--ombre-verre);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.carte-frise time { display: block; font-size: .78rem; font-weight: 700; letter-spacing: .04em; color: var(--or-texte); margin: 0 0 4px; }
+.carte-frise h3 { margin: 0 0 4px; font-family: var(--serif); font-weight: 600; font-size: 1.12rem; overflow-wrap: anywhere; }
+.carte-frise p { margin: 0; color: var(--texte-2); font-size: .92rem; line-height: 1.45; overflow-wrap: anywhere; }
+.docs-frise { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px dashed var(--trait); display: grid; gap: 8px; }
+.docs-frise li { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.docs-frise .nom-doc { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 180px; font-size: .9rem; font-weight: 600; overflow-wrap: anywhere; }
+.docs-frise .nom-doc .emoji { flex: none; }
+.a-venir { color: var(--texte-3); font-size: .85rem; font-style: italic; }
+
+.grille-themes { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px) { .grille-themes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .grille-themes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.carte-theme { padding: 14px 16px; border-radius: 20px; background: var(--verre); border: 1px solid var(--verre-trait); box-shadow: var(--ombre-verre);
+  border-top: 4px solid var(--or); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.carte-theme h3 { margin: 0 0 6px; font-family: var(--serif); font-weight: 600; font-size: 1.08rem; }
+.carte-theme ul { margin: 0; padding-left: 18px; color: var(--texte-2); font-size: .92rem; line-height: 1.45; display: grid; gap: 4px; }
+.carte-theme li::marker { color: var(--or); }
+
+.liste-docs { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .liste-docs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.doc { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; border-radius: 16px; color: var(--texte); text-decoration: none;
+  background: var(--verre); border: 1px solid var(--verre-trait); box-shadow: var(--ombre-verre); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+a.doc:hover { border-color: var(--primaire); }
+.doc > .emoji { font-size: 1.3rem; flex: none; }
+.doc > span:not(.emoji) { flex: 1; min-width: 0; }
+.doc b { display: block; font-size: .95rem; overflow-wrap: anywhere; }
+.doc small { display: block; color: var(--texte-2); font-size: .8rem; }
+.doc > svg.ic { color: var(--primaire); flex: none; }
+.doc.a-venir { opacity: .65; box-shadow: none; border-style: dashed; font-style: normal; }
+.doc.a-venir small { font-style: italic; }
+
+.carte-contact { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: 20px; background: var(--verre); border: 1px solid var(--verre-trait);
+  box-shadow: var(--ombre-verre); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.carte-contact > div { min-width: 0; flex: 1; }
+.carte-contact b { display: block; font-family: var(--serif); font-weight: 600; font-size: 1.1rem; margin: 2px 0 10px; overflow-wrap: anywhere; }
+.carte-contact .boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.carte-contact .btn { max-width: 100%; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .frise-suivi::before, .etape-frise .point, .frise-suivi > .etape-frise { animation: none !important; } }
+
+/* ================================================================ */
 /* Palette « Bleu Breteuil » (bleu nuit profond + doré) — v5.1.3     */
 /* Choisie dans Moi → Réglages → Couleurs ; posée sur <html> par     */
 /* data-palette="bleu". Ne redéfinit QUE des variables : tous les    */
