@@ -1006,3 +1006,23 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .premier-date::before, .premier-date::after { content: ""; width: 22px; height: 1px; background: var(--or); }
 .premier-date .reflet { --reflet-base: var(--or-texte); }
 .premier-pied { margin: 0; text-align: center; font-size: .72rem; color: var(--texte-3); }
+
+/* Apparitions échelonnées à l'ouverture d'un écran (pas lors d'un simple rafraîchissement) */
+.ecran.ouverture { animation: none; }
+.ecran:not(.sans-anim) > :not(.barre), .ecran:not(.sans-anim) .premier > *, .ecran:not(.sans-anim) .premier-tete > *,
+.ecran:not(.sans-anim) .calendrier-seul > * { animation: eb-entre .8s cubic-bezier(.2,.7,.2,1) both; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(2) { animation-delay: .05s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(3) { animation-delay: .14s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(4) { animation-delay: .23s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(5) { animation-delay: .32s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(6) { animation-delay: .41s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(n+7) { animation-delay: .50s; }
+.ecran:not(.sans-anim) .premier-tete > .premier-anneau { animation: eb-entre .8s cubic-bezier(.2,.7,.2,1) both, eb-tourne 14s linear infinite; }
+
+/* Révélation pendant la lecture (au défilement), là où le navigateur sait le faire */
+@supports (animation-timeline: view()) {
+  .evts > .evt, .actions-liste > .action, .liste-personnes > *, .liste-acces > *, .rdv-jour > .rdv, .ligne-temps > .rdv-temps {
+    animation: eb-revele linear both; animation-timeline: view(); animation-range: entry 0% cover 22%; }
+  .zone-planning.defile .evt { animation: none; }
+  @keyframes eb-revele { from { opacity: 0; transform: translateY(22px) scale(.98); } to { opacity: 1; transform: none; } }
+}

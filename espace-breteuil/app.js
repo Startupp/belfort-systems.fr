@@ -1043,7 +1043,7 @@
     if (!connecte()) {
       // Pas connecté : 2 boutons, ou le calendrier seul. Rien d'autre (ni onglets, ni démo).
       cleEcran = reglages.mode === "calendrier" ? "~calendrier" : "~premier";
-      vue = h("div", { class: "ecran " + (cleEcran === dernierEcran || dernierEcran === null ? "sans-anim" : "") });
+      vue = h("div", { class: "ecran " + (cleEcran === dernierEcran ? "sans-anim" : dernierEcran === null ? "ouverture" : "") });
       rendreOnglets("", true);
       app.classList.add("plein-ecran");
       if (reglages.mode === "calendrier") ecranCalendrierSeul(vue); else ecranPremier(vue);
@@ -1065,7 +1065,7 @@
       cleEcran = chemin.join("/");
       onglet = ongletDe(ecran); niveau = niveauDe(chemin);
       var memeEcran = cleEcran === dernierEcran;
-      var anim = memeEcran || dernierEcran === null ? "sans-anim"
+      var anim = memeEcran ? "sans-anim" : dernierEcran === null ? "ouverture"
         : onglet !== dernierOnglet ? "" : niveau > dernierNiveau ? "avant" : niveau < dernierNiveau ? "arriere" : "";
       vue = h("div", { class: "ecran " + anim });
       app.classList.remove("plein-ecran");
