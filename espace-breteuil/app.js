@@ -800,7 +800,9 @@
   function puceDroit(emo, titre, phrase) {
     return h("li", { class: "droit" }, emoji(emo), h("span", null, h("b", null, titre), h("small", null, phrase)));
   }
-  function ecranMoi(app) {
+  function ecranMoi(app, chemin) {
+    // v5.2 : Moi → Guides (#/moi/guides), pour tout le monde.
+    if (chemin && chemin[1] === "guides" && window.EBPilotageEcrans) { window.EBPilotageEcrans.guides(app); return; }
     var g = G(), c = (g && g.compte()) || {}, A = window.EBAcces, r = resultat();
     var me = A && A.me();
     app.appendChild(barre("Moi", null));
@@ -831,6 +833,7 @@
     if (liens.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mes outils Microsoft"),
       tuiles(liens.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; }))));
     app.appendChild(h("div", { class: "actions-liste" },
+      window.EBPilotageEcrans ? action("#/moi/guides", "📘", "Guides", "Guides PDF et pas-à-pas pour vous") : null,
       action("#/reglages", "⚙️", "Réglages", "Texte, couleurs, planning, démos, détails techniques"),
       reglages.demos ? action("#/demos", "🧪", "Démos", "Écrans d'essai, données fictives") : null,
       estInstallee() ? null : action("#/installer", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil"),
@@ -862,6 +865,7 @@
     app.appendChild(barre(o ? o.nom : "Gérer", null));
     if (!r) { app.appendChild(squelette(4, "tuiles")); return; }
     var sec = r.sections, fiches = donnees.fiches || {};
+    if (window.EBPilotageEcrans && window.EBProfil.routePermise("pilotage", r)) app.appendChild(h("div", { class: "actions-liste tete-pilotage" }, window.EBPilotageEcrans.tuile()));
     var lienFin = function (titre) { var t = ((fiches.finance || {}).tuiles || []).filter(function (x) { return x.titre === titre; })[0]; return t && t.url; };
     if (sec.indexOf("deleguer") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Administration"),
       tuilesTrois([
@@ -1176,7 +1180,7 @@
   function droitsChanges() {
     if (!connecte()) return;
     var e = cheminActuel()[0] || "";
-    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "site", "liens"];
+    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "site", "liens", "pilotage"];
     if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
     else rendreOnglets(ongletDe(e), false);
   }
