@@ -941,3 +941,57 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 :nth-child(5n+3) > :is(.ico, .pastille, .emoji, .anneau), .anneau.d3 { animation-delay: -4s; }
 :nth-child(5n+4) > :is(.ico, .pastille, .emoji, .anneau), .anneau.d4 { animation-delay: -6s; }
 :nth-child(5n+5) > :is(.ico, .pastille, .emoji, .anneau), .anneau.d5 { animation-delay: -8s; }
+
+/* Cartes en verre crème */
+.t, .tuile, .boite, .action, .evt, .epingle, .fichier, button.fichier, a.fichier, .carte-personne, .liste-fiches a, .carte-acces, .carte-profil,
+.carte-role, .zone-schema, .droit, .carte-aujourdhui, .carte-jour, .ligne-journal, .ligne-rdv, .etapes li, .gros-bouton, .mois .case {
+  background-color: var(--verre); border-color: var(--verre-trait); box-shadow: var(--ombre-verre);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.t { border-radius: 16px; }
+.tuile, .boite, .action, .carte-profil, .carte-role, .zone-schema, .carte-aujourdhui, .carte-jour { border-radius: 20px; }
+.epingle, .fichier, button.fichier, a.fichier, .carte-personne, .liste-fiches a, .carte-acces, .droit, .ligne-journal, .evt { border-radius: 16px; }
+@media (hover: hover) {
+  .t:hover, .tuile:hover, .action:hover, .epingle:hover, button.fichier:hover, .carte-personne:hover, .liste-fiches a:hover, .gros-bouton:hover {
+    transform: translateY(-2px); box-shadow: var(--ombre-verre-forte); }
+}
+.t, .tuile, .action, .epingle, button.fichier, .carte-personne, .liste-fiches a, .gros-bouton {
+  transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s, background-color 90ms; }
+.section > h2, .titre-section, .titre-groupe { color: var(--or-texte); letter-spacing: .12em; }
+.epingle { border-bottom-color: var(--verre-trait); }
+
+/* Gros boutons du premier écran : carte en verre et bouton praline avec lueur qui glisse */
+.gros-bouton { border: 1px solid var(--verre-trait); border-radius: 22px; }
+.gros-bouton .anneau { --fi: var(--surface); }
+.gros-bouton .chevron { margin-left: auto; color: var(--or); font-size: 1.2rem; }
+.gros-bouton > span:not(.anneau) { flex: 1; min-width: 0; }
+.gros-bouton.principal { position: relative; overflow: hidden; border: 0; color: var(--praline-texte);
+  background: linear-gradient(135deg, var(--praline-1), var(--praline-2)); box-shadow: 0 14px 34px -14px rgba(108,56,50,.65); }
+.gros-bouton.principal::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,240,215,.22) 50%, transparent 70%);
+  transform: translateX(-120%); animation: eb-lueur 6s ease-in-out infinite 1.5s; }
+.gros-bouton.principal > * { position: relative; z-index: 1; }
+.gros-bouton.principal small { color: var(--praline-doux); opacity: 1; }
+.gros-bouton.principal .anneau { --fi: rgba(255,255,255,.12); color: #FFF4E4;
+  background: linear-gradient(var(--fi), var(--fi)) padding-box,
+    conic-gradient(from var(--ang), rgba(255,255,255,.25), #E2BE6A, rgba(255,255,255,.5), #E7B8A8, rgba(255,255,255,.25)) border-box; animation-delay: -4s; }
+.gros-bouton.principal .anneau svg.ic, .gros-bouton.principal .chevron { color: #E2BE6A; }
+.gros-bouton.principal .anneau svg.ic { color: #FFF4E4; }
+.gros-bouton.principal:hover { background: linear-gradient(135deg, var(--praline-1), var(--praline-2)); }
+.gros-bouton.principal:active { background: var(--praline-2); }
+
+/* Barre d'onglets flottante en verre (téléphone), soulignement doré sous l'actif */
+@media (max-width: 899px) {
+  .onglets { left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); padding: 6px; border-radius: 26px;
+    background: var(--verre-fort); border: 1px solid var(--verre-trait); box-shadow: 0 16px 40px -16px rgba(91,56,51,.35);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+  .onglets a { border-radius: 20px; min-height: 52px; position: relative; }
+  .onglets a.actif { background: var(--onglet-actif); color: var(--primaire-fort); box-shadow: none; }
+  :root[data-theme="sombre"] .onglets a.actif { color: var(--primaire); }
+  .onglets a.actif::after { content: ""; position: absolute; bottom: 4px; left: 50%; width: 18px; margin-left: -9px; height: 2px; border-radius: 2px; background: var(--or); }
+  body.avec-onglets { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+  .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 899px) and (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .onglets a.actif { color: var(--primaire); } }
+@media (min-width: 900px) {
+  .onglets a.actif { box-shadow: inset 0 -2px 0 var(--or); }
+}
