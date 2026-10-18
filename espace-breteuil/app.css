@@ -913,3 +913,31 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .reflet { background: linear-gradient(100deg, var(--reflet-base) 42%, var(--reflet-or) 50%, var(--reflet-base) 58%); background-size: 300% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; animation: eb-reflet-or 9s ease-in-out infinite; }
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) { .reflet { color: var(--texte); -webkit-text-fill-color: currentColor; background: none; } }
+
+/* Anneaux d'icônes : bordure dont la couleur tourne (crème → doré → praline), décalée selon la position.
+ * Une seule boîte : fond intérieur (--fi) en padding-box, dégradé conique en border-box. */
+.t .ico.c-praline, .epingle .ico.c-praline { --fi: var(--c-praline-f); }
+.t .ico.c-dore, .epingle .ico.c-dore { --fi: var(--c-dore-f); }
+.t .ico.c-sauge { --fi: var(--c-sauge-f); }
+.t .ico.c-ciel, .epingle .ico.c-ciel { --fi: var(--c-ciel-f); }
+.t .ico.c-lavande { --fi: var(--c-lavande-f); }
+.t .ico.c-corail { --fi: var(--c-corail-f); }
+.anneau, .t .ico.ico:not(.ronde), .tuile .pastille.pastille, .epingle .ico.ico, .action > .emoji, .droit > .emoji, .fichier > .emoji,
+.choix > .emoji, .carte-role .tete > .emoji, .verrou .pastille.pastille {
+  border: 1.6px solid transparent;
+  background: linear-gradient(var(--fi), var(--fi)) padding-box,
+    conic-gradient(from var(--ang), var(--an-1), var(--an-2), var(--an-3), var(--an-4), var(--an-5), var(--an-1)) border-box;
+  animation: eb-tourne 10s linear infinite; box-shadow: none; }
+.anneau { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 14px; color: var(--primaire); }
+.anneau.rond { border-radius: 50%; }
+.anneau.lent, .verrou .pastille.pastille { animation-duration: 14s; }
+.anneau svg.ic { font-size: 1.3rem; }
+.action > .emoji, .droit > .emoji, .fichier > .emoji, .choix > .emoji, .carte-role .tete > .emoji {
+  width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex: none; font-size: 1.2rem; text-align: center; }
+.tuile .pastille.pastille { --fi: var(--primaire-pale); }
+.verrou .pastille.pastille { --fi: var(--primaire-pale); border-width: 2px; }
+/* Décalages d2…d5 selon la position dans la liste */
+:nth-child(5n+2) > :is(.ico, .pastille, .emoji, .anneau), .anneau.d2 { animation-delay: -2s; }
+:nth-child(5n+3) > :is(.ico, .pastille, .emoji, .anneau), .anneau.d3 { animation-delay: -4s; }
+:nth-child(5n+4) > :is(.ico, .pastille, .emoji, .anneau), .anneau.d4 { animation-delay: -6s; }
+:nth-child(5n+5) > :is(.ico, .pastille, .emoji, .anneau), .anneau.d5 { animation-delay: -8s; }
