@@ -1519,3 +1519,84 @@ a.doc:hover { border-color: var(--primaire); }
 .carte-projet > p.prochaine-etape { margin-top: 10px; padding: 8px 12px; border-radius: var(--rayon-petit); background: var(--surface-2);
   border-left: 3px solid var(--or); color: var(--texte); }
 .prochaine-etape b { font-weight: 700; }
+/* v5.4 — Aide et demandes : bouton « ? », panneau, fil, écrans      */
+/* Variables du thème uniquement : crème et Bleu Breteuil, clair et  */
+/* sombre suivent d'eux-mêmes.                                       */
+/* ================================================================ */
+.aide-fab { position: fixed; z-index: 35; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%;
+  border: 2px solid var(--or); background: var(--primaire); color: var(--sur-primaire); box-shadow: var(--ombre-forte); cursor: pointer;
+  display: grid; place-items: center; padding: 0; transition: transform 120ms, background-color 120ms; }
+.aide-fab:hover { background: var(--primaire-fort); }
+.aide-fab:active { transform: scale(.94); }
+.aide-fab:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.aide-fab-signe { font-family: var(--serif); font-size: 1.75rem; font-weight: 600; line-height: 1; }
+body.avec-onglets .aide-fab { bottom: calc(80px + env(safe-area-inset-bottom)); }
+@media (min-width: 900px) { body.avec-onglets .aide-fab, .aide-fab { bottom: 24px; right: 24px; } }
+.aide-pastille { position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--danger); color: var(--fond);
+  border: 2px solid var(--fond); font-size: .75rem; font-weight: 800; line-height: 18px; text-align: center; }
+.aide-pastille[hidden], .aide-compte[hidden] { display: none; }
+/* Le bouton ne doit rien masquer : la fin de chaque écran défile au-dessus de lui. */
+#app { padding-bottom: 72px; }
+@media print { .aide-fab { display: none; } }
+
+dialog.aide-panneau { width: min(600px, calc(100vw - 24px)); }
+.aide-tete { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 12px 12px 18px;
+  background: var(--surface); border-bottom: 1px solid var(--trait); }
+.aide-tete h2 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.15rem; }
+.aide-fermer { width: 48px; height: 48px; flex: none; }
+.aide-corps { padding-top: 14px; }
+.aide-corps.centre { text-align: center; }
+.aide-compte { display: inline-grid; place-items: center; min-width: 22px; height: 22px; margin-left: 6px; padding: 0 6px; border-radius: 11px; background: var(--danger); color: var(--fond); font-size: .75rem; font-weight: 800; vertical-align: 1px; }
+.aide-form { display: grid; gap: 12px; }
+.aide-champ { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.aide-champ legend, .aide-form label { font-weight: 700; padding: 0; margin-bottom: 6px; }
+.aide-types { gap: 8px; }
+.aide-type { min-height: 48px; }
+.aide-type[aria-checked="true"] { background: var(--primaire); color: var(--sur-primaire); border-color: var(--primaire); }
+textarea.champ.aide-message { min-height: 140px; padding: 12px 14px; resize: vertical; line-height: 1.45; font: inherit; }
+.aide-compteur { color: var(--texte-2); justify-self: end; }
+.aide-compteur.presque { color: var(--danger); font-weight: 700; }
+.aide-form .erreur:empty { display: none; }
+.aide-contexte { padding: 10px 14px; border-radius: var(--rayon-petit); background: var(--surface-2); border: 1px dashed var(--trait-fort); font-size: .88rem; }
+.aide-contexte dl { margin: 6px 0 0; display: grid; gap: 2px; }
+.aide-contexte dl div { display: flex; gap: 8px; }
+.aide-contexte dt { flex: none; width: 5.5em; color: var(--texte-2); }
+.aide-contexte dd { margin: 0; overflow-wrap: anywhere; }
+.aide-note { margin: 0; color: var(--texte-2); font-size: .9rem; }
+.aide-erreur { display: grid; gap: 10px; padding: 12px 14px; border-radius: var(--rayon-petit); background: var(--exemple-fond); color: var(--exemple-texte); }
+.aide-erreur p { margin: 0; font-weight: 600; }
+.aide-ok { display: grid; place-items: center; width: 64px; height: 64px; margin: 4px auto 0; border-radius: 50%; background: color-mix(in srgb, var(--succes) 14%, var(--surface)); color: var(--succes); font-size: 2rem; }
+.aide-retour { justify-self: start; min-height: 44px; }
+
+.aide-liste { display: grid; gap: 8px; }
+.aide-carte { display: grid; gap: 4px; width: 100%; padding: 12px 14px; border-radius: var(--rayon-petit); border: 1px solid var(--trait); background: var(--surface);
+  color: var(--texte); text-decoration: none; text-align: left; cursor: pointer; box-shadow: var(--ombre); font: inherit; }
+.aide-carte:hover { border-color: var(--primaire); }
+.aide-carte.nonlu { border-left: 5px solid var(--danger); }
+.aide-carte-tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.aide-carte-tete b { flex: 1 1 auto; }
+.aide-carte-qui { font-size: .88rem; color: var(--texte-2); overflow-wrap: anywhere; }
+.aide-carte-extrait { color: var(--texte-2); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.aide-carte-pied { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: var(--texte-3); }
+.aide-nonlu { font-size: .8rem; font-weight: 800; color: var(--danger); }
+.aide-statut { display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 99px; font-size: .8rem; font-weight: 700; white-space: nowrap; }
+.aide-statut.nouvelle { background: var(--info-fond); color: var(--info-texte); }
+.aide-statut.repondue { background: var(--exemple-fond); color: var(--exemple-texte); }
+.aide-statut.resolue { background: color-mix(in srgb, var(--succes) 14%, var(--surface)); color: var(--succes); }
+
+.aide-fil { display: grid; gap: 12px; }
+.aide-fil-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.aide-fil-tete h3 { margin: 0; font-size: 1.1rem; display: flex; gap: 8px; align-items: center; }
+.aide-messages { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.aide-bulle { display: grid; gap: 4px; max-width: 88%; padding: 10px 14px; border-radius: 16px; border: 1px solid var(--trait); }
+.aide-bulle.client { justify-self: end; background: var(--primaire-pale); border-bottom-right-radius: 4px; }
+.aide-bulle.damien { justify-self: start; background: var(--surface-2); border-bottom-left-radius: 4px; border-left: 4px solid var(--or); }
+.aide-bulle-qui { font-size: .8rem; color: var(--texte-2); }
+.aide-bulle-texte { white-space: pre-wrap; overflow-wrap: anywhere; }
+.aide-actions { display: grid; gap: 8px; margin-bottom: 14px; }
+@media (min-width: 900px) { .aide-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.aide-filtres { display: grid; gap: 8px; margin-bottom: 14px; }
+.aide-filtres-l2 { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 420px) { .aide-filtres-l2 { grid-template-columns: 1fr; } }
+.aide-lignes-moi { display: contents; }
+.page > .ecran > .aide-fil, .page > .ecran > .aide-liste, .ecran > .aide-fil, .ecran > .aide-liste { max-width: 760px; }

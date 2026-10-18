@@ -199,6 +199,30 @@
       });
   }
 
+  /**
+   * v5.4 — Jeton d'IDENTITÉ (ID token) pour le Worker belfort-api (Aide et demandes) : prouve qui
+   * est connecté, sans donner accès à Graph. acquireTokenSilent avec les scopes existants ; si l'ID
+   * token en cache expire dans moins de 5 min, renouvellement forcé (toujours silencieux).
+   */
+  function expDe(t) {
+    try {
+      var p = String(t).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      return JSON.parse(atob(p + "===".slice((p.length + 3) % 4))).exp || 0;
+    } catch (e) { return 0; }
+  }
+  function jetonIdentite() {
+    if (etat.maquette) { var em = erreurMaquette("identite"); return em ? Promise.reject(em) : Promise.resolve("maquette-id-token"); }
+    if (!etat.pca || !etat.compte) return Promise.reject(erreur(401, "Vous n'êtes pas connecté."));
+    var demande = { scopes: scopesGraph(), account: etat.compte };
+    return etat.pca.acquireTokenSilent(demande).then(function (r) {
+      if (r && r.idToken && expDe(r.idToken) - Date.now() / 1000 > 300) return r.idToken;
+      return etat.pca.acquireTokenSilent(Object.assign({ forceRefresh: true }, demande)).then(function (r2) {
+        if (!r2 || !r2.idToken) throw erreur(401, "Jeton d'identité indisponible.");
+        return r2.idToken;
+      });
+    });
+  }
+
   /** Permissions réellement accordées dans le jeton (claim « scp »), sans jamais exposer le jeton. */
   /** Décode le claim « scp » d'un jeton (jamais exposé ni gardé). */
   function scpDe(t) {
@@ -396,6 +420,7 @@
     surResultat: function (fn) { ecouteursResultat.push(fn); },
     jeton: function (ressource) { return jeton(ressource, { silencieux: true }).then(function () { return true; }); },
     scopesAccordes: scopesAccordes,
+    jetonIdentite: jetonIdentite,
     config: config,
     graph: graph, graphTout: graphTout, graphPhoto: graphPhoto, sp: sp, televerser: televerser,
     origineSharePoint: origineSharePoint,

@@ -13,7 +13,7 @@ var VERSION = "eb-v" + (self.EB_VERSION || "0");
 var COQUILLE = [
   "./", "./index.html", "./app.css", "./prechargement.js", "./version.js", "./config.js",
   "./ics.js", "./demo.js", "./resume.js", "./droits.js", "./erreurs.js", "./graph.js", "./diagnostic.js", "./diagnostic.css", "./app.js", "./connecte.js",
-  "./cache.js", "./profil.js", "./acces.js", "./deleguer.js", "./siteweb.js", "./siteweb-ecrans.js", "./suivi.js", "./suivi-ecrans.js", "./depot.js", "./depot-ecran.js", "./fichiers.js", "./epingles.js", "./liste-boites.js", "./boites-partagees.json",
+  "./cache.js", "./profil.js", "./acces.js", "./deleguer.js", "./siteweb.js", "./siteweb-ecrans.js", "./suivi.js", "./suivi-ecrans.js", "./depot.js", "./depot-ecran.js", "./aide.js", "./aide-ecrans.js", "./fichiers.js", "./epingles.js", "./liste-boites.js", "./boites-partagees.json",
   "./demos/demos.css", "./demos/donnees.js", "./demos/commun.js", "./demos/roles.js", "./demos/equipe.js",
   "./demos/boites.js", "./demos/finance.js", "./demos/securite.js",
   "./personnes.json", "./fiches.json", "./exemple.ics", "./exemple-accueil.ics", "./manifest.webmanifest",

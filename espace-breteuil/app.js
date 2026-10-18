@@ -842,6 +842,7 @@
       tuiles(liens.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; }))));
     app.appendChild(h("div", { class: "actions-liste" },
       window.EBSuiviEcrans ? action("#/moi/guides", "📘", "Guides", "Guides PDF et pas-à-pas pour vous") : null,
+      window.EBAideEcrans ? window.EBAideEcrans.lignesMoi() : null, // v5.4 : Mes demandes (+ Demandes pour le prestataire)
       action("#/reglages", "⚙️", "Réglages", "Texte, couleurs, planning, démos, détails techniques"),
       reglages.demos ? action("#/demos", "🧪", "Démos", "Écrans d'essai, données fictives") : null,
       estInstallee() ? null : action("#/installer", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil"),

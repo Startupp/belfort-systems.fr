@@ -127,7 +127,7 @@
   /** Onglet (id) qui contient une route. */
   function ongletDe(route, r) {
     var map = { planning: "planning", "": "planning", fichiers: "fichiers", onedrive: "fichiers", dossiers: "fichiers", commun: "fichiers", acces: "fichiers", restreindre: "fichiers", journal: "fichiers",
-      moi: "moi", reglages: "moi", details: "moi", verifier: "moi", installer: "moi", demos: "moi" };
+      moi: "moi", reglages: "moi", details: "moi", verifier: "moi", installer: "moi", demos: "moi", aide: "moi", demandes: "moi" };
     if (map[route] != null) return map[route];
     var ids = (r ? r.onglets : onglets([])).map(function (o) { return o.id; });
     return ids.length === 4 && ids[2] !== "moi" ? ids[2] : "moi";
