@@ -841,3 +841,318 @@ button.fichier:hover { border-color: var(--primaire); }
 .epingle.cible { outline: 2px dashed var(--or); }
 .zone-epingles .petit { margin: 6px 0 0; color: var(--texte-2); font-size: .8rem; }
 
+/* ================================================================ */
+/* v5 : refonte visuelle « verre crème, praline et doré »            */
+/* (maquette validée : anneaux qui tournent, halos, en-tête praline,  */
+/* cartes en verre, apparitions échelonnées). Tout s'arrête avec      */
+/* « réduire les animations ». Couleurs = variables ci-dessous.        */
+/* ================================================================ */
+@property --ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+:root {
+  --verre: rgba(255,253,248,.80);          /* cartes en verre crème */
+  --verre-fort: rgba(255,253,248,.90);
+  --verre-trait: rgba(205,187,166,.55);
+  --ombre-verre: 0 1px 2px rgba(91,56,51,.05), 0 10px 30px -12px rgba(91,56,51,.18);
+  --ombre-verre-forte: 0 2px 4px rgba(91,56,51,.06), 0 18px 40px -14px rgba(91,56,51,.28);
+  --halo-1: rgba(201,160,74,.20); --halo-2: rgba(138,76,69,.13); --halo-3: rgba(231,184,168,.18);
+  --an-1: #E6DACB; --an-2: #C9A04A; --an-3: #F1DFC6; --an-4: #8A4C45; --an-5: #E7B8A8; /* anneaux */
+  --fi: var(--surface);                    /* fond intérieur d'un anneau */
+  --reflet-base: #2A1C19; --reflet-or: #B8903E;
+  --praline-1: #8A4C45; --praline-2: #6C3832; --praline-texte: #FFFFFF; --praline-doux: #F6E1D6;
+  --onglet-actif: linear-gradient(180deg, #F4E3DC, #F0DED3);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) {
+  --verre: rgba(39,27,23,.80); --verre-fort: rgba(39,27,23,.92); --verre-trait: rgba(106,78,69,.65);
+  --ombre-verre: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.55);
+  --ombre-verre-forte: 0 2px 4px rgba(0,0,0,.35), 0 18px 40px -14px rgba(0,0,0,.65);
+  --halo-1: rgba(226,190,106,.10); --halo-2: rgba(231,184,168,.08); --halo-3: rgba(138,76,69,.16);
+  --an-1: #4A3530; --an-2: #E2BE6A; --an-3: #6A4E45; --an-4: #E7B8A8; --an-5: #8A4C45;
+  --reflet-base: #F6ECE1; --reflet-or: #E2BE6A;
+  --praline-1: #7A443D; --praline-2: #5B312C; --praline-texte: #FFFFFF; --praline-doux: #F6E1D6;
+  --onglet-actif: linear-gradient(180deg, #46302A, #3E2A24); } }
+:root[data-theme="sombre"] {
+  --verre: rgba(39,27,23,.80); --verre-fort: rgba(39,27,23,.92); --verre-trait: rgba(106,78,69,.65);
+  --ombre-verre: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.55);
+  --ombre-verre-forte: 0 2px 4px rgba(0,0,0,.35), 0 18px 40px -14px rgba(0,0,0,.65);
+  --halo-1: rgba(226,190,106,.10); --halo-2: rgba(231,184,168,.08); --halo-3: rgba(138,76,69,.16);
+  --an-1: #4A3530; --an-2: #E2BE6A; --an-3: #6A4E45; --an-4: #E7B8A8; --an-5: #8A4C45;
+  --reflet-base: #F6ECE1; --reflet-or: #E2BE6A;
+  --praline-1: #7A443D; --praline-2: #5B312C; --praline-texte: #FFFFFF; --praline-doux: #F6E1D6;
+  --onglet-actif: linear-gradient(180deg, #46302A, #3E2A24); }
+
+@keyframes eb-tourne { to { --ang: 360deg; } }
+@keyframes eb-derive { from { transform: translate3d(-4%,-3%,0) rotate(0deg); } to { transform: translate3d(4%,3%,0) rotate(8deg); } }
+@keyframes eb-filet { from { background-position: 200% 0; } to { background-position: 0 0; } }
+@keyframes eb-respire { 0% { box-shadow: 0 0 0 0 rgba(61,220,151,.55); } 70% { box-shadow: 0 0 0 10px rgba(61,220,151,0); } 100% { box-shadow: 0 0 0 0 rgba(61,220,151,0); } }
+@keyframes eb-reflet-or { 0%, 55% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@keyframes eb-lueur { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
+@keyframes eb-entre { from { opacity: 0; transform: translateY(16px); filter: blur(5px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes eb-trace { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes eb-onde { 0% { box-shadow: 0 0 0 0 rgba(138,76,69,.45); } 70% { box-shadow: 0 0 0 10px rgba(138,76,69,0); } 100% { box-shadow: 0 0 0 0 rgba(138,76,69,0); } }
+
+/* Halos de fond : couche fixe derrière tout, ne capte aucun toucher */
+body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(38% 28% at 22% 18%, var(--halo-1), transparent 70%),
+    radial-gradient(34% 30% at 82% 72%, var(--halo-2), transparent 70%),
+    radial-gradient(30% 22% at 60% 40%, var(--halo-3), transparent 70%);
+  animation: eb-derive 22s ease-in-out infinite alternate; }
+
+/* En-tête praline + filet doré qui coule + titre serif */
+.barre { background: linear-gradient(180deg, color-mix(in srgb, var(--entete) 97%, transparent), color-mix(in srgb, var(--entete) 92%, transparent));
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.barre::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #C9A04A 30%, #F1DFC6 50%, #C9A04A 70%, transparent);
+  background-size: 200% 100%; animation: eb-filet 6s linear infinite; }
+.barre h1 { font-family: var(--serif); font-weight: 600; font-size: 1.3rem; letter-spacing: -.01em; }
+.barre h1 small { font-family: var(--sans); font-weight: 400; letter-spacing: 0; margin-top: 1px; }
+/* Pastille de connexion qui respire (vert seulement) */
+.pastille-etat.vert i { animation: eb-respire 2.8s ease-out infinite; }
+
+/* Reflet doré qui passe sur un titre (le texte reste lisible : base = couleur du texte) */
+.reflet { background: linear-gradient(100deg, var(--reflet-base) 42%, var(--reflet-or) 50%, var(--reflet-base) 58%); background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; animation: eb-reflet-or 9s ease-in-out infinite; }
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) { .reflet { color: var(--texte); -webkit-text-fill-color: currentColor; background: none; } }
+
+/* Anneaux d'icônes : bordure dont la couleur tourne (crème → doré → praline), décalée selon la position.
+ * Une seule boîte : fond intérieur (--fi) en padding-box, dégradé conique en border-box. */
+.t .ico.c-praline, .epingle .ico.c-praline { --fi: var(--c-praline-f); }
+.t .ico.c-dore, .epingle .ico.c-dore { --fi: var(--c-dore-f); }
+.t .ico.c-sauge { --fi: var(--c-sauge-f); }
+.t .ico.c-ciel, .epingle .ico.c-ciel { --fi: var(--c-ciel-f); }
+.t .ico.c-lavande { --fi: var(--c-lavande-f); }
+.t .ico.c-corail { --fi: var(--c-corail-f); }
+.eb-anneau, .t .ico.ico:not(.ronde), .tuile .pastille.pastille, .epingle .ico.ico, .action > .emoji, .droit > .emoji, .fichier > .emoji,
+.choix > .emoji, .carte-role .tete > .emoji, .verrou .pastille.pastille {
+  border: 1.6px solid transparent;
+  background: linear-gradient(var(--fi), var(--fi)) padding-box,
+    conic-gradient(from var(--ang), var(--an-1), var(--an-2), var(--an-3), var(--an-4), var(--an-5), var(--an-1)) border-box;
+  animation: eb-tourne 10s linear infinite; box-shadow: none; }
+.eb-anneau { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 14px; color: var(--primaire); }
+.eb-anneau.rond { border-radius: 50%; }
+.eb-anneau.lent, .verrou .pastille.pastille { animation-duration: 14s; }
+.eb-anneau svg.ic { font-size: 1.3rem; }
+.action > .emoji, .droit > .emoji, .fichier > .emoji, .choix > .emoji, .carte-role .tete > .emoji {
+  width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex: none; font-size: 1.2rem; text-align: center; }
+.tuile .pastille.pastille { --fi: var(--primaire-pale); }
+.verrou .pastille.pastille { --fi: var(--primaire-pale); border-width: 2px; }
+/* Décalages d2…d5 selon la position dans la liste */
+:nth-child(5n+2) > :is(.ico, .pastille, .emoji, .eb-anneau), .eb-anneau.d2 { animation-delay: -2s; }
+:nth-child(5n+3) > :is(.ico, .pastille, .emoji, .eb-anneau), .eb-anneau.d3 { animation-delay: -4s; }
+:nth-child(5n+4) > :is(.ico, .pastille, .emoji, .eb-anneau), .eb-anneau.d4 { animation-delay: -6s; }
+:nth-child(5n+5) > :is(.ico, .pastille, .emoji, .eb-anneau), .eb-anneau.d5 { animation-delay: -8s; }
+
+/* Cartes en verre crème */
+.t, .tuile, .boite, .action, .evt, .epingle, .fichier, button.fichier, a.fichier, .carte-personne, .liste-fiches a, .carte-acces, .carte-profil,
+.carte-role, .zone-schema, .droit, .carte-aujourdhui, .carte-jour, .ligne-journal, .ligne-rdv, .etapes li, .gros-bouton, .mois .case {
+  background-color: var(--verre); border-color: var(--verre-trait); box-shadow: var(--ombre-verre);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.t { border-radius: 16px; }
+.tuile, .boite, .action, .carte-profil, .carte-role, .zone-schema, .carte-aujourdhui, .carte-jour { border-radius: 20px; }
+.epingle, .fichier, button.fichier, a.fichier, .carte-personne, .liste-fiches a, .carte-acces, .droit, .ligne-journal, .evt { border-radius: 16px; }
+@media (hover: hover) {
+  .t:hover, .tuile:hover, .action:hover, .epingle:hover, button.fichier:hover, .carte-personne:hover, .liste-fiches a:hover, .gros-bouton:hover {
+    transform: translateY(-2px); box-shadow: var(--ombre-verre-forte); }
+}
+.t, .tuile, .action, .epingle, button.fichier, .carte-personne, .liste-fiches a, .gros-bouton {
+  transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s, background-color 90ms; }
+.section > h2, .titre-section, .titre-groupe { color: var(--or-texte); letter-spacing: .12em; }
+.epingle { border-bottom-color: var(--verre-trait); }
+
+/* Gros boutons du premier écran : carte en verre et bouton praline avec lueur qui glisse */
+.gros-bouton { border: 1px solid var(--verre-trait); border-radius: 22px; }
+.gros-bouton .eb-anneau { --fi: var(--surface); }
+.gros-bouton .chevron { margin-left: auto; color: var(--or); font-size: 1.2rem; }
+.gros-bouton > span:not(.eb-anneau):not(.chevron) { flex: 1; min-width: 0; }
+.gros-bouton .chevron { flex: none; display: grid; }
+.gros-bouton.principal { position: relative; overflow: hidden; border: 0; color: var(--praline-texte);
+  background: linear-gradient(135deg, var(--praline-1), var(--praline-2)); box-shadow: 0 14px 34px -14px rgba(108,56,50,.65); }
+.gros-bouton.principal::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,240,215,.22) 50%, transparent 70%);
+  transform: translateX(-120%); animation: eb-lueur 6s ease-in-out infinite 1.5s; }
+.gros-bouton.principal > * { position: relative; z-index: 1; }
+.gros-bouton.principal small { color: var(--praline-doux); opacity: 1; }
+.gros-bouton.principal .eb-anneau { --fi: color-mix(in srgb, var(--praline-1) 86%, #FFFFFF); color: #FFF4E4;
+  background: linear-gradient(var(--fi), var(--fi)) padding-box,
+    conic-gradient(from var(--ang), rgba(255,255,255,.25), #E2BE6A, rgba(255,255,255,.5), #E7B8A8, rgba(255,255,255,.25)) border-box; animation-delay: -4s; }
+.gros-bouton.principal .eb-anneau svg.ic, .gros-bouton.principal .chevron { color: #E2BE6A; }
+.gros-bouton.principal .eb-anneau svg.ic { color: #FFF4E4; }
+.gros-bouton.principal:hover { background: linear-gradient(135deg, var(--praline-1), var(--praline-2)); }
+.gros-bouton.principal:active { background: var(--praline-2); }
+
+/* Barre d'onglets flottante en verre (téléphone), soulignement doré sous l'actif */
+@media (max-width: 899px) {
+  .onglets { left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); padding: 6px; border-radius: 26px;
+    background: var(--verre-fort); border: 1px solid var(--verre-trait); box-shadow: 0 16px 40px -16px rgba(91,56,51,.35);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+  .onglets a { border-radius: 20px; min-height: 52px; position: relative; }
+  .onglets a.actif { background: var(--onglet-actif); color: var(--primaire-fort); box-shadow: none; }
+  :root[data-theme="sombre"] .onglets a.actif { color: var(--primaire); }
+  .onglets a.actif::after { content: ""; position: absolute; bottom: 4px; left: 50%; width: 18px; margin-left: -9px; height: 2px; border-radius: 2px; background: var(--or); }
+  body.avec-onglets { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+  .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 899px) and (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .onglets a.actif { color: var(--primaire); } }
+@media (min-width: 900px) {
+  .onglets a.actif { box-shadow: inset 0 -2px 0 var(--or); }
+}
+
+/* Premier écran (maquette « Accueil ») */
+.premier-anneau { width: auto; height: auto; padding: 0; border-width: 2px; border-radius: 30px; margin: 0 auto 14px; display: grid; width: max-content; }
+.premier-anneau .premier-logo { width: 96px; height: 96px; border-radius: 28px; margin: 0; }
+.premier-tete h1 { font-size: 2.3rem; line-height: 1.08; }
+.premier-tete h1.reflet { color: transparent; }
+.premier-date { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 12px 0 0 !important;
+  font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.premier-date::before, .premier-date::after { content: ""; width: 22px; height: 1px; background: var(--or); }
+.premier-date .reflet { --reflet-base: var(--or-texte); }
+.premier-pied { margin: 0; text-align: center; font-size: .72rem; color: var(--texte-3); }
+
+/* Apparitions échelonnées à l'ouverture d'un écran (pas lors d'un simple rafraîchissement) */
+.ecran.ouverture { animation: none; }
+.ecran:not(.sans-anim) > :not(.barre), .ecran:not(.sans-anim) .premier > *, .ecran:not(.sans-anim) .premier-tete > *,
+.ecran:not(.sans-anim) .calendrier-seul > * { animation: eb-entre .8s cubic-bezier(.2,.7,.2,1) both; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(2) { animation-delay: .05s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(3) { animation-delay: .14s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(4) { animation-delay: .23s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(5) { animation-delay: .32s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(6) { animation-delay: .41s; }
+:is(.ecran:not(.sans-anim), .premier, .premier-tete, .calendrier-seul) > :nth-child(n+7) { animation-delay: .50s; }
+.ecran:not(.sans-anim) .premier-tete > .premier-anneau { animation: eb-entre .8s cubic-bezier(.2,.7,.2,1) both, eb-tourne 14s linear infinite; }
+
+/* Révélation pendant la lecture (au défilement), là où le navigateur sait le faire */
+@supports (animation-timeline: view()) {
+  .evts > .evt, .actions-liste > .action, .liste-personnes > *, .liste-acces > *, .rdv-jour > .rdv, .ligne-temps > .rdv-temps {
+    animation: eb-revele linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  .zone-planning.defile .evt { animation: none; }
+  @keyframes eb-revele { from { opacity: 0; transform: translateY(22px) scale(.98); } to { opacity: 1; transform: none; } }
+}
+
+/* Calendrier seul : « Aujourd'hui » avec ligne de temps dorée qui se trace */
+.calendrier-seul { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+.aujourdhui-seul { display: grid; gap: 14px; margin: 6px 0 22px; }
+.libelle { margin: 0; font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--or-texte); }
+.aujourdhui-seul .libelle { margin-bottom: -10px; }
+.date-jour { font-family: var(--serif); font-weight: 600; font-size: 2rem; line-height: 1.08; letter-spacing: -.01em; overflow-wrap: break-word; }
+.resume-jour { margin: -6px 0 0; color: var(--texte-2); }
+.carte-journee { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 12px 16px; text-align: left; cursor: pointer; color: var(--texte);
+  border-radius: 20px; border: 1px solid var(--verre-trait); box-shadow: var(--ombre-verre);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--exemple-fond) 90%, transparent), var(--verre)); }
+.carte-journee .eb-anneau { --fi: var(--surface); color: var(--or-texte); width: 42px; height: 42px; }
+.carte-journee b { display: block; } .carte-journee small { color: var(--texte-2); }
+.ligne-temps { position: relative; padding-left: 26px; display: grid; gap: 12px; }
+.ligne-temps::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--or), var(--an-5) 60%, transparent); transform-origin: top; animation: eb-trace 1.6s cubic-bezier(.2,.7,.2,1) .3s both; }
+.rdv-temps { position: relative; display: block; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer; color: var(--texte); font: inherit;
+  background: var(--verre); border: 1px solid var(--verre-trait); border-radius: 20px; box-shadow: var(--ombre-verre);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.rdv-temps.en-cours { border-color: color-mix(in srgb, var(--primaire) 55%, transparent); }
+.rdv-temps.passe { opacity: .6; }
+.rdv-temps .point { position: absolute; left: -25px; top: 20px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--or); }
+.rdv-temps .point.maintenant { border-color: var(--primaire); animation: eb-onde 2.6s ease-out infinite; }
+.rdv-temps .heures { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 4px; font-size: .78rem; font-weight: 700; color: var(--or-texte); }
+.rdv-temps.en-cours .heures { color: var(--primaire); }
+.en-cours-etiquette { padding: 2px 8px; border-radius: 99px; background: var(--primaire-pale); font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; }
+.rdv-temps b { display: block; font-size: 1rem; overflow-wrap: anywhere; }
+.rdv-temps small { display: block; color: var(--texte-2); font-size: .85rem; overflow-wrap: anywhere; }
+.rdv-temps small:empty { display: none; }
+#tout-le-planning { scroll-margin-top: 72px; margin-top: 8px; }
+#tout-le-planning:focus { outline: none; }
+/* Barre basse flottante (calendrier seul) */
+.barre-bas { position: fixed; z-index: 30; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom)); display: flex; gap: 10px; max-width: 640px; margin: 0 auto; }
+.btn-verre { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 12px; border-radius: 18px; cursor: pointer;
+  background: var(--verre-fort); border: 1px solid var(--verre-trait); box-shadow: 0 16px 40px -16px rgba(91,56,51,.35); color: var(--primaire-fort); font-weight: 600; font-size: .9rem;
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); white-space: nowrap; }
+:root[data-theme="sombre"] .btn-verre { color: var(--primaire); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .btn-verre { color: var(--primaire); } }
+.btn-verre.large { flex: 2; }
+.btn-verre svg.ic { font-size: 1.1rem; }
+
+/* Semaine lisible (zoom « ajuster ») : barre de 7 jours + rendez-vous du jour choisi */
+.zone-planning.ajuster .semaine { padding: 8px 6px; gap: 4px; border-radius: 20px; background: var(--verre); border: 1px solid var(--verre-trait);
+  box-shadow: var(--ombre-verre); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.zone-planning.ajuster .semaine .jour-boite { min-height: 0; padding: 0; border: 0; background: none; border-radius: 14px; overflow: visible; }
+.zone-planning.ajuster .semaine .jour-boite.aujourdhui { outline: 1.5px solid color-mix(in srgb, var(--or) 75%, transparent); outline-offset: -1px; background: color-mix(in srgb, var(--primaire-pale) 70%, transparent); }
+.zone-planning.ajuster .semaine .jour-titre { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; min-height: 64px; padding: 6px 0 8px; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: .72rem; font-weight: 600; color: var(--texte-3); }
+.zone-planning.ajuster .semaine .jour-titre .court { display: block; text-align: center; line-height: 1.1; }
+.zone-planning.ajuster .semaine .jour-titre .court b { display: block; font-size: 1.05rem; color: var(--texte); }
+.zone-planning.ajuster .semaine .jour-titre:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.zone-planning.ajuster .semaine .jour-boite.choisi .jour-titre { background: linear-gradient(160deg, var(--praline-1), var(--praline-2)); color: var(--praline-doux);
+  box-shadow: 0 10px 24px -12px rgba(108,56,50,.7); }
+.zone-planning.ajuster .semaine .jour-boite.choisi .jour-titre .court b { color: #FFFFFF; }
+.reperes { display: flex; flex-direction: column; gap: 2px; width: 70%; min-height: 4px; }
+.reperes i { display: block; height: 4px; border-radius: 3px; background: var(--primaire); }
+.reperes i.j { opacity: .55; }
+.choisi .reperes i { box-shadow: 0 0 0 1px rgba(255,255,255,.6); }
+.rdv-jour { display: grid; gap: 10px; margin-top: 16px; }
+.rdv-jour .libelle { margin: 4px 0 0; }
+.rdv { display: flex; gap: 14px; align-items: flex-start; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer; font: inherit; color: var(--texte);
+  background: var(--verre); border: 1px solid var(--verre-trait); border-radius: 20px; box-shadow: var(--ombre-verre); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.rdv.en-cours { border-color: color-mix(in srgb, var(--or) 70%, transparent); }
+.rdv.passe { opacity: .6; }
+.rdv .h { width: 4.2em; flex: none; font-size: .85rem; font-weight: 700; color: var(--primaire-fort); white-space: nowrap; }
+:root[data-theme="sombre"] .rdv .h { color: var(--primaire); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .rdv .h { color: var(--primaire); } }
+.rdv .h small { display: block; font-size: .75rem; font-weight: 400; color: var(--texte-3); }
+.rdv .trait { width: 4px; align-self: stretch; border-radius: 4px; background: var(--primaire); flex: none; }
+.rdv .quoi { flex: 1; min-width: 0; }
+.rdv .quoi b { display: block; font-size: .95rem; overflow-wrap: anywhere; }
+.rdv .quoi small { display: block; font-size: .8rem; color: var(--texte-2); overflow-wrap: anywhere; }
+.rdv .quoi small.en-cours-texte { color: var(--primaire); font-weight: 600; }
+.rdv:active { transform: scale(.98); background-color: var(--appui); }
+
+/* Moi : avatar dans un anneau, nom à reflet, carte de licence en dégradé */
+.moi-tete { flex-direction: column; text-align: center; gap: 12px; margin: 6px 0 8px; }
+.moi-tete .eb-anneau { width: auto; height: auto; padding: 0; border-width: 2.5px; --fi: transparent; }
+.moi-tete .avatar.grand { width: 84px; height: 84px; font-size: 1.8rem; }
+.moi-tete h2 { font-family: var(--serif); font-weight: 600; font-size: 1.6rem; }
+.carte-profil.standard, .carte-profil.basic, .carte-profil.exchange { position: relative; overflow: hidden; border: 0; color: #FFFFFF;
+  box-shadow: 0 20px 44px -20px rgba(35,74,60,.7); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.carte-profil.standard { background: linear-gradient(150deg, #2F5E4C, #234A3C); }
+.carte-profil.basic, .carte-profil.exchange { background: linear-gradient(150deg, #7A443D, #5B312C); box-shadow: 0 20px 44px -20px rgba(91,56,51,.7); }
+.carte-profil.standard::after, .carte-profil.basic::after, .carte-profil.exchange::after { content: ""; position: absolute; right: -50px; bottom: -60px; width: 200px; height: 200px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(226,190,106,.3), transparent 65%); pointer-events: none; }
+.carte-profil.standard .tete span, .carte-profil.basic .tete span, .carte-profil.exchange .tete span { color: #F1E6D8; }
+.carte-profil.standard ul.outils, .carte-profil.basic ul.outils, .carte-profil.exchange ul.outils { color: #FFFFFF; position: relative; z-index: 1; }
+
+/* Gérer : 3 tuiles par ligne, icônes plus grandes */
+.tuiles.trois { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tuiles.trois .t { min-height: 104px; padding: 16px 6px 14px; gap: 10px; font-size: .8rem; }
+.tuiles.trois .t .ico { width: 48px; height: 48px; border-radius: 15px; }
+@media (min-width: 720px) { .tuiles.trois { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+:root[data-texte="tres-grand"] .tuiles.trois { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Fichiers : récents en cartes qui défilent de côté, dossier commun en carte praline */
+.section-fichiers:has(#t-recents) .liste-fichiers { display: flex; gap: 12px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.section-fichiers:has(#t-recents) .liste-fichiers::-webkit-scrollbar { display: none; }
+.section-fichiers:has(#t-recents) button.fichier { flex: none; width: 150px; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; min-height: 128px; }
+.section-fichiers:has(#t-recents) button.fichier > span:not(.emoji):not(.fleche) { font-size: .85rem; font-weight: 600; line-height: 1.25; }
+.section-fichiers:has(#t-recents) button.fichier .fleche { display: none; }
+@media (min-width: 720px) { .section-fichiers:has(#t-recents) .liste-fichiers { margin: 0; padding: 2px 0 10px; } }
+.section-fichiers:has(#t-commun) { position: relative; overflow: hidden; padding: 18px; border-radius: 24px; color: #FFFFFF;
+  background: linear-gradient(150deg, #5B3833, #6C3832); box-shadow: 0 20px 44px -18px rgba(91,56,51,.6); }
+.section-fichiers:has(#t-commun)::before { content: ""; position: absolute; right: -40px; top: -40px; width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(226,190,106,.35), transparent 65%); pointer-events: none; }
+.section-fichiers:has(#t-commun) > * { position: relative; }
+.section-fichiers:has(#t-commun) h2 { font-family: var(--serif); font-weight: 600; font-size: 1.4rem; text-transform: none; letter-spacing: 0; color: #FFFFFF; }
+.section-fichiers:has(#t-commun) .btn.secondaire { background: rgba(255,255,255,.12); color: #FFFFFF; border-color: rgba(226,190,106,.55); }
+.section-fichiers:has(#t-commun) .tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+@media (min-width: 720px) { .section-fichiers:has(#t-commun) .tuiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.section-fichiers:has(#t-commun) .t { flex-direction: row; justify-content: flex-start; text-align: left; min-height: 60px; padding: 10px 12px; gap: 10px; font-size: .85rem;
+  background-color: var(--verre-fort); }
+.section-fichiers:has(#t-commun) .t .ico { width: 38px; height: 38px; }
+.section-fichiers:has(#t-commun) .lien-plus { color: #F6E1D6; }
+.section-fichiers:has(#t-commun) .vide-doux { color: #F6E1D6; }
+.section-fichiers:has(#t-commun) .squelette { opacity: .5; }
+.section-fichiers:has(#t-commun) :focus-visible { outline-color: #FFFFFF; }
+
+/* Mouvement réduit : la règle générale plus haut (animation: none !important) arrête tout ;
+ * ici on garantit que rien ne reste caché ni décalé. */
+@media (prefers-reduced-motion: reduce) {
+  .ecran > *, .premier > *, .premier-tete > *, .calendrier-seul > *, .evt, .action, .rdv, .rdv-temps { opacity: 1; transform: none; filter: none; }
+  .t:hover, .tuile:hover, .action:hover, .epingle:hover, button.fichier:hover, .carte-personne:hover, .liste-fiches a:hover, .gros-bouton:hover { transform: none; }
+  .gros-bouton.principal::after { display: none; }
+}
+.btn-verre { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 374px) { .barre-bas { left: 10px; right: 10px; gap: 8px; } .btn-verre { font-size: .82rem; gap: 5px; padding: 0 8px; } .btn-verre.large svg.ic { display: none; } }

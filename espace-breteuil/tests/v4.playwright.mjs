@@ -135,6 +135,9 @@ async function nouvellePage(vp, nomProfil, opts) {
 async function capturer(page, nom) {
   if (!SORTIE) return;
   await page.waitForTimeout(250);
+  // v5 : attendre la fin des apparitions (animations finies seulement ; les boucles infinies et le défilement sont ignorés).
+  await page.evaluate(() => Promise.race([new Promise((ok) => setTimeout(ok, 2000)), Promise.all(document.getAnimations()
+    .filter((a) => a.timeline === document.timeline && isFinite(a.effect.getComputedTiming().endTime)).map((a) => a.finished.catch(() => {})))]));
   await page.screenshot({ path: `${SORTIE}/${nom}.png`, fullPage: true });
   captures++;
 }

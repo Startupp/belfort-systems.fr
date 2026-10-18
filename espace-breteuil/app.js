@@ -342,6 +342,7 @@
     return h("button", attrs, contenu);
   }
   function tuiles(liste, attrs) { return h("div", Object.assign({ class: "tuiles" }, attrs || {}), liste.filter(Boolean).map(tuile)); }
+  function tuilesTrois(liste) { return tuiles(liste, { class: "tuiles trois" }); } // Gérer : 3 par ligne, plus grandes
 
   /** Squelette de chargement (appels Microsoft) : n lignes grises animées. */
   function squelette(n, forme) {
@@ -526,19 +527,21 @@
     var g = G(), configure = g && g.estConfigure();
     app.appendChild(h("div", { class: "premier" },
       h("div", { class: "premier-tete" },
-        h("img", { class: "premier-logo", src: "icones/icon.svg", alt: "", width: "64", height: "64" }),
-        h("h1", null, "Espace Breteuil"),
-        h("p", null, "Château de Breteuil")),
+        h("span", { class: "eb-anneau grand lent premier-anneau" }, h("img", { class: "premier-logo", src: "icones/icon.svg", alt: "", width: "64", height: "64" })),
+        h("h1", { class: "reflet" }, "Espace Breteuil"),
+        h("p", null, "Château de Breteuil"),
+        h("p", { class: "premier-date" }, h("span", { class: "reflet" }, maj(jourLong(aujourdhui()))))),
       h("div", { class: "premier-boutons" },
         h("button", { class: "gros-bouton", type: "button", "data-action": "calendrier", onclick: function () {
           reglages.mode = "calendrier"; sauverReglages(); rendre();
-        } }, icone("agenda"), h("span", null, h("b", null, "Voir le calendrier"), h("small", null, "Sans compte, sur cet appareil"))),
+        } }, h("span", { class: "eb-anneau" }, icone("agenda")), h("span", null, h("b", null, "Voir le calendrier"), h("small", null, "Sans compte, sur cet appareil")), h("span", { class: "chevron" }, icone("droite"))),
         h("button", { class: "gros-bouton principal", type: "button", "data-action": "connexion", disabled: !configure, onclick: function () {
           this.disabled = true; this.classList.add("en-cours");
           var b = this;
           Promise.resolve(g.connecter()).catch(function () {}).then(function () { b.disabled = false; b.classList.remove("en-cours"); });
-        } }, icone("cle"), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre compte Microsoft du Château" : "Connexion pas encore activée")))),
-      g && g.erreur() ? h("p", { class: "erreur premier-erreur", role: "alert" }, g.erreur()) : null));
+        } }, h("span", { class: "eb-anneau" }, icone("cle")), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre compte Microsoft du Château" : "Connexion pas encore activée")), h("span", { class: "chevron" }, icone("droite")))),
+      g && g.erreur() ? h("p", { class: "erreur premier-erreur", role: "alert" }, g.erreur()) : null,
+      h("p", { class: "premier-pied" }, "Belfort Systems · 06 09 89 74 43")));
   }
 
   function actualiserPlanning() {
@@ -643,11 +646,52 @@
 
   /* Mode « calendrier seul » (choisi sur le premier écran, mémorisé sur l'appareil). */
   function ecranCalendrierSeul(app) {
-    app.appendChild(barre("Planning du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", onclick: actualiserPlanning }, icone("actualiser"))));
-    blocPlanning(app, null);
-    app.appendChild(h("p", { class: "lien-discret" }, h("button", { type: "button", "data-action": "accueil", onclick: function () {
-      reglages.mode = ""; sauverReglages(); rendre();
-    } }, "Revenir à l'accueil")));
+    app.appendChild(barre("Calendrier du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", onclick: actualiserPlanning }, icone("actualiser")), "Lecture seule · sans compte"));
+    var corps = h("div", { class: "calendrier-seul" });
+    app.appendChild(corps);
+    corps.appendChild(blocAujourdhui());
+    corps.appendChild(h("h2", { class: "titre-groupe", id: "tout-le-planning", tabindex: "-1" }, "Jour · Semaine · Mois"));
+    blocPlanning(corps, null);
+    app.appendChild(h("div", { class: "barre-bas" },
+      h("button", { class: "btn-verre", type: "button", "data-action": "accueil", onclick: function () {
+        reglages.mode = ""; sauverReglages(); rendre();
+      } }, icone("gauche"), "Accueil"),
+      h("button", { class: "btn-verre large", type: "button", onclick: function () {
+        var c = document.getElementById("tout-le-planning");
+        if (c) { c.scrollIntoView({ behavior: window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); c.focus({ preventScroll: true }); }
+      } }, icone("agenda"), "Jour · Semaine · Mois")));
+  }
+
+  /** « Aujourd'hui » (calendrier seul) : la date, puis les rendez-vous du jour sur une ligne de temps dorée. */
+  function blocAujourdhui() {
+    var bloc = h("section", { class: "aujourdhui-seul", "aria-labelledby": "t-aujourdhui" });
+    function dessiner() {
+      var j = aujourdhui(), maintenant = Date.now();
+      var liste = planning ? occurrences(debutJour(j), debutJour(plusJours(j, 1)), null) : null;
+      var journees = liste ? liste.filter(function (o) { return o.journee; }) : [], heures = liste ? liste.filter(function (o) { return !o.journee; }) : [];
+      bloc.textContent = "";
+      bloc.appendChild(h("p", { class: "libelle" }, "Aujourd'hui"));
+      bloc.appendChild(h("h2", { id: "t-aujourdhui", class: "date-jour" }, h("span", { class: "reflet" }, maj(jourLong(j)))));
+      if (!liste) { bloc.appendChild(squelette(3)); return; }
+      bloc.appendChild(h("p", { class: "resume-jour" }, heures.length ? heures.length + " rendez-vous" : "Aucun rendez-vous à heure fixe",
+        journees.length ? " · " + journees.map(function (o) { return o.titre; }).join(", ") : ""));
+      journees.forEach(function (o) {
+        bloc.appendChild(h("button", { class: "carte-journee", type: "button", onclick: function () { ouvrirDetail(o); } },
+          h("span", { class: "eb-anneau d4" }, icone("soleil")), h("span", null, h("b", null, o.titre), h("small", null, "Toute la journée"))));
+      });
+      if (!heures.length) { bloc.appendChild(h("p", { class: "vide" }, "Rien de prévu à heure fixe aujourd'hui.")); return; }
+      bloc.appendChild(h("div", { class: "ligne-temps" }, heures.map(function (o) {
+        var enCours = o.debut <= maintenant && o.fin > maintenant, passe = o.fin <= maintenant;
+        return h("button", { class: "rdv-temps" + (enCours ? " en-cours" : "") + (passe ? " passe" : ""), type: "button", onclick: function () { ouvrirDetail(o); } },
+          h("span", { class: "point" + (enCours ? " maintenant" : ""), "aria-hidden": "true" }),
+          h("span", { class: "heures" }, heure(o.debut) + (o.fin > o.debut ? " – " + heure(o.fin) : ""), enCours ? h("span", { class: "en-cours-etiquette" }, "En cours") : null),
+          h("b", null, o.titre),
+          h("small", null, [o.source && planning.sources.length > 1 ? o.source : null, o.lieu].filter(Boolean).join(" · ")));
+      })));
+    }
+    surPlanning(bloc, dessiner);
+    dessiner();
+    return bloc;
   }
 
   function vueJour(zone, j, personne) {
@@ -658,6 +702,7 @@
   function vueSemaine(zone, j, personne) {
     var l = lundiDe(j), auj = cle(aujourdhui());
     var liste = occurrences(debutJour(l), debutJour(plusJours(l, 7)), personne);
+    if (!reglages.zoom) { semaineLisible(zone, j, l, auj, liste); return; }
     var grille = h("div", { class: "semaine" });
     for (var i = 0; i < 7; i++) (function (jj) {
       var evts = duJour(liste, jj);
@@ -668,6 +713,38 @@
         evts.length ? h("div", { class: "evts" }, evts.map(function (o) { return carteEvenement(o, jj); })) : h("p", { class: "rien" }, "—")));
     })(plusJours(l, i));
     zone.appendChild(grille);
+  }
+  /** Semaine « ajustée à l'écran » : une barre de 7 jours (repères de couleur par calendrier),
+   * puis la liste lisible des rendez-vous du jour choisi (au lieu de 7 colonnes au texte coupé). */
+  function semaineLisible(zone, j, l, auj, liste) {
+    var barreJours = h("div", { class: "semaine", role: "group", "aria-label": "Choisir un jour de la semaine" });
+    for (var i = 0; i < 7; i++) (function (jj) {
+      var evts = duJour(liste, jj), choisi = cle(jj) === cle(j);
+      barreJours.appendChild(h("div", { class: "jour-boite" + (cle(jj) === auj ? " aujourdhui" : "") + (choisi ? " choisi" : "") },
+        h("button", { class: "jour-titre", type: "button", "aria-pressed": String(choisi),
+          "aria-label": maj(jourLong(jj)) + (evts.length ? ", " + evts.length + " rendez-vous" : ", rien de prévu"),
+          onclick: function () {
+            vuePlanning.jour = jj; redessinerPlanning();
+            var b = document.querySelector('.zone-planning .jour-titre[aria-pressed="true"]'); if (b) b.focus({ preventScroll: true });
+          } },
+          h("span", { class: "court", "aria-hidden": "true" }, maj(fmt(midi(jj), { weekday: "short" })).replace(".", ""), h("b", null, String(jj.d))),
+          h("span", { class: "reperes", "aria-hidden": "true" }, evts.slice(0, 4).map(function (o) { return h("i", { class: o.journee ? "j" : null, style: { background: o.couleur || "" } }); })))));
+    })(plusJours(l, i));
+    zone.appendChild(barreJours);
+    var evts = duJour(liste, j), t = Date.now();
+    var bloc = h("section", { class: "rdv-jour", "aria-label": "Rendez-vous du " + jourLong(j) },
+      h("p", { class: "libelle" }, maj(fmt(midi(j), { weekday: "long", day: "numeric" })) + " · " + (evts.length ? evts.length + " rendez-vous" : "rien de prévu")));
+    if (!evts.length) bloc.appendChild(h("p", { class: "vide" }, "Rien de prévu ce jour-là."));
+    evts.forEach(function (o) {
+      var a = debutJour(j), enCours = !o.journee && o.debut <= t && o.fin > t;
+      var debut = o.journee ? "Journée" : o.debut < a ? "Suite" : heure(o.debut);
+      var fin = !o.journee && o.fin > o.debut && o.fin <= debutJour(plusJours(j, 1)) ? heure(o.fin) : "";
+      bloc.appendChild(h("button", { class: "rdv" + (enCours ? " en-cours" : "") + (o.fin <= t ? " passe" : ""), type: "button", onclick: function () { ouvrirDetail(o); } },
+        h("span", { class: "h" }, debut, fin ? h("small", null, fin) : null),
+        h("span", { class: "trait", style: { background: o.couleur || "" }, "aria-hidden": "true" }),
+        h("span", { class: "quoi" }, h("b", null, o.titre), enCours ? h("small", { class: "en-cours-texte" }, "En cours") : o.lieu ? h("small", null, o.lieu) : null)));
+    });
+    zone.appendChild(bloc);
   }
   function vueMois(zone, j, personne) {
     var premier = { y: j.y, m: j.m, d: 1 }, depart = lundiDe(premier), auj = cle(aujourdhui());
@@ -722,8 +799,8 @@
     var me = A && A.me();
     app.appendChild(barre("Moi", null));
     var nom = (me && me.displayName) || c.name || "";
-    app.appendChild(h("div", { class: "bonjour" }, avatar({ prenom: nom || "?", couleur: "#8A4C45" }, "grand"),
-      h("div", null, h("h2", null, nom || "Mon compte"), h("p", null, (me && (me.mail || me.userPrincipalName)) || c.username || ""))));
+    app.appendChild(h("div", { class: "bonjour moi-tete" }, h("span", { class: "eb-anneau rond lent" }, avatar({ prenom: nom || "?", couleur: "#8A4C45" }, "grand")),
+      h("div", null, h("h2", null, h("span", { class: "reflet" }, nom || "Mon compte")), h("p", null, (me && (me.mail || me.userPrincipalName)) || c.username || ""))));
 
     var P = window.EBProfil, D = window.EBDroits;
     var zone = h("section", { class: "section", "aria-busy": r ? "false" : "true" }, h("h2", null, "Mes droits"));
@@ -781,19 +858,19 @@
     var sec = r.sections, fiches = donnees.fiches || {};
     var lienFin = function (titre) { var t = ((fiches.finance || {}).tuiles || []).filter(function (x) { return x.titre === titre; })[0]; return t && t.url; };
     if (sec.indexOf("deleguer") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Administration"),
-      tuiles([
+      tuilesTrois([
         { href: "#/deleguer", icone: "etoile", libelle: "Déléguer", aide: "Donner ou retirer un rôle : propriétaire du site, facturation, utilisateurs, Exchange" },
         { href: "#/guides/admin", icone: "livre", libelle: "Guides", aide: "Les gestes d'administration, pas à pas, sur le site de Microsoft" },
         { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Centre d'admin", aide: "Ouvrir le centre d'administration Microsoft 365" },
       ])));
     if (sec.indexOf("equipe") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Équipe"),
-      tuiles([
+      tuilesTrois([
         { href: "#/personnes", icone: "personnes", libelle: "Personnes", aide: "L'équipe, les boîtes partagées et les externes (étiquette EXTERNE)" },
         { href: "#/organisation", icone: "reseau", libelle: "Qui a quoi", aide: "Organisation : qui a quoi, en un schéma à toucher" },
         sec.indexOf("finance") < 0 ? { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Qui a quelle licence Microsoft, combien il en reste" } : null,
       ])));
     if (sec.indexOf("finance") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Finance"),
-      tuiles([
+      tuilesTrois([
         { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Licences achetées, utilisées et libres (données réelles)" },
         { href: lienFin("Les factures") || "https://admin.microsoft.com/Adminportal/Home#/billoverview", externe: true, icone: "facture", libelle: "Factures", aide: "Les factures Microsoft, dans le centre d'administration" },
         { href: lienFin("Abonnements") || "https://admin.microsoft.com/Adminportal/Home#/subscriptions", externe: true, icone: "carte", libelle: "Abonnements", aide: "Abonnements et moyen de paiement, dans le centre d'administration" },
@@ -1041,7 +1118,7 @@
     if (!connecte()) {
       // Pas connecté : 2 boutons, ou le calendrier seul. Rien d'autre (ni onglets, ni démo).
       cleEcran = reglages.mode === "calendrier" ? "~calendrier" : "~premier";
-      vue = h("div", { class: "ecran " + (cleEcran === dernierEcran || dernierEcran === null ? "sans-anim" : "") });
+      vue = h("div", { class: "ecran " + (cleEcran === dernierEcran ? "sans-anim" : dernierEcran === null ? "ouverture" : "") });
       rendreOnglets("", true);
       app.classList.add("plein-ecran");
       if (reglages.mode === "calendrier") ecranCalendrierSeul(vue); else ecranPremier(vue);
@@ -1063,7 +1140,7 @@
       cleEcran = chemin.join("/");
       onglet = ongletDe(ecran); niveau = niveauDe(chemin);
       var memeEcran = cleEcran === dernierEcran;
-      var anim = memeEcran || dernierEcran === null ? "sans-anim"
+      var anim = memeEcran ? "sans-anim" : dernierEcran === null ? "ouverture"
         : onglet !== dernierOnglet ? "" : niveau > dernierNiveau ? "avant" : niveau < dernierNiveau ? "arriere" : "";
       vue = h("div", { class: "ecran " + anim });
       app.classList.remove("plein-ecran");
