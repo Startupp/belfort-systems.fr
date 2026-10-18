@@ -105,7 +105,7 @@
   var RESERVES = {
     equipe: "equipe", gerer: "plusieurs", finance: "finance", personnes: "equipe", organisation: "equipe",
     "licences-reel": "licences", deleguer: "deleguer", acces: "gererDroits", restreindre: "gererDroits",
-    site: "site", liens: "site",
+    site: "site", liens: "site", suivi: "suivi",
   };
   /** Vrai si la route (1er segment) est permise pour ce résultat de deduire(). */
   function routePermise(route, r) {
@@ -115,6 +115,8 @@
     if (c === "plusieurs") return r.sections.length > 1;
     if (c === "licences") return r.sections.indexOf("finance") > -1 || r.sections.indexOf("equipe") > -1;
     if (c === "gererDroits") return !!r.droits.gererDroits;
+    // Suivi informatique (v5.2) : depuis l'onglet de gestion (Gérer, Équipe ou Finance).
+    if (c === "suivi") return r.sections.indexOf("equipe") > -1 || r.sections.indexOf("finance") > -1;
     if (c === "equipe" || c === "finance" || c === "site") {
       if (r.sections.indexOf(c) < 0) return false;
       // Une seule section : son onglet porte son nom ; plusieurs : tout passe par « Gérer ».

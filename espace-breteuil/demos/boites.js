@@ -11,25 +11,27 @@
   var h = EB.h;
   var onglet = "partagees";
 
-  function nbAcces(acces) { var n = Object.keys(acces || {}).length; return n ? n + " personne" + (n > 1 ? "s" : "") : "Personne"; }
-
   function ecranBoites(app, chemin) {
     if (chemin[1] === "perso" && chemin[2]) return ecranBoitePerso(app, chemin[2]);
     if (chemin[1]) return ecranBoite(app, chemin[1]);
     if (!X.entete(app, "Les boîtes mail", ["admin"])) return;
     var etat = X.etat();
-    app.appendChild(h("p", { class: "aide-ecran" }, "📬 Une boîte partagée, c'est une adresse lue par plusieurs personnes, comme contact@. Touchez une boîte pour la régler."));
+    app.appendChild(h("p", { class: "aide-ecran" }, "📬 Une boîte partagée, c'est une adresse lue par plusieurs personnes, comme contact@. « Régler » : sa photo et qui peut l'ouvrir."));
     var seg = h("div", { class: "segments", role: "group", "aria-label": "Type de boîte", style: { "--n": "2" } });
     [["partagees", "Partagées (" + etat.boites.length + ")"], ["perso", "Personnelles (" + D.actifs(etat.personnes).length + ")"]].forEach(function (o) {
       seg.appendChild(h("button", { type: "button", "aria-pressed": String(onglet === o[0]), onclick: function () { onglet = o[0]; EB.rendre(); } }, o[1]));
     });
     app.appendChild(seg);
+    if (onglet === "partagees" && window.EBListeBoites) {
+      // Même liste claire que « Qui a quoi » : une ligne par boîte, qui y a accès, Ouvrir, Régler.
+      app.appendChild(h("div", { class: "section-proche" }, window.EBListeBoites.liste(etat.boites.map(function (b) {
+        return { id: b.id, nom: b.nom, adresse: b.adresse, qui: Object.keys(b.acces || {}).map(function (id) { var p = D.personne(etat, id); return p ? { nom: p.prenom, couleur: p.couleur } : null; }).filter(Boolean) };
+      }), { regler: function (b) { return "#/boites/" + encodeURIComponent(b.id); } })));
+      app.appendChild(EB.pied());
+      return;
+    }
     var grille = h("div", { class: "grille-boites section-proche" });
-    if (onglet === "partagees") etat.boites.forEach(function (b) {
-      grille.appendChild(h("a", { class: "tuile-boite", href: "#/boites/" + encodeURIComponent(b.id) },
-        X.vignetteBoite(b), h("b", null, b.nom), h("small", null, b.adresse), h("small", null, "👥 " + nbAcces(b.acces))));
-    });
-    else D.actifs(etat.personnes).forEach(function (p) {
+    D.actifs(etat.personnes).forEach(function (p) {
       var dl = etat.delegations[p.id] || {}, autres = Object.keys(dl);
       grille.appendChild(h("a", { class: "tuile-boite", href: "#/boites/perso/" + encodeURIComponent(p.id) },
         EB.avatar(p), h("b", null, p.prenom), h("small", null, p.adresse),

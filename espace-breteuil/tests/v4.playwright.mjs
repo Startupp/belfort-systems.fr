@@ -10,6 +10,10 @@
 //     maquettée : 1 cassé, 1 redirigé, 3 bons), « Corriger » → pas-à-pas, vérificateur absent → message clair ;
 //   - « Déléguer » : permission demandée seulement sur cet écran, garde-fous, POST roleAssignments ;
 //   - dossier commun introuvable : pastille orange et message dans Dossiers ;
+//   - v5.2 « Suivi informatique » (#/suivi ; données FICTIVES, tests/suivi-exemple.json) : tuile en tête de Gérer / Équipe /
+//     Finance, frise du plus récent au plus ancien, « Ouvrir » → PDF déposé (nouvel onglet), « document à
+//     venir », tous/gestion, contact ; Moi → Guides pour tous ; dossier absent → message clair ; #/pilotage
+//     redirigé ; ancien emplacement « Pilotage/pilotage.json » lu en repli ;
 //   - aucune erreur console, pas de défilement horizontal, cibles ≥ 44 px.
 // Réponses Microsoft et Worker maquettées ; ?maquette=1 n'agit que sur localhost.
 import { createRequire } from "node:module";
@@ -27,6 +31,14 @@ const BASE = `http://localhost:${PORT}/?maquette=1`;
 if (SORTIE) mkdirSync(SORTIE, { recursive: true });
 const ICS = readFileSync(RACINE + "exemple.ics", "utf8");
 const ICS2 = readFileSync(RACINE + "exemple-accueil.ics", "utf8");
+// v5.2 Suivi informatique : contenu et PDF FICTIFS (Château d'exemple) — jamais de données du client dans le dépôt.
+const PILOTAGE = JSON.parse(readFileSync(RACINE + "tests/suivi-exemple.json", "utf8"));
+const GUIDES_PDF = [
+  { name: "guide-demarrage.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/exemple/guide-demarrage.pdf", size: 245760, lastModifiedDateTime: "2026-05-05T09:00:00Z" },
+  { name: "Memo Messagerie.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/exemple/memo.pdf", size: 1300000 },
+  { name: "Plan de bascule.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/exemple/plan.pdf", size: 52000 },
+  { name: "Notes internes.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/exemple/notes.pdf", size: 1000 },
+];
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 const CORS = { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" };
 
@@ -112,6 +124,13 @@ function reponses(nomProfil, variante) {
     "/sites/ChateaudeBreteuil/_api/web/lists(guid'list1')/items(5)/roleassignments": { value: [
       { PrincipalId: 3, Member: { Id: 3, Title: "Propriétaires de Château de Breteuil", PrincipalType: 8 }, RoleDefinitionBindings: [{ RoleTypeKind: 5, Name: "Contrôle total" }] }] },
   };
+  if (variante === "suivi-ancien") {
+    r["/v1.0/drives/drive1/root:/Commun/Pilotage/pilotage.json:/content"] = PILOTAGE;
+    r["/v1.0/drives/drive1/root:/Commun/Pilotage/Guides:/children"] = { value: GUIDES_PDF.slice(0, 1) };
+  } else if (variante !== "suivi-absent") {
+    r["/v1.0/drives/drive1/root:/Commun/Suivi informatique/suivi.json:/content"] = PILOTAGE;
+    r["/v1.0/drives/drive1/root:/Commun/Suivi informatique/Guides:/children"] = { value: GUIDES_PDF };
+  }
   if (variante === "commun-introuvable") { delete r["/v1.0/drives/drive1/root:/Commun"]; delete r["/v1.0/drives/drive1/root:/Commun:/children"]; }
   return { r, moi };
 }
@@ -405,6 +424,97 @@ try {
       await contexte.close();
     }
 
+    /* ---------- v5.2 Suivi informatique (données fictives) ---------- */
+    for (const nom of ["admin", "proprietaire", "facturation", "collaborateur"]) {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, nom);
+      await page.goto(BASE + "#/planning");
+      await page.waitForFunction((n) => document.querySelectorAll("#onglets a").length === n, PROFILS[nom].attendus.length, { timeout: 8000 });
+      const gestion = PROFILS[nom].attendus[2];
+      if (nom !== "collaborateur") {
+        // Tuile en tête de l'onglet de gestion (avant toute section).
+        await page.goto(BASE + "#/" + gestion);
+        await page.waitForSelector(".carte-suivi");
+        assert.ok(await page.evaluate(() => { const t = document.querySelector(".carte-suivi"), s = document.querySelector(".ecran .section");
+          return !s || !!(t.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING); }), `${nom} : tuile Suivi informatique en tête`);
+        assert.match(await page.textContent(".carte-suivi"), /^Suivi informatique — tout ce qui a été fait pour vous/);
+        await page.click(".carte-suivi");
+        await page.waitForFunction(() => location.hash === "#/suivi");
+        await page.waitForSelector(".frise-suivi .etape-frise");
+        assert.equal((await page.textContent(".barre h1")).startsWith("Suivi informatique"), true, "titre « Suivi informatique »");
+        assert.doesNotMatch(await page.textContent(".ecran"), /Pilotage/, "plus aucun « Pilotage » à l'écran");
+        assert.deepEqual(await ongletsVisibles(page), PROFILS[nom].attendus, `${nom} : 4 onglets au plus, inchangés`);
+        assert.equal(await page.getAttribute("#onglets a.actif", "data-onglet"), gestion, `${nom} : Suivi informatique sous l'onglet ${gestion}`);
+        assert.deepEqual(await page.$$eval(".frise-suivi time", (l) => l.map((t) => t.textContent)), ["1er juin 2026", "5 mai 2026", "5 mai 2026", "20 avril 2026", "2 mars 2026"], "frise : récent → ancien, date en toutes lettres");
+        assert.equal(await page.$$eval(".zone-suivi img", (l) => l.length), 0, "aucun HTML interprété");
+        assert.match(await page.textContent(".frise-suivi"), /<img src=x onerror=alert\(1\)> reste du texte/);
+        const ouvrir = await page.$$eval(".docs-frise a", (l) => l.map((a) => [a.getAttribute("href"), a.target, a.rel]));
+        assert.deepEqual(ouvrir.map((x) => x[0]), ["https://breteuil02.sharepoint.com/exemple/guide-demarrage.pdf", "https://breteuil02.sharepoint.com/exemple/memo.pdf", "https://breteuil02.sharepoint.com/exemple/plan.pdf"]);
+        assert.ok(ouvrir.every((x) => x[1] === "_blank" && /noopener/.test(x[2])), "Ouvrir : nouvel onglet");
+        assert.deepEqual(await page.$$eval(".docs-frise .a-venir", (l) => l.map((x) => x.textContent)), ["document à venir"], "devis pas encore déposé");
+        assert.deepEqual(await page.$$eval(".liste-docs .doc b", (l) => l.map((x) => x.textContent)),
+          ["Guide de démarrage", "Mémo messagerie (1 page)", "Plan de bascule et coûts", "Devis postes et sauvegarde", "Notes internes.pdf"], "tous les documents (gestion)");
+        assert.equal(await page.$$eval(".carte-theme", (l) => l.length), 3);
+        assert.ok(await page.$('.carte-contact a[href="tel:+33123456789"]'));
+        assert.ok(await page.$('.carte-contact a[href="mailto:jean@exemple.test"]'));
+        assert.ok(journal.length === 0 || !journal.some((x) => /Suivi|Pilotage/.test(x.chemin)), "lecture seule");
+        await calme(page);
+        await controlesCommuns(page, `${nom} suivi ${taille}`);
+        if (nom === "admin") await capturer(page, `suivi-${taille}`);
+        // Ancienne adresse : #/pilotage → #/suivi.
+        await page.goto(BASE + "#/pilotage");
+        await page.waitForFunction(() => location.hash === "#/suivi");
+        await page.waitForSelector(".frise-suivi .etape-frise");
+        await page.click('.sommaire-suivi button:has-text("Contacter")');
+      } else {
+        for (const route of ["suivi", "pilotage"]) {
+          await page.goto(BASE + "#/" + route);
+          await page.waitForFunction(() => location.hash === "#/planning", null, { timeout: 4000 }).catch(() => problemes.push(`collaborateur : #/${route} aurait dû être refusé`));
+        }
+      }
+      // Moi → Guides : pour tout le monde, seulement les guides « pour: tous ».
+      await page.goto(BASE + "#/moi");
+      await page.click('a.action[href="#/moi/guides"]');
+      await page.waitForFunction(() => location.hash === "#/moi/guides");
+      await page.waitForSelector(".liste-docs .doc");
+      assert.equal(await page.getAttribute("#onglets a.actif", "data-onglet"), "moi");
+      assert.deepEqual(await page.$$eval(".liste-docs .doc b", (l) => l.map((x) => x.textContent)), ["Guide de démarrage", "Mémo messagerie (1 page)"], `${nom} : guides pour tous`);
+      assert.doesNotMatch(await page.textContent(".ecran"), /réservé à la gestion|Plan de bascule|Notes internes/);
+      const pas = await page.$$eval(".liste-fiches a", (l) => l.map((a) => a.getAttribute("href")));
+      assert.deepEqual(pas, { admin: ["#/guides/admin", "#/guides/finance", "#/guides/site"], proprietaire: ["#/guides/admin"], facturation: ["#/guides/finance"], collaborateur: [] }[nom], `${nom} : pas-à-pas selon le profil`);
+      for (const href of pas) { await page.goto(BASE + href); await page.waitForTimeout(200); if ((await page.evaluate(() => location.hash)) !== href) problemes.push(`${nom} : ${href} refusé depuis Moi → Guides`); }
+      await page.goto(BASE + "#/moi/guides");
+      await page.waitForSelector(".liste-docs .doc");
+      await calme(page);
+      await controlesCommuns(page, `${nom} moi-guides ${taille}`);
+      if (nom === "collaborateur") await capturer(page, `moi-guides-${taille}`);
+      if (erreurs.length) problemes.push(`suivi ${nom} ${taille} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    /* ---------- v5.2 Suivi informatique : ancien emplacement lu en repli ---------- */
+    {
+      const { contexte, page, erreurs } = await nouvellePage(vp, "proprietaire", { variante: "suivi-ancien" });
+      await page.goto(BASE + "#/suivi");
+      await page.waitForSelector(".frise-suivi .etape-frise", { timeout: 8000 });
+      assert.equal(await page.$$eval(".liste-docs a.doc", (l) => l.length), 1, "PDF lus dans Pilotage/Guides");
+      const autres = erreurs.filter((e) => !/404/.test(e));
+      if (autres.length) problemes.push(`suivi ancien ${taille} : erreurs console ${autres.join(" | ")}`);
+      await contexte.close();
+    }
+    /* ---------- v5.2 Suivi informatique : dossier pas encore déposé ---------- */
+    {
+      const { contexte, page, erreurs } = await nouvellePage(vp, "proprietaire", { variante: "suivi-absent" });
+      await page.goto(BASE + "#/suivi");
+      await page.waitForSelector('[data-etat="absent"]', { timeout: 8000 });
+      assert.equal(await page.textContent('[data-etat="absent"]'), "Le dossier Suivi informatique n'est pas encore en place — Damien doit le déposer dans le dossier commun.");
+      assert.equal(await page.$(".bandeau.erreur"), null, "pas d'erreur technique");
+      await capturer(page, `suivi-absent-${taille}`);
+      await page.goto(BASE + "#/moi/guides");
+      await page.waitForSelector('[data-etat="absent"]');
+      const autres = erreurs.filter((e) => !/404/.test(e));
+      if (autres.length) problemes.push(`suivi absent ${taille} : erreurs console ${autres.join(" | ")}`);
+      await contexte.close();
+    }
+
     /* ---------- Vérificateur de liens pas encore installé (Worker sans la route) ---------- */
     {
       const { contexte, page, erreurs } = await nouvellePage(vp, "siteweb", { liens: "absent" });
@@ -415,6 +525,132 @@ try {
       const autres = erreurs.filter((e) => !/404/.test(e));
       if (autres.length) problemes.push(`liens absent ${taille} : erreurs console ${autres.join(" | ")}`);
       await contexte.close();
+    }
+
+    /* ---------- Liste des boîtes partagées : démo « Boîtes mail » (fictif) puis « Qui a quoi » (vraies données) ---------- */
+    {
+      const { contexte, page, erreurs } = await nouvellePage(vp, "admin");
+      await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ demos: true })));
+      await page.goto(BASE + "#/boites");
+      await page.waitForSelector(".liste-boites .ligne-boite");
+      const lignes = await page.$$eval(".liste-boites .ligne-boite", (l) => l.map((x) => ({ nom: x.querySelector(".quoi b").textContent,
+        adresse: x.querySelector(".quoi small").textContent, ouvrir: x.querySelector('a.btn[href^="https://outlook.office.com/mail/"]')?.getAttribute("href"),
+        pastilles: x.querySelectorAll(".pastille-initiales").length, personne: !!x.querySelector(".qui-boite.personne"), epingler: !!x.querySelector("[data-epingler]"),
+        regler: x.querySelector('a.btn[href^="#/boites/"]')?.getAttribute("href"),
+        deborde: x.scrollWidth > x.clientWidth + 1 })));
+      assert.ok(lignes.length >= 5, "démo : une ligne par boîte");
+      const noms = lignes.map((x) => x.nom);
+      assert.deepEqual(noms, [...noms].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" })), "tri alphabétique");
+      for (const x of lignes) {
+        assert.equal(x.ouvrir, "https://outlook.office.com/mail/" + encodeURIComponent(x.adresse) + "/", "Ouvrir → Outlook web");
+        assert.ok(x.pastilles <= 4 && (x.pastilles > 0 || x.personne), `${x.nom} : pastilles (4 au plus) ou « Personne »`);
+        assert.equal(x.epingler, false, "démo : pas d'épingles");
+        assert.ok(x.regler, `${x.nom} : bouton « Régler »`);
+        if (x.deborde) problemes.push(`boîtes ${taille} : la ligne « ${x.nom} » déborde`);
+      }
+      assert.equal(await page.$(".zone-liste-boites .recherche"), null, "pas de recherche pour 8 boîtes ou moins");
+      await controlesCommuns(page, `boîtes démo ${taille}`);
+      await capturer(page, `boites-liste-demo-${taille}`);
+      // Plus de 8 boîtes et plus de 4 personnes : recherche et « +n ».
+      const r = await page.evaluate(() => {
+        const qui = ["Anne", "Bruno", "Chloé", "David", "Emma", "Farid"].map((nom) => ({ nom }));
+        const l = Array.from({ length: 10 }, (_, i) => ({ nom: "Boîte " + String.fromCharCode(74 - i), adresse: "b" + i + "@exemple.fr", qui: i === 0 ? qui : [] }));
+        const z = window.EBListeBoites.liste(l, {});
+        document.querySelector(".zone-liste-boites").after(z);
+        const champ = z.querySelector("input.recherche");
+        const plus = z.querySelector(".pastille-initiales.plus")?.textContent;
+        const total = z.querySelectorAll(".ligne-boite").length;
+        champ.value = "b3@"; champ.dispatchEvent(new Event("input"));
+        const filtre = [...z.querySelectorAll(".ligne-boite .quoi b")].map((b) => b.textContent);
+        const premier = (champ.value = "", champ.dispatchEvent(new Event("input")), z.querySelector(".ligne-boite .quoi b").textContent);
+        z.remove();
+        return { champ: !!champ, plus, total, filtre, premier };
+      });
+      assert.deepEqual(r, { champ: true, plus: "+3", total: 10, filtre: ["Boîte G"], premier: "Boîte A" }, "recherche, tri et « +n »");
+      if (erreurs.length) problemes.push(`boîtes démo ${taille} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, "admin");
+      await page.goto(BASE + "#/organisation");
+      await page.waitForSelector(".pastille-demo.reel");
+      await page.waitForSelector('.liste-boites .ligne-boite[data-boite="contact@breteuil.fr"]');
+      assert.ok(await page.isVisible('.ligne-boite[data-boite="contact@breteuil.fr"] .qui-boite.inconnu'), "vraies données : accès non fournis par Microsoft");
+      await page.click('[data-epingler="contact@breteuil.fr"]');
+      assert.deepEqual((await page.evaluate(() => window.EBEpingles.lire())).map((e) => e.url), ["https://outlook.office.com/mail/contact%40breteuil.fr/"], "Épingler");
+      assert.match(await page.textContent('[data-epingler="contact@breteuil.fr"]'), /Épinglée/);
+      await controlesCommuns(page, `boîtes réelles ${taille}`);
+      await capturer(page, `boites-liste-reel-${taille}`);
+      assert.ok(!journal.some((x) => /mail|messages|sendMail/i.test(x.chemin)), "aucun appel de messagerie");
+      if (erreurs.length) problemes.push(`boîtes réelles ${taille} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+
+    /* ---------- Palette « Bleu Breteuil » (375 px) : clair et sombre ---------- */
+    for (const theme of taille === "375" ? ["light", "dark"] : []) {
+      const nomT = theme === "light" ? "clair" : "sombre", entete = theme === "light" ? "#14213D" : "#0F1A33";
+      const verifier = async (page, ou) => {
+        const v = await page.evaluate(() => ({ palette: document.documentElement.getAttribute("data-palette"),
+          meta: document.querySelector('meta[name="theme-color"]').content, entete: getComputedStyle(document.documentElement).getPropertyValue("--entete").trim() }));
+        assert.deepEqual(v, { palette: "bleu", meta: entete, entete }, `bleu ${nomT} : ${ou}`);
+      };
+      {
+        const { contexte, page, erreurs } = await nouvellePage(vp, null, { theme });
+        await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
+        await page.goto(BASE);
+        await page.waitForSelector(".gros-bouton");
+        await verifier(page, "premier écran");
+        await controlesCommuns(page, `bleu premier ${nomT}`);
+        await capturer(page, `bleu-premier-${nomT}-375`);
+        if (erreurs.length) problemes.push(`bleu premier ${nomT} : erreurs console ${erreurs.join(" | ")}`);
+        await contexte.close();
+      }
+      {
+        const { contexte, page, erreurs } = await nouvellePage(vp, "collaborateur", { theme });
+        await page.goto(BASE + "#/reglages");
+        await page.waitForSelector('.reglage button:has-text("Bleu Breteuil")');
+        assert.equal(await page.getAttribute('.reglage button:has-text("Crème et praline")', "aria-pressed"), "true", "crème par défaut");
+        await page.click('.reglage button:has-text("Bleu Breteuil")');
+        await verifier(page, "réglage");
+        assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("eb:reglages"))).palette, "bleu", "mémorisé sur l'appareil");
+        await capturer(page, `bleu-reglages-${nomT}-375`);
+        await page.goto(BASE + "#/planning");
+        await page.reload();
+        await page.waitForSelector(".pastille-etat.vert", { timeout: 8000 });
+        await verifier(page, "après rechargement");
+        await controlesCommuns(page, `bleu planning ${nomT}`);
+        await capturer(page, `bleu-planning-${nomT}-375`);
+        await page.click('#onglets a[data-onglet="moi"]');
+        await page.waitForFunction(() => location.hash === "#/moi");
+        await page.waitForTimeout(150);
+        await controlesCommuns(page, `bleu moi ${nomT}`);
+        await capturer(page, `bleu-moi-${nomT}-375`);
+        if (theme === "light") {
+          // Suivi informatique et Moi → Guides (v5.2) en Bleu Breteuil (palette déjà mémorisée ci-dessus).
+          const adm = await nouvellePage(vp, "admin", { theme });
+          await adm.page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
+          await adm.page.goto(BASE + "#/suivi");
+          await adm.page.waitForSelector(".frise-suivi .etape-frise", { timeout: 8000 });
+          await verifier(adm.page, "Suivi informatique");
+          await controlesCommuns(adm.page, "bleu suivi clair");
+          await capturer(adm.page, "bleu-suivi-clair-375");
+          await adm.page.goto(BASE + "#/moi/guides");
+          await adm.page.waitForSelector(".barre h1");
+          await adm.page.waitForTimeout(300);
+          await verifier(adm.page, "Moi → Guides");
+          await controlesCommuns(adm.page, "bleu guides clair");
+          await capturer(adm.page, "bleu-moi-guides-clair-375");
+          if (adm.erreurs.length) problemes.push(`bleu suivi : erreurs console ${adm.erreurs.join(" | ")}`);
+          await adm.contexte.close();
+        }
+        // Retour à la palette crème : l'attribut disparaît, la couleur du navigateur revient au praline.
+        await page.goto(BASE + "#/reglages");
+        await page.click('.reglage button:has-text("Crème et praline")');
+        assert.deepEqual(await page.evaluate(() => [document.documentElement.getAttribute("data-palette"), document.querySelector('meta[name="theme-color"]').content]),
+          [null, theme === "light" ? "#5B3833" : "#2E1D19"], "retour à la palette crème");
+        if (erreurs.length) problemes.push(`bleu ${nomT} : erreurs console ${erreurs.join(" | ")}`);
+        await contexte.close();
+      }
     }
 
     /* ---------- Problème réel : dossier commun introuvable ---------- */
@@ -456,4 +692,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + vérificateur de liens + Fichiers + épingles + problème réel (375 et 1280 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
