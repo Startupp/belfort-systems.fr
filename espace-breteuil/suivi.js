@@ -1,12 +1,13 @@
 /*
- * Espace Breteuil — v5.2 : « Pilotage » (tout ce qui a été fait et échangé avec le prestataire).
- * Partie SANS écran (testée sous Node, tests/pilotage.test.mjs) : validation du fichier
- * pilotage.json, tri de l'historique, filtrage des guides (tous / gestion), correspondance
+ * Espace Breteuil — v5.2 : « Suivi informatique » (tout ce qui a été fait et échangé avec le prestataire).
+ * Libellés, dossier et fichier : config.js → suivi (renommables en une ligne).
+ * Partie SANS écran (testée sous Node, tests/suivi.test.mjs) : validation du fichier
+ * de suivi (suivi.json), tri de l'historique, filtrage des guides (tous / gestion), correspondance
  * « document cité » → fichier PDF déposé (sans tenir compte des majuscules ni des accents).
  *
  * AUCUNE donnée du client ici : le dépôt est public. Les données vivent dans le SharePoint
- * du client : <dossier commun>/Pilotage/pilotage.json et <dossier commun>/Pilotage/Guides/*.pdf
- * (voir docs/ESPACE-BRETEUIL.md, section « Pilotage »).
+ * du client : <dossier commun>/Suivi informatique/suivi.json et …/Guides/*.pdf
+ * (voir docs/ESPACE-BRETEUIL.md, section « Suivi informatique »).
  */
 (function (racine) {
   "use strict";
@@ -54,13 +55,13 @@
   }
 
   /**
-   * Valide le contenu de pilotage.json. Renvoie { ok, donnees, ignores, raison }.
+   * Valide le contenu du fichier de suivi (suivi.json). Renvoie { ok, donnees, ignores, raison }.
    * ok = faux seulement si ce n'est pas un objet JSON exploitable. Les entrées invalides sont
    * ignorées une à une (compte dans « ignores ») : un oubli ne bloque pas tout l'écran.
    */
   function valider(brut) {
-    if (typeof brut === "string") { try { brut = JSON.parse(brut); } catch (e) { return { ok: false, raison: "Le fichier pilotage.json n'est pas lisible (JSON invalide)." }; } }
-    if (!estObjet(brut)) return { ok: false, raison: "Le fichier pilotage.json est vide ou mal formé." };
+    if (typeof brut === "string") { try { brut = JSON.parse(brut); } catch (e) { return { ok: false, raison: "Le fichier de suivi n'est pas lisible (JSON invalide)." }; } }
+    if (!estObjet(brut)) return { ok: false, raison: "Le fichier de suivi est vide ou mal formé." };
     var ignores = 0;
     var tableau = function (v, max) { if (!Array.isArray(v)) { if (v != null) ignores++; return []; } if (v.length > max) ignores += v.length - max; return v.slice(0, max); };
 
@@ -150,7 +151,7 @@
   /**
    * Guides à afficher. portee « tous » : seulement ceux marqués « pour: tous » (Moi → Guides) ;
    * « gestion » : tous les guides décrits, plus les PDF déposés mais pas encore décrits (nom de fichier).
-   * Renvoie [{ fichier, titre, pour, url, taille, modifie }], dans l'ordre de pilotage.json.
+   * Renvoie [{ fichier, titre, pour, url, taille, modifie }], dans l'ordre du fichier de suivi.
    */
   function guidesPour(donnees, fichiers, portee) {
     var decrits = ((donnees && donnees.guides) || []).filter(function (g) { return portee === "gestion" || g.pour === "tous"; });
@@ -183,5 +184,5 @@
     taille: taille, lienTel: lienTel, urlSure: urlSure,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
-  else racine.EBPilotage = api;
+  else racine.EBSuivi = api;
 })(typeof self !== "undefined" ? self : this);

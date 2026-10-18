@@ -1,39 +1,57 @@
 /*
- * Espace Breteuil — v5.2 : écrans « Pilotage » (vraies données, lues dans le dossier commun).
+ * Espace Breteuil — v5.2 : écrans « Suivi informatique » (vraies données, lues dans le dossier commun).
+ * Libellés, dossier et fichier : config.js → suivi (un seul endroit pour les renommer).
  *
- *   #/pilotage     historique daté (frise), ce qui a été mis en place, tous les documents, contacter
- *                  — depuis l'onglet de gestion (Gérer, Équipe ou Finance) ;
+ *   #/suivi        historique daté (frise), ce qui a été mis en place, tous les documents, contacter
+ *                  — depuis l'onglet de gestion (Gérer, Équipe ou Finance) ; #/pilotage y renvoie ;
  *   #/moi/guides   guides PDF « pour: tous » + pas-à-pas selon le profil — pour tout le monde.
  *
  * Sources (Microsoft Graph, droits de la personne connectée, Files.ReadWrite.All déjà accordé) :
- *   <dossier commun>/Pilotage/pilotage.json   contenu structuré (validé par pilotage.js)
- *   <dossier commun>/Pilotage/Guides/*.pdf    les documents (liens « Ouvrir » = webUrl, nouvel onglet)
+ *   <dossier commun>/Suivi informatique/suivi.json   contenu structuré (validé par suivi.js)
+ *   <dossier commun>/Suivi informatique/Guides/*.pdf les documents (liens « Ouvrir » = webUrl, nouvel onglet)
+ *   En repli : l'ancien emplacement <dossier commun>/Pilotage/pilotage.json (+ Pilotage/Guides).
  * Tout est inséré en TEXTE (fabrique EB.h) : jamais de HTML venu du fichier.
  * Réponses gardées en mémoire 1 minute (cache.js), puis rafraîchies en arrière-plan.
  */
 (function () {
   "use strict";
 
-  var EB = window.EB, G = window.EBGraph, C = window.EBCache, P = window.EBPilotage;
+  var EB = window.EB, G = window.EBGraph, C = window.EBCache, P = window.EBSuivi;
   var X = function () { return window.EBConnecte; };
   var h = EB.h, icone = EB.icone, emoji = EB.emoji;
-  var CLE = "pilotage:contenu";
-  var ABSENT = "Le dossier Pilotage n'est pas encore en place — Damien doit le déposer dans le dossier commun.";
+  var CLE = "suivi:contenu";
+  /** Réglages (config.js → suivi), avec valeurs par défaut. */
+  function reglage() {
+    var s = (self.EB_CONFIG && self.EB_CONFIG.suivi) || {};
+    return { libelle: s.libelle || "Suivi informatique", tuile: s.tuile || "Suivi informatique — tout ce qui a été fait pour vous",
+      dossier: s.dossier || "Suivi informatique", fichier: s.fichier || "suivi.json", guides: s.guides || "Guides",
+      ancien: s.ancien && s.ancien.dossier && s.ancien.fichier ? s.ancien : null };
+  }
+  function messageAbsent() { return "Le dossier " + reglage().dossier + " n'est pas encore en place — Damien doit le déposer dans le dossier commun."; }
 
   /* ------------------------------------------------------------------ */
   /* Lecture                                                             */
   /* ------------------------------------------------------------------ */
   function introuvable(e) { return e && (e.statut === 404 || e.codeGraph === "itemNotFound"); }
-  /** { etat: "ok" | "absent" | "illisible", donnees, ignores, fichiers }. */
+  /** Lit <Commun>/<dossier>/<fichier> → { v, base } ; null si introuvable. */
+  function lireJson(driveId, dossier, fichier) {
+    var base = "/drives/" + driveId + "/root:/" + [X().nomCommun(), dossier].map(encodeURIComponent).join("/");
+    return G.graph("GET", base + "/" + encodeURIComponent(fichier) + ":/content").then(function (v) { return { v: v, base: base }; },
+      function (e) { if (introuvable(e)) return null; throw e; });
+  }
+  /** { etat: "ok" | "absent" | "illisible", donnees, ignores, fichiers }. Nouvel emplacement, puis l'ancien en repli. */
   function charger() {
+    var R = reglage();
     return X().contexte().then(function (c) {
       if (!c || !c.drive) return { etat: "absent" };
-      var base = "/drives/" + c.drive.id + "/root:/" + [X().nomCommun(), "Pilotage"].map(encodeURIComponent).join("/");
-      var json = G.graph("GET", base + "/pilotage.json:/content").then(function (v) { return { v: v }; },
-        function (e) { if (introuvable(e)) return null; throw e; });
-      var fichiers = G.graphTout(base + "/Guides:/children?$select=name,webUrl,size,lastModifiedDateTime,file,folder&$top=500")
-        .catch(function (e) { if (introuvable(e)) return []; throw e; });
-      return Promise.all([json, fichiers]).then(function (r) {
+      return lireJson(c.drive.id, R.dossier, R.fichier).then(function (j) {
+        return j || (R.ancien ? lireJson(c.drive.id, R.ancien.dossier, R.ancien.fichier) : null);
+      }).then(function (j) {
+        if (!j) return [null, []];
+        var fichiers = G.graphTout(j.base + "/" + encodeURIComponent(R.guides) + ":/children?$select=name,webUrl,size,lastModifiedDateTime,file,folder&$top=500")
+          .catch(function (e) { if (introuvable(e)) return []; throw e; });
+        return Promise.all([j, fichiers]);
+      }).then(function (r) {
         if (!r[0]) return { etat: "absent" };
         var v = P.valider(r[0].v);
         if (!v.ok) return { etat: "illisible", raison: v.raison };
@@ -55,9 +73,9 @@
     });
   }
   function bandeauEtat(r) {
-    if (r.etat === "absent") return h("div", { class: "bandeau info", role: "status", "data-etat": "absent" }, icone("info"), h("span", null, ABSENT));
+    if (r.etat === "absent") return h("div", { class: "bandeau info", role: "status", "data-etat": "absent" }, icone("info"), h("span", null, messageAbsent()));
     if (r.etat === "illisible") return h("div", { class: "bandeau erreur", role: "alert", "data-etat": "illisible" }, icone("exemple"),
-      h("span", null, h("strong", null, r.raison || "Le fichier pilotage.json n'est pas lisible."), "Damien doit le corriger dans le dossier commun."));
+      h("span", null, h("strong", null, r.raison || "Le fichier de suivi n'est pas lisible."), "Damien doit le corriger dans le dossier commun."));
     return null;
   }
 
@@ -114,24 +132,24 @@
   }
 
   function section(id, titre, contenu) {
-    return h("section", { class: "section section-pilotage", id: id, "aria-labelledby": id + "-t" }, h("h2", { id: id + "-t", tabindex: "-1" }, titre), contenu);
+    return h("section", { class: "section section-suivi", id: id, "aria-labelledby": id + "-t" }, h("h2", { id: id + "-t", tabindex: "-1" }, titre), contenu);
   }
 
   /* ------------------------------------------------------------------ */
-  /* #/pilotage                                                          */
+  /* #/suivi (#/pilotage y renvoie)                                     */
   /* ------------------------------------------------------------------ */
   var SECTIONS = [["p-historique", "Historique"], ["p-place", "Mis en place"], ["p-docs", "Documents"], ["p-contact", "Contacter"]];
-  function ecranPilotage(app) {
-    app.appendChild(EB.barre("Pilotage", EB.hub(), null, "Tout ce qui a été mis en place"));
-    var zone = h("div", { class: "zone-pilotage" });
+  function ecranSuivi(app) {
+    app.appendChild(EB.barre(reglage().libelle, EB.hub(), null, "Tout ce qui a été fait pour vous"));
+    var zone = h("div", { class: "zone-suivi" });
     app.appendChild(zone);
     avecDonnees(zone, function (r) {
       var b = bandeauEtat(r);
       if (b) { zone.appendChild(b); return; }
       var d = r.donnees;
       zone.appendChild(h("p", { class: "aide-ecran" }, "Ce qui a été fait et échangé avec votre prestataire, du plus récent au plus ancien.",
-        d.misAJour ? h("small", { class: "maj-pilotage" }, "Mis à jour le " + P.dateLongue(d.misAJour)) : null));
-      zone.appendChild(h("nav", { class: "sommaire-pilotage", "aria-label": "Aller à" }, SECTIONS.map(function (s) {
+        d.misAJour ? h("small", { class: "maj-suivi" }, "Mis à jour le " + P.dateLongue(d.misAJour)) : null));
+      zone.appendChild(h("nav", { class: "sommaire-suivi", "aria-label": "Aller à" }, SECTIONS.map(function (s) {
         return h("button", { class: "btn petit secondaire", type: "button", onclick: function () {
           var t = document.getElementById(s[0] + "-t"); if (!t) return;
           t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); t.focus({ preventScroll: true });
@@ -156,7 +174,7 @@
   }
   function ecranMesGuides(app) {
     app.appendChild(EB.barre("Guides", { href: "#/moi", texte: "Moi" }));
-    var zone = h("section", { class: "section section-pilotage", "aria-labelledby": "g-docs" }, h("h2", { id: "g-docs" }, "Documents"));
+    var zone = h("section", { class: "section section-suivi", "aria-labelledby": "g-docs" }, h("h2", { id: "g-docs" }, "Documents"));
     app.appendChild(zone);
     var corps = h("div");
     zone.appendChild(corps);
@@ -174,12 +192,12 @@
 
   /** Grande tuile en tête de l'onglet de gestion. */
   function tuileGestion() {
-    return h("a", { class: "action carte-pilotage", href: "#/pilotage", "data-action": "pilotage" },
+    return h("a", { class: "action carte-suivi", href: "#/suivi", "data-action": "suivi" },
       h("span", { class: "eb-anneau" }, icone("horloge")),
-      h("span", null, h("b", null, "Pilotage — tout ce qui a été mis en place"), h("small", null, "Historique daté, guides PDF, ce qui a été réglé, contacter le prestataire")),
+      h("span", null, h("b", null, reglage().tuile), h("small", null, "Historique daté, guides PDF, ce qui a été réglé, contacter le prestataire")),
       h("span", { class: "fleche", "aria-hidden": "true" }, "›"));
   }
 
-  EB.ecran("pilotage", ecranPilotage);
-  window.EBPilotageEcrans = { guides: ecranMesGuides, tuile: tuileGestion, charger: charger };
+  EB.ecran("suivi", ecranSuivi);
+  window.EBSuiviEcrans = { guides: ecranMesGuides, tuile: tuileGestion, charger: charger, reglage: reglage };
 })();
