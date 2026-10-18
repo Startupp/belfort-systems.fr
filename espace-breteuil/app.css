@@ -1143,6 +1143,14 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
   background-color: var(--verre-fort); }
 .section-fichiers:has(#t-commun) .t .ico { width: 38px; height: 38px; }
 .section-fichiers:has(#t-commun) .lien-plus { color: #F6E1D6; }
-.section-fichiers:has(#t-commun) .vide-doux, .section-fichiers:has(#t-commun) .bandeau { color: #F6E1D6; }
+.section-fichiers:has(#t-commun) .vide-doux { color: #F6E1D6; }
 .section-fichiers:has(#t-commun) .squelette { opacity: .5; }
 .section-fichiers:has(#t-commun) :focus-visible { outline-color: #FFFFFF; }
+
+/* Mouvement réduit : la règle générale plus haut (animation: none !important) arrête tout ;
+ * ici on garantit que rien ne reste caché ni décalé. */
+@media (prefers-reduced-motion: reduce) {
+  .ecran > *, .premier > *, .premier-tete > *, .calendrier-seul > *, .evt, .action, .rdv, .rdv-temps { opacity: 1; transform: none; filter: none; }
+  .t:hover, .tuile:hover, .action:hover, .epingle:hover, button.fichier:hover, .carte-personne:hover, .liste-fiches a:hover, .gros-bouton:hover { transform: none; }
+  .gros-bouton.principal::after { display: none; }
+}
