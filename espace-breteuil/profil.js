@@ -6,7 +6,9 @@
  *   - roles     : roleTemplateId des rôles d'annuaire (/me/transitiveMemberOf/microsoft.graph.directoryRole) ;
  *   - proprietaire : membre du groupe « Propriétaires » du site SharePoint du Château (ou IsSiteAdmin) ;
  *   - gererDroits  : permission SharePoint ManagePermissions (effectivebasepermissions) ;
- *   - licences  : skuPartNumber de ses licences (/me/licenseDetails).
+ *   - licences  : skuPartNumber de ses licences (/me/licenseDetails) ;
+ *   - siteWeb   : membre du groupe nommé dans config.js (siteWeb.groupe), lu dans
+ *                 /me/transitiveMemberOf/microsoft.graph.group (voir estMembreDe).
  *
  * Sorties : profil (libellé), sections permises, onglets (4 au plus), routes autorisées,
  * garde-fous de délégation, couleur de la pastille d'état. Logique pure, testée sous Node.
@@ -47,8 +49,17 @@
     return null;
   }
 
+  /** Nom de groupe comparé sans casse ni espaces autour (« Site Web » = « site web »). */
+  function nomNormalise(s) { return String(s || "").trim().replace(/\s+/g, " ").toLowerCase(); }
+  /** La personne est-elle membre (directement ou non) du groupe « nom » ? groupes : [{ displayName }]. */
+  function estMembreDe(groupes, nom) {
+    var n = nomNormalise(nom);
+    if (!n) return false;
+    return (groupes || []).some(function (g) { return g && nomNormalise(g.displayName) === n; });
+  }
+
   /**
-   * Droits réels → profil. e : { roles: [templateId], proprietaire, gererDroits, licences: [sku] }.
+   * Droits réels → profil. e : { roles: [templateId], proprietaire, gererDroits, licences: [sku], siteWeb }.
    * Une information absente (appel en échec) vaut « non » : on n'affiche jamais plus que sûr.
    */
   function deduire(e) {
@@ -64,11 +75,13 @@
       gererDroits: !!e.gererDroits || !!e.proprietaire,
       licences: (e.licences || []).slice(),
     };
+    d.siteWeb = d.admin || !!e.siteWeb;
     // Sections au-delà de Planning, Dossiers et Moi.
     var sections = [];
     if (d.admin || d.proprietaire || d.utilisateurs) sections.push("equipe");
     if (d.admin || d.facturation) sections.push("finance");
     if (d.admin) sections.push("deleguer");
+    if (d.siteWeb) sections.push("site");
     var profil = d.admin ? "admin" : d.proprietaire ? "proprietaire" : d.facturation ? "facturation" : "collaborateur";
     return { profil: profil, droits: d, sections: sections, onglets: onglets(sections), roles: cles };
   }
@@ -77,11 +90,12 @@
     admin: "Administrateur général", proprietaire: "Propriétaire du site", facturation: "Administrateur de facturation", collaborateur: "Collaborateur",
   };
 
-  /** 4 onglets au plus : Planning, Dossiers, [Équipe | Finance | Gérer], Moi. */
+  /** 4 onglets au plus : Planning, Dossiers, [Équipe | Finance | Site | Gérer], Moi. */
   function onglets(sections) {
     var l = [{ id: "planning", nom: "Planning", icone: "agenda" }, { id: "fichiers", nom: "Fichiers", icone: "dossier" }];
     if (sections.length === 1 && sections[0] === "equipe") l.push({ id: "equipe", nom: "Équipe", icone: "personnes" });
     else if (sections.length === 1 && sections[0] === "finance") l.push({ id: "finance", nom: "Finance", icone: "euro" });
+    else if (sections.length === 1 && sections[0] === "site") l.push({ id: "site", nom: "Site", icone: "globe" });
     else if (sections.length > 1) l.push({ id: "gerer", nom: "Gérer", icone: "etoile" });
     l.push({ id: "moi", nom: "Moi", icone: "personne" });
     return l;
@@ -91,6 +105,7 @@
   var RESERVES = {
     equipe: "equipe", gerer: "plusieurs", finance: "finance", personnes: "equipe", organisation: "equipe",
     "licences-reel": "licences", deleguer: "deleguer", acces: "gererDroits", restreindre: "gererDroits",
+    site: "site", liens: "site",
   };
   /** Vrai si la route (1er segment) est permise pour ce résultat de deduire(). */
   function routePermise(route, r) {
@@ -100,7 +115,7 @@
     if (c === "plusieurs") return r.sections.length > 1;
     if (c === "licences") return r.sections.indexOf("finance") > -1 || r.sections.indexOf("equipe") > -1;
     if (c === "gererDroits") return !!r.droits.gererDroits;
-    if (c === "equipe" || c === "finance") {
+    if (c === "equipe" || c === "finance" || c === "site") {
       if (r.sections.indexOf(c) < 0) return false;
       // Une seule section : son onglet porte son nom ; plusieurs : tout passe par « Gérer ».
       return route !== c || r.sections.length === 1;
@@ -161,7 +176,7 @@
 
   var api = {
     ROLES: ROLES, ROLES_DELEGABLES: ROLES_DELEGABLES, PERMISSION_ROLES: PERMISSION_ROLES, LIBELLES: LIBELLES,
-    aLeBit: aLeBit, gererDroitsDe: gererDroitsDe, cleDeRole: cleDeRole, deduire: deduire, onglets: onglets,
+    aLeBit: aLeBit, gererDroitsDe: gererDroitsDe, cleDeRole: cleDeRole, estMembreDe: estMembreDe, deduire: deduire, onglets: onglets,
     routePermise: routePermise, ongletDe: ongletDe, refusRetraitRole: refusRetraitRole,
     refusRetraitProprietaire: refusRetraitProprietaire, aLaPermission: aLaPermission, pastille: pastille,
   };

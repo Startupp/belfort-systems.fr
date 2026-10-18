@@ -8,10 +8,12 @@ const P = require("../profil.js");
 const R = P.ROLES;
 const ids = (r) => r.onglets.map((o) => o.id);
 
-test("administrateur général : tout, 4 onglets dont Gérer (Équipe, Finance, Déléguer)", () => {
+test("administrateur général : tout, 4 onglets dont Gérer (Équipe, Finance, Déléguer, Site web)", () => {
   const r = P.deduire({ roles: [R.admin.id], proprietaire: false, gererDroits: false });
   assert.equal(r.profil, "admin");
-  assert.deepEqual(r.sections, ["equipe", "finance", "deleguer"]);
+  assert.deepEqual(r.sections, ["equipe", "finance", "deleguer", "site"]);
+  assert.ok(P.routePermise("liens", r), "vérificateur de liens dans Gérer");
+  assert.equal(P.routePermise("site", r), false, "pas de doublon : Site web est dans Gérer");
   assert.deepEqual(ids(r), ["planning", "fichiers", "gerer", "moi"]);
   for (const route of ["gerer", "deleguer", "personnes", "organisation", "licences-reel"]) assert.ok(P.routePermise(route, r), route);
   assert.equal(P.routePermise("equipe", r), false, "pas de doublon : Équipe est dans Gérer");
@@ -90,4 +92,42 @@ test("pastille : vert, orange (partiel), rouge (problème), gris (en cours / dé
   const o = P.pastille({ me: { etat: "ok" }, commun: { etat: "erreur", message: "Le dossier commun est introuvable." } }, true);
   assert.equal(o.couleur, "orange"); assert.match(o.texte, /introuvable/);
   assert.equal(P.pastille({ me: { etat: "erreur", critique: true, message: "Session expirée." }, sp: { etat: "ok" } }, true).couleur, "rouge");
+});
+
+test("groupe « Site web » : nom comparé sans casse ni espaces, groupes imbriqués compris (transitiveMemberOf)", () => {
+  const groupes = [{ displayName: "Accueil" }, { displayName: "  SITE   Web " }];
+  assert.ok(P.estMembreDe(groupes, "Site web"));
+  assert.equal(P.estMembreDe([{ displayName: "Site web (archives)" }], "Site web"), false, "nom exact, pas « contient »");
+  assert.equal(P.estMembreDe(groupes, ""), false, "groupe non configuré = personne");
+  assert.equal(P.estMembreDe(null, "Site web"), false);
+});
+
+test("membre du groupe Site web sans autre droit : onglet « Site » (4 onglets)", () => {
+  const r = P.deduire({ roles: [], licences: ["O365_BUSINESS_ESSENTIALS"], siteWeb: true });
+  assert.equal(r.profil, "collaborateur");
+  assert.deepEqual(r.sections, ["site"]);
+  assert.deepEqual(ids(r), ["planning", "fichiers", "site", "moi"]);
+  assert.equal(r.onglets[2].nom, "Site");
+  for (const route of ["site", "liens"]) assert.ok(P.routePermise(route, r), route);
+  for (const route of ["gerer", "equipe", "finance", "deleguer", "personnes", "acces"]) assert.equal(P.routePermise(route, r), false, route);
+  assert.equal(P.ongletDe("liens", r), "site");
+});
+
+test("Site web + autre section : regroupés sous Gérer, jamais plus de 4 onglets", () => {
+  const r = P.deduire({ roles: [], proprietaire: true, siteWeb: true });
+  assert.deepEqual(r.sections, ["equipe", "site"]);
+  assert.deepEqual(ids(r), ["planning", "fichiers", "gerer", "moi"]);
+  assert.equal(P.routePermise("site", r), false);
+  assert.ok(P.routePermise("liens", r));
+  assert.equal(P.ongletDe("liens", r), "gerer");
+  const f = P.deduire({ roles: [R.facturation.id], siteWeb: true });
+  assert.deepEqual(ids(f), ["planning", "fichiers", "gerer", "moi"]);
+});
+
+test("pas membre du groupe : ni onglet Site, ni vérificateur", () => {
+  const r = P.deduire({ roles: [], siteWeb: false });
+  assert.deepEqual(ids(r), ["planning", "fichiers", "moi"]);
+  assert.equal(P.routePermise("site", r), false);
+  assert.equal(P.routePermise("liens", r), false);
+  assert.equal(P.routePermise("liens", null), false);
 });
