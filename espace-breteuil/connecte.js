@@ -846,6 +846,35 @@
     }).catch(function (e) { if (toujoursLa(gen, zone)) { zone.textContent = ""; zone.appendChild(blocErreur(e, EB.rendre)); } });
   }
 
+  /**
+   * « Tous les outils inclus » : plans de service Microsoft traduits en français (liste propre, sans code),
+   * puis, tout en bas et replié, « Détail pour le support (codes Microsoft) » : codes non reconnus et plans
+   * désactivés. charger() → réponse Graph /licenseDetails. opts : { titre, silencieux } (silencieux : en cas
+   * d'erreur, la section disparaît au lieu d'afficher un message).
+   */
+  function outilsInclus(charger, opts) {
+    opts = opts || {};
+    var attente = chargement(2);
+    var sect = h("section", { class: "section outils-inclus", "aria-busy": "true" }, h("h2", null, opts.titre || "Tous les outils inclus"), attente);
+    function fin() { sect.setAttribute("aria-busy", "false"); attente.remove(); }
+    Promise.resolve().then(charger).then(function (r) {
+      fin();
+      var res = D.outilsDesPlans((r && r.value) || []);
+      if (res.outils.length) sect.appendChild(h("ul", { class: "outils liste-inclus" }, res.outils.map(function (o) { return h("li", null, emoji(o.emoji), h("span", null, o.nom)); })));
+      else sect.appendChild(h("p", { class: "vide" }, "Aucun outil trouvé dans ces licences."));
+      if (res.support.length) sect.appendChild(h("details", { class: "support-codes" },
+        h("summary", null, "Détail pour le support (codes Microsoft)"),
+        h("p", null, "Codes que l'appli ne traduit pas, et options désactivées. Utile seulement si Damien vous les demande."),
+        h("ul", { class: "codes" }, res.support.map(function (s) {
+          return h("li", null, h("code", null, s.code), h("span", null, " · " + s.licence + (s.desactive ? " · désactivé" : "")));
+        }))));
+    }).catch(function (e) {
+      fin();
+      if (opts.silencieux) sect.remove(); else sect.appendChild(blocErreur(e));
+    });
+    return sect;
+  }
+
   function fichePersonne(app, id) {
     if (!exigerConnexion(app, "Fiche", EB.hub())) return;
     var gen = demarrerEcran();
@@ -866,19 +895,9 @@
         h("ul", { class: "outils" }, P.outils.map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); }))));
       if (x.mail) zone.appendChild(h("p", { class: "aide-ecran" }, "Adresse : " + x.mail));
       if ((x.assignedLicenses || []).length) {
-        var details = h("details", { class: "boite details" }, h("summary", null, "Détail technique des licences"), chargement());
-        details.addEventListener("toggle", function () {
-          if (!details.open || details.dataset.charge) return;
-          details.dataset.charge = "1";
-          G.graph("GET", "/users/" + encodeURIComponent(x.id) + "/licenseDetails?$select=skuPartNumber,servicePlans").then(function (r) {
-            details.lastChild.remove();
-            ((r && r.value) || []).forEach(function (l) {
-              details.appendChild(h("p", null, h("b", null, (D.PROFILS[D.SKUS[l.skuPartNumber]] || {}).nom || l.skuPartNumber)));
-              details.appendChild(h("ul", { class: "plans" }, (l.servicePlans || []).filter(function (s) { return s.provisioningStatus !== "Disabled"; }).map(function (s) { return h("li", null, s.servicePlanName); })));
-            });
-          }).catch(function (e) { details.lastChild.remove(); details.appendChild(blocErreur(e)); });
-        });
-        zone.appendChild(details);
+        zone.appendChild(outilsInclus(function () {
+          return G.graph("GET", "/users/" + encodeURIComponent(x.id) + "/licenseDetails?$select=skuPartNumber,servicePlans");
+        }, { titre: "Tous les outils inclus" }));
       }
     }).catch(function (e) { if (toujoursLa(gen, zone)) { zone.textContent = ""; zone.appendChild(blocErreur(e, EB.rendre)); } });
   }
@@ -1070,6 +1089,7 @@
     choisirPersonne: choisirPersonne,
     avatarPersonne: avatarPersonne,
     blocErreur: blocErreur,
+    outilsInclus: outilsInclus,
     afficherErreur: afficherErreur,
     noter: noter,
     annuairePourDemo: function () { return Promise.reject(new Error("non utilisé")); },

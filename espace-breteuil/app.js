@@ -826,6 +826,11 @@
         h("div", { class: "carte-profil " + (pr || "aucune") },
           h("div", { class: "tete" }, emoji(PR.emoji, "grand"), h("div", null, h("b", null, PR.nom), h("span", null, PR.phrase))),
           h("ul", { class: "outils" }, (PR.outils || []).map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); })))));
+      // Détail réel de mes licences (plans Microsoft traduits), si connecté.
+      var X = window.EBConnecte;
+      if (pr && g && g.estConnecte() && X && X.outilsInclus) app.appendChild(X.outilsInclus(function () {
+        return g.graph("GET", "/me/licenseDetails?$select=skuPartNumber,servicePlans");
+      }, { titre: "Tous mes outils inclus", silencieux: true }));
     }
     var liens = ["mail", "agenda", "onedrive", "teams"].map(function (k) { return donnees.liens[k]; }).filter(Boolean);
     if (liens.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mes outils Microsoft"),
