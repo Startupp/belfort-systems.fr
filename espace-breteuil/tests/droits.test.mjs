@@ -67,3 +67,29 @@ test("noms de dossier et identifiant de connexion", () => {
   assert.notEqual(D.nomDossierValide("  "), "");
   assert.equal(D.logonName("YSaber@Breteuil.fr"), "i:0#.f|membership|ysaber@breteuil.fr");
 });
+
+test("plans de service Microsoft : outils en français, dédoublonnés, triés ; le reste pour le support", () => {
+  const actif = (n) => ({ servicePlanName: n, provisioningStatus: "Success" });
+  const r = D.outilsDesPlans([
+    { skuPartNumber: "O365_BUSINESS_PREMIUM", servicePlans: ["MDOLITE_ENTERPRISE", "EXCHANGE_STORAGE_50GB", "INSIGHTS_BY_MYANALYTICS", "TEAMS1", "SHAREPOINTSTANDARD",
+      "EXCHANGE_S_STANDARD", "SHAREPOINTWAC", "MCOSTANDARD", "OFFICESUBSCRIPTION", "FORMS_PLAN_E1", "FLOW_O365_P1", "POWERAPPS_O365_P1", "BPOS_S_TODO_1",
+      "MICROSOFTBOOKINGS", "SWAY", "STREAM_O365_SMB", "WHITEBOARD_PLAN1", "PROJECTWORKMANAGEMENT", "INTUNE_O365", "VIVAENGAGE_CORE", "YAMMER_ENTERPRISE",
+      "Bing_Chat_Enterprise", "MICROSOFT_SEARCH", "OFFICEMOBILE_SUBSCRIPTION", "MYANALYTICS_P2"].map(actif)
+      .concat([{ servicePlanName: "KAIZALA_O365_P2", provisioningStatus: "Disabled" }, { servicePlanName: "SWAY", provisioningStatus: "Disabled" }]) },
+    { skuPartNumber: "EXCHANGESTANDARD", servicePlans: [actif("EXCHANGE_S_STANDARD"), actif("TEAMS1")] },
+  ]);
+  const noms = r.outils.map((o) => o.nom);
+  assert.equal(new Set(noms).size, noms.length, "dédoublonné (Teams, mail, Viva Engage, Insights)");
+  assert.deepEqual(noms, [...noms].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" })), "trié");
+  for (const n of ["Boîte mail Outlook (50 Go)", "Teams", "Dossiers partagés (SharePoint)", "Word, Excel, PowerPoint en ligne", "Word, Excel, PowerPoint à installer",
+    "Forms (questionnaires)", "Power Automate (automatisations)", "Power Apps", "To Do (listes de tâches)", "Bookings (prise de rendez-vous)", "Stream (vidéos)",
+    "Whiteboard (tableau blanc)", "Planner (projets)", "Gestion des téléphones (Intune)", "Viva Engage", "Copilot (assistant gratuit)", "Recherche Microsoft",
+    "Office sur téléphone", "Sway (présentations)"]) assert.ok(noms.includes(n), n);
+  assert.ok(r.outils.every((o) => o.emoji && !/^[A-Z0-9_]+$/.test(o.nom)), "aucun code brut dans la liste");
+  assert.equal(noms.filter((n) => n === "Viva Engage").length, 1);
+  assert.deepEqual(r.support.map((s) => s.code + (s.desactive ? " (désactivé)" : "")),
+    ["EXCHANGE_STORAGE_50GB", "MDOLITE_ENTERPRISE", "KAIZALA_O365_P2 (désactivé)", "SWAY (désactivé)"], "non reconnus puis désactivés");
+  assert.equal(r.support[0].licence, "Business Standard");
+  assert.deepEqual(D.outilsDesPlans(null), { outils: [], support: [] });
+  assert.deepEqual(D.outilsDesPlans([{ skuPartNumber: "X", servicePlans: [actif("constructor")] }]).outils, [], "nom de propriété JS : pas un outil");
+});
