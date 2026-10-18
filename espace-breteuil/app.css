@@ -1101,3 +1101,24 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .rdv .quoi small { display: block; font-size: .8rem; color: var(--texte-2); overflow-wrap: anywhere; }
 .rdv .quoi small.en-cours-texte { color: var(--primaire); font-weight: 600; }
 .rdv:active { transform: scale(.98); background-color: var(--appui); }
+
+/* Moi : avatar dans un anneau, nom à reflet, carte de licence en dégradé */
+.moi-tete { flex-direction: column; text-align: center; gap: 12px; margin: 6px 0 8px; }
+.moi-tete .eb-anneau { width: auto; height: auto; padding: 0; border-width: 2.5px; --fi: transparent; }
+.moi-tete .avatar.grand { width: 84px; height: 84px; font-size: 1.8rem; }
+.moi-tete h2 { font-family: var(--serif); font-weight: 600; font-size: 1.6rem; }
+.carte-profil.standard, .carte-profil.basic, .carte-profil.exchange { position: relative; overflow: hidden; border: 0; color: #FFFFFF;
+  box-shadow: 0 20px 44px -20px rgba(35,74,60,.7); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.carte-profil.standard { background: linear-gradient(150deg, #2F5E4C, #234A3C); }
+.carte-profil.basic, .carte-profil.exchange { background: linear-gradient(150deg, #7A443D, #5B312C); box-shadow: 0 20px 44px -20px rgba(91,56,51,.7); }
+.carte-profil.standard::after, .carte-profil.basic::after, .carte-profil.exchange::after { content: ""; position: absolute; right: -50px; bottom: -60px; width: 200px; height: 200px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(226,190,106,.3), transparent 65%); pointer-events: none; }
+.carte-profil.standard .tete span, .carte-profil.basic .tete span, .carte-profil.exchange .tete span { color: #F1E6D8; }
+.carte-profil.standard ul.outils, .carte-profil.basic ul.outils, .carte-profil.exchange ul.outils { color: #FFFFFF; position: relative; z-index: 1; }
+
+/* Gérer : 3 tuiles par ligne, icônes plus grandes */
+.tuiles.trois { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tuiles.trois .t { min-height: 104px; padding: 16px 6px 14px; gap: 10px; font-size: .8rem; }
+.tuiles.trois .t .ico { width: 48px; height: 48px; border-radius: 15px; }
+@media (min-width: 720px) { .tuiles.trois { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+:root[data-texte="tres-grand"] .tuiles.trois { grid-template-columns: repeat(2, minmax(0, 1fr)); }

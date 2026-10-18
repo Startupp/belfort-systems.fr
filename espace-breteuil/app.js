@@ -342,6 +342,7 @@
     return h("button", attrs, contenu);
   }
   function tuiles(liste, attrs) { return h("div", Object.assign({ class: "tuiles" }, attrs || {}), liste.filter(Boolean).map(tuile)); }
+  function tuilesTrois(liste) { return tuiles(liste, { class: "tuiles trois" }); } // Gérer : 3 par ligne, plus grandes
 
   /** Squelette de chargement (appels Microsoft) : n lignes grises animées. */
   function squelette(n, forme) {
@@ -798,8 +799,8 @@
     var me = A && A.me();
     app.appendChild(barre("Moi", null));
     var nom = (me && me.displayName) || c.name || "";
-    app.appendChild(h("div", { class: "bonjour" }, avatar({ prenom: nom || "?", couleur: "#8A4C45" }, "grand"),
-      h("div", null, h("h2", null, nom || "Mon compte"), h("p", null, (me && (me.mail || me.userPrincipalName)) || c.username || ""))));
+    app.appendChild(h("div", { class: "bonjour moi-tete" }, h("span", { class: "eb-anneau rond lent" }, avatar({ prenom: nom || "?", couleur: "#8A4C45" }, "grand")),
+      h("div", null, h("h2", null, h("span", { class: "reflet" }, nom || "Mon compte")), h("p", null, (me && (me.mail || me.userPrincipalName)) || c.username || ""))));
 
     var P = window.EBProfil, D = window.EBDroits;
     var zone = h("section", { class: "section", "aria-busy": r ? "false" : "true" }, h("h2", null, "Mes droits"));
@@ -857,19 +858,19 @@
     var sec = r.sections, fiches = donnees.fiches || {};
     var lienFin = function (titre) { var t = ((fiches.finance || {}).tuiles || []).filter(function (x) { return x.titre === titre; })[0]; return t && t.url; };
     if (sec.indexOf("deleguer") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Administration"),
-      tuiles([
+      tuilesTrois([
         { href: "#/deleguer", icone: "etoile", libelle: "Déléguer", aide: "Donner ou retirer un rôle : propriétaire du site, facturation, utilisateurs, Exchange" },
         { href: "#/guides/admin", icone: "livre", libelle: "Guides", aide: "Les gestes d'administration, pas à pas, sur le site de Microsoft" },
         { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Centre d'admin", aide: "Ouvrir le centre d'administration Microsoft 365" },
       ])));
     if (sec.indexOf("equipe") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Équipe"),
-      tuiles([
+      tuilesTrois([
         { href: "#/personnes", icone: "personnes", libelle: "Personnes", aide: "L'équipe, les boîtes partagées et les externes (étiquette EXTERNE)" },
         { href: "#/organisation", icone: "reseau", libelle: "Qui a quoi", aide: "Organisation : qui a quoi, en un schéma à toucher" },
         sec.indexOf("finance") < 0 ? { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Qui a quelle licence Microsoft, combien il en reste" } : null,
       ])));
     if (sec.indexOf("finance") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Finance"),
-      tuiles([
+      tuilesTrois([
         { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Licences achetées, utilisées et libres (données réelles)" },
         { href: lienFin("Les factures") || "https://admin.microsoft.com/Adminportal/Home#/billoverview", externe: true, icone: "facture", libelle: "Factures", aide: "Les factures Microsoft, dans le centre d'administration" },
         { href: lienFin("Abonnements") || "https://admin.microsoft.com/Adminportal/Home#/subscriptions", externe: true, icone: "carte", libelle: "Abonnements", aide: "Abonnements et moyen de paiement, dans le centre d'administration" },
