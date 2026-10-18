@@ -1451,3 +1451,71 @@ a.doc:hover { border-color: var(--primaire); }
   .ligne-boite .qui-boite { flex: none; min-width: 9.5em; justify-content: flex-end; }
   .qui-boite.inconnu { max-width: 10em; text-align: right; }
 }
+
+/* ================================================================ */
+/* v5.3.3 : Suivi informatique → « Projets à venir »                 */
+/* Pastille de statut : fond + texte par palette (AA ≥ 4,5:1,         */
+/* vérifié par tests/theme.test.mjs). À confirmer = doré/ambre,       */
+/* Proposition envoyée = praline (crème) / bleu (Bleu Breteuil),      */
+/* En cours = vert, Terminé = gris-vert discret.                      */
+/* ================================================================ */
+:root {
+  --statut-confirmer-fond: #FBEFD3; --statut-confirmer-texte: #6B4400;
+  --statut-envoyee-fond: #F4E3DC; --statut-envoyee-texte: #6C3832;
+  --statut-cours-fond: #E2F1E5; --statut-cours-texte: #24572F;
+  --statut-termine-fond: #ECEDE8; --statut-termine-texte: #4A5A4E;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="clair"]) {
+    --statut-confirmer-fond: #3A2C0B; --statut-confirmer-texte: #FFD98A;
+    --statut-envoyee-fond: #3E2A24; --statut-envoyee-texte: #F3D0C3;
+    --statut-cours-fond: #1F3A27; --statut-cours-texte: #A8E2B5;
+    --statut-termine-fond: #2C2A26; --statut-termine-texte: #C9CFC5;
+  }
+}
+:root[data-theme="sombre"] {
+  --statut-confirmer-fond: #3A2C0B; --statut-confirmer-texte: #FFD98A;
+  --statut-envoyee-fond: #3E2A24; --statut-envoyee-texte: #F3D0C3;
+  --statut-cours-fond: #1F3A27; --statut-cours-texte: #A8E2B5;
+  --statut-termine-fond: #2C2A26; --statut-termine-texte: #C9CFC5;
+}
+:root[data-palette="bleu"] {
+  --statut-confirmer-fond: #FBF1D6; --statut-confirmer-texte: #6B4400;
+  --statut-envoyee-fond: #E3E9F4; --statut-envoyee-texte: #172C52;
+  --statut-cours-fond: #E2F1E5; --statut-cours-texte: #24572F;
+  --statut-termine-fond: #ECEFEC; --statut-termine-texte: #4A5A4E;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="bleu"]:not([data-theme="clair"]) {
+    --statut-confirmer-fond: #3A2C0B; --statut-confirmer-texte: #FFD98A;
+    --statut-envoyee-fond: #1B2A48; --statut-envoyee-texte: #C3D3F0;
+    --statut-cours-fond: #17362A; --statut-cours-texte: #A8E2B5;
+    --statut-termine-fond: #1E2633; --statut-termine-texte: #C3CBC6;
+  }
+}
+:root[data-palette="bleu"][data-theme="sombre"] {
+  --statut-confirmer-fond: #3A2C0B; --statut-confirmer-texte: #FFD98A;
+  --statut-envoyee-fond: #1B2A48; --statut-envoyee-texte: #C3D3F0;
+  --statut-cours-fond: #17362A; --statut-cours-texte: #A8E2B5;
+  --statut-termine-fond: #1E2633; --statut-termine-texte: #C3CBC6;
+}
+
+.grille-projets { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .grille-projets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.carte-projet { --st-fond: var(--statut-confirmer-fond); --st-texte: var(--statut-confirmer-texte);
+  padding: 14px 16px; border-radius: 20px; background: var(--verre); border: 1px solid var(--verre-trait); border-left: 5px solid var(--st-texte);
+  box-shadow: var(--ombre-verre); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); min-width: 0; }
+.carte-projet.envoyee, .pastille-statut.envoyee { --st-fond: var(--statut-envoyee-fond); --st-texte: var(--statut-envoyee-texte); }
+.carte-projet.cours, .pastille-statut.cours { --st-fond: var(--statut-cours-fond); --st-texte: var(--statut-cours-texte); }
+.carte-projet.termine, .pastille-statut.termine { --st-fond: var(--statut-termine-fond); --st-texte: var(--statut-termine-texte); }
+.carte-projet.termine { box-shadow: none; }
+.carte-projet.termine h3 { color: var(--texte-2); }
+.tete-projet { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; margin: 0 0 6px; }
+.carte-projet h3 { margin: 0; flex: 1 1 200px; min-width: 0; font-family: var(--serif); font-weight: 600; font-size: 1.12rem; overflow-wrap: anywhere; }
+.pastille-statut { --st-fond: var(--statut-confirmer-fond); --st-texte: var(--statut-confirmer-texte);
+  display: inline-flex; align-items: center; min-height: 28px; padding: 2px 12px; border-radius: 100px; font-size: .8rem; font-weight: 700;
+  background: var(--st-fond); color: var(--st-texte); border: 1px solid color-mix(in srgb, var(--st-texte) 35%, transparent); white-space: nowrap; }
+.carte-projet > p { margin: 0; color: var(--texte-2); font-size: .92rem; line-height: 1.45; overflow-wrap: anywhere; }
+.carte-projet > p.prochaine-etape { margin-top: 10px; padding: 8px 12px; border-radius: var(--rayon-petit); background: var(--surface-2);
+  border-left: 3px solid var(--or); color: var(--texte); font-weight: 600; }
+.prochaine-etape b { font-weight: 800; }

@@ -48,6 +48,9 @@ const PAIRES = [
   ["--commun-doux", "--commun-1", 4.5], ["--commun-doux", "--commun-2", 4.5],
   ["--c-praline", "--c-praline-f", 4.5],
   ["--focus", "--fond", 3], ["--or", "--entete", 3],
+  // v5.3.3 Projets à venir : pastilles de statut.
+  ["--statut-confirmer-texte", "--statut-confirmer-fond", 4.5], ["--statut-envoyee-texte", "--statut-envoyee-fond", 4.5],
+  ["--statut-cours-texte", "--statut-cours-fond", 4.5], ["--statut-termine-texte", "--statut-termine-fond", 4.5],
 ];
 
 for (const [nom, v] of Object.entries(PALETTES)) {
