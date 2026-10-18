@@ -1231,8 +1231,8 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .section-suivi > h2:focus { outline: none; }
 .zone-suivi .rien, .section-suivi .rien { color: var(--texte-3); margin: 4px 0; }
 
-.frise { list-style: none; margin: 0; padding: 0 0 0 26px; position: relative; display: grid; gap: 14px; }
-.frise::before { content: ""; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 2px; border-radius: 2px;
+.frise-suivi { list-style: none; margin: 0; padding: 0 0 0 26px; position: relative; display: grid; gap: 14px; }
+.frise-suivi::before { content: ""; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 2px; border-radius: 2px;
   background: linear-gradient(180deg, var(--or), var(--an-5) 70%, transparent); transform-origin: top; animation: eb-trace 1.6s cubic-bezier(.2,.7,.2,1) .2s both; }
 .etape-frise { position: relative; }
 .etape-frise .point { position: absolute; left: -25px; top: 20px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--or); }
@@ -1247,9 +1247,6 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .docs-frise .nom-doc { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 180px; font-size: .9rem; font-weight: 600; overflow-wrap: anywhere; }
 .docs-frise .nom-doc .emoji { flex: none; }
 .a-venir { color: var(--texte-3); font-size: .85rem; font-style: italic; }
-@supports (animation-timeline: view()) {
-  .frise > .etape-frise { animation: eb-revele linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
-}
 
 .grille-themes { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 700px) { .grille-themes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1279,4 +1276,4 @@ a.doc:hover { border-color: var(--primaire); }
 .carte-contact b { display: block; font-family: var(--serif); font-weight: 600; font-size: 1.1rem; margin: 2px 0 10px; overflow-wrap: anywhere; }
 .carte-contact .boutons { display: flex; flex-wrap: wrap; gap: 8px; }
 .carte-contact .btn { max-width: 100%; overflow-wrap: anywhere; }
-@media (prefers-reduced-motion: reduce) { .frise::before, .etape-frise .point, .frise > .etape-frise { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .frise-suivi::before, .etape-frise .point, .frise-suivi > .etape-frise { animation: none !important; } }

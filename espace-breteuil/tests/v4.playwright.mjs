@@ -380,14 +380,14 @@ try {
         assert.match(await page.textContent(".carte-suivi"), /^Suivi informatique — tout ce qui a été fait pour vous/);
         await page.click(".carte-suivi");
         await page.waitForFunction(() => location.hash === "#/suivi");
-        await page.waitForSelector(".frise .etape-frise");
+        await page.waitForSelector(".frise-suivi .etape-frise");
         assert.equal((await page.textContent(".barre h1")).startsWith("Suivi informatique"), true, "titre « Suivi informatique »");
         assert.doesNotMatch(await page.textContent(".ecran"), /Pilotage/, "plus aucun « Pilotage » à l'écran");
         assert.deepEqual(await ongletsVisibles(page), PROFILS[nom].attendus, `${nom} : 4 onglets au plus, inchangés`);
         assert.equal(await page.getAttribute("#onglets a.actif", "data-onglet"), gestion, `${nom} : Suivi informatique sous l'onglet ${gestion}`);
-        assert.deepEqual(await page.$$eval(".frise time", (l) => l.map((t) => t.textContent)), ["1er juin 2026", "5 mai 2026", "5 mai 2026", "20 avril 2026", "2 mars 2026"], "frise : récent → ancien, date en toutes lettres");
+        assert.deepEqual(await page.$$eval(".frise-suivi time", (l) => l.map((t) => t.textContent)), ["1er juin 2026", "5 mai 2026", "5 mai 2026", "20 avril 2026", "2 mars 2026"], "frise : récent → ancien, date en toutes lettres");
         assert.equal(await page.$$eval(".zone-suivi img", (l) => l.length), 0, "aucun HTML interprété");
-        assert.match(await page.textContent(".frise"), /<img src=x onerror=alert\(1\)> reste du texte/);
+        assert.match(await page.textContent(".frise-suivi"), /<img src=x onerror=alert\(1\)> reste du texte/);
         const ouvrir = await page.$$eval(".docs-frise a", (l) => l.map((a) => [a.getAttribute("href"), a.target, a.rel]));
         assert.deepEqual(ouvrir.map((x) => x[0]), ["https://breteuil02.sharepoint.com/exemple/guide-demarrage.pdf", "https://breteuil02.sharepoint.com/exemple/memo.pdf", "https://breteuil02.sharepoint.com/exemple/plan.pdf"]);
         assert.ok(ouvrir.every((x) => x[1] === "_blank" && /noopener/.test(x[2])), "Ouvrir : nouvel onglet");
@@ -404,7 +404,7 @@ try {
         // Ancienne adresse : #/pilotage → #/suivi.
         await page.goto(BASE + "#/pilotage");
         await page.waitForFunction(() => location.hash === "#/suivi");
-        await page.waitForSelector(".frise .etape-frise");
+        await page.waitForSelector(".frise-suivi .etape-frise");
         await page.click('.sommaire-suivi button:has-text("Contacter")');
       } else {
         for (const route of ["suivi", "pilotage"]) {
@@ -435,7 +435,7 @@ try {
     {
       const { contexte, page, erreurs } = await nouvellePage(vp, "proprietaire", { variante: "suivi-ancien" });
       await page.goto(BASE + "#/suivi");
-      await page.waitForSelector(".frise .etape-frise", { timeout: 8000 });
+      await page.waitForSelector(".frise-suivi .etape-frise", { timeout: 8000 });
       assert.equal(await page.$$eval(".liste-docs a.doc", (l) => l.length), 1, "PDF lus dans Pilotage/Guides");
       const autres = erreurs.filter((e) => !/404/.test(e));
       if (autres.length) problemes.push(`suivi ancien ${taille} : erreurs console ${autres.join(" | ")}`);

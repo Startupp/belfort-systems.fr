@@ -86,7 +86,7 @@
 
   function frise(d, fichiers) {
     if (!d.historique.length) return h("p", { class: "rien" }, "Rien pour l'instant.");
-    return h("ol", { class: "frise" }, d.historique.map(function (e) {
+    return h("ol", { class: "frise-suivi" }, d.historique.map(function (e) {
       var docs = P.documentsDe(e, d, fichiers);
       return h("li", { class: "etape-frise" },
         h("span", { class: "point", "aria-hidden": "true" }),
