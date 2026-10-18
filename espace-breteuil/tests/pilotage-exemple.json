@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "misAJour": "2026-10-12",
+  "prestataire": { "nom": "Jean Exemple — Atelier Fictif", "telephone": "01 23 45 67 89", "mail": "jean@exemple.test" },
+  "historique": [
+    { "date": "2026-03-02", "titre": "Première visite", "resume": "Tour du Château d'Exemple : postes, réseau et besoins de chacun. Données entièrement fictives." },
+    { "date": "2026-04-20", "titre": "Plan de bascule", "resume": "Planning daté et coûts estimés.", "documents": ["Plan de bascule.pdf"] },
+    { "date": "2026-05-05", "titre": "Guides de démarrage", "resume": "Deux guides pour bien commencer et un mémo d'une page.", "documents": ["guide-demarrage.PDF", "Mémo Messagerie.pdf"] },
+    { "date": "2026-05-05", "titre": "Bascule de la messagerie", "resume": "Les anciens messages, contacts et agendas ont été repris." },
+    { "date": "2026-06-01", "titre": "Devis matériel", "resume": "Deux postes et une sauvegarde. <img src=x onerror=alert(1)> reste du texte.", "documents": ["Devis matériel.pdf"] },
+    { "date": "2026-02-30", "titre": "Date impossible (ignorée)" }
+  ],
+  "miseEnPlace": [
+    { "titre": "Messagerie", "points": ["Nouvelle messagerie depuis le 5 mai 2026.", "Boîtes de service partagées, sans licence."] },
+    { "titre": "Fichiers", "points": ["Un dossier commun, à ajouter en raccourci.", "Des accès réglables par dossier."] },
+    { "titre": "Administration", "points": ["Deux personnes administrent, une gère la facturation."] }
+  ],
+  "guides": [
+    { "fichier": "Guide-Demarrage.pdf", "titre": "Guide de démarrage", "pour": "tous" },
+    { "fichier": "Memo Messagerie.pdf", "titre": "Mémo messagerie (1 page)", "pour": "tous" },
+    { "fichier": "Plan de bascule.pdf", "titre": "Plan de bascule et coûts", "pour": "gestion" },
+    { "fichier": "Devis matériel.pdf", "titre": "Devis postes et sauvegarde", "pour": "gestion" }
+  ]
+}
