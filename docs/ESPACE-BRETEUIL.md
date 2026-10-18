@@ -21,6 +21,7 @@ cibles tactiles d'au moins 44 px, confirmation avant chaque changement.
 | Propriétaire du site | REST `associatedownergroup/users` (+ `IsSiteAdmin`) | Équipe, droits des dossiers |
 | Droit de gérer les accès | REST `effectivebasepermissions` (ManagePermissions) | « Qui a accès ? » |
 | Licences | Graph `/me/licenseDetails` | « Ce que je peux utiliser » (Moi) |
+| Groupes (v5.1) | Graph `/me/transitiveMemberOf/microsoft.graph.group` (repli : sans filtre) | Section « Site web » si membre du groupe `siteWeb.groupe` de `config.js` (nom comparé sans casse) |
 
 Une information illisible vaut « non » : l'appli n'affiche jamais plus que ce qui est sûr.
 
@@ -86,6 +87,26 @@ Adresses :
 - `/espace-breteuil/` sur belfort-systems.fr ;
 - un projet Cloudflare Pages séparé pour la version connectée
   (voir **[ESPACE-BRETEUIL-CONNEXION.md](ESPACE-BRETEUIL-CONNEXION.md)**).
+
+## Section « Site web » (v5.1)
+
+Pour les administrateurs généraux (dans **Gérer**) et les membres du groupe Microsoft 365 ou de
+sécurité **« Site web »** (onglet **Site** s'ils n'ont pas d'autre section de gestion).
+Fichiers : `siteweb.js` (adresses WordPress, pas-à-pas, tri des liens — testé), `siteweb-ecrans.js`.
+
+- Tuiles vers l'administration WordPress de www.breteuil.fr (nouvel onglet ; WordPress demande son
+  propre identifiant) + pas-à-pas en 3 étapes (`#/guides/site`, `#/guides/site/<id>`) adaptés à
+  Elementor Pro (Theme Builder), Astra, WPML (FR/EN), WP Rocket (vider le cache), Smush.
+- **Vérifier les liens** (`#/liens`) : le Worker `belfort-api` lit le bas de page FR et EN
+  (`GET /breteuil/site/liens`, `?forcer=1` pour revérifier), essaie chaque lien (40 au plus) et
+  l'appli les trie : cassés (rouge), à vérifier (orange : redirigés ou sites qui refusent les robots,
+  comme Facebook ou Instagram), bons (repliés).
+
+**À faire par Damien** :
+1. Cloudflare → Workers → `belfort-api` → Modifier le code → coller `api-planning/worker.js` → Déployer
+   (les routes du planning sont inchangées ; tests : `node api-planning/worker.test.mjs`).
+2. Centre d'administration Microsoft 365 → Équipes et groupes → créer le groupe « Site web » et y
+   ajouter les personnes chargées du site. Effet à la prochaine ouverture de l'appli (≤ 5 min).
 
 ## Choix du chemin
 
