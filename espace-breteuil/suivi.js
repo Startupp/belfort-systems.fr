@@ -220,7 +220,16 @@
       l.push({ fichier: g.fichier, titre: titre, pour: g.pour, url: f ? f.webUrl : "", taille: f && f.size || 0, modifie: f && f.lastModifiedDateTime || "",
         _n: numero(f ? f.name : g.fichier), _r: 0, _i: i });
     });
-    fichiersSurs(fichiers).filter(function (f) { return connus.indexOf(f) < 0; }).forEach(function (f, i) {
+    // Non décrits ; un numéro déjà pris (doublon) n'affiche que le fichier le plus récent.
+    var pris = {};
+    connus.forEach(function (f) { var n = numero(f.name); if (n !== null) pris[n] = 1; });
+    fichiersSurs(fichiers).filter(function (f) { return connus.indexOf(f) < 0; })
+      .filter(function (f, _, reste) {
+        var n = numero(f.name);
+        if (n === null) return true;
+        if (pris[n]) return false;
+        return trouverFichier(f.name, reste) === f;
+      }).forEach(function (f, i) {
       var pour = pourDuNumero(f.name);
       if (portee !== "gestion" && pour !== "tous") return;
       l.push({ fichier: f.name, titre: titreDuNom(f.name), pour: pour, url: f.webUrl, taille: f.size || 0, modifie: f.lastModifiedDateTime || "",

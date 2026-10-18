@@ -85,7 +85,78 @@ test("filtrage : « tous » pour Moi → Guides, tout (et les PDF non décrits) 
   assert.ok(tous.every((g) => g.pour === "tous" && g.url));
   const gestion = P.guidesPour(d, FICHIERS, "gestion");
   assert.deepEqual(gestion.map((g) => [g.titre, !!g.url]), [["Guide de démarrage", true], ["Mémo messagerie (1 page)", true],
-    ["Plan de bascule et coûts", true], ["Devis postes et sauvegarde", false], ["Notes internes.pdf", true]]);
+    ["Plan de bascule et coûts", true], ["Devis postes et sauvegarde", false], ["Notes internes", true]]);
+  assert.equal(gestion[4].pour, "gestion", "non décrit sans numéro → gestion");
+});
+
+// Guides numérotés « NN - Titre.pdf » : renommables tant que le numéro reste devant.
+const NUM = {
+  guides: [
+    { fichier: "02 - Premiers pas.pdf", titre: "Premiers pas", pour: "tous" },
+    { fichier: "04 - Mes mails sur téléphone (avec Outlook).pdf", titre: "Mes mails sur téléphone", pour: "tous" },
+    { fichier: "12 - Sauvegardes.pdf", titre: "Sauvegardes", pour: "gestion" },
+  ],
+  historique: [{ date: "2026-09-01", titre: "Guides", documents: ["04 - Mes mails sur téléphone (avec Outlook).pdf"] }],
+};
+const u = (n) => "https://exemple.sharepoint.com/" + n;
+
+test("guides numérotés : un PDF renommé (même numéro) reste relié, titre tiré du nom réel", () => {
+  const f = [
+    { name: "02 - Premiers pas.pdf", webUrl: u("a"), lastModifiedDateTime: "2026-09-01T00:00:00Z" },
+    { name: "04 - Mails sur mon iPhone.pdf", webUrl: u("b"), lastModifiedDateTime: "2026-09-02T00:00:00Z" },
+    { name: "12 – sauvegardes NAS.pdf", webUrl: u("c") },
+  ];
+  assert.equal(P.numero("04 - Mails.pdf"), 4);
+  assert.equal(P.numero("  7_Truc.pdf"), 7);
+  assert.equal(P.numero("2026 rapport.pdf"), null, "plus de 3 chiffres : pas un numéro");
+  assert.equal(P.numero("Notes.pdf"), null);
+  assert.equal(P.titreDuNom("04 - Mails sur mon iPhone.pdf"), "Mails sur mon iPhone");
+  assert.equal(P.trouverFichier("04 - Mes mails sur téléphone (avec Outlook).pdf", f).webUrl, u("b"));
+  const tous = P.guidesPour(NUM, f, "tous");
+  assert.deepEqual(tous.map((g) => [g.titre, g.url]), [["Premiers pas", u("a")], ["Mails sur mon iPhone", u("b")]]);
+  const gestion = P.guidesPour(NUM, f, "gestion");
+  assert.deepEqual(gestion.map((g) => g.titre), ["Premiers pas", "Mails sur mon iPhone", "sauvegardes NAS"], "rien en double");
+  const docs = P.documentsDe(NUM.historique[0], NUM, f);
+  assert.deepEqual(docs.map((d) => [d.titre, d.url]), [["Mails sur mon iPhone", u("b")]], "« Ouvrir » reste actif dans l'historique");
+  const sansRenommage = P.guidesPour(NUM, [{ name: "04 - MES MAILS SUR TELEPHONE (avec Outlook).pdf", webUrl: u("b") }], "tous");
+  assert.equal(sansRenommage.find((g) => g.url).titre, "Mes mails sur téléphone", "même nom (casse, accents) : titre du suivi");
+});
+
+test("guides numérotés : deux fichiers avec le même numéro → le plus récent, signalé en console seulement", () => {
+  const f = [
+    { name: "04 - Ancien.pdf", webUrl: u("old"), lastModifiedDateTime: "2026-01-01T00:00:00Z" },
+    { name: "04 - Nouveau.pdf", webUrl: u("new"), lastModifiedDateTime: "2026-09-01T00:00:00Z" },
+  ];
+  const avertissements = [], avant = console.warn;
+  console.warn = (m) => avertissements.push(String(m));
+  try {
+    assert.equal(P.trouverFichier("04 - Mes mails sur téléphone (avec Outlook).pdf", f).webUrl, u("new"));
+    const gestion = P.guidesPour(NUM, f, "gestion");
+    assert.deepEqual(gestion.filter((g) => g.url).map((g) => [g.titre, g.url]), [["Nouveau", u("new")]], "l'ancien n'apparaît pas en plus");
+    const nonDecrits = P.guidesPour({ guides: [] }, f, "gestion");
+    assert.deepEqual(nonDecrits.map((g) => g.url), [u("new")], "doublon non décrit : le plus récent seulement");
+  } finally { console.warn = avant; }
+  assert.ok(avertissements.some((m) => /numéro 4/.test(m) && /04 - Ancien\.pdf/.test(m)), "signalé dans la console");
+});
+
+test("PDF non décrits : 01–09 → pour tous, 10 et plus ou sans numéro → gestion ; tri par numéro puis nom", () => {
+  const f = [
+    { name: "Zébus.pdf", webUrl: u("z") },
+    { name: "15 - Procédure interne.pdf", webUrl: u("p") },
+    { name: "08 - Imprimer depuis son poste.pdf", webUrl: u("i") },
+    { name: "03 - B.pdf", webUrl: u("b3") },
+    { name: "Archives.pdf", webUrl: u("ar") },
+  ];
+  const vide = { guides: [] };
+  const tous = P.guidesPour(vide, f, "tous");
+  assert.deepEqual(tous.map((g) => [g.titre, g.pour]), [["B", "tous"], ["Imprimer depuis son poste", "tous"]], "le nouveau 08 est visible pour tous");
+  const gestion = P.guidesPour(vide, f, "gestion");
+  assert.deepEqual(gestion.map((g) => [g.titre, g.pour]), [["B", "tous"], ["Imprimer depuis son poste", "tous"],
+    ["Procédure interne", "gestion"], ["Archives", "gestion"], ["Zébus", "gestion"]]);
+  assert.equal(P.pourDuNumero("09 - x.pdf"), "tous");
+  assert.equal(P.pourDuNumero("10 - x.pdf"), "gestion");
+  assert.equal(P.pourDuNumero("00 - x.pdf"), "gestion");
+  assert.equal(P.pourDuNumero("x.pdf"), "gestion");
 });
 
 test("petits outils : taille, lien tel:", () => {
