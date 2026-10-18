@@ -49,4 +49,9 @@ self.EB_CONFIG = {
   /* Domaines de l'entreprise : toute personne sans adresse de ces domaines est « Externe ». */
   domainesInternes: ["breteuil.fr", "breteuil02.onmicrosoft.com"],
 
+  /* Site web du Château (WordPress). La section « Site web » apparaît pour les administrateurs
+   * généraux et pour les membres du groupe Microsoft 365 (ou de sécurité) nommé « groupe »
+   * (nom affiché, sans tenir compte des majuscules). Aucune adresse personnelle ici. */
+  siteWeb: { url: "https://www.breteuil.fr", admin: "https://www.breteuil.fr/wp-admin/", groupe: "Site web" },
+
 };

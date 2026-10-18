@@ -4,8 +4,10 @@
 // Contrôles à 375 px et 1280 px :
 //   - premier lancement : 2 gros boutons seulement (ni onglets, ni démo, ni tuiles) ; « Voir le calendrier »
 //     mémorisé sur l'appareil, petit lien « Revenir à l'accueil » ;
-//   - administrateur général, propriétaire du site, facturation, simple collaborateur : UNIQUEMENT les
-//     onglets attendus (4 au plus), routes réservées refusées, pastille verte ;
+//   - administrateur général, propriétaire du site, facturation, simple collaborateur, membre du groupe
+//     « Site web » : UNIQUEMENT les onglets attendus (4 au plus), routes réservées refusées, pastille verte ;
+//   - v5.1 « Site web » : onglet Site, tuiles WordPress (nouvel onglet), vérificateur de liens (réponse
+//     maquettée : 1 cassé, 1 redirigé, 3 bons), « Corriger » → pas-à-pas, vérificateur absent → message clair ;
 //   - « Déléguer » : permission demandée seulement sur cet écran, garde-fous, POST roleAssignments ;
 //   - dossier commun introuvable : pastille orange et message dans Dossiers ;
 //   - aucune erreur console, pas de défilement horizontal, cibles ≥ 44 px.
@@ -32,8 +34,8 @@ const GA = "62e90394-69f5-4237-9190-012177145e10", BILLING = "b0f54661-2d74-4c50
 const u = (id, nom, mail, lic, type = "Member") => ({ id, displayName: nom, givenName: nom.split(" ")[0], mail, userPrincipalName: mail, userType: type, accountEnabled: true, assignedLicenses: lic ? [{ skuId: lic }] : [] });
 const USERS = [u("u1", "Pauline de Breteuil", "pdebreteuil@breteuil.fr", "a"), u("u2", "François de Breteuil", "fdebreteuil@breteuil.fr", "a"),
   u("u3", "Valérie Durand", "vdurand@breteuil.fr", "a"), u("u4", "Fanny Martin", "fmartin@breteuil.fr", "b"), u("u5", "Contact", "contact@breteuil.fr", null),
-  u("u6", "Damien Belfort", "damien@breteuil02.onmicrosoft.com", null)];
-const SP = { u1: 7, u2: 8, u3: 9, u4: 10, u6: 11 };
+  u("u6", "Damien Belfort", "damien@breteuil02.onmicrosoft.com", null), u("u7", "Camille Roux", "croux@breteuil.fr", "b")];
+const SP = { u1: 7, u2: 8, u3: 9, u4: 10, u6: 11, u7: 12 };
 const PROPRIETAIRES = [{ Id: 7, Title: "Pauline de Breteuil", Email: "pdebreteuil@breteuil.fr", LoginName: "i:0#.f|membership|pdebreteuil@breteuil.fr", PrincipalType: 1 },
   { Id: 8, Title: "François de Breteuil", Email: "fdebreteuil@breteuil.fr", LoginName: "i:0#.f|membership|fdebreteuil@breteuil.fr", PrincipalType: 1 }];
 const AVEC_GERER = { High: "432", Low: String(2 ** 24 + 0xFFFF) }, SANS_GERER = { High: "176", Low: "138612833" };
@@ -45,9 +47,20 @@ const PROFILS = {
     attendus: ["planning", "fichiers", "equipe", "moi"], interdits: ["deleguer", "finance", "gerer"], autorises: ["personnes", "acces/Commun"] },
   facturation: { user: "u3", roles: [{ id: "r2", displayName: "Billing Administrator", roleTemplateId: BILLING }], lic: ["O365_BUSINESS_PREMIUM"],
     attendus: ["planning", "fichiers", "finance", "moi"], interdits: ["deleguer", "personnes", "acces/Commun", "gerer"], autorises: ["licences-reel"] },
-  collaborateur: { user: "u4", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"],
-    attendus: ["planning", "fichiers", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "absences"], autorises: [] },
+  collaborateur: { user: "u4", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"], groupes: [{ id: "g2", displayName: "Accueil" }],
+    attendus: ["planning", "fichiers", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "absences", "site", "liens", "guides/site"], autorises: [] },
+  // Membre du groupe « Site web » (nom en majuscules : comparaison sans casse), aucun autre droit.
+  siteweb: { user: "u7", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"], groupes: [{ id: "g2", displayName: "Accueil" }, { id: "g1", displayName: "SITE WEB" }],
+    attendus: ["planning", "fichiers", "site", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "guides/admin"], autorises: ["liens", "guides/site", "guides/site/pied"] },
 };
+// Réponse maquettée du Worker (GET /breteuil/site/liens) : 1 cassé, 1 redirigé, 3 bons.
+const LIENS = { verifieLe: "2026-10-18T12:05:00.000Z", liens: [
+  { texte: "Horaires, tarifs et accès", url: "https://www.breteuil.fr/horaires-tarifs-acces/", page: "fr", statut: 200, ok: true, redirigeVers: null },
+  { texte: "Escape Game", url: "https://www.breteuil.fr/escape-game-du-chateau-de-breteuil/", page: "fr", statut: 404, ok: false, redirigeVers: null },
+  { texte: "Presse", url: "https://www.breteuil.fr/presse/", page: "fr", statut: 200, ok: true, redirigeVers: "https://www.breteuil.fr/espace-presse-et-medias-2026/" },
+  { texte: "E-billetterie", url: "https://breteuil.tickeasy.com/", page: "fr", statut: 200, ok: true, redirigeVers: null },
+  { texte: "Contact", url: "https://www.breteuil.fr/en/contact/", page: "en", statut: 200, ok: true, redirigeVers: null },
+] };
 
 function reponses(nomProfil, variante) {
   const p = PROFILS[nomProfil], moi = USERS.find((x) => x.id === p.user);
@@ -56,6 +69,7 @@ function reponses(nomProfil, variante) {
     "/v1.0/me": moi,
     "/v1.0/me/transitiveMemberOf/microsoft.graph.directoryRole": { value: p.roles },
     "/v1.0/me/licenseDetails": { value: p.lic.map((s) => ({ skuPartNumber: s })) },
+    "/v1.0/me/transitiveMemberOf/microsoft.graph.group": { value: p.groupes || [] },
     "/v1.0/users": { value: USERS },
     "/v1.0/subscribedSkus": { value: [{ skuId: "a", skuPartNumber: "O365_BUSINESS_PREMIUM", prepaidUnits: { enabled: 6 }, consumedUnits: 4 }, { skuId: "b", skuPartNumber: "O365_BUSINESS_ESSENTIALS", prepaidUnits: { enabled: 6 }, consumedUnits: 1 }] },
     "/v1.0/directoryRoles": { value: [
@@ -111,8 +125,15 @@ async function preparer(contexte, nomProfil, opts = {}) {
   } else {
     await contexte.addInitScript(() => { self.EB_MAQUETTE = { deconnecte: true }; });
   }
-  await contexte.route("https://belfort-api.damien-belfort.workers.dev/**", (r) => r.fulfill({ status: 200,
-    headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "text/calendar" }, body: /\/2\.ics/.test(r.request().url()) ? ICS2 : ICS }));
+  await contexte.route("https://belfort-api.damien-belfort.workers.dev/**", (r) => {
+    const url = r.request().url();
+    if (/\/breteuil\/site\/liens/.test(url)) {
+      journal.push({ methode: "GET", chemin: new URL(url).pathname + new URL(url).search });
+      if (opts.liens === "absent") return r.fulfill({ status: 404, headers: CORS, body: JSON.stringify({ ok: false, erreur: "Introuvable." }) });
+      return r.fulfill({ status: 200, headers: CORS, body: JSON.stringify(LIENS) });
+    }
+    return r.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "text/calendar" }, body: /\/2\.ics/.test(url) ? ICS2 : ICS });
+  });
   return journal;
 }
 
@@ -141,6 +162,9 @@ async function capturer(page, nom) {
   await page.screenshot({ path: `${SORTIE}/${nom}.png`, fullPage: true });
   captures++;
 }
+/** Attendre la fin des apparitions (glissement d'écran) avant de mesurer. */
+const calme = (page) => page.evaluate(() => Promise.race([new Promise((ok) => setTimeout(ok, 2000)), Promise.all(document.getAnimations()
+  .filter((a) => a.timeline === document.timeline && isFinite(a.effect.getComputedTiming().endTime)).map((a) => a.finished.catch(() => {})))]));
 async function controlesCommuns(page, ou) {
   const r = await page.evaluate(() => ({ large: document.documentElement.scrollWidth > window.innerWidth + 1,
     petites: [...document.querySelectorAll(".onglets a, .barre .btn-rond, .barre .btn-retour, .pastille-etat, .gros-bouton, .t, .lien-discret button")]
@@ -178,7 +202,7 @@ try {
       await contexte.close();
     }
 
-    /* ---------- 4 profils ---------- */
+    /* ---------- 5 profils ---------- */
     for (const [nom, p] of Object.entries(PROFILS)) {
       const { contexte, page, erreurs, journal } = await nouvellePage(vp, nom, { theme: nom === "facturation" ? "dark" : "light" });
       await page.goto(BASE + "#/planning");
@@ -245,7 +269,46 @@ try {
         assert.equal((await page.evaluate(() => window.EBEpingles.lire())).length, 1, "retirer");
         assert.ok(!journal.some((x) => /mail|messages|sendMail/i.test(x.chemin)), "aucun appel de messagerie");
       }
+      if (nom === "siteweb") {
+        // Onglet Site : rappel de l'identifiant WordPress, 8 tuiles, liens WordPress dans un nouvel onglet.
+        await page.goto(BASE + "#/site");
+        await page.waitForSelector(".section-site .tuiles .t");
+        assert.match(await page.textContent(".section-site .bandeau"), /propre identifiant/);
+        const tuilesSite = await page.$$eval(".section-site .t", (l) => l.map((a) => ({ lib: a.querySelector(".lib").textContent, href: a.getAttribute("href"), cible: a.getAttribute("target") })));
+        assert.equal(tuilesSite.length, 8);
+        for (const t of tuilesSite.filter((x) => /^https:/.test(x.href))) assert.equal(t.cible, "_blank", t.lib);
+        assert.ok(tuilesSite.some((t) => t.href === "https://www.breteuil.fr/wp-admin/upload.php"));
+        await page.click('#fiche-pied > summary');
+        await page.waitForSelector('#fiche-pied[open] .etapes li');
+        await calme(page);
+        await controlesCommuns(page, `siteweb fiche ${taille}`);
+        await capturer(page, `siteweb-site-fiche-ouverte-${taille}`);
+        // Vérificateur de liens : cassé d'abord (rouge), puis à vérifier (orange), bons repliés.
+        await page.click('.section-site a[href="#/liens"]');
+        await page.waitForSelector(".carte-lien.casse");
+        const groupes = await page.$$eval(".zone-liens .carte-lien", (l) => l.map((c) => c.className.replace("carte-lien ", "")));
+        assert.deepEqual(groupes, ["casse", "verifier", "ok", "ok", "ok"]);
+        assert.equal(await page.isVisible(".liens-ok .carte-lien"), false, "bons liens repliés");
+        assert.match(await page.textContent(".bilan-liens"), /1 cassé.*1 à vérifier.*3 bons/);
+        await calme(page);
+        await controlesCommuns(page, `siteweb liens ${taille}`);
+        await capturer(page, `siteweb-liens-${taille}`);
+        await page.click('[data-action="reverifier"]');
+        await page.waitForFunction(() => !document.querySelector('[data-action="reverifier"]').disabled);
+        assert.ok(journal.some((x) => x.chemin === "/breteuil/site/liens?forcer=1"), "Revérifier → ?forcer=1");
+        await page.click('.carte-lien.casse a:has-text("Corriger")');
+        await page.waitForFunction(() => location.hash === "#/guides/site/pied");
+        await page.waitForSelector(".etapes li");
+        assert.equal(await page.$$eval(".etapes li", (l) => l.length), 3);
+        await capturer(page, `siteweb-guide-pied-${taille}`);
+        await page.goto(BASE + "#/guides/site/couleurs");
+        await page.waitForSelector('.bandeau.exemple:has-text("site de test")');
+      }
       if (nom === "admin") {
+        await page.goto(BASE + "#/gerer");
+        await page.waitForSelector("#t-site");
+        assert.equal(await page.$$eval(".section-site .t", (l) => l.length), 8, "admin : section Site web dans Gérer");
+        await capturer(page, `admin-gerer-site-web-${taille}`);
         await page.goto(BASE + "#/deleguer");
         await page.waitForSelector('[data-permission="manquante"]');
         assert.ok(await page.isDisabled('[data-action="donner-facturation"]'), "sans permission : boutons désactivés");
@@ -269,7 +332,7 @@ try {
         // Tous les écrans de l'administrateur (et les démos, une fois le réglage activé) s'ouvrent sans erreur.
         await page.evaluate(() => { const r = JSON.parse(localStorage.getItem("eb:reglages") || "{}"); r.demos = true; localStorage.setItem("eb:reglages", JSON.stringify(r)); });
         await page.reload();
-        for (const route of ["gerer", "personnes", "personnes/u4", "organisation", "licences-reel", "guides/admin", "guides/finance", "commun", "commun/Commun/Finance", "acces/Commun",
+        for (const route of ["gerer", "liens", "guides/site", "guides/site/cache", "personnes", "personnes/u4", "organisation", "licences-reel", "guides/admin", "guides/finance", "commun", "commun/Commun/Finance", "acces/Commun",
           "onedrive", "journal", "reglages", "details", "installer", "demos", "arrivee/1", "depart", "roles", "boites", "securite", "historique", "licences", "simulateur", "factures", "paiement"]) {
           await page.goto(BASE + "#/" + route);
           await page.waitForSelector(".barre h1");
@@ -280,6 +343,18 @@ try {
         await page.waitForFunction(() => location.hash === "#/planning").catch(() => problemes.push("#/absences devrait être retiré"));
       }
       if (erreurs.length) problemes.push(`${nom} ${taille} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+
+    /* ---------- Vérificateur de liens pas encore installé (Worker sans la route) ---------- */
+    {
+      const { contexte, page, erreurs } = await nouvellePage(vp, "siteweb", { liens: "absent" });
+      await page.goto(BASE + "#/liens");
+      await page.waitForSelector('[data-etat="erreur"]', { timeout: 8000 });
+      assert.match(await page.textContent('[data-etat="erreur"]'), /pas encore installé.*Damien doit mettre à jour le service/);
+      await capturer(page, `siteweb-liens-absent-${taille}`);
+      const autres = erreurs.filter((e) => !/404/.test(e));
+      if (autres.length) problemes.push(`liens absent ${taille} : erreurs console ${autres.join(" | ")}`);
       await contexte.close();
     }
 
@@ -322,4 +397,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 4 profils + Fichiers + épingles + problème réel (375 et 1280 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + vérificateur de liens + Fichiers + épingles + problème réel (375 et 1280 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
