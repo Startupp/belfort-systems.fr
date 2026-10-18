@@ -1,14 +1,14 @@
-// Tests de « Pilotage » (sans navigateur) : node --test espace-breteuil/tests/pilotage.test.mjs
-// Données FICTIVES uniquement (tests/pilotage-exemple.json) : le dépôt est public.
+// Tests de « Suivi informatique » (sans navigateur) : node --test espace-breteuil/tests/suivi.test.mjs
+// Données FICTIVES uniquement (tests/suivi-exemple.json) : le dépôt est public.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
-const P = require("../pilotage.js");
+const P = require("../suivi.js");
 const lire = (f) => readFileSync(new URL("../" + f, import.meta.url), "utf8");
-const EXEMPLE = JSON.parse(lire("tests/pilotage-exemple.json"));
+const EXEMPLE = JSON.parse(lire("tests/suivi-exemple.json"));
 const FICHIERS = [
   { name: "guide-demarrage.pdf", webUrl: "https://exemple.sharepoint.com/g1.pdf", size: 245760, lastModifiedDateTime: "2026-05-05T09:00:00Z" },
   { name: "Memo Messagerie.pdf", webUrl: "https://exemple.sharepoint.com/g2.pdf", size: 1300000 },
@@ -78,7 +78,7 @@ test("correspondance document → fichier : sans casse ni accents, https seuleme
   assert.deepEqual(devis, [{ nom: "Devis matériel.pdf", titre: "Devis postes et sauvegarde", url: "" }], "absent → « document à venir »");
 });
 
-test("filtrage : « tous » pour Moi → Guides, tout (et les PDF non décrits) dans Pilotage", () => {
+test("filtrage : « tous » pour Moi → Guides, tout (et les PDF non décrits) dans Suivi informatique", () => {
   const d = P.valider(EXEMPLE).donnees;
   const tous = P.guidesPour(d, FICHIERS, "tous");
   assert.deepEqual(tous.map((g) => g.titre), ["Guide de démarrage", "Mémo messagerie (1 page)"]);
@@ -97,7 +97,17 @@ test("petits outils : taille, lien tel:", () => {
 });
 
 test("dépôt public : aucune donnée client dans le code ni dans l'exemple", () => {
-  const code = lire("pilotage.js") + lire("pilotage-ecrans.js") + lire("tests/pilotage-exemple.json");
+  const code = lire("suivi.js") + lire("suivi-ecrans.js") + lire("tests/suivi-exemple.json");
   assert.doesNotMatch(code, /breteuil\.fr|ch[aâ]teau de breteuil|o2switch|D-2026-001|06 09 89 74 43|gmail/i);
-  assert.doesNotMatch(lire("pilotage-ecrans.js"), /innerHTML|insertAdjacentHTML|outerHTML/, "tout est inséré en texte");
+  assert.doesNotMatch(lire("suivi-ecrans.js"), /innerHTML|insertAdjacentHTML|outerHTML/, "tout est inséré en texte");
+});
+
+test("config.js : libellés, dossier et fichier du Suivi informatique en UNE constante", async () => {
+  const vm = await import("node:vm");
+  const ctx = { self: {} }; vm.runInNewContext(lire("config.js"), ctx);
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.self.EB_CONFIG.suivi)), { libelle: "Suivi informatique", tuile: "Suivi informatique — tout ce qui a été fait pour vous",
+    dossier: "Suivi informatique", fichier: "suivi.json", guides: "Guides", ancien: { dossier: "Pilotage", fichier: "pilotage.json" } });
+  const ecrans = lire("suivi-ecrans.js");
+  assert.match(ecrans, /EB_CONFIG\.suivi/);
+  assert.doesNotMatch(ecrans.replace(/function reglage\(\)[\s\S]*?\n  }\n/, ""), /"Suivi informatique|"suivi\.json"|"Pilotage"|"pilotage\.json"/, "aucun nom codé en dur hors des valeurs par défaut");
 });

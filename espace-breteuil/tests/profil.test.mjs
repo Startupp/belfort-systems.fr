@@ -132,7 +132,7 @@ test("pas membre du groupe : ni onglet Site, ni vérificateur", () => {
   assert.equal(P.routePermise("liens", null), false);
 });
 
-test("v5.2 Pilotage : depuis Gérer, Équipe ou Finance ; jamais pour un simple collaborateur", () => {
+test("v5.2 Suivi informatique (#/suivi) : depuis Gérer, Équipe ou Finance ; jamais pour un simple collaborateur", () => {
   const cas = [
     [{ roles: [R.admin.id] }, true, "gerer"],
     [{ roles: [], proprietaire: true }, true, "equipe"],
@@ -142,10 +142,10 @@ test("v5.2 Pilotage : depuis Gérer, Équipe ou Finance ; jamais pour un simple 
   ];
   for (const [e, permis, onglet] of cas) {
     const r = P.deduire(e);
-    assert.equal(P.routePermise("pilotage", r), permis, JSON.stringify(e));
-    if (onglet) assert.equal(P.ongletDe("pilotage", r), onglet);
+    assert.equal(P.routePermise("suivi", r), permis, JSON.stringify(e));
+    if (onglet) assert.equal(P.ongletDe("suivi", r), onglet);
     assert.ok(r.onglets.length <= 4);
   }
-  assert.equal(P.routePermise("pilotage", null), false, "droits inconnus : écran en attente");
+  assert.equal(P.routePermise("suivi", null), false, "droits inconnus : écran en attente");
   assert.equal(P.ongletDe("moi", P.deduire({ roles: [] })), "moi", "Moi → Guides reste sous Moi");
 });
