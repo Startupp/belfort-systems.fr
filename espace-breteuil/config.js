@@ -54,4 +54,10 @@ self.EB_CONFIG = {
    * (nom affiché, sans tenir compte des majuscules). Aucune adresse personnelle ici. */
   siteWeb: { url: "https://www.breteuil.fr", admin: "https://www.breteuil.fr/wp-admin/", groupe: "Site web" },
 
+  /* « Suivi informatique » (v5.2) : libellés de l'écran et emplacement des données dans le dossier
+   * commun. Renommer ici suffit (interface, dossier SharePoint, fichier). « ancien » = emplacement
+   * accepté en repli (anciennement « Pilotage/pilotage.json »). Aucune donnée du client ici. */
+  suivi: { libelle: "Suivi informatique", tuile: "Suivi informatique — tout ce qui a été fait pour vous",
+    dossier: "Suivi informatique", fichier: "suivi.json", guides: "Guides", ancien: { dossier: "Pilotage", fichier: "pilotage.json" } },
+
 };
