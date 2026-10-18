@@ -5,7 +5,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const SOURCE = readFileSync(new URL("./worker.js", import.meta.url), "utf8");
+// « cloudflare:email » n'existe que chez Cloudflare : remplacé par une classe témoin (from, to, raw).
+const SOURCE = readFileSync(new URL("./worker.js", import.meta.url), "utf8")
+  .replace(/^import \{ EmailMessage \} from "cloudflare:email";$/m, "class EmailMessage { constructor(from, to, raw) { this.from = from; this.to = to; this.raw = raw; } }");
+assert.ok(!/cloudflare:email/.test(SOURCE.replace(/^\/\/.*$/gm, "")), "import cloudflare:email remplacé pour Node");
 let n = 0;
 const charger = () => import("data:text/javascript;charset=utf-8," + encodeURIComponent(SOURCE + "\n// copie " + (n++)));
 const ORIGINE = "https://espace-breteuil.pages.dev";
@@ -231,4 +234,312 @@ test("site injoignable : 502 JSON clair, ou dernière copie connue", async () =>
   const j = await r.json();
   assert.equal(j.ok, false); assert.match(j.erreur, /ne répond pas/);
   assert.equal(r.headers.get("Access-Control-Allow-Origin"), ORIGINE);
+});
+
+/* ================================================================== */
+/* Aide / demandes (v5.4) : jeton Microsoft, D1, mails sortants/entrants */
+/* ================================================================== */
+// Clé RSA de TEST générée à chaque lancement, JWKS simulé, base D1 simulée par node:sqlite (mémoire).
+// Adresses fictives (exemple.fr) : aucune vraie adresse dans le dépôt.
+import { DatabaseSync } from "node:sqlite";
+
+const TENANT_GUID = "11111111-2222-3333-4444-555555555555";
+const ISS = `https://login.microsoftonline.com/${TENANT_GUID}/v2.0`;
+const CLIENT = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+const PRESTA = "damien.prestataire@exemple.fr", PRESTA_TENANT = "damien@chateau-exemple.onmicrosoft.com";
+const paire = await crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["sign", "verify"]);
+const autrePaire = await crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["sign", "verify"]);
+const jwkPublic = await crypto.subtle.exportKey("jwk", paire.publicKey);
+const JWKS = { keys: [{ kty: "RSA", use: "sig", kid: "cle-test", n: jwkPublic.n, e: jwkPublic.e }] };
+const b64u = (o) => Buffer.from(o).toString("base64url");
+async function jeton(charge, opts = {}) {
+  const maintenant = Math.floor(Date.now() / 1000);
+  const c = { iss: ISS, aud: CLIENT, iat: maintenant, nbf: maintenant, exp: maintenant + 3600, ...charge };
+  const tete = b64u(JSON.stringify({ alg: "RS256", typ: "JWT", kid: opts.kid || "cle-test" })) + "." + b64u(JSON.stringify(c));
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", (opts.paire || paire).privateKey, new TextEncoder().encode(tete));
+  return tete + "." + b64u(new Uint8Array(sig));
+}
+const FANNY = { oid: "oid-fanny", name: "Fanny Martin", preferred_username: "fmartin@chateau-exemple.fr" };
+const CAMILLE = { oid: "oid-camille", name: "Camille Roux", preferred_username: "croux@chateau-exemple.fr" };
+const DAMIEN = { oid: "oid-damien", name: "Damien Belfort", preferred_username: PRESTA_TENANT };
+
+function d1() {
+  const db = new DatabaseSync(":memory:");
+  const stmt = (sql, v = []) => ({
+    bind: (...x) => stmt(sql, x),
+    first: async () => db.prepare(sql).get(...v) ?? null,
+    all: async () => ({ results: db.prepare(sql).all(...v) }),
+    run: async () => { const r = db.prepare(sql).run(...v); return { meta: { changes: r.changes, last_row_id: Number(r.lastInsertRowid) } }; },
+  });
+  return { brut: db, prepare: (sql) => stmt(sql), batch: async (l) => { for (const s of l) await s.run(); } };
+}
+function envAide(extra = {}) {
+  const envoyes = [];
+  return { envoyes, AIDE_DB: d1(), AIDE_MAIL: { send: async (m) => { envoyes.push(m); return { messageId: "x" }; } },
+    AIDE_TENANT_ID: "chateau-exemple.onmicrosoft.com", AIDE_CLIENT_ID: CLIENT, AIDE_SECRET: "secret-de-test-tres-long-0123456789",
+    AIDE_EXPEDITEUR: "aide@aide.exemple.fr", AIDE_DESTINATAIRE: PRESTA, AIDE_PRESTATAIRES: PRESTA + ", " + PRESTA_TENANT, ...extra };
+}
+function installerMicrosoft() {
+  return installer({
+    "https://login.microsoftonline.com/chateau-exemple.onmicrosoft.com/v2.0/.well-known/openid-configuration": { status: 200, type: "application/json", corps: JSON.stringify({ issuer: ISS }) },
+    "https://login.microsoftonline.com/chateau-exemple.onmicrosoft.com/discovery/v2.0/keys": { status: 200, type: "application/json", corps: JSON.stringify(JWKS) },
+  });
+}
+// La maquette de fetch n'a que text() : json() ajouté ici.
+const fetchAvecJson = () => { const f = globalThis.fetch; globalThis.fetch = async (u, i) => { const r = await f(u, i); r.json = async () => JSON.parse(await r.text()); return r; }; globalThis.fetch.appels = f.appels; };
+async function appel(W, env, chemin, { methode = "GET", qui, corps, brut } = {}) {
+  const headers = { Origin: ORIGINE };
+  if (qui) headers.Authorization = "Bearer " + (typeof qui === "string" ? qui : await jeton(qui));
+  if (corps) headers["Content-Type"] = "application/json";
+  const r = await W.fetch(new Request("https://belfort-api.exemple.workers.dev" + chemin, { method: methode, headers, body: brut ?? (corps ? JSON.stringify(corps) : undefined) }), env);
+  return { status: r.status, j: await r.json(), r };
+}
+async function prete() { const mod = await charger(); installerMicrosoft(); fetchAvecJson(); return mod; }
+/** Décode le MIME produit : en-têtes dépliés + corps base64. */
+function lireMime(raw) {
+  const [tete, corps] = raw.split("\r\n\r\n");
+  const h = {};
+  for (const l of tete.replace(/\r\n[ \t]+/g, " ").split("\r\n")) { const i = l.indexOf(":"); h[l.slice(0, i).toLowerCase()] = l.slice(i + 1).trim(); }
+  const mots = (v) => v.replace(/=\?UTF-8\?B\?([^?]+)\?=\s*/g, (m, b) => Buffer.from(b, "base64").toString("utf8"));
+  return { h, sujet: mots(h.subject), corps: Buffer.from(corps.replace(/\s/g, ""), "base64").toString("utf8"), tete };
+}
+
+test("aide : non configurée → 503 aide_non_configuree ; CORS : Authorization, POST, PATCH", async () => {
+  const W = (await prete()).default;
+  const r = await appel(W, {}, "/breteuil/aide/moi");
+  assert.equal(r.status, 503); assert.equal(r.j.code, "aide_non_configuree");
+  const sansMail = envAide({ AIDE_MAIL: undefined });
+  assert.equal((await appel(W, sansMail, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "x" } })).j.code, "aide_non_configuree");
+  const o = await W.fetch(new Request("https://x.dev/breteuil/aide", { method: "OPTIONS", headers: { Origin: ORIGINE } }), {});
+  assert.equal(o.status, 204);
+  assert.match(o.headers.get("Access-Control-Allow-Headers"), /Authorization/); assert.match(o.headers.get("Access-Control-Allow-Headers"), /Content-Type/);
+  assert.match(o.headers.get("Access-Control-Allow-Methods"), /POST/); assert.match(o.headers.get("Access-Control-Allow-Methods"), /PATCH/);
+  assert.equal((await W.fetch(new Request("https://x.dev/breteuil/aide", { headers: { Origin: "https://pirate.example" } }), envAide())).status, 403, "origine toujours contrôlée");
+});
+
+test("aide : jeton Microsoft vérifié (signature, iss, aud, exp/nbf avec 5 min de tolérance)", async () => {
+  const W = (await prete()).default, env = envAide();
+  const maintenant = Math.floor(Date.now() / 1000);
+  assert.equal((await appel(W, env, "/breteuil/aide/moi")).status, 401, "sans jeton");
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: "pas.un.jeton" })).status, 401);
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: await jeton(FANNY, { paire: autrePaire }) })).status, 401, "autre clé");
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: await jeton(FANNY, { kid: "inconnue" }) })).status, 401, "kid inconnu");
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: { ...FANNY, aud: "autre-appli" } })).status, 401, "aud");
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: { ...FANNY, iss: "https://login.microsoftonline.com/autre/v2.0" } })).status, 401, "iss");
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: { ...FANNY, exp: maintenant - 400 } })).status, 401, "expiré");
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: { ...FANNY, nbf: maintenant + 400 } })).status, 401, "pas encore valable");
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: { ...FANNY, oid: undefined } })).status, 401, "sans oid");
+  // Jeton altéré : charge changée, signature d'origine.
+  const t = (await jeton(FANNY)).split("."); t[1] = b64u(JSON.stringify({ ...JSON.parse(Buffer.from(t[1], "base64url")), preferred_username: PRESTA_TENANT }));
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: t.join(".") })).status, 401, "charge altérée");
+  const ok = await appel(W, env, "/breteuil/aide/moi", { qui: { ...FANNY, exp: maintenant - 120 } });
+  assert.equal(ok.status, 200, "expiré depuis 2 min : toléré");
+  assert.deepEqual(ok.j, { prestataire: false, nom: "Fanny Martin", adresse: "fmartin@chateau-exemple.fr" });
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: DAMIEN })).j.prestataire, true);
+  // Clés en cache : un seul chargement des JWKS pour tous ces appels.
+  assert.equal(globalThis.fetch.appels.filter((a) => /keys$/.test(a)).length, 1, "JWKS chargées une fois (kid inconnu : pas de rechargement avant 1 min)");
+});
+
+test("aide : création, mail sortant MIME (sujet exact encodé RFC 2047, Reply-To signé, corps complet)", async () => {
+  const mod = await prete(), W = mod.default, env = envAide();
+  const r = await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "probleme", message: "Le planning ne s'affiche plus\u0007 <b>depuis ce matin</b>.", ecran: "Planning", version: "5.4.0", appareil: "iPhone (Safari)" } });
+  assert.equal(r.status, 201); assert.equal(r.j.id, 1); assert.equal(r.j.mailEnvoye, true);
+  assert.equal(env.envoyes.length, 1);
+  const m = env.envoyes[0];
+  assert.equal(m.from, "aide@aide.exemple.fr"); assert.equal(m.to, PRESTA);
+  const x = lireMime(m.raw);
+  assert.equal(x.sujet, "Application Breteuil - Retour client - Problème - n°1");
+  assert.match(x.h.subject, /^=\?UTF-8\?B\?/, "sujet encodé (accent)");
+  assert.ok(x.tete.split("\r\n").every((l) => l.length <= 78), "lignes d'en-tête ≤ 78 caractères");
+  const sig = await mod.signature(env.AIDE_SECRET, 1);
+  assert.match(sig, /^[0-9a-f]{12}$/);
+  assert.equal(x.h["reply-to"], `<demande-1-${sig}@aide.exemple.fr>`);
+  assert.match(x.h.from, /<aide@aide\.exemple\.fr>$/);
+  assert.equal(x.h["content-type"], "text/plain; charset=UTF-8");
+  for (const attendu of ["Nom : Fanny Martin", "Adresse : fmartin@chateau-exemple.fr", "Écran : Planning", "Version : 5.4.0", "Appareil : iPhone (Safari)",
+    "Le planning ne s'affiche plus <b>depuis ce matin</b>.", "https://espace-breteuil.pages.dev/#/aide/1"]) assert.ok(x.corps.includes(attendu), "corps : " + attendu);
+  assert.ok(!x.corps.includes("\u0007"), "caractères de contrôle retirés");
+  // « n° » n'est pas ASCII : le sujet est toujours encodé, et se relit à l'identique.
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "Bravo" } });
+  assert.equal(lireMime(env.envoyes[1].raw).sujet, "Application Breteuil - Retour client - Avis - n°2");
+  assert.equal(mod.enTete("Re: simple ASCII"), "Re: simple ASCII", "ASCII : non encodé");
+  for (const [t, l] of [["question", "Question"], ["amelioration", "Amélioration"]]) assert.equal(mod.sujetDemande(t, 7), `Application Breteuil - Retour client - ${l} - n°7`);
+  // Constructeur MIME seul : en-tête long non ASCII découpé en plusieurs mots encodés.
+  const long = mod.enTete("Amélioration ".repeat(8));
+  assert.ok(long.split("\r\n ").length > 1 && long.split("\r\n ").every((w) => w.length <= 75));
+});
+
+test("aide : validations, limite de 10 demandes par heure, envoi de mail en échec non bloquant", async () => {
+  const W = (await prete()).default, env = envAide();
+  const post = (corps, qui = FANNY) => appel(W, env, "/breteuil/aide", { methode: "POST", qui, corps });
+  assert.equal((await post({ type: "inconnu", message: "x" })).status, 400);
+  assert.equal((await post({ type: "avis", message: "   " })).j.code, "message_vide");
+  assert.equal((await post({ type: "avis", message: "é".repeat(4001) })).j.code, "message_trop_long");
+  assert.equal((await post({ type: "avis", message: "é".repeat(4000) })).status, 201);
+  assert.equal((await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, brut: "{pas du json" })).status, 400);
+  for (let i = 0; i < 9; i++) assert.equal((await post({ type: "question", message: "Q" + i })).status, 201);
+  const trop = await post({ type: "question", message: "une de trop" });
+  assert.equal(trop.status, 429); assert.equal(trop.j.code, "trop_de_demandes");
+  assert.equal((await post({ type: "question", message: "autre personne" }, CAMILLE)).status, 201, "limite par personne");
+  // Une heure plus tard : de nouveau permis.
+  env.AIDE_DB.brut.exec("UPDATE demandes SET cree = '2000-01-01T00:00:00.000Z'");
+  assert.equal((await post({ type: "question", message: "plus tard" })).status, 201);
+  const enPanne = envAide({ AIDE_MAIL: { send: async () => { throw new Error("destination non vérifiée"); } } });
+  const r = await appel(W, enPanne, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "x" } });
+  assert.equal(r.status, 201); assert.equal(r.j.mailEnvoye, false, "demande gardée même si le mail échoue");
+});
+
+test("aide : droits (chacun ses demandes, prestataire tout), fil, réponse, non lu, statuts, filtres", async () => {
+  const W = (await prete()).default, env = envAide();
+  const creer = async (qui, type, message) => (await appel(W, env, "/breteuil/aide", { methode: "POST", qui, corps: { type, message, ecran: "Moi" } })).j.id;
+  const a = await creer(FANNY, "probleme", "Imprimante"), b = await creer(CAMILLE, "question", "Mot de passe");
+  // Camille ne voit ni ne modifie la demande de Fanny (404 : rien n'est révélé).
+  assert.equal((await appel(W, env, "/breteuil/aide/" + a, { qui: CAMILLE })).status, 404);
+  assert.equal((await appel(W, env, "/breteuil/aide/" + a + "/messages", { methode: "POST", qui: CAMILLE, corps: { texte: "intrus" } })).status, 404);
+  assert.equal((await appel(W, env, "/breteuil/aide/" + a, { methode: "PATCH", qui: CAMILLE, corps: { statut: "resolue" } })).status, 404);
+  assert.deepEqual((await appel(W, env, "/breteuil/aide", { qui: CAMILLE })).j.demandes.map((d) => d.id), [b]);
+  // Prestataire : tout, filtrable.
+  const tout = await appel(W, env, "/breteuil/aide", { qui: DAMIEN });
+  assert.equal(tout.j.prestataire, true); assert.deepEqual(tout.j.demandes.map((d) => d.id).sort(), [a, b]);
+  assert.deepEqual((await appel(W, env, "/breteuil/aide?type=probleme", { qui: DAMIEN })).j.demandes.map((d) => d.id), [a]);
+  assert.deepEqual((await appel(W, env, "/breteuil/aide?personne=CROUX@chateau-exemple.fr", { qui: DAMIEN })).j.demandes.map((d) => d.id), [b]);
+  // Réponse de Damien dans l'appli → Répondue, non lue chez Fanny, pas de mail.
+  const avant = env.envoyes.length;
+  const rep = await appel(W, env, "/breteuil/aide/" + a + "/messages", { methode: "POST", qui: DAMIEN, corps: { texte: "Je regarde ça." } });
+  assert.equal(rep.status, 201); assert.equal(rep.j.statut, "repondue"); assert.equal(env.envoyes.length, avant);
+  const l = (await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes[0];
+  assert.equal(l.statut, "repondue"); assert.equal(l.nonLu, true); assert.equal(l.nbMessages, 2); assert.equal(l.dernierAuteur, "prestataire");
+  assert.equal((await appel(W, env, "/breteuil/aide/" + a, { qui: DAMIEN })).j.demande.nonLu, false, "lu par le prestataire : ne change rien");
+  assert.equal((await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes[0].nonLu, true);
+  const fil = await appel(W, env, "/breteuil/aide/" + a, { qui: FANNY });
+  assert.deepEqual(fil.j.messages.map((m) => [m.auteur, m.texte, m.origine]), [["client", "Imprimante", "appli"], ["prestataire", "Je regarde ça.", "appli"]]);
+  assert.equal((await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes[0].nonLu, false, "ouvert → lu");
+  // Fanny répond → Nouvelle + mail à Damien (même sujet).
+  const r2 = await appel(W, env, "/breteuil/aide/" + a + "/messages", { methode: "POST", qui: FANNY, corps: { texte: "Toujours en panne." } });
+  assert.equal(r2.j.statut, "nouvelle"); assert.equal(r2.j.mailEnvoye, true);
+  const dernier = lireMime(env.envoyes.at(-1).raw);
+  assert.equal(dernier.sujet, "Application Breteuil - Retour client - Problème - n°" + a);
+  assert.match(dernier.corps, /Nouveau message sur la demande n°1/); assert.match(dernier.corps, /Toujours en panne\./);
+  // Statuts : le client peut seulement marquer « Résolue » ; le prestataire peut tout.
+  assert.equal((await appel(W, env, "/breteuil/aide/" + a, { methode: "PATCH", qui: FANNY, corps: { statut: "repondue" } })).status, 403);
+  assert.equal((await appel(W, env, "/breteuil/aide/" + a, { methode: "PATCH", qui: FANNY, corps: { statut: "resolue" } })).j.statut, "resolue");
+  assert.equal((await appel(W, env, "/breteuil/aide/" + a, { methode: "PATCH", qui: DAMIEN, corps: { statut: "bidon" } })).status, 400);
+  assert.equal((await appel(W, env, "/breteuil/aide/" + b, { methode: "PATCH", qui: DAMIEN, corps: { statut: "resolue" } })).status, 200);
+  assert.deepEqual((await appel(W, env, "/breteuil/aide?statut=resolue", { qui: DAMIEN })).j.demandes.map((d) => d.id).sort(), [a, b]);
+  assert.equal((await appel(W, env, "/breteuil/aide/" + a + "/messages", { methode: "POST", qui: FANNY, corps: { texte: "x".repeat(4001) } })).status, 400);
+  assert.equal((await appel(W, env, "/breteuil/aide/abc", { qui: FANNY })).status, 404);
+  assert.equal((await appel(W, env, "/breteuil/aide/999", { qui: DAMIEN })).status, 404);
+});
+
+/* ---------- Mail entrant ---------- */
+// Réponse Gmail réaliste : multipart/alternative, texte en quoted-printable, ligne « Le … a écrit : » coupée en deux.
+function reponseGmail(a, de) {
+  return [
+    "Received: by mail-wr1-f41.google.com with SMTP id 5b1f17b1804b1-46e0;",
+    "        Sun, 18 Oct 2026 05:07:12 -0700 (PDT)",
+    "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=exemple.fr; s=20230601; h=to:subject:message-id:date:from;",
+    "        bh=AAAA; b=BBBB",
+    "MIME-Version: 1.0",
+    "References: <demande-1@aide.exemple.fr> <demande-1-0f1e2d3c@aide.exemple.fr>",
+    "In-Reply-To: <demande-1-0f1e2d3c@aide.exemple.fr>",
+    `From: Damien Belfort <${de}>`,
+    "Date: Sun, 18 Oct 2026 14:07:12 +0200",
+    "Message-ID: <CAF8x9Q0r=YpZk_exemple@mail.gmail.com>",
+    "Subject: Re: Application Breteuil - Retour client - =?UTF-8?B?UHJvYmzDqG1l?= - n°1",
+    `To: ${a}`,
+    'Content-Type: multipart/alternative; boundary="000000000000c0ffee0123456789"',
+    "",
+    "--000000000000c0ffee0123456789",
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: quoted-printable",
+    "",
+    "Bonjour Fanny,",
+    "",
+    "C'est r=C3=A9gl=C3=A9 : le planning s'affiche de nouveau. Pouvez-vous v=C3=A9rif=",
+    "ier de votre c=C3=B4t=C3=A9 ?",
+    "",
+    "> Une ligne citée au milieu (ignorée)",
+    "Bonne journ=C3=A9e,",
+    "Damien",
+    "",
+    "Le dim. 18 oct. 2026 =C3=A0 14:05, Espace Breteuil <aide@aide.exemple.fr> a",
+    "=C3=A9crit :",
+    "",
+    "> Nouvelle demande n=C2=B01 =E2=80=94 Probl=C3=A8me",
+    ">",
+    "> Nom : Fanny Martin",
+    "> Message :",
+    "> Le planning ne s'affiche plus.",
+    ">",
+    "",
+    "--000000000000c0ffee0123456789",
+    'Content-Type: text/html; charset="UTF-8"',
+    "Content-Transfer-Encoding: quoted-printable",
+    "",
+    '<div dir=3D"ltr">Bonjour Fanny,<div><br></div><div>C&#39;est r=C3=A9gl=C3=A9 (HTML)</div></div>',
+    "",
+    "--000000000000c0ffee0123456789--",
+    "",
+  ].join("\r\n");
+}
+function mailEntrant(a, de, brut) {
+  const octets = new TextEncoder().encode(brut);
+  return { to: a, from: de, rawSize: octets.length, rejet: null,
+    raw: new ReadableStream({ start(c) { c.enqueue(octets); c.close(); } }), setReject(r) { this.rejet = r; } };
+}
+
+test("mail entrant : réponse Gmail (quoted-printable) ajoutée au fil sans la citation → Répondue, non lue", async () => {
+  const mod = await prete(), W = mod.default, env = envAide();
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "probleme", message: "Le planning ne s'affiche plus." } });
+  const a = `demande-1-${await mod.signature(env.AIDE_SECRET, 1)}@aide.exemple.fr`;
+  const msg = mailEntrant(a, PRESTA, reponseGmail(a, PRESTA));
+  await W.email(msg, env, {});
+  assert.equal(msg.rejet, null);
+  const fil = await appel(W, env, "/breteuil/aide/1", { qui: DAMIEN });
+  const m = fil.j.messages.at(-1);
+  assert.equal(m.auteur, "prestataire"); assert.equal(m.origine, "mail");
+  assert.equal(m.texte, "Bonjour Fanny,\n\nC'est réglé : le planning s'affiche de nouveau. Pouvez-vous vérifier de votre côté ?\n\nBonne journée,\nDamien");
+  assert.equal(fil.j.demande.statut, "repondue");
+  assert.equal((await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes[0].nonLu, true, "pastille chez Fanny");
+  // Adresse en MAJUSCULES et expéditeur avec nom : acceptés.
+  const m2 = mailEntrant(a.toUpperCase(), "Damien <" + PRESTA.toUpperCase() + ">", reponseGmail(a, PRESTA));
+  await W.email(m2, env, {}); assert.equal(m2.rejet, null);
+});
+
+test("mail entrant : signature invalide, expéditeur non autorisé, autre domaine, demande inconnue → rejet", async () => {
+  const mod = await prete(), W = mod.default, env = envAide();
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "x" } });
+  const bon = `demande-1-${await mod.signature(env.AIDE_SECRET, 1)}@aide.exemple.fr`;
+  const cas = [
+    ["demande-1-000000000000@aide.exemple.fr", PRESTA, "signature fausse"],
+    [`demande-2-${(await mod.signature(env.AIDE_SECRET, 1))}@aide.exemple.fr`, PRESTA, "signature d'une autre demande"],
+    [bon, "pirate@exemple.org", "expéditeur non autorisé"],
+    [bon, "fmartin@chateau-exemple.fr", "le client ne répond pas par mail"],
+    [bon.replace("aide.exemple.fr", "autre.exemple.fr"), PRESTA, "autre domaine"],
+    ["contact@aide.exemple.fr", PRESTA, "adresse quelconque"],
+    [`demande-9-${await mod.signature(env.AIDE_SECRET, 9)}@aide.exemple.fr`, PRESTA, "demande inexistante"],
+  ];
+  for (const [a, de, pourquoi] of cas) {
+    const m = mailEntrant(a, de, reponseGmail(a, de));
+    await W.email(m, env, {});
+    assert.equal(m.rejet, "Adresse inconnue", pourquoi);
+  }
+  assert.equal((await appel(W, env, "/breteuil/aide/1", { qui: DAMIEN })).j.messages.length, 1, "rien ajouté");
+  // Aide non configurée : rejet aussi.
+  const m = mailEntrant(bon, PRESTA, reponseGmail(bon, PRESTA)); await W.email(m, {}, {}); assert.equal(m.rejet, "Adresse inconnue");
+});
+
+test("mail entrant : base64, HTML seul, anglais « On … wrote: », signature « -- », Outlook", async () => {
+  const mod = await prete();
+  const b64 = Buffer.from("Réponse en base64.\n\nOn Sun, Oct 18, 2026 at 2:05 PM Espace Breteuil <aide@aide.exemple.fr> wrote:\n> cité", "utf8").toString("base64");
+  assert.equal(mod.sansCitation(mod.partieTexte(`Content-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${b64}\r\n`).texte), "Réponse en base64.");
+  const html = 'Content-Type: text/html; charset=UTF-8\r\n\r\n<div>Bonjour &amp; merci<br>Damien</div><div class="gmail_quote"><blockquote>vieux</blockquote></div>';
+  assert.equal(mod.sansCitation(mod.partieTexte(html).texte), "Bonjour & merci\nDamien");
+  assert.equal(mod.sansCitation("Merci !\n-- \nDamien Belfort\n06 00 00 00 00"), "Merci !");
+  assert.equal(mod.sansCitation("Ok pour moi.\n\nDe : Espace Breteuil <aide@aide.exemple.fr>\nEnvoyé : dimanche 18 octobre 2026 14:05\nÀ : moi"), "Ok pour moi.");
+  assert.equal(mod.sansCitation("Vu.\n\n-----Original Message-----\nFrom: x"), "Vu.");
+  assert.equal(mod.sansCitation("Le plus simple : redémarrer.\nLe portable est prêt."), "Le plus simple : redémarrer.\nLe portable est prêt.", "phrases commençant par « Le » gardées");
+  // Pièce jointe ignorée ; charset latin-1.
+  const mixte = 'Content-Type: multipart/mixed; boundary=XYZ\r\n\r\n--XYZ\r\nContent-Type: text/plain; charset=iso-8859-1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\nD=E9j=E0 fait.\r\n--XYZ\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=a.txt\r\n\r\npièce\r\n--XYZ--\r\n';
+  assert.equal(mod.partieTexte(mixte).texte.trim(), "Déjà fait.");
 });
