@@ -119,6 +119,11 @@ svg.ic { width: 1em; height: 1em; flex: none; stroke: currentColor; fill: none; 
 @keyframes eb-avant { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
 @keyframes eb-arriere { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
 
+/* Défilement (ancres, focus, scrollIntoView) : le contenu s'arrête SOUS l'en-tête collant, jamais dessous.
+   Mobile : en-tête de 56 px (+ encoche). Ordinateur avec onglets : onglets (56 px) + en-tête. */
+html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); }
+@media (min-width: 900px) { html:has(body.avec-onglets) { scroll-padding-top: 132px; } }
+
 /* En-tête bleu (collant) avec bouton retour */
 .barre {
   position: sticky; top: 0; z-index: 10; background: var(--entete); color: var(--entete-texte);
@@ -609,7 +614,16 @@ ul.outils .emoji { font-size: 1.4rem; width: 30px; text-align: center; flex: non
 .compteurs .libre b { color: var(--succes); }
 details.details { margin-top: 16px; }
 details.details summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
-ul.plans { columns: 2; font-size: .8rem; color: var(--texte-2); }
+/* « Tous les outils inclus » : plans Microsoft traduits ; codes bruts repliés tout en bas, en petit */
+.outils-inclus ul.liste-inclus { margin-top: 4px; padding: 14px 16px; border-radius: var(--rayon); background: var(--surface); border: 1px solid var(--trait); }
+@media (min-width: 720px) { .outils-inclus ul.liste-inclus { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; } }
+.outils-inclus ul.liste-inclus li { align-items: center; min-width: 0; overflow-wrap: anywhere; }
+details.support-codes { margin-top: 18px; font-size: .85rem; color: var(--texte-2); }
+details.support-codes summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+details.support-codes p { margin: 0 0 8px; }
+details.support-codes ul.codes { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+details.support-codes ul.codes li { min-width: 0; overflow-wrap: anywhere; word-break: break-word; line-height: 1.35; }
+details.support-codes code { font-size: .8rem; }
 
 /* Comprendre l'organisation */
 .schema { display: grid; gap: 10px; }
@@ -1056,7 +1070,7 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .rdv-temps b { display: block; font-size: 1rem; overflow-wrap: anywhere; }
 .rdv-temps small { display: block; color: var(--texte-2); font-size: .85rem; overflow-wrap: anywhere; }
 .rdv-temps small:empty { display: none; }
-#tout-le-planning { scroll-margin-top: 72px; margin-top: 8px; }
+#tout-le-planning { scroll-margin-top: 8px; margin-top: 8px; }
 #tout-le-planning:focus { outline: none; }
 /* Barre basse flottante (calendrier seul) */
 .barre-bas { position: fixed; z-index: 30; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom)); display: flex; gap: 10px; max-width: 640px; margin: 0 auto; }
