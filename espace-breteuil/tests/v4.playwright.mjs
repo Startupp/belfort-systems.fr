@@ -105,6 +105,7 @@ function reponses(nomProfil, variante) {
       { id: "rf1", name: "Menu de Noël.docx", file: {}, webUrl: "https://breteuil02.sharepoint.com/Menu.docx", lastModifiedDateTime: "2026-10-16T10:00:00Z", remoteItem: { id: "rf1", parentReference: { driveId: "drive1" } } },
       { id: "rf2", name: "Budget 2027.xlsx", file: {}, webUrl: "https://breteuil02-my.sharepoint.com/Budget.xlsx", lastModifiedDateTime: "2026-10-15T10:00:00Z", remoteItem: { id: "rf2", parentReference: { driveId: "od1" } } }] },
     "/v1.0/me/drive/root/children": { value: [{ id: "o1", name: "Notes", folder: { childCount: 2 } }, { id: "o2", name: "Photo façade.jpg", file: {}, webUrl: "https://breteuil02-my.sharepoint.com/p.jpg", parentReference: { driveId: "od1" } }] },
+    "/v1.0/drives/od1/root/children": { value: [{ id: "o1", name: "Notes", folder: { childCount: 2 } }] },
     "/v1.0/sites/breteuil02.sharepoint.com:/sites/ChateaudeBreteuil": { id: "site1", displayName: "Château de Breteuil", webUrl: "https://breteuil02.sharepoint.com/sites/ChateaudeBreteuil" },
     "/v1.0/sites/site1/drive": { id: "drive1", name: "Documents" },
     "/v1.0/drives/drive1/list": { id: "list1" },
@@ -144,7 +145,9 @@ async function preparer(contexte, nomProfil, opts = {}) {
       const req = route.request(), url = new URL(req.url()), chemin = decodeURIComponent(url.pathname);
       if (/\/photos\//.test(url.pathname)) return route.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "image/png" }, body: PNG });
       if (req.method() !== "GET") {
-        journal.push({ methode: req.method(), chemin, corps: req.method() === "PUT" ? null : req.postData() });
+        journal.push({ methode: req.method(), chemin, requete: url.search, corps: req.method() === "PUT" ? null : req.postData() });
+        // v5.3.1 : dossier où l'on n'a pas le droit d'écrire (fichier « interdit… »).
+        if (req.method() === "PUT" && /\/interdit[^/]*:\/content$/.test(chemin)) return route.fulfill({ status: 403, headers: CORS, body: JSON.stringify({ error: { code: "accessDenied", message: "Access denied" } }) });
         if (/\/createLink$/.test(chemin)) return route.fulfill({ status: 200, headers: CORS, body: JSON.stringify({ link: { webUrl: "https://breteuil02.sharepoint.com/:w:/s/lien-interne" } }) });
         if (req.method() === "PUT") return route.fulfill({ status: 201, headers: CORS, body: JSON.stringify({ id: "nouveau", name: "x" }) });
         return route.fulfill({ status: req.method() === "POST" ? 201 : 204, headers: CORS, body: req.method() === "POST" ? JSON.stringify({ id: "ra-nouveau" }) : "" });
@@ -653,6 +656,92 @@ try {
       }
     }
 
+    /* ---------- v5.3.1 : glisser-déposer des fichiers dans la fenêtre (1280 px, crème puis Bleu Breteuil) ---------- */
+    if (taille === "1280") for (const palette of ["creme", "bleu"]) {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, "collaborateur");
+      if (palette === "bleu") await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
+      // Glisser (sans lâcher) : dragenter puis dragover répété, comme un vrai glisser depuis le bureau.
+      const survoler = (noms) => page.evaluate((noms) => {
+        const dt = new DataTransfer();
+        for (const n of noms) dt.items.add(new File(["contenu " + n], n, { type: "text/plain" }));
+        window.__dt = dt;
+        const ev = (t) => document.body.dispatchEvent(new DragEvent(t, { dataTransfer: dt, bubbles: true, cancelable: true, clientX: 600, clientY: 400 }));
+        ev("dragenter"); ev("dragover");
+        clearInterval(window.__survol); window.__survol = setInterval(() => ev("dragover"), 150);
+      }, noms);
+      const lacher = () => page.evaluate(() => {
+        clearInterval(window.__survol);
+        const ev = new DragEvent("drop", { dataTransfer: window.__dt, bubbles: true, cancelable: true, clientX: 600, clientY: 400 });
+        document.querySelector("#app").dispatchEvent(ev);
+        return ev.defaultPrevented;
+      });
+      const puts = () => journal.filter((x) => x.methode === "PUT");
+      await page.goto(BASE + "#/commun/Commun/Finance");
+      await page.waitForSelector('[data-fichier="Factures 2026.pdf"]');
+      await survoler(["Devis: été?.txt", "Factures 2026.pdf", "Notes.txt"]);
+      await page.waitForSelector(".voile-depot:not([hidden])");
+      assert.equal(await page.getAttribute(".voile-depot", "role"), "dialog");
+      assert.equal(await page.textContent(".voile-titre"), "Déposer ici pour envoyer dans : Finance");
+      assert.equal(await page.textContent(".voile-chemin"), "Dossier commun › Finance");
+      await capturer(page, `depot-voile-${palette}-1280`);
+      assert.equal(await page.isVisible(".voile-depot"), true, "le voile reste tant que le fichier survole");
+      assert.equal(await lacher(), true, "le navigateur n'ouvre pas le fichier");
+      assert.equal(await page.isVisible(".voile-depot"), false, "voile retiré au dépôt");
+      // « Factures 2026.pdf » existe déjà : jamais écrasé en silence, « Garder les deux » en premier.
+      await page.waitForSelector('dialog .choix:has-text("Garder les deux")');
+      assert.equal(puts().length, 0, "rien n'est envoyé avant le choix");
+      assert.deepEqual(await page.$$eval("dialog .choix b", (l) => l.map((x) => x.textContent)), ["Garder les deux", "Remplacer"]);
+      await page.click('dialog .choix:has-text("Garder les deux")');
+      await page.waitForFunction(() => /3 fichiers envoyés dans Finance/.test(document.getElementById("toast")?.textContent || ""));
+      assert.deepEqual(puts().map((x) => x.chemin), ["/v1.0/drives/drive1/root:/Commun/Finance/Devis- été-.txt:/content",
+        "/v1.0/drives/drive1/root:/Commun/Finance/Factures 2026 (2).pdf:/content", "/v1.0/drives/drive1/root:/Commun/Finance/Notes.txt:/content"], "PUT vers le dossier ouvert, noms nettoyés");
+      assert.ok(puts().every((x) => /conflictBehavior=rename/.test(x.requete)), "conflictBehavior=rename");
+      // « Remplacer » : choisi explicitement.
+      await survoler(["Factures 2026.pdf"]); await lacher();
+      await page.click('dialog .choix:has-text("Remplacer")');
+      await page.waitForFunction(() => /1 fichier envoyé dans Finance/.test(document.getElementById("toast")?.textContent || ""));
+      const rem = puts().at(-1);
+      assert.equal(rem.chemin, "/v1.0/drives/drive1/root:/Commun/Finance/Factures 2026.pdf:/content");
+      assert.match(rem.requete, /conflictBehavior=replace/);
+      // Pas le droit d'écrire (403) : message humain.
+      await survoler(["interdit.txt"]); await lacher();
+      await page.waitForSelector('dialog h2:has-text("Vous n\'avez pas le droit d\'ajouter des fichiers dans ce dossier")');
+      await page.click('dialog button:has-text("J\'ai compris")');
+      // Planning : aucun dossier ouvert → voile explicatif, rien n'est envoyé.
+      await page.goto(BASE + "#/planning");
+      await page.waitForSelector('[data-action="epingler"]');
+      const avant = puts().length;
+      await survoler(["Planning.txt"]);
+      await page.waitForSelector(".voile-depot.sans-cible:not([hidden])");
+      assert.equal(await page.textContent(".voile-titre"), "Ouvrez d'abord un dossier pour y déposer vos fichiers");
+      await capturer(page, `depot-voile-planning-${palette}-1280`);
+      await lacher();
+      await page.waitForTimeout(400);
+      assert.equal(puts().length, avant, "Planning : rien n'est envoyé");
+      // Accueil de Fichiers : proposition d'envoyer dans « Mes fichiers ».
+      await page.goto(BASE + "#/fichiers");
+      await page.waitForSelector('[data-fichier="Menu de Noël.docx"]');
+      await survoler(["Mémo.txt"]);
+      assert.match(await page.textContent(".voile-chemin"), /Mes fichiers/);
+      await lacher();
+      await page.click('dialog button:has-text("Oui, envoyer dans Mes fichiers")');
+      await page.waitForFunction(() => /1 fichier envoyé dans Mes fichiers/.test(document.getElementById("toast")?.textContent || ""));
+      assert.equal(puts().at(-1).chemin, "/v1.0/drives/od1/root:/Mémo.txt:/content");
+      // Les épingles se réordonnent toujours en glissant (gestes au pointeur, non touchés par le dépôt).
+      await page.goto(BASE + "#/planning");
+      for (const b of ["contact@breteuil.fr", "finance@breteuil.fr"]) { await page.click('[data-action="epingler"]'); await page.click(`dialog .choix:has-text("${b}")`); }
+      const a = await page.locator('[data-epingle="https://outlook.office.com/mail/contact%40breteuil.fr/"]').boundingBox();
+      const z = await page.locator('[data-epingle="https://outlook.office.com/mail/finance%40breteuil.fr/"]').boundingBox();
+      await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2); await page.mouse.down();
+      await page.mouse.move(a.x + a.width / 2 + 20, a.y + a.height / 2, { steps: 3 });
+      await page.mouse.move(z.x + z.width / 2, z.y + z.height / 2, { steps: 6 }); await page.mouse.up();
+      assert.equal((await page.evaluate(() => window.EBEpingles.lire()))[0].adresse, "finance@breteuil.fr", "épingles : glisser pour réordonner");
+      // Le 403 de la maquette est voulu ici (fichier « interdit.txt ») : seules les autres erreurs comptent.
+      const autres = erreurs.filter((e) => !/status of 403/.test(e));
+      if (autres.length) problemes.push(`dépôt ${palette} : erreurs console ${autres.join(" | ")}`);
+      await contexte.close();
+    }
+
     /* ---------- Problème réel : dossier commun introuvable ---------- */
     // (voir plus bas)
 
@@ -692,4 +781,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
