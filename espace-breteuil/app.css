@@ -841,3 +841,59 @@ button.fichier:hover { border-color: var(--primaire); }
 .epingle.cible { outline: 2px dashed var(--or); }
 .zone-epingles .petit { margin: 6px 0 0; color: var(--texte-2); font-size: .8rem; }
 
+/* ================================================================ */
+/* v5 : refonte visuelle « verre crème, praline et doré »            */
+/* (maquette validée : anneaux qui tournent, halos, en-tête praline,  */
+/* cartes en verre, apparitions échelonnées). Tout s'arrête avec      */
+/* « réduire les animations ». Couleurs = variables ci-dessous.        */
+/* ================================================================ */
+@property --ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+:root {
+  --verre: rgba(255,253,248,.80);          /* cartes en verre crème */
+  --verre-fort: rgba(255,253,248,.90);
+  --verre-trait: rgba(205,187,166,.55);
+  --ombre-verre: 0 1px 2px rgba(91,56,51,.05), 0 10px 30px -12px rgba(91,56,51,.18);
+  --ombre-verre-forte: 0 2px 4px rgba(91,56,51,.06), 0 18px 40px -14px rgba(91,56,51,.28);
+  --halo-1: rgba(201,160,74,.20); --halo-2: rgba(138,76,69,.13); --halo-3: rgba(231,184,168,.18);
+  --an-1: #E6DACB; --an-2: #C9A04A; --an-3: #F1DFC6; --an-4: #8A4C45; --an-5: #E7B8A8; /* anneaux */
+  --fi: var(--surface);                    /* fond intérieur d'un anneau */
+  --reflet-base: #2A1C19; --reflet-or: #B8903E;
+  --praline-1: #8A4C45; --praline-2: #6C3832; --praline-texte: #FFFFFF; --praline-doux: #F6E1D6;
+  --onglet-actif: linear-gradient(180deg, #F4E3DC, #F0DED3);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) {
+  --verre: rgba(39,27,23,.80); --verre-fort: rgba(39,27,23,.92); --verre-trait: rgba(106,78,69,.65);
+  --ombre-verre: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.55);
+  --ombre-verre-forte: 0 2px 4px rgba(0,0,0,.35), 0 18px 40px -14px rgba(0,0,0,.65);
+  --halo-1: rgba(226,190,106,.10); --halo-2: rgba(231,184,168,.08); --halo-3: rgba(138,76,69,.16);
+  --an-1: #4A3530; --an-2: #E2BE6A; --an-3: #6A4E45; --an-4: #E7B8A8; --an-5: #8A4C45;
+  --reflet-base: #F6ECE1; --reflet-or: #E2BE6A;
+  --praline-1: #7A443D; --praline-2: #5B312C; --praline-texte: #FFFFFF; --praline-doux: #F6E1D6;
+  --onglet-actif: linear-gradient(180deg, #46302A, #3E2A24); } }
+:root[data-theme="sombre"] {
+  --verre: rgba(39,27,23,.80); --verre-fort: rgba(39,27,23,.92); --verre-trait: rgba(106,78,69,.65);
+  --ombre-verre: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.55);
+  --ombre-verre-forte: 0 2px 4px rgba(0,0,0,.35), 0 18px 40px -14px rgba(0,0,0,.65);
+  --halo-1: rgba(226,190,106,.10); --halo-2: rgba(231,184,168,.08); --halo-3: rgba(138,76,69,.16);
+  --an-1: #4A3530; --an-2: #E2BE6A; --an-3: #6A4E45; --an-4: #E7B8A8; --an-5: #8A4C45;
+  --reflet-base: #F6ECE1; --reflet-or: #E2BE6A;
+  --praline-1: #7A443D; --praline-2: #5B312C; --praline-texte: #FFFFFF; --praline-doux: #F6E1D6;
+  --onglet-actif: linear-gradient(180deg, #46302A, #3E2A24); }
+
+@keyframes eb-tourne { to { --ang: 360deg; } }
+@keyframes eb-derive { from { transform: translate3d(-4%,-3%,0) rotate(0deg); } to { transform: translate3d(4%,3%,0) rotate(8deg); } }
+@keyframes eb-filet { from { background-position: 200% 0; } to { background-position: 0 0; } }
+@keyframes eb-respire { 0% { box-shadow: 0 0 0 0 rgba(61,220,151,.55); } 70% { box-shadow: 0 0 0 10px rgba(61,220,151,0); } 100% { box-shadow: 0 0 0 0 rgba(61,220,151,0); } }
+@keyframes eb-reflet-or { 0%, 55% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@keyframes eb-lueur { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
+@keyframes eb-entre { from { opacity: 0; transform: translateY(16px); filter: blur(5px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes eb-trace { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes eb-onde { 0% { box-shadow: 0 0 0 0 rgba(138,76,69,.45); } 70% { box-shadow: 0 0 0 10px rgba(138,76,69,0); } 100% { box-shadow: 0 0 0 0 rgba(138,76,69,0); } }
+
+/* Halos de fond : couche fixe derrière tout, ne capte aucun toucher */
+body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(38% 28% at 22% 18%, var(--halo-1), transparent 70%),
+    radial-gradient(34% 30% at 82% 72%, var(--halo-2), transparent 70%),
+    radial-gradient(30% 22% at 60% 40%, var(--halo-3), transparent 70%);
+  animation: eb-derive 22s ease-in-out infinite alternate; }
