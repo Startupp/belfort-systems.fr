@@ -417,6 +417,114 @@ try {
       await contexte.close();
     }
 
+    /* ---------- Liste des boîtes partagées : démo « Boîtes mail » (fictif) puis « Qui a quoi » (vraies données) ---------- */
+    {
+      const { contexte, page, erreurs } = await nouvellePage(vp, "admin");
+      await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ demos: true })));
+      await page.goto(BASE + "#/boites");
+      await page.waitForSelector(".liste-boites .ligne-boite");
+      const lignes = await page.$$eval(".liste-boites .ligne-boite", (l) => l.map((x) => ({ nom: x.querySelector(".quoi b").textContent,
+        adresse: x.querySelector(".quoi small").textContent, ouvrir: x.querySelector('a.btn[href^="https://outlook.office.com/mail/"]')?.getAttribute("href"),
+        pastilles: x.querySelectorAll(".pastille-initiales").length, personne: !!x.querySelector(".qui-boite.personne"), epingler: !!x.querySelector("[data-epingler]"),
+        regler: x.querySelector('a.btn[href^="#/boites/"]')?.getAttribute("href"),
+        deborde: x.scrollWidth > x.clientWidth + 1 })));
+      assert.ok(lignes.length >= 5, "démo : une ligne par boîte");
+      const noms = lignes.map((x) => x.nom);
+      assert.deepEqual(noms, [...noms].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" })), "tri alphabétique");
+      for (const x of lignes) {
+        assert.equal(x.ouvrir, "https://outlook.office.com/mail/" + encodeURIComponent(x.adresse) + "/", "Ouvrir → Outlook web");
+        assert.ok(x.pastilles <= 4 && (x.pastilles > 0 || x.personne), `${x.nom} : pastilles (4 au plus) ou « Personne »`);
+        assert.equal(x.epingler, false, "démo : pas d'épingles");
+        assert.ok(x.regler, `${x.nom} : bouton « Régler »`);
+        if (x.deborde) problemes.push(`boîtes ${taille} : la ligne « ${x.nom} » déborde`);
+      }
+      assert.equal(await page.$(".zone-liste-boites .recherche"), null, "pas de recherche pour 8 boîtes ou moins");
+      await controlesCommuns(page, `boîtes démo ${taille}`);
+      await capturer(page, `boites-liste-demo-${taille}`);
+      // Plus de 8 boîtes et plus de 4 personnes : recherche et « +n ».
+      const r = await page.evaluate(() => {
+        const qui = ["Anne", "Bruno", "Chloé", "David", "Emma", "Farid"].map((nom) => ({ nom }));
+        const l = Array.from({ length: 10 }, (_, i) => ({ nom: "Boîte " + String.fromCharCode(74 - i), adresse: "b" + i + "@exemple.fr", qui: i === 0 ? qui : [] }));
+        const z = window.EBListeBoites.liste(l, {});
+        document.querySelector(".zone-liste-boites").after(z);
+        const champ = z.querySelector("input.recherche");
+        const plus = z.querySelector(".pastille-initiales.plus")?.textContent;
+        const total = z.querySelectorAll(".ligne-boite").length;
+        champ.value = "b3@"; champ.dispatchEvent(new Event("input"));
+        const filtre = [...z.querySelectorAll(".ligne-boite .quoi b")].map((b) => b.textContent);
+        const premier = (champ.value = "", champ.dispatchEvent(new Event("input")), z.querySelector(".ligne-boite .quoi b").textContent);
+        z.remove();
+        return { champ: !!champ, plus, total, filtre, premier };
+      });
+      assert.deepEqual(r, { champ: true, plus: "+3", total: 10, filtre: ["Boîte G"], premier: "Boîte A" }, "recherche, tri et « +n »");
+      if (erreurs.length) problemes.push(`boîtes démo ${taille} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, "admin");
+      await page.goto(BASE + "#/organisation");
+      await page.waitForSelector(".pastille-demo.reel");
+      await page.waitForSelector('.liste-boites .ligne-boite[data-boite="contact@breteuil.fr"]');
+      assert.ok(await page.isVisible('.ligne-boite[data-boite="contact@breteuil.fr"] .qui-boite.inconnu'), "vraies données : accès non fournis par Microsoft");
+      await page.click('[data-epingler="contact@breteuil.fr"]');
+      assert.deepEqual((await page.evaluate(() => window.EBEpingles.lire())).map((e) => e.url), ["https://outlook.office.com/mail/contact%40breteuil.fr/"], "Épingler");
+      assert.match(await page.textContent('[data-epingler="contact@breteuil.fr"]'), /Épinglée/);
+      await controlesCommuns(page, `boîtes réelles ${taille}`);
+      await capturer(page, `boites-liste-reel-${taille}`);
+      assert.ok(!journal.some((x) => /mail|messages|sendMail/i.test(x.chemin)), "aucun appel de messagerie");
+      if (erreurs.length) problemes.push(`boîtes réelles ${taille} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+
+    /* ---------- Palette « Bleu Breteuil » (375 px) : clair et sombre ---------- */
+    for (const theme of taille === "375" ? ["light", "dark"] : []) {
+      const nomT = theme === "light" ? "clair" : "sombre", entete = theme === "light" ? "#14213D" : "#0F1A33";
+      const verifier = async (page, ou) => {
+        const v = await page.evaluate(() => ({ palette: document.documentElement.getAttribute("data-palette"),
+          meta: document.querySelector('meta[name="theme-color"]').content, entete: getComputedStyle(document.documentElement).getPropertyValue("--entete").trim() }));
+        assert.deepEqual(v, { palette: "bleu", meta: entete, entete }, `bleu ${nomT} : ${ou}`);
+      };
+      {
+        const { contexte, page, erreurs } = await nouvellePage(vp, null, { theme });
+        await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
+        await page.goto(BASE);
+        await page.waitForSelector(".gros-bouton");
+        await verifier(page, "premier écran");
+        await controlesCommuns(page, `bleu premier ${nomT}`);
+        await capturer(page, `bleu-premier-${nomT}-375`);
+        if (erreurs.length) problemes.push(`bleu premier ${nomT} : erreurs console ${erreurs.join(" | ")}`);
+        await contexte.close();
+      }
+      {
+        const { contexte, page, erreurs } = await nouvellePage(vp, "collaborateur", { theme });
+        await page.goto(BASE + "#/reglages");
+        await page.waitForSelector('.reglage button:has-text("Bleu Breteuil")');
+        assert.equal(await page.getAttribute('.reglage button:has-text("Crème et praline")', "aria-pressed"), "true", "crème par défaut");
+        await page.click('.reglage button:has-text("Bleu Breteuil")');
+        await verifier(page, "réglage");
+        assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("eb:reglages"))).palette, "bleu", "mémorisé sur l'appareil");
+        await capturer(page, `bleu-reglages-${nomT}-375`);
+        await page.goto(BASE + "#/planning");
+        await page.reload();
+        await page.waitForSelector(".pastille-etat.vert", { timeout: 8000 });
+        await verifier(page, "après rechargement");
+        await controlesCommuns(page, `bleu planning ${nomT}`);
+        await capturer(page, `bleu-planning-${nomT}-375`);
+        await page.click('#onglets a[data-onglet="moi"]');
+        await page.waitForFunction(() => location.hash === "#/moi");
+        await page.waitForTimeout(150);
+        await controlesCommuns(page, `bleu moi ${nomT}`);
+        await capturer(page, `bleu-moi-${nomT}-375`);
+        // Retour à la palette crème : l'attribut disparaît, la couleur du navigateur revient au praline.
+        await page.goto(BASE + "#/reglages");
+        await page.click('.reglage button:has-text("Crème et praline")');
+        assert.deepEqual(await page.evaluate(() => [document.documentElement.getAttribute("data-palette"), document.querySelector('meta[name="theme-color"]').content]),
+          [null, theme === "light" ? "#5B3833" : "#2E1D19"], "retour à la palette crème");
+        if (erreurs.length) problemes.push(`bleu ${nomT} : erreurs console ${erreurs.join(" | ")}`);
+        await contexte.close();
+      }
+    }
+
     /* ---------- Problème réel : dossier commun introuvable ---------- */
     // (voir plus bas)
 
@@ -456,4 +564,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + vérificateur de liens + Fichiers + épingles + problème réel (375 et 1280 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + vérificateur de liens + Fichiers + épingles + boîtes partagées + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);

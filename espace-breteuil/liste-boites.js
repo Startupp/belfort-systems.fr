@@ -5,6 +5,7 @@
  * à droite, qui y a accès (pastilles d'initiales, 4 au plus puis « +n », ou « Personne ») ;
  * « Ouvrir » (Outlook web, ou l'appli Outlook sur téléphone — comme les épingles) et « Épingler »
  * (connecté seulement : les épingles s'affichent en haut du Planning). Champ de recherche au-delà de 8 boîtes.
+ * Aussi dans la démo « Boîtes mail » (données fictives), avec un bouton « Régler » (photo, accès).
  * Sur téléphone, la ligne passe sur deux niveaux (requête de conteneur) ; jamais de défilement de côté.
  *
  * boites : [{ nom, adresse, qui }] — qui : [{ nom, couleur }] ; [] = personne ; null = inconnu
@@ -50,7 +51,7 @@
     return bt;
   }
 
-  function ligne(b, i, epingler) {
+  function ligne(b, i, epingler, regler) {
     var url = urlBoite(b.adresse);
     var ouvrir = h("a", { class: "btn petit", href: url, target: "_blank", rel: "noopener", "aria-label": "Ouvrir la boîte " + b.nom + " dans Outlook" }, icone("ouvrir"), "Ouvrir");
     ouvrir.addEventListener("click", function (ev) {
@@ -60,10 +61,12 @@
       h("span", { class: "eb-anneau rond d" + (i % 5 + 1), "aria-hidden": "true" }, icone("mail")),
       h("span", { class: "quoi" }, h("b", null, b.nom), h("small", null, b.adresse)),
       pastilles(b.qui),
-      h("span", { class: "actes" }, ouvrir, epingler ? boutonEpingler(b) : null));
+      h("span", { class: "actes" }, ouvrir, epingler ? boutonEpingler(b) : null,
+        regler ? h("a", { class: "btn petit secondaire", href: regler(b), "aria-label": "Régler la boîte " + b.nom + " (photo, accès)" }, "Régler") : null));
   }
 
-  /** Liste complète (recherche si plus de 8 boîtes). opts.epingler : proposer « Épingler ». */
+  /** Liste complète (recherche si plus de 8 boîtes). opts.epingler : proposer « Épingler » ;
+   *  opts.regler(b) → lien de l'écran de réglage de la boîte (démo « Boîtes mail »). */
   function liste(boites, opts) {
     opts = opts || {};
     var tri = trier((boites || []).filter(function (b) { return b && b.adresse; }));
@@ -76,7 +79,7 @@
       ul.textContent = "";
       q = String(q || "").trim().toLowerCase();
       var l = tri.filter(function (b) { return !q || (b.nom + " " + b.adresse).toLowerCase().indexOf(q) > -1; });
-      l.forEach(function (b, i) { ul.appendChild(ligne(b, i, epingler)); });
+      l.forEach(function (b, i) { ul.appendChild(ligne(b, i, epingler, opts.regler)); });
       vide.hidden = l.length > 0;
     }
     if (tri.length > SEUIL_RECHERCHE) {
