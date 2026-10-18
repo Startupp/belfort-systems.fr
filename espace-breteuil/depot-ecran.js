@@ -130,17 +130,18 @@
       return avertir("📁", "Les dossiers ne peuvent pas être déposés, déposez les fichiers",
         "Ouvrez le dossier " + liste(t.dossiers) + " sur votre ordinateur, sélectionnez les fichiers qu'il contient et glissez-les ici. Rien n'a été envoyé.");
     }
-    var debut = Promise.resolve(c);
+    var debut = function () { return c; };
     if (!c.espace) {
       if (!c.proposerMoi) return EB.toast("Ouvrez d'abord un dossier pour y déposer vos fichiers.");
-      debut = EB.confirmer({ emoji: "⬆️", titre: "Envoyer dans « Mes fichiers » ?", deuxEtapes: false,
+      // Ouverte seulement APRÈS l'éventuel message « trop lourd » (une seule fenêtre à la fois).
+      debut = function () { return EB.confirmer({ emoji: "⬆️", titre: "Envoyer dans « Mes fichiers » ?", deuxEtapes: false,
         phrase: "Aucun dossier n'est ouvert. " + (t.fichiers.length > 1 ? "Les " + t.fichiers.length + " fichiers iront" : "Le fichier ira") + " dans « Mes fichiers » (votre OneDrive).",
-        bouton: "Oui, envoyer dans Mes fichiers" }).then(function (ok) { return ok ? D.cible(["onedrive"], {}) : null; });
+        bouton: "Oui, envoyer dans Mes fichiers" }).then(function (ok) { return ok ? D.cible(["onedrive"], {}) : null; }); };
     }
     var avant = t.tropGros.length ? avertir("📦", "Fichier trop lourd (250 Mo au plus)",
       liste(t.tropGros) + (t.tropGros.length > 1 ? " ne seront pas envoyés." : " ne sera pas envoyé.") + " Déposez-le directement dans OneDrive ou SharePoint, ou demandez à Damien."
       + (t.fichiers.length ? " Les autres fichiers sont envoyés." : "")) : Promise.resolve();
-    avant.then(function () { return t.fichiers.length ? debut : null; }).then(function (cible) {
+    avant.then(function () { return t.fichiers.length ? debut() : null; }).then(function (cible) {
       if (!cible) return;
       return envoyer(cible, t.fichiers);
     }).catch(function (e) { X().afficherErreur(e); });
