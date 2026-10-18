@@ -124,10 +124,11 @@ suivi: { libelle: "Suivi informatique", tuile: "Suivi informatique — tout ce q
 
 - **`#/suivi`** (l'ancienne adresse `#/pilotage` y renvoie) : grande tuile « Suivi informatique — tout
   ce qui a été fait pour vous » en tête de l'onglet de gestion (**Gérer** pour l'administrateur général,
-  **Équipe** pour le propriétaire du site, **Finance** pour la facturation). Quatre parties : Historique
+  **Équipe** pour le propriétaire du site, **Finance** pour la facturation). Parties : Historique
   (frise, du plus récent au plus ancien, bouton « Ouvrir » vers chaque PDF cité, « document à venir »
-  s'il n'est pas encore déposé), Ce qui a été mis en place (cartes par thème), Tous les documents,
-  Contacter (téléphone et mail). Un simple collaborateur n'y a pas accès.
+  s'il n'est pas encore déposé), **Projets à venir** (v5.3.3, seulement si `suivi.json` a une clé
+  `projets`), Ce qui a été mis en place (cartes par thème), Tous les documents, Contacter (téléphone
+  et mail). Un simple collaborateur n'y a pas accès.
 - **Moi → Guides** (`#/moi/guides`, pour tout le monde) : les guides marqués `"pour": "tous"` et les
   pas-à-pas d'administration selon le profil.
 - Fichiers : `suivi.js` (validation, tri, filtrage, correspondance des documents — testé par
@@ -162,7 +163,11 @@ Format de `suivi.json` (exemple fictif complet : `espace-breteuil/tests/suivi-ex
     { "date": "2026-05-05", "titre": "…", "resume": "…", "documents": ["01 - Guide de démarrage.pdf"] }
   ],
   "miseEnPlace": [ { "titre": "Messagerie", "points": ["…", "…"] } ],
-  "guides": [ { "fichier": "01 - Guide de démarrage.pdf", "titre": "Guide de démarrage", "pour": "tous" } ]
+  "guides": [ { "fichier": "01 - Guide de démarrage.pdf", "titre": "Guide de démarrage", "pour": "tous" } ],
+  "projets": [
+    { "titre": "Renouvellement d'un poste", "statut": "Proposition envoyée", "resume": "…",
+      "prochaineEtape": "Choisir le modèle dans la proposition.", "documents": ["20 - Proposition.pdf"] }
+  ]
 }
 ```
 
@@ -185,6 +190,24 @@ Règles :
   ni `.pdf`), et le numéro décide pour qui : **01–09 = pour tous, 10 et plus = gestion** ; sans
   numéro = gestion. Les guides sont triés par numéro, puis par nom ;
 - longueurs maximales : titre 200 caractères, résumé 3 000, point 600 ; au-delà, le texte est coupé.
+
+**Projets à venir** (clé `projets`, facultative, v5.3.3) — ce qui est prévu ou proposé, affiché entre
+l'Historique et « Ce qui a été mis en place » (et dans les boutons « Aller à » du haut) :
+
+| Champ | Obligatoire | Contenu |
+|---|---|---|
+| `titre` | oui | nom du projet (200 caractères max) ; sans titre, le projet est ignoré |
+| `statut` | non | `"À confirmer"`, `"Proposition envoyée"`, `"En cours"` ou `"Terminé"` |
+| `resume` | non | quelques phrases (3 000 caractères max) |
+| `prochaineEtape` | non | affichée en évidence : « Prochaine étape : … » (600 caractères max) |
+| `documents` | non | noms des PDF du sous-dossier `Guides`, reliés **comme l'historique** (numéro en tête, puis nom sans majuscules ni accents) ; bouton « Ouvrir » ou « document à venir » |
+
+- statut absent ou inconnu → **« À confirmer »** (majuscules et accents ne comptent pas : `"en cours"`
+  = `"En cours"`). Pastille colorée : À confirmer = doré, Proposition envoyée = praline (Bleu
+  Breteuil : bleu), En cours = vert, Terminé = gris-vert ;
+- ordre : celui du fichier, **les projets « Terminé » en bas** ; 50 projets au plus ;
+- clé `projets` absente → la section n'apparaît pas ; liste vide → « Aucun projet en vue pour
+  l'instant ». Comme le reste de `#/suivi`, visible des seuls profils de gestion.
 
 Mettre à jour = remplacer `suivi.json` (et déposer les PDF) dans SharePoint : l'appli relit le
 fichier à chaque ouverture (gardé 1 minute en mémoire). Aucune publication du site n'est nécessaire.
