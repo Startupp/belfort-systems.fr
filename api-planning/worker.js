@@ -3,7 +3,8 @@
 // Aucun secret ici : les adresses ICS sont des SECRETS du Worker
 // (BRETEUIL_ICS_URL, BRETEUIL_ICS_URL_2 … _4), posés dans le tableau de bord Cloudflare.
 // Routes : GET /breteuil/planning.ics, /breteuil/planning/2.ics … /4.ics, GET /breteuil/site/liens[?forcer=1],
-//          « Aide / demandes » (v5.4) : /breteuil/aide… (voir plus bas) + mails entrants (export email).
+//          « Aide / demandes » (v5.4) : /breteuil/aide… (voir plus bas) + mails entrants (export email,
+//          règle Email Routing « demande@<domaine de AIDE_EXPEDITEUR> » → Worker, sous-adressage « + » activé).
 // Tests : node api-planning/worker.test.mjs
 // Aide : liaisons AIDE_DB (D1) et AIDE_MAIL (envoi d'e-mails), variables AIDE_TENANT_ID, AIDE_CLIENT_ID,
 // AIDE_EXPEDITEUR, AIDE_DESTINATAIRE, AIDE_PRESTATAIRES, secret AIDE_SECRET — voir docs/AIDE-INSTALLATION.md.
@@ -361,7 +362,9 @@ function lienAppli(env, id) { return String(env.AIDE_APPLI_URL || "https://espac
 
 async function envoyerMail(env, d, texte, premier) {
   const domaine = domaineDe(env.AIDE_EXPEDITEUR);
-  const repondreA = "demande-" + d.id + "-" + (await signature(env.AIDE_SECRET, d.id)) + "@" + domaine;
+  // « demande+<n°>-<signature>@… » : une seule règle Email Routing « demande@… → Worker » suffit
+  // (sous-adressage « + » ; les règles « catch-all » n'existent que sur le domaine principal).
+  const repondreA = "demande+" + d.id + "-" + (await signature(env.AIDE_SECRET, d.id)) + "@" + domaine;
   const corps = [
     (premier ? "Nouvelle demande n°" : "Nouveau message sur la demande n°") + d.id + " — " + (AIDE_TYPES[d.type] || d.type),
     "",
@@ -589,7 +592,8 @@ export function sansCitation(texte) {
 export async function recevoirMail(message, env) {
   const rejeter = () => message.setReject("Adresse inconnue");
   if (!aideConfiguree(env)) return rejeter();
-  const m = /^demande-(\d{1,9})-([0-9a-f]{12})@(.+)$/i.exec(String(message.to || "").trim().toLowerCase());
+  // demande+<n°>-<sig>@… (règle « demande@ » + sous-adressage) ou demande-<n°>-<sig>@… (catch-all).
+  const m = /^demande[+-](\d{1,9})-([0-9a-f]{12})@(.+)$/i.exec(String(message.to || "").trim().toLowerCase());
   if (!m || m[3] !== domaineDe(env.AIDE_EXPEDITEUR)) return rejeter();
   if (!egal(m[2], await signature(env.AIDE_SECRET, Number(m[1])))) return rejeter();
   const de = String(message.from || "").trim().toLowerCase().replace(/^.*<([^>]+)>.*$/, "$1");
@@ -611,7 +615,7 @@ export async function recevoirMail(message, env) {
 }
 
 export default {
-  /** Mail entrant (Email Routing « catch-all » → Worker) : réponse de Damien à une demande. */
+  /** Mail entrant (Email Routing, règle « demande@… » → Worker) : réponse de Damien à une demande. */
   async email(message, env, ctx) {
     try { await recevoirMail(message, env); }
     catch (e) { console.error("Aide, mail entrant :", e && e.message); message.setReject("Adresse inconnue"); }

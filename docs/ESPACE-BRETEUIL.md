@@ -575,3 +575,11 @@ Version connectée : voir la checklist de [ESPACE-BRETEUIL-CONNEXION.md](ESPACE-
 - [ ] Écrans de démo (si activés) : rôles (retirer / donner), arrivée complète, départ complet,
       photo d'une boîte partagée (appareil photo et galerie), simulateur,
       exemple PDF, activation de la double authentification (Moi → Démos → Double auth.) puis rappel.
+
+## Aide et demandes (v5.4)
+
+Bouton **?** en bas à droite de tous les écrans : Question, Avis, Amélioration, Problème, envoyés à
+Damien (mail) et suivis dans **Moi → Mes demandes** (pastille quand Damien a répondu). Damien répond
+au mail ou dans **Moi → Demandes (toutes)**. Code : `espace-breteuil/aide.js` (logique, testée par
+`tests/aide.test.mjs`), `aide-ecrans.js` (écrans), routes `/breteuil/aide…` et mails entrants dans
+`api-planning/worker.js`. Installation côté Cloudflare : [AIDE-INSTALLATION.md](AIDE-INSTALLATION.md).

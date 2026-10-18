@@ -353,7 +353,7 @@ test("aide : création, mail sortant MIME (sujet exact encodé RFC 2047, Reply-T
   assert.ok(x.tete.split("\r\n").every((l) => l.length <= 78), "lignes d'en-tête ≤ 78 caractères");
   const sig = await mod.signature(env.AIDE_SECRET, 1);
   assert.match(sig, /^[0-9a-f]{12}$/);
-  assert.equal(x.h["reply-to"], `<demande-1-${sig}@aide.exemple.fr>`);
+  assert.equal(x.h["reply-to"], `<demande+1-${sig}@aide.exemple.fr>`);
   assert.match(x.h.from, /<aide@aide\.exemple\.fr>$/);
   assert.equal(x.h["content-type"], "text/plain; charset=UTF-8");
   for (const attendu of ["Nom : Fanny Martin", "Adresse : fmartin@chateau-exemple.fr", "Écran : Planning", "Version : 5.4.0", "Appareil : iPhone (Safari)",
@@ -491,7 +491,7 @@ function mailEntrant(a, de, brut) {
 test("mail entrant : réponse Gmail (quoted-printable) ajoutée au fil sans la citation → Répondue, non lue", async () => {
   const mod = await prete(), W = mod.default, env = envAide();
   await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "probleme", message: "Le planning ne s'affiche plus." } });
-  const a = `demande-1-${await mod.signature(env.AIDE_SECRET, 1)}@aide.exemple.fr`;
+  const a = `demande+1-${await mod.signature(env.AIDE_SECRET, 1)}@aide.exemple.fr`;
   const msg = mailEntrant(a, PRESTA, reponseGmail(a, PRESTA));
   await W.email(msg, env, {});
   assert.equal(msg.rejet, null);
@@ -501,7 +501,9 @@ test("mail entrant : réponse Gmail (quoted-printable) ajoutée au fil sans la c
   assert.equal(m.texte, "Bonjour Fanny,\n\nC'est réglé : le planning s'affiche de nouveau. Pouvez-vous vérifier de votre côté ?\n\nBonne journée,\nDamien");
   assert.equal(fil.j.demande.statut, "repondue");
   assert.equal((await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes[0].nonLu, true, "pastille chez Fanny");
-  // Adresse en MAJUSCULES et expéditeur avec nom : acceptés.
+  // Forme « demande-<n°>-<sig> » (catch-all) aussi acceptée ; adresse en MAJUSCULES et expéditeur avec nom : acceptés.
+  const tiret = a.replace("demande+", "demande-"), m3 = mailEntrant(tiret, PRESTA, reponseGmail(tiret, PRESTA));
+  await W.email(m3, env, {}); assert.equal(m3.rejet, null);
   const m2 = mailEntrant(a.toUpperCase(), "Damien <" + PRESTA.toUpperCase() + ">", reponseGmail(a, PRESTA));
   await W.email(m2, env, {}); assert.equal(m2.rejet, null);
 });
@@ -509,9 +511,10 @@ test("mail entrant : réponse Gmail (quoted-printable) ajoutée au fil sans la c
 test("mail entrant : signature invalide, expéditeur non autorisé, autre domaine, demande inconnue → rejet", async () => {
   const mod = await prete(), W = mod.default, env = envAide();
   await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "x" } });
-  const bon = `demande-1-${await mod.signature(env.AIDE_SECRET, 1)}@aide.exemple.fr`;
+  const bon = `demande+1-${await mod.signature(env.AIDE_SECRET, 1)}@aide.exemple.fr`;
   const cas = [
-    ["demande-1-000000000000@aide.exemple.fr", PRESTA, "signature fausse"],
+    ["demande+1-000000000000@aide.exemple.fr", PRESTA, "signature fausse"],
+    [bon.replace("demande+", "demande_"), PRESTA, "autre séparateur"],
     [`demande-2-${(await mod.signature(env.AIDE_SECRET, 1))}@aide.exemple.fr`, PRESTA, "signature d'une autre demande"],
     [bon, "pirate@exemple.org", "expéditeur non autorisé"],
     [bon, "fmartin@chateau-exemple.fr", "le client ne répond pas par mail"],
