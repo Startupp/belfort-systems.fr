@@ -17,10 +17,11 @@ function cacheMaquette() {
 }
 /** Maquette de fetch : table url → fonction(méthode) → { status, url?, type?, corps? } ; journal des appels. */
 function fetchMaquette(table) {
-  const appels = [];
+  const appels = [], entetes = [];
   const f = async (url, init = {}) => {
     const methode = (init.method || "GET").toUpperCase();
     appels.push(methode + " " + url);
+    entetes.push(init.headers || {});
     const def = table[url];
     if (!def) throw new TypeError("réseau : " + url);
     const r = typeof def === "function" ? def(methode) : def;
@@ -29,7 +30,7 @@ function fetchMaquette(table) {
     return { ok: r.status >= 200 && r.status < 300, status: r.status, url: r.url || url, headers: new Headers({ "Content-Type": r.type || "text/html; charset=UTF-8" }),
       text: async () => corps, body: methode === "HEAD" ? null : { cancel: async () => {} } };
   };
-  f.appels = appels;
+  f.appels = appels; f.entetes = entetes;
   return f;
 }
 function installer(table) { const f = fetchMaquette(table); globalThis.fetch = f; globalThis.caches = { default: cacheMaquette() }; return f; }
@@ -116,7 +117,24 @@ test("liens du bas de page : <footer> seulement, http(s), dédoublonnés, FR pui
   assert.equal(parUrl["https://www.culture.gouv.fr/"].redirigeVers, null, "www / barre finale : pas une vraie redirection");
   assert.deepEqual([parUrl["https://www.facebook.com/exemple"].ok, parUrl["https://www.facebook.com/exemple"].statut], [false, 403]);
   assert.deepEqual([parUrl["https://www.breteuil.fr/mentions-legales/"].ok, parUrl["https://www.breteuil.fr/mentions-legales/"].statut], [false, null], "ne répond pas");
-  for (const l of j.liens) assert.deepEqual(Object.keys(l).sort(), ["ok", "page", "redirigeVers", "statut", "texte", "url"]);
+  for (const l of j.liens) assert.deepEqual(Object.keys(l).sort(), ["methode", "ok", "page", "redirigeVers", "statut", "texte", "url"]);
+  assert.ok(!f.appels.some((a) => /^HEAD https:\/\/www\.breteuil\.fr\//.test(a)), "pages de www.breteuil.fr : GET direct, jamais HEAD");
+  assert.equal(parUrl["https://www.breteuil.fr/page-disparue/"].methode, "GET", "cassé = confirmé par un GET");
+});
+
+test("entités HTML : apostrophes, guillemets, accents, symboles (textes des liens)", async () => {
+  const { decoder } = await charger();
+  assert.equal(decoder("Groupes d&rsquo;enfants"), "Groupes d\u2019enfants");
+  assert.equal(decoder("Breteuil dans l&rsquo;Histoire"), "Breteuil dans l\u2019Histoire");
+  assert.equal(decoder("&laquo;&nbsp;&Eacute;t&eacute;&nbsp;&raquo; &ndash; &hellip;"), "\u00ab\u00a0Été\u00a0\u00bb \u2013 \u2026");
+  assert.equal(decoder("&OElig;uvre, c&oelig;ur, &agrave; &ccedil;a, &icirc;le, 5&euro;, 20&deg;, &copy;"), "Œuvre, cœur, à ça, île, 5€, 20°, ©");
+  assert.equal(decoder("&#8217; &#x2019; &AMP; &inconnu; &lt;b&gt;"), "\u2019 \u2019 & &inconnu; <b>", "numériques, casse, inconnue laissée telle quelle");
+  assert.equal(decoder("&constructor; &toString;"), "&constructor; &toString;", "noms de propriétés JS : pas des entités");
+  const W = (await charger()).default;
+  installer(tableSite({ "https://www.breteuil.fr/": { status: 200, corps: '<footer><a href="/en-famille/">Groupes d&rsquo;enfants</a><a href="/histoire/">Breteuil dans l&#8217;Histoire</a></footer>' },
+    "https://www.breteuil.fr/en-famille/": { status: 200 }, "https://www.breteuil.fr/histoire/": { status: 200 } }));
+  const j = await (await W.fetch(req("/breteuil/site/liens"), {})).json();
+  assert.deepEqual(j.liens.slice(0, 2).map((l) => l.texte), ["Groupes d\u2019enfants", "Breteuil dans l\u2019Histoire"]);
 });
 
 test("cache 1 h, ?forcer=1 (au plus une fois par minute)", async () => {
@@ -139,6 +157,51 @@ test("cache 1 h, ?forcer=1 (au plus une fois par minute)", async () => {
     await W.fetch(req("/breteuil/site/liens"), {});
     assert.ok(f.appels.length > apres2, "après 1 h : nouvelle vérification");
   } finally { Date.now = reel; }
+});
+
+test("faux « cassés » : HEAD 404/403/429/5xx refait en GET (navigateur, français) avant de conclure", async () => {
+  const W = (await charger()).default;
+  const pied = '<footer><a href="https://ext.exemple/en-famille/">En famille</a><a href="https://ext.exemple/histoire/">Histoire</a>'
+    + '<a href="https://ext.exemple/vraiment-disparue/">Disparue</a><a href="https://ext.exemple/robot/">Robot</a><a href="https://ext.exemple/panne/">Panne</a>'
+    + '<a href="/wp-page/">Page WordPress</a></footer>';
+  const f = installer({
+    "https://www.breteuil.fr/": { status: 200, corps: pied }, "https://www.breteuil.fr/en/": { status: 404 },
+    "https://ext.exemple/en-famille/": (m) => ({ status: m === "HEAD" ? 404 : 200 }),
+    "https://ext.exemple/histoire/": (m) => ({ status: m === "HEAD" ? 403 : 200 }),
+    "https://ext.exemple/vraiment-disparue/": { status: 410 },
+    "https://ext.exemple/robot/": (m) => ({ status: m === "HEAD" ? 429 : 403 }),
+    "https://ext.exemple/panne/": (m) => ({ status: m === "HEAD" ? 503 : 200 }),
+    "https://www.breteuil.fr/wp-page/": (m) => ({ status: m === "HEAD" ? 404 : 200 }),
+  });
+  const j = await (await W.fetch(req("/breteuil/site/liens"), {})).json();
+  const parTexte = Object.fromEntries(j.liens.map((l) => [l.texte, l]));
+  assert.deepEqual([parTexte["En famille"].ok, parTexte["En famille"].statut, parTexte["En famille"].methode], [true, 200, "GET"], "HEAD 404 puis GET 200 : bon");
+  assert.deepEqual([parTexte["Histoire"].ok, parTexte["Histoire"].statut], [true, 200], "HEAD 403 puis GET 200 : bon");
+  assert.deepEqual([parTexte["Disparue"].ok, parTexte["Disparue"].statut, parTexte["Disparue"].methode], [false, 410, "GET"], "410 confirmé en GET");
+  assert.deepEqual([parTexte["Robot"].statut, parTexte["Robot"].methode], [403, "GET"]);
+  assert.deepEqual([parTexte["Panne"].ok, parTexte["Panne"].statut], [true, 200], "HEAD 503 puis GET 200 : bon");
+  assert.deepEqual([parTexte["Page WordPress"].ok, parTexte["Page WordPress"].methode], [true, "GET"]);
+  assert.ok(!f.appels.includes("HEAD https://www.breteuil.fr/wp-page/"));
+  const iGet = f.appels.indexOf("GET https://ext.exemple/en-famille/");
+  assert.ok(iGet > -1);
+  const e = f.entetes[iGet];
+  assert.match(e["User-Agent"], /^Mozilla\/5\.0 \(Windows NT 10\.0.*Chrome\/\d+/, "User-Agent de navigateur");
+  assert.match(e["Accept-Language"], /^fr-FR,fr/);
+  assert.match(e["Accept"], /text\/html/);
+});
+
+test("budget : sans sous-requête libre, un HEAD 404 n'est pas revérifié et reste « HEAD » (non confirmé)", async () => {
+  const W = (await charger()).default;
+  const liens = Array.from({ length: 40 }, (_, i) => `<a href="https://ext${i}.exemple/">Ext ${i}</a>`).join("");
+  const table = { "https://www.breteuil.fr/": { status: 200, corps: "<footer>" + liens + "</footer>" }, "https://www.breteuil.fr/en/": { status: 200, corps: "<footer></footer>" } };
+  for (let i = 0; i < 40; i++) table[`https://ext${i}.exemple/`] = (m) => ({ status: m === "HEAD" ? 404 : 200 });
+  const f = installer(table);
+  const j = await (await W.fetch(req("/breteuil/site/liens"), {})).json();
+  assert.ok(f.appels.length <= 50, f.appels.length + " sous-requêtes");
+  const confirmes = j.liens.filter((l) => l.methode === "GET"), restes = j.liens.filter((l) => l.methode === "HEAD");
+  assert.equal(confirmes.length, 6, "48 - 2 pages - 40 HEAD = 6 GET de secours");
+  assert.ok(confirmes.every((l) => l.ok));
+  assert.ok(restes.every((l) => l.statut === 404 && !l.ok), "non revérifiés : marqués HEAD");
 });
 
 test("40 liens au plus et jamais plus de 50 sous-requêtes", async () => {

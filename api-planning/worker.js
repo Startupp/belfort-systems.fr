@@ -43,7 +43,7 @@ function ics(texte, etat, quand, origine) {
 /* ------------------------------------------------------------------ */
 // Seules ces pages sont lues (adresses fixes : le Worker n'est pas un relais ouvert).
 const SITE_PAGES = [{ page: "fr", url: "https://www.breteuil.fr/" }, { page: "en", url: "https://www.breteuil.fr/en/" }];
-const LIENS_MAX = 40;          // liens vérifiés au plus
+const LIENS_MAX = 40;          // liens vérifiés au plus (1 sous-requête chacun + GET de secours si le budget le permet)
 const SOUS_REQUETES = 48;      // Cloudflare gratuit : 50 sous-requêtes par appel (marge de 2)
 const LIENS_TTL_S = 3600;      // résultat gardé 1 h
 const FORCER_MIN_S = 60;       // « Revérifier » : pas plus d'une vraie vérification par minute
@@ -52,11 +52,29 @@ const EN_PARALLELE = 6;
 const UA = "Mozilla/5.0 (compatible; belfort-api/1.0; verificateur de liens de l'Espace Breteuil)";
 let memoire = null;            // copie en mémoire (si caches.default est inactif, ex. *.workers.dev)
 
-const ENTITES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-function decoder(t) {
-  return String(t || "").replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => {
+// Entités HTML nommées courantes (français, typographie, symboles). Sensibles à la casse (&Eacute; ≠ &eacute;).
+const ENTITES = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0", thinsp: "\u2009", ensp: "\u2002", emsp: "\u2003", shy: "",
+  rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201d", ldquo: "\u201c", sbquo: "\u201a", bdquo: "\u201e", laquo: "\u00ab", raquo: "\u00bb",
+  lsaquo: "\u2039", rsaquo: "\u203a", hellip: "\u2026", ndash: "\u2013", mdash: "\u2014", bull: "\u2022", middot: "\u00b7", prime: "\u2032",
+  agrave: "à", aacute: "á", acirc: "â", atilde: "ã", auml: "ä", aring: "å", aelig: "æ", ccedil: "ç",
+  egrave: "è", eacute: "é", ecirc: "ê", euml: "ë", igrave: "ì", iacute: "í", icirc: "î", iuml: "ï",
+  ntilde: "ñ", ograve: "ò", oacute: "ó", ocirc: "ô", otilde: "õ", ouml: "ö", oslash: "ø", oelig: "œ",
+  ugrave: "ù", uacute: "ú", ucirc: "û", uuml: "ü", yacute: "ý", yuml: "ÿ", szlig: "ß",
+  Agrave: "À", Aacute: "Á", Acirc: "Â", Atilde: "Ã", Auml: "Ä", Aring: "Å", AElig: "Æ", Ccedil: "Ç",
+  Egrave: "È", Eacute: "É", Ecirc: "Ê", Euml: "Ë", Igrave: "Ì", Iacute: "Í", Icirc: "Î", Iuml: "Ï",
+  Ntilde: "Ñ", Ograve: "Ò", Oacute: "Ó", Ocirc: "Ô", Otilde: "Õ", Ouml: "Ö", Oslash: "Ø", OElig: "Œ",
+  Ugrave: "Ù", Uacute: "Ú", Ucirc: "Û", Uuml: "Ü", Yacute: "Ý", Yuml: "Ÿ",
+  euro: "€", pound: "£", cent: "¢", yen: "¥", deg: "°", copy: "©", reg: "®", trade: "™", sect: "§", para: "¶",
+  times: "×", divide: "÷", plusmn: "±", frac12: "½", frac14: "¼", frac34: "¾", sup2: "²", sup3: "³", ordf: "ª", ordm: "º",
+  iexcl: "¡", iquest: "¿", dagger: "†", larr: "←", rarr: "→", uarr: "↑", darr: "↓", hearts: "♥", check: "✓",
+};
+/** Décode les entités HTML (nommées, &#233; et &#xE9;). Texte brut en sortie, jamais de HTML interprété. */
+export function decoder(t) {
+  return String(t || "").replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/gi, (m, e) => {
     if (e[0] === "#") { const n = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10); return isFinite(n) && n > 0 && n < 0x110000 ? String.fromCodePoint(n) : m; }
-    return ENTITES[e.toLowerCase()] ?? m;
+    const v = Object.hasOwn(ENTITES, e) ? ENTITES[e] : Object.hasOwn(ENTITES, e.toLowerCase()) ? ENTITES[e.toLowerCase()] : null;
+    return v ?? m;
   });
 }
 function attribut(balise, nom) {
@@ -90,22 +108,38 @@ export function extraireLiens(fragment, base) {
 }
 function normaliser(u) { return String(u || "").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/+$/, "").toLowerCase(); }
 
-async function verifierUn(lien, budget) {
-  // Les HEAD sont réservés d'avance ; budget.reste = sous-requêtes encore libres pour les GET de secours.
-  const essai = async (methode) => {
-    if (methode !== "HEAD") budget.reste--;
-    return fetch(lien.url, { method: methode, redirect: "follow", headers: { "User-Agent": UA, "Accept": "text/html,*/*;q=0.8" }, signal: AbortSignal.timeout(DELAI_MS) });
-  };
+// En-têtes d'un vrai navigateur pour les vérifications : certains WordPress (WP Rocket, Cloudflare)
+// répondent 403/404 aux robots ou aux requêtes HEAD alors que la page existe.
+const NAVIGATEUR = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+};
+const HOTE_SITE = new URL(SITE_PAGES[0].url).hostname;
+/** HEAD à refaire en GET avant de conclure (ordre = priorité quand le budget manque). */
+function prioriteGet(statut) {
+  if (statut === 404 || statut === 410) return 0;      // « cassé » à confirmer en premier
+  if (statut === 403 || statut === 405 || statut === 429) return 1;
+  if (statut != null && statut >= 500) return 2;
+  return -1;
+}
+async function essai(url, methode) {
   let r = null, statut = null;
   try {
-    r = await essai("HEAD");
+    r = await fetch(url, { method: methode, redirect: "follow", headers: NAVIGATEUR, signal: AbortSignal.timeout(DELAI_MS) });
     statut = r.status;
-    if ((statut === 405 || statut === 403) && budget.reste > 0) { r = await essai("GET"); statut = r.status; }
-  } catch (e) { statut = null; r = null; }
+  } catch (e) { r = null; statut = null; }
   try { if (r && r.body) await r.body.cancel(); } catch {}
-  const finale = r && r.url ? r.url : lien.url;
-  const redirigeVers = r && normaliser(finale) !== normaliser(lien.url) ? finale : null;
-  return { ...lien, statut, ok: statut != null && statut >= 200 && statut < 400, redirigeVers };
+  return { statut, finale: r && r.url ? r.url : url, methode };
+}
+function resultat(lien, e) {
+  const redirigeVers = e.statut != null && normaliser(e.finale) !== normaliser(lien.url) ? e.finale : null;
+  return { ...lien, statut: e.statut, ok: e.statut != null && e.statut >= 200 && e.statut < 400, redirigeVers, methode: e.methode };
+}
+async function enParallele(n, taches) {
+  let i = 0;
+  const travail = async () => { while (i < taches.length) { const k = i++; await taches[k](); } };
+  await Promise.all(Array.from({ length: Math.min(n, taches.length) }, travail));
 }
 
 export async function verifierLiens(maintenant = Date.now()) {
@@ -128,13 +162,20 @@ export async function verifierLiens(maintenant = Date.now()) {
     }
   }
   if (!pages[0].lue) throw Object.assign(new Error("www.breteuil.fr ne répond pas"), { code: "site_indisponible" });
-  // Vérifications en parallèle, dans la limite des sous-requêtes.
+  // 1re passe (une sous-requête par lien) : GET direct pour les pages de www.breteuil.fr (WordPress
+  // répond parfois 404 à un HEAD), HEAD pour les autres sites.
   liens.splice(Math.max(0, budget.reste));
   budget.reste -= liens.length;
   const resultats = new Array(liens.length);
-  let i = 0;
-  const travail = async () => { while (i < liens.length) { const k = i++; resultats[k] = await verifierUn(liens[k], budget); } };
-  await Promise.all(Array.from({ length: Math.min(EN_PARALLELE, liens.length) }, travail));
+  await enParallele(EN_PARALLELE, liens.map((l, k) => async () => {
+    resultats[k] = resultat(l, await essai(l.url, new URL(l.url).hostname === HOTE_SITE ? "GET" : "HEAD"));
+  }));
+  // 2e passe : HEAD 404/410/403/405/429/5xx → refait en GET avant de conclure, dans la limite du budget
+  // (les « cassés » d'abord). Un lien non revérifié garde methode « HEAD » : l'appli ne le dit pas cassé.
+  const aRefaire = resultats.map((x, k) => ({ k, p: x.methode === "HEAD" ? prioriteGet(x.statut) : -1 }))
+    .filter((x) => x.p >= 0).sort((a, b) => a.p - b.p || a.k - b.k).slice(0, Math.max(0, budget.reste));
+  budget.reste -= aRefaire.length;
+  await enParallele(EN_PARALLELE, aRefaire.map(({ k }) => async () => { resultats[k] = resultat(liens[k], await essai(liens[k].url, "GET")); }));
   return { verifieLe: new Date(maintenant).toISOString(), pages, liens: resultats };
 }
 

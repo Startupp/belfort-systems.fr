@@ -41,17 +41,23 @@ test("tuiles externes : nouvel onglet ; pas-à-pas de 3 étapes au plus", () => 
   assert.equal(S.guide(CFG, "inconnu"), null);
 });
 
-test("liens vérifiés : cassés, à vérifier (redirigés, robots refusés), bons", () => {
+test("liens vérifiés : cassés (GET 404/410 seulement), à vérifier (redirigés, robots refusés, muets), bons", () => {
   const l = [
-    { texte: "Escape Game", url: "https://www.breteuil.fr/escape/", statut: 404, ok: false, redirigeVers: null },
+    { texte: "Escape Game", url: "https://www.breteuil.fr/escape/", statut: 404, ok: false, redirigeVers: null, methode: "GET" },
     { texte: "Presse", url: "https://www.breteuil.fr/presse/", statut: 200, ok: true, redirigeVers: "https://www.breteuil.fr/espace-presse/" },
     { texte: "Instagram", url: "https://www.instagram.com/x/", statut: 429, ok: false, redirigeVers: null },
     { texte: "Contact", url: "https://www.breteuil.fr/contact/", statut: 200, ok: true, redirigeVers: null },
     { texte: "Mentions légales", url: "https://www.breteuil.fr/mentions/", statut: null, ok: false, redirigeVers: null },
   ];
   const g = S.trier(l);
-  assert.deepEqual(g.casse.map((x) => x.texte), ["Escape Game", "Mentions légales"]);
-  assert.deepEqual(g.verifier.map((x) => x.texte), ["Presse", "Instagram"]);
+  assert.deepEqual(g.casse.map((x) => x.texte), ["Escape Game"]);
+  assert.deepEqual(g.verifier.map((x) => x.texte), ["Presse", "Instagram", "Mentions légales"]);
+  // 404 vu seulement par un HEAD (budget épuisé) ou ancienne réponse sans « methode » : pas « cassé ».
+  assert.equal(S.classer({ url: "x", statut: 404, ok: false, methode: "HEAD" }), "verifier");
+  assert.equal(S.classer({ url: "x", statut: 404, ok: false }), "verifier");
+  assert.equal(S.classer({ url: "x", statut: 410, ok: false, methode: "GET" }), "casse");
+  assert.equal(S.classer({ url: "x", statut: 503, ok: false, methode: "GET" }), "verifier");
+  assert.match(S.phrase({ statut: 404, ok: false, methode: "HEAD" }), /non confirmée.*vérifier vous-même/);
   assert.deepEqual(g.ok.map((x) => x.texte), ["Contact"]);
   assert.match(S.phrase(l[0]), /introuvable/);
   assert.match(S.phrase(l[1]), /ailleurs/);
@@ -60,6 +66,15 @@ test("liens vérifiés : cassés, à vérifier (redirigés, robots refusés), bo
   assert.match(S.phrase({ statut: 503, ok: false }), /panne/);
   assert.equal(S.courte("https://www.breteuil.fr/contact/"), "breteuil.fr/contact");
   assert.equal(S.courte("https://x.fr/" + "a".repeat(100), 20).length, 20);
+});
+
+test("entités HTML décodées en texte (cache du Worker encore ancien)", () => {
+  assert.equal(S.decoder("Groupes d&rsquo;enfants"), "Groupes d\u2019enfants");
+  assert.equal(S.decoder("Breteuil dans l&rsquo;Histoire"), "Breteuil dans l\u2019Histoire");
+  assert.equal(S.decoder("&laquo;&nbsp;&Eacute;t&eacute;&nbsp;&raquo; &ndash; &OElig;uvre &euro; &#8217;&#x2019;"), "\u00ab\u00a0Été\u00a0\u00bb \u2013 Œuvre € \u2019\u2019");
+  assert.equal(S.decoder("&lt;img src=x onerror=alert(1)&gt;"), "<img src=x onerror=alert(1)>", "texte brut : posé avec textContent, jamais interprété");
+  assert.equal(S.decoder("&inconnu; &constructor; &toString;"), "&inconnu; &constructor; &toString;", "inconnues (et noms de propriétés JS) laissées telles quelles");
+  assert.equal(S.decoder(null), "");
 });
 
 test("erreurs : vérificateur pas installé, site muet, hors ligne", () => {

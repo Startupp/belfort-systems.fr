@@ -102,7 +102,7 @@
       h("div", { class: "tete" },
         h("span", { class: "eb-anneau" }, icone(symbole)),
         h("div", { class: "quoi" },
-          h("b", null, l.texte || S.courte(l.url, 40)),
+          h("b", null, S.decoder(l.texte) || S.courte(l.url, 40)),
           h("small", { class: "adresse" }, S.courte(l.url)),
           h("small", { class: "pourquoi" }, S.phrase(l)),
           l.redirigeVers ? h("small", { class: "adresse" }, "→ " + S.courte(l.redirigeVers)) : null,

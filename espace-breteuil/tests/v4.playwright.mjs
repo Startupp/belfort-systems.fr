@@ -26,7 +26,7 @@ const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 const RACINE = fileURLToPath(new URL("../", import.meta.url));
 const SORTIE = process.argv[2] || "";
-const PORT = 8768;
+const PORT = Number(process.env.EB_PORT) || 8768; // EB_PORT : autre port si un autre test tourne déjà
 const BASE = `http://localhost:${PORT}/?maquette=1`;
 if (SORTIE) mkdirSync(SORTIE, { recursive: true });
 const ICS = readFileSync(RACINE + "exemple.ics", "utf8");
@@ -50,6 +50,14 @@ const USERS = [u("u1", "Pauline de Breteuil", "pdebreteuil@breteuil.fr", "a"), u
 const SP = { u1: 7, u2: 8, u3: 9, u4: 10, u6: 11, u7: 12 };
 const PROPRIETAIRES = [{ Id: 7, Title: "Pauline de Breteuil", Email: "pdebreteuil@breteuil.fr", LoginName: "i:0#.f|membership|pdebreteuil@breteuil.fr", PrincipalType: 1 },
   { Id: 8, Title: "François de Breteuil", Email: "fdebreteuil@breteuil.fr", LoginName: "i:0#.f|membership|fdebreteuil@breteuil.fr", PrincipalType: 1 }];
+// Plans de service réels d'une licence Business Standard / Basic (extraits de /licenseDetails).
+const PLANS_STANDARD = ["MDOLITE_ENTERPRISE", "EXCHANGE_STORAGE_50GB", "INSIGHTS_BY_MYANALYTICS", "TEAMS1", "SHAREPOINTSTANDARD", "EXCHANGE_S_STANDARD",
+  "SHAREPOINTWAC", "MCOSTANDARD", "OFFICESUBSCRIPTION", "FORMS_PLAN_E1", "FLOW_O365_P1", "POWERAPPS_O365_P1", "BPOS_S_TODO_1", "MICROSOFTBOOKINGS", "SWAY",
+  "STREAM_O365_SMB", "WHITEBOARD_PLAN1", "PROJECTWORKMANAGEMENT", "INTUNE_O365", "VIVAENGAGE_CORE", "YAMMER_ENTERPRISE", "Bing_Chat_Enterprise",
+  "MICROSOFT_SEARCH", "OFFICEMOBILE_SUBSCRIPTION", "MYANALYTICS_P2", "DYN365_CDS_O365_P2", "EXCHANGE_S_FOUNDATION"];
+const PLANS_BASIC = PLANS_STANDARD.filter((x) => x !== "OFFICESUBSCRIPTION");
+const detailsLicence = (sku) => ({ skuPartNumber: sku, servicePlans: (sku === "O365_BUSINESS_PREMIUM" ? PLANS_STANDARD : PLANS_BASIC)
+  .map((n) => ({ servicePlanName: n, provisioningStatus: "Success" })).concat([{ servicePlanName: "KAIZALA_O365_P2", provisioningStatus: "Disabled" }]) });
 const AVEC_GERER = { High: "432", Low: String(2 ** 24 + 0xFFFF) }, SANS_GERER = { High: "176", Low: "138612833" };
 
 const PROFILS = {
@@ -65,12 +73,14 @@ const PROFILS = {
   siteweb: { user: "u7", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"], groupes: [{ id: "g2", displayName: "Accueil" }, { id: "g1", displayName: "SITE WEB" }],
     attendus: ["planning", "fichiers", "site", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "guides/admin"], autorises: ["liens", "guides/site", "guides/site/pied"] },
 };
-// Réponse maquettée du Worker (GET /breteuil/site/liens) : 1 cassé, 1 redirigé, 3 bons.
+// Réponse maquettée du Worker (GET /breteuil/site/liens) : 1 cassé, 1 redirigé, 4 bons.
 const LIENS = { verifieLe: "2026-10-18T12:05:00.000Z", liens: [
   { texte: "Horaires, tarifs et accès", url: "https://www.breteuil.fr/horaires-tarifs-acces/", page: "fr", statut: 200, ok: true, redirigeVers: null },
-  { texte: "Escape Game", url: "https://www.breteuil.fr/escape-game-du-chateau-de-breteuil/", page: "fr", statut: 404, ok: false, redirigeVers: null },
+  { texte: "Escape Game", url: "https://www.breteuil.fr/escape-game-du-chateau-de-breteuil/", page: "fr", statut: 404, ok: false, redirigeVers: null, methode: "GET" },
   { texte: "Presse", url: "https://www.breteuil.fr/presse/", page: "fr", statut: 200, ok: true, redirigeVers: "https://www.breteuil.fr/espace-presse-et-medias-2026/" },
   { texte: "E-billetterie", url: "https://breteuil.tickeasy.com/", page: "fr", statut: 200, ok: true, redirigeVers: null },
+  // Ancienne réponse du Worker (cache d'1 h) : entité HTML non décodée → l'appli la décode en texte.
+  { texte: "Groupes d&rsquo;enfants", url: "https://www.breteuil.fr/en-famille/", page: "fr", statut: 200, ok: true, redirigeVers: null },
   { texte: "Contact", url: "https://www.breteuil.fr/en/contact/", page: "en", statut: 200, ok: true, redirigeVers: null },
 ] };
 
@@ -80,7 +90,9 @@ function reponses(nomProfil, variante) {
   const r = {
     "/v1.0/me": moi,
     "/v1.0/me/transitiveMemberOf/microsoft.graph.directoryRole": { value: p.roles },
-    "/v1.0/me/licenseDetails": { value: p.lic.map((s) => ({ skuPartNumber: s })) },
+    "/v1.0/me/licenseDetails": { value: p.lic.map(detailsLicence) },
+    ...Object.fromEntries(USERS.filter((x) => x.assignedLicenses.length).map((x) => ["/v1.0/users/" + x.id + "/licenseDetails",
+      { value: [detailsLicence(x.assignedLicenses[0].skuId === "a" ? "O365_BUSINESS_PREMIUM" : "O365_BUSINESS_ESSENTIALS")] }])),
     "/v1.0/me/transitiveMemberOf/microsoft.graph.group": { value: p.groupes || [] },
     "/v1.0/users": { value: USERS },
     "/v1.0/subscribedSkus": { value: [{ skuId: "a", skuPartNumber: "O365_BUSINESS_PREMIUM", prepaidUnits: { enabled: 6 }, consumedUnits: 4 }, { skuId: "b", skuPartNumber: "O365_BUSINESS_ESSENTIALS", prepaidUnits: { enabled: 6 }, consumedUnits: 1 }] },
@@ -174,6 +186,9 @@ async function nouvellePage(vp, nomProfil, opts) {
 }
 async function capturer(page, nom) {
   if (!SORTIE) return;
+  // Capture pleine page prise depuis le haut : sinon l'en-tête collant et les onglets fixes sont
+  // dessinés au milieu de l'image (artefact de capture, pas un défaut de l'appli).
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(250);
   // v5 : attendre la fin des apparitions (animations finies seulement ; les boucles infinies et le défilement sont ignorés).
   await page.evaluate(() => Promise.race([new Promise((ok) => setTimeout(ok, 2000)), Promise.all(document.getAnimations()
@@ -306,12 +321,19 @@ try {
         await page.click('.section-site a[href="#/liens"]');
         await page.waitForSelector(".carte-lien.casse");
         const groupes = await page.$$eval(".zone-liens .carte-lien", (l) => l.map((c) => c.className.replace("carte-lien ", "")));
-        assert.deepEqual(groupes, ["casse", "verifier", "ok", "ok", "ok"]);
+        assert.deepEqual(groupes, ["casse", "verifier", "ok", "ok", "ok", "ok"]);
         assert.equal(await page.isVisible(".liens-ok .carte-lien"), false, "bons liens repliés");
-        assert.match(await page.textContent(".bilan-liens"), /1 cassé.*1 à vérifier.*3 bons/);
+        assert.match(await page.textContent(".bilan-liens"), /1 cassé.*1 à vérifier.*4 bons/);
+        // Entités HTML décodées (texte), jamais affichées telles quelles.
+        assert.equal(await page.textContent('[data-lien="https://www.breteuil.fr/en-famille/"] .quoi b'), "Groupes d\u2019enfants");
+        assert.ok(!/&[a-z]+;/i.test(await page.textContent(".zone-liens")), "aucune entité HTML visible");
         await calme(page);
         await controlesCommuns(page, `siteweb liens ${taille}`);
         await capturer(page, `siteweb-liens-${taille}`);
+        await page.click(".liens-ok > summary");
+        await page.waitForSelector('.liens-ok[open] [data-lien="https://www.breteuil.fr/en-famille/"]');
+        await calme(page);
+        await capturer(page, `siteweb-liens-bons-ouverts-${taille}`);
         await page.click('[data-action="reverifier"]');
         await page.waitForFunction(() => !document.querySelector('[data-action="reverifier"]').disabled);
         assert.ok(journal.some((x) => x.chemin === "/breteuil/site/liens?forcer=1"), "Revérifier → ?forcer=1");
@@ -324,6 +346,43 @@ try {
         await page.waitForSelector('.bandeau.exemple:has-text("site de test")');
       }
       if (nom === "admin") {
+        // « Ce que je peux utiliser » : outils en français, codes Microsoft repliés en bas, rien sous l'en-tête.
+        await page.goto(BASE + "#/personnes/u3");
+        await page.waitForSelector(".outils-inclus ul.liste-inclus li");
+        await calme(page);
+        const inclus = await page.$$eval(".outils-inclus ul.liste-inclus li", (l) => l.map((li) => li.textContent.trim()));
+        for (const n of ["Teams", "Boîte mail Outlook (50 Go)", "Dossiers partagés (SharePoint)", "Word, Excel, PowerPoint à installer", "Planner (projets)"])
+          assert.ok(inclus.some((t) => t.endsWith(n)), "outil traduit : " + n);
+        assert.equal(new Set(inclus).size, inclus.length, "outils dédoublonnés");
+        assert.ok(!inclus.some((t) => /[A-Z0-9]+_[A-Z0-9_]+/.test(t)), "aucun code Microsoft dans la liste");
+        assert.equal(await page.$$eval("details.support-codes", (l) => l.length), 1, "un seul repli support");
+        assert.equal(await page.$eval("details.support-codes", (d) => d.open), false, "repli support fermé par défaut");
+        assert.equal(await page.isVisible("details.support-codes ul.codes"), false);
+        assert.equal(await page.$("ul.plans"), null, "plus de liste brute sur deux colonnes");
+        assert.ok(await page.$eval("details.support-codes", (d) => !d.nextElementSibling && d.parentElement.matches(".outils-inclus") && !d.parentElement.nextElementSibling), "repli tout en bas");
+        // Défilement vers la carte de licence : elle s'arrête sous l'en-tête collant.
+        const sousEntete = async () => page.evaluate(() => { const c = document.querySelector(".carte-profil"); c.scrollIntoView(); const b = document.querySelector(".barre").getBoundingClientRect();
+          const o = document.getElementById("onglets"), ob = o && !o.hidden && getComputedStyle(o).position === "fixed" && o.getBoundingClientRect().top < 10 ? o.getBoundingClientRect().bottom : 0;
+          return { carte: c.getBoundingClientRect().top, entete: Math.max(b.bottom, ob) }; });
+        await page.evaluate(() => { document.querySelector(".ecran").style.minHeight = "300vh"; });
+        const m1 = await sousEntete();
+        if (m1.carte < m1.entete - 1) problemes.push(`licence ${taille} : la carte passe sous l'en-tête (${JSON.stringify(m1)})`);
+        await page.evaluate(() => { document.querySelector(".ecran").style.minHeight = ""; window.scrollTo(0, 0); });
+        await controlesCommuns(page, `admin licence ${taille}`);
+        await capturer(page, `admin-licence-${taille}`);
+        await page.click("details.support-codes > summary");
+        await page.waitForSelector("details.support-codes ul.codes li");
+        const codes = await page.$$eval("details.support-codes ul.codes li", (l) => l.map((x) => x.textContent));
+        assert.ok(codes.some((c) => /^MDOLITE_ENTERPRISE/.test(c)) && codes.some((c) => /KAIZALA_O365_P2.*désactivé/.test(c)), "codes non reconnus et désactivés");
+        assert.equal(await page.$eval("details.support-codes ul.codes", (u) => getComputedStyle(u).columnCount), "auto", "une colonne");
+        await controlesCommuns(page, `admin licence support ${taille}`);
+        await capturer(page, `admin-licence-support-ouvert-${taille}`);
+        // Moi : la même liste pour ses propres licences.
+        await page.goto(BASE + "#/moi");
+        await page.waitForSelector(".outils-inclus ul.liste-inclus li");
+        await calme(page);
+        await controlesCommuns(page, `admin moi ${taille}`);
+        await capturer(page, `admin-moi-licence-${taille}`);
         await page.goto(BASE + "#/gerer");
         await page.waitForSelector("#t-site");
         assert.equal(await page.$$eval(".section-site .t", (l) => l.length), 8, "admin : section Site web dans Gérer");
