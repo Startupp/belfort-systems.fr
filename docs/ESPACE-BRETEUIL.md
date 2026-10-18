@@ -108,34 +108,48 @@ Fichiers : `siteweb.js` (adresses WordPress, pas-à-pas, tri des liens — test�
 2. Centre d'administration Microsoft 365 → Équipes et groupes → créer le groupe « Site web » et y
    ajouter les personnes chargées du site. Effet à la prochaine ouverture de l'appli (≤ 5 min).
 
-## Section « Pilotage » (v5.2)
+## Section « Suivi informatique » (v5.2)
 
 Pour que le Château revoie **tout ce qui a été fait et échangé** avec son prestataire : historique
 daté, guides PDF, « ce qui a été mis en place » et coordonnées.
 
-- **`#/pilotage`** : grande tuile « Pilotage — tout ce qui a été mis en place » en tête de l'onglet de
-  gestion (**Gérer** pour l'administrateur général, **Équipe** pour le propriétaire du site, **Finance**
-  pour la facturation). Quatre parties : Historique (frise, du plus récent au plus ancien, bouton
-  « Ouvrir » vers chaque PDF cité, « document à venir » s'il n'est pas encore déposé), Ce qui a été mis
-  en place (cartes par thème), Tous les documents, Contacter (téléphone et mail).
+**Noms en un seul endroit** : `config.js` → `suivi` (libellé de l'écran, texte de la tuile, nom du
+dossier, du fichier, du sous-dossier des guides, ancien emplacement accepté en repli). Renommer =
+changer cette ligne (et le dossier dans SharePoint), rien d'autre.
+
+```js
+suivi: { libelle: "Suivi informatique", tuile: "Suivi informatique — tout ce qui a été fait pour vous",
+  dossier: "Suivi informatique", fichier: "suivi.json", guides: "Guides", ancien: { dossier: "Pilotage", fichier: "pilotage.json" } },
+```
+
+- **`#/suivi`** (l'ancienne adresse `#/pilotage` y renvoie) : grande tuile « Suivi informatique — tout
+  ce qui a été fait pour vous » en tête de l'onglet de gestion (**Gérer** pour l'administrateur général,
+  **Équipe** pour le propriétaire du site, **Finance** pour la facturation). Quatre parties : Historique
+  (frise, du plus récent au plus ancien, bouton « Ouvrir » vers chaque PDF cité, « document à venir »
+  s'il n'est pas encore déposé), Ce qui a été mis en place (cartes par thème), Tous les documents,
+  Contacter (téléphone et mail). Un simple collaborateur n'y a pas accès.
 - **Moi → Guides** (`#/moi/guides`, pour tout le monde) : les guides marqués `"pour": "tous"` et les
   pas-à-pas d'administration selon le profil.
-- Fichiers : `pilotage.js` (validation, tri, filtrage, correspondance des documents — testé par
-  `tests/pilotage.test.mjs`), `pilotage-ecrans.js`. Tout est affiché en texte (jamais de HTML).
+- Fichiers : `suivi.js` (validation, tri, filtrage, correspondance des documents — testé par
+  `tests/suivi.test.mjs`), `suivi-ecrans.js`. Tout est affiché en texte (jamais de HTML).
 
 **Où déposer les données** (jamais dans ce dépôt, qui est public) — SharePoint du Château,
 bibliothèque **Documents**, dans le dossier commun (`sharepoint.dossierCommun` de `config.js`) :
 
 ```
 Commun/
-└── Pilotage/
-    ├── pilotage.json
+└── Suivi informatique/
+    ├── suivi.json
     └── Guides/
         ├── Guide de démarrage.pdf
         └── …
 ```
 
-Format de `pilotage.json` (exemple fictif complet : `espace-breteuil/tests/pilotage-exemple.json`) :
+En repli, l'appli lit encore l'ancien emplacement `Commun/Pilotage/pilotage.json` (et ses PDF dans
+`Commun/Pilotage/Guides`) si `Suivi informatique/suivi.json` n'existe pas : renommer le dossier et le
+fichier dans SharePoint quand c'est possible.
+
+Format de `suivi.json` (exemple fictif complet : `espace-breteuil/tests/suivi-exemple.json`) :
 
 ```json
 {
@@ -153,18 +167,18 @@ Format de `pilotage.json` (exemple fictif complet : `espace-breteuil/tests/pilot
 Règles :
 - dates au format `AAAA-MM-JJ` (affichées « 15 septembre 2026 ») ; une entrée sans date valide ou
   sans titre est ignorée, le reste s'affiche quand même ;
-- `documents` et `fichier` = **nom du PDF dans `Pilotage/Guides`** ; majuscules et accents ne comptent
-  pas (« Memo-Outlook.pdf » = « mémo-outlook.PDF ») ;
+- `documents` et `fichier` = **nom du PDF dans le sous-dossier `Guides`** ; majuscules et accents ne
+  comptent pas (« Memo-Outlook.pdf » = « mémo-outlook.PDF ») ;
 - `pour` : `"tous"` (visible dans Moi → Guides par toute l'équipe) ou `"gestion"` (seulement dans
-  Pilotage). Sans `pour` valide : `"gestion"`. Un PDF déposé mais absent de `guides` apparaît dans
-  Pilotage sous son nom de fichier ;
+  Suivi informatique). Sans `pour` valide : `"gestion"`. Un PDF déposé mais absent de `guides`
+  apparaît dans Suivi informatique sous son nom de fichier ;
 - longueurs maximales : titre 200 caractères, résumé 3 000, point 600 ; au-delà, le texte est coupé.
 
-Mettre à jour = remplacer `pilotage.json` (et déposer les PDF) dans SharePoint : l'appli relit le
+Mettre à jour = remplacer `suivi.json` (et déposer les PDF) dans SharePoint : l'appli relit le
 fichier à chaque ouverture (gardé 1 minute en mémoire). Aucune publication du site n'est nécessaire.
-Tant que le dossier n'existe pas, l'appli affiche : « Le dossier Pilotage n'est pas encore en place —
-Damien doit le déposer dans le dossier commun ». Les droits sont ceux de SharePoint : laisser le
-dossier `Pilotage` hériter des droits du dossier commun (toute l'équipe peut lire).
+Tant que le dossier n'existe pas, l'appli affiche : « Le dossier Suivi informatique n'est pas encore
+en place — Damien doit le déposer dans le dossier commun ». Les droits sont ceux de SharePoint :
+laisser le dossier hériter des droits du dossier commun (toute l'équipe peut lire).
 
 ## Choix du chemin
 
