@@ -7,6 +7,8 @@
  *   - Graph  /me/transitiveMemberOf/microsoft.graph.directoryRole     → mes rôles d'annuaire
  *            (repli : /me/memberOf filtré sur directoryRole)
  *   - Graph  /me/licenseDetails                                       → mes licences
+ *   - Graph  /me/transitiveMemberOf/microsoft.graph.group             → mes groupes (section « Site web »)
+ *            (repli : /me/transitiveMemberOf filtré sur les groupes ; échec = pas de section, sans alerte)
  *   - contexte SharePoint (connecte.js) : site, Documents, Commun, currentuser, propriétaires
  *   - REST   /_api/web/effectivebasepermissions                       → ManagePermissions
  * Le résultat (profil.js) décide des onglets. Le dernier état connu est gardé pour la
@@ -95,11 +97,20 @@
       });
     });
   }
+  /** Groupes (Microsoft 365 et sécurité, y compris imbriqués) : seulement leur nom affiché. */
+  function mesGroupes() {
+    return G.graphTout("/me/transitiveMemberOf/microsoft.graph.group?$select=id,displayName").catch(function () {
+      return G.graphTout("/me/transitiveMemberOf?$select=id,displayName").then(function (l) {
+        return l.filter(function (x) { return x["@odata.type"] === "#microsoft.graph.group"; });
+      });
+    });
+  }
+  function nomGroupeSite() { var s = (self.EB_CONFIG || {}).siteWeb; return (s && s.groupe) || ""; }
   function charger(force) {
     if (!G.estConnecte()) return Promise.resolve(null);
     restaurer();
     if (etat.enCours && !force) return etat.enCours;
-    if (force) { ["acces:me", "acces:roles", "acces:licences", "acces:perm"].forEach(function (k) { C.oublier(k); }); if (window.EBConnecte) window.EBConnecte.oublierContexte(); }
+    if (force) { ["acces:me", "acces:roles", "acces:licences", "acces:perm", "acces:groupes"].forEach(function (k) { C.oublier(k); }); if (window.EBConnecte) window.EBConnecte.oublierContexte(); }
     ["me", "roles", "licences", "site", "sp"].forEach(function (k) { if (!etat.sondes[k]) sonde(k, "attente"); });
     var ctx = window.EBConnecte ? window.EBConnecte.contexte() : Promise.reject(new Error("indisponible"));
     etat.enCours = Promise.all([
@@ -108,8 +119,9 @@
       regle(C.obtenir("acces:licences", function () { return G.graphTout("/me/licenseDetails?$select=skuPartNumber"); }, { ttl: TTL })),
       regle(ctx),
       regle(C.obtenir("acces:perm", function () { return G.sp("GET", "/_api/web/effectivebasepermissions"); }, { ttl: TTL })),
+      nomGroupeSite() ? regle(C.obtenir("acces:groupes", mesGroupes, { ttl: TTL })) : Promise.resolve({ ok: true, v: [] }),
     ]).then(function (r) {
-      var me = r[0], roles = r[1], lic = r[2], c = r[3], perm = r[4];
+      var me = r[0], roles = r[1], lic = r[2], c = r[3], perm = r[4], groupes = r[5];
       if (me.ok) { etat.me = me.v; sonde("me", "ok"); } else sonde("me", "erreur", (me.e && me.e.message) || "Microsoft ne vous reconnaît pas.", true);
       if (roles.ok) sonde("roles", "ok"); else sonde("roles", "erreur", "Vos rôles d'administration n'ont pas pu être lus (permission Directory.Read.All ?).");
       if (lic.ok) sonde("licences", "ok"); else sonde("licences", "erreur", "Vos licences n'ont pas pu être lues.");
@@ -127,6 +139,7 @@
         proprietaire: !!proprietaire,
         gererDroits: perm.ok ? P.gererDroitsDe(perm.v) : false,
         licences: lic.ok ? lic.v.map(function (x) { return x.skuPartNumber; }) : [],
+        siteWeb: groupes.ok ? P.estMembreDe(groupes.v, nomGroupeSite()) : !!(etat.entrees && etat.entrees.siteWeb),
       };
       var avant = etat.resultat ? JSON.stringify(etat.entrees) : null;
       etat.entrees = entrees;
