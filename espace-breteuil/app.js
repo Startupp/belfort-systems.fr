@@ -34,7 +34,7 @@
     try { if (valeur == null) localStorage.removeItem(cle); else localStorage.setItem(cle, JSON.stringify(valeur)); return true; } catch (e) { return false; }
   }
 
-  var REGLAGES_DEFAUT = { vue: "semaine", texte: "normal", theme: "auto", passes: "afficher", mode: "", demos: false, zoom: 0 };
+  var REGLAGES_DEFAUT = { vue: "semaine", texte: "normal", theme: "auto", palette: "creme", passes: "afficher", mode: "", demos: false, zoom: 0 };
   var reglages = Object.assign({}, REGLAGES_DEFAUT, lire("eb:reglages", {}));
   if (reglages.calendrierSeul) reglages.mode = "calendrier"; // reprise v3
   ["calendrierSeul", "monEspace", "moi", "ouvrirMonEspace"].forEach(function (k) { delete reglages[k]; });
@@ -43,7 +43,10 @@
     var r = document.documentElement;
     if (reglages.theme === "clair" || reglages.theme === "sombre") r.setAttribute("data-theme", reglages.theme); else r.removeAttribute("data-theme");
     if (reglages.texte === "petit" || reglages.texte === "grand" || reglages.texte === "tres-grand") r.setAttribute("data-texte", reglages.texte); else r.removeAttribute("data-texte");
+    if (window.EBAppliquerPalette) window.EBAppliquerPalette(reglages); // data-palette + meta theme-color
   }
+  // Thème « Auto » : la couleur du navigateur suit le passage clair ↔ sombre du système.
+  try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { if (window.EBAppliquerPalette) window.EBAppliquerPalette(reglages); }); } catch (e) {}
 
   /* ------------------------------------------------------------------ */
   /* Icônes (dessins fixes)                                              */
@@ -955,7 +958,8 @@
     app.appendChild(h("h2", { class: "titre-groupe" }, "Affichage"));
     app.appendChild(h("div", { class: "grille-reglages" },
       choix("Taille de l'interface", "Texte, boutons et tuiles, ensemble.", "texte", [["petit", "Petit"], ["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
-      choix("Couleurs", null, "theme", [["auto", "Auto"], ["clair", "Clair"], ["sombre", "Sombre"]])));
+      choix("Couleurs", "Crème et praline par défaut, ou Bleu Breteuil : bleu nuit et doré.", "palette", [["creme", "Crème et praline"], ["bleu", "Bleu Breteuil"]]),
+      choix("Clair ou sombre", "« Auto » suit le réglage du téléphone.", "theme", [["auto", "Auto"], ["clair", "Clair"], ["sombre", "Sombre"]])));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Planning"));
     app.appendChild(h("div", { class: "grille-reglages" },
