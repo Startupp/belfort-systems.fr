@@ -311,6 +311,10 @@ try {
         await calme(page);
         await controlesCommuns(page, `siteweb liens ${taille}`);
         await capturer(page, `siteweb-liens-${taille}`);
+        await page.click(".liens-ok > summary");
+        await page.waitForSelector('.liens-ok[open] [data-lien="https://www.breteuil.fr/en-famille/"]');
+        await calme(page);
+        await capturer(page, `siteweb-liens-bons-ouverts-${taille}`);
         await page.click('[data-action="reverifier"]');
         await page.waitForFunction(() => !document.querySelector('[data-action="reverifier"]').disabled);
         assert.ok(journal.some((x) => x.chemin === "/breteuil/site/liens?forcer=1"), "Revérifier → ?forcer=1");
