@@ -10,6 +10,9 @@
 //     maquettée : 1 cassé, 1 redirigé, 3 bons), « Corriger » → pas-à-pas, vérificateur absent → message clair ;
 //   - « Déléguer » : permission demandée seulement sur cet écran, garde-fous, POST roleAssignments ;
 //   - dossier commun introuvable : pastille orange et message dans Dossiers ;
+//   - v5.2 « Pilotage » (données FICTIVES, tests/pilotage-exemple.json) : tuile en tête de Gérer / Équipe /
+//     Finance, frise du plus récent au plus ancien, « Ouvrir » → PDF déposé (nouvel onglet), « document à
+//     venir », tous/gestion, contact ; Moi → Guides pour tous ; dossier Pilotage absent → message clair ;
 //   - aucune erreur console, pas de défilement horizontal, cibles ≥ 44 px.
 // Réponses Microsoft et Worker maquettées ; ?maquette=1 n'agit que sur localhost.
 import { createRequire } from "node:module";
@@ -27,6 +30,14 @@ const BASE = `http://localhost:${PORT}/?maquette=1`;
 if (SORTIE) mkdirSync(SORTIE, { recursive: true });
 const ICS = readFileSync(RACINE + "exemple.ics", "utf8");
 const ICS2 = readFileSync(RACINE + "exemple-accueil.ics", "utf8");
+// v5.2 Pilotage : contenu et PDF FICTIFS (Château d'exemple) — jamais de données du client dans le dépôt.
+const PILOTAGE = JSON.parse(readFileSync(RACINE + "tests/pilotage-exemple.json", "utf8"));
+const GUIDES_PDF = [
+  { name: "guide-demarrage.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/exemple/guide-demarrage.pdf", size: 245760, lastModifiedDateTime: "2026-05-05T09:00:00Z" },
+  { name: "Memo Messagerie.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/exemple/memo.pdf", size: 1300000 },
+  { name: "Plan de bascule.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/exemple/plan.pdf", size: 52000 },
+  { name: "Notes internes.pdf", file: {}, webUrl: "https://breteuil02.sharepoint.com/exemple/notes.pdf", size: 1000 },
+];
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 const CORS = { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" };
 
@@ -100,6 +111,9 @@ function reponses(nomProfil, variante) {
     "/sites/ChateaudeBreteuil/_api/web/lists(guid'list1')/items(5)/roleassignments": { value: [
       { PrincipalId: 3, Member: { Id: 3, Title: "Propriétaires de Château de Breteuil", PrincipalType: 8 }, RoleDefinitionBindings: [{ RoleTypeKind: 5, Name: "Contrôle total" }] }] },
   };
+  r["/v1.0/drives/drive1/root:/Commun/Pilotage/pilotage.json:/content"] = PILOTAGE;
+  r["/v1.0/drives/drive1/root:/Commun/Pilotage/Guides:/children"] = { value: GUIDES_PDF };
+  if (variante === "pilotage-absent") { delete r["/v1.0/drives/drive1/root:/Commun/Pilotage/pilotage.json:/content"]; delete r["/v1.0/drives/drive1/root:/Commun/Pilotage/Guides:/children"]; }
   if (variante === "commun-introuvable") { delete r["/v1.0/drives/drive1/root:/Commun"]; delete r["/v1.0/drives/drive1/root:/Commun:/children"]; }
   return { r, moi };
 }
@@ -346,6 +360,79 @@ try {
       await contexte.close();
     }
 
+    /* ---------- v5.2 Pilotage (données fictives) ---------- */
+    for (const nom of ["admin", "proprietaire", "facturation", "collaborateur"]) {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, nom);
+      await page.goto(BASE + "#/planning");
+      await page.waitForFunction((n) => document.querySelectorAll("#onglets a").length === n, PROFILS[nom].attendus.length, { timeout: 8000 });
+      const gestion = PROFILS[nom].attendus[2];
+      if (nom !== "collaborateur") {
+        // Tuile en tête de l'onglet de gestion (avant toute section).
+        await page.goto(BASE + "#/" + gestion);
+        await page.waitForSelector(".carte-pilotage");
+        assert.ok(await page.evaluate(() => { const t = document.querySelector(".carte-pilotage"), s = document.querySelector(".ecran .section");
+          return !s || !!(t.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING); }), `${nom} : tuile Pilotage en tête`);
+        assert.match(await page.textContent(".carte-pilotage"), /Pilotage — tout ce qui a été mis en place/);
+        await page.click(".carte-pilotage");
+        await page.waitForFunction(() => location.hash === "#/pilotage");
+        await page.waitForSelector(".frise .etape-frise");
+        assert.deepEqual(await ongletsVisibles(page), PROFILS[nom].attendus, `${nom} : 4 onglets au plus, inchangés`);
+        assert.equal(await page.getAttribute("#onglets a.actif", "data-onglet"), gestion, `${nom} : Pilotage sous l'onglet ${gestion}`);
+        assert.deepEqual(await page.$$eval(".frise time", (l) => l.map((t) => t.textContent)), ["1er juin 2026", "5 mai 2026", "5 mai 2026", "20 avril 2026", "2 mars 2026"], "frise : récent → ancien, date en toutes lettres");
+        assert.equal(await page.$$eval(".zone-pilotage img", (l) => l.length), 0, "aucun HTML interprété");
+        assert.match(await page.textContent(".frise"), /<img src=x onerror=alert\(1\)> reste du texte/);
+        const ouvrir = await page.$$eval(".docs-frise a", (l) => l.map((a) => [a.getAttribute("href"), a.target, a.rel]));
+        assert.deepEqual(ouvrir.map((x) => x[0]), ["https://breteuil02.sharepoint.com/exemple/guide-demarrage.pdf", "https://breteuil02.sharepoint.com/exemple/memo.pdf", "https://breteuil02.sharepoint.com/exemple/plan.pdf"]);
+        assert.ok(ouvrir.every((x) => x[1] === "_blank" && /noopener/.test(x[2])), "Ouvrir : nouvel onglet");
+        assert.deepEqual(await page.$$eval(".docs-frise .a-venir", (l) => l.map((x) => x.textContent)), ["document à venir"], "devis pas encore déposé");
+        assert.deepEqual(await page.$$eval(".liste-docs .doc b", (l) => l.map((x) => x.textContent)),
+          ["Guide de démarrage", "Mémo messagerie (1 page)", "Plan de bascule et coûts", "Devis postes et sauvegarde", "Notes internes.pdf"], "tous les documents (gestion)");
+        assert.equal(await page.$$eval(".carte-theme", (l) => l.length), 3);
+        assert.ok(await page.$('.carte-contact a[href="tel:+33123456789"]'));
+        assert.ok(await page.$('.carte-contact a[href="mailto:jean@exemple.test"]'));
+        assert.ok(journal.length === 0 || !journal.some((x) => /Pilotage/.test(x.chemin)), "lecture seule");
+        await calme(page);
+        await controlesCommuns(page, `${nom} pilotage ${taille}`);
+        if (nom === "admin") await capturer(page, `pilotage-${taille}`);
+        await page.click('.sommaire-pilotage button:has-text("Contacter")');
+      } else {
+        await page.goto(BASE + "#/pilotage");
+        await page.waitForFunction(() => location.hash === "#/planning", null, { timeout: 4000 }).catch(() => problemes.push("collaborateur : #/pilotage aurait dû être refusé"));
+      }
+      // Moi → Guides : pour tout le monde, seulement les guides « pour: tous ».
+      await page.goto(BASE + "#/moi");
+      await page.click('a.action[href="#/moi/guides"]');
+      await page.waitForFunction(() => location.hash === "#/moi/guides");
+      await page.waitForSelector(".liste-docs .doc");
+      assert.equal(await page.getAttribute("#onglets a.actif", "data-onglet"), "moi");
+      assert.deepEqual(await page.$$eval(".liste-docs .doc b", (l) => l.map((x) => x.textContent)), ["Guide de démarrage", "Mémo messagerie (1 page)"], `${nom} : guides pour tous`);
+      assert.doesNotMatch(await page.textContent(".ecran"), /réservé à la gestion|Plan de bascule|Notes internes/);
+      const pas = await page.$$eval(".liste-fiches a", (l) => l.map((a) => a.getAttribute("href")));
+      assert.deepEqual(pas, { admin: ["#/guides/admin", "#/guides/finance", "#/guides/site"], proprietaire: ["#/guides/admin"], facturation: ["#/guides/finance"], collaborateur: [] }[nom], `${nom} : pas-à-pas selon le profil`);
+      for (const href of pas) { await page.goto(BASE + href); await page.waitForTimeout(200); if ((await page.evaluate(() => location.hash)) !== href) problemes.push(`${nom} : ${href} refusé depuis Moi → Guides`); }
+      await page.goto(BASE + "#/moi/guides");
+      await page.waitForSelector(".liste-docs .doc");
+      await calme(page);
+      await controlesCommuns(page, `${nom} moi-guides ${taille}`);
+      if (nom === "collaborateur") await capturer(page, `moi-guides-${taille}`);
+      if (erreurs.length) problemes.push(`pilotage ${nom} ${taille} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    /* ---------- v5.2 Pilotage : dossier pas encore déposé ---------- */
+    {
+      const { contexte, page, erreurs } = await nouvellePage(vp, "proprietaire", { variante: "pilotage-absent" });
+      await page.goto(BASE + "#/pilotage");
+      await page.waitForSelector('[data-etat="absent"]', { timeout: 8000 });
+      assert.equal(await page.textContent('[data-etat="absent"]'), "Le dossier Pilotage n'est pas encore en place — Damien doit le déposer dans le dossier commun.");
+      assert.equal(await page.$(".bandeau.erreur"), null, "pas d'erreur technique");
+      await capturer(page, `pilotage-absent-${taille}`);
+      await page.goto(BASE + "#/moi/guides");
+      await page.waitForSelector('[data-etat="absent"]');
+      const autres = erreurs.filter((e) => !/404/.test(e));
+      if (autres.length) problemes.push(`pilotage absent ${taille} : erreurs console ${autres.join(" | ")}`);
+      await contexte.close();
+    }
+
     /* ---------- Vérificateur de liens pas encore installé (Worker sans la route) ---------- */
     {
       const { contexte, page, erreurs } = await nouvellePage(vp, "siteweb", { liens: "absent" });
@@ -397,4 +484,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + vérificateur de liens + Fichiers + épingles + problème réel (375 et 1280 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Pilotage et Moi → Guides + vérificateur de liens + Fichiers + épingles + problème réel (375 et 1280 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
