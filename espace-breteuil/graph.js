@@ -341,14 +341,16 @@
    * Téléverse un fichier (v4, permissions déjà en place : Files.ReadWrite.All).
    * chemin : « /drives/<id>/root:/<dossier>/<nom> » (sans « :/content »). ≤ 4 Mo : un seul PUT ;
    * au-delà : session de téléversement par morceaux de 3,75 Mio (multiple de 320 Kio).
-   * Un fichier du même nom n'est jamais écrasé (conflictBehavior=rename).
+   * Un fichier du même nom n'est jamais écrasé (conflictBehavior=rename) — sauf si l'appelant
+   * passe explicitement comportement = "replace" (v5.3.1 : choix « Remplacer » du glisser-déposer).
    */
   var MORCEAU = 320 * 1024 * 12;
-  function televerser(chemin, fichier, progres) {
+  function televerser(chemin, fichier, progres, comportement) {
     progres = progres || function () {};
+    var cb = comportement === "replace" ? "replace" : "rename";
     if (fichier.size <= 4 * 1024 * 1024) {
       return jeton("graph").then(function (t) {
-        return fetch(GRAPH + chemin + ":/content?@microsoft.graph.conflictBehavior=rename", { method: "PUT",
+        return fetch(GRAPH + chemin + ":/content?@microsoft.graph.conflictBehavior=" + cb, { method: "PUT",
           headers: { Authorization: "Bearer " + t, "Content-Type": fichier.type || "application/octet-stream" }, body: fichier });
       }).then(function (r) {
         signaler({ ressource: "graph", ok: r.ok, statut: r.status, methode: "PUT" });
@@ -356,7 +358,7 @@
         progres(1); return r.json();
       });
     }
-    return graph("POST", chemin + ":/createUploadSession", { item: { "@microsoft.graph.conflictBehavior": "rename" } }).then(function (session) {
+    return graph("POST", chemin + ":/createUploadSession", { item: { "@microsoft.graph.conflictBehavior": cb } }).then(function (session) {
       var debut = 0;
       function suivant() {
         var fin = Math.min(debut + MORCEAU, fichier.size);
