@@ -1154,3 +1154,5 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
   .t:hover, .tuile:hover, .action:hover, .epingle:hover, button.fichier:hover, .carte-personne:hover, .liste-fiches a:hover, .gros-bouton:hover { transform: none; }
   .gros-bouton.principal::after { display: none; }
 }
+.btn-verre { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 374px) { .barre-bas { left: 10px; right: 10px; gap: 8px; } .btn-verre { font-size: .82rem; gap: 5px; padding: 0 8px; } .btn-verre.large svg.ic { display: none; } }
