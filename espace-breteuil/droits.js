@@ -183,6 +183,70 @@
     return ORDRE.filter(function (p) { return out[p]; }).map(function (p) { out[p].libres = Math.max(0, out[p].achetees - out[p].attribuees); return out[p]; });
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Plans de service Microsoft (servicePlanName) → outil en français     */
+  /* ------------------------------------------------------------------ */
+  // Seuls les plans UTILES à un non-technicien. Un code peut donner plusieurs outils ; plusieurs codes,
+  // le même outil (dédoublonné). Les autres codes vont dans le repli « Détail pour le support ».
+  var O = {
+    mail: ["📧", "Boîte mail Outlook (50 Go)"], mail2: ["📧", "Boîte mail Outlook (2 Go)"],
+    teams: ["💬", "Teams"], reunions: ["📞", "Réunions et appels Teams"],
+    sharepoint: ["🗂️", "Dossiers partagés (SharePoint)"], onedrive: ["☁️", "OneDrive (ses fichiers, 1 To)"],
+    web: ["🌐", "Word, Excel, PowerPoint en ligne"], installe: ["💻", "Word, Excel, PowerPoint à installer"],
+    mobile: ["📱", "Office sur téléphone"], forms: ["📝", "Forms (questionnaires)"],
+    automate: ["⚙️", "Power Automate (automatisations)"], apps: ["🧩", "Power Apps"],
+    todo: ["✅", "To Do (listes de tâches)"], bookings: ["📅", "Bookings (prise de rendez-vous)"],
+    sway: ["🎨", "Sway (présentations)"], stream: ["🎬", "Stream (vidéos)"], whiteboard: ["🖍️", "Whiteboard (tableau blanc)"],
+    planner: ["📋", "Planner (projets)"], intune: ["📲", "Gestion des téléphones (Intune)"], engage: ["🗣️", "Viva Engage"],
+    copilot: ["✨", "Copilot (assistant gratuit)"], recherche: ["🔎", "Recherche Microsoft"],
+    insights: ["📊", "Viva Insights (temps de travail)"], learning: ["🎓", "Viva Learning (formations)"],
+    loop: ["🔁", "Loop (pages partagées)"], clipchamp: ["🎥", "Clipchamp (montage vidéo)"],
+    defender: ["🛡️", "Protection contre les mails piégés (Defender)"],
+  };
+  var PLANS = {
+    EXCHANGE_S_STANDARD: [O.mail], EXCHANGE_S_ENTERPRISE: [O.mail], EXCHANGE_S_ESSENTIALS: [O.mail], EXCHANGE_S_DESKLESS: [O.mail2],
+    TEAMS1: [O.teams], TEAMS_FREE: [O.teams], MCOSTANDARD: [O.reunions],
+    SHAREPOINTSTANDARD: [O.sharepoint, O.onedrive], SHAREPOINTENTERPRISE: [O.sharepoint, O.onedrive], SHAREPOINTDESKLESS: [O.sharepoint],
+    ONEDRIVE_BASIC: [O.onedrive],
+    SHAREPOINTWAC: [O.web], OFFICESUBSCRIPTION: [O.installe], OFFICE_BUSINESS: [O.installe], OFFICEMOBILE_SUBSCRIPTION: [O.mobile],
+    FORMS_PLAN_E1: [O.forms], FORMS_PLAN_E3: [O.forms], FLOW_O365_P1: [O.automate], FLOW_O365_P2: [O.automate],
+    POWERAPPS_O365_P1: [O.apps], POWERAPPS_O365_P2: [O.apps], BPOS_S_TODO_1: [O.todo], BPOS_S_TODO_2: [O.todo],
+    MICROSOFTBOOKINGS: [O.bookings], SWAY: [O.sway], STREAM_O365_SMB: [O.stream], STREAM_O365_E1: [O.stream], STREAM_O365_E3: [O.stream],
+    WHITEBOARD_PLAN1: [O.whiteboard], WHITEBOARD_PLAN2: [O.whiteboard], PROJECTWORKMANAGEMENT: [O.planner],
+    INTUNE_O365: [O.intune], VIVAENGAGE_CORE: [O.engage], YAMMER_ENTERPRISE: [O.engage],
+    Bing_Chat_Enterprise: [O.copilot], MICROSOFT_SEARCH: [O.recherche],
+    MYANALYTICS_P2: [O.insights], INSIGHTS_BY_MYANALYTICS: [O.insights], EXCHANGE_ANALYTICS: [O.insights],
+    VIVA_LEARNING_SEEDED: [O.learning], MICROSOFT_LOOP: [O.loop], CLIPCHAMP: [O.clipchamp],
+    ATP_ENTERPRISE: [O.defender], THREAT_INTELLIGENCE: [O.defender],
+  };
+
+  /**
+   * Outils inclus dans les licences d'une personne (réponse Graph /licenseDetails).
+   * Retour : { outils: [{ emoji, nom }] dédoublonnés et triés ; support: [{ code, licence, desactive }] —
+   *   codes non reconnus et plans désactivés, pour le repli « Détail pour le support » }.
+   */
+  function outilsDesPlans(licences) {
+    var vus = {}, outils = [], support = [], cles = {};
+    (licences || []).forEach(function (l) {
+      var licence = (PROFILS[SKUS[l && l.skuPartNumber]] || {}).nom || (l && l.skuPartNumber) || "";
+      ((l && l.servicePlans) || []).forEach(function (s) {
+        var code = String((s && s.servicePlanName) || "");
+        if (!code) return;
+        var desactive = s.provisioningStatus === "Disabled";
+        var connus = Object.prototype.hasOwnProperty.call(PLANS, code) ? PLANS[code] : null;
+        if (connus && !desactive) {
+          connus.forEach(function (o) { if (!vus[o[1]]) { vus[o[1]] = 1; outils.push({ emoji: o[0], nom: o[1] }); } });
+          return;
+        }
+        var cle = code + "|" + licence + "|" + desactive;
+        if (!cles[cle]) { cles[cle] = 1; support.push({ code: code, licence: licence, desactive: desactive }); }
+      });
+    });
+    outils.sort(function (a, b) { return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }); });
+    support.sort(function (a, b) { return (a.desactive - b.desactive) || a.code.localeCompare(b.code); });
+    return { outils: outils, support: support };
+  }
+
   /** Nom de connexion SharePoint d'un compte de l'entreprise (pour ensureuser). */
   function logonName(upn) { return "i:0#.f|membership|" + minuscule(upn); }
 
@@ -199,7 +263,7 @@
   var api = {
     NIVEAUX: NIVEAUX, TYPES: TYPES, PROFILS: PROFILS, SKUS: SKUS,
     niveauDeRoles: niveauDeRoles, typeDe: typeDe, adresseDe: adresseDe, estProtege: estProtege, nomGroupe: nomGroupe,
-    profilDe: profilDe, compteLicences: compteLicences, logonName: logonName, nomDossierValide: nomDossierValide,
+    profilDe: profilDe, compteLicences: compteLicences, PLANS: PLANS, outilsDesPlans: outilsDesPlans, logonName: logonName, nomDossierValide: nomDossierValide,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.EBDroits = api;

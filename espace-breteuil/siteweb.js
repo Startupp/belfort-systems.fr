@@ -108,11 +108,14 @@
   /* ------------------------------------------------------------------ */
   var BLOQUES = [401, 403, 429, 999]; // sites qui refusent les robots (réseaux sociaux…) : rien ne prouve que le lien est cassé
 
-  /** « casse » (rouge), « verifier » (orange : redirigé ou robot refusé) ou « ok ». */
+  /** Introuvable confirmé par un vrai GET (le Worker refait en GET les HEAD douteux). */
+  function introuvableConfirme(l) { return (l.statut === 404 || l.statut === 410) && l.methode === "GET"; }
+  /** « casse » (rouge, seulement si un GET a répondu 404/410), « verifier » (orange : redirigé, robot refusé,
+   *  ne répond pas, panne, 404 non confirmé) ou « ok ». */
   function classer(l) {
     if (l && l.ok) return l.redirigeVers ? "verifier" : "ok";
-    if (l && BLOQUES.indexOf(l.statut) > -1) return "verifier";
-    return "casse";
+    if (l && introuvableConfirme(l)) return "casse";
+    return "verifier";
   }
   function trier(liens) {
     var g = { casse: [], verifier: [], ok: [] };
@@ -123,11 +126,43 @@
     var s = l.statut;
     if (l.ok && l.redirigeVers) return "Marche, mais mène maintenant ailleurs. À mettre à jour si possible.";
     if (l.ok) return "Marche.";
-    if (s == null) return "Ne répond pas (adresse inconnue ou site trop lent).";
-    if (s === 404 || s === 410) return "Page introuvable (erreur " + s + ").";
+    if (s == null) return "Ne répond pas (site trop lent ou adresse inconnue) : ouvrez le lien pour vérifier vous-même.";
+    if (introuvableConfirme(l)) return "Page introuvable (erreur " + s + ").";
+    if (s === 404 || s === 410) return "Semble introuvable (erreur " + s + ", non confirmée) : ouvrez le lien pour vérifier vous-même.";
     if (BLOQUES.indexOf(s) > -1) return "Ce site refuse les vérifications automatiques (code " + s + ") : ouvrez le lien pour vérifier vous-même.";
-    if (s >= 500) return "Le site en face est en panne (erreur " + s + ").";
-    return "Ne marche pas (erreur " + s + ").";
+    if (s >= 500) return "Le site en face est peut-être en panne (erreur " + s + ") : ouvrez le lien pour vérifier vous-même.";
+    return "Réponse inattendue (code " + s + ") : ouvrez le lien pour vérifier vous-même.";
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Entités HTML (&rsquo; &eacute;…) : décodées en TEXTE, jamais en HTML  */
+  /* ------------------------------------------------------------------ */
+  var ENTITES = {
+    amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0", thinsp: "\u2009", ensp: "\u2002", emsp: "\u2003", shy: "",
+    rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201d", ldquo: "\u201c", sbquo: "\u201a", bdquo: "\u201e", laquo: "\u00ab", raquo: "\u00bb",
+    lsaquo: "\u2039", rsaquo: "\u203a", hellip: "\u2026", ndash: "\u2013", mdash: "\u2014", bull: "\u2022", middot: "\u00b7", prime: "\u2032",
+    agrave: "à", aacute: "á", acirc: "â", atilde: "ã", auml: "ä", aring: "å", aelig: "æ", ccedil: "ç",
+    egrave: "è", eacute: "é", ecirc: "ê", euml: "ë", igrave: "ì", iacute: "í", icirc: "î", iuml: "ï",
+    ntilde: "ñ", ograve: "ò", oacute: "ó", ocirc: "ô", otilde: "õ", ouml: "ö", oslash: "ø", oelig: "œ",
+    ugrave: "ù", uacute: "ú", ucirc: "û", uuml: "ü", yacute: "ý", yuml: "ÿ", szlig: "ß",
+    Agrave: "À", Aacute: "Á", Acirc: "Â", Atilde: "Ã", Auml: "Ä", Aring: "Å", AElig: "Æ", Ccedil: "Ç",
+    Egrave: "È", Eacute: "É", Ecirc: "Ê", Euml: "Ë", Igrave: "Ì", Iacute: "Í", Icirc: "Î", Iuml: "Ï",
+    Ntilde: "Ñ", Ograve: "Ò", Oacute: "Ó", Ocirc: "Ô", Otilde: "Õ", Ouml: "Ö", Oslash: "Ø", OElig: "Œ",
+    Ugrave: "Ù", Uacute: "Ú", Ucirc: "Û", Uuml: "Ü", Yacute: "Ý", Yuml: "Ÿ",
+    euro: "€", pound: "£", cent: "¢", yen: "¥", deg: "°", copy: "©", reg: "®", trade: "™", sect: "§", para: "¶",
+    times: "×", divide: "÷", plusmn: "±", frac12: "½", frac14: "¼", frac34: "¾", sup2: "²", sup3: "³", ordf: "ª", ordm: "º",
+    iexcl: "¡", iquest: "¿", dagger: "†", larr: "←", rarr: "→", uarr: "↑", darr: "↓", hearts: "♥", check: "✓",
+  };
+  /** « Groupes d&rsquo;enfants » → « Groupes d’enfants ». Sortie = texte brut (à poser avec textContent). */
+  function decoder(t) {
+    return String(t == null ? "" : t).replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/gi, function (m, e) {
+      if (e.charAt(0) === "#") {
+        var n = e.charAt(1) === "x" || e.charAt(1) === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+        return isFinite(n) && n > 0 && n < 0x110000 ? String.fromCodePoint(n) : m;
+      }
+      var v = Object.prototype.hasOwnProperty.call(ENTITES, e) ? ENTITES[e] : ENTITES[e.toLowerCase()];
+      return typeof v === "string" ? v : m;
+    });
   }
   /** Adresse lisible : sans https://, sans www., coupée si trop longue. */
   function courte(url, max) {
@@ -144,7 +179,7 @@
     return { titre: "La vérification n'a pas abouti", texte: "Réessayez dans une minute. Si cela recommence, prévenez Damien." + (e.statut ? " (code " + e.statut + ")" : "") };
   }
 
-  var api = { config: config, adresses: adresses, guides: guides, guide: guide, tuiles: tuiles, classer: classer, trier: trier, phrase: phrase, courte: courte, messageErreur: messageErreur };
+  var api = { config: config, adresses: adresses, guides: guides, guide: guide, tuiles: tuiles, classer: classer, decoder: decoder, trier: trier, phrase: phrase, courte: courte, messageErreur: messageErreur };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.EBSiteWeb = api;
 })(typeof self !== "undefined" ? self : this);
