@@ -31,8 +31,17 @@
     };
   }
 
+  /** Typographie : espace insécable dans les guillemets (« Pied de page » ne se coupe pas à la ligne). */
+  function insecable(t) { return String(t).replace(/« /g, "«\u00a0").replace(/ »/g, "\u00a0»"); }
   /** Pas-à-pas (3 étapes au plus), dans l'ordre des tuiles. */
   function guides(cfg) {
+    return brutes(cfg).map(function (g) {
+      g.etapes = g.etapes.map(insecable);
+      if (g.note) g.note = insecable(g.note);
+      return g;
+    });
+  }
+  function brutes(cfg) {
     var u = adresses(cfg);
     return [
       { id: "image", titre: "Remplacer une image", icone: "photo",
