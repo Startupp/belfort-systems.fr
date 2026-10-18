@@ -99,6 +99,11 @@
     calcul: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h8"/>',
     pouls: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
     badge: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 17a3.5 3.5 0 0 1 7 0M15 9h3M15 13h3"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    lien: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    palette: '<path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2.5a1.5 1.5 0 0 0-1.1 2.5c.4.5.6 1 .6 1.5 0 1.1-.9 2-2 2Z"/><circle cx="7.5" cy="11.5" r="1.2"/><circle cx="10.5" cy="7.5" r="1.2"/><circle cx="15.5" cy="7.5" r="1.2"/>',
+    page: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 17 .5-2 4.5-4.5 1.5 1.5-4.5 4.5z"/>',
+    loupe: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="m8 11 2 2 4-4"/>',
     palmier: '<path d="M13 8c0-2.8-2.2-5-5-5S3 5.2 3 8"/><path d="M13 8c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M13 8c-3 0-7 2-8 6M13 8c3 0 7 2 8 6M13 8v14"/>',
   };
   function icone(nom) {
@@ -326,6 +331,7 @@
     agenda: "praline", mail: "ciel", boite: "ciel", dossier: "dore", nuage: "ciel", bulles: "lavande", grille: "sauge",
     personnes: "sauge", personne: "sauge", reseau: "lavande", badge: "dore", euro: "dore", facture: "dore", carte: "dore", calcul: "dore",
     etoile: "praline", cle: "praline", livre: "lavande", ouvrir: "praline", cadenas: "corail", horloge: "lavande", bouclier: "corail",
+    globe: "ciel", lien: "sauge", palette: "lavande", page: "dore", loupe: "corail", photo: "ciel", actualiser: "sauge",
     arrivee: "sauge", depart: "corail", palmier: "sauge", telephone: "sauge", reglages: "lavande", installer: "ciel",
   };
   function tuile(t) {
@@ -876,6 +882,7 @@
         { href: lienFin("Abonnements") || "https://admin.microsoft.com/Adminportal/Home#/subscriptions", externe: true, icone: "carte", libelle: "Abonnements", aide: "Abonnements et moyen de paiement, dans le centre d'administration" },
         { href: "#/guides/finance", icone: "livre", libelle: "Guides", aide: "Les gestes de facturation, pas à pas" },
       ])));
+    if (sec.indexOf("site") > -1 && window.EBSiteEcrans) app.appendChild(window.EBSiteEcrans.section());
   }
 
   /* ------------------------------------------------------------------ */
@@ -900,6 +907,7 @@
     ]));
   }
   function ecranGuides(app, chemin) {
+    if (chemin[1] === "site" && window.EBSiteEcrans) { window.EBSiteEcrans.guides(app, chemin); return; }
     var k = chemin[1] === "finance" ? "finance" : "admin";
     var retourHub = hub();
     var pack = donnees.fiches[k], idFiche = chemin[2];
@@ -1133,7 +1141,8 @@
       var r = resultat(), P = window.EBProfil;
       var demoInterdite = (ECRANS_DEMO.indexOf(ecran) > -1 && !reglages.demos) || ABSENCES_RETIREES.indexOf(ecran) > -1;
       var reserve = !P.routePermise(ecran, null) || ecran === "guides";
-      if (demoInterdite || (reserve && r && !(ecran === "guides" ? r.sections.length : P.routePermise(ecran, r)))) {
+      var guidesPermis = r && (chemin[1] === "site" ? r.sections.indexOf("site") > -1 : r.sections.filter(function (x) { return x !== "site"; }).length > 0);
+      if (demoInterdite || (reserve && r && !(ecran === "guides" ? guidesPermis : P.routePermise(ecran, r)))) {
         history.replaceState(null, "", "#/planning");
         chemin = ["planning"]; ecran = "planning";
       }
@@ -1167,7 +1176,7 @@
   function droitsChanges() {
     if (!connecte()) return;
     var e = cheminActuel()[0] || "";
-    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre"];
+    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "site", "liens"];
     if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
     else rendreOnglets(ongletDe(e), false);
   }
