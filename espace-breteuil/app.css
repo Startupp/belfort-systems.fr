@@ -1066,3 +1066,37 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 @media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .btn-verre { color: var(--primaire); } }
 .btn-verre.large { flex: 2; }
 .btn-verre svg.ic { font-size: 1.1rem; }
+
+/* Semaine lisible (zoom « ajuster ») : barre de 7 jours + rendez-vous du jour choisi */
+.zone-planning.ajuster .semaine { padding: 8px 6px; gap: 4px; border-radius: 20px; background: var(--verre); border: 1px solid var(--verre-trait);
+  box-shadow: var(--ombre-verre); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.zone-planning.ajuster .semaine .jour-boite { min-height: 0; padding: 0; border: 0; background: none; border-radius: 14px; overflow: visible; }
+.zone-planning.ajuster .semaine .jour-boite.aujourdhui { outline: 1.5px solid color-mix(in srgb, var(--or) 75%, transparent); outline-offset: -1px; background: color-mix(in srgb, var(--primaire-pale) 70%, transparent); }
+.zone-planning.ajuster .semaine .jour-titre { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; min-height: 64px; padding: 6px 0 8px; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: .72rem; font-weight: 600; color: var(--texte-3); }
+.zone-planning.ajuster .semaine .jour-titre .court { display: block; text-align: center; line-height: 1.1; }
+.zone-planning.ajuster .semaine .jour-titre .court b { display: block; font-size: 1.05rem; color: var(--texte); }
+.zone-planning.ajuster .semaine .jour-titre:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.zone-planning.ajuster .semaine .jour-boite.choisi .jour-titre { background: linear-gradient(160deg, var(--praline-1), var(--praline-2)); color: var(--praline-doux);
+  box-shadow: 0 10px 24px -12px rgba(108,56,50,.7); }
+.zone-planning.ajuster .semaine .jour-boite.choisi .jour-titre .court b { color: #FFFFFF; }
+.reperes { display: flex; flex-direction: column; gap: 2px; width: 70%; min-height: 4px; }
+.reperes i { display: block; height: 4px; border-radius: 3px; background: var(--primaire); }
+.reperes i.j { opacity: .55; }
+.choisi .reperes i { box-shadow: 0 0 0 1px rgba(255,255,255,.6); }
+.rdv-jour { display: grid; gap: 10px; margin-top: 16px; }
+.rdv-jour .libelle { margin: 4px 0 0; }
+.rdv { display: flex; gap: 14px; align-items: flex-start; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer; font: inherit; color: var(--texte);
+  background: var(--verre); border: 1px solid var(--verre-trait); border-radius: 20px; box-shadow: var(--ombre-verre); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.rdv.en-cours { border-color: color-mix(in srgb, var(--or) 70%, transparent); }
+.rdv.passe { opacity: .6; }
+.rdv .h { width: 4.2em; flex: none; font-size: .85rem; font-weight: 700; color: var(--primaire-fort); white-space: nowrap; }
+:root[data-theme="sombre"] .rdv .h { color: var(--primaire); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .rdv .h { color: var(--primaire); } }
+.rdv .h small { display: block; font-size: .75rem; font-weight: 400; color: var(--texte-3); }
+.rdv .trait { width: 4px; align-self: stretch; border-radius: 4px; background: var(--primaire); flex: none; }
+.rdv .quoi { flex: 1; min-width: 0; }
+.rdv .quoi b { display: block; font-size: .95rem; overflow-wrap: anywhere; }
+.rdv .quoi small { display: block; font-size: .8rem; color: var(--texte-2); overflow-wrap: anywhere; }
+.rdv .quoi small.en-cours-texte { color: var(--primaire); font-weight: 600; }
+.rdv:active { transform: scale(.98); background-color: var(--appui); }

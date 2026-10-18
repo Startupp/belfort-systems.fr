@@ -701,6 +701,7 @@
   function vueSemaine(zone, j, personne) {
     var l = lundiDe(j), auj = cle(aujourdhui());
     var liste = occurrences(debutJour(l), debutJour(plusJours(l, 7)), personne);
+    if (!reglages.zoom) { semaineLisible(zone, j, l, auj, liste); return; }
     var grille = h("div", { class: "semaine" });
     for (var i = 0; i < 7; i++) (function (jj) {
       var evts = duJour(liste, jj);
@@ -711,6 +712,38 @@
         evts.length ? h("div", { class: "evts" }, evts.map(function (o) { return carteEvenement(o, jj); })) : h("p", { class: "rien" }, "—")));
     })(plusJours(l, i));
     zone.appendChild(grille);
+  }
+  /** Semaine « ajustée à l'écran » : une barre de 7 jours (repères de couleur par calendrier),
+   * puis la liste lisible des rendez-vous du jour choisi (au lieu de 7 colonnes au texte coupé). */
+  function semaineLisible(zone, j, l, auj, liste) {
+    var barreJours = h("div", { class: "semaine", role: "group", "aria-label": "Choisir un jour de la semaine" });
+    for (var i = 0; i < 7; i++) (function (jj) {
+      var evts = duJour(liste, jj), choisi = cle(jj) === cle(j);
+      barreJours.appendChild(h("div", { class: "jour-boite" + (cle(jj) === auj ? " aujourdhui" : "") + (choisi ? " choisi" : "") },
+        h("button", { class: "jour-titre", type: "button", "aria-pressed": String(choisi),
+          "aria-label": maj(jourLong(jj)) + (evts.length ? ", " + evts.length + " rendez-vous" : ", rien de prévu"),
+          onclick: function () {
+            vuePlanning.jour = jj; redessinerPlanning();
+            var b = document.querySelector('.zone-planning .jour-titre[aria-pressed="true"]'); if (b) b.focus({ preventScroll: true });
+          } },
+          h("span", { class: "court", "aria-hidden": "true" }, maj(fmt(midi(jj), { weekday: "short" })).replace(".", ""), h("b", null, String(jj.d))),
+          h("span", { class: "reperes", "aria-hidden": "true" }, evts.slice(0, 4).map(function (o) { return h("i", { class: o.journee ? "j" : null, style: { background: o.couleur || "" } }); })))));
+    })(plusJours(l, i));
+    zone.appendChild(barreJours);
+    var evts = duJour(liste, j), t = Date.now();
+    var bloc = h("section", { class: "rdv-jour", "aria-label": "Rendez-vous du " + jourLong(j) },
+      h("p", { class: "libelle" }, maj(fmt(midi(j), { weekday: "long", day: "numeric" })) + " · " + (evts.length ? evts.length + " rendez-vous" : "rien de prévu")));
+    if (!evts.length) bloc.appendChild(h("p", { class: "vide" }, "Rien de prévu ce jour-là."));
+    evts.forEach(function (o) {
+      var a = debutJour(j), enCours = !o.journee && o.debut <= t && o.fin > t;
+      var debut = o.journee ? "Journée" : o.debut < a ? "Suite" : heure(o.debut);
+      var fin = !o.journee && o.fin > o.debut && o.fin <= debutJour(plusJours(j, 1)) ? heure(o.fin) : "";
+      bloc.appendChild(h("button", { class: "rdv" + (enCours ? " en-cours" : "") + (o.fin <= t ? " passe" : ""), type: "button", onclick: function () { ouvrirDetail(o); } },
+        h("span", { class: "h" }, debut, fin ? h("small", null, fin) : null),
+        h("span", { class: "trait", style: { background: o.couleur || "" }, "aria-hidden": "true" }),
+        h("span", { class: "quoi" }, h("b", null, o.titre), enCours ? h("small", { class: "en-cours-texte" }, "En cours") : o.lieu ? h("small", null, o.lieu) : null)));
+    });
+    zone.appendChild(bloc);
   }
   function vueMois(zone, j, personne) {
     var premier = { y: j.y, m: j.m, d: 1 }, depart = lundiDe(premier), auj = cle(aujourdhui());
