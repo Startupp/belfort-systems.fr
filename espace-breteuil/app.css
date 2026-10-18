@@ -1239,3 +1239,93 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 :root[data-theme="sombre"] .carte-lien.verifier { border-left-color: #E2A23B; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .carte-lien.verifier { border-left-color: #E2A23B; } }
 .btn.petit:not(.secondaire) { color: var(--sur-primaire); } /* « .petit » (texte gris) ne doit pas griser un bouton plein */
+
+/* ================================================================ */
+/* Palette « Bleu Breteuil » (bleu nuit profond + doré) — v5.1.3     */
+/* Choisie dans Moi → Réglages → Couleurs ; posée sur <html> par     */
+/* data-palette="bleu". Ne redéfinit QUE des variables : tous les    */
+/* écrans (anneaux, halos, filet doré, verre, onglets) suivent.      */
+/* Contrastes AA vérifiés par tests/theme.test.mjs.                  */
+/* ================================================================ */
+:root[data-palette="bleu"] {
+  --entete: #14213D; --entete-texte: #FFFFFF; --entete-doux: #E9D9AE;
+  --primaire: #1F3A68; --primaire-fort: #172C52; --primaire-pale: #E3E9F4; --sur-primaire: #FFFFFF;
+  --texte: #121A2B; --texte-2: #3E4A62; --texte-3: #56627A;
+  --fond: #F5F6FA; --surface: #FFFFFF; --surface-2: #ECEFF6; --trait: #DCE1EC; --trait-fort: #B7C0D3;
+  --appui: #E1E7F2; --or: #C9A04A; --or-texte: #8A6A1F; --focus: #8A6A1F;
+  --exemple-fond: #FBF1D6; --exemple-texte: #6B4400; --info-fond: #E3E9F4; --info-texte: #14213D;
+  --squelette: #E6EAF2; --squelette-reflet: #F2F4F9;
+  --ombre: 0 1px 2px rgba(20,33,61,.06), 0 4px 14px rgba(20,33,61,.07);
+  --ombre-forte: 0 14px 40px rgba(20,33,61,.20); --ombre-entete: 0 2px 10px rgba(20,33,61,.25);
+  --c-praline-f: #E3E9F4; --c-praline: #1F3A68;
+  --verre: rgba(255,255,255,.80); --verre-fort: rgba(255,255,255,.90); --verre-trait: rgba(183,192,211,.55);
+  --ombre-verre: 0 1px 2px rgba(20,33,61,.05), 0 10px 30px -12px rgba(20,33,61,.18);
+  --ombre-verre-forte: 0 2px 4px rgba(20,33,61,.06), 0 18px 40px -14px rgba(20,33,61,.28);
+  --halo-1: rgba(201,160,74,.16); --halo-2: rgba(31,58,104,.12); --halo-3: rgba(157,180,224,.22);
+  --an-1: #DCE1EC; --an-2: #C9A04A; --an-3: #F3E6C4; --an-4: #1F3A68; --an-5: #9DB4E0;
+  --reflet-base: #121A2B; --reflet-or: #B8903E;
+  --praline-1: #1F3A68; --praline-2: #14213D; --praline-texte: #FFFFFF; --praline-doux: #DCE5F5;
+  --onglet-actif: linear-gradient(180deg, #E3E9F4, #DCE3F0);
+  --filet-or: #C9A04A; --filet-clair: #F3E2B8;
+  --ombre-principal: 0 14px 34px -14px rgba(20,33,61,.6); --lueur: rgba(230,238,255,.20);
+  --principal-icone: #F6F1E1; --principal-or: #E2BE6A; --principal-accent: #9DB4E0;
+  --ombre-flottante: 0 16px 40px -16px rgba(20,33,61,.35); --ombre-choisi: 0 10px 24px -12px rgba(20,33,61,.6);
+  --licence-1: #1F3A68; --licence-2: #14213D; --ombre-licence: 0 20px 44px -20px rgba(20,33,61,.65);
+  --commun-1: #14213D; --commun-2: #1F3A68; --commun-doux: #DCE5F5; --ombre-commun: 0 20px 44px -18px rgba(20,33,61,.6);
+  --onde: rgba(31,58,104,.45); --voile: rgba(8,12,24,.55); --ombre-onglets-bas: 0 -4px 16px rgba(20,33,61,.08);
+}
+/* Bleu Breteuil sombre — mêmes valeurs dans les deux blocs (auto et choisi). */
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="bleu"]:not([data-theme="clair"]) {
+    --entete: #0F1A33; --entete-texte: #FFFFFF; --entete-doux: #E2CF9E;
+    --primaire: #9DB4E0; --primaire-fort: #C3D3F0; --primaire-pale: #1B2A48; --sur-primaire: #0B1222;
+    --texte: #EEF1F8; --texte-2: #C3CBDC; --texte-3: #A3AEC4;
+    --fond: #0B1222; --surface: #111B30; --surface-2: #17233D; --trait: #26344F; --trait-fort: #3A4B6B;
+    --appui: #1E2D4C; --or: #E2BE6A; --or-texte: #E2BE6A; --focus: #E2BE6A;
+    --exemple-fond: #3A2C0B; --exemple-texte: #FFD98A; --info-fond: #1B2A48; --info-texte: #D3DEF3;
+    --squelette: #17233D; --squelette-reflet: #1F2D4A;
+    --ombre: 0 1px 2px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.25); --ombre-forte: 0 14px 40px rgba(0,0,0,.45); --ombre-entete: 0 2px 10px rgba(0,0,0,.4);
+    --c-praline-f: #1F3050; --c-praline: #C3D3F0;
+    --verre: rgba(17,27,48,.80); --verre-fort: rgba(17,27,48,.92); --verre-trait: rgba(58,75,107,.65);
+    --ombre-verre: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.55);
+    --ombre-verre-forte: 0 2px 4px rgba(0,0,0,.35), 0 18px 40px -14px rgba(0,0,0,.65);
+    --halo-1: rgba(226,190,106,.08); --halo-2: rgba(157,180,224,.08); --halo-3: rgba(31,58,104,.22);
+    --an-1: #26344F; --an-2: #E2BE6A; --an-3: #3A4B6B; --an-4: #9DB4E0; --an-5: #1F3A68;
+    --reflet-base: #EEF1F8; --reflet-or: #E2BE6A;
+    --praline-1: #24427A; --praline-2: #172C52; --praline-texte: #FFFFFF; --praline-doux: #DCE5F5;
+    --onglet-actif: linear-gradient(180deg, #1E2D4C, #1B2A48);
+    --filet-or: #E2BE6A; --filet-clair: #F3E2B8;
+    --ombre-principal: 0 14px 34px -14px rgba(0,0,0,.7); --lueur: rgba(230,238,255,.16);
+    --principal-icone: #F6F1E1; --principal-or: #E2BE6A; --principal-accent: #9DB4E0;
+    --ombre-flottante: 0 16px 40px -16px rgba(0,0,0,.6); --ombre-choisi: 0 10px 24px -12px rgba(0,0,0,.7);
+    --licence-1: #24427A; --licence-2: #172C52; --ombre-licence: 0 20px 44px -20px rgba(0,0,0,.7);
+    --commun-1: #14213D; --commun-2: #1F3A68; --commun-doux: #DCE5F5; --ombre-commun: 0 20px 44px -18px rgba(0,0,0,.6);
+    --onde: rgba(157,180,224,.45); --voile: rgba(0,0,0,.6); --ombre-onglets-bas: 0 -4px 16px rgba(0,0,0,.3);
+  }
+}
+:root[data-palette="bleu"][data-theme="sombre"] {
+  --entete: #0F1A33; --entete-texte: #FFFFFF; --entete-doux: #E2CF9E;
+  --primaire: #9DB4E0; --primaire-fort: #C3D3F0; --primaire-pale: #1B2A48; --sur-primaire: #0B1222;
+  --texte: #EEF1F8; --texte-2: #C3CBDC; --texte-3: #A3AEC4;
+  --fond: #0B1222; --surface: #111B30; --surface-2: #17233D; --trait: #26344F; --trait-fort: #3A4B6B;
+  --appui: #1E2D4C; --or: #E2BE6A; --or-texte: #E2BE6A; --focus: #E2BE6A;
+  --exemple-fond: #3A2C0B; --exemple-texte: #FFD98A; --info-fond: #1B2A48; --info-texte: #D3DEF3;
+  --squelette: #17233D; --squelette-reflet: #1F2D4A;
+  --ombre: 0 1px 2px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.25); --ombre-forte: 0 14px 40px rgba(0,0,0,.45); --ombre-entete: 0 2px 10px rgba(0,0,0,.4);
+  --c-praline-f: #1F3050; --c-praline: #C3D3F0;
+  --verre: rgba(17,27,48,.80); --verre-fort: rgba(17,27,48,.92); --verre-trait: rgba(58,75,107,.65);
+  --ombre-verre: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.55);
+  --ombre-verre-forte: 0 2px 4px rgba(0,0,0,.35), 0 18px 40px -14px rgba(0,0,0,.65);
+  --halo-1: rgba(226,190,106,.08); --halo-2: rgba(157,180,224,.08); --halo-3: rgba(31,58,104,.22);
+  --an-1: #26344F; --an-2: #E2BE6A; --an-3: #3A4B6B; --an-4: #9DB4E0; --an-5: #1F3A68;
+  --reflet-base: #EEF1F8; --reflet-or: #E2BE6A;
+  --praline-1: #24427A; --praline-2: #172C52; --praline-texte: #FFFFFF; --praline-doux: #DCE5F5;
+  --onglet-actif: linear-gradient(180deg, #1E2D4C, #1B2A48);
+  --filet-or: #E2BE6A; --filet-clair: #F3E2B8;
+  --ombre-principal: 0 14px 34px -14px rgba(0,0,0,.7); --lueur: rgba(230,238,255,.16);
+  --principal-icone: #F6F1E1; --principal-or: #E2BE6A; --principal-accent: #9DB4E0;
+  --ombre-flottante: 0 16px 40px -16px rgba(0,0,0,.6); --ombre-choisi: 0 10px 24px -12px rgba(0,0,0,.7);
+  --licence-1: #24427A; --licence-2: #172C52; --ombre-licence: 0 20px 44px -20px rgba(0,0,0,.7);
+  --commun-1: #14213D; --commun-2: #1F3A68; --commun-doux: #DCE5F5; --ombre-commun: 0 20px 44px -18px rgba(0,0,0,.6);
+  --onde: rgba(157,180,224,.45); --voile: rgba(0,0,0,.6); --ombre-onglets-bas: 0 -4px 16px rgba(0,0,0,.3);
+}
