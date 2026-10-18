@@ -452,7 +452,7 @@ try {
         assert.ok(ouvrir.every((x) => x[1] === "_blank" && /noopener/.test(x[2])), "Ouvrir : nouvel onglet");
         assert.deepEqual(await page.$$eval(".docs-frise .a-venir", (l) => l.map((x) => x.textContent)), ["document à venir"], "devis pas encore déposé");
         assert.deepEqual(await page.$$eval(".liste-docs .doc b", (l) => l.map((x) => x.textContent)),
-          ["Guide de démarrage", "Mémo messagerie (1 page)", "Plan de bascule et coûts", "Devis postes et sauvegarde", "Notes internes.pdf"], "tous les documents (gestion)");
+          ["Guide de démarrage", "Mémo messagerie (1 page)", "Plan de bascule et coûts", "Devis postes et sauvegarde", "Notes internes"], "tous les documents (gestion)");
         assert.equal(await page.$$eval(".carte-theme", (l) => l.length), 3);
         assert.ok(await page.$('.carte-contact a[href="tel:+33123456789"]'));
         assert.ok(await page.$('.carte-contact a[href="mailto:jean@exemple.test"]'));
