@@ -119,6 +119,20 @@ test("liens du bas de page : <footer> seulement, http(s), dédoublonnés, FR pui
   for (const l of j.liens) assert.deepEqual(Object.keys(l).sort(), ["ok", "page", "redirigeVers", "statut", "texte", "url"]);
 });
 
+test("entités HTML : apostrophes, guillemets, accents, symboles (textes des liens)", async () => {
+  const { decoder } = await charger();
+  assert.equal(decoder("Groupes d&rsquo;enfants"), "Groupes d\u2019enfants");
+  assert.equal(decoder("Breteuil dans l&rsquo;Histoire"), "Breteuil dans l\u2019Histoire");
+  assert.equal(decoder("&laquo;&nbsp;&Eacute;t&eacute;&nbsp;&raquo; &ndash; &hellip;"), "\u00ab\u00a0Été\u00a0\u00bb \u2013 \u2026");
+  assert.equal(decoder("&OElig;uvre, c&oelig;ur, &agrave; &ccedil;a, &icirc;le, 5&euro;, 20&deg;, &copy;"), "Œuvre, cœur, à ça, île, 5€, 20°, ©");
+  assert.equal(decoder("&#8217; &#x2019; &AMP; &inconnu; &lt;b&gt;"), "\u2019 \u2019 & &inconnu; <b>", "numériques, casse, inconnue laissée telle quelle");
+  const W = (await charger()).default;
+  installer(tableSite({ "https://www.breteuil.fr/": { status: 200, corps: '<footer><a href="/en-famille/">Groupes d&rsquo;enfants</a><a href="/histoire/">Breteuil dans l&#8217;Histoire</a></footer>' },
+    "https://www.breteuil.fr/en-famille/": { status: 200 }, "https://www.breteuil.fr/histoire/": { status: 200 } }));
+  const j = await (await W.fetch(req("/breteuil/site/liens"), {})).json();
+  assert.deepEqual(j.liens.slice(0, 2).map((l) => l.texte), ["Groupes d\u2019enfants", "Breteuil dans l\u2019Histoire"]);
+});
+
 test("cache 1 h, ?forcer=1 (au plus une fois par minute)", async () => {
   const W = (await charger()).default; const f = installer(tableSite());
   const reel = Date.now; let maintenant = reel();
