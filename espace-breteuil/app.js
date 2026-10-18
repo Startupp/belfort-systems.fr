@@ -526,19 +526,21 @@
     var g = G(), configure = g && g.estConfigure();
     app.appendChild(h("div", { class: "premier" },
       h("div", { class: "premier-tete" },
-        h("img", { class: "premier-logo", src: "icones/icon.svg", alt: "", width: "64", height: "64" }),
-        h("h1", null, "Espace Breteuil"),
-        h("p", null, "Château de Breteuil")),
+        h("span", { class: "anneau grand lent premier-anneau" }, h("img", { class: "premier-logo", src: "icones/icon.svg", alt: "", width: "64", height: "64" })),
+        h("h1", { class: "reflet" }, "Espace Breteuil"),
+        h("p", null, "Château de Breteuil"),
+        h("p", { class: "premier-date" }, h("span", { class: "reflet" }, maj(jourLong(aujourdhui()))))),
       h("div", { class: "premier-boutons" },
         h("button", { class: "gros-bouton", type: "button", "data-action": "calendrier", onclick: function () {
           reglages.mode = "calendrier"; sauverReglages(); rendre();
-        } }, icone("agenda"), h("span", null, h("b", null, "Voir le calendrier"), h("small", null, "Sans compte, sur cet appareil"))),
+        } }, h("span", { class: "anneau" }, icone("agenda")), h("span", null, h("b", null, "Voir le calendrier"), h("small", null, "Sans compte, sur cet appareil")), h("span", { class: "chevron" }, icone("droite"))),
         h("button", { class: "gros-bouton principal", type: "button", "data-action": "connexion", disabled: !configure, onclick: function () {
           this.disabled = true; this.classList.add("en-cours");
           var b = this;
           Promise.resolve(g.connecter()).catch(function () {}).then(function () { b.disabled = false; b.classList.remove("en-cours"); });
-        } }, icone("cle"), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre compte Microsoft du Château" : "Connexion pas encore activée")))),
-      g && g.erreur() ? h("p", { class: "erreur premier-erreur", role: "alert" }, g.erreur()) : null));
+        } }, h("span", { class: "anneau" }, icone("cle")), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre compte Microsoft du Château" : "Connexion pas encore activée")), h("span", { class: "chevron" }, icone("droite")))),
+      g && g.erreur() ? h("p", { class: "erreur premier-erreur", role: "alert" }, g.erreur()) : null,
+      h("p", { class: "premier-pied" }, "Belfort Systems · 06 09 89 74 43")));
   }
 
   function actualiserPlanning() {

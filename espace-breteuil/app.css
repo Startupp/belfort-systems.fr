@@ -995,3 +995,14 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 @media (min-width: 900px) {
   .onglets a.actif { box-shadow: inset 0 -2px 0 var(--or); }
 }
+
+/* Premier écran (maquette « Accueil ») */
+.premier-anneau { width: auto; height: auto; padding: 0; border-width: 2px; border-radius: 30px; margin: 0 auto 14px; display: grid; width: max-content; }
+.premier-anneau .premier-logo { width: 96px; height: 96px; border-radius: 28px; margin: 0; }
+.premier-tete h1 { font-size: 2.3rem; line-height: 1.08; }
+.premier-tete h1.reflet { color: transparent; }
+.premier-date { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 12px 0 0 !important;
+  font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.premier-date::before, .premier-date::after { content: ""; width: 22px; height: 1px; background: var(--or); }
+.premier-date .reflet { --reflet-base: var(--or-texte); }
+.premier-pied { margin: 0; text-align: center; font-size: .72rem; color: var(--texte-3); }
