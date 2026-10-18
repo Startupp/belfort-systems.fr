@@ -1334,7 +1334,7 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 /* Liste des boîtes partagées (« Qui a quoi ») — une ligne par boîte */
 /* Étroit (téléphone, colonne) : deux niveaux ; large : une ligne.   */
 /* ================================================================ */
-.zone-schema.boites { grid-column: 1 / -1; }
+/* (« Qui a quoi » en 2 colonnes : la liste garde sa demi-largeur et passe d'elle-même sur deux niveaux.) */
 .zone-liste-boites { container-type: inline-size; }
 .liste-boites { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 /* Étroit : anneau + nom sur le 1er niveau ; pastilles et boutons dessous (les boutons passent à la ligne s'il le faut). */
