@@ -1122,3 +1122,27 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .tuiles.trois .t .ico { width: 48px; height: 48px; border-radius: 15px; }
 @media (min-width: 720px) { .tuiles.trois { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 :root[data-texte="tres-grand"] .tuiles.trois { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Fichiers : récents en cartes qui défilent de côté, dossier commun en carte praline */
+.section-fichiers:has(#t-recents) .liste-fichiers { display: flex; gap: 12px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.section-fichiers:has(#t-recents) .liste-fichiers::-webkit-scrollbar { display: none; }
+.section-fichiers:has(#t-recents) button.fichier { flex: none; width: 150px; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; min-height: 128px; }
+.section-fichiers:has(#t-recents) button.fichier > span:not(.emoji):not(.fleche) { font-size: .85rem; font-weight: 600; line-height: 1.25; }
+.section-fichiers:has(#t-recents) button.fichier .fleche { display: none; }
+@media (min-width: 720px) { .section-fichiers:has(#t-recents) .liste-fichiers { margin: 0; padding: 2px 0 10px; } }
+.section-fichiers:has(#t-commun) { position: relative; overflow: hidden; padding: 18px; border-radius: 24px; color: #FFFFFF;
+  background: linear-gradient(150deg, #5B3833, #6C3832); box-shadow: 0 20px 44px -18px rgba(91,56,51,.6); }
+.section-fichiers:has(#t-commun)::before { content: ""; position: absolute; right: -40px; top: -40px; width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(226,190,106,.35), transparent 65%); pointer-events: none; }
+.section-fichiers:has(#t-commun) > * { position: relative; }
+.section-fichiers:has(#t-commun) h2 { font-family: var(--serif); font-weight: 600; font-size: 1.4rem; text-transform: none; letter-spacing: 0; color: #FFFFFF; }
+.section-fichiers:has(#t-commun) .btn.secondaire { background: rgba(255,255,255,.12); color: #FFFFFF; border-color: rgba(226,190,106,.55); }
+.section-fichiers:has(#t-commun) .tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+@media (min-width: 720px) { .section-fichiers:has(#t-commun) .tuiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.section-fichiers:has(#t-commun) .t { flex-direction: row; justify-content: flex-start; text-align: left; min-height: 60px; padding: 10px 12px; gap: 10px; font-size: .85rem;
+  background-color: var(--verre-fort); }
+.section-fichiers:has(#t-commun) .t .ico { width: 38px; height: 38px; }
+.section-fichiers:has(#t-commun) .lien-plus { color: #F6E1D6; }
+.section-fichiers:has(#t-commun) .vide-doux, .section-fichiers:has(#t-commun) .bandeau { color: #F6E1D6; }
+.section-fichiers:has(#t-commun) .squelette { opacity: .5; }
+.section-fichiers:has(#t-commun) :focus-visible { outline-color: #FFFFFF; }
