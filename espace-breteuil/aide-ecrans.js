@@ -37,7 +37,7 @@
   /* Petits éléments                                                     */
   /* ------------------------------------------------------------------ */
   function lienTel(texte) {
-    return h("a", { class: "btn secondaire large aide-appel", href: "tel:" + A.TEL }, icone("telephone"), texte || "Appeler Damien — " + A.TEL_AFFICHE);
+    return h("a", { class: "btn secondaire large aide-appel", href: "tel:" + A.TEL }, icone("telephone"), texte || "Appeler Damien · " + A.TEL_AFFICHE.replace(/ /g, "\u00a0"));
   }
   function badgeStatut(s) { return h("span", { class: "aide-statut " + (s || "nouvelle") }, A.libelleStatut(s)); }
   function quand(iso) {
@@ -299,7 +299,7 @@
       vueFil(app, id, {});
       return;
     }
-    app.appendChild(EB.barre("Mes demandes", { href: "#/moi", texte: "Moi" }, null, "Questions, avis et problèmes envoyés à Damien"));
+    app.appendChild(EB.barre("Mes demandes", { href: "#/moi", texte: "Moi" }, null, "Envoyées à Damien"));
     app.appendChild(h("div", { class: "actions aide-actions" },
       h("button", { class: "btn large", type: "button", "data-action": "aide-nouvelle", onclick: function () { ouvrir("nouvelle"); } }, icone("plus"), "Nouvelle demande"),
       etat.prestataire ? h("a", { class: "btn secondaire large", href: "#/demandes" }, "Toutes les demandes (prestataire)") : null));

@@ -159,8 +159,10 @@ async function preparer(contexte, nomProfil, opts = {}) {
   } else {
     await contexte.addInitScript(() => { self.EB_MAQUETTE = { deconnecte: true }; });
   }
+  const aide = workerAide(opts.aide, journal);
   await contexte.route("https://belfort-api.damien-belfort.workers.dev/**", (r) => {
     const url = r.request().url();
+    if (/\/breteuil\/aide/.test(url)) return aide(r);
     if (/\/breteuil\/site\/liens/.test(url)) {
       journal.push({ methode: "GET", chemin: new URL(url).pathname + new URL(url).search });
       if (opts.liens === "absent") return r.fulfill({ status: 404, headers: CORS, body: JSON.stringify({ ok: false, erreur: "Introuvable." }) });
@@ -169,6 +171,64 @@ async function preparer(contexte, nomProfil, opts = {}) {
     return r.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "text/calendar" }, body: /\/2\.ics/.test(url) ? ICS2 : ICS });
   });
   return journal;
+}
+
+/* ---------- v5.4 Aide et demandes : Worker simulé (en mémoire, par contexte) ---------- */
+// Données FICTIVES. Le vrai Worker vérifie le jeton Microsoft ; ici on contrôle qu'il est bien envoyé.
+const AIDE_EXEMPLE = () => ({
+  demandes: [
+    { id: 11, cree: "2026-10-16T08:10:00.000Z", type: "probleme", statut: "repondue", nom: "Fanny Martin", adresse: "fmartin@breteuil.fr", ecran: "Planning (#/planning)", version: "5.3.1", appareil: "iPhone · Safari", nonLu: true },
+    { id: 9, cree: "2026-10-12T15:00:00.000Z", type: "amelioration", statut: "resolue", nom: "Fanny Martin", adresse: "fmartin@breteuil.fr", ecran: "Moi (#/moi)", version: "5.3.0", appareil: "iPhone · Safari", nonLu: false },
+    { id: 10, cree: "2026-10-14T10:00:00.000Z", type: "question", statut: "nouvelle", nom: "Camille Roux", adresse: "croux@breteuil.fr", ecran: "Dossiers (#/fichiers)", version: "5.3.1", appareil: "Ordinateur Windows · Edge", nonLu: false, autre: true },
+  ],
+  messages: {
+    11: [{ id: 1, cree: "2026-10-16T08:10:00.000Z", auteur: "client", texte: "Le planning de l'accueil ne s'affiche plus depuis ce matin sur mon téléphone.", origine: "appli" },
+      { id: 2, cree: "2026-10-16T09:02:00.000Z", auteur: "prestataire", texte: "Bonjour Fanny,\n\nC'est réglé : le calendrier de l'accueil était déconnecté. Pouvez-vous vérifier ?\n\nDamien", origine: "mail" }],
+    9: [{ id: 3, cree: "2026-10-12T15:00:00.000Z", auteur: "client", texte: "Pourrait-on voir les anniversaires dans le planning ?", origine: "appli" },
+      { id: 4, cree: "2026-10-13T08:00:00.000Z", auteur: "prestataire", texte: "Bonne idée, c'est fait.", origine: "appli" }],
+    10: [{ id: 5, cree: "2026-10-14T10:00:00.000Z", auteur: "client", texte: "Comment partager un dossier avec un prestataire extérieur ?", origine: "appli" }],
+  },
+});
+function workerAide(o, journal) {
+  o = o || {};
+  const s = AIDE_EXEMPLE(), prestataire = !!o.prestataire;
+  let suivant = 12;
+  const CORS_AIDE = { ...CORS, "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS" };
+  const rep = (route, status, corps) => route.fulfill({ status, headers: CORS_AIDE, body: JSON.stringify(corps) });
+  const vue = (d) => ({ ...d, nonLu: !prestataire && !!d.nonLu, dernier: (s.messages[d.id] || []).at(-1)?.cree || d.cree, nbMessages: (s.messages[d.id] || []).length, extrait: (s.messages[d.id] || [])[0]?.texte });
+  return async (route) => {
+    const req = route.request(), url = new URL(req.url()), m = req.method();
+    if (m === "OPTIONS") return route.fulfill({ status: 204, headers: CORS_AIDE });
+    const auth = (await req.allHeaders()).authorization || "";
+    journal.push({ methode: m, chemin: url.pathname + url.search, corps: req.postData(), auth, aide: true });
+    if (o.nonConfiguree) return rep(route, 503, { ok: false, code: "aide_non_configuree" });
+    if (auth !== "Bearer maquette-id-token") return rep(route, 401, { code: "non_connecte" });
+    const seg = url.pathname.split("/").slice(3).filter(Boolean);
+    const visibles = () => s.demandes.filter((d) => prestataire || !d.autre);
+    if (seg[0] === "moi") return rep(route, 200, { prestataire });
+    if (!seg.length && m === "GET") {
+      let l = visibles();
+      for (const k of ["statut", "type"]) if (url.searchParams.get(k)) l = l.filter((d) => d[k] === url.searchParams.get(k));
+      if (url.searchParams.get("personne")) l = l.filter((d) => d.adresse === url.searchParams.get("personne"));
+      return rep(route, 200, { prestataire, demandes: l.map(vue).sort((a, b) => b.dernier.localeCompare(a.dernier)) });
+    }
+    if (!seg.length && m === "POST") {
+      const c = JSON.parse(req.postData());
+      const d = { id: suivant++, cree: new Date().toISOString(), type: c.type, statut: "nouvelle", nom: "Fanny Martin", adresse: "fmartin@breteuil.fr", ecran: c.ecran, version: c.version, appareil: c.appareil };
+      s.demandes.push(d); s.messages[d.id] = [{ id: 99, cree: d.cree, auteur: "client", texte: c.message, origine: "appli" }];
+      return rep(route, 201, { ok: true, id: d.id, statut: "nouvelle", mailEnvoye: true });
+    }
+    const d = visibles().find((x) => x.id === Number(seg[0]));
+    if (!d) return rep(route, 404, { code: "introuvable" });
+    if (seg.length === 1 && m === "GET") { const v = vue(d); d.nonLu = false; return rep(route, 200, { prestataire, demande: { ...v, nonLu: false }, messages: s.messages[d.id] }); }
+    if (seg[1] === "messages" && m === "POST") {
+      s.messages[d.id].push({ id: 100 + s.messages[d.id].length, cree: new Date().toISOString(), auteur: prestataire ? "prestataire" : "client", texte: JSON.parse(req.postData()).texte, origine: "appli" });
+      d.statut = prestataire ? "repondue" : "nouvelle";
+      return rep(route, 201, { ok: true, statut: d.statut });
+    }
+    if (m === "PATCH") { d.statut = JSON.parse(req.postData()).statut; return rep(route, 200, { ok: true, id: d.id, statut: d.statut }); }
+    return rep(route, 405, {});
+  };
 }
 
 const serveur = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1"], { cwd: RACINE, stdio: "ignore" });
@@ -795,6 +855,163 @@ try {
       await contexte.close();
     }
   }
+  /* ---------- v5.4 Aide et demandes (Worker simulé) : 375 et 1280 px, crème et Bleu Breteuil ---------- */
+  for (const [taille, vp] of [["375", { width: 375, height: 812 }], ["1280", { width: 1280, height: 900 }]]) for (const palette of ["creme", "bleu"]) {
+    const suffixe = `${palette}-${taille}`;
+    const avecPalette = async (page) => { if (palette === "bleu") await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" }))); };
+    // Non connecté : le bouton est là, il explique qu'il faut se connecter et propose d'appeler.
+    {
+      const { contexte, page, erreurs } = await nouvellePage(vp, null);
+      await avecPalette(page);
+      await page.goto(BASE);
+      await page.waitForSelector(".gros-bouton");
+      await page.click(".aide-fab");
+      await page.waitForSelector("#aide-panneau[open]");
+      assert.match(await page.textContent("#aide-panneau"), /connectez-vous d'abord/);
+      assert.equal(await page.getAttribute("#aide-panneau a.aide-appel", "href"), "tel:0609897443");
+      assert.equal(await page.$$eval("#aide-panneau textarea", (l) => l.length), 0, "pas de formulaire sans connexion");
+      await capturer(page, `aide-deconnecte-${suffixe}`);
+      if (erreurs.length) problemes.push(`aide déconnecté ${suffixe} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    // Collaborateur : bouton, pastille, envoi, Mes demandes avec une réponse, réponse, « Résolue ».
+    {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, "collaborateur", {});
+      await avecPalette(page);
+      await page.goto(BASE + "#/planning");
+      await page.waitForSelector("#onglets a[data-onglet]");
+      await page.waitForSelector(".aide-fab .aide-pastille:not([hidden])");
+      await calme(page);
+      const fab = await page.evaluate(() => {
+        const b = document.querySelector(".aide-fab").getBoundingClientRect(), o = document.querySelector("#onglets").getBoundingClientRect();
+        return { w: b.width, h: b.height, droite: innerWidth - b.right, bas: b.bottom, ongletsHaut: o.top, ongletsBas: o.bottom, label: document.querySelector(".aide-fab").getAttribute("aria-label"),
+          pastille: document.querySelector(".aide-pastille").textContent, visible: getComputedStyle(document.querySelector(".aide-fab")).visibility };
+      });
+      assert.ok(fab.w >= 48 && fab.h >= 48, `bouton ? ≥ 48 px (${fab.w}×${fab.h})`);
+      assert.ok(fab.droite <= 32, "coin bas droit");
+      if (taille === "375") assert.ok(fab.bas <= fab.ongletsHaut, "au-dessus de la barre d'onglets");
+      assert.equal(fab.pastille, "1"); assert.match(fab.label, /^Aide et demandes — 1 réponse/);
+      await capturer(page, `aide-bouton-${suffixe}`);
+      await page.click(".aide-fab");
+      await page.waitForSelector("#aide-panneau[open] .aide-form");
+      // Contexte joint, visible.
+      assert.equal(await page.textContent('[data-ctx="ecran"]'), "Planning (#/planning)");
+      assert.equal(await page.textContent('[data-ctx="version"]'), "5.4.0");
+      assert.match(await page.textContent('[data-ctx="appareil"]'), /px$/);
+      assert.deepEqual(await page.$$eval(".aide-type", (l) => l.map((b) => b.textContent.trim())), ["❓Question", "💬Avis", "✨Amélioration", "⚠️Problème"]);
+      // Formulaire vide : erreurs claires, rien n'est envoyé.
+      await page.click('[data-action="aide-envoyer"]');
+      assert.equal(await page.textContent("#aide-err-type"), "Choisissez le type de demande.");
+      assert.equal(await page.textContent("#aide-err-msg"), "Écrivez votre message.");
+      assert.equal(journal.filter((j) => j.aide && j.methode === "POST").length, 0);
+      await page.click('.aide-type[data-type="probleme"]');
+      await page.fill("#aide-message", "L'imprimante de l'accueil n'imprime plus les billets.\nMessage d'erreur : « bourrage ».");
+      assert.equal(await page.textContent("#aide-compteur"), "86 / 4000 caractères");
+      await capturer(page, `aide-nouvelle-${suffixe}`);
+      await page.click('[data-action="aide-envoyer"]');
+      await page.waitForSelector(".aide-confirmation");
+      assert.equal(await page.textContent(".aide-confirmation"), "Demande n° 12 envoyée à Damien");
+      const envoi = journal.find((j) => j.aide && j.methode === "POST" && j.chemin === "/breteuil/aide");
+      assert.equal(envoi.auth, "Bearer maquette-id-token", "ID token envoyé au Worker");
+      assert.deepEqual(JSON.parse(envoi.corps).type, "probleme");
+      assert.equal(JSON.parse(envoi.corps).ecran, "Planning (#/planning)"); assert.equal(JSON.parse(envoi.corps).version, "5.4.0");
+      await capturer(page, `aide-envoyee-${suffixe}`);
+      // Mes demandes : la réponse de Damien est signalée, le fil s'ouvre, la pastille disparaît.
+      await page.click("text=Voir mes demandes");
+      await page.waitForSelector('#aide-panneau .aide-carte[data-demande="11"]');
+      assert.deepEqual(await page.$$eval("#aide-panneau .aide-carte", (l) => l.map((c) => c.dataset.demande)), ["12", "11", "9"]);
+      assert.match(await page.textContent('#aide-panneau .aide-carte[data-demande="11"]'), /Nouvelle réponse/);
+      assert.match(await page.textContent('#aide-panneau .aide-carte[data-demande="11"]'), /Répondue/);
+      await capturer(page, `aide-mes-demandes-${suffixe}`);
+      await page.click('#aide-panneau .aide-carte[data-demande="11"]');
+      await page.waitForSelector("#aide-panneau .aide-bulle.damien");
+      assert.match(await page.textContent("#aide-panneau .aide-bulle.damien"), /Damien · .* · par mail/);
+      assert.match(await page.textContent("#aide-panneau .aide-bulle.damien .aide-bulle-texte"), /C'est réglé/);
+      await page.waitForSelector(".aide-fab .aide-pastille[hidden]", { state: "attached" });
+      await capturer(page, `aide-fil-${suffixe}`);
+      await page.fill("#aide-reponse-11", "Oui, ça marche, merci !");
+      await page.click('#aide-panneau [data-action="aide-repondre"]');
+      await page.waitForFunction(() => [...document.querySelectorAll("#aide-panneau .aide-bulle.client")].some((b) => /ça marche/.test(b.textContent)));
+      await page.click('#aide-panneau [data-action="aide-resolue"]');
+      await page.waitForFunction(() => /Résolue/.test(document.querySelector("#aide-panneau .aide-fil-tete")?.textContent || ""));
+      const ecrits = journal.filter((j) => j.aide && j.methode !== "GET").map((j) => j.methode + " " + j.chemin + " " + j.corps);
+      assert.deepEqual(ecrits.slice(1), ['POST /breteuil/aide/11/messages {"texte":"Oui, ça marche, merci !"}', 'PATCH /breteuil/aide/11 {"statut":"resolue"}']);
+      await page.keyboard.press("Escape");
+      // Moi → « Mes demandes » → écran #/aide → demande.
+      await page.goto(BASE + "#/moi");
+      await page.waitForSelector('[data-action="mes-demandes"]');
+      assert.equal(await page.$$eval('[data-action="toutes-demandes"]', (l) => l.length), 0, "pas d'écran Demandes pour un client");
+      await page.click('[data-action="mes-demandes"]');
+      await page.waitForSelector('.ecran a.aide-carte[data-demande="9"]');
+      await calme(page);
+      await controlesCommuns(page, `aide mes demandes ${suffixe}`);
+      if (palette === "creme" || taille === "375") await capturer(page, `aide-ecran-mes-demandes-${suffixe}`);
+      await page.click('.ecran a.aide-carte[data-demande="9"]');
+      await page.waitForSelector(".ecran .aide-bulle.damien");
+      assert.equal(await page.evaluate(() => location.hash), "#/aide/9");
+      assert.equal(await page.$$eval('.ecran [data-action="aide-resolue"]', (l) => l.length), 0, "déjà résolue");
+      // #/demandes refusé à un client.
+      await page.goto(BASE + "#/demandes");
+      await page.waitForFunction(() => /réservé à Damien/.test(document.querySelector(".aide-demandes")?.textContent || ""));
+      if (erreurs.length) problemes.push(`aide collaborateur ${suffixe} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    // Prestataire : écran « Demandes » (toutes, filtres), répondre, changer le statut.
+    {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, "admin", { aide: { prestataire: true } });
+      await avecPalette(page);
+      await page.goto(BASE + "#/moi");
+      await page.waitForSelector('[data-action="toutes-demandes"]');
+      await page.click('[data-action="toutes-demandes"]');
+      await page.waitForSelector(".aide-filtres");
+      await page.click('[data-filtre-statut=""]');
+      await page.waitForSelector('.aide-demandes .aide-carte[data-demande="10"]');
+      assert.equal(await page.$$eval(".aide-demandes .aide-carte", (l) => l.length), 3, "toutes les demandes, de toutes les personnes");
+      assert.match(await page.textContent('.aide-carte[data-demande="10"]'), /Camille Roux · croux@breteuil\.fr/);
+      await page.selectOption('[data-filtre="type"]', "question");
+      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 1);
+      await page.selectOption('[data-filtre="type"]', "");
+      await page.selectOption('[data-filtre="personne"]', "fmartin@breteuil.fr");
+      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 2);
+      assert.ok(journal.some((j) => j.aide && j.chemin === "/breteuil/aide?personne=fmartin%40breteuil.fr"), "filtre par personne envoyé au Worker");
+      await page.selectOption('[data-filtre="personne"]', "");
+      await page.click('[data-filtre-statut="nouvelle"]');
+      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 1);
+      await calme(page);
+      await controlesCommuns(page, `aide prestataire ${suffixe}`);
+      await capturer(page, `aide-prestataire-${suffixe}`);
+      await page.click('.aide-demandes .aide-carte[data-demande="10"]');
+      await page.waitForSelector('.ecran [data-statut="resolue"]');
+      assert.match(await page.textContent(".ecran .aide-note"), /Camille Roux · croux@breteuil\.fr/);
+      await page.fill("#aide-reponse-10", "Dossiers → ⋯ → Partager, puis son adresse.");
+      await page.click('.ecran [data-action="aide-repondre"]');
+      await page.waitForFunction(() => document.querySelectorAll(".ecran .aide-bulle.damien").length === 1);
+      assert.equal(await page.getAttribute('.ecran [data-statut="repondue"]', "aria-pressed"), "true", "réponse → Répondue");
+      await page.click('.ecran [data-statut="resolue"]');
+      await page.waitForFunction(() => document.querySelector('.ecran [data-statut="resolue"]')?.getAttribute("aria-pressed") === "true");
+      await capturer(page, `aide-prestataire-fil-${suffixe}`);
+      assert.ok(journal.some((j) => j.aide && j.methode === "PATCH" && j.corps === '{"statut":"resolue"}'));
+      if (erreurs.length) problemes.push(`aide prestataire ${suffixe} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+  }
+  // Aide pas encore installée (Worker : 503 aide_non_configuree) : message clair + téléphone.
+  {
+    const { contexte, page, erreurs } = await nouvellePage({ width: 375, height: 812 }, "collaborateur", { aide: { nonConfiguree: true } });
+    await page.goto(BASE + "#/planning");
+    await page.waitForSelector("#onglets a[data-onglet]");
+    await page.click(".aide-fab");
+    await page.click('.aide-type[data-type="question"]');
+    await page.fill("#aide-message", "Test");
+    await page.click('[data-action="aide-envoyer"]');
+    await page.waitForSelector("#aide-panneau .aide-erreur");
+    assert.equal(await page.textContent("#aide-panneau .aide-erreur p"), "L'aide n'est pas encore installée — appelez Damien au 06 09 89 74 43.");
+    assert.equal(await page.getAttribute("#aide-panneau .aide-erreur a", "href"), "tel:0609897443");
+    await capturer(page, "aide-non-installee-375");
+    const autres = erreurs.filter((e) => !/503/.test(e));
+    if (autres.length) problemes.push(`aide non installée : erreurs console ${autres.join(" | ")}`);
+    await contexte.close();
+  }
   /* ---------- Calendrier « ajuster à l'écran » : la semaine tient en entier ---------- */
   for (const w of [320, 375, 414, 768, 1280]) {
     const { contexte, page, erreurs } = await nouvellePage({ width: w, height: 800 }, null);
@@ -819,4 +1036,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique (dont Projets à venir, crème et Bleu) et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique (dont Projets à venir, crème et Bleu) et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px + Aide et demandes (crème et Bleu, 375 et 1280 px) (${captures} captures).`);
