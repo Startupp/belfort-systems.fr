@@ -180,6 +180,25 @@ Tant que le dossier n'existe pas, l'appli affiche : « Le dossier Suivi informat
 en place — Damien doit le déposer dans le dossier commun ». Les droits sont ceux de SharePoint :
 laisser le dossier hériter des droits du dossier commun (toute l'équipe peut lire).
 
+## Glisser-déposer des fichiers (v5.3.1)
+
+Sur ordinateur, glisser un ou plusieurs fichiers n'importe où dans la fenêtre : un voile indique
+« Déposer ici pour envoyer dans : <dossier> » et le chemin (« Dossier commun › Finance › 2026 »).
+Dossiers concernés : Mes fichiers (`#/onedrive/…`), dossier commun et ses sous-dossiers (`#/commun/…`),
+Suivi informatique › Guides (`#/suivi`, `#/moi/guides`) pour les profils de gestion. Ailleurs (Planning,
+Moi…) : « Ouvrez d'abord un dossier pour y déposer vos fichiers », rien n'est envoyé ; sur l'accueil de
+Fichiers, l'appli propose d'envoyer dans « Mes fichiers ».
+
+- Envoi par `graph.js → televerser` (≤ 4 Mo : PUT `…:/content` ; au-delà : session d'envoi), une barre par
+  fichier, puis « 3 fichiers envoyés dans Finance » et liste rafraîchie.
+- Nom déjà pris : « Garder les deux » (par défaut, « nom (2).ext », `conflictBehavior=rename`) ou
+  « Remplacer » (`conflictBehavior=replace`) — jamais d'écrasement silencieux.
+- Dossiers déposés : refusés en bloc avec un message. 250 Mo par fichier au plus. Caractères interdits
+  par OneDrive (`" * : < > ? / \ |`) remplacés par « - ». Refus de SharePoint (403) : « Vous n'avez pas
+  le droit d'ajouter des fichiers dans ce dossier ».
+- Seuls les glisser de fichiers sont interceptés : les épingles (gestes au pointeur) ne sont pas touchées.
+  Téléphone : rien ne change ; le bouton « Téléverser » reste.
+
 ## Choix du chemin
 
 L'application est servie sous **`/espace-breteuil/`**.
@@ -208,6 +227,8 @@ espace-breteuil/            ← autonome : peut être servi tel quel sur un autr
   acces.js                  détection des droits en arrière-plan, sondes, pastille d'état
   deleguer.js               écran « Déléguer » (propriétaires du site, rôles d'annuaire)
   fichiers.js               onglet Fichiers (Récents, Mes fichiers, Dossier commun)
+  depot.js                  v5.3.1 glisser-déposer : dossier cible selon la route, noms, conflits (testé)
+  depot-ecran.js            v5.3.1 glisser-déposer : voile « Déposer ici… », envoi, progression
   epingles.js               « Mes épingles » ; boites-partagees.json = boîtes proposées
   erreurs.js                erreurs Microsoft en français simple (testé)
   demos/                    écrans de démo (rôles, arrivée/départ, absences, boîtes, Finance, double auth.)
