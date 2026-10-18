@@ -1213,3 +1213,4 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 @media (max-width: 374px) { .carte-lien .actes { padding-left: 0; } }
 :root[data-theme="sombre"] .carte-lien.verifier { border-left-color: #E2A23B; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .carte-lien.verifier { border-left-color: #E2A23B; } }
+.btn.petit:not(.secondaire) { color: var(--sur-primaire); } /* « .petit » (texte gris) ne doit pas griser un bouton plein */
