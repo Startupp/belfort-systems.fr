@@ -141,7 +141,9 @@ Commun/
 └── Suivi informatique/
     ├── suivi.json
     └── Guides/
-        ├── Guide de démarrage.pdf
+        ├── 01 - Guide de démarrage.pdf
+        ├── 04 - Mes mails sur téléphone.pdf
+        ├── 12 - Sauvegardes.pdf
         └── …
 ```
 
@@ -157,21 +159,31 @@ Format de `suivi.json` (exemple fictif complet : `espace-breteuil/tests/suivi-ex
   "misAJour": "2026-10-12",
   "prestataire": { "nom": "…", "telephone": "01 23 45 67 89", "mail": "…@….fr" },
   "historique": [
-    { "date": "2026-05-05", "titre": "…", "resume": "…", "documents": ["Guide de démarrage.pdf"] }
+    { "date": "2026-05-05", "titre": "…", "resume": "…", "documents": ["01 - Guide de démarrage.pdf"] }
   ],
   "miseEnPlace": [ { "titre": "Messagerie", "points": ["…", "…"] } ],
-  "guides": [ { "fichier": "Guide de démarrage.pdf", "titre": "Guide de démarrage", "pour": "tous" } ]
+  "guides": [ { "fichier": "01 - Guide de démarrage.pdf", "titre": "Guide de démarrage", "pour": "tous" } ]
 }
 ```
 
 Règles :
 - dates au format `AAAA-MM-JJ` (affichées « 15 septembre 2026 ») ; une entrée sans date valide ou
   sans titre est ignorée, le reste s'affiche quand même ;
-- `documents` et `fichier` = **nom du PDF dans le sous-dossier `Guides`** ; majuscules et accents ne
-  comptent pas (« Memo-Outlook.pdf » = « mémo-outlook.PDF ») ;
+- `documents` et `fichier` = **nom du PDF dans le sous-dossier `Guides`**, de la forme
+  **`NN - Titre.pdf`** (NN = numéro à 2 chiffres) ;
+- **on peut renommer un PDF dans SharePoint tant qu'on garde le numéro devant** : l'appli relie
+  d'abord par le numéro (« 04 - Mes mails sur téléphone (avec Outlook).pdf » renommé en
+  « 04 - Mails sur mon iPhone.pdf » reste le guide 04, et « Ouvrir » marche toujours dans
+  l'historique). Le titre affiché devient alors celui du nouveau nom (sans numéro ni `.pdf`).
+  Sans numéro, la correspondance se fait par le nom exact (majuscules et accents ne comptent pas :
+  « Memo-Outlook.pdf » = « mémo-outlook.PDF ») ;
+- deux PDF avec le même numéro : seul le plus récemment modifié est utilisé (signalé dans la console
+  du navigateur) — éviter les doublons ;
 - `pour` : `"tous"` (visible dans Moi → Guides par toute l'équipe) ou `"gestion"` (seulement dans
-  Suivi informatique). Sans `pour` valide : `"gestion"`. Un PDF déposé mais absent de `guides`
-  apparaît dans Suivi informatique sous son nom de fichier ;
+  Suivi informatique). Sans `pour` valide : `"gestion"` ;
+- un PDF déposé mais **absent de `guides`** apparaît quand même, titré d'après son nom (sans numéro
+  ni `.pdf`), et le numéro décide pour qui : **01–09 = pour tous, 10 et plus = gestion** ; sans
+  numéro = gestion. Les guides sont triés par numéro, puis par nom ;
 - longueurs maximales : titre 200 caractères, résumé 3 000, point 600 ; au-delà, le texte est coupé.
 
 Mettre à jour = remplacer `suivi.json` (et déposer les PDF) dans SharePoint : l'appli relit le

@@ -3,7 +3,8 @@
  * Libellés, dossier et fichier : config.js → suivi (renommables en une ligne).
  * Partie SANS écran (testée sous Node, tests/suivi.test.mjs) : validation du fichier
  * de suivi (suivi.json), tri de l'historique, filtrage des guides (tous / gestion), correspondance
- * « document cité » → fichier PDF déposé (sans tenir compte des majuscules ni des accents).
+ * « document cité » → fichier PDF déposé : d'abord par le numéro en tête (« 04 - … », le fichier
+ * peut donc être renommé), puis par le nom (sans tenir compte des majuscules ni des accents).
  *
  * AUCUNE donnée du client ici : le dépôt est public. Les données vivent dans le SharePoint
  * du client : <dossier commun>/Suivi informatique/suivi.json et …/Guides/*.pdf
@@ -124,19 +125,70 @@
   function urlSure(u) { return typeof u === "string" && /^https:\/\/[^\s]+$/i.test(u) ? u : ""; }
 
   /**
+   * Numéro en tête d'un nom de fichier « NN - Titre.pdf » (1 à 3 chiffres suivis d'un séparateur),
+   * ou null s'il n'y en a pas. « 04 - Mails.pdf » → 4 ; « Notes.pdf » → null.
+   */
+  function numero(nom) {
+    var m = /^\s*(\d{1,3})\s*[-–—._ ]/.exec(String(nom || ""));
+    return m ? +m[1] : null;
+  }
+  /** Titre tiré d'un nom de fichier : sans le numéro de tête ni l'extension. */
+  function titreDuNom(nom) {
+    var t = String(nom || "").replace(/\.[a-z0-9]{1,5}$/i, "");
+    var m = /^\s*\d{1,3}\s*[-–—._ ]+\s*/.exec(t);
+    if (m && m[0].length < t.length) t = t.slice(m[0].length);
+    return texte(t, MAX.titre) || String(nom || "");
+  }
+  function dateModif(f) { var t = Date.parse(f && f.lastModifiedDateTime || ""); return isNaN(t) ? 0 : t; }
+  var signales = {};
+  function signaler(n, l) {
+    var k = n + ":" + l.map(function (f) { return f.name; }).sort().join("|");
+    if (signales[k]) return;
+    signales[k] = 1;
+    if (typeof console !== "undefined" && console.warn) console.warn("[Suivi] Plusieurs guides portent le numéro " + n + " : " + l.map(function (f) { return f.name; }).join(", ") + " — le plus récent est utilisé.");
+  }
+  function fichiersSurs(fichiers) {
+    return (fichiers || []).filter(function (f) { return f && typeof f.name === "string" && urlSure(f.webUrl) && !f.folder; });
+  }
+
+  /**
    * Fichier déposé correspondant au nom cité (ou null). fichiers : [{ name, webUrl, size, lastModifiedDateTime }].
-   * Comparaison sans casse ni accents ; à défaut, sans l'extension (« Devis.pdf » ↔ « devis »).
+   * 1. Par le NUMÉRO en tête (« 04 - … ») : le fichier peut être renommé tant qu'il garde son numéro ;
+   *    plusieurs fichiers avec le même numéro → le plus récemment modifié (signalé dans la console).
+   * 2. À défaut, par le nom : sans casse ni accents, puis sans l'extension (« Devis.pdf » ↔ « devis »).
    */
   function trouverFichier(nom, fichiers) {
-    var k = cle(nom), l = (fichiers || []).filter(function (f) { return f && typeof f.name === "string" && urlSure(f.webUrl); });
+    var k = cle(nom), l = fichiersSurs(fichiers), n = numero(nom);
+    if (n !== null) {
+      var memes = l.filter(function (x) { return numero(x.name) === n; });
+      if (memes.length > 1) {
+        memes = memes.slice().sort(function (a, b) { return dateModif(b) - dateModif(a); });
+        signaler(n, memes);
+      }
+      if (memes.length) return memes[0];
+    }
     var f = l.filter(function (x) { return cle(x.name) === k; })[0];
     if (!f) f = l.filter(function (x) { return sansExtension(cle(x.name)) === sansExtension(k); })[0];
     return f || null;
   }
+  /** Vrai si le fichier réel porte un autre nom que celui du suivi (renommé dans SharePoint). */
+  function renomme(nom, f) { return !!f && sansExtension(cle(f.name)) !== sansExtension(cle(nom)); }
 
-  /** Titre lisible d'un fichier cité : celui de « guides », sinon le nom de fichier. */
-  function titreDe(nom, donnees) {
-    var k = cle(nom), g = ((donnees && donnees.guides) || []).filter(function (x) { return cle(x.fichier) === k; })[0];
+  /** Guide décrit correspondant à un nom cité : même nom, sinon même numéro en tête. */
+  function guideDe(nom, donnees) {
+    var l = (donnees && donnees.guides) || [], k = cle(nom), n = numero(nom);
+    return l.filter(function (x) { return cle(x.fichier) === k; })[0]
+      || (n !== null ? l.filter(function (x) { return numero(x.fichier) === n; })[0] : null) || null;
+  }
+
+  /**
+   * Titre lisible d'un fichier cité. Si le PDF a été renommé dans SharePoint : titre tiré du nom réel
+   * (c'est la volonté de l'utilisateur) ; sinon celui de « guides », sinon le nom cité.
+   */
+  function titreDe(nom, donnees, fichiers) {
+    var f = fichiers ? trouverFichier(nom, fichiers) : null;
+    if (renomme(nom, f)) return titreDuNom(f.name);
+    var g = guideDe(nom, donnees);
     return (g && g.titre) || nom;
   }
 
@@ -144,28 +196,52 @@
   function documentsDe(etape, donnees, fichiers) {
     return (etape.documents || []).map(function (n) {
       var f = trouverFichier(n, fichiers);
-      return { nom: n, titre: titreDe(n, donnees), url: f ? f.webUrl : "" };
+      return { nom: n, titre: titreDe(n, donnees, fichiers), url: f ? f.webUrl : "" };
     });
   }
 
+  /** « pour » d'un PDF déposé mais non décrit : 01–09 → tous ; 10 et plus, ou sans numéro → gestion. */
+  function pourDuNumero(nom) { var n = numero(nom); return n !== null && n >= 1 && n <= 9 ? "tous" : "gestion"; }
+
   /**
-   * Guides à afficher. portee « tous » : seulement ceux marqués « pour: tous » (Moi → Guides) ;
-   * « gestion » : tous les guides décrits, plus les PDF déposés mais pas encore décrits (nom de fichier).
-   * Renvoie [{ fichier, titre, pour, url, taille, modifie }], dans l'ordre du fichier de suivi.
+   * Guides à afficher. portee « tous » : ceux marqués « pour: tous » (Moi → Guides) ;
+   * « gestion » : tous les guides décrits. Les PDF déposés mais pas encore décrits s'ajoutent
+   * (titre = nom sans numéro ni extension ; « pour » déduit du numéro, voir pourDuNumero).
+   * Renvoie [{ fichier, titre, pour, url, taille, modifie }], trié par numéro (les décrits dans
+   * l'ordre du fichier de suivi, puis les non décrits par nom), les fichiers sans numéro à la fin.
    */
   function guidesPour(donnees, fichiers, portee) {
-    var decrits = ((donnees && donnees.guides) || []).filter(function (g) { return portee === "gestion" || g.pour === "tous"; });
-    var l = decrits.map(function (g) {
+    var tous = (donnees && donnees.guides) || [], l = [], connus = [];
+    tous.forEach(function (g, i) {
       var f = trouverFichier(g.fichier, fichiers);
-      return { fichier: g.fichier, titre: g.titre || g.fichier, pour: g.pour, url: f ? f.webUrl : "", taille: f && f.size || 0, modifie: f && f.lastModifiedDateTime || "" };
+      if (f) connus.push(f);
+      if (portee !== "gestion" && g.pour !== "tous") return;
+      var titre = renomme(g.fichier, f) ? titreDuNom(f.name) : (g.titre || g.fichier);
+      l.push({ fichier: g.fichier, titre: titre, pour: g.pour, url: f ? f.webUrl : "", taille: f && f.size || 0, modifie: f && f.lastModifiedDateTime || "",
+        _n: numero(f ? f.name : g.fichier), _r: 0, _i: i });
     });
-    if (portee === "gestion") {
-      var connus = ((donnees && donnees.guides) || []).map(function (g) { return trouverFichier(g.fichier, fichiers); }).filter(Boolean);
-      (fichiers || []).filter(function (f) { return f && typeof f.name === "string" && urlSure(f.webUrl) && connus.indexOf(f) < 0 && !f.folder; })
-        .sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); })
-        .forEach(function (f) { l.push({ fichier: f.name, titre: f.name, pour: "gestion", url: f.webUrl, taille: f.size || 0, modifie: f.lastModifiedDateTime || "" }); });
-    }
-    return l;
+    // Non décrits ; un numéro déjà pris (doublon) n'affiche que le fichier le plus récent.
+    var pris = {};
+    connus.forEach(function (f) { var n = numero(f.name); if (n !== null) pris[n] = 1; });
+    fichiersSurs(fichiers).filter(function (f) { return connus.indexOf(f) < 0; })
+      .filter(function (f, _, reste) {
+        var n = numero(f.name);
+        if (n === null) return true;
+        if (pris[n]) return false;
+        return trouverFichier(f.name, reste) === f;
+      }).forEach(function (f, i) {
+      var pour = pourDuNumero(f.name);
+      if (portee !== "gestion" && pour !== "tous") return;
+      l.push({ fichier: f.name, titre: titreDuNom(f.name), pour: pour, url: f.webUrl, taille: f.size || 0, modifie: f.lastModifiedDateTime || "",
+        _n: numero(f.name), _r: 1, _i: i });
+    });
+    l.sort(function (a, b) {
+      var na = a._n === null ? Infinity : a._n, nb = b._n === null ? Infinity : b._n;
+      if (na !== nb) return na - nb;
+      if (a._r !== b._r) return a._r - b._r;
+      return a._r ? a.titre.localeCompare(b.titre, "fr") || a._i - b._i : a._i - b._i;
+    });
+    return l.map(function (g) { return { fichier: g.fichier, titre: g.titre, pour: g.pour, url: g.url, taille: g.taille, modifie: g.modifie }; });
   }
 
   /** Taille lisible : « 240 Ko », « 1,2 Mo ». */
@@ -180,7 +256,7 @@
 
   var api = {
     MAX: MAX, valider: valider, dateValide: dateValide, dateLongue: dateLongue, trierHistorique: trierHistorique,
-    cle: cle, trouverFichier: trouverFichier, titreDe: titreDe, documentsDe: documentsDe, guidesPour: guidesPour,
+    cle: cle, numero: numero, titreDuNom: titreDuNom, pourDuNumero: pourDuNumero, trouverFichier: trouverFichier, titreDe: titreDe, documentsDe: documentsDe, guidesPour: guidesPour,
     taille: taille, lienTel: lienTel, urlSure: urlSure,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
