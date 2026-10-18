@@ -1026,3 +1026,43 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
   .zone-planning.defile .evt { animation: none; }
   @keyframes eb-revele { from { opacity: 0; transform: translateY(22px) scale(.98); } to { opacity: 1; transform: none; } }
 }
+
+/* Calendrier seul : « Aujourd'hui » avec ligne de temps dorée qui se trace */
+.calendrier-seul { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+.aujourdhui-seul { display: grid; gap: 14px; margin: 6px 0 22px; }
+.libelle { margin: 0; font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--or-texte); }
+.aujourdhui-seul .libelle { margin-bottom: -10px; }
+.date-jour { font-family: var(--serif); font-weight: 600; font-size: 2rem; line-height: 1.08; letter-spacing: -.01em; overflow-wrap: break-word; }
+.resume-jour { margin: -6px 0 0; color: var(--texte-2); }
+.carte-journee { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 12px 16px; text-align: left; cursor: pointer; color: var(--texte);
+  border-radius: 20px; border: 1px solid var(--verre-trait); box-shadow: var(--ombre-verre);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--exemple-fond) 90%, transparent), var(--verre)); }
+.carte-journee .anneau { --fi: var(--surface); color: var(--or-texte); width: 42px; height: 42px; }
+.carte-journee b { display: block; } .carte-journee small { color: var(--texte-2); }
+.ligne-temps { position: relative; padding-left: 26px; display: grid; gap: 12px; }
+.ligne-temps::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--or), var(--an-5) 60%, transparent); transform-origin: top; animation: eb-trace 1.6s cubic-bezier(.2,.7,.2,1) .3s both; }
+.rdv-temps { position: relative; display: block; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer; color: var(--texte); font: inherit;
+  background: var(--verre); border: 1px solid var(--verre-trait); border-radius: 20px; box-shadow: var(--ombre-verre);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.rdv-temps.en-cours { border-color: color-mix(in srgb, var(--primaire) 55%, transparent); }
+.rdv-temps.passe { opacity: .6; }
+.rdv-temps .point { position: absolute; left: -25px; top: 20px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--or); }
+.rdv-temps .point.maintenant { border-color: var(--primaire); animation: eb-onde 2.6s ease-out infinite; }
+.rdv-temps .heures { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 4px; font-size: .78rem; font-weight: 700; color: var(--or-texte); }
+.rdv-temps.en-cours .heures { color: var(--primaire); }
+.en-cours-etiquette { padding: 2px 8px; border-radius: 99px; background: var(--primaire-pale); font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; }
+.rdv-temps b { display: block; font-size: 1rem; overflow-wrap: anywhere; }
+.rdv-temps small { display: block; color: var(--texte-2); font-size: .85rem; overflow-wrap: anywhere; }
+.rdv-temps small:empty { display: none; }
+#tout-le-planning { scroll-margin-top: 72px; margin-top: 8px; }
+#tout-le-planning:focus { outline: none; }
+/* Barre basse flottante (calendrier seul) */
+.barre-bas { position: fixed; z-index: 30; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom)); display: flex; gap: 10px; max-width: 640px; margin: 0 auto; }
+.btn-verre { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 12px; border-radius: 18px; cursor: pointer;
+  background: var(--verre-fort); border: 1px solid var(--verre-trait); box-shadow: 0 16px 40px -16px rgba(91,56,51,.35); color: var(--primaire-fort); font-weight: 600; font-size: .9rem;
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); white-space: nowrap; }
+:root[data-theme="sombre"] .btn-verre { color: var(--primaire); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="clair"]) .btn-verre { color: var(--primaire); } }
+.btn-verre.large { flex: 2; }
+.btn-verre svg.ic { font-size: 1.1rem; }

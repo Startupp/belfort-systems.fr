@@ -645,11 +645,52 @@
 
   /* Mode « calendrier seul » (choisi sur le premier écran, mémorisé sur l'appareil). */
   function ecranCalendrierSeul(app) {
-    app.appendChild(barre("Planning du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", onclick: actualiserPlanning }, icone("actualiser"))));
-    blocPlanning(app, null);
-    app.appendChild(h("p", { class: "lien-discret" }, h("button", { type: "button", "data-action": "accueil", onclick: function () {
-      reglages.mode = ""; sauverReglages(); rendre();
-    } }, "Revenir à l'accueil")));
+    app.appendChild(barre("Calendrier du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", onclick: actualiserPlanning }, icone("actualiser")), "Lecture seule · sans compte"));
+    var corps = h("div", { class: "calendrier-seul" });
+    app.appendChild(corps);
+    corps.appendChild(blocAujourdhui());
+    corps.appendChild(h("h2", { class: "titre-groupe", id: "tout-le-planning", tabindex: "-1" }, "Jour · Semaine · Mois"));
+    blocPlanning(corps, null);
+    app.appendChild(h("div", { class: "barre-bas" },
+      h("button", { class: "btn-verre", type: "button", "data-action": "accueil", onclick: function () {
+        reglages.mode = ""; sauverReglages(); rendre();
+      } }, icone("gauche"), "Accueil"),
+      h("button", { class: "btn-verre large", type: "button", onclick: function () {
+        var c = document.getElementById("tout-le-planning");
+        if (c) { c.scrollIntoView({ behavior: window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); c.focus({ preventScroll: true }); }
+      } }, icone("agenda"), "Jour · Semaine · Mois")));
+  }
+
+  /** « Aujourd'hui » (calendrier seul) : la date, puis les rendez-vous du jour sur une ligne de temps dorée. */
+  function blocAujourdhui() {
+    var bloc = h("section", { class: "aujourdhui-seul", "aria-labelledby": "t-aujourdhui" });
+    function dessiner() {
+      var j = aujourdhui(), maintenant = Date.now();
+      var liste = planning ? occurrences(debutJour(j), debutJour(plusJours(j, 1)), null) : null;
+      var journees = liste ? liste.filter(function (o) { return o.journee; }) : [], heures = liste ? liste.filter(function (o) { return !o.journee; }) : [];
+      bloc.textContent = "";
+      bloc.appendChild(h("p", { class: "libelle" }, "Aujourd'hui"));
+      bloc.appendChild(h("h2", { id: "t-aujourdhui", class: "date-jour" }, h("span", { class: "reflet" }, maj(jourLong(j)))));
+      if (!liste) { bloc.appendChild(squelette(3)); return; }
+      bloc.appendChild(h("p", { class: "resume-jour" }, heures.length ? heures.length + " rendez-vous" : "Aucun rendez-vous à heure fixe",
+        journees.length ? " · " + journees.map(function (o) { return o.titre; }).join(", ") : ""));
+      journees.forEach(function (o) {
+        bloc.appendChild(h("button", { class: "carte-journee", type: "button", onclick: function () { ouvrirDetail(o); } },
+          h("span", { class: "anneau d4" }, icone("soleil")), h("span", null, h("b", null, o.titre), h("small", null, "Toute la journée"))));
+      });
+      if (!heures.length) { bloc.appendChild(h("p", { class: "vide" }, "Rien de prévu à heure fixe aujourd'hui.")); return; }
+      bloc.appendChild(h("div", { class: "ligne-temps" }, heures.map(function (o) {
+        var enCours = o.debut <= maintenant && o.fin > maintenant, passe = o.fin <= maintenant;
+        return h("button", { class: "rdv-temps" + (enCours ? " en-cours" : "") + (passe ? " passe" : ""), type: "button", onclick: function () { ouvrirDetail(o); } },
+          h("span", { class: "point" + (enCours ? " maintenant" : ""), "aria-hidden": "true" }),
+          h("span", { class: "heures" }, heure(o.debut) + (o.fin > o.debut ? " – " + heure(o.fin) : ""), enCours ? h("span", { class: "en-cours-etiquette" }, "En cours") : null),
+          h("b", null, o.titre),
+          h("small", null, [o.source && planning.sources.length > 1 ? o.source : null, o.lieu].filter(Boolean).join(" · ")));
+      })));
+    }
+    surPlanning(bloc, dessiner);
+    dessiner();
+    return bloc;
   }
 
   function vueJour(zone, j, personne) {
