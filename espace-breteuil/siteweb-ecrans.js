@@ -18,7 +18,7 @@
   function rappelIdentifiant() {
     return h("div", { class: "bandeau info", role: "note" }, icone("cle"), h("div", null,
       h("strong", null, "WordPress a son propre identifiant"),
-      h("span", null, "Ce n'est pas votre compte Microsoft : utilisez l'identifiant et le mot de passe WordPress que Damien vous a donnés.")));
+      h("span", null, "Ce n'est pas votre compte Microsoft : il faut un compte WordPress du site breteuil.fr.")));
   }
 
   /** Section « Site web » : rappel + tuiles (3 par ligne). */
