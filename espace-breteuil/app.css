@@ -963,7 +963,8 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .gros-bouton { border: 1px solid var(--verre-trait); border-radius: 22px; }
 .gros-bouton .eb-anneau { --fi: var(--surface); }
 .gros-bouton .chevron { margin-left: auto; color: var(--or); font-size: 1.2rem; }
-.gros-bouton > span:not(.eb-anneau) { flex: 1; min-width: 0; }
+.gros-bouton > span:not(.eb-anneau):not(.chevron) { flex: 1; min-width: 0; }
+.gros-bouton .chevron { flex: none; display: grid; }
 .gros-bouton.principal { position: relative; overflow: hidden; border: 0; color: var(--praline-texte);
   background: linear-gradient(135deg, var(--praline-1), var(--praline-2)); box-shadow: 0 14px 34px -14px rgba(108,56,50,.65); }
 .gros-bouton.principal::after { content: ""; position: absolute; inset: 0; pointer-events: none;
@@ -971,7 +972,7 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
   transform: translateX(-120%); animation: eb-lueur 6s ease-in-out infinite 1.5s; }
 .gros-bouton.principal > * { position: relative; z-index: 1; }
 .gros-bouton.principal small { color: var(--praline-doux); opacity: 1; }
-.gros-bouton.principal .eb-anneau { --fi: rgba(255,255,255,.12); color: #FFF4E4;
+.gros-bouton.principal .eb-anneau { --fi: color-mix(in srgb, var(--praline-1) 86%, #FFFFFF); color: #FFF4E4;
   background: linear-gradient(var(--fi), var(--fi)) padding-box,
     conic-gradient(from var(--ang), rgba(255,255,255,.25), #E2BE6A, rgba(255,255,255,.5), #E7B8A8, rgba(255,255,255,.25)) border-box; animation-delay: -4s; }
 .gros-bouton.principal .eb-anneau svg.ic, .gros-bouton.principal .chevron { color: #E2BE6A; }
