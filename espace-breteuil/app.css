@@ -1517,5 +1517,5 @@ a.doc:hover { border-color: var(--primaire); }
   background: var(--st-fond); color: var(--st-texte); border: 1px solid color-mix(in srgb, var(--st-texte) 35%, transparent); white-space: nowrap; }
 .carte-projet > p { margin: 0; color: var(--texte-2); font-size: .92rem; line-height: 1.45; overflow-wrap: anywhere; }
 .carte-projet > p.prochaine-etape { margin-top: 10px; padding: 8px 12px; border-radius: var(--rayon-petit); background: var(--surface-2);
-  border-left: 3px solid var(--or); color: var(--texte); font-weight: 600; }
-.prochaine-etape b { font-weight: 800; }
+  border-left: 3px solid var(--or); color: var(--texte); }
+.prochaine-etape b { font-weight: 700; }

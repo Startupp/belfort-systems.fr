@@ -463,6 +463,44 @@ try {
         await calme(page);
         await controlesCommuns(page, `${nom} suivi ${taille}`);
         if (nom === "admin") await capturer(page, `suivi-${taille}`);
+        // v5.3.3 Projets à venir : après l'historique, avant « Ce qui a été mis en place » ; « Terminé » en bas.
+        assert.deepEqual(await page.$$eval(".zone-suivi > section", (l) => l.map((x) => x.id)), ["p-historique", "p-projets", "p-place", "p-docs", "p-contact"], `${nom} : ordre des sections`);
+        assert.deepEqual(await page.$$eval(".sommaire-suivi button", (l) => l.map((b) => b.textContent)), ["Historique", "Projets à venir", "Mis en place", "Documents", "Contacter"], "boutons d'ancrage");
+        assert.deepEqual(await page.$$eval(".carte-projet", (l) => l.map((c) => [c.querySelector("h3").textContent, c.querySelector(".pastille-statut").textContent])),
+          [["Renouvellement d'un poste", "Proposition envoyée"], ["Sauvegarde sur place", "À confirmer"], ["Archivage des anciens messages", "Terminé"]], `${nom} : projets, statut inconnu → À confirmer, Terminé en bas`);
+        assert.deepEqual(await page.$$eval(".prochaine-etape", (l) => l.map((x) => x.textContent)), ["Prochaine étape : Choisir le modèle dans la proposition.", "Prochaine étape : Confirmer le besoin, puis devis."]);
+        assert.deepEqual(await page.$$eval(".docs-projet a", (l) => l.map((a) => [a.getAttribute("href"), a.target])), [["https://breteuil02.sharepoint.com/exemple/plan.pdf", "_blank"]], "projet : Ouvrir le document déposé");
+        assert.deepEqual(await page.$$eval(".docs-projet .a-venir", (l) => l.map((x) => x.textContent)), ["document à venir"]);
+        assert.equal(await page.$$eval("#p-projets b", (l) => l.filter((b) => !b.closest(".prochaine-etape")).length), 0, "aucun HTML interprété dans les projets");
+        assert.match(await page.textContent("#p-projets"), /<b>reste du texte<\/b>/);
+        const couleurs = await page.$$eval(".pastille-statut", (l) => l.map((x) => getComputedStyle(x).backgroundColor));
+        assert.equal(new Set(couleurs).size, 3, "une couleur par statut");
+        await page.click('.sommaire-suivi button:has-text("Projets à venir")');
+        await page.waitForFunction(() => document.activeElement && document.activeElement.id === "p-projets-t");
+        if (nom === "admin") {
+          const capturerProjets = async (nomC) => {
+            if (!SORTIE) return;
+            // Pleine page découpée sur la section (sinon les onglets fixes du bas recouvrent la capture).
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.waitForTimeout(300);
+            const b = await page.evaluate(() => { const r = document.getElementById("p-projets").getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; });
+            const vw = page.viewportSize().width, x = Math.max(0, b.x - 12);
+            await page.screenshot({ path: `${SORTIE}/${nomC}.png`, fullPage: true, clip: { x, y: Math.max(0, b.y - 12), width: Math.min(vw - x, b.w + 24), height: b.h + 24 } });
+            captures++;
+          };
+          await capturerProjets(`suivi-projets-creme-${taille}`);
+          // Même section en Bleu Breteuil (clair), puis retour à la palette crème.
+          await page.evaluate(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
+          await page.reload();
+          await page.waitForSelector(".carte-projet");
+          assert.equal(await page.evaluate(() => document.documentElement.getAttribute("data-palette")), "bleu");
+          await calme(page);
+          await controlesCommuns(page, `${nom} suivi projets bleu ${taille}`);
+          await capturerProjets(`suivi-projets-bleu-${taille}`);
+          await page.evaluate(() => localStorage.removeItem("eb:reglages"));
+          await page.reload();
+          await page.waitForSelector(".carte-projet");
+        }
         // Ancienne adresse : #/pilotage → #/suivi.
         await page.goto(BASE + "#/pilotage");
         await page.waitForFunction(() => location.hash === "#/suivi");
@@ -781,4 +819,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique (dont Projets à venir, crème et Bleu) et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
