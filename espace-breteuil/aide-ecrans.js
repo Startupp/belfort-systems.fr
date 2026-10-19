@@ -670,7 +670,21 @@
     return bloc;
   }
 
-  window.EBAideEcrans = { ouvrir: ouvrir, fermer: fermer, rafraichir: rafraichir, lignesMoi: lignesMoi, blocGerer: blocGerer, etat: function () { return etat; } };
+  /**
+   * v5.7 : demande créée par l'appli elle-même (ex. « Nouveau logo à publier »). fichiers : [{ fichier: Blob, nom }].
+   * Pièces jointes envoyées si elles sont installées côté Worker ; sinon le message seul (sansPj y est ajouté).
+   * Renvoie { id, pj } (pj = vrai si les fichiers sont partis avec la demande).
+   */
+  function envoyerAuto(d, fichiers) {
+    var ctx = contexte();
+    return C.moi().catch(function () { return {}; }).then(function (j) {
+      if (j && j.pj != null) etat.pj = !!j.pj;
+      var f = etat.pj ? (fichiers || []) : [];
+      return C.creer({ type: d.type, message: d.message + (f.length ? "" : (d.sansPj || "")), ecran: ctx.ecran, version: ctx.version, appareil: ctx.appareil }, f)
+        .then(function (r) { etat.derniereLecture = 0; rafraichirDiscret(); return { id: r && r.id, pj: f.length > 0 }; });
+    });
+  }
+  window.EBAideEcrans = { ouvrir: ouvrir, fermer: fermer, rafraichir: rafraichir, lignesMoi: lignesMoi, blocGerer: blocGerer, envoyerAuto: envoyerAuto, etat: function () { return etat; } };
 
   /* ------------------------------------------------------------------ */
   /* Démarrage : bouton sur tous les écrans, pastille tenue à jour       */

@@ -84,6 +84,7 @@
       etat.maquette = true; etat.pret = true;
       var m = maquette();
       etat.compte = m.deconnecte ? null : (m.compte || { name: "Pauline (maquette)", username: "pdebreteuil@breteuil.fr", localAccountId: "moi" });
+      if (m.erreurConnexion) retenirErreur({ errorCode: "access_denied", message: m.erreurConnexion }); // v5.7 : ex. AADSTS50105 (tests)
       return Promise.resolve(!!etat.compte);
     }
     if (!estConfigure()) return Promise.resolve(false);
@@ -242,18 +243,20 @@
     }, function () { return false; });
   }
   /** Demande une permission en plus (consentement incrémental), par redirection pleine page. */
+  /* v5.7 : « permission » peut être une liste (plusieurs permissions demandées en une seule fois). */
   function demanderPermission(permission) {
+    var liste = [].concat(permission), nom = liste.join(" ");
     ecrireSession("eb:consentement-refuse", null);
     if (etat.maquette) {
       var m = self.EB_MAQUETTE = self.EB_MAQUETTE || {};
-      if (m.refuserConsentement) { ecrireSession("eb:consentement-refuse", JSON.stringify({ permission: permission, code: "AADSTS65001" })); return Promise.resolve(false); }
-      m.permissions = (m.permissions || []).concat([permission]);
+      if (m.refuserConsentement) { ecrireSession("eb:consentement-refuse", JSON.stringify({ permission: nom, code: "AADSTS65001" })); return Promise.resolve(false); }
+      m.permissions = (m.permissions || []).concat(liste);
       return Promise.resolve(true);
     }
     if (!etat.pca || !etat.compte) return Promise.reject(erreur(401, "Vous n'êtes pas connecté."));
-    ecrireSession("eb:consentement-demande", permission);
+    ecrireSession("eb:consentement-demande", nom);
     ecrireSession("eb:retour", location.hash || "#/");
-    return etat.pca.acquireTokenRedirect({ scopes: [permission], account: etat.compte });
+    return etat.pca.acquireTokenRedirect({ scopes: liste, account: etat.compte });
   }
   /** Dernier refus de consentement (retour de redirection), ou null. */
   function consentementRefuse() { try { return JSON.parse(lireSession("eb:consentement-refuse") || "null"); } catch (e) { return null; } }
