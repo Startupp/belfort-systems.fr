@@ -297,11 +297,21 @@ async function appel(W, env, chemin, { methode = "GET", qui, corps, brut } = {})
 async function prete() { const mod = await charger(); installerMicrosoft(); fetchAvecJson(); return mod; }
 /** Décode le MIME produit : en-têtes dépliés + corps base64. */
 function lireMime(raw) {
-  const [tete, corps] = raw.split("\r\n\r\n");
+  const i0 = raw.indexOf("\r\n\r\n"), tete = raw.slice(0, i0), reste = raw.slice(i0 + 4);
   const h = {};
   for (const l of tete.replace(/\r\n[ \t]+/g, " ").split("\r\n")) { const i = l.indexOf(":"); h[l.slice(0, i).toLowerCase()] = l.slice(i + 1).trim(); }
   const mots = (v) => v.replace(/=\?UTF-8\?B\?([^?]+)\?=\s*/g, (m, b) => Buffer.from(b, "base64").toString("utf8"));
-  return { h, sujet: mots(h.subject), corps: Buffer.from(corps.replace(/\s/g, ""), "base64").toString("utf8"), tete };
+  const deB64 = (s) => Buffer.from(s.replace(/\s/g, ""), "base64").toString("utf8");
+  const parties = {};
+  const borne = /boundary="([^"]+)"/.exec(h["content-type"] || "");
+  if (borne) {
+    for (const p of reste.split("--" + borne[1]).slice(1)) {
+      if (p.startsWith("--")) break;
+      const j = p.indexOf("\r\n\r\n"), th = p.slice(0, j), type = /Content-Type: ([^;\r\n]+)/i.exec(th)[1];
+      parties[type] = { tete: th, corps: deB64(p.slice(j + 4)), brut: p.slice(j + 4) };
+    }
+  }
+  return { h, sujet: mots(h.subject), corps: borne ? parties["text/plain"].corps : deB64(reste), html: parties["text/html"]?.corps, parties, tete };
 }
 
 test("aide : non configurée → 503 aide_non_configuree ; CORS : Authorization, POST, PATCH", async () => {
@@ -355,7 +365,17 @@ test("aide : création, mail sortant MIME (sujet exact encodé RFC 2047, Reply-T
   assert.match(sig, /^[0-9a-f]{12}$/);
   assert.equal(x.h["reply-to"], `<demande+1-${sig}@aide.exemple.fr>`);
   assert.match(x.h.from, /<aide@aide\.exemple\.fr>$/);
-  assert.equal(x.h["content-type"], "text/plain; charset=UTF-8");
+  assert.match(x.h["content-type"], /^multipart\/alternative; +boundary="=_eb_[0-9a-f]{32}"$/);
+  assert.ok(Object.keys(x.parties).join() === "text/plain,text/html", "texte brut d'abord (secours), puis HTML");
+  for (const p of Object.values(x.parties)) {
+    assert.match(p.tete, /charset=UTF-8\r\nContent-Transfer-Encoding: base64/);
+    assert.ok(p.brut.trim().split("\r\n").every((l) => l.length <= 76), "base64 : lignes ≤ 76 caractères");
+  }
+  // HTML : contenu utilisateur échappé (balises du message affichées, jamais interprétées).
+  assert.ok(x.html.includes("Le planning ne s&#39;affiche plus &lt;b&gt;depuis ce matin&lt;/b&gt;."), "message échappé");
+  assert.ok(!x.html.includes("<b>depuis"), "aucune balise venue de l'utilisateur");
+  for (const attendu of ["Espace Breteuil</span> · Demande n°1", ">Problème</td>", "Fanny Martin", "fmartin@chateau-exemple.fr", "Ouvrir la demande",
+    'href="https://espace-breteuil.pages.dev/#/aide/1"', "Répondez simplement à ce mail : votre réponse s&#39;ajoute à la demande.".replace("s&#39;", "s'"), "Nouvelle demande"]) assert.ok(x.html.includes(attendu), "HTML : " + attendu);
   for (const attendu of ["Nom : Fanny Martin", "Adresse : fmartin@chateau-exemple.fr", "Écran : Planning", "Version : 5.4.0", "Appareil : iPhone (Safari)",
     "Le planning ne s'affiche plus <b>depuis ce matin</b>.", "https://espace-breteuil.pages.dev/#/aide/1"]) assert.ok(x.corps.includes(attendu), "corps : " + attendu);
   assert.ok(!x.corps.includes("\u0007"), "caractères de contrôle retirés");
@@ -367,6 +387,26 @@ test("aide : création, mail sortant MIME (sujet exact encodé RFC 2047, Reply-T
   // Constructeur MIME seul : en-tête long non ASCII découpé en plusieurs mots encodés.
   const long = mod.enTete("Amélioration ".repeat(8));
   assert.ok(long.split("\r\n ").length > 1 && long.split("\r\n ").every((w) => w.length <= 75));
+});
+
+test("mail HTML : tout est échappé (nom, adresse, contexte, pièces jointes), pastille du type, nouveau message", async () => {
+  const mod = await charger();
+  const piege = `<script>alert("x")</script>&'"`;
+  const html = mod.htmlMail({ id: 7, type: "question", nom: piege, adresse: "a@b.fr<img src=x onerror=alert(1)>", ecran: piege, version: piege, appareil: piege,
+    date: Date.UTC(2026, 9, 19, 12, 5), texte: "Ligne 1\n" + piege, premier: false, lien: 'https://x.fr/#/aide/7"><script>',
+    pj: [{ nom: piege + ".pdf", taille: 1536, lien: "https://x.fr/#/aide/7/pj/3" }], ignorees: ["Pièce jointe ignorée : trop lourde (" + piege + ")"] });
+  assert.ok(!/<script|<img|onerror=alert\(1\)>/.test(html), "aucune balise injectée");
+  assert.ok(html.includes("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&#39;&quot;"));
+  assert.ok(html.includes("Ligne 1<br>"), "sauts de ligne → <br>");
+  assert.ok(html.includes("Nouveau message sur la demande n°7"));
+  assert.ok(html.includes("#E2ECF7") && html.includes(">Question</td>"), "pastille Question (bleu)");
+  assert.ok(html.includes("2 Ko") && html.includes('href="https://x.fr/#/aide/7/pj/3"'), "pièce jointe : taille + lien vers l'appli");
+  assert.ok(html.includes("19 octobre 2026"), "date en français (Europe/Paris)");
+  assert.match(html, /max-width:600px/); assert.doesNotMatch(html, /<link|<script/);
+  assert.equal(mod.tailleLisible(500), "500 o"); assert.equal(mod.tailleLisible(2048), "2 Ko"); assert.equal(mod.tailleLisible(1.25 * 1024 * 1024), "1,3 Mo");
+  // MIME sans HTML : texte seul, comme avant.
+  const brut = mod.construireMime({ de: "a@x.fr", a: "b@x.fr", sujet: "S", texte: "t", messageId: "m@x.fr" });
+  assert.match(brut, /Content-Type: text\/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64/);
 });
 
 test("aide : validations, limite de 10 demandes par heure, envoi de mail en échec non bloquant", async () => {

@@ -331,9 +331,21 @@ export function enTete(valeur) {
 function adresseNommee(nom, adresse) { return nom ? enTete(String(nom).replace(/["\\<>]/g, "")) + " <" + adresse + ">" : "<" + adresse + ">"; }
 export function domaineDe(adresse) { return String(adresse || "").split("@")[1]?.trim().toLowerCase() || ""; }
 
-/** Message MIME complet (texte brut UTF-8 en base64). */
-export function construireMime({ de, nomDe, a, repondreA, sujet, texte, messageId, references, date }) {
-  const corps = b64(new TextEncoder().encode(String(texte).replace(/\r?\n/g, "\r\n"))).replace(/.{76}(?=.)/g, "$&\r\n");
+/** Corps encodé en base64 (RFC 2045 : lignes de 76 caractères au plus, fins de ligne CRLF). */
+function base64Lignes(texte) { return b64(new TextEncoder().encode(String(texte).replace(/\r?\n/g, "\r\n"))).replace(/.{76}(?=.)/g, "$&\r\n"); }
+
+/**
+ * Message MIME complet. Sans `html` : texte brut UTF-8 en base64 (comme avant).
+ * Avec `html` : multipart/alternative — texte brut d'abord (secours), puis HTML (base64 tous les deux).
+ */
+export function construireMime({ de, nomDe, a, repondreA, sujet, texte, html, messageId, references, date }) {
+  const borne = html ? "=_eb_" + crypto.randomUUID().replace(/-/g, "") : null; // « =_ » n'apparaît jamais en base64
+  const corps = html
+    ? "Ce message est au format MIME (texte et HTML).\r\n\r\n" +
+      "--" + borne + "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" + base64Lignes(texte) + "\r\n" +
+      "--" + borne + "\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" + base64Lignes(html) + "\r\n" +
+      "--" + borne + "--"
+    : base64Lignes(texte);
   const l = [
     "From: " + adresseNommee(nomDe, de),
     "To: <" + a + ">",
@@ -344,10 +356,109 @@ export function construireMime({ de, nomDe, a, repondreA, sujet, texte, messageI
     references ? "References: <" + references + ">" : null,
     references ? "In-Reply-To: <" + references + ">" : null,
     "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding: base64",
+    ...(html ? ['Content-Type: multipart/alternative;\r\n boundary="' + borne + '"'] : ["Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64"]),
   ].filter(Boolean);
   return l.join("\r\n") + "\r\n\r\n" + corps + "\r\n";
+}
+
+/* ---------- Mail HTML à Damien (tableaux + styles en ligne : Gmail, Outlook, Apple Mail) ---------- */
+/** Échappe TOUT contenu venu d'un utilisateur avant de l'insérer dans le HTML. */
+export function echapperHtml(t) {
+  return String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+const AIDE_COULEURS = { // texte / fond de la pastille du type (contraste ≥ 4,5:1)
+  question: ["#1F4F7A", "#E2ECF7"], avis: ["#2D6142", "#E1F0E6"], amelioration: ["#7A5410", "#F6EAD0"], probleme: ["#9E2A20", "#F9E1DE"],
+};
+export function tailleLisible(n) {
+  n = Number(n) || 0;
+  if (n < 1024) return n + " o";
+  if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + " Ko";
+  return (Math.round(n / 1024 / 1024 * 10) / 10).toString().replace(".", ",") + " Mo";
+}
+function dateFr(ms) {
+  try { return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(ms)); }
+  catch { return new Date(ms).toISOString().slice(0, 16).replace("T", " ") + " UTC"; }
+}
+
+/**
+ * Mail HTML d'une demande (nouvelle ou nouveau message). Tout texte utilisateur est échappé.
+ * p : { id, type, nom, adresse, ecran, version, appareil, date (ms), texte, premier, lien, pj: [{ nom, taille, lien }], ignorees: [texte] }
+ */
+export function htmlMail(p) {
+  const e = echapperHtml, type = AIDE_TYPES[p.type] || "Demande", [coulT, coulF] = AIDE_COULEURS[p.type] || ["#5B3833", "#F3E9DF"];
+  const POL = "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
+  const SERIF = "font-family:Georgia,'Times New Roman',serif;";
+  const titre = p.premier ? "Nouvelle demande" : "Nouveau message sur la demande n°" + p.id;
+  const texte = e(p.texte || "").replace(/\r?\n/g, "<br>");
+  const extrait = e(ligneCourte(p.texte || "", 110));
+  const ligneMeta = (k, v) => `<tr><td class="eb-doux" style="${POL}padding:6px 12px 6px 0;font-size:13px;color:#7A6458;white-space:nowrap;vertical-align:top;">${k}</td>` +
+    `<td class="eb-texte" style="${POL}padding:6px 0;font-size:13px;color:#2B1F1B;word-break:break-word;">${e(v || "—")}</td></tr>`;
+  const pj = (p.pj || []).map((f) => `<tr><td style="padding:0 0 8px 0;">` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="eb-carte-pj" style="border:1px solid #E6D9C6;border-radius:8px;background:#FFFFFF;"><tr>` +
+    `<td style="${POL}padding:10px 12px;font-size:14px;color:#2B1F1B;word-break:break-all;" class="eb-texte">📎&nbsp;<b>${e(f.nom)}</b> <span class="eb-doux" style="color:#7A6458;font-size:12px;white-space:nowrap;">${e(tailleLisible(f.taille))}</span></td>` +
+    `<td align="right" style="${POL}padding:10px 12px;font-size:13px;white-space:nowrap;"><a href="${e(f.lien)}" style="color:#8A6A1F;font-weight:700;text-decoration:underline;">Ouvrir</a></td>` +
+    `</tr></table></td></tr>`).join("");
+  const ignorees = (p.ignorees || []).map((t) => `<tr><td class="eb-doux" style="${POL}padding:0 0 6px 0;font-size:12px;color:#7A6458;">${e(t)}</td></tr>`).join("");
+  return `<!DOCTYPE html>
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>${e(type)} · Demande n°${e(p.id)}</title>
+<style>
+  @media (prefers-color-scheme: dark) {
+    .eb-fond { background:#1C1513 !important; }
+    .eb-carte, .eb-carte-pj { background:#2A201D !important; border-color:#4A3A33 !important; }
+    .eb-citation { background:#231A17 !important; }
+    .eb-texte { color:#F3EAE0 !important; }
+    .eb-doux { color:#C9B8AA !important; }
+  }
+  @media (max-width: 480px) { .eb-pad { padding-left:18px !important; padding-right:18px !important; } }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#FBF6EE;" class="eb-fond">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#FBF6EE;">${extrait}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FBF6EE" class="eb-fond" style="background:#FBF6EE;">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+<tr><td bgcolor="#5B3833" style="background:#5B3833;border-radius:12px 12px 0 0;padding:20px 28px;" class="eb-pad">
+  <div style="${SERIF}font-size:20px;line-height:1.3;color:#FBF6EE;"><span style="color:#E2BE6E;">Espace Breteuil</span> · Demande n°${e(p.id)}</div>
+  <div style="${POL}font-size:13px;line-height:1.4;color:#EADBC8;padding-top:4px;">${e(titre)}</div>
+</td></tr>
+<tr><td bgcolor="#C9A04A" style="background:#C9A04A;height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
+<tr><td bgcolor="#FFFFFF" class="eb-carte eb-pad" style="background:#FFFFFF;border:1px solid #E6D9C6;border-top:0;border-radius:0 0 12px 12px;padding:24px 28px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td bgcolor="${coulF}" style="background:${coulF};border-radius:99px;padding:5px 12px;${POL}font-size:13px;font-weight:700;color:${coulT};">${e(type)}</td>
+  </tr></table>
+  <div class="eb-texte" style="${POL}font-size:17px;font-weight:700;color:#2B1F1B;padding-top:14px;">${e(p.nom)}</div>
+  <div class="eb-doux" style="${POL}font-size:14px;color:#7A6458;padding-top:2px;word-break:break-all;">${e(p.adresse)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;"><tr>
+    <td class="eb-citation eb-texte" bgcolor="#FBF6EE" style="background:#FBF6EE;border-left:4px solid #C9A04A;border-radius:0 8px 8px 0;padding:14px 16px;${POL}font-size:15px;line-height:1.55;color:#2B1F1B;word-break:break-word;">${texte || "<i>(pièce jointe seule)</i>"}</td>
+  </tr></table>
+  ${pj || ignorees ? `<div class="eb-texte" style="${POL}font-size:14px;font-weight:700;color:#2B1F1B;padding:20px 0 8px;">Pièces jointes</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${pj}${ignorees}</table>` : ""}
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;border-top:1px solid #EFE4D4;width:100%;">
+    ${ligneMeta("Écran", p.ecran)}${ligneMeta("Version", p.version)}${ligneMeta("Appareil", p.appareil)}${ligneMeta("Date", dateFr(p.date || Date.now()))}
+  </table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;"><tr><td align="center">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td bgcolor="#5B3833" style="background:#5B3833;border-radius:8px;">
+        <a href="${e(p.lien)}" style="display:inline-block;padding:14px 32px;${POL}font-size:16px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:8px;">Ouvrir la demande</a>
+      </td>
+    </tr></table>
+  </td></tr></table>
+</td></tr>
+<tr><td class="eb-doux" style="${POL}padding:18px 12px 0;font-size:13px;line-height:1.5;color:#7A6458;text-align:center;">
+  Répondez simplement à ce mail : votre réponse s'ajoute à la demande.
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
 }
 
 async function hmacHex(secret, texte) {
@@ -358,13 +469,15 @@ async function hmacHex(secret, texte) {
 export async function signature(secret, id) { return (await hmacHex(secret, "demande-" + id)).slice(0, 12); }
 function egal(a, b) { a = String(a); b = String(b); if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
 export function sujetDemande(type, id) { return "Application Breteuil - Retour client - " + (AIDE_TYPES[type] || "Question") + " - n°" + id; }
-function lienAppli(env, id) { return String(env.AIDE_APPLI_URL || "https://espace-breteuil.pages.dev/").replace(/#.*$/, "").replace(/\/?$/, "/") + "#/aide/" + id; }
+function lienAppli(env, id, pjId) { return String(env.AIDE_APPLI_URL || "https://espace-breteuil.pages.dev/").replace(/#.*$/, "").replace(/\/?$/, "/") + "#/aide/" + id + (pjId ? "/pj/" + pjId : ""); }
 
-async function envoyerMail(env, d, texte, premier) {
+async function envoyerMail(env, d, texte, premier, pj = [], ignorees = []) {
   const domaine = domaineDe(env.AIDE_EXPEDITEUR);
   // « demande+<n°>-<signature>@… » : une seule règle Email Routing « demande@… → Worker » suffit
   // (sous-adressage « + » ; les règles « catch-all » n'existent que sur le domaine principal).
   const repondreA = "demande+" + d.id + "-" + (await signature(env.AIDE_SECRET, d.id)) + "@" + domaine;
+  // Pièces jointes : listées avec un lien vers l'appli, jamais jointes au mail (mail léger, accès contrôlé).
+  const listePj = pj.map((f) => ({ nom: f.nom, taille: f.taille, lien: lienAppli(env, d.id, f.id) }));
   const corps = [
     (premier ? "Nouvelle demande n°" : "Nouveau message sur la demande n°") + d.id + " — " + (AIDE_TYPES[d.type] || d.type),
     "",
@@ -375,21 +488,24 @@ async function envoyerMail(env, d, texte, premier) {
     "Appareil : " + (d.appareil || "—"),
     "",
     "Message :",
-    texte,
+    texte || "(pièce jointe seule)",
+    ...(listePj.length || ignorees.length ? ["", "Pièces jointes :", ...listePj.map((f) => "- " + f.nom + " (" + tailleLisible(f.taille) + ") : " + f.lien), ...ignorees.map((t) => "- " + t)] : []),
     "",
     "Voir la demande dans l'appli : " + lienAppli(env, d.id),
     "",
     "Pour répondre : répondez simplement à ce mail. Votre réponse s'ajoute au fil de la demande (la citation est retirée).",
   ].join("\n");
+  const html = htmlMail({ id: d.id, type: d.type, nom: d.nom, adresse: d.adresse, ecran: d.ecran, version: d.version, appareil: d.appareil,
+    date: Date.now(), texte, premier, lien: lienAppli(env, d.id), pj: listePj, ignorees });
   const mime = construireMime({
     de: env.AIDE_EXPEDITEUR, nomDe: "Espace Breteuil", a: env.AIDE_DESTINATAIRE, repondreA,
-    sujet: sujetDemande(d.type, d.id), texte: corps,
+    sujet: sujetDemande(d.type, d.id), texte: corps, html,
     messageId: "demande-" + d.id + "-" + crypto.randomUUID() + "@" + domaine, references: "demande-" + d.id + "@" + domaine,
   });
   await env.AIDE_MAIL.send(new EmailMessage(env.AIDE_EXPEDITEUR, env.AIDE_DESTINATAIRE, mime));
 }
-async function essayerMail(env, d, texte, premier) {
-  try { await envoyerMail(env, d, texte, premier); return true; }
+async function essayerMail(env, d, texte, premier, pj, ignorees) {
+  try { await envoyerMail(env, d, texte, premier, pj, ignorees); return true; }
   catch (e) { console.error("Aide, mail sortant :", e && e.message); return false; }
 }
 
