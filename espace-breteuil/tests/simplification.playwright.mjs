@@ -1,14 +1,17 @@
 // v5.5 « Simplification » — réponses Microsoft MAQUETTÉES, données FICTIVES.
 // Lancer depuis la racine du dépôt (Chromium déjà installé) :
 //   EB_PORT=8798 PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node espace-breteuil/tests/simplification.playwright.mjs [dossier-captures]
-// Contrôles à 375 et 1280 px, palettes crème et Bleu Breteuil :
+// Contrôles à 375 et 1280 px, palettes crème et Bleu élégant :
 //   - premier lancement : carte « Vous êtes : Gestionnaire / Lecteur » (droits RÉELS), questionnaire filtré par les droits,
 //     ordre des choix, écran ouvert = 1er choix, choix gardé par compte, « Plus tard », stockage bloqué ;
 //   - Accueil : tuiles dans l'ordre choisi ; Moi : carte du niveau ; Lecteur : actions d'ajout CACHÉES (pas grisées) ;
 //   - « Comment faire ? » → « Montrez-moi » : bon écran, bouton entouré, bulle « Touchez ici », Échap / toucher ferme ;
 //   - Gérer : tuile « 🛠️ Suivi informatique » → #/suivi (mêmes profils que #/suivi) ;
 //   - feuille d'actions et écran dossier : AUCUN texte ne chevauche un autre (aussi en police agrandie, 412 px, sombre) ;
-//   - fil d'Ariane sur une ligne, boutons d'action de même taille, aucune erreur console, pas de défilement horizontal.
+//   - fil d'Ariane sur une ligne, boutons d'action de même taille, aucune erreur console, pas de défilement horizontal ;
+//   - v5.5.1 « Qui fait quoi » (412 sombre police agrandie, 1280 clair et sombre) : boîtes partagées toujours dans
+//     « Les adresses partagées » (avec ou sans licence, liste config.js ou userPurpose), photo de FetP, groupe
+//     « Prestataire informatique », « Sans licence » = vraies personnes, noms longs sans chevauchement, homonymes.
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -61,6 +64,31 @@ function reponses(p) {
   };
 }
 
+/* ---------- v5.5.1 « Qui fait quoi » : annuaire proche du vrai (données FICTIVES pour les personnes) ---------- */
+const STD = "sku-std", BAS = "sku-bas";
+const SKUS = [{ skuId: STD, skuPartNumber: "O365_BUSINESS_PREMIUM", prepaidUnits: { enabled: 25 }, consumedUnits: 20 },
+  { skuId: BAS, skuPartNumber: "O365_BUSINESS_ESSENTIALS", prepaidUnits: { enabled: 10 }, consumedUnits: 4 }];
+const qu = (id, nom, mail, sku, extra = {}) => ({ id, displayName: nom, givenName: extra.givenName === undefined ? nom.split(" ")[0] : extra.givenName, mail, userPrincipalName: extra.upn || mail || "",
+  userType: "Member", accountEnabled: true, assignedLicenses: sku ? [{ skuId: sku }] : [] });
+// Les 11 adresses de service converties en boîtes partagées, encore avec une licence d'essai Business Standard (sauf 4).
+const BOITES_SERVICE = [["chanteclerc", "chanteclerc", STD], ["chanteclercdeveloppement", "Développement", STD], ["escapegame", "Escape game", null], ["hfb", "hfb", STD],
+  ["intendance", "Intendance", STD], ["jardins", "Jardins", null], ["jecharrault", "jecharrault", null], ["klefur", "Klefur", STD], ["marketing", "Marketing", null],
+  ["newsletter", "newsletter", STD], ["travaux", "Travaux", STD]];
+function annuaireQfq(licencesRetirees) {
+  return [
+    qu("q1", "Pauline de Breteuil", "pdebreteuil@breteuil.fr", STD), qu("q2", "François de Breteuil", "fdebreteuil@breteuil.fr", STD),
+    qu("q3", "Valérie Durand", "vdurand@breteuil.fr", STD), qu("q4", "Valérie Martin", "vmartin@breteuil.fr", BAS),
+    qu("q5", "Fanny Martin", "fmartin@breteuil.fr", BAS), qu("q6", "Maximilien-Alexandre de Montmorency", "mmontmorency@breteuil.fr", STD),
+    qu("q7", "Accueilbilletterieboutiquechateau", "accueil@breteuil.fr", STD, { givenName: "" }),
+    qu("q8", "Camille Roux", "croux@breteuil.fr", null),
+    qu("q9", "Damien", null, null, { upn: "damien@breteuil02.onmicrosoft.com" }),
+    qu("q10", "FetP", "fetpdebreteuil@breteuil.fr", null),
+    qu("q11", "Réservations", "reservations@breteuil.fr", STD), // boîte repérée seulement par userPurpose
+    ...BOITES_SERVICE.map(([id, nom, sku], i) => qu("b" + i, nom, id + "@breteuil.fr", licencesRetirees ? null : sku, { givenName: "" })),
+  ];
+}
+const QFQ_PHOTOS = ["q1", "q10"]; // Pauline et FetP ont une photo ; les autres non (404)
+
 const problemes = [];
 let captures = 0;
 const calme = (page) => page.evaluate(() => Promise.race([new Promise((ok) => setTimeout(ok, 2000)), Promise.all(document.getAnimations()
@@ -85,7 +113,9 @@ async function sansChevauchement(page, sel, boite, ou) {
     for (const el of document.querySelectorAll(sel)) {
       if (!el.offsetParent && getComputedStyle(el).position !== "fixed") continue;
       const range = document.createRange(); range.selectNodeContents(el);
-      for (const q of range.getClientRects()) if (q.width > 1 && q.height > 1) rects.push({ t: el.textContent.trim().slice(0, 30), x: q.left, y: q.top, r: q.right, b: q.bottom, el });
+      // Texte coupé exprès (overflow caché, ex. nom sur 2 lignes puis « … ») : les lignes masquées ne comptent pas.
+      const coupe = getComputedStyle(el).overflow !== "visible" ? el.getBoundingClientRect() : null;
+      for (const q of range.getClientRects()) if (q.width > 1 && q.height > 1 && (!coupe || q.top < coupe.bottom - 1)) rects.push({ t: el.textContent.trim().slice(0, 30), x: q.left, y: q.top, r: q.right, b: q.bottom, el });
     }
     const conflits = [];
     for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
@@ -109,7 +139,11 @@ async function sansChevauchement(page, sel, boite, ou) {
 async function nouvellePage(navigateur, opts) {
   const p = PROFILS[opts.profil];
   const contexte = await navigateur.newContext({ viewport: opts.vp, deviceScaleFactor: 1, serviceWorkers: "block", locale: "fr-FR", colorScheme: opts.theme || "light" });
-  await contexte.addInitScript((m) => { self.EB_MAQUETTE = m; }, { compte: { name: p.moi.displayName, username: p.moi.mail, localAccountId: p.moi.id }, permissions: [] });
+  await contexte.addInitScript((m) => { self.EB_MAQUETTE = m; }, { compte: { name: p.moi.displayName, username: p.moi.mail, localAccountId: p.moi.id }, permissions: [], ...(opts.scopes ? { scopes: { graph: opts.scopes } } : {}), ...(opts.deconnecte ? { deconnecte: true } : {}) });
+  // Réglages de config.js propres au test (ex. prestataires, vide dans le dépôt) : posés au chargement de config.js.
+  if (opts.config) await contexte.addInitScript((extra) => {
+    let c; Object.defineProperty(self, "EB_CONFIG", { configurable: true, get: () => c, set: (v) => { c = Object.assign(v, extra); } });
+  }, opts.config);
   const reglages = {};
   if (opts.palette === "bleu") reglages.palette = "bleu";
   if (opts.texte) reglages.texte = opts.texte;
@@ -122,10 +156,16 @@ async function nouvellePage(navigateur, opts) {
   if (opts.policeAgrandie) await contexte.addInitScript(() => document.addEventListener("DOMContentLoaded", () => {
     const s = document.createElement("style"); s.textContent = "html { font-size: 130% !important; }"; document.head.appendChild(s);
   }));
-  const R = reponses(p);
+  const R = { ...reponses(p), ...(opts.reponses || {}) };
   await contexte.route(/https:\/\/(graph\.microsoft\.com|[a-z0-9-]+\.sharepoint\.com)\/.*/, async (route) => {
     const req = route.request(), url = new URL(req.url()), chemin = decodeURIComponent(url.pathname);
-    if (/\/photos\//.test(url.pathname)) return route.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "image/png" }, body: PNG });
+    if (/\/photos\//.test(url.pathname)) {
+      const id = (/\/users\/([^/]+)\/photos/.exec(chemin) || [])[1];
+      if (opts.photos && !opts.photos.includes(id)) return route.fulfill({ status: 404, headers: CORS, body: "{}" });
+      return route.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "image/png" }, body: PNG });
+    }
+    const usage = /^\/v1\.0\/users\/([^/]+)\/mailboxSettings\/userPurpose$/.exec(chemin);
+    if (usage) return route.fulfill({ status: 200, headers: CORS, body: JSON.stringify({ value: usage[1] === "q11" ? "shared" : "user" }) });
     if (req.method() !== "GET") return route.fulfill({ status: 204, headers: CORS, body: "" });
     return route.fulfill({ status: 200, headers: CORS, body: JSON.stringify(R[chemin] || { value: [] }) });
   });
@@ -152,6 +192,62 @@ async function fabLibre(page, ou) {
     }).map((e) => (e.textContent || "").trim().slice(0, 30));
   });
   if (r.length) problemes.push(`${ou} : le bouton « ? » couvre : ${r.join(" | ")}`);
+}
+
+/** Options de page pour « Qui fait quoi » (annuaire réaliste, prestataire configuré, userPurpose lisible). */
+function optsQfq(licencesRetirees) {
+  return { profil: "admin", photos: QFQ_PHOTOS, config: { prestataires: ["damien@breteuil02.onmicrosoft.com"] },
+    scopes: ["User.Read", "User.Read.All", "Directory.Read.All", "MailboxSettings.Read"],
+    reponses: { "/v1.0/users": { value: annuaireQfq(licencesRetirees) }, "/v1.0/subscribedSkus": { value: SKUS } } };
+}
+/** « Qui fait quoi » : rangement, photos, homonymes, noms longs. */
+async function verifierQfq(page, ou, licencesRetirees) {
+  await page.goto(BASE + "#/organisation");
+  await page.waitForSelector(".pastille-demo.reel");
+  await page.waitForSelector('.ligne-boite[data-boite="fetpdebreteuil@breteuil.fr"] .eb-anneau.photo img', { timeout: 8000 });
+  const r = await page.evaluate(() => {
+    const groupes = [...document.querySelectorAll(".groupe-schema[data-groupe]")].map((g) => ({ g: g.dataset.groupe,
+      noms: [...g.querySelectorAll(".visage")].map((v) => v.getAttribute("title")) }));
+    const boites = [...document.querySelectorAll(".ligne-boite")].map((l) => l.dataset.boite).sort();
+    const photos = [...document.querySelectorAll(".ligne-boite")].filter((l) => l.querySelector(".eb-anneau img")).map((l) => l.dataset.boite);
+    const fetp = document.querySelector('.ligne-boite[data-boite="fetpdebreteuil@breteuil.fr"]');
+    const ordreFetp = fetp ? [...fetp.children].slice(0, 2).map((e) => e.className.split(" ")[0]) : [];
+    const homonymes = [...document.querySelectorAll(".adresse-visage")].map((s) => s.textContent);
+    // Chaque nom tient dans sa cellule (largeur), sur 2 lignes au plus.
+    const debords = [...document.querySelectorAll(".groupe-schema .visage")].filter((v) => {
+      const n = v.querySelector(".nom-visage"), a = v.getBoundingClientRect(), b = n.getBoundingClientRect();
+      const lignes = Math.round(b.height / parseFloat(getComputedStyle(n).lineHeight));
+      return b.left < a.left - 1 || b.right > a.right + 1 || lignes > 2;
+    }).map((v) => v.getAttribute("title"));
+    const largeurs = new Set([...document.querySelectorAll(".groupe-schema:not(.prestataire) .visage")].map((v) => Math.round(v.getBoundingClientRect().width)));
+    return { groupes, boites, photos, ordreFetp, homonymes, debords, largeurs: [...largeurs] };
+  });
+  const attendues = ["chanteclerc", "chanteclercdeveloppement", "escapegame", "fetpdebreteuil", "hfb", "intendance", "jardins", "jecharrault", "klefur",
+    "marketing", "newsletter", "reservations", "travaux"].map((x) => x + "@breteuil.fr").sort();
+  assert.deepEqual(r.boites, attendues, `${ou} : toutes les boîtes partagées (licence ou pas) dans « Les adresses partagées »`);
+  assert.deepEqual(r.groupes.map((g) => g.g), ["standard", "basic", "aucune", "prestataire"], `${ou} : groupes ${JSON.stringify(r.groupes)}`);
+  const de = (g) => r.groupes.find((x) => x.g === g).noms;
+  assert.deepEqual(de("standard").sort(), ["Accueilbilletterieboutiquechateau", "François de Breteuil", "Maximilien-Alexandre de Montmorency", "Pauline de Breteuil", "Valérie Durand (vdurand)"].sort(), `${ou} : Business Standard sans les boîtes`);
+  assert.deepEqual(de("basic").sort(), ["Fanny Martin", "Valérie Martin (vmartin)"], `${ou} : Business Basic`);
+  assert.deepEqual(de("aucune"), ["Camille Roux"], `${ou} : Sans licence = vraies personnes seulement`);
+  assert.deepEqual(de("prestataire"), ["Damien"], `${ou} : Prestataire informatique`);
+  assert.deepEqual(r.photos, ["fetpdebreteuil@breteuil.fr"], `${ou} : photo de FetP, enveloppe pour les autres`);
+  assert.deepEqual(r.ordreFetp, ["eb-anneau", "quoi"], `${ou} : photo puis nom/adresse`);
+  assert.equal(await page.textContent('.ligne-boite[data-boite="fetpdebreteuil@breteuil.fr"] .quoi'), "FetPfetpdebreteuil@breteuil.fr");
+  assert.deepEqual(r.homonymes.sort(), ["vdurand", "vmartin"], `${ou} : deux « Valérie » distinguées`);
+  assert.deepEqual(r.debords, [], `${ou} : noms qui sortent de leur cellule ou sur plus de 2 lignes`);
+  assert.equal(r.largeurs.length, 1, `${ou} : cellules de même largeur ${r.largeurs}`);
+  await sansChevauchement(page, ".groupe-schema .nom-visage, .groupe-schema .adresse-visage, .titre-groupe-schema, .ligne-boite .quoi b, .ligne-boite .quoi small", ".visage, .ligne-boite", `${ou} qui fait quoi`);
+  await sansDebord(page, `${ou} qui fait quoi`);
+  if (!licencesRetirees) {
+    // Abonnements : les boîtes qui gardent une licence sont signalées.
+    await page.goto(BASE + "#/licences-reel");
+    await page.waitForSelector(".carte-profil.standard .boites-licence");
+    assert.match(await page.textContent(".carte-profil.standard .boites-licence"), /Dont 8 adresses partagées qui utilisent encore cette licence/);
+    assert.equal(await page.$(".carte-profil.basic .boites-licence"), null);
+    await page.goto(BASE + "#/organisation");
+    await page.waitForSelector('.ligne-boite[data-boite="fetpdebreteuil@breteuil.fr"] .eb-anneau.photo img', { timeout: 8000 });
+  }
 }
 
 const serveur = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1"], { cwd: RACINE, stdio: "ignore" });
@@ -306,7 +402,7 @@ try {
         await page.goto(BASE + "#/gerer");
         await page.waitForSelector('.tuiles-grandes a[data-action="suivi"]');
         const titres = await page.$$eval(".ecran .section > h2", (l) => l.map((x) => x.textContent));
-        assert.deepEqual(titres, ["Informatique", "Équipe", "Factures", "Administration", "Site internet"], `${ou} : sections de Gérer`);
+        assert.deepEqual(titres, ["Informatique", "Équipe", "Factures", "Administration", "Site internet", "Application", "Bientôt"], `${ou} : sections de Gérer (v5.7 : Application, Bientôt)`);
         const tuiles = await page.$$eval(".tuiles-grandes .t.gt", (l) => l.map((a) => { const r = a.getBoundingClientRect(); return { lib: a.querySelector(".lib").textContent, sous: a.querySelector(".sous")?.textContent || "", h: r.height }; }));
         assert.ok(tuiles.every((x) => x.sous && x.h >= 64), `${ou} : chaque tuile a une ligne d'explication`);
         await sansChevauchement(page, ".tuiles-grandes .lib, .tuiles-grandes .sous", ".t.gt", `${ou} gérer`);
@@ -349,7 +445,129 @@ try {
     await sansDebord(page, `${ou} accueil`);
     if (erreurs.length) problemes.push(`${ou} : erreurs console ${erreurs.join(" | ")}`);
     await contexte.close();
+    // v5.5.1 « Qui fait quoi » : même téléphone, annuaire réaliste (boîtes à licence d'essai, FetP, Damien, deux Valérie).
+    {
+      const { contexte, page, erreurs } = await nouvellePage(navigateur, { ...optsQfq(false), vp: { width: 412, height: 915 }, palette, theme: "dark", texte: "tres-grand", policeAgrandie: true, choix: ["equipe"] });
+      await verifierQfq(page, `${ou} (licences d'essai)`, false);
+      await capturer(page, `qui-fait-quoi-412-sombre-grand-${palette}`);
+      if (erreurs.length) problemes.push(`${ou} qui fait quoi : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
     console.log("ok", ou);
+  }
+
+  /* ---------- v5.5.1 « Qui fait quoi » à 1280 px, clair et sombre ; avant et après le retrait des licences ---------- */
+  for (const theme of ["light", "dark"]) {
+    for (const retirees of [false, true]) {
+      const ou = `qui fait quoi 1280 ${theme}${retirees ? " licences retirées" : ""}`;
+      const { contexte, page, erreurs } = await nouvellePage(navigateur, { ...optsQfq(retirees), vp: { width: 1280, height: 900 }, theme, choix: ["equipe"] });
+      await verifierQfq(page, ou, retirees);
+      if (!retirees) await capturer(page, `qui-fait-quoi-1280-${theme === "light" ? "clair" : "sombre"}`);
+      if (erreurs.length) problemes.push(`${ou} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+      console.log("ok", ou);
+    }
+  }
+
+  /* ---------- v5.5.1 Site web : encadré « 🔑 Accès au site à prévoir » (accesPret false par défaut) ---------- */
+  for (const [nomVp, vp, extra] of [["375 clair", { width: 375, height: 812 }, {}], ["412 sombre police agrandie", { width: 412, height: 915 }, { theme: "dark", texte: "tres-grand", policeAgrandie: true }],
+    ["1280 sombre", { width: 1280, height: 900 }, { theme: "dark" }]]) {
+    const ou = `site web ${nomVp}`;
+    const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "admin", vp, choix: ["equipe"], ...extra });
+    for (const route of ["#/gerer", "#/liens", "#/guides/site", "#/guides/site/pied"]) {
+      await page.goto(BASE + route);
+      await page.waitForSelector('[data-encadre="acces-site"]');
+      assert.equal(await page.$$eval('[data-encadre="acces-site"]', (l) => l.length), 1, `${ou} ${route} : un seul encadré`);
+      const enTete = await page.evaluate(() => { const e = document.querySelector('[data-encadre="acces-site"]'), p = e.parentElement;
+        return p.classList.contains("section-site") ? p.querySelector("h2").nextElementSibling === e : e.previousElementSibling?.classList.contains("barre"); });
+      assert.ok(enTete, `${ou} ${route} : encadré en tête`);
+      assert.equal(await page.$$eval('.ecran a[href*="wp-admin"]', (l) => l.length), 0, `${ou} ${route} : aucun bouton vers l'administration WordPress`);
+      await sansChevauchement(page, ".encadre-acces .titre, .encadre-acces .texte, .encadre-acces .btn", ".encadre-acces", `${ou} ${route}`);
+      await sansDebord(page, `${ou} ${route}`);
+    }
+    // Le mode d'emploi reste lisible, le bouton WordPress est remplacé par une phrase.
+    assert.equal(await page.$$eval(".etapes li", (l) => l.length), 3);
+    assert.match(await texte(page, ".acces-attente"), /« Ouvrir les modèles » apparaîtra quand l'accès au site sera prêt/);
+    await page.goto(BASE + "#/gerer");
+    await page.waitForSelector('[data-encadre="acces-site"]');
+    assert.equal(await texte(page, '[data-encadre="acces-site"] .titre'), "🔑 Accès au site à prévoir");
+    assert.match(await texte(page, '[data-encadre="acces-site"] .texte'), /compte WordPress « éditeur » et l'accord de M\. Defecques.*rien n'est modifié\./);
+    await page.evaluate(() => document.querySelector(".section-site").scrollIntoView());
+    await capturer(page, `site-acces-a-prevoir-${nomVp.replace(/ /g, "-")}`, false);
+    // « Écrire à Damien » : panneau d'aide, type Question, message pré-rempli.
+    await page.click('[data-action="ecrire-acces-site"]');
+    await page.waitForSelector("dialog[open] #aide-message");
+    assert.equal(await page.inputValue("#aide-message"), "Je souhaite pouvoir modifier le site internet.");
+    assert.equal(await page.getAttribute('.aide-type[data-type="question"]', "aria-checked"), "true");
+    await capturer(page, `site-acces-ecrire-${nomVp.replace(/ /g, "-")}`, false);
+    if (erreurs.length) problemes.push(`${ou} : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
+    console.log("ok", ou);
+  }
+  /* accesPret: true → plus d'encadré, les boutons WordPress reviennent. */
+  {
+    const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "admin", vp: { width: 375, height: 812 }, choix: ["equipe"],
+      config: { siteWeb: { url: "https://www.breteuil.fr", admin: "https://www.breteuil.fr/wp-admin/", groupe: "Site web", accesPret: true } } });
+    await page.goto(BASE + "#/gerer");
+    await page.waitForSelector(".section-site .tuiles-grandes .t");
+    assert.equal(await page.$('[data-encadre="acces-site"]'), null, "accès prêt : pas d'encadré");
+    assert.ok(await page.$('.section-site a[href="https://www.breteuil.fr/wp-admin/upload.php"][target="_blank"]'), "accès prêt : tuile Médiathèque");
+    await page.goto(BASE + "#/guides/site/pied");
+    await page.waitForSelector('.actions a[href*="wp-admin"]');
+    assert.equal(await page.$(".acces-attente"), null);
+    if (erreurs.length) problemes.push(`site web accès prêt : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
+  }
+
+  /* ---------- v5.5.1 Lien profond ouvert depuis un mail : non connecté → connexion → écran demandé ; 2e onglet déjà connecté ---------- */
+  for (const [taille, vp] of [["375", { width: 375, height: 812 }], ["1280", { width: 1280, height: 900 }]]) {
+    const ou = `lien profond ${taille}`;
+    const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "gestionnaire", vp, deconnecte: true, choix: ["equipe"] });
+    await page.goto(BASE + "#/comment-faire");
+    await page.waitForSelector('[data-action="connexion"]');
+    assert.equal(await page.evaluate(() => sessionStorage.getItem("eb:retour")), "#/comment-faire", `${ou} : écran demandé retenu avant la connexion`);
+    await page.click('[data-action="connexion"]');
+    await page.waitForSelector(".carte-tache");
+    assert.equal(await page.evaluate(() => location.hash), "#/comment-faire", `${ou} : arrive sur l'écran demandé (pas « Documents de l'équipe »)`);
+    if (taille === "375") await capturer(page, "lien-profond-apres-connexion-375", false);
+    // 2e onglet (lien d'un autre mail) : déjà connecté, directement sur l'écran demandé.
+    const page2 = await contexte.newPage();
+    await page2.goto(BASE + "#/installer");
+    await page2.waitForSelector(".ecran .barre h1");
+    assert.equal(await page2.$('[data-action="connexion"]'), null, `${ou} : 2e onglet déjà connecté`);
+    assert.equal(await page2.evaluate(() => location.hash), "#/installer", `${ou} : 2e onglet sur #/installer`);
+    const page3 = await contexte.newPage();
+    await page3.goto(BASE + "#/commun/Commun");
+    await page3.waitForSelector(".tuile-menu");
+    assert.equal(await page3.evaluate(() => location.hash), "#/commun/Commun");
+    // Se déconnecter : plus aucune donnée du compte sur l'appareil ; un nouvel onglet redemande la connexion.
+    await page3.evaluate(() => { localStorage.setItem("eb:epingles", "[]"); localStorage.setItem("eb:journal", "[]"); });
+    await page3.goto(BASE + "#/moi");
+    await page3.click('[data-action="deconnexion"]');
+    await page3.waitForSelector('[data-action="connexion"]');
+    const restes = await page3.evaluate(() => [...Array(localStorage.length).keys()].map((i) => localStorage.key(i)).concat([...Array(sessionStorage.length).keys()].map((i) => sessionStorage.key(i))));
+    assert.deepEqual(restes.filter((k) => /^(eb:|msal\.)/.test(k) && k !== "eb:reglages" && !k.startsWith("eb:planning:")), [], `${ou} : clés restantes ${restes}`);
+    const page4 = await contexte.newPage();
+    await page4.goto(BASE + "#/comment-faire");
+    await page4.waitForSelector('[data-action="connexion"]');
+    if (erreurs.length) problemes.push(`${ou} : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
+    console.log("ok", ou);
+  }
+  /* Premier lancement (questionnaire) : après « C'est parti », retour à l'écran demandé, pas au 1er choix. */
+  {
+    const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "gestionnaire", vp: { width: 375, height: 812 }, deconnecte: true });
+    // v5.7 : #/installer est public (sans connexion) ; le lien profond se vérifie avec #/comment-faire.
+    await page.goto(BASE + "#/comment-faire");
+    await page.click('[data-action="connexion"]');
+    await page.click('[data-action="bienvenue-continuer"]');
+    await page.click('.carte-usage[data-usage="equipe"]');
+    await page.click('[data-action="usages-valider"]');
+    await page.waitForFunction(() => location.hash === "#/comment-faire", null, { timeout: 5000 });
+    await page.waitForSelector(".ecran .barre h1");
+    assert.equal(await page.$(".carte-usage"), null);
+    if (erreurs.length) problemes.push(`lien profond + questionnaire : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
   }
 
   /* ---------- Stockage bloqué (navigation privée stricte) : l'appli marche, pas de boucle ---------- */

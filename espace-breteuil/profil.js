@@ -29,6 +29,8 @@
   };
   /** Rôles que l'écran « Déléguer » sait donner ou retirer. */
   var ROLES_DELEGABLES = ["admin", "facturation", "utilisateurs", "exchange"];
+  /* v5.7 : Administrateur d'applications cloud, Administrateur d'applications (roleTemplateId). */
+  var ROLES_APPLIS = ["158c047a-c907-4556-b7ef-446551a6b5f7", "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"];
   var PERMISSION_ROLES = "RoleManagement.ReadWrite.Directory";
   // Permission SharePoint « Gérer les autorisations » (PermissionKind.ManagePermissions = 25 → bit 24 de Low).
   var BIT_MANAGE_PERMISSIONS = 24;
@@ -111,6 +113,8 @@
       editer: e.editer == null ? null : !!e.editer || !!e.gererDroits || !!e.proprietaire,
     };
     d.siteWeb = d.admin || !!e.siteWeb;
+    // v5.7 : « Qui peut utiliser l'application » — Administrateur général ou d'applications (cloud).
+    d.adminApplis = d.admin || (e.roles || []).some(function (t) { return ROLES_APPLIS.indexOf(String(t || "").toLowerCase()) > -1; });
     // Sections au-delà de Planning, Dossiers et Moi.
     var sections = [];
     if (d.admin || d.proprietaire || d.utilisateurs) sections.push("equipe");
@@ -146,7 +150,7 @@
   var RESERVES = {
     equipe: "equipe", gerer: "plusieurs", finance: "finance", personnes: "equipe", organisation: "equipe",
     "licences-reel": "licences", deleguer: "deleguer", acces: "gererDroits", restreindre: "gererDroits", reserver: "gererDroits",
-    site: "site", liens: "site", suivi: "suivi",
+    site: "site", liens: "site", suivi: "suivi", "acces-appli": "adminApplis",
   };
   /** Vrai si la route (1er segment) est permise pour ce résultat de deduire(). */
   function routePermise(route, r) {
@@ -156,6 +160,7 @@
     if (c === "plusieurs") return r.sections.length > 1;
     if (c === "licences") return r.sections.indexOf("finance") > -1 || r.sections.indexOf("equipe") > -1;
     if (c === "gererDroits") return !!r.droits.gererDroits;
+    if (c === "adminApplis") return !!r.droits.adminApplis;
     // Suivi informatique (v5.2) : depuis l'onglet de gestion (Gérer, Équipe ou Finance).
     if (c === "suivi") return r.sections.indexOf("equipe") > -1 || r.sections.indexOf("finance") > -1;
     if (c === "equipe" || c === "finance" || c === "site") {
@@ -182,10 +187,12 @@
    * Renvoie null si c'est permis, sinon la raison (phrase simple).
    */
   function refusRetraitRole(role, cibleId, moiId, titulaires) {
-    if (role === "admin" && cibleId && cibleId === moiId) return "Vous ne pouvez pas retirer votre propre rôle d'administrateur général.";
+    // v5.7 : on peut retirer son propre rôle d'administrateur général (confirmation renforcée), sauf s'il est le dernier.
     if (role === "admin" && (titulaires || []).filter(Boolean).length <= 1) return "Impossible de retirer le dernier administrateur général : il en faut toujours au moins un.";
     return null;
   }
+  /** v5.7 : retrait demandant de taper « RETIRER » (rôle d'administrateur général, à quelqu'un ou à soi-même). */
+  function retraitRenforce(role) { return role === "admin"; }
   /** Peut-on retirer cette personne des propriétaires du site ? */
   function refusRetraitProprietaire(cibleId, moiId, proprietaires) {
     if (cibleId != null && cibleId === moiId) return "Vous ne pouvez pas vous retirer vous-même des propriétaires du site.";
@@ -220,7 +227,7 @@
   var api = {
     ROLES: ROLES, ROLES_DELEGABLES: ROLES_DELEGABLES, PERMISSION_ROLES: PERMISSION_ROLES, LIBELLES: LIBELLES,
     NIVEAUX: NIVEAUX, ongletGestion: ongletGestion, niveauDe: niveauDe, editerDe: editerDe, peutEditer: peutEditer,
-    aLeBit: aLeBit, gererDroitsDe: gererDroitsDe, cleDeRole: cleDeRole, estMembreDe: estMembreDe, deduire: deduire, onglets: onglets,
+    aLeBit: aLeBit, retraitRenforce: retraitRenforce, gererDroitsDe: gererDroitsDe, cleDeRole: cleDeRole, estMembreDe: estMembreDe, deduire: deduire, onglets: onglets,
     routePermise: routePermise, ongletDe: ongletDe, refusRetraitRole: refusRetraitRole,
     refusRetraitProprietaire: refusRetraitProprietaire, aLaPermission: aLaPermission, pastille: pastille,
   };

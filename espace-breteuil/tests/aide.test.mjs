@@ -88,3 +88,87 @@ test("intégration : scripts chargés, coquille hors ligne, version 5.4.x ou plu
   for (const f of ["aide.js", "aide-ecrans.js"]) assert.doesNotMatch(lire(f).replace(/^\s*(\/\/|\*|\/\*).*$/gm, ""), /innerHTML|outerHTML|insertAdjacentHTML/, f);
   assert.match(lire("graph.js"), /jetonIdentite/, "graph.js : jeton d'identité pour le Worker");
 });
+
+test("v5.6 pièces jointes : types acceptés, taille lisible, réduction, contrôles en français simple", () => {
+  const f = (name, size, type) => ({ name, size, type: type || "" });
+  assert.deepEqual(["a.JPG", "b.jpeg", "c.png", "d.webp", "e.HEIC", "f.heif", "g.pdf", "h.docx", "i.xlsx", "j.pptx", "k.txt"].map((n) => A.typePj(f(n, 1))),
+    ["jpg", "jpg", "png", "webp", "heic", "heic", "pdf", "docx", "xlsx", "pptx", "txt"]);
+  assert.equal(A.typePj(f("image", 1, "image/png")), "png", "capture collée : type du presse-papiers");
+  assert.equal(A.typePj(f("x.zip", 1, "application/zip")), ""); assert.equal(A.typePj(f("x.svg", 1, "image/svg+xml")), ""); assert.equal(A.typePj(f("x.exe", 1)), "");
+  assert.equal(A.estImage(f("a.png", 1)), true); assert.equal(A.estImage(f("a.pdf", 1)), false);
+  assert.equal(A.tailleLisible(900), "900 o"); assert.equal(A.tailleLisible(150 * 1024), "150 Ko"); assert.equal(A.tailleLisible(2.46 * 1024 * 1024), "2,5 Mo");
+  assert.equal(A.nomJpeg("IMG_0042.HEIC"), "IMG_0042.jpg"); assert.equal(A.nomJpeg("image.png"), "capture-ecran.jpg"); assert.equal(A.nomJpeg(""), "capture.jpg");
+  assert.deepEqual(A.dimensions(4032, 3024), { l: 2000, h: 1500, reduit: true });
+  assert.deepEqual(A.dimensions(1170, 2532), { l: 924, h: 2000, reduit: true });
+  assert.deepEqual(A.dimensions(800, 600), { l: 800, h: 600, reduit: false });
+  const MO = 1024 * 1024;
+  let r = A.controlerAjout([], [f("photo.jpg", 12 * MO), f("plan.pdf", 9 * MO), f("x.zip", 10), f("vide.txt", 0)]);
+  assert.deepEqual(r.ajouts.map((x) => x.name), ["photo.jpg"], "grosse photo : acceptée avant réduction");
+  assert.deepEqual(r.erreurs, ["« plan.pdf » est trop lourd (9 Mo) : 8 Mo au plus par fichier.",
+    "« x.zip » : ce type de fichier n'est pas accepté. Envoyez une photo, un PDF, un fichier Word, Excel, PowerPoint ou texte.", "« vide.txt » est vide."]);
+  assert.match(A.controlerAjout([], [f("photo.jpg", 9 * MO)], true).erreurs[0], /trop lourd \(9 Mo\)/, "après réduction : contrôlée");
+  r = A.controlerAjout([1, 2, 3, 4], [f("a.pdf", 1), f("b.pdf", 1)]);
+  assert.equal(r.ajouts.length, 1); assert.equal(r.erreurs[0], "5 fichiers au plus par message : « b.pdf » n'a pas été ajouté.");
+  assert.equal(A.validerReponse("", true).ok, true, "fichier seul : permis"); assert.equal(A.validerReponse("", false).ok, false);
+  assert.match(A.messageErreur({ code: "pj_non_installees" }), /pas encore installées/);
+  assert.equal(A.messageErreur(Object.assign(new Error("« a.pdf » est trop lourd (8 Mo au plus)."), { code: "fichier_trop_lourd", statut: 413 })), "« a.pdf » est trop lourd (8 Mo au plus).");
+  assert.match(A.PJ_ACCEPT, /\.heic/); assert.match(A.PJ_ACCEPT, /image\/\*/);
+});
+
+test("v5.6 client : fichiers → multipart (donnees + fichier×n), pièce jointe lue avec le jeton (Blob)", async () => {
+  const appels = [];
+  const fauxFetch = async (url, init) => {
+    appels.push({ url, init });
+    if (/\/pj\//.test(url)) return { ok: true, status: 200, blob: async () => new Blob(["x"]), json: async () => ({}) };
+    return { ok: true, status: 201, json: async () => ({ ok: true }) };
+  };
+  const C = A.client({ base: "https://api.exemple.dev", jeton: async () => "id-token", fetch: fauxFetch });
+  await C.creer({ type: "probleme", message: "Voir" }, [{ fichier: new Blob(["a"], { type: "image/jpeg" }), nom: "capture.jpg" }, { fichier: new Blob(["b"]), nom: "devis.pdf" }]);
+  const fd = appels[0].init.body;
+  assert.ok(fd instanceof FormData); assert.equal(appels[0].init.headers["Content-Type"], undefined, "frontière posée par le navigateur");
+  assert.deepEqual(JSON.parse(fd.get("donnees")).type, "probleme");
+  assert.deepEqual(fd.getAll("fichier").map((x) => x.name), ["capture.jpg", "devis.pdf"]);
+  await C.repondre(3, "", [{ fichier: new Blob(["c"]), nom: "n.txt" }]);
+  assert.equal(appels[1].url, "https://api.exemple.dev/breteuil/aide/3/messages");
+  await C.repondre(3, "Sans fichier", []);
+  assert.equal(appels[2].init.headers["Content-Type"], "application/json", "sans fichier : JSON comme avant");
+  const b = await C.piece(3, 7);
+  assert.ok(b instanceof Blob); assert.equal(appels[3].url, "https://api.exemple.dev/breteuil/aide/3/pj/7"); assert.equal(appels[3].init.headers.Authorization, "Bearer id-token");
+});
+
+test("v5.6 filtres « En cours / Résolues / Toutes » et compteurs", () => {
+  const l = [{ statut: "nouvelle" }, { statut: "repondue" }, { statut: "resolue" }, { statut: "nouvelle" }];
+  assert.deepEqual(A.FILTRES.map((f) => [f.cle, f.libelle]), [["encours", "En cours"], ["resolue", "Résolues"], ["", "Toutes"]]);
+  assert.equal(A.filtrerStatut(l, "encours").length, 3); assert.equal(A.filtrerStatut(l, "resolue").length, 1); assert.equal(A.filtrerStatut(l, "").length, 4);
+  assert.deepEqual(A.comptesStatut(l), { encours: 3, resolue: 1, "": 4 }); assert.deepEqual(A.comptesStatut(null), { encours: 0, resolue: 0, "": 0 });
+});
+
+test("v5.6 requalification : facturable par défaut, temps passé saisi librement, durées lisibles", () => {
+  assert.equal(A.facturableParDefaut("probleme"), true); assert.equal(A.facturableParDefaut("question"), false);
+  assert.deepEqual(A.RAPIDES.map((r) => r.min), [15, 30, 60, 120]);
+  for (const [t, n] of [["", 0], ["45", 45], ["45 min", 45], ["1h30", 90], ["1 h", 60], ["2h05", 125], ["abc", null], ["-5", null], ["1,5", null]]) assert.equal(A.lireMinutes(t), n, t);
+  assert.equal(A.duree(0), "0\u00a0min"); assert.equal(A.duree(45), "45\u00a0min"); assert.equal(A.duree(90), "1\u00a0h 30"); assert.equal(A.duree(125), "2\u00a0h 05"); assert.equal(A.duree(120), "2\u00a0h");
+  assert.equal(A.delai(null), "—"); assert.equal(A.delai(190), "3\u00a0h 10"); assert.equal(A.delai(3120), "2\u00a0j 4\u00a0h");
+  assert.equal(A.libelleMois("2026-10"), "Octobre 2026"); assert.equal(A.libelleMois("2026-02", true), "févr.");
+});
+
+test("v5.6 export CSV : BOM, « ; », guillemets, pas de formule, heure de Paris", () => {
+  const csv = A.csvMois([
+    { id: 12, cree: "2026-10-19T08:42:00.000Z", nom: "Fanny Martin", type: "probleme", statut: "repondue", facturable: true, minutes: 45, extrait: "Le planning; ne s'affiche \"plus\"" },
+    { id: 13, cree: "2026-10-01T22:30:00.000Z", nom: "=HYPERLINK(\"x\")", type: "question", statut: "resolue", facturable: false, minutes: 0, extrait: "-2+3" },
+  ]);
+  assert.ok(csv.startsWith("\ufeffN°;Date;Personne;Type;Statut;Facturable;Temps (min);Début du message\r\n"), "BOM + en-tête");
+  const l = csv.slice(1).split("\r\n");
+  assert.equal(l[1], '12;19/10/2026 10:42;Fanny Martin;Problème;Répondue;oui;45;"Le planning; ne s\'affiche ""plus"""');
+  assert.equal(l[2], "13;02/10/2026 00:30;\"'=HYPERLINK(\"\"x\"\")\";Question;Résolue;non;0;'-2+3");
+  assert.equal(l.length, 4, "ligne vide finale");
+});
+
+test("v5.6 client : requalifier (PATCH) et statistiques (GET /stats?mois=)", async () => {
+  const appels = [];
+  const C = A.client({ base: "https://api.exemple.dev", jeton: async () => "t", fetch: async (url, init) => { appels.push([init.method, url, init.body]); return { ok: true, status: 200, json: async () => ({}) }; } });
+  await C.requalifier(4, { type: "probleme", facturable: true, minutes: 30 });
+  await C.stats("2026-09"); await C.stats();
+  assert.deepEqual(appels, [["PATCH", "https://api.exemple.dev/breteuil/aide/4", '{"type":"probleme","facturable":true,"minutes":30}'],
+    ["GET", "https://api.exemple.dev/breteuil/aide/stats?mois=2026-09", undefined], ["GET", "https://api.exemple.dev/breteuil/aide/stats", undefined]]);
+});

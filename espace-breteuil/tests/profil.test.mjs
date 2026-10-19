@@ -71,7 +71,9 @@ test("ManagePermissions lu dans effectivebasepermissions", () => {
 });
 
 test("garde-fous : ni son propre rôle d'administrateur général, ni le dernier", () => {
-  assert.match(P.refusRetraitRole("admin", "moi", "moi", ["moi", "francois"]), /propre rôle/);
+  assert.equal(P.refusRetraitRole("admin", "moi", "moi", ["moi", "francois"]), null, "v5.7 : se retirer est permis (confirmation renforcée), sauf dernier");
+  assert.match(P.refusRetraitRole("admin", "moi", "moi", ["moi"]), /dernier administrateur/);
+  assert.equal(P.retraitRenforce("admin"), true); assert.equal(P.retraitRenforce("facturation"), false);
   assert.match(P.refusRetraitRole("admin", "francois", "moi", ["francois"]), /dernier administrateur/);
   assert.equal(P.refusRetraitRole("admin", "francois", "moi", ["moi", "francois"]), null);
   assert.equal(P.refusRetraitRole("facturation", "moi", "moi", ["moi"]), null, "on peut se retirer un autre rôle");
@@ -190,4 +192,14 @@ test("onglets : Accueil en premier, 5 au plus, onglet de gestion trouvé", () =>
   assert.equal(P.ongletGestion(P.deduire({}).onglets), null);
   assert.equal(P.ongletDe("comment-faire", r), "accueil");
   assert.equal(P.ongletDe("", r), "accueil");
+});
+
+test("v5.7 : « Qui peut utiliser l'application » réservé aux administrateurs général et d'applications", () => {
+  const P2 = P;
+  const ga = P2.deduire({ roles: ["62e90394-69f5-4237-9190-012177145e10"] });
+  const cloud = P2.deduire({ roles: ["158c047a-c907-4556-b7ef-446551a6b5f7"] });
+  const fact = P2.deduire({ roles: ["b0f54661-2d74-4c50-afa3-1ec803f12efe"] });
+  assert.equal(ga.droits.adminApplis, true); assert.equal(cloud.droits.adminApplis, true); assert.equal(fact.droits.adminApplis, false);
+  assert.equal(P2.routePermise("acces-appli", ga), true); assert.equal(P2.routePermise("acces-appli", fact), false); assert.equal(P2.routePermise("acces-appli", null), false);
+  assert.deepEqual(cloud.sections, [], "aucune section en plus : les onglets ne changent pas");
 });

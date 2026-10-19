@@ -297,11 +297,21 @@ async function appel(W, env, chemin, { methode = "GET", qui, corps, brut } = {})
 async function prete() { const mod = await charger(); installerMicrosoft(); fetchAvecJson(); return mod; }
 /** Décode le MIME produit : en-têtes dépliés + corps base64. */
 function lireMime(raw) {
-  const [tete, corps] = raw.split("\r\n\r\n");
+  const i0 = raw.indexOf("\r\n\r\n"), tete = raw.slice(0, i0), reste = raw.slice(i0 + 4);
   const h = {};
   for (const l of tete.replace(/\r\n[ \t]+/g, " ").split("\r\n")) { const i = l.indexOf(":"); h[l.slice(0, i).toLowerCase()] = l.slice(i + 1).trim(); }
   const mots = (v) => v.replace(/=\?UTF-8\?B\?([^?]+)\?=\s*/g, (m, b) => Buffer.from(b, "base64").toString("utf8"));
-  return { h, sujet: mots(h.subject), corps: Buffer.from(corps.replace(/\s/g, ""), "base64").toString("utf8"), tete };
+  const deB64 = (s) => Buffer.from(s.replace(/\s/g, ""), "base64").toString("utf8");
+  const parties = {};
+  const borne = /boundary="([^"]+)"/.exec(h["content-type"] || "");
+  if (borne) {
+    for (const p of reste.split("--" + borne[1]).slice(1)) {
+      if (p.startsWith("--")) break;
+      const j = p.indexOf("\r\n\r\n"), th = p.slice(0, j), type = /Content-Type: ([^;\r\n]+)/i.exec(th)[1];
+      parties[type] = { tete: th, corps: deB64(p.slice(j + 4)), brut: p.slice(j + 4) };
+    }
+  }
+  return { h, sujet: mots(h.subject), corps: borne ? parties["text/plain"].corps : deB64(reste), html: parties["text/html"]?.corps, parties, tete };
 }
 
 test("aide : non configurée → 503 aide_non_configuree ; CORS : Authorization, POST, PATCH", async () => {
@@ -334,7 +344,7 @@ test("aide : jeton Microsoft vérifié (signature, iss, aud, exp/nbf avec 5 min 
   assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: t.join(".") })).status, 401, "charge altérée");
   const ok = await appel(W, env, "/breteuil/aide/moi", { qui: { ...FANNY, exp: maintenant - 120 } });
   assert.equal(ok.status, 200, "expiré depuis 2 min : toléré");
-  assert.deepEqual(ok.j, { prestataire: false, nom: "Fanny Martin", adresse: "fmartin@chateau-exemple.fr" });
+  assert.deepEqual(ok.j, { prestataire: false, nom: "Fanny Martin", adresse: "fmartin@chateau-exemple.fr", pj: false });
   assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: DAMIEN })).j.prestataire, true);
   // Clés en cache : un seul chargement des JWKS pour tous ces appels.
   assert.equal(globalThis.fetch.appels.filter((a) => /keys$/.test(a)).length, 1, "JWKS chargées une fois (kid inconnu : pas de rechargement avant 1 min)");
@@ -355,7 +365,17 @@ test("aide : création, mail sortant MIME (sujet exact encodé RFC 2047, Reply-T
   assert.match(sig, /^[0-9a-f]{12}$/);
   assert.equal(x.h["reply-to"], `<demande+1-${sig}@aide.exemple.fr>`);
   assert.match(x.h.from, /<aide@aide\.exemple\.fr>$/);
-  assert.equal(x.h["content-type"], "text/plain; charset=UTF-8");
+  assert.match(x.h["content-type"], /^multipart\/alternative; +boundary="=_eb_[0-9a-f]{32}"$/);
+  assert.ok(Object.keys(x.parties).join() === "text/plain,text/html", "texte brut d'abord (secours), puis HTML");
+  for (const p of Object.values(x.parties)) {
+    assert.match(p.tete, /charset=UTF-8\r\nContent-Transfer-Encoding: base64/);
+    assert.ok(p.brut.trim().split("\r\n").every((l) => l.length <= 76), "base64 : lignes ≤ 76 caractères");
+  }
+  // HTML : contenu utilisateur échappé (balises du message affichées, jamais interprétées).
+  assert.ok(x.html.includes("Le planning ne s&#39;affiche plus &lt;b&gt;depuis ce matin&lt;/b&gt;."), "message échappé");
+  assert.ok(!x.html.includes("<b>depuis"), "aucune balise venue de l'utilisateur");
+  for (const attendu of ["Espace Breteuil</span> · Demande n°1", ">Problème</td>", "Fanny Martin", "fmartin@chateau-exemple.fr", "Ouvrir la demande",
+    'href="https://espace-breteuil.pages.dev/#/aide/1"', "Répondez simplement à ce mail&nbsp;: votre réponse s'ajoute à la demande.", "Nouvelle demande"]) assert.ok(x.html.includes(attendu), "HTML : " + attendu);
   for (const attendu of ["Nom : Fanny Martin", "Adresse : fmartin@chateau-exemple.fr", "Écran : Planning", "Version : 5.4.0", "Appareil : iPhone (Safari)",
     "Le planning ne s'affiche plus <b>depuis ce matin</b>.", "https://espace-breteuil.pages.dev/#/aide/1"]) assert.ok(x.corps.includes(attendu), "corps : " + attendu);
   assert.ok(!x.corps.includes("\u0007"), "caractères de contrôle retirés");
@@ -367,6 +387,26 @@ test("aide : création, mail sortant MIME (sujet exact encodé RFC 2047, Reply-T
   // Constructeur MIME seul : en-tête long non ASCII découpé en plusieurs mots encodés.
   const long = mod.enTete("Amélioration ".repeat(8));
   assert.ok(long.split("\r\n ").length > 1 && long.split("\r\n ").every((w) => w.length <= 75));
+});
+
+test("mail HTML : tout est échappé (nom, adresse, contexte, pièces jointes), pastille du type, nouveau message", async () => {
+  const mod = await charger();
+  const piege = `<script>alert("x")</script>&'"`;
+  const html = mod.htmlMail({ id: 7, type: "question", nom: piege, adresse: "a@b.fr<img src=x onerror=alert(1)>", ecran: piege, version: piege, appareil: piege,
+    date: Date.UTC(2026, 9, 19, 12, 5), texte: "Ligne 1\n" + piege, premier: false, lien: 'https://x.fr/#/aide/7"><script>',
+    pj: [{ nom: piege + ".pdf", taille: 1536, lien: "https://x.fr/#/aide/7/pj/3" }], ignorees: ["Pièce jointe ignorée : trop lourde (" + piege + ")"] });
+  assert.ok(!/<script|<img|onerror=alert\(1\)>/.test(html), "aucune balise injectée");
+  assert.ok(html.includes("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&#39;&quot;"));
+  assert.ok(html.includes("Ligne 1<br>"), "sauts de ligne → <br>");
+  assert.ok(html.includes("Nouveau message sur la demande n°7"));
+  assert.ok(html.includes("#E2ECF7") && html.includes(">Question</td>"), "pastille Question (bleu)");
+  assert.ok(html.includes("2 Ko") && html.includes('href="https://x.fr/#/aide/7/pj/3"'), "pièce jointe : taille + lien vers l'appli");
+  assert.ok(html.includes("19 octobre 2026"), "date en français (Europe/Paris)");
+  assert.match(html, /max-width:600px/); assert.doesNotMatch(html, /<link|<script/);
+  assert.equal(mod.tailleLisible(500), "500 o"); assert.equal(mod.tailleLisible(2048), "2 Ko"); assert.equal(mod.tailleLisible(1.25 * 1024 * 1024), "1,3 Mo");
+  // MIME sans HTML : texte seul, comme avant.
+  const brut = mod.construireMime({ de: "a@x.fr", a: "b@x.fr", sujet: "S", texte: "t", messageId: "m@x.fr" });
+  assert.match(brut, /Content-Type: text\/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64/);
 });
 
 test("aide : validations, limite de 10 demandes par heure, envoi de mail en échec non bloquant", async () => {
@@ -545,4 +585,303 @@ test("mail entrant : base64, HTML seul, anglais « On … wrote: », signature �
   // Pièce jointe ignorée ; charset latin-1.
   const mixte = 'Content-Type: multipart/mixed; boundary=XYZ\r\n\r\n--XYZ\r\nContent-Type: text/plain; charset=iso-8859-1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\nD=E9j=E0 fait.\r\n--XYZ\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=a.txt\r\n\r\npièce\r\n--XYZ--\r\n';
   assert.equal(mod.partieTexte(mixte).texte.trim(), "Déjà fait.");
+});
+
+/* ================================================================== */
+/* v5.6 : pièces jointes (KV « AIDE_PJ » simulé)                        */
+/* ================================================================== */
+function kv() {
+  const m = new Map();
+  return { m, put: async (k, v, o) => { m.set(k, { v: new Uint8Array(v), meta: o && o.metadata }); },
+    get: async (k, o) => { const x = m.get(k); if (!x) return null; return o && o.type === "stream" ? new Blob([x.v]).stream() : x.v; } };
+}
+// Petits fichiers d'exemple (signatures réelles).
+const JPG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70, 0, 1, ...new Array(64).fill(7)]);
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+const PDF = new TextEncoder().encode("%PDF-1.7\n1 0 obj << >> endobj\n%%EOF\n");
+const WEBP = new Uint8Array([...new TextEncoder().encode("RIFF"), 30, 0, 0, 0, ...new TextEncoder().encode("WEBPVP8 "), ...new Array(20).fill(1)]);
+const HEIC = new Uint8Array([0, 0, 0, 24, ...new TextEncoder().encode("ftypheic"), 0, 0, 0, 0, ...new TextEncoder().encode("mif1heic"), ...new Array(16).fill(0)]);
+const zip = (dossier) => new Uint8Array([...new TextEncoder().encode("PK\x03\x04"), ...new Array(30).fill(0), ...new TextEncoder().encode("[Content_Types].xml " + dossier + "document.xml PK\x01\x02 PK\x05\x06")]);
+
+test("pièces jointes : type réel d'après les octets (nombres magiques), pas l'extension", async () => {
+  const { typeFichier: t, nomFichier, disposition } = await charger();
+  assert.equal(t(JPG, "photo.jpg").type, "image/jpeg");
+  assert.equal(t(JPG, "capture.png").ext, "jpg", "JPEG nommé .png : vu comme JPEG");
+  assert.equal(t(PNG, "x").type, "image/png");
+  assert.equal(t(WEBP, "x.webp").type, "image/webp");
+  assert.equal(t(HEIC, "IMG_0001.HEIC").type, "image/heic");
+  assert.equal(t(PDF, "devis.pdf").type, "application/pdf");
+  assert.equal(t(zip("word/"), "lettre.docx").ext, "docx");
+  assert.equal(t(zip("xl/"), "budget.xlsx").ext, "xlsx");
+  assert.equal(t(zip("ppt/"), "expo.pptx").ext, "pptx");
+  assert.equal(t(zip("xl/"), "faux.docx"), null, "ZIP sans word/ : refusé");
+  assert.equal(t(zip("word/"), "archive.zip"), null, "ZIP quelconque : refusé");
+  assert.equal(t(new TextEncoder().encode("Bonjour, été"), "notes.txt").type, "text/plain; charset=utf-8");
+  assert.equal(t(new Uint8Array([0x42, 0xe9, 0x74, 0xe9]), "ancien.txt").type, "text/plain; charset=windows-1252");
+  assert.equal(t(new TextEncoder().encode("<svg onload=alert(1)>"), "image.svg"), null, "SVG refusé");
+  assert.equal(t(new TextEncoder().encode("<html><script>"), "page.html"), null, "HTML refusé");
+  assert.equal(t(new TextEncoder().encode("<html>"), "x.txt").type.startsWith("text/plain"), true, "texte : servi en text/plain (jamais HTML)");
+  assert.equal(t(new Uint8Array([0x4d, 0x5a, 0x90, 0]), "virus.pdf"), null, "exécutable renommé .pdf : refusé");
+  assert.equal(t(new Uint8Array([65, 0, 66]), "binaire.txt"), null, "octet nul : pas du texte");
+  assert.equal(t(new Uint8Array(0), "vide.pdf"), null);
+  // Noms : chemin, contrôles, extension corrigée selon le type réel, longueur.
+  assert.equal(nomFichier("C:\\Users\\x\\capture.png", "jpg"), "capture.jpg");
+  assert.equal(nomFichier("../../etc/passwd\u0007", "txt"), "passwd.txt");
+  assert.equal(nomFichier("Photo.JPEG", "jpg"), "Photo.JPEG");
+  assert.equal(nomFichier("rapport v2.final", "pdf"), "rapport v2.final.pdf");
+  assert.equal(nomFichier("", "pdf"), "fichier.pdf");
+  assert.ok(nomFichier("é".repeat(300) + ".pdf", "pdf").length <= 100 && nomFichier("é".repeat(300) + ".pdf", "pdf").endsWith(".pdf"));
+  assert.equal(disposition("Été 2026.pdf", true), "inline; filename=\"Ete 2026.pdf\"; filename*=UTF-8''%C3%89t%C3%A9%202026.pdf");
+  assert.match(disposition('a"b.txt', false), /^attachment; filename="a_b\.txt"/);
+});
+
+function formulaire(donnees, fichiers) {
+  const fd = new FormData();
+  fd.set("donnees", JSON.stringify(donnees));
+  for (const [nom, octets, type] of fichiers) fd.append("fichier", new File([octets], nom, { type: type || "application/octet-stream" }));
+  return fd;
+}
+async function envoyerFd(W, env, chemin, qui, fd) {
+  const r = await W.fetch(new Request("https://belfort-api.exemple.workers.dev" + chemin, { method: "POST", headers: { Origin: ORIGINE, Authorization: "Bearer " + await jeton(qui) }, body: fd }), env);
+  return { status: r.status, j: await r.json() };
+}
+async function lirePj(W, env, chemin, qui) {
+  const r = await W.fetch(new Request("https://belfort-api.exemple.workers.dev" + chemin, { headers: { Origin: ORIGINE, Authorization: "Bearer " + await jeton(qui) } }), env);
+  return r;
+}
+
+test("pièces jointes : envoi multipart (création et message), KV + D1, mail qui les liste, lecture réservée", async () => {
+  const W = (await prete()).default, env = envAide({ AIDE_PJ: kv() });
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: FANNY })).j.pj, true, "capacité annoncée");
+  assert.equal((await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.pj, true);
+  const r = await envoyerFd(W, env, "/breteuil/aide", FANNY, formulaire({ type: "probleme", message: "Voir la capture", ecran: "Planning" },
+    [["capture.png", JPG, "image/png"], ["Devis été.pdf", PDF, "application/pdf"]]));
+  assert.equal(r.status, 201, JSON.stringify(r.j));
+  assert.deepEqual(r.j.pj.map((p) => [p.nom, p.type, p.apercu]), [["capture.jpg", "image/jpeg", true], ["Devis été.pdf", "application/pdf", false]]);
+  // KV : clé pj/<demande>/<uuid>, métadonnées.
+  const cles = [...env.AIDE_PJ.m.keys()];
+  assert.equal(cles.length, 2); assert.match(cles[0], /^pj\/1\/[0-9a-f-]{36}$/);
+  assert.deepEqual(Object.keys(env.AIDE_PJ.m.get(cles[0]).meta).sort(), ["auteur", "date", "nom", "taille", "type"]);
+  // Mail : pièces listées avec lien vers l'appli, aucun octet joint.
+  const x = lireMime(env.envoyes[0].raw);
+  assert.ok(x.corps.includes("capture.jpg (") && x.corps.includes("#/aide/1/pj/1"), "texte : pièces + liens");
+  assert.ok(x.html.includes("Devis été.pdf") && x.html.includes("#/aide/1/pj/2"), "HTML : pièces + liens");
+  assert.doesNotMatch(env.envoyes[0].raw, /Content-Disposition: attachment/);
+  // Fil : pièces sous le bon message.
+  const fil = await appel(W, env, "/breteuil/aide/1", { qui: FANNY });
+  assert.deepEqual(fil.j.messages[0].pj.map((p) => p.id), [1, 2]);
+  // Lecture : demandeur et prestataire oui, autre personne non (404), sans jeton non (401), autre demande non.
+  const ok = await lirePj(W, env, "/breteuil/aide/1/pj/1", FANNY);
+  assert.equal(ok.status, 200); assert.equal(ok.headers.get("Content-Type"), "image/jpeg");
+  assert.equal(ok.headers.get("Content-Disposition"), "inline; filename=\"capture.jpg\"; filename*=UTF-8''capture.jpg");
+  assert.equal(ok.headers.get("X-Content-Type-Options"), "nosniff"); assert.match(ok.headers.get("Content-Security-Policy"), /sandbox/);
+  assert.deepEqual(new Uint8Array(await ok.arrayBuffer()), JPG);
+  assert.equal((await lirePj(W, env, "/breteuil/aide/1/pj/2", DAMIEN)).status, 200, "prestataire");
+  assert.equal((await lirePj(W, env, "/breteuil/aide/1/pj/1", CAMILLE)).status, 404, "autre personne : 404");
+  assert.equal((await W.fetch(new Request("https://x.dev/breteuil/aide/1/pj/1", { headers: { Origin: ORIGINE } }), env)).status, 401);
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: CAMILLE, corps: { type: "avis", message: "x" } });
+  assert.equal((await lirePj(W, env, "/breteuil/aide/2/pj/1", CAMILLE)).status, 404, "pièce d'une autre demande via sa propre demande : 404");
+  assert.equal((await lirePj(W, env, "/breteuil/aide/1/pj/abc", DAMIEN)).status, 404);
+  // Message avec fichier seul (sans texte), côté prestataire aussi.
+  const rep = await envoyerFd(W, env, "/breteuil/aide/1/messages", DAMIEN, formulaire({ texte: "" }, [["notes.txt", new TextEncoder().encode("Étapes : 1, 2, 3")]]));
+  assert.equal(rep.status, 201); assert.equal(rep.j.pj[0].type, "text/plain; charset=utf-8");
+  const t = await lirePj(W, env, "/breteuil/aide/1/pj/3", FANNY);
+  assert.match(t.headers.get("Content-Disposition"), /^attachment;/, "texte : téléchargé, jamais affiché");
+  // Message client avec fichier → mail « Nouveau message » qui le liste.
+  await envoyerFd(W, env, "/breteuil/aide/1/messages", FANNY, formulaire({ texte: "Et le PDF" }, [["b.pdf", PDF]]));
+  const dernier = lireMime(env.envoyes.at(-1).raw);
+  assert.ok(dernier.html.includes("Nouveau message sur la demande n°1") && dernier.html.includes("b.pdf"));
+});
+
+test("pièces jointes : refus clairs (nombre, poids, type, non installées), quotas", async () => {
+  const W = (await prete()).default, env = envAide({ AIDE_PJ: kv() });
+  const post = (fichiers, qui = FANNY) => envoyerFd(W, env, "/breteuil/aide", qui, formulaire({ type: "avis", message: "x" }, fichiers));
+  let r = await post(Array.from({ length: 6 }, (_, i) => ["p" + i + ".pdf", PDF]));
+  assert.equal(r.status, 400); assert.equal(r.j.code, "trop_de_fichiers");
+  r = await post([["gros.pdf", new Uint8Array(8 * 1024 * 1024 + 1).fill(37)]]);
+  assert.equal(r.status, 413); assert.equal(r.j.code, "fichier_trop_lourd"); assert.match(r.j.erreur, /gros\.pdf.*8 Mo/);
+  r = await post([["virus.pdf", new Uint8Array([0x4d, 0x5a, 1, 2])]]);
+  assert.equal(r.j.code, "type_fichier"); assert.match(r.j.erreur, /virus\.pdf/);
+  assert.equal((await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes.length, 0, "rien créé si un fichier est refusé");
+  assert.equal(env.AIDE_PJ.m.size, 0);
+  // Sans liaison AIDE_PJ : le reste marche, les fichiers sont refusés clairement, la capacité est annoncée « false ».
+  const sans = envAide();
+  assert.equal((await appel(W, sans, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "sans fichier" } })).status, 201);
+  const r2 = await envoyerFd(W, sans, "/breteuil/aide", FANNY, formulaire({ type: "avis", message: "x" }, [["a.pdf", PDF]]));
+  assert.equal(r2.j.code, "pj_non_installees");
+  // Quota par personne (40 / 24 h) ; le prestataire n'y est pas soumis.
+  env.AIDE_DB.brut.exec("INSERT INTO pieces_jointes(demande_id, message_id, nom, type, taille, cle, cree_le, auteur) SELECT 1, 1, 'x', 'application/pdf', 1, 'k', '" + new Date().toISOString() + "', 'oid-fanny' FROM (WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 39) SELECT i FROM n)");
+  r = await post([["a.pdf", PDF], ["b.pdf", PDF]]);
+  assert.equal(r.status, 429); assert.equal(r.j.code, "trop_de_pj");
+  assert.equal((await post([["a.pdf", PDF]], CAMILLE)).status, 201, "autre personne : permis");
+  // Quota global (écritures KV gratuites).
+  env.AIDE_DB.brut.exec("UPDATE pieces_jointes SET auteur = 'oid-autre'");
+  env.AIDE_DB.brut.exec("INSERT INTO pieces_jointes(demande_id, message_id, nom, type, taille, cle, cree_le, auteur) SELECT 1, 1, 'x', 'application/pdf', 1, 'k', '" + new Date().toISOString() + "', 'oid-autre' FROM (WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 900) SELECT i FROM n)");
+  r = await post([["a.pdf", PDF]], DAMIEN);
+  assert.equal(r.status, 429); assert.equal(r.j.code, "quota_pj");
+});
+
+/* ---------- v5.6 : mail entrant avec pièces jointes, signature sans « -- » ---------- */
+const b64l = (o) => Buffer.from(o).toString("base64").replace(/.{76}/g, "$&\r\n");
+function reponseAvecPj(a, de, { texte = "Voici le devis signé.\r\n\r\nBELFORT Damien,\r\n06 00 00 00 00\r\n", gros = false, zip = false, six = false } = {}) {
+  const pdfs = six ? Array.from({ length: 6 }, (_, i) => ["p" + i + ".pdf", PDF]) : [];
+  return [
+    `From: Damien <${de}>`, `To: ${a}`, "Subject: Re: demande", "MIME-Version: 1.0",
+    'Content-Type: multipart/mixed; boundary="mixte01"', "",
+    "--mixte01", 'Content-Type: multipart/related; boundary="rel02"', "",
+    "--rel02", 'Content-Type: multipart/alternative; boundary="alt03"', "",
+    "--alt03", 'Content-Type: text/plain; charset="UTF-8"', "Content-Transfer-Encoding: quoted-printable", "",
+    texte + "Le lun. 19 oct. 2026 =C3=A0 10:00, Espace Breteuil a =C3=A9crit :", "> cité", "",
+    "--alt03", 'Content-Type: text/html; charset="UTF-8"', "", "<div>Voici le devis sign&eacute;.</div>", "",
+    "--alt03--", "",
+    "--rel02", "Content-Type: image/png; name=\"logo.png\"", "Content-Disposition: inline; filename=\"logo.png\"", "Content-ID: <ii_logo>", "Content-Transfer-Encoding: base64", "",
+    b64l(PNG), "",
+    "--rel02--", "",
+    "--mixte01", "Content-Type: application/pdf; name=\"=?UTF-8?B?RGV2aXMgw6l0w6kucGRm?=\"", "Content-Disposition: attachment; filename*=UTF-8''Devis%20%C3%A9t%C3%A9.pdf", "Content-Transfer-Encoding: base64", "",
+    b64l(PDF), "",
+    "--mixte01", "Content-Type: image/jpeg; name=\"=?UTF-8?Q?Capture_=C3=A9cran.jpg?=\"", "Content-Disposition: attachment", "Content-Transfer-Encoding: base64", "",
+    b64l(JPG), "",
+    ...(gros ? ["--mixte01", "Content-Type: application/pdf; name=\"plan.pdf\"", "Content-Disposition: attachment; filename=\"plan.pdf\"", "Content-Transfer-Encoding: base64", "",
+      b64l(Buffer.concat([Buffer.from("%PDF-1.7\n"), Buffer.alloc(9 * 1024 * 1024, 65)])), ""] : []),
+    ...(zip ? ["--mixte01", "Content-Type: application/zip; name=\"photos.zip\"", "Content-Disposition: attachment; filename=\"photos.zip\"", "Content-Transfer-Encoding: base64", "",
+      b64l(Buffer.from("PK\x03\x04zzzz")), ""] : []),
+    ...pdfs.flatMap(([n, o]) => ["--mixte01", `Content-Type: application/pdf; name="${n}"`, `Content-Disposition: attachment; filename="${n}"`, "Content-Transfer-Encoding: base64", "", b64l(o), ""]),
+    "--mixte01--", "",
+  ].join("\r\n");
+}
+
+test("mail entrant : extraction des pièces jointes (RFC 2231 / 2047, imbriquées), logo de signature ignoré", async () => {
+  const mod = await charger();
+  const { texte, pieces } = mod.analyserMail(reponseAvecPj("a@x.fr", "d@x.fr"));
+  assert.equal(texte.type, "text/plain");
+  assert.deepEqual(pieces.map((p) => [p.nom, p.typeDeclare, p.inline, p.taille]), [
+    ["logo.png", "image/png", true, PNG.length], ["Devis été.pdf", "application/pdf", false, PDF.length], ["Capture écran.jpg", "image/jpeg", false, JPG.length]]);
+  assert.deepEqual(pieces[1].octets, PDF);
+  const tri = mod.trierPiecesMail(pieces);
+  assert.deepEqual(tri.gardees.map((g) => g.nom), ["Devis été.pdf", "Capture écran.jpg"], "logo inline < 5 Ko ignoré");
+  assert.deepEqual(tri.notes, []);
+  const gros = mod.trierPiecesMail(mod.analyserMail(reponseAvecPj("a@x.fr", "d@x.fr", { gros: true, zip: true })).pieces);
+  assert.deepEqual(gros.notes, ["Pièce jointe ignorée : trop lourde (plan.pdf, 9 Mo)", "Pièce jointe ignorée : type non accepté (photos.zip)"]);
+  const six = mod.trierPiecesMail(mod.analyserMail(reponseAvecPj("a@x.fr", "d@x.fr", { six: true })).pieces);
+  assert.equal(six.gardees.length, 5); assert.equal(six.notes.length, 3, "au-delà de 5 : ignorées avec une note");
+  assert.deepEqual(mod.trierPiecesMail(pieces, false).notes, ["Pièce jointe ignorée : pièces jointes non installées (Devis été.pdf)", "Pièce jointe ignorée : pièces jointes non installées (Capture écran.jpg)"]);
+  assert.equal(mod.decoderMots("=?UTF-8?Q?R=C3=A9ponse_rapide?= =?UTF-8?B?w6l0w6k=?="), "Réponse rapideété");
+});
+
+test("mail entrant : réponse avec pièces jointes → fil + KV ; signature AIDE_SIGNATURE retirée ; notes d'ignorées", async () => {
+  const mod = await prete(), W = mod.default, env = envAide({ AIDE_PJ: kv(), AIDE_SIGNATURE: "BELFORT Damien,|06 00 00 00 00" });
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "probleme", message: "Devis ?" } });
+  const a = `demande+1-${await mod.signature(env.AIDE_SECRET, 1)}@aide.exemple.fr`;
+  const m = mailEntrant(a, PRESTA, reponseAvecPj(a, PRESTA, { zip: true }));
+  await W.email(m, env, {});
+  assert.equal(m.rejet, null);
+  const fil = await appel(W, env, "/breteuil/aide/1", { qui: FANNY });
+  const dernier = fil.j.messages.at(-1);
+  assert.equal(dernier.texte, "Voici le devis signé.\n\n(Pièce jointe ignorée : type non accepté (photos.zip))", "signature et citation retirées, note ajoutée");
+  assert.deepEqual(dernier.pj.map((p) => [p.nom, p.type]), [["Devis été.pdf", "application/pdf"], ["Capture écran.jpg", "image/jpeg"]]);
+  assert.equal(env.AIDE_PJ.m.size, 2);
+  assert.equal((await lirePj(W, env, "/breteuil/aide/1/pj/" + dernier.pj[0].id, FANNY)).status, 200);
+  // Pièce jointe seule, sans texte : acceptée.
+  const seul = mailEntrant(a, PRESTA, reponseAvecPj(a, PRESTA, { texte: "\r\n" }));
+  await W.email(seul, env, {});
+  assert.equal(seul.rejet, null);
+  // Sans liaison AIDE_PJ : texte gardé, note « non installées ».
+  const env2 = envAide({ AIDE_SIGNATURE: "BELFORT Damien,\n06 00 00 00 00" });
+  await appel(W, env2, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "x" } });
+  const m2 = mailEntrant(a, PRESTA, reponseAvecPj(a, PRESTA));
+  await W.email(m2, env2, {});
+  assert.match((await appel(W, env2, "/breteuil/aide/1", { qui: FANNY })).j.messages.at(-1).texte, /^Voici le devis signé\.\n\n\(Pièce jointe ignorée : pièces jointes non installées \(Devis été\.pdf\)\)/);
+});
+
+test("signature sans délimiteur : retirée seulement en fin de message, lignes vides de fin retirées", async () => {
+  const { sansCitation, retirerSignature } = await charger();
+  const SIG = "BELFORT Damien,|06 09 00 00 00";
+  assert.equal(sansCitation("C'est fait.\n\nBELFORT Damien,\n06 09 00 00 00\n\n\n", SIG), "C'est fait.");
+  assert.equal(sansCitation("C'est fait.\nBelfort damien\n06 09 00 00 00", SIG), "C'est fait.", "casse, virgule et espaces ignorés");
+  assert.equal(sansCitation("C'est fait.\n0609000000", SIG), "C'est fait.", "téléphone sans espaces");
+  assert.equal(sansCitation("BELFORT Damien, voici la réponse.\nMerci", SIG), "BELFORT Damien, voici la réponse.\nMerci", "pas en fin : gardé");
+  assert.equal(sansCitation("Appelez le 06 09 00 00 00 si besoin.\nBonne journée", SIG), "Appelez le 06 09 00 00 00 si besoin.\nBonne journée");
+  assert.equal(retirerSignature("Ok\n\n\n", ""), "Ok", "sans variable : lignes vides de fin retirées");
+  assert.equal(retirerSignature("Ok\nBELFORT Damien,", "BELFORT Damien,\\n06 09 00 00 00"), "Ok", "« \\n » littéral accepté");
+  assert.equal(sansCitation("Merci !\n-- \nDamien Belfort", SIG), "Merci !", "« -- » toujours géré");
+});
+
+/* ================================================================== */
+/* v5.6 : requalification (prestataire), migration douce, statistiques  */
+/* ================================================================== */
+test("migration douce : colonnes facturable et minutes ajoutées à une ancienne base, données gardées, une seule fois", async () => {
+  const mod = await charger(), db = d1();
+  db.brut.exec("CREATE TABLE demandes(id INTEGER PRIMARY KEY, cree TEXT, oid TEXT, nom TEXT, adresse TEXT, type TEXT, statut TEXT, ecran TEXT, version TEXT, appareil TEXT, lu_par_demandeur INTEGER)");
+  db.brut.exec("INSERT INTO demandes(cree, nom, type, statut) VALUES ('2026-10-01T08:00:00.000Z', 'Ancienne', 'probleme', 'nouvelle')");
+  assert.equal(await mod.migrer(db), 2);
+  assert.equal(await mod.migrer(db), 0, "déjà faite : rien");
+  const r = db.brut.prepare("SELECT * FROM demandes").get();
+  assert.equal(r.nom, "Ancienne"); assert.equal(r.facturable, null); assert.equal(r.minutes, 0);
+  assert.equal(mod.estFacturable(r), true, "Problème : facturable par défaut");
+  assert.equal(mod.estFacturable({ type: "question", facturable: null }), false);
+  assert.equal(mod.estFacturable({ type: "question", facturable: 1 }), true);
+  assert.equal(mod.estFacturable({ type: "probleme", facturable: 0 }), false);
+});
+
+test("requalification : type, facturable, temps passé — prestataire seulement, jamais montrés au demandeur", async () => {
+  const W = (await prete()).default, env = envAide();
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "question", message: "L'imprimante ne marche plus" } });
+  let v = (await appel(W, env, "/breteuil/aide/1", { qui: DAMIEN })).j.demande;
+  assert.deepEqual([v.type, v.facturable, v.facturableChoisi, v.minutes], ["question", false, false, 0]);
+  const fanny = (await appel(W, env, "/breteuil/aide/1", { qui: FANNY })).j.demande;
+  assert.ok(!("facturable" in fanny) && !("minutes" in fanny), "le demandeur ne voit ni « facturable » ni le temps");
+  assert.ok(!("facturable" in (await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes[0]));
+  // Le demandeur ne peut pas requalifier.
+  for (const corps of [{ type: "probleme" }, { facturable: true }, { minutes: 30 }]) assert.equal((await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: FANNY, corps })).status, 403);
+  // Type → Problème : facturable par défaut (non choisi).
+  let r = await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps: { type: "probleme" } });
+  assert.deepEqual([r.j.demande.type, r.j.demande.facturable, r.j.demande.facturableChoisi], ["probleme", true, false]);
+  r = await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps: { facturable: false, minutes: 45 } });
+  assert.deepEqual([r.j.demande.facturable, r.j.demande.facturableChoisi, r.j.demande.minutes], [false, true, 45]);
+  r = await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps: { facturable: null, statut: "resolue" } });
+  assert.deepEqual([r.j.demande.facturable, r.j.statut], [true, "resolue"], "null : retour au défaut du type");
+  for (const corps of [{ type: "bidon" }, { facturable: "oui" }, { minutes: -5 }, { minutes: 1.5 }, { minutes: "abc" }, {}])
+    assert.equal((await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps })).status, 400, JSON.stringify(corps));
+  // Statut seul : le demandeur peut toujours marquer « Résolue ».
+  assert.equal((await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: FANNY, corps: { statut: "resolue" } })).status, 200);
+});
+
+test("statistiques : agrégats du mois (heure de Paris), par type, par personne, 6 mois, délai de 1re réponse", async () => {
+  const { statsAide, moisParis } = await charger();
+  assert.equal(moisParis(Date.parse("2026-09-30T22:30:00Z")), "2026-10", "minuit passé à Paris : octobre");
+  const L = (id, cree, type, extra = {}) => ({ id, cree, nom: extra.nom || "Fanny Martin", adresse: extra.adresse || "fmartin@exemple.fr", type, statut: extra.statut || "nouvelle",
+    facturable: extra.facturable ?? null, minutes: extra.minutes ?? 0, premiere_reponse: extra.rep || null, extrait: extra.extrait || "Message " + id });
+  const lignes = [
+    L(1, "2026-10-02T08:00:00.000Z", "probleme", { minutes: 30, rep: "2026-10-02T09:00:00.000Z", statut: "resolue" }),
+    L(2, "2026-10-05T08:00:00.000Z", "question", { minutes: 15, rep: "2026-10-05T08:30:00.000Z" }),                // non facturable
+    L(3, "2026-10-06T08:00:00.000Z", "question", { facturable: 1, minutes: 60, nom: "Camille Roux", adresse: "croux@exemple.fr", statut: "repondue", rep: "2026-10-06T10:00:00.000Z" }),
+    L(4, "2026-10-07T08:00:00.000Z", "probleme", { facturable: 0, nom: "Camille Roux", adresse: "croux@exemple.fr" }),
+    L(5, "2026-09-30T22:30:00.000Z", "avis"),                                                                       // 1er octobre à Paris
+    L(6, "2026-09-15T08:00:00.000Z", "probleme"), L(7, "2026-05-10T08:00:00.000Z", "probleme"), L(8, "2026-04-10T08:00:00.000Z", "probleme"),
+  ];
+  const s = statsAide(lignes, "2026-10", Date.parse("2026-10-19T12:00:00Z"));
+  assert.equal(s.mois, "2026-10"); assert.equal(s.precedent, "2026-09"); assert.equal(s.suivant, null, "pas de mois futur");
+  assert.deepEqual(s.tuiles, { demandes: 5, problemes: 2, facturables: 2, minutesFacturables: 90, delaiMoyenMinutes: Math.round((60 + 30 + 120) / 3), enCours: 4 });
+  assert.deepEqual(s.parType.map((t) => [t.libelle, t.demandes]), [["Question", 2], ["Avis", 1], ["Amélioration", 0], ["Problème", 2]]);
+  assert.deepEqual(s.parPersonne.map((p) => [p.nom, p.demandes, p.facturables, p.minutes]), [["Fanny Martin", 3, 1, 30], ["Camille Roux", 2, 1, 60]]);
+  assert.deepEqual(s.evolution.map((e) => [e.mois, e.total, e.problemesFacturables]),
+    [["2026-05", 1, 1], ["2026-06", 0, 0], ["2026-07", 0, 0], ["2026-08", 0, 0], ["2026-09", 1, 1], ["2026-10", 5, 1]], "avril hors fenêtre");
+  assert.deepEqual(s.lignes.map((l) => [l.id, l.facturable, l.minutes]), [[1, true, 30], [2, false, 15], [3, true, 60], [4, false, 0], [5, false, 0]]);
+  const sept = statsAide(lignes, "2026-09", Date.parse("2026-10-19T12:00:00Z"));
+  assert.equal(sept.suivant, "2026-10"); assert.equal(sept.tuiles.demandes, 1); assert.equal(sept.tuiles.delaiMoyenMinutes, null);
+  assert.equal(statsAide(lignes, "2027-01", Date.parse("2026-10-19T12:00:00Z")).mois, "2026-10", "mois futur → mois courant");
+  assert.equal(statsAide(lignes, "n'importe", Date.parse("2026-10-19T12:00:00Z")).mois, "2026-10");
+});
+
+test("statistiques : route réservée au prestataire, calculée depuis D1", async () => {
+  const W = (await prete()).default, env = envAide();
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "probleme", message: "Écran noir" } });
+  await appel(W, env, "/breteuil/aide/1/messages", { methode: "POST", qui: DAMIEN, corps: { texte: "Je regarde" } });
+  await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps: { minutes: 20 } });
+  assert.equal((await appel(W, env, "/breteuil/aide/stats", { qui: FANNY })).status, 403);
+  const r = await appel(W, env, "/breteuil/aide/stats", { qui: DAMIEN });
+  assert.equal(r.status, 200);
+  assert.equal(r.j.tuiles.demandes, 1); assert.equal(r.j.tuiles.minutesFacturables, 20); assert.equal(typeof r.j.tuiles.delaiMoyenMinutes, "number");
+  assert.equal(r.j.lignes[0].extrait, "Écran noir");
+  assert.equal((await appel(W, env, "/breteuil/aide/stats?mois=2020-01", { qui: DAMIEN })).j.tuiles.demandes, 0);
 });

@@ -1,4 +1,4 @@
-# Installer « Aide et demandes » (Espace Breteuil v5.4)
+# Installer « Aide et demandes » (Espace Breteuil v5.4, pièces jointes v5.6)
 
 Ce guide s'adresse à Damien. Il se fait **une seule fois**, dans le tableau de bord Cloudflare,
 en 20 minutes environ. Rien à coder : on clique, on colle.
@@ -108,6 +108,67 @@ En cas de souci : **belfort-api** → **Logs** (journal en direct) ; les erreurs
 
 ---
 
+## Pièces jointes (v5.6) — 5 minutes
+
+Les salariés peuvent joindre des photos, des captures d'écran (même collées), des PDF, des fichiers Word,
+Excel, PowerPoint ou texte. Vous aussi, dans l'appli **et** en répondant au mail depuis Gmail.
+Tant que ce n'est pas fait, **tout le reste marche** : le bouton **📎 Joindre un fichier** est simplement caché.
+
+L'espace de stockage `breteuil-aide-pj` existe déjà (Workers KV). Il suffit de le brancher :
+
+1. **Workers & Pages** → **belfort-api** → **Settings** → **Bindings** → **Add binding**.
+2. Choisir **KV namespace**.
+3. Variable name : `AIDE_PJ` — KV namespace : `breteuil-aide-pj` → **Add binding** (ou **Deploy**).
+4. Recoller le code du Worker (étape 6 : `api-planning/worker.js` → **Copy raw file** → **Edit code** → tout remplacer → **Deploy**).
+
+Test : **?** → **Problème** → **📎 Joindre un fichier** → une photo → **Envoyer à Damien**. Le mail reçu liste
+la pièce jointe avec un lien **Ouvrir** (le fichier n'est pas dans le mail : il s'ouvre dans l'appli, après connexion).
+Répondez au mail avec un PDF joint : il apparaît dans la demande, sous votre réponse.
+
+| Règle | Valeur |
+|---|---|
+| Fichiers par message | 5 au plus |
+| Poids | 8 Mo par fichier (les photos sont réduites à 2000 px avant l'envoi : une photo de 12 Mo devient ~1 Mo) |
+| Types | photos (JPEG, PNG, WebP, HEIC), PDF, Word, Excel, PowerPoint (docx, xlsx, pptx), texte (txt). Le type est vérifié **sur le contenu** du fichier, pas sur son nom. |
+| Qui peut ouvrir | la personne qui a fait la demande et vous (prestataire), comme le fil de discussion |
+| Quotas | 40 fichiers par personne et par jour ; 900 pour tout le compte (voir ci-dessous) |
+| Réponse par mail | pièces jointes gardées ; logos de signature (< 5 Ko) ignorés ; trop lourdes, refusées ou au-delà de 5 : ignorées avec une note dans le message (« Pièce jointe ignorée : trop lourde… ») |
+
+**Limites gratuites de Cloudflare KV** : 1 Go de stockage et **1000 écritures par jour** (une écriture par fichier).
+L'appli s'arrête d'elle-même à 900 fichiers par jour (« Limite du jour atteinte… réessayez demain »).
+
+**Conservation** : les fichiers sont gardés **tant que la demande existe**. Rien n'est supprimé automatiquement.
+Pour faire de la place : tableau de bord → **Storage & Databases** → **KV** → `breteuil-aide-pj` : les clés sont
+rangées par demande (`pj/<n° de demande>/…`) ; supprimez celles d'une demande ancienne, puis dans **D1** →
+`breteuil-aide` → **Console** : `DELETE FROM pieces_jointes WHERE demande_id = <n°>;`.
+
+## Filtres, requalification et statistiques (v5.6) — rien à installer
+
+- **Filtres** en tête de « Mes demandes » et de « Demandes » : **En cours** (Nouvelle + Répondue, par défaut) /
+  **Résolues** / **Toutes**, avec le nombre sur chaque bouton.
+- **Requalifier** (vous seul, dans une demande) : changer le type, cocher **Facturable** (par défaut : oui pour un
+  Problème, non sinon), noter le **temps passé** (boutons + 15 min / + 30 min / + 1 h / + 2 h qui s'ajoutent, ou
+  champ libre : « 45 », « 1h30 »). Le salarié ne voit ni « facturable » ni le temps.
+- **Statistiques** : **Demandes → Statistiques** ou **Gérer → Demandes d'aide → Statistiques** (`#/demandes/stats`) :
+  le mois en chiffres, par type, par personne, les 6 derniers mois, **Exporter le mois (CSV)** pour Excel.
+- Les colonnes nécessaires s'ajoutent toutes seules à la base `breteuil-aide` au premier appel (rien n'est effacé).
+
+## Signature retirée des réponses par mail (facultatif)
+
+Votre signature Gmail n'a pas de ligne « -- » : elle s'ajoutait à la fin de vos réponses dans l'appli.
+Pour la retirer : **belfort-api** → **Settings** → **Variables and Secrets** → **Add** :
+
+| Nom | Type | Valeur |
+|---|---|---|
+| `AIDE_SIGNATURE` | Text | `BELFORT Damien,\|06 09 89 74 43` |
+
+Les lignes sont séparées par `|` (barre verticale). Elles ne sont retirées que si elles **terminent** le message
+(majuscules, espaces et virgule finale ignorés) ; les lignes vides de la fin sont retirées aussi.
+Une phrase du message qui contient votre nom ou votre numéro n'est jamais touchée.
+Recoller ensuite `worker.js` si ce n'est pas déjà fait (étape 6).
+
+---
+
 ## Limites à connaître
 
 - **Les salariés ne reçoivent pas de mail.** Cloudflare (gratuit) n'envoie des mails **qu'aux adresses
@@ -118,8 +179,11 @@ En cas de souci : **belfort-api** → **Logs** (journal en direct) ; les erreurs
   signature propre à la demande : on ne peut pas écrire dans une autre demande en devinant un numéro.
   L'adresse d'expéditeur d'un mail peut être falsifiée : la vraie protection est la signature, connue
   seulement de vous (elle n'apparaît que dans les mails reçus dans votre Gmail). Ne transférez pas ces mails.
-- **Réponse par mail = texte seul.** Les pièces jointes et les images sont ignorées ; la citation de
-  l'ancien mail et la signature « -- » sont retirées. 4000 caractères au plus.
+- **Réponse par mail** : la citation de l'ancien mail, la signature « -- » et celle d'`AIDE_SIGNATURE` sont
+  retirées. 4000 caractères au plus. Pièces jointes : voir « Pièces jointes » (25 Mo par mail au plus, limite
+  d'Email Routing). Un mail très lourd peut dépasser le temps de calcul du Worker gratuit : envoyez plutôt
+  les gros fichiers un par un.
+- **Le mail reçu est mis en forme** (HTML, couleurs du Château) avec une version texte de secours.
 - **10 demandes par heure et par personne** au maximum (protection contre les erreurs et les abus).
 - La pastille se met à jour à l'ouverture de l'appli, à chaque changement d'écran (au plus une fois
   par minute) et toutes les 5 minutes : ce n'est pas une notification sur le téléphone.

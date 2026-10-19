@@ -122,21 +122,44 @@
     ]).then(function (r) {
       var skuNoms = {};
       r[1].forEach(function (s) { skuNoms[s.skuId] = s.skuPartNumber; });
-      var boites = boitesConnues();
-      var liste = r[0].map(function (u) {
-        var p = D.profilDe(u, skuNoms, boites);
-        return Object.assign({}, u, { profil: p, type: D.typeDe(u, optsType()), prenom: u.givenName || (u.displayName || "").split(" ")[0] || "?" });
-      }).sort(function (a, b) { return String(a.displayName).localeCompare(String(b.displayName), "fr"); });
-      return { liste: liste, skus: r[1], skuNoms: skuNoms };
+      return usagesBoites(r[0]).then(function (comptes) {
+        var boites = boitesConnues(), opts = { prestataires: CFG.prestataires || [] };
+        var liste = comptes.map(function (u) {
+          var p = D.profilDe(u, skuNoms, boites, opts);
+          return Object.assign({}, u, { profil: p, licence: D.licenceDe(u, skuNoms), type: D.typeDe(u, optsType()), prenom: u.givenName || (u.displayName || "").split(" ")[0] || "?" });
+        }).sort(function (a, b) { return String(a.displayName).localeCompare(String(b.displayName), "fr"); });
+        return { liste: liste, skus: r[1], skuNoms: skuNoms };
+      });
     });
   }
+  /** Boîtes partagées connues : liste de config.js (« boitesPartagees ») + adresses de la démo. */
   function boitesConnues() {
-    var b = [];
+    var b = (CFG.boitesPartagees || []).slice();
     try {
       var d = EB.demo().boites || [];
       d.forEach(function (x) { b.push(x.adresse); });
     } catch (e) {}
     return b;
+  }
+  /**
+   * v5.5.1 : réglage Exchange « userPurpose » (shared = boîte partagée) de chaque compte qui a une
+   * adresse mail — SEULEMENT si la permission MailboxSettings.Read (ou ReadWrite) figure déjà dans le
+   * jeton : l'appli ne la demande pas (voir docs). Au premier refus (403…), on s'arrête : la liste
+   * de config.js et l'ancien indice prennent le relais. Ne rejette jamais.
+   */
+  function usagesBoites(comptes) {
+    return Promise.resolve().then(function () { return G.scopesAccordes ? G.scopesAccordes("graph") : null; }).then(function (scp) {
+      if (!(scp || []).some(function (s) { return /^mailboxsettings\.read(write)?$/i.test(s); })) return comptes;
+      var file = comptes.filter(function (u) { return u.mail && u.userType !== "Guest"; }), arret = false;
+      function suivant() {
+        var u = file.shift();
+        if (!u || arret) return Promise.resolve();
+        return G.graph("GET", "/users/" + encodeURIComponent(u.id) + "/mailboxSettings/userPurpose", undefined, { silencieux: true })
+          .then(function (r) { if (r && r.value) u.userPurpose = r.value; }, function (e) { if (e && (e.statut === 403 || e.statut === 401)) arret = true; })
+          .then(suivant);
+      }
+      return Promise.all([suivant(), suivant(), suivant(), suivant()]).then(function () { return comptes; });
+    }).catch(function () { return comptes; });
   }
   function photo(id) {
     if (cachePhotos[id] !== undefined) return Promise.resolve(cachePhotos[id]);
@@ -197,6 +220,12 @@
       EB.initiales(u.prenom || u.givenName || u.displayName || u.Title || "?"));
     var id = u.id;
     if (id) photo(id).then(function (url) { if (url) { el.textContent = ""; el.appendChild(h("img", { src: url, alt: "" })); } });
+    return el;
+  }
+  /** Avatar d'une boîte partagée : sa photo de profil s'il y en a une (ex. « FetP »), sinon l'enveloppe. */
+  function avatarBoite(u, cls) {
+    var el = h("span", { class: "avatar groupe " + (cls || ""), "aria-hidden": "true" }, emoji("📬"));
+    if (u && u.id) photo(u.id).then(function (url) { if (url) { el.textContent = ""; el.classList.remove("groupe"); el.appendChild(h("img", { src: url, alt: "" })); } });
     return el;
   }
   var PALETTE = ["#8A4C45", "#2F6B5A", "#6C3832", "#6E4F86", "#7A5710", "#4F6B3A", "#3F6683", "#8A2B3B"];
@@ -1047,7 +1076,7 @@
         }).forEach(function (x) {
           var P = D.PROFILS[x.profil];
           liste.appendChild(h("a", { class: "carte-personne", href: "#/personnes/" + encodeURIComponent(x.id) },
-            x.profil === "boite" ? h("span", { class: "avatar groupe" }, emoji("📬")) : avatarPersonne(x),
+            x.profil === "boite" ? avatarBoite(x) : avatarPersonne(x),
             h("span", { class: "qui" }, h("b", null, x.displayName), h("small", null, x.mail || x.userPrincipalName),
               h("span", { class: "etiquettes" }, h("span", { class: "etiquette profil " + x.profil }, P.emoji + " " + P.court), etiquette(x.type))),
             h("span", { class: "fleche", "aria-hidden": "true" }, "›")));
@@ -1101,7 +1130,7 @@
       zone.textContent = "";
       if (!x) { zone.appendChild(h("p", { class: "vide" }, "Personne introuvable.")); return; }
       var P = D.PROFILS[x.profil];
-      zone.appendChild(h("div", { class: "bonjour" }, x.profil === "boite" ? h("span", { class: "avatar grand groupe" }, emoji("📬")) : avatarPersonne(x, "grand"),
+      zone.appendChild(h("div", { class: "bonjour" }, x.profil === "boite" ? avatarBoite(x, "grand") : avatarPersonne(x, "grand"),
         h("div", null, h("h2", null, x.displayName), h("p", null, [x.jobTitle, x.department].filter(Boolean).join(" · ") || x.mail || ""),
           h("span", { class: "etiquettes" }, etiquette(x.type)))));
       zone.appendChild(h("div", { class: "carte-profil " + x.profil },
@@ -1132,6 +1161,7 @@
       ["standard", "basic"].concat(comptes.some(function (c) { return c.profil === "exchange"; }) ? ["exchange"] : []).forEach(function (p) {
         var P = D.PROFILS[p], c = comptes.filter(function (x) { return x.profil === p; })[0] || { achetees: 0, attribuees: 0, libres: 0 };
         var qui = u.liste.filter(function (x) { return x.profil === p; });
+        var boitesLic = u.liste.filter(function (x) { return x.profil === "boite" && x.licence === p; });
         zone.appendChild(h("div", { class: "carte-profil " + p },
           h("div", { class: "tete" }, emoji(P.emoji, "grand"), h("div", null, h("b", null, P.nom), h("span", null, P.phrase))),
           h("div", { class: "compteurs" },
@@ -1140,8 +1170,11 @@
             h("span", { class: c.libres ? "libre" : "" }, h("b", null, String(c.libres)), "libres")),
           h("ul", { class: "outils" }, P.outils.map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); })),
           qui.length ? h("div", { class: "visages petits" }, qui.map(function (x) {
-            return h("a", { class: "visage", href: "#/personnes/" + encodeURIComponent(x.id) }, avatarPersonne(x), h("span", null, x.prenom));
-          })) : null));
+            return h("a", { class: "visage", href: "#/personnes/" + encodeURIComponent(x.id), title: x.displayName, "aria-label": x.displayName }, avatarPersonne(x), h("span", { class: "nom-visage" }, x.prenom));
+          })) : null,
+          // v5.5.1 : boîtes partagées qui gardent une licence (souvent d'essai) — comptées par Microsoft dans « utilisées ».
+          boitesLic.length ? h("p", { class: "aide-ecran boites-licence" }, "📬 Dont " + boitesLic.length + (boitesLic.length > 1 ? " adresses partagées qui utilisent" : " adresse partagée qui utilise") +
+            " encore cette licence : " + D.listeNoms(boitesLic.map(function (x) { return x.displayName; })) + ".") : null));
       });
       zone.appendChild(h("div", { class: "carte-profil boite" },
         h("div", { class: "tete" }, emoji("📬", "grand"), h("div", null, h("b", null, "Adresse partagée"), h("span", null, D.PROFILS.boite.phrase))),
@@ -1174,7 +1207,7 @@
       return {
         exemple: false,
         personnes: u.filter(function (x) { return x.profil !== "boite"; }),
-        boites: u.filter(function (x) { return x.profil === "boite"; }).map(function (x) { return { nom: x.displayName, adresse: x.mail, emoji: "📬", qui: null }; }),
+        boites: u.filter(function (x) { return x.profil === "boite"; }).map(function (x) { return { id: x.id, nom: x.displayName, adresse: x.mail || x.userPrincipalName, emoji: "📬", qui: null, photo: function () { return photo(x.id); } }; }),
         site: r[1].site.displayName, proprietaires: r[1].proprietairesNoms || [],
         roles: r[2].filter(function (x) { return noms[x.roleTemplateId]; }).map(function (x) { return { nom: noms[x.roleTemplateId], qui: (x.members || []).map(function (m) { return m.displayName; }) }; }),
       };
@@ -1203,11 +1236,14 @@
       var schema = h("div", { class: "schema" });
 
       // 1. Les personnes, rangées par licence
-      var groupes = ["standard", "basic", "exchange", "aucune", "externe"].map(function (p) {
+      // v5.5.1 : boîtes partagées jamais ici (même avec licence) ; le prestataire dans un petit groupe à part ;
+      // noms affichés en double (deux « Valérie ») : partie avant @ sous chacun.
+      var homonymes = D.distinguerHomonymes(o.personnes, function (x) { return x.prenom || x.displayName; });
+      var groupes = ["standard", "basic", "exchange", "aucune", "externe", "prestataire"].map(function (p) {
         var l = o.personnes.filter(function (x) { return x.profil === p; });
         if (!l.length) return null;
         var P = D.PROFILS[p];
-        return h("div", { class: "groupe-schema " + p },
+        return h("div", { class: "groupe-schema " + p, "data-groupe": p },
           h("button", { class: "titre-groupe-schema", type: "button", onclick: function () {
             expliquer(P.emoji, P.nom, [P.phrase, h("ul", { class: "outils" }, P.outils.map(function (x) { return h("li", null, emoji(x[0]), h("span", null, x[1])); }))], G.estConnecte() ? { href: "#/licences-reel", texte: "Voir les abonnements" } : null);
           } }, P.emoji + " " + P.nom, h("span", { class: "compte" }, String(l.length))),
@@ -1215,7 +1251,9 @@
             return h("button", { class: "visage", type: "button", onclick: function () {
               expliquer(P.emoji, x.displayName, [P.phrase, x.type === "externe" ? D.TYPES.externe.aide : ""].filter(Boolean),
                 G.estConnecte() && x.id ? { href: "#/personnes/" + encodeURIComponent(x.id), texte: "Ce qu'il ou elle peut utiliser" } : null);
-            } }, x.couleur ? h("span", { class: "avatar", style: { background: x.couleur } }, EB.initiales(x.prenom)) : avatarPersonne(x), h("span", null, x.prenom));
+            }, title: x.displayName + (homonymes[x.id] ? " (" + homonymes[x.id] + ")" : ""), "aria-label": x.displayName + (homonymes[x.id] ? ", " + homonymes[x.id] : "") },
+            x.couleur ? h("span", { class: "avatar", style: { background: x.couleur } }, EB.initiales(x.prenom)) : avatarPersonne(x),
+            h("span", { class: "nom-visage" }, x.prenom), homonymes[x.id] ? h("small", { class: "adresse-visage" }, homonymes[x.id]) : null);
           })));
       }).filter(Boolean);
       schema.appendChild(h("section", { class: "zone-schema personnes" }, h("h2", null, emoji("👥"), " Les personnes"), groupes));
@@ -1283,8 +1321,12 @@
     apresConnexion: function () {
       if (window.EBAcces) window.EBAcces.charger();
       var hash = location.hash || "#/";
-      if (hash === "#/" || hash === "#") location.hash = EB.depart(); // v5.5 : 1er choix de « Ce que j'utilise » (sinon l'accueil)
-      else EB.rendre();
+      if (hash === "#/" || hash === "#") {
+        // v5.5.1 : écran demandé avant la connexion (lien profond) d'abord ; sinon le 1er choix de « Ce que j'utilise ».
+        var cible = null;
+        try { cible = sessionStorage.getItem("eb:retour"); sessionStorage.removeItem("eb:retour"); } catch (e) {}
+        location.hash = cible && cible !== "#/" && cible !== "#" ? cible : EB.depart();
+      } else EB.rendre();
     },
     oublier: oublier,
     oublierContexte: oublierContexte,

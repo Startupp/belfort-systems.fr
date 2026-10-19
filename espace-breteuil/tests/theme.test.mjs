@@ -1,5 +1,5 @@
 // Palettes de couleurs (sans navigateur) : node --test espace-breteuil/tests/theme.test.mjs
-// Calcule les contrastes WCAG des paires principales dans les 2 palettes (crème, Bleu Breteuil)
+// Calcule les contrastes WCAG des paires principales dans les 2 palettes (crème, Bleu élégant)
 // × clair / sombre, directement depuis les variables d'app.css.
 import { test } from "node:test";
 import assert from "node:assert/strict";

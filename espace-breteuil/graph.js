@@ -3,9 +3,11 @@
  *
  * - Inactif tant que config.js n'a pas de clientId (mode démo).
  * - MSAL 3.30.0 servi depuis vendor/ (pas de CDN : compatible CSP script-src 'self').
- * - Session gardée TANT QUE L'ONGLET (ou l'appli installée) RESTE OUVERT :
- *   cacheLocation "sessionStorage". Fermer l'onglet ou l'appli efface tout ; jamais de
- *   localStorage pour les jetons. Compromis documenté dans docs/ESPACE-BRETEUIL-CONNEXION.md.
+ * - v5.5.1 : session gardée ENTRE LES ONGLETS et après fermeture : cacheLocation "localStorage"
+ *   (réglage standard de MSAL pour une SPA / PWA). Un lien ouvert depuis un mail (nouvel onglet)
+ *   ne redemande plus la connexion. Jetons d'accès : 1 h ; jeton de renouvellement d'une SPA :
+ *   24 h au plus (imposé par Microsoft), puis reconnexion. « Se déconnecter » efface le cache MSAL
+ *   et les données eb:* de l'appareil. Compromis documenté dans docs/ESPACE-BRETEUIL-CONNEXION.md.
  * - Connexion : fenêtre (popup) d'abord, puis redirection si la fenêtre est bloquée.
  *   Appli installée sur iPhone/iPad (écran d'accueil) : redirection directement, car une
  *   fenêtre s'ouvrirait dans Safari, hors de l'appli.
@@ -72,6 +74,10 @@
     etat.compte = actif || (tous.length ? tous[0] : null);
     if (etat.compte && etat.pca.setActiveAccount) etat.pca.setActiveAccount(etat.compte);
   }
+  /* Maquette : imite le cache MSAL en localStorage (partagé entre onglets, effacé à la déconnexion). */
+  var CLE_MAQUETTE = "msal.maquette.compte";
+  function compteMaquetteGarde() { try { return JSON.parse(localStorage.getItem(CLE_MAQUETTE) || "null"); } catch (e) { return null; } }
+  function garderCompteMaquette(c) { try { if (c) localStorage.setItem(CLE_MAQUETTE, JSON.stringify(c)); else localStorage.removeItem(CLE_MAQUETTE); } catch (e) {} }
   function retenirErreur(e) { etat.erreurDetail = E.expliquer(e); etat.erreur = etat.erreurDetail.titre + " " + etat.erreurDetail.action; }
 
   function init() {
@@ -83,7 +89,8 @@
     if (estMaquette()) {
       etat.maquette = true; etat.pret = true;
       var m = maquette();
-      etat.compte = m.deconnecte ? null : (m.compte || { name: "Pauline (maquette)", username: "pdebreteuil@breteuil.fr", localAccountId: "moi" });
+      etat.compte = m.deconnecte ? compteMaquetteGarde() : (m.compte || { name: "Pauline (maquette)", username: "pdebreteuil@breteuil.fr", localAccountId: "moi" });
+      if (m.erreurConnexion) retenirErreur({ errorCode: "access_denied", message: m.erreurConnexion }); // v5.7 : ex. AADSTS50105 (tests)
       return Promise.resolve(!!etat.compte);
     }
     if (!estConfigure()) return Promise.resolve(false);
@@ -96,8 +103,9 @@
           authority: "https://login.microsoftonline.com/" + c.tenantId,
           redirectUri: adresse, postLogoutRedirectUri: adresse, navigateToLoginRequestUrl: false,
         },
-        // sessionStorage : la session tient tant que l'onglet ou l'appli reste ouvert (jamais localStorage).
-        cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false },
+        // v5.5.1 : localStorage — session partagée entre onglets (liens ouverts depuis un mail) et gardée
+        // après fermeture ; renouvellement limité à 24 h par Microsoft. Déconnexion : tout est effacé.
+        cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false },
         system: { allowNativeBroker: false },
       });
       return etat.pca.initialize();
@@ -133,6 +141,7 @@
   function connecter(mode) {
     if (etat.maquette) {
       etat.compte = maquette().compte || { name: "Pauline (maquette)", username: "pdebreteuil@breteuil.fr", localAccountId: "moi" };
+      garderCompteMaquette(etat.compte);
       if (window.EBConnecte) window.EBConnecte.apresConnexion();
       return Promise.resolve();
     }
@@ -141,7 +150,10 @@
     var sp = scopeSharePoint();
     var demande = { scopes: scopesGraph(), extraScopesToConsent: sp ? [sp] : [], prompt: "select_account" };
     function parRedirection() {
-      try { sessionStorage.setItem("eb:retour", location.hash || "#/"); } catch (e) {}
+      // Écran à rouvrir après la connexion : l'adresse actuelle, sinon celle demandée avant l'écran
+      // de connexion (lien profond, ex. #/comment-faire ouvert depuis un mail — voir app.js).
+      var h = location.hash, cible = h && h !== "#" && h !== "#/" ? h : lireSession("eb:retour");
+      ecrireSession("eb:retour", cible || "#/");
       return etat.pca.loginRedirect(demande);
     }
     // Connexion TOUJOURS par redirection pleine page : la fenêtre (popup) se perdait sur certains
@@ -161,6 +173,7 @@
 
   function oublier() {
     etat.compte = null; etat.vientDeSeConnecter = false;
+    if (etat.maquette) garderCompteMaquette(null);
     if (etat.pca && etat.pca.clearCache) { try { etat.pca.clearCache(); } catch (e) {} }
   }
 
@@ -242,18 +255,20 @@
     }, function () { return false; });
   }
   /** Demande une permission en plus (consentement incrémental), par redirection pleine page. */
+  /* v5.7 : « permission » peut être une liste (plusieurs permissions demandées en une seule fois). */
   function demanderPermission(permission) {
+    var liste = [].concat(permission), nom = liste.join(" ");
     ecrireSession("eb:consentement-refuse", null);
     if (etat.maquette) {
       var m = self.EB_MAQUETTE = self.EB_MAQUETTE || {};
-      if (m.refuserConsentement) { ecrireSession("eb:consentement-refuse", JSON.stringify({ permission: permission, code: "AADSTS65001" })); return Promise.resolve(false); }
-      m.permissions = (m.permissions || []).concat([permission]);
+      if (m.refuserConsentement) { ecrireSession("eb:consentement-refuse", JSON.stringify({ permission: nom, code: "AADSTS65001" })); return Promise.resolve(false); }
+      m.permissions = (m.permissions || []).concat(liste);
       return Promise.resolve(true);
     }
     if (!etat.pca || !etat.compte) return Promise.reject(erreur(401, "Vous n'êtes pas connecté."));
-    ecrireSession("eb:consentement-demande", permission);
+    ecrireSession("eb:consentement-demande", nom);
     ecrireSession("eb:retour", location.hash || "#/");
-    return etat.pca.acquireTokenRedirect({ scopes: [permission], account: etat.compte });
+    return etat.pca.acquireTokenRedirect({ scopes: liste, account: etat.compte });
   }
   /** Dernier refus de consentement (retour de redirection), ou null. */
   function consentementRefuse() { try { return JSON.parse(lireSession("eb:consentement-refuse") || "null"); } catch (e) { return null; } }

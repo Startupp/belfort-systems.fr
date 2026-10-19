@@ -1,8 +1,91 @@
-# Espace Breteuil — application (v5.5.0)
+# Espace Breteuil — application (v5.7.0)
 
 Application installable (PWA) pour l'équipe du Château de Breteuil, **sur mobile d'abord**,
 branchée sur le vrai tenant Microsoft. Pour des personnes non techniques : écrans courts,
 cibles tactiles d'au moins 44 px, confirmation avant chaque changement.
+
+## v5.7 « Apparence, installation, accès »
+
+### Apparence (Gérer › Apparence, `#/apparence`) — pour la personne choisie par le Château
+- **Pour tout le monde** : réglages dans `<Commun>/<config.suivi.dossier>/apparence.json` (SharePoint),
+  logo `logo-<n>.png|jpg|webp` à côté, icônes proposées dans le sous-dossier `Icônes/`. Lu au démarrage
+  (cache de 10 min sur l'appareil, appliqué avant le premier affichage au lancement suivant).
+- **Qui voit l'écran** : les personnes qui peuvent **modifier** `apparence.json` (droits SharePoint
+  effectifs du fichier ; s'il n'existe pas encore : droit d'**ajouter** un fichier dans le dossier).
+  👉 **Damien** : donner à Guillaumette le droit **Modifier** sur `apparence.json` (le créer d'abord en
+  appliquant une fois une apparence, ou lui donner « Modifier » sur le dossier *Suivi informatique*).
+  SharePoint : dossier › ⋯ › Gérer l'accès › Ajouter des personnes › « Peut modifier ». Toute l'équipe doit
+  pouvoir **lire** ce dossier (c'est déjà le cas pour les guides « pour tous »).
+- 10 palettes (Crème et praline et Bleu élégant = les feuilles de style d'origine ; les 8 autres sont
+  **calculées**), puis : couleur principale, accent, ton du fond (chaud/neutre/froid), coins
+  (carrés/doux/ronds), police (Classique Spectral+Archivo / Moderne Archivo / Comme le téléphone ;
+  aucune police externe), en-tête (uni/dégradé/clair).
+- **Lisibilité garantie** (`apparence.js`, OKLCH) : toutes les variables (textes, traits, survols,
+  pastilles de statut, en-tête…) sont **dérivées** des 2 couleurs, en clair ET en sombre, et vérifiées
+  AA (texte ≥ 4,5:1). Une couleur trop claire est **refusée** (« Trop clair : le texte serait
+  illisible ») ; un peu trop claire, elle est **ajustée** et c'est dit.
+- Aperçu clair/sombre (accueil, carte, tuile, boutons, pastilles) avant « Appliquer pour tout le monde »
+  (2 confirmations) ; « Revenir à la version précédente » (5 versions gardées dans le fichier) ;
+  « Revenir à l'original » (le logo reste).
+- **Choix personnel** : Moi › Réglages › Couleurs : « Comme le Château » (défaut), Crème et praline,
+  Bleu élégant, ou « Autres palettes… » (cet appareil seulement ; coins, police et en-tête suivent
+  toujours le Château). Ancien réglage « bleu » gardé ; l'ancien « crème » (enregistré par défaut
+  pour tout le monde) devient « Comme le Château ».
+- **Logo** : PNG, JPEG ou WebP ≤ 1 Mo (SVG refusé : il peut contenir du code). Affiché tout de suite
+  dans l'en-tête et sur l'écran de connexion (copie réduite gardée sur l'appareil).
+
+### Publier l'icône d'installation (Damien)
+Quand un logo est publié, l'appli dessine 3 icônes (`icone-<v>-192.png`, `-512.png`, `-masquable-512.png`),
+les dépose dans `…/Suivi informatique/Icônes/` et crée une **demande d'aide** « Nouveau logo à publier pour
+l'icône d'installation » (fichiers joints si les pièces jointes sont installées). Pour publier :
+1. remplacer `espace-breteuil/icones/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`
+   (et `icon-180.png` pour l'iPhone : réduire le 192) ;
+2. dans `config.js`, passer `icone: { version: <v> }` (le numéro de la demande) ;
+3. augmenter `version.js`, publier.
+Android met l'icône à jour seul. **iPhone/iPad** : impossible (Apple) ; l'appli installée affiche une fois
+« Le logo a changé : pour le voir sur votre écran d'accueil, supprimez puis rajoutez l'appli (30 s) ».
+Le numéro d'icône comparé est celui **publié** (`config.js`), pas celui du fichier partagé : sinon le
+bandeau apparaîtrait avant que l'icône existe.
+
+### Installer / Gérer l'application (`#/installer`, public)
+Un seul bouton « Installer l'application » : invitation du navigateur quand elle existe (Android,
+Chrome/Edge ordinateur), sinon le geste exact (iPhone Safari : Partager ⬆️ › « Sur l'écran d'accueil » ;
+iPhone autre navigateur : ouvrir dans Safari ; Mac Safari : Fichier › Ajouter au Dock ; Firefox
+ordinateur : pas possible, utiliser Chrome/Edge). Appli lancée installée : « Gérer l'application »
+(version, Rechercher une mise à jour, Désinstaller = le geste, une appli web ne peut pas se supprimer).
+Encadré mesuré : fichiers de l'appli ≈ 1,4 Mo (58 fichiers, MSAL compris), place comptée ≈ 2,4 Mo ;
+gardés sur l'appareil : le planning (hors connexion), les réglages, les épingles, le logo réduit ;
+jamais le contenu des documents (listes et photos restent en mémoire).
+
+### Planning public (employés sans compte)
+`https://espace-breteuil.pages.dev/#/planning` s'ouvre **sans connexion** avec un gros bouton
+« 📲 Ajouter à l'écran d'accueil ». Installée par quelqu'un de non connecté, l'appli s'ouvre sur le
+planning (« Se connecter » discret en bas). Écran Planning (connecté) : carte « 👥 Partager le planning
+avec l'équipe » (Copier le lien, Partager…).
+
+### Qui peut utiliser l'application (Gérer, `#/acces-appli`) — François
+**Vrai contrôle Microsoft** : propriété « Affectation requise » de l'application d'entreprise
+*Espace Breteuil* + affectations (rôle par défaut). Réservé aux rôles Administrateur général /
+Administrateur d'applications (cloud). Lecture avec Directory.Read.All (déjà accordée) ; écriture :
+`AppRoleAssignment.ReadWrite.All` + `Application.ReadWrite.All` demandées **seulement sur cet écran**
+(consentement incrémental). Garde-fous : vous et les administrateurs généraux sont affectés
+**avant** de restreindre ; compte prestataire (`config.prestataires`) affiché **en clair**
+(« 🛠️ Prestataire informatique — accès de maintenance »), coché par défaut, retirable avec confirmation.
+Personne non cochée : Microsoft refuse la connexion (AADSTS50105) → « L'application n'est pas ouverte
+pour vous — demandez à François » + « Voir le planning ». Invitation par mail (aperçu, envoi depuis la
+boîte de François via `Mail.Send`, demandé à ce moment-là ; repli « Écrire avec ma messagerie »).
+À la main : Entra › Applications d'entreprise › Espace Breteuil › Propriétés › « Affectation requise » ;
+Utilisateurs et groupes. Ce réglage concerne la **connexion à l'appli**, pas les documents (protégés par
+leurs droits Microsoft).
+
+### Rôles et administrateurs (`#/deleguer`, administrateurs généraux)
+Encadré « Toute modification prend effet immédiatement chez Microsoft » dans chaque confirmation ;
+retirer le rôle d'administrateur général (à quelqu'un ou à soi-même) : il faut en plus **taper RETIRER** ;
+le dernier administrateur général ne peut jamais être retiré ; le prestataire est marqué en clair.
+
+### Bientôt
+`config.bientot = [{ titre, emoji, texte }]` : cartes « bientôt disponible » (Accueil de la direction et
+Gérer), un toucher ouvre « En préparation ».
 
 ## v5.5 « Simplification » : clair, droit, carré
 
@@ -44,7 +127,7 @@ toucher n'importe où ou Échap ferme. Pas de fausses captures d'écran.
 une ligne, une seule action par carte ; boutons d'action de même taille (carrés arrondis, icône
 au-dessus) ; fil d'Ariane sur une ligne discrète ; feuilles d'actions dont les lignes grandissent
 avec le texte (et qui défilent) ; aucun lien de navigation en simple texte ; cibles ≥ 48 px ;
-mêmes couleurs (crème/praline et Bleu Breteuil, clair et sombre, contrastes AA). Les épingles
+mêmes couleurs (crème/praline et Bleu élégant, clair et sombre, contrastes AA). Les épingles
 sont sur l'Accueil (le Planning ne montre que le planning). Gérer : tuile **🛠️ Suivi informatique**
 en tête (`#/suivi`).
 
@@ -400,11 +483,12 @@ Côté utilisateurs :
 
 - l'appli vérifie les mises à jour à l'ouverture, au retour sur l'appli (toutes les
   30 min au plus) et toutes les heures ;
-- une version prête **pendant l'utilisation** affiche le bandeau « ✨ Nouvelle version
-  disponible — Mettre à jour » (un toucher = rechargement) ;
-- une version prête **au lancement** s'installe d'elle-même, sauf si l'utilisateur est en
-  train de saisir quelque chose ;
-- le numéro est visible dans **Moi → Réglages** (bouton « Rechercher une mise à jour »).
+- v5.7 : **mises à jour silencieuses**. Plus de bandeau : une version prête s'active d'elle-même
+  quand c'est sans gêne (appli mise en arrière-plan, ou 45 s sans toucher l'écran), jamais
+  pendant une saisie (champ actif, fenêtre ouverte, brouillon d'Apparence non appliqué) ; au
+  lancement suivant, petit message « Application mise à jour (5.7.0) » ;
+- le numéro est visible dans **Moi → Réglages** et **Moi → Gérer l'application** (bouton
+  « Rechercher une mise à jour » : l'appli redémarre tout de suite si une version est trouvée).
 
 
 ## Éditer `personnes.json`
@@ -468,8 +552,26 @@ réglages par défaut) :
 - `eb:usages:<id du compte>` (v5.5) : « Ce que j'utilise » (ordre des tuiles de l'accueil, écran de départ) ;
 - `eb:journal` : « Ce que j'ai fait » (dossiers, droits, délégations).
 
-Pour la session de l'onglet seulement (`sessionStorage`) : jetons MSAL et dernier profil connu
-(uniquement des rôles, pour afficher les bons onglets tout de suite).
+Jetons MSAL (v5.5.1) : `localStorage`, partagés entre onglets (un lien ouvert depuis un mail
+ne redemande plus la connexion) ; renouvellement limité à 24 h par Microsoft. Pour l'onglet seulement
+(`sessionStorage`) : dernier profil connu (uniquement des rôles) et `eb:retour` (écran demandé par
+un lien, rouvert après la connexion).
+
+**Se déconnecter** efface le cache MSAL et toutes les clés `eb:*` des deux stockages, sauf
+`eb:reglages` et `eb:planning:*`. Détails et compromis : docs/ESPACE-BRETEUIL-CONNEXION.md,
+« Session et sécurité ».
+
+## v5.5.1 — réglages dans config.js
+
+- `boitesPartagees` : adresses (ou parties avant @) des boîtes partagées. Elles restent dans
+  « Les adresses partagées » (écrans « Qui fait quoi » et « L'équipe ») même si une licence leur
+  est encore attribuée. Également repérées par le réglage Exchange `userPurpose` si la permission
+  `MailboxSettings.Read` est un jour accordée (pas demandée par l'appli), et par l'ancien indice
+  (sans licence + connexion bloquée).
+- `prestataires` : compte(s) du prestataire informatique, montrés dans un petit groupe
+  « Prestataire informatique » au lieu de « Sans licence ». **À remplir par Damien.**
+- `siteWeb.accesPret` : `false` tant que l'équipe n'a pas de compte WordPress « éditeur » ;
+  encadré « 🔑 Accès au site à prévoir » et boutons vers WordPress masqués. Mettre `true` ensuite.
 
 ## Mode « calendrier seul »
 
@@ -627,6 +729,11 @@ Version connectée : voir la checklist de [ESPACE-BRETEUIL-CONNEXION.md](ESPACE-
       exemple PDF, activation de la double authentification (Moi → Démos → Double auth.) puis rappel.
 
 ## Aide et demandes (v5.4)
+
+> **v5.6** : pièces jointes (📎, capture collée, glisser-déposer ; 5 fichiers, 8 Mo ; vignettes dans le fil),
+> mail à Damien mis en forme (HTML + texte de secours), signature Gmail retirée des réponses (`AIDE_SIGNATURE`).
+> Installation : `docs/AIDE-INSTALLATION.md`, sections « Pièces jointes » et « Signature ». Tests :
+> `node api-planning/worker.test.mjs`, `node espace-breteuil/tests/aide.test.mjs`, `espace-breteuil/tests/aide-pj.playwright.mjs`.
 
 Bouton **?** en bas à droite de tous les écrans : Question, Avis, Amélioration, Problème, envoyés à
 Damien (mail) et suivis dans **Moi → Mes demandes** (pastille quand Damien a répondu). Damien répond

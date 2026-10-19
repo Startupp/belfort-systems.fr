@@ -154,7 +154,8 @@ async function preparer(contexte, nomProfil, opts = {}) {
         if (req.method() === "PUT") return route.fulfill({ status: 201, headers: CORS, body: JSON.stringify({ id: "nouveau", name: "x" }) });
         return route.fulfill({ status: req.method() === "POST" ? 201 : 204, headers: CORS, body: req.method() === "POST" ? JSON.stringify({ id: "ra-nouveau" }) : "" });
       }
-      const v = r[chemin];
+      // v5.7 : dossier du suivi listé pour trouver apparence.json (absent ici : dossier vide, l'apparence d'origine).
+      const v = r[chemin] || (chemin === "/v1.0/drives/drive1/root:/Commun/Suivi informatique:/children" ? { value: [] } : null);
       if (!v) return route.fulfill({ status: 404, headers: CORS, body: JSON.stringify({ error: { code: "itemNotFound", message: "introuvable " + chemin } }) });
       return route.fulfill({ status: 200, headers: CORS, body: JSON.stringify(v) });
     });
@@ -378,7 +379,10 @@ try {
         const tuilesSite = await page.$$eval(".section-site .t", (l) => l.map((a) => ({ lib: a.querySelector(".lib").textContent, href: a.getAttribute("href"), cible: a.getAttribute("target") })));
         assert.equal(tuilesSite.length, 8);
         for (const t of tuilesSite.filter((x) => /^https:/.test(x.href))) assert.equal(t.cible, "_blank", t.lib);
-        assert.ok(tuilesSite.some((t) => t.href === "https://www.breteuil.fr/wp-admin/upload.php"));
+        // v5.5.1 : accès WordPress pas encore prêt (config.siteWeb.accesPret false) → encadré, aucune tuile vers wp-admin.
+        assert.ok(!tuilesSite.some((t) => /wp-admin/.test(t.href)), "aucune tuile vers l'administration WordPress");
+        assert.ok(tuilesSite.some((t) => t.href === "#/guides/site/image"));
+        assert.match(await page.textContent('.section-site [data-encadre="acces-site"]'), /Accès au site à prévoir/);
         await page.click('#fiche-pied > summary');
         await page.waitForSelector('#fiche-pied[open] .etapes li');
         await calme(page);
@@ -461,7 +465,8 @@ try {
         await page.click('[data-action="autoriser-roles"]');
         await page.waitForSelector('[data-action="donner-facturation"]:not([disabled])');
         assert.equal(await page.$('[data-permission="manquante"]'), null);
-        assert.ok(await page.isDisabled('[data-titulaire="u2"] button'), "garde-fou : son propre rôle d'administrateur général");
+        // v5.7 : se retirer son propre rôle d'administrateur général est permis s'il en reste un autre (taper « RETIRER »).
+        assert.equal(await page.isDisabled('[data-titulaire="u2"] button'), false, "v5.7 : son propre rôle, retirable avec confirmation renforcée");
         assert.ok(await page.isDisabled('[data-proprietaire="fdebreteuil@breteuil.fr"] button'), "garde-fou : se retirer soi-même des propriétaires");
         await capturer(page, `admin-deleguer-${taille}`);
         // Donner le rôle Facturation à Fanny : choix, 2 confirmations, POST roleAssignments.
@@ -552,7 +557,7 @@ try {
             captures++;
           };
           await capturerProjets(`suivi-projets-creme-${taille}`);
-          // Même section en Bleu Breteuil (clair), puis retour à la palette crème.
+          // Même section en Bleu élégant (clair), puis retour à la palette crème.
           await page.evaluate(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
           await page.reload();
           await page.waitForSelector(".carte-projet");
@@ -690,7 +695,7 @@ try {
       await contexte.close();
     }
 
-    /* ---------- Palette « Bleu Breteuil » (375 px) : clair et sombre ---------- */
+    /* ---------- Palette « Bleu élégant » (375 px) : clair et sombre ---------- */
     for (const theme of taille === "375" ? ["light", "dark"] : []) {
       const nomT = theme === "light" ? "clair" : "sombre", entete = theme === "light" ? "#14213D" : "#0F1A33";
       const verifier = async (page, ou) => {
@@ -712,9 +717,9 @@ try {
       {
         const { contexte, page, erreurs } = await nouvellePage(vp, "collaborateur", { theme });
         await page.goto(BASE + "#/reglages");
-        await page.waitForSelector('.reglage button:has-text("Bleu Breteuil")');
-        assert.equal(await page.getAttribute('.reglage button:has-text("Crème et praline")', "aria-pressed"), "true", "crème par défaut");
-        await page.click('.reglage button:has-text("Bleu Breteuil")');
+        await page.waitForSelector('.reglage button:has-text("Bleu élégant")');
+        assert.equal(await page.getAttribute('.reglage button:has-text("Comme le Château")', "aria-pressed"), "true", "v5.7 : « Comme le Château » par défaut (crème tant que rien n'est choisi)");
+        await page.click('.reglage button:has-text("Bleu élégant")');
         await verifier(page, "réglage");
         assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("eb:reglages"))).palette, "bleu", "mémorisé sur l'appareil");
         await capturer(page, `bleu-reglages-${nomT}-375`);
@@ -730,7 +735,7 @@ try {
         await controlesCommuns(page, `bleu moi ${nomT}`);
         await capturer(page, `bleu-moi-${nomT}-375`);
         if (theme === "light") {
-          // Suivi informatique et Moi → Guides (v5.2) en Bleu Breteuil (palette déjà mémorisée ci-dessus).
+          // Suivi informatique et Moi → Guides (v5.2) en Bleu élégant (palette déjà mémorisée ci-dessus).
           const adm = await nouvellePage(vp, "admin", { theme });
           await adm.page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
           await adm.page.goto(BASE + "#/suivi");
@@ -757,7 +762,7 @@ try {
       }
     }
 
-    /* ---------- v5.3.1 : glisser-déposer des fichiers dans la fenêtre (1280 px, crème puis Bleu Breteuil) ---------- */
+    /* ---------- v5.3.1 : glisser-déposer des fichiers dans la fenêtre (1280 px, crème puis Bleu élégant) ---------- */
     if (taille === "1280") for (const palette of ["creme", "bleu"]) {
       const { contexte, page, erreurs, journal } = await nouvellePage(vp, "collaborateur");
       if (palette === "bleu") await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
@@ -858,7 +863,7 @@ try {
       await contexte.close();
     }
   }
-  /* ---------- v5.4 Aide et demandes (Worker simulé) : 375 et 1280 px, crème et Bleu Breteuil ---------- */
+  /* ---------- v5.4 Aide et demandes (Worker simulé) : 375 et 1280 px, crème et Bleu élégant ---------- */
   for (const [taille, vp] of [["375", { width: 375, height: 812 }], ["1280", { width: 1280, height: 900 }]]) for (const palette of ["creme", "bleu"]) {
     const suffixe = `${palette}-${taille}`;
     const avecPalette = async (page) => { if (palette === "bleu") await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" }))); };
@@ -899,7 +904,7 @@ try {
       await page.waitForSelector("#aide-panneau[open] .aide-form");
       // Contexte joint, visible.
       assert.equal(await page.textContent('[data-ctx="ecran"]'), "Planning (#/planning)");
-      assert.equal(await page.textContent('[data-ctx="version"]'), "5.5.0");
+      assert.equal(await page.textContent('[data-ctx="version"]'), "5.7.0");
       assert.match(await page.textContent('[data-ctx="appareil"]'), /px$/);
       assert.deepEqual(await page.$$eval(".aide-type", (l) => l.map((b) => b.textContent.trim())), ["❓Question", "💬Avis", "✨Amélioration", "⚠️Problème"]);
       // Formulaire vide : erreurs claires, rien n'est envoyé.
@@ -917,11 +922,15 @@ try {
       const envoi = journal.find((j) => j.aide && j.methode === "POST" && j.chemin === "/breteuil/aide");
       assert.equal(envoi.auth, "Bearer maquette-id-token", "ID token envoyé au Worker");
       assert.deepEqual(JSON.parse(envoi.corps).type, "probleme");
-      assert.equal(JSON.parse(envoi.corps).ecran, "Planning (#/planning)"); assert.equal(JSON.parse(envoi.corps).version, "5.5.0");
+      assert.equal(JSON.parse(envoi.corps).ecran, "Planning (#/planning)"); assert.equal(JSON.parse(envoi.corps).version, "5.7.0");
       await capturer(page, `aide-envoyee-${suffixe}`);
       // Mes demandes : la réponse de Damien est signalée, le fil s'ouvre, la pastille disparaît.
       await page.click("text=Voir mes demandes");
       await page.waitForSelector('#aide-panneau .aide-carte[data-demande="11"]');
+      // v5.6 : « En cours » par défaut (la n° 9, résolue, est sous « Résolues » / « Toutes »), compteur sur chaque bouton.
+      assert.deepEqual(await page.$$eval("#aide-panneau .aide-carte", (l) => l.map((c) => c.dataset.demande)), ["12", "11"]);
+      assert.deepEqual(await page.$$eval("#aide-panneau [data-filtre-statut]", (l) => l.map((b) => b.textContent)), ["En cours2", "Résolues1", "Toutes3"]);
+      await page.click('#aide-panneau [data-filtre-statut=""]');
       assert.deepEqual(await page.$$eval("#aide-panneau .aide-carte", (l) => l.map((c) => c.dataset.demande)), ["12", "11", "9"]);
       assert.match(await page.textContent('#aide-panneau .aide-carte[data-demande="11"]'), /Nouvelle réponse/);
       assert.match(await page.textContent('#aide-panneau .aide-carte[data-demande="11"]'), /Répondue/);
@@ -945,6 +954,8 @@ try {
       await page.waitForSelector('[data-action="mes-demandes"]');
       assert.equal(await page.$$eval('[data-action="toutes-demandes"]', (l) => l.length), 0, "pas d'écran Demandes pour un client");
       await page.click('[data-action="mes-demandes"]');
+      await page.waitForSelector('.ecran [data-filtre-statut="resolue"]');
+      await page.click('.ecran [data-filtre-statut="resolue"]');
       await page.waitForSelector('.ecran a.aide-carte[data-demande="9"]');
       await calme(page);
       await controlesCommuns(page, `aide mes demandes ${suffixe}`);
@@ -978,8 +989,8 @@ try {
       await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 2);
       assert.ok(journal.some((j) => j.aide && j.chemin === "/breteuil/aide?personne=fmartin%40breteuil.fr"), "filtre par personne envoyé au Worker");
       await page.selectOption('[data-filtre="personne"]', "");
-      await page.click('[data-filtre-statut="nouvelle"]');
-      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 1);
+      await page.click('[data-filtre-statut="encours"]');
+      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 2);
       await calme(page);
       await controlesCommuns(page, `aide prestataire ${suffixe}`);
       await capturer(page, `aide-prestataire-${suffixe}`);
@@ -1039,4 +1050,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique (dont Projets à venir, crème et Bleu) et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px + Aide et demandes (crème et Bleu, 375 et 1280 px) (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique (dont Projets à venir, crème et Bleu) et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu élégant clair/sombre (375 px) + semaine à 320/375/414/768/1280 px + Aide et demandes (crème et Bleu, 375 et 1280 px) (${captures} captures).`);

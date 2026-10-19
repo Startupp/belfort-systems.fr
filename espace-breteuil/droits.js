@@ -207,6 +207,14 @@
         ["🚫", "Pas de connexion propre, pas de OneDrive, pas de Teams"],
       ],
     },
+    prestataire: {
+      nom: "Prestataire informatique", court: "Prestataire", emoji: "🛠️",
+      phrase: "Le compte du prestataire informatique : il sert à régler Microsoft 365 pour le Château.",
+      outils: [
+        ["🔑", "Régler les comptes, les licences et les adresses partagées"],
+        ["🚫", "Pas de licence : pas de mail ni d'Office à ce nom"],
+      ],
+    },
     aucune: {
       nom: "Sans licence", court: "Sans licence", emoji: "⚪",
       phrase: "Ce compte n'a aucun outil Microsoft pour l'instant.",
@@ -228,18 +236,73 @@
   var ORDRE = ["standard", "basic", "exchange"];
 
   /**
-   * Profil d'un compte. utilisateur : { userType, accountEnabled, assignedLicenses, mail }.
-   * skuNoms : { skuId: skuPartNumber }. boitesPartagees : adresses connues.
+   * Le compte figure-t-il dans une liste d'adresses ? Chaque entrée est une adresse complète
+   * (« jardins@breteuil.fr ») ou seulement la partie avant @ (« jardins »), sans tenir compte des
+   * majuscules ; comparée à l'adresse mail ET au nom de connexion (userPrincipalName).
    */
-  function profilDe(utilisateur, skuNoms, boitesPartagees) {
-    if (utilisateur.userType === "Guest" || /#ext#/i.test(utilisateur.userPrincipalName || "")) return "externe";
-    var adresse = minuscule(utilisateur.mail || utilisateur.userPrincipalName);
-    if ((boitesPartagees || []).map(minuscule).indexOf(adresse) > -1) return "boite";
+  function dansListe(utilisateur, liste) {
+    var adresses = [minuscule(utilisateur.mail), minuscule(utilisateur.userPrincipalName)].filter(Boolean);
+    if (!adresses.length) return false;
+    var locales = adresses.map(function (a) { return a.split("@")[0]; });
+    return (liste || []).some(function (e) {
+      e = minuscule(e);
+      if (!e) return false;
+      return e.indexOf("@") > -1 ? adresses.indexOf(e) > -1 : locales.indexOf(e) > -1;
+    });
+  }
+
+  /** Profil de licence seul (sans tenir compte des boîtes partagées) : standard, basic, exchange ou aucune. */
+  function licenceDe(utilisateur, skuNoms) {
     var profils = (utilisateur.assignedLicenses || []).map(function (l) { return SKUS[(skuNoms || {})[l.skuId]]; }).filter(Boolean);
     for (var i = 0; i < ORDRE.length; i++) if (profils.indexOf(ORDRE[i]) > -1) return ORDRE[i];
+    return "aucune";
+  }
+
+  /**
+   * Profil d'un compte. utilisateur : { userType, accountEnabled, assignedLicenses, mail, userPrincipalName,
+   * userPurpose? }. skuNoms : { skuId: skuPartNumber }. boitesPartagees : adresses (ou parties avant @)
+   * connues comme boîtes partagées. opts : { prestataires: adresses du prestataire informatique }.
+   *
+   * Une boîte partagée va TOUJOURS dans « boite », quelle que soit sa licence (des boîtes converties
+   * gardent parfois une licence d'essai), avant comme après le retrait des licences. Repérée par :
+   *   a) userPurpose === "shared" (réglages de la boîte Exchange, lus seulement si la permission
+   *      MailboxSettings.Read est accordée) ;
+   *   b) la liste connue (config.js « boitesPartagees ») ;
+   *   c) l'indice historique : aucune licence, connexion bloquée et une adresse mail.
+   */
+  function profilDe(utilisateur, skuNoms, boitesPartagees, opts) {
+    opts = opts || {};
+    if (utilisateur.userType === "Guest" || /#ext#/i.test(utilisateur.userPrincipalName || "")) return "externe";
+    if (minuscule(utilisateur.userPurpose) === "shared") return "boite";
+    if (dansListe(utilisateur, boitesPartagees)) return "boite";
+    if (dansListe(utilisateur, opts.prestataires)) return "prestataire";
+    var licence = licenceDe(utilisateur, skuNoms);
+    if (licence !== "aucune") return licence;
     // Sans licence et sans connexion possible : très probablement une boîte partagée.
     if (!(utilisateur.assignedLicenses || []).length && utilisateur.accountEnabled === false && utilisateur.mail) return "boite";
     return "aucune";
+  }
+
+  /**
+   * Noms affichés en double (deux « Valérie ») : renvoie { id: partie avant @ } pour chaque compte
+   * dont le nom affiché est partagé avec un autre, afin de les distinguer. liste : [{ id, displayName, mail, userPrincipalName }].
+   * nomDe(x) : le libellé réellement affiché (par défaut displayName ; l'écran « Qui fait quoi » montre le prénom).
+   */
+  function distinguerHomonymes(liste, nomDe) {
+    var parNom = {}, out = {};
+    nomDe = nomDe || function (x) { return x.displayName; };
+    (liste || []).forEach(function (x) {
+      var n = minuscule(nomDe(x));
+      if (n) (parNom[n] = parNom[n] || []).push(x);
+    });
+    Object.keys(parNom).forEach(function (n) {
+      if (parNom[n].length < 2) return;
+      parNom[n].forEach(function (x) {
+        var a = String(x.mail || x.userPrincipalName || "");
+        if (a && x.id != null) out[x.id] = a.split("@")[0];
+      });
+    });
+    return out;
   }
 
   /** Décompte des licences : [{ profil, nom, achetees, attribuees, libres }]. */
@@ -336,7 +399,7 @@
     NIVEAUX: NIVEAUX, TYPES: TYPES, PROFILS: PROFILS, SKUS: SKUS,
     niveauDeRoles: niveauDeRoles, typeDe: typeDe, adresseDe: adresseDe, estProtege: estProtege, nomGroupe: nomGroupe,
     planReserve: planReserve, phraseReserve: phraseReserve, obligatoiresReserve: obligatoiresReserve, listeNoms: listeNoms,
-    profilDe: profilDe, compteLicences: compteLicences, PLANS: PLANS, outilsDesPlans: outilsDesPlans, logonName: logonName, nomDossierValide: nomDossierValide,
+    profilDe: profilDe, licenceDe: licenceDe, dansListe: dansListe, distinguerHomonymes: distinguerHomonymes, compteLicences: compteLicences, PLANS: PLANS, outilsDesPlans: outilsDesPlans, logonName: logonName, nomDossierValide: nomDossierValide,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.EBDroits = api;

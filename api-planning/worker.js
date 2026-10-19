@@ -8,6 +8,8 @@
 // Tests : node api-planning/worker.test.mjs
 // Aide : liaisons AIDE_DB (D1) et AIDE_MAIL (envoi d'e-mails), variables AIDE_TENANT_ID, AIDE_CLIENT_ID,
 // AIDE_EXPEDITEUR, AIDE_DESTINATAIRE, AIDE_PRESTATAIRES, secret AIDE_SECRET — voir docs/AIDE-INSTALLATION.md.
+// v5.6 : mail à Damien en HTML (+ texte brut de secours) ; pièces jointes si la liaison KV AIDE_PJ existe
+// (sinon tout le reste marche, le bouton 📎 est caché) ; variable facultative AIDE_SIGNATURE (signature retirée des réponses).
 import { EmailMessage } from "cloudflare:email";
 const ORIGINES = ["https://espace-breteuil.pages.dev", "https://belfort-systems.fr", "https://breteuil.belfort-systems.fr"];
 const TTL_S = 600; // fraîcheur : 10 min
@@ -19,7 +21,7 @@ function cors(origine) {
     "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Max-Age": "600",
-    "Access-Control-Expose-Headers": "X-Planning-Etat, X-Planning-Date",
+    "Access-Control-Expose-Headers": "X-Planning-Etat, X-Planning-Date, Content-Disposition",
     "Vary": "Origin",
   };
 }
@@ -223,7 +225,7 @@ const AIDE_LIMITE_HEURE = 10;        // demandes par heure et par personne
 const AIDE_MESSAGES_HEURE = 40;      // messages par heure et par personne (garde-fou)
 const AIDE_TOLERANCE_S = 300;        // horloges : 5 min de tolérance (exp / nbf)
 const AIDE_CLES_TTL_MS = 6 * 3600 * 1000;
-const AIDE_RAW_MAX = 2 * 1024 * 1024; // mail entrant : 2 Mo au plus
+const AIDE_RAW_MAX = 25 * 1024 * 1024; // mail entrant : 25 Mo au plus (limite d'Email Routing ; pièces jointes comprises)
 let aideTablesPretes = null;          // base partagée par isolat : tables créées une fois
 let aideCles = null;                  // { tenant, quand, issuer, cles: Map(kid → CryptoKey) }
 
@@ -304,9 +306,26 @@ async function tables(db) {
     db.prepare("CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY, demande_id INTEGER, cree TEXT, auteur TEXT, texte TEXT, origine TEXT)"),
     db.prepare("CREATE INDEX IF NOT EXISTS demandes_oid ON demandes(oid, cree)"),
     db.prepare("CREATE INDEX IF NOT EXISTS messages_demande ON messages(demande_id, id)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS pieces_jointes(id INTEGER PRIMARY KEY, demande_id INTEGER, message_id INTEGER, nom TEXT, type TEXT, taille INTEGER, cle TEXT, cree_le TEXT, auteur TEXT)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS pj_demande ON pieces_jointes(demande_id, id)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS pj_quota ON pieces_jointes(cree_le, auteur)"),
   ]);
+  await migrer(db);
   aideTablesPretes = { db };
 }
+/**
+ * Migration douce (v5.6, requalification) : colonnes ajoutées si absentes, données gardées.
+ *   facturable : NULL = selon le type (Problème → oui), 0/1 = choisi par le prestataire ; minutes : temps passé.
+ */
+export async function migrer(db) {
+  const cols = ((await db.prepare("PRAGMA table_info(demandes)").all()).results || []).map((c) => c.name);
+  const aFaire = [];
+  if (!cols.includes("facturable")) aFaire.push("ALTER TABLE demandes ADD COLUMN facturable INTEGER");
+  if (!cols.includes("minutes")) aFaire.push("ALTER TABLE demandes ADD COLUMN minutes INTEGER DEFAULT 0");
+  for (const sql of aFaire) await db.prepare(sql).run();
+  return aFaire.length;
+}
+export const estFacturable = (d) => d.facturable == null ? d.type === "probleme" : !!d.facturable;
 const iso = (ms) => new Date(ms).toISOString();
 
 /* ---------- Mail sortant : petit constructeur MIME (texte UTF-8, en-têtes RFC 2047) ---------- */
@@ -331,9 +350,21 @@ export function enTete(valeur) {
 function adresseNommee(nom, adresse) { return nom ? enTete(String(nom).replace(/["\\<>]/g, "")) + " <" + adresse + ">" : "<" + adresse + ">"; }
 export function domaineDe(adresse) { return String(adresse || "").split("@")[1]?.trim().toLowerCase() || ""; }
 
-/** Message MIME complet (texte brut UTF-8 en base64). */
-export function construireMime({ de, nomDe, a, repondreA, sujet, texte, messageId, references, date }) {
-  const corps = b64(new TextEncoder().encode(String(texte).replace(/\r?\n/g, "\r\n"))).replace(/.{76}(?=.)/g, "$&\r\n");
+/** Corps encodé en base64 (RFC 2045 : lignes de 76 caractères au plus, fins de ligne CRLF). */
+function base64Lignes(texte) { return b64(new TextEncoder().encode(String(texte).replace(/\r?\n/g, "\r\n"))).replace(/.{76}(?=.)/g, "$&\r\n"); }
+
+/**
+ * Message MIME complet. Sans `html` : texte brut UTF-8 en base64 (comme avant).
+ * Avec `html` : multipart/alternative — texte brut d'abord (secours), puis HTML (base64 tous les deux).
+ */
+export function construireMime({ de, nomDe, a, repondreA, sujet, texte, html, messageId, references, date }) {
+  const borne = html ? "=_eb_" + crypto.randomUUID().replace(/-/g, "") : null; // « =_ » n'apparaît jamais en base64
+  const corps = html
+    ? "Ce message est au format MIME (texte et HTML).\r\n\r\n" +
+      "--" + borne + "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" + base64Lignes(texte) + "\r\n" +
+      "--" + borne + "\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" + base64Lignes(html) + "\r\n" +
+      "--" + borne + "--"
+    : base64Lignes(texte);
   const l = [
     "From: " + adresseNommee(nomDe, de),
     "To: <" + a + ">",
@@ -344,11 +375,219 @@ export function construireMime({ de, nomDe, a, repondreA, sujet, texte, messageI
     references ? "References: <" + references + ">" : null,
     references ? "In-Reply-To: <" + references + ">" : null,
     "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding: base64",
+    ...(html ? ['Content-Type: multipart/alternative;\r\n boundary="' + borne + '"'] : ["Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64"]),
   ].filter(Boolean);
   return l.join("\r\n") + "\r\n\r\n" + corps + "\r\n";
 }
+
+/* ---------- Mail HTML à Damien (tableaux + styles en ligne : Gmail, Outlook, Apple Mail) ---------- */
+/** Échappe TOUT contenu venu d'un utilisateur avant de l'insérer dans le HTML. */
+export function echapperHtml(t) {
+  return String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+const AIDE_COULEURS = { // texte / fond de la pastille du type (contraste ≥ 4,5:1)
+  question: ["#1F4F7A", "#E2ECF7"], avis: ["#2D6142", "#E1F0E6"], amelioration: ["#7A5410", "#F6EAD0"], probleme: ["#9E2A20", "#F9E1DE"],
+};
+export function tailleLisible(n) {
+  n = Number(n) || 0;
+  if (n < 1024) return n + " o";
+  if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + " Ko";
+  return (Math.round(n / 1024 / 1024 * 10) / 10).toString().replace(".", ",") + " Mo";
+}
+function dateFr(ms) {
+  try { return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(ms)); }
+  catch { return new Date(ms).toISOString().slice(0, 16).replace("T", " ") + " UTC"; }
+}
+
+/**
+ * Mail HTML d'une demande (nouvelle ou nouveau message). Tout texte utilisateur est échappé.
+ * p : { id, type, nom, adresse, ecran, version, appareil, date (ms), texte, premier, lien, pj: [{ nom, taille, lien }], ignorees: [texte] }
+ */
+export function htmlMail(p) {
+  const e = echapperHtml, type = AIDE_TYPES[p.type] || "Demande", [coulT, coulF] = AIDE_COULEURS[p.type] || ["#5B3833", "#F3E9DF"];
+  const POL = "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
+  const SERIF = "font-family:Georgia,'Times New Roman',serif;";
+  const titre = p.premier ? "Nouvelle demande" : "Nouveau message sur la demande n°" + p.id;
+  // Espace insécable autour de « » et avant : ; ! ? (un signe ne tombe jamais seul en début de ligne).
+  const insecable = (t) => t.replace(/« /g, "«&nbsp;").replace(/ ([»:;!?])/g, "&nbsp;$1");
+  const texte = insecable(e(p.texte || "")).replace(/\r?\n/g, "<br>");
+  const extrait = e(ligneCourte(p.texte || "", 110));
+  const ligneMeta = (k, v) => `<tr><td class="eb-doux" style="${POL}padding:6px 12px 6px 0;font-size:13px;color:#7A6458;white-space:nowrap;vertical-align:top;">${k}</td>` +
+    `<td class="eb-texte" style="${POL}padding:6px 0;font-size:13px;color:#2B1F1B;word-break:break-word;">${e(v || "—")}</td></tr>`;
+  const pj = (p.pj || []).map((f) => `<tr><td style="padding:0 0 8px 0;">` +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="eb-carte-pj" style="border:1px solid #E6D9C6;border-radius:8px;background:#FFFFFF;"><tr>` +
+    `<td style="${POL}padding:10px 12px;font-size:14px;color:#2B1F1B;word-break:break-all;" class="eb-texte">📎&nbsp;<b>${e(f.nom)}</b> <span class="eb-doux" style="color:#7A6458;font-size:12px;white-space:nowrap;">${e(tailleLisible(f.taille))}</span></td>` +
+    `<td align="right" style="${POL}padding:10px 12px;font-size:13px;white-space:nowrap;"><a href="${e(f.lien)}" class="eb-lien" style="color:#8A6A1F;font-weight:700;text-decoration:underline;">Ouvrir</a></td>` +
+    `</tr></table></td></tr>`).join("");
+  const ignorees = (p.ignorees || []).map((t) => `<tr><td class="eb-doux" style="${POL}padding:0 0 6px 0;font-size:12px;color:#7A6458;">${e(t)}</td></tr>`).join("");
+  return `<!DOCTYPE html>
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>${e(type)} · Demande n°${e(p.id)}</title>
+<style>
+  @media (prefers-color-scheme: dark) {
+    .eb-fond { background:#1C1513 !important; }
+    .eb-carte, .eb-carte-pj { background:#2A201D !important; border-color:#4A3A33 !important; }
+    .eb-citation { background:#231A17 !important; }
+    .eb-texte { color:#F3EAE0 !important; }
+    .eb-doux { color:#C9B8AA !important; }
+    .eb-lien { color:#E2BE6E !important; }
+    .eb-trait { border-color:#4A3A33 !important; }
+    td.eb-bouton, a.eb-bouton { background:#C9A04A !important; color:#2B1F1B !important; }
+  }
+  @media (max-width: 480px) { .eb-pad { padding-left:18px !important; padding-right:18px !important; } }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#FBF6EE;" class="eb-fond">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#FBF6EE;">${extrait}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FBF6EE" class="eb-fond" style="background:#FBF6EE;">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+<tr><td bgcolor="#5B3833" style="background:#5B3833;border-radius:12px 12px 0 0;padding:20px 28px;" class="eb-pad">
+  <div style="${SERIF}font-size:20px;line-height:1.3;color:#FBF6EE;"><span style="color:#E2BE6E;">Espace Breteuil</span> · Demande n°${e(p.id)}</div>
+  <div style="${POL}font-size:13px;line-height:1.4;color:#EADBC8;padding-top:4px;">${e(titre)}</div>
+</td></tr>
+<tr><td bgcolor="#C9A04A" style="background:#C9A04A;height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
+<tr><td bgcolor="#FFFFFF" class="eb-carte eb-pad" style="background:#FFFFFF;border:1px solid #E6D9C6;border-top:0;border-radius:0 0 12px 12px;padding:24px 28px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td bgcolor="${coulF}" style="background:${coulF};border-radius:99px;padding:5px 12px;${POL}font-size:13px;font-weight:700;color:${coulT};">${e(type)}</td>
+  </tr></table>
+  <div class="eb-texte" style="${POL}font-size:17px;font-weight:700;color:#2B1F1B;padding-top:14px;">${e(p.nom)}</div>
+  <div class="eb-doux" style="${POL}font-size:14px;color:#7A6458;padding-top:2px;word-break:break-all;">${e(p.adresse)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;"><tr>
+    <td class="eb-citation eb-texte" bgcolor="#FBF6EE" style="background:#FBF6EE;border-left:4px solid #C9A04A;border-radius:0 8px 8px 0;padding:14px 16px;${POL}font-size:15px;line-height:1.55;color:#2B1F1B;word-break:break-word;">${texte || "<i>(pièce jointe seule)</i>"}</td>
+  </tr></table>
+  ${pj || ignorees ? `<div class="eb-texte" style="${POL}font-size:14px;font-weight:700;color:#2B1F1B;padding:20px 0 8px;">Pièces jointes</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${pj}${ignorees}</table>` : ""}
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="eb-trait" style="margin-top:18px;border-top:1px solid #EFE4D4;width:100%;">
+    ${ligneMeta("Écran", p.ecran)}${ligneMeta("Version", p.version)}${ligneMeta("Appareil", p.appareil)}${ligneMeta("Date", dateFr(p.date || Date.now()))}
+  </table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;"><tr><td align="center">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td bgcolor="#5B3833" class="eb-bouton" style="background:#5B3833;border-radius:8px;">
+        <a href="${e(p.lien)}" class="eb-bouton" style="display:inline-block;padding:14px 32px;${POL}font-size:16px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:8px;">Ouvrir la demande</a>
+      </td>
+    </tr></table>
+  </td></tr></table>
+</td></tr>
+<tr><td class="eb-doux" style="${POL}padding:18px 12px 0;font-size:13px;line-height:1.5;color:#7A6458;text-align:center;">
+  Répondez simplement à ce mail&nbsp;: votre réponse s'ajoute à la demande.
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+/* ---------- Pièces jointes (v5.6) : Workers KV « AIDE_PJ », index dans D1 « pieces_jointes » ---------- */
+const PJ_MAX = 5;                       // fichiers par message
+const PJ_TAILLE = 8 * 1024 * 1024;      // 8 Mo par fichier
+const PJ_SIGNATURE = 5 * 1024;          // mail entrant : image « inline » plus petite = logo de signature, ignorée
+const PJ_PERSONNE_JOUR = 40;            // fichiers par personne et par 24 h (hors prestataire)
+const PJ_JOUR = 900;                    // tous comptes : KV gratuit = 1000 écritures par jour (marge)
+const PJ_TYPES = {
+  jpg: { type: "image/jpeg", inline: true, image: true }, png: { type: "image/png", inline: true, image: true },
+  webp: { type: "image/webp", inline: true, image: true }, heic: { type: "image/heic", inline: false },
+  pdf: { type: "application/pdf", inline: true },
+  docx: { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", inline: false, dossier: "word/" },
+  xlsx: { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", inline: false, dossier: "xl/" },
+  pptx: { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation", inline: false, dossier: "ppt/" },
+  txt: { type: "text/plain; charset=utf-8", inline: false },
+};
+const pjOk = (env) => !!(env && env.AIDE_PJ && typeof env.AIDE_PJ.put === "function");
+const ascii = (o, debut, fin) => String.fromCharCode(...o.subarray(debut, fin));
+function extension(nom) { const m = /\.([a-z0-9]{1,5})$/i.exec(String(nom || "")); return m ? m[1].toLowerCase() : ""; }
+
+/**
+ * Type RÉEL d'un fichier, d'après ses premiers octets (« nombres magiques »), jamais d'après le nom seul.
+ * → { ext, type, inline, image } ou null (type refusé). Le nom ne sert qu'à distinguer docx/xlsx/pptx (tous des ZIP)
+ * et le texte brut (sans signature) ; l'archive doit alors contenir le bon dossier (word/, xl/, ppt/).
+ */
+export function typeFichier(octets, nom) {
+  const o = octets instanceof Uint8Array ? octets : new Uint8Array(octets || []), n = o.length, ext = extension(nom);
+  const r = (e) => ({ ext: e, ...PJ_TYPES[e] });
+  if (n >= 3 && o[0] === 0xff && o[1] === 0xd8 && o[2] === 0xff) return r("jpg");
+  if (n >= 8 && ascii(o, 0, 8) === "\x89PNG\r\n\x1a\n") return r("png");
+  if (n >= 12 && ascii(o, 0, 4) === "RIFF" && ascii(o, 8, 12) === "WEBP") return r("webp");
+  if (n >= 12 && ascii(o, 4, 8) === "ftyp" && /^(heic|heix|hevc|hevx|heim|heis|hevm|hevs|mif1|msf1)$/.test(ascii(o, 8, 12))) return r("heic");
+  if (n >= 5 && ascii(o, 0, 5) === "%PDF-") return r("pdf");
+  if (n >= 4 && ascii(o, 0, 4) === "PK\x03\x04") {
+    if (!["docx", "xlsx", "pptx"].includes(ext)) return null;
+    // Le répertoire central (fin du ZIP) liste tous les noms : on y cherche « word/ », « xl/ » ou « ppt/ ».
+    const fin = new TextDecoder("latin1").decode(o.subarray(Math.max(0, n - 65536)));
+    return fin.includes(PJ_TYPES[ext].dossier) && fin.includes("[Content_Types].xml") ? r(ext) : null;
+  }
+  if (ext === "txt" && n > 0) {
+    const debut = o.subarray(0, 8192);
+    if (debut.includes(0)) return null; // octet nul : pas du texte
+    try { new TextDecoder("utf-8", { fatal: true }).decode(o.subarray(0, 65536), { stream: true }); return r("txt"); }
+    catch { return { ...r("txt"), type: "text/plain; charset=windows-1252" }; }
+  }
+  return null;
+}
+/** Nom de fichier sûr : sans chemin ni caractère de contrôle, 100 caractères au plus, extension = type réel. */
+export function nomFichier(nom, ext) {
+  let s = String(nom == null ? "" : nom).split(/[\\/]/).pop().normalize("NFC")
+    .replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069"<>|:*?]/g, "").replace(/\s+/g, " ").trim().replace(/^\.+/, "");
+  if (ext) {
+    const actuelle = extension(s), equiv = { jpeg: "jpg", jpe: "jpg", heif: "heic" }, connue = Object.hasOwn(PJ_TYPES, actuelle) || Object.hasOwn(equiv, actuelle);
+    if ((equiv[actuelle] || actuelle) !== ext) s = (connue ? s.slice(0, -actuelle.length - 1) : s) + "." + ext; // « photo.png » en vrai JPEG → « photo.jpg »
+  }
+  if (!s || s === "." + ext) s = "fichier" + (ext ? "." + ext : "");
+  if (s.length > 100) { const e = extension(s); s = s.slice(0, 100 - (e ? e.length + 1 : 0)).trim() + (e ? "." + e : ""); }
+  return s;
+}
+/** En-tête Content-Disposition (RFC 6266 : filename ASCII de secours + filename* UTF-8). */
+export function disposition(nom, inline) {
+  const secours = String(nom).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x20-\x7e]|["\\]/g, "_");
+  const utf8 = encodeURIComponent(nom).replace(/['()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
+  return (inline ? "inline" : "attachment") + '; filename="' + secours + "\"; filename*=UTF-8''" + utf8;
+}
+/** Contrôle d'une liste de fichiers {nom, octets} → { ok: [{nom, octets, t}], erreur?: {code, erreur} }. */
+export function controlerFichiers(fichiers) {
+  if (fichiers.length > PJ_MAX) return { erreur: { code: "trop_de_fichiers", erreur: PJ_MAX + " fichiers au plus par message." } };
+  const ok = [];
+  for (const f of fichiers) {
+    if (f.octets.length > PJ_TAILLE) return { erreur: { code: "fichier_trop_lourd", erreur: "« " + nomFichier(f.nom) + " » est trop lourd (8 Mo au plus)." } };
+    if (!f.octets.length) return { erreur: { code: "fichier_vide", erreur: "« " + nomFichier(f.nom) + " » est vide." } };
+    const t = typeFichier(f.octets, f.nom);
+    if (!t) return { erreur: { code: "type_fichier", erreur: "« " + nomFichier(f.nom) + " » : type de fichier non accepté (photos, PDF, Word, Excel, PowerPoint, texte)." } };
+    ok.push({ nom: nomFichier(f.nom, t.ext), octets: f.octets, t });
+  }
+  return { ok };
+}
+/** Quota de pièces jointes : par personne (24 h) et pour tout le compte (écritures KV gratuites). */
+async function quotaPj(db, oid, nombre, prestataire) {
+  if (!nombre) return null;
+  const depuis = iso(Date.now() - 86400000);
+  const tous = await db.prepare("SELECT COUNT(*) AS n FROM pieces_jointes WHERE cree_le > ?").bind(depuis).first();
+  if (tous && tous.n + nombre > PJ_JOUR) return { code: "quota_pj", erreur: "Limite du jour atteinte pour les pièces jointes. Réessayez demain." };
+  if (prestataire || !oid) return null;
+  const moi = await db.prepare("SELECT COUNT(*) AS n FROM pieces_jointes WHERE auteur = ? AND cree_le > ?").bind(oid, depuis).first();
+  if (moi && moi.n + nombre > PJ_PERSONNE_JOUR) return { code: "trop_de_pj", erreur: "Beaucoup de pièces jointes aujourd'hui : réessayez demain." };
+  return null;
+}
+/** Enregistre les fichiers contrôlés : octets dans KV (pj/<demande>/<uuid>), ligne dans D1. → [{id, nom, type, taille}] */
+async function stockerPj(env, demandeId, messageId, fichiers, auteur) {
+  const faits = [], echecs = [];
+  for (const f of fichiers) {
+    const cle = "pj/" + demandeId + "/" + crypto.randomUUID(), cree = iso(Date.now());
+    try {
+      await env.AIDE_PJ.put(cle, f.octets, { metadata: { nom: f.nom, type: f.t.type, taille: f.octets.length, auteur, date: cree } });
+      const r = await env.AIDE_DB.prepare("INSERT INTO pieces_jointes(demande_id, message_id, nom, type, taille, cle, cree_le, auteur) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id")
+        .bind(demandeId, messageId, f.nom, f.t.type, f.octets.length, cle, cree, auteur).first();
+      faits.push({ id: r.id, nom: f.nom, type: f.t.type, taille: f.octets.length });
+    } catch (e) { console.error("Aide, pièce jointe :", e && e.message); echecs.push("Pièce jointe non enregistrée : " + f.nom); }
+  }
+  return { faits, echecs };
+}
+const vuePj = (p) => ({ id: p.id, nom: p.nom, type: p.type, taille: p.taille, apercu: /^image\/(jpeg|png|webp)$/.test(p.type) });
 
 async function hmacHex(secret, texte) {
   const cle = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(secret)), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
@@ -358,13 +597,15 @@ async function hmacHex(secret, texte) {
 export async function signature(secret, id) { return (await hmacHex(secret, "demande-" + id)).slice(0, 12); }
 function egal(a, b) { a = String(a); b = String(b); if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
 export function sujetDemande(type, id) { return "Application Breteuil - Retour client - " + (AIDE_TYPES[type] || "Question") + " - n°" + id; }
-function lienAppli(env, id) { return String(env.AIDE_APPLI_URL || "https://espace-breteuil.pages.dev/").replace(/#.*$/, "").replace(/\/?$/, "/") + "#/aide/" + id; }
+function lienAppli(env, id, pjId) { return String(env.AIDE_APPLI_URL || "https://espace-breteuil.pages.dev/").replace(/#.*$/, "").replace(/\/?$/, "/") + "#/aide/" + id + (pjId ? "/pj/" + pjId : ""); }
 
-async function envoyerMail(env, d, texte, premier) {
+async function envoyerMail(env, d, texte, premier, pj = [], ignorees = []) {
   const domaine = domaineDe(env.AIDE_EXPEDITEUR);
   // « demande+<n°>-<signature>@… » : une seule règle Email Routing « demande@… → Worker » suffit
   // (sous-adressage « + » ; les règles « catch-all » n'existent que sur le domaine principal).
   const repondreA = "demande+" + d.id + "-" + (await signature(env.AIDE_SECRET, d.id)) + "@" + domaine;
+  // Pièces jointes : listées avec un lien vers l'appli, jamais jointes au mail (mail léger, accès contrôlé).
+  const listePj = pj.map((f) => ({ nom: f.nom, taille: f.taille, lien: lienAppli(env, d.id, f.id) }));
   const corps = [
     (premier ? "Nouvelle demande n°" : "Nouveau message sur la demande n°") + d.id + " — " + (AIDE_TYPES[d.type] || d.type),
     "",
@@ -375,29 +616,57 @@ async function envoyerMail(env, d, texte, premier) {
     "Appareil : " + (d.appareil || "—"),
     "",
     "Message :",
-    texte,
+    texte || "(pièce jointe seule)",
+    ...(listePj.length || ignorees.length ? ["", "Pièces jointes :", ...listePj.map((f) => "- " + f.nom + " (" + tailleLisible(f.taille) + ") : " + f.lien), ...ignorees.map((t) => "- " + t)] : []),
     "",
     "Voir la demande dans l'appli : " + lienAppli(env, d.id),
     "",
     "Pour répondre : répondez simplement à ce mail. Votre réponse s'ajoute au fil de la demande (la citation est retirée).",
   ].join("\n");
+  const html = htmlMail({ id: d.id, type: d.type, nom: d.nom, adresse: d.adresse, ecran: d.ecran, version: d.version, appareil: d.appareil,
+    date: Date.now(), texte, premier, lien: lienAppli(env, d.id), pj: listePj, ignorees });
   const mime = construireMime({
     de: env.AIDE_EXPEDITEUR, nomDe: "Espace Breteuil", a: env.AIDE_DESTINATAIRE, repondreA,
-    sujet: sujetDemande(d.type, d.id), texte: corps,
+    sujet: sujetDemande(d.type, d.id), texte: corps, html,
     messageId: "demande-" + d.id + "-" + crypto.randomUUID() + "@" + domaine, references: "demande-" + d.id + "@" + domaine,
   });
   await env.AIDE_MAIL.send(new EmailMessage(env.AIDE_EXPEDITEUR, env.AIDE_DESTINATAIRE, mime));
 }
-async function essayerMail(env, d, texte, premier) {
-  try { await envoyerMail(env, d, texte, premier); return true; }
+async function essayerMail(env, d, texte, premier, pj, ignorees) {
+  try { await envoyerMail(env, d, texte, premier, pj, ignorees); return true; }
   catch (e) { console.error("Aide, mail sortant :", e && e.message); return false; }
 }
 
 /* ---------- Routes HTTP ---------- */
 function vueDemande(r, moi, prestataire) {
-  return { id: r.id, cree: r.cree, type: r.type, statut: r.statut, nom: r.nom, adresse: r.adresse, ecran: r.ecran, version: r.version, appareil: r.appareil,
+  // « facturable » et le temps passé : réservés au prestataire (jamais envoyés au demandeur).
+  const presta = prestataire ? { facturable: estFacturable(r), facturableChoisi: r.facturable != null, minutes: r.minutes || 0 } : {};
+  return { ...presta, id: r.id, cree: r.cree, type: r.type, statut: r.statut, nom: r.nom, adresse: r.adresse, ecran: r.ecran, version: r.version, appareil: r.appareil,
     nonLu: !prestataire && r.oid === moi.oid && r.lu_par_demandeur === 0, dernier: r.dernier || r.cree, nbMessages: r.nb || 0,
     extrait: r.extrait != null ? ligneCourte(r.extrait, 140) : undefined, dernierAuteur: r.dernier_auteur || undefined };
+}
+/**
+ * Corps d'un envoi : JSON (sans fichier, comme avant) ou multipart/form-data (v5.6) avec un champ « donnees »
+ * (le même JSON) et jusqu'à 5 champs « fichier ». → { c, fichiers: [{ nom, octets }] }
+ */
+async function lireEnvoi(req) {
+  if (!/^multipart\/form-data/i.test(req.headers.get("Content-Type") || "")) return { c: await lireCorps(req), fichiers: [] };
+  const longueur = Number(req.headers.get("Content-Length") || 0);
+  if (longueur > PJ_MAX * PJ_TAILLE + 1024 * 1024) throw Object.assign(new Error("trop lourd"), { statut: 413 });
+  let fd;
+  try { fd = await req.formData(); } catch { throw Object.assign(new Error("multipart invalide"), { statut: 400 }); }
+  const brut = fd.get("donnees");
+  if (typeof brut !== "string" || brut.length > 20000) throw Object.assign(new Error("donnees"), { statut: 400 });
+  let c;
+  try { c = JSON.parse(brut || "{}"); } catch { c = null; }
+  if (!c || typeof c !== "object" || Array.isArray(c)) throw Object.assign(new Error("JSON invalide"), { statut: 400 });
+  const fichiers = [];
+  for (const f of fd.getAll("fichier")) {
+    if (!f || typeof f === "string" || typeof f.arrayBuffer !== "function") continue;
+    if (fichiers.length >= PJ_MAX) { fichiers.push({ nom: f.name, octets: new Uint8Array(0) }); break; } // compté, refusé plus loin
+    fichiers.push({ nom: f.name, octets: f.size > PJ_TAILLE ? new Uint8Array(PJ_TAILLE + 1) : new Uint8Array(await f.arrayBuffer()) });
+  }
+  return { c, fichiers };
 }
 async function lireCorps(req) {
   const t = await req.text();
@@ -409,6 +678,71 @@ async function demandeAccessible(db, id, moi, prestataire) {
   const d = await db.prepare("SELECT * FROM demandes WHERE id = ?").bind(id).first();
   if (!d || (!prestataire && d.oid !== moi.oid)) return null; // 404 dans les deux cas : on ne révèle rien
   return d;
+}
+
+/* ---------- Statistiques (prestataire) ---------- */
+const FMT_PARIS = (() => { try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit" }); } catch { return null; } })();
+/** « AAAA-MM » d'un instant, à l'heure de Paris. */
+export function moisParis(ms) {
+  if (FMT_PARIS) { const p = FMT_PARIS.formatToParts(new Date(ms)); return p.find((x) => x.type === "year").value + "-" + p.find((x) => x.type === "month").value; }
+  return new Date(ms).toISOString().slice(0, 7);
+}
+function decalerMois(mois, n) { const [y, m] = mois.split("-").map(Number), t = new Date(Date.UTC(y, m - 1 + n, 1)); return t.getUTCFullYear() + "-" + String(t.getUTCMonth() + 1).padStart(2, "0"); }
+/**
+ * Agrégats d'un mois (et des 5 précédents pour l'évolution) à partir des lignes de « demandes »
+ * { id, cree, nom, adresse, type, statut, facturable, minutes, premiere_reponse, extrait }.
+ */
+export function statsAide(lignes, mois, maintenant = Date.now()) {
+  const courant = moisParis(maintenant);
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(mois || "")) || mois > courant) mois = courant;
+  const avecMois = lignes.map((l) => ({ ...l, mois: moisParis(Date.parse(l.cree)), fact: estFacturable(l), minutes: Number(l.minutes) || 0 }));
+  const du = avecMois.filter((l) => l.mois === mois);
+  const delais = du.filter((l) => l.premiere_reponse).map((l) => (Date.parse(l.premiere_reponse) - Date.parse(l.cree)) / 60000).filter((x) => x >= 0);
+  const personnes = new Map();
+  for (const l of du) {
+    const k = String(l.adresse || l.nom).toLowerCase();
+    const p = personnes.get(k) || { nom: l.nom, adresse: l.adresse, demandes: 0, facturables: 0, minutes: 0 };
+    p.demandes++; if (l.fact) { p.facturables++; p.minutes += l.minutes; }
+    personnes.set(k, p);
+  }
+  const evolution = [];
+  for (let i = 5; i >= 0; i--) {
+    const mm = decalerMois(mois, -i), x = avecMois.filter((l) => l.mois === mm);
+    evolution.push({ mois: mm, total: x.length, problemesFacturables: x.filter((l) => l.type === "probleme" && l.fact).length });
+  }
+  return {
+    mois, precedent: decalerMois(mois, -1), suivant: mois < courant ? decalerMois(mois, 1) : null,
+    tuiles: {
+      demandes: du.length, problemes: du.filter((l) => l.type === "probleme").length, facturables: du.filter((l) => l.fact).length,
+      minutesFacturables: du.filter((l) => l.fact).reduce((a, l) => a + l.minutes, 0),
+      delaiMoyenMinutes: delais.length ? Math.round(delais.reduce((a, b) => a + b, 0) / delais.length) : null,
+      enCours: du.filter((l) => l.statut !== "resolue").length,
+    },
+    parType: Object.keys(AIDE_TYPES).map((t) => ({ type: t, libelle: AIDE_TYPES[t], demandes: du.filter((l) => l.type === t).length })),
+    parPersonne: [...personnes.values()].sort((a, b) => b.demandes - a.demandes || b.minutes - a.minutes || String(a.nom).localeCompare(String(b.nom), "fr")),
+    evolution,
+    lignes: du.map((l) => ({ id: l.id, cree: l.cree, nom: l.nom, adresse: l.adresse, type: l.type, statut: l.statut, facturable: l.fact, minutes: l.minutes, extrait: ligneCourte(l.extrait || "", 140) })),
+  };
+}
+async function statsDepuisBase(db, mois) {
+  const m = /^\d{4}-(0[1-9]|1[0-2])$/.test(String(mois || "")) ? mois : moisParis(Date.now());
+  const [y, mo] = m.split("-").map(Number);
+  const depuis = iso(Date.UTC(y, mo - 1 - 5, 1) - 2 * 86400000); // 6 mois (+ marge pour l'heure de Paris)
+  const r = await db.prepare("SELECT d.id, d.cree, d.nom, d.adresse, d.type, d.statut, d.facturable, d.minutes, " +
+    "(SELECT MIN(cree) FROM messages WHERE demande_id = d.id AND auteur = 'prestataire') AS premiere_reponse, " +
+    "(SELECT texte FROM messages WHERE demande_id = d.id ORDER BY id LIMIT 1) AS extrait FROM demandes d WHERE d.cree >= ? ORDER BY d.id").bind(depuis).all();
+  return statsAide(r.results || [], m);
+}
+
+/** Fichiers d'un envoi : installés ? contrôlés (nombre, poids, type réel) ? quota ? → { ok: [...] } ou { reponse, statut }. */
+async function preparerPj(env, db, moi, prestataire, fichiers) {
+  if (!fichiers.length) return { ok: [] };
+  if (!pjOk(env)) return { reponse: { ok: false, code: "pj_non_installees", erreur: "Les pièces jointes ne sont pas encore installées." }, statut: 400 };
+  const c = controlerFichiers(fichiers);
+  if (c.erreur) return { reponse: { ok: false, ...c.erreur }, statut: c.erreur.code === "fichier_trop_lourd" ? 413 : 400 };
+  const q = await quotaPj(db, moi.oid, c.ok.length, prestataire);
+  if (q) return { reponse: { ok: false, ...q }, statut: 429 };
+  return { ok: c.ok };
 }
 
 async function routeAide(req, url, env, origine) {
@@ -424,10 +758,14 @@ async function routeAide(req, url, env, origine) {
   const m = req.method;
   try {
     await tables(db);
-    if (segments.length === 1 && segments[0] === "moi" && m === "GET") return repondre({ prestataire, nom: moi.nom, adresse: moi.adresse }, 200);
+    if (segments.length === 1 && segments[0] === "stats" && m === "GET") {
+      if (!prestataire) return repondre({ ok: false, code: "interdit", erreur: "Réservé à Damien." }, 403);
+      return repondre(await statsDepuisBase(db, url.searchParams.get("mois")), 200);
+    }
+    if (segments.length === 1 && segments[0] === "moi" && m === "GET") return repondre({ prestataire, nom: moi.nom, adresse: moi.adresse, pj: pjOk(env) }, 200);
 
     if (segments.length === 0 && m === "POST") {
-      const c = await lireCorps(req);
+      const { c, fichiers } = await lireEnvoi(req);
       const type = String(c.type || ""), texte = texteBrut(c.message);
       if (!Object.hasOwn(AIDE_TYPES, type)) return repondre({ ok: false, code: "type_invalide", erreur: "Type de demande inconnu." }, 400);
       if (!texte) return repondre({ ok: false, code: "message_vide", erreur: "Le message est vide." }, 400);
@@ -435,14 +773,17 @@ async function routeAide(req, url, env, origine) {
       const maintenant = Date.now();
       const n = await db.prepare("SELECT COUNT(*) AS n FROM demandes WHERE oid = ? AND cree > ?").bind(moi.oid, iso(maintenant - 3600000)).first();
       if (n && n.n >= AIDE_LIMITE_HEURE) return repondre({ ok: false, code: "trop_de_demandes", erreur: "Trop de demandes en une heure." }, 429);
+      const pj = await preparerPj(env, db, moi, prestataire, fichiers);
+      if (pj.reponse) return repondre(pj.reponse, pj.statut);
       const d = { cree: iso(maintenant), oid: moi.oid, nom: moi.nom, adresse: moi.adresse, type, statut: "nouvelle",
         ecran: ligneCourte(c.ecran, 120), version: ligneCourte(c.version, 20), appareil: ligneCourte(c.appareil, 120) };
       const r = await db.prepare("INSERT INTO demandes(cree, oid, nom, adresse, type, statut, ecran, version, appareil, lu_par_demandeur) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1) RETURNING id")
         .bind(d.cree, d.oid, d.nom, d.adresse, d.type, d.statut, d.ecran, d.version, d.appareil).first();
       d.id = r.id;
-      await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, 'client', ?, 'appli')").bind(d.id, d.cree, texte).run();
-      const mailEnvoye = await essayerMail(env, d, texte, true);
-      return repondre({ ok: true, id: d.id, statut: d.statut, mailEnvoye }, 201);
+      const msg = await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, 'client', ?, 'appli') RETURNING id").bind(d.id, d.cree, texte).first();
+      const { faits, echecs } = pj.ok.length ? await stockerPj(env, d.id, msg.id, pj.ok, moi.oid) : { faits: [], echecs: [] };
+      const mailEnvoye = await essayerMail(env, d, texte, true, faits, echecs);
+      return repondre({ ok: true, id: d.id, statut: d.statut, mailEnvoye, pj: faits.map(vuePj), pjEchecs: echecs }, 201);
     }
 
     if (segments.length === 0 && m === "GET") {
@@ -456,7 +797,7 @@ async function routeAide(req, url, env, origine) {
         "(SELECT texte FROM messages WHERE demande_id = d.id ORDER BY id LIMIT 1) AS extrait, (SELECT auteur FROM messages WHERE demande_id = d.id ORDER BY id DESC LIMIT 1) AS dernier_auteur " +
         "FROM demandes d" + (conditions.length ? " WHERE " + conditions.join(" AND ") : "") + " ORDER BY dernier DESC, d.id DESC LIMIT 200";
       const r = await db.prepare(sql).bind(...valeurs).all();
-      return repondre({ prestataire, demandes: (r.results || []).map((x) => vueDemande(x, moi, prestataire)) }, 200);
+      return repondre({ prestataire, pj: pjOk(env), demandes: (r.results || []).map((x) => vueDemande(x, moi, prestataire)) }, 200);
     }
 
     const id = segments[0] && /^\d{1,9}$/.test(segments[0]) ? Number(segments[0]) : null;
@@ -467,15 +808,17 @@ async function routeAide(req, url, env, origine) {
 
     if (segments.length === 1 && m === "GET") {
       const msgs = await db.prepare("SELECT id, cree, auteur, texte, origine FROM messages WHERE demande_id = ? ORDER BY id").bind(id).all();
+      const pjs = (await db.prepare("SELECT id, message_id, nom, type, taille FROM pieces_jointes WHERE demande_id = ? ORDER BY id").bind(id).all()).results || [];
+      const messages = (msgs.results || []).map((x) => ({ ...x, pj: pjs.filter((p) => p.message_id === x.id).map(vuePj) }));
       const nonLu = proprietaire && d.lu_par_demandeur === 0;
       if (nonLu) await db.prepare("UPDATE demandes SET lu_par_demandeur = 1 WHERE id = ?").bind(id).run();
-      return repondre({ prestataire, demande: { ...vueDemande(d, moi, prestataire), nonLu: false }, messages: msgs.results || [] }, 200);
+      return repondre({ prestataire, pj: pjOk(env), demande: { ...vueDemande(d, moi, prestataire), nonLu: false }, messages }, 200);
     }
 
     if (segments.length === 2 && segments[1] === "messages" && m === "POST") {
-      const c = await lireCorps(req);
+      const { c, fichiers } = await lireEnvoi(req);
       const texte = texteBrut(c.texte);
-      if (!texte) return repondre({ ok: false, code: "message_vide", erreur: "Le message est vide." }, 400);
+      if (!texte && !fichiers.length) return repondre({ ok: false, code: "message_vide", erreur: "Le message est vide." }, 400);
       if (texte.length > AIDE_MAX) return repondre({ ok: false, code: "message_trop_long", erreur: "4000 caractères au plus." }, 400);
       const maintenant = Date.now();
       const auteur = prestataire ? "prestataire" : "client";
@@ -483,24 +826,65 @@ async function routeAide(req, url, env, origine) {
         const n = await db.prepare("SELECT COUNT(*) AS n FROM messages m JOIN demandes d ON d.id = m.demande_id WHERE d.oid = ? AND m.auteur = 'client' AND m.cree > ?").bind(moi.oid, iso(maintenant - 3600000)).first();
         if (n && n.n >= AIDE_MESSAGES_HEURE) return repondre({ ok: false, code: "trop_de_messages", erreur: "Trop de messages en une heure." }, 429);
       }
-      await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, ?, ?, 'appli')").bind(id, iso(maintenant), auteur, texte).run();
+      const pj = await preparerPj(env, db, moi, prestataire, fichiers);
+      if (pj.reponse) return repondre(pj.reponse, pj.statut);
+      const msg = await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, ?, ?, 'appli') RETURNING id").bind(id, iso(maintenant), auteur, texte).first();
+      const { faits, echecs } = pj.ok.length ? await stockerPj(env, id, msg.id, pj.ok, prestataire ? "prestataire" : moi.oid) : { faits: [], echecs: [] };
       let mailEnvoye = null;
       if (auteur === "client") {
         await db.prepare("UPDATE demandes SET statut = 'nouvelle' WHERE id = ?").bind(id).run();
-        mailEnvoye = await essayerMail(env, d, texte, false);
+        mailEnvoye = await essayerMail(env, d, texte, false, faits, echecs);
       } else {
         await db.prepare("UPDATE demandes SET statut = 'repondue', lu_par_demandeur = 0 WHERE id = ?").bind(id).run();
       }
-      return repondre({ ok: true, statut: auteur === "client" ? "nouvelle" : "repondue", mailEnvoye }, 201);
+      return repondre({ ok: true, statut: auteur === "client" ? "nouvelle" : "repondue", mailEnvoye, pj: faits.map(vuePj), pjEchecs: echecs }, 201);
+    }
+
+    // Pièce jointe : mêmes droits que le fil (demandeur ou prestataire), rendue avec son type RÉEL.
+    if (segments.length === 3 && segments[1] === "pj" && m === "GET") {
+      const pjId = /^\d{1,9}$/.test(segments[2]) ? Number(segments[2]) : null;
+      const p = pjId == null ? null : await db.prepare("SELECT * FROM pieces_jointes WHERE id = ? AND demande_id = ?").bind(pjId, id).first();
+      if (!p) return repondre({ ok: false, code: "introuvable", erreur: "Pièce jointe introuvable." }, 404);
+      if (!pjOk(env)) return repondre({ ok: false, code: "pj_non_installees", erreur: "Les pièces jointes ne sont pas installées." }, 503);
+      const corps = await env.AIDE_PJ.get(p.cle, { type: "stream" });
+      if (!corps) return repondre({ ok: false, code: "introuvable", erreur: "Pièce jointe introuvable." }, 404);
+      const t = Object.values(PJ_TYPES).find((x) => x.type === p.type);
+      return new Response(corps, { status: 200, headers: {
+        "Content-Type": p.type, "Content-Length": String(p.taille), "Content-Disposition": disposition(p.nom, !!(t && t.inline)),
+        "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox", ...cors(origine),
+      } });
     }
 
     if (segments.length === 1 && m === "PATCH") {
       const c = await lireCorps(req);
-      const statut = String(c.statut || "");
-      if (!AIDE_STATUTS.includes(statut)) return repondre({ ok: false, code: "statut_invalide", erreur: "Statut inconnu." }, 400);
-      if (!prestataire && statut !== "resolue") return repondre({ ok: false, code: "interdit", erreur: "Seul Damien peut changer ce statut." }, 403);
-      await db.prepare("UPDATE demandes SET statut = ? WHERE id = ?").bind(statut, id).run();
-      return repondre({ ok: true, id, statut }, 200);
+      const champs = [], valeurs = [];
+      if (c.statut !== undefined) {
+        const statut = String(c.statut || "");
+        if (!AIDE_STATUTS.includes(statut)) return repondre({ ok: false, code: "statut_invalide", erreur: "Statut inconnu." }, 400);
+        if (!prestataire && statut !== "resolue") return repondre({ ok: false, code: "interdit", erreur: "Seul Damien peut changer ce statut." }, 403);
+        champs.push("statut = ?"); valeurs.push(statut);
+      }
+      // Requalification (prestataire seulement) : type, facturable (oui / non / null = selon le type), temps passé.
+      const requal = ["type", "facturable", "minutes"].filter((k) => c[k] !== undefined);
+      if (requal.length && !prestataire) return repondre({ ok: false, code: "interdit", erreur: "Seul Damien peut requalifier une demande." }, 403);
+      if (c.type !== undefined) {
+        if (!Object.hasOwn(AIDE_TYPES, String(c.type))) return repondre({ ok: false, code: "type_invalide", erreur: "Type de demande inconnu." }, 400);
+        champs.push("type = ?"); valeurs.push(String(c.type));
+      }
+      if (c.facturable !== undefined) {
+        if (c.facturable !== null && typeof c.facturable !== "boolean") return repondre({ ok: false, code: "facturable_invalide", erreur: "Facturable : oui ou non." }, 400);
+        champs.push("facturable = ?"); valeurs.push(c.facturable === null ? null : c.facturable ? 1 : 0);
+      }
+      if (c.minutes !== undefined) {
+        const n = Number(c.minutes);
+        if (!Number.isInteger(n) || n < 0 || n > 100000) return repondre({ ok: false, code: "minutes_invalides", erreur: "Temps passé : un nombre de minutes (0 à 100 000)." }, 400);
+        champs.push("minutes = ?"); valeurs.push(n);
+      }
+      if (!champs.length) return repondre({ ok: false, code: "rien_a_changer", erreur: "Rien à changer." }, 400);
+      await db.prepare("UPDATE demandes SET " + champs.join(", ") + " WHERE id = ?").bind(...valeurs, id).run();
+      const apres = await db.prepare("SELECT * FROM demandes WHERE id = ?").bind(id).first();
+      return repondre({ ok: true, id, statut: apres.statut, demande: vueDemande(apres, moi, prestataire) }, 200);
     }
     return repondre({ ok: false, erreur: "Méthode non permise." }, 405);
   } catch (e) {
@@ -539,40 +923,104 @@ function parametre(valeur, nom) {
   const m = new RegExp(";\\s*" + nom + "\\s*=\\s*(\"([^\"]*)\"|([^;\\s]+))", "i").exec(valeur || "");
   return m ? (m[2] ?? m[3]) : "";
 }
-/** Partie texte d'un mail brut (chaîne « binaire », 1 caractère = 1 octet) : text/plain d'abord, sinon HTML sans balises. */
-export function partieTexte(binaire, profondeur = 0) {
+/** Mots encodés RFC 2047 (=?charset?B|Q?…?=) d'un en-tête (nom de fichier, sujet). */
+export function decoderMots(v) {
+  return String(v || "").replace(/\?=\s+=\?/g, "?==?").replace(/=\?([^?]+)\?([bq])\?([^?]*)\?=/gi, (m, cs, enc, t) => {
+    try {
+      const bin = enc.toLowerCase() === "b" ? atob(t.replace(/[^A-Za-z0-9+/=]/g, "")) : quotedPrintable(t.replace(/_/g, " "));
+      return decoderCharset(octetsDe(bin), cs);
+    } catch { return m; }
+  });
+}
+/** Nom de fichier d'une partie : filename / name, RFC 2231 (filename*=UTF-8''…, suites *0*, *1*…) ou RFC 2047. */
+function nomPartie(entetes) {
+  for (const [h, nom] of [["content-disposition", "filename"], ["content-type", "name"]]) {
+    const v = entetes[h] || "";
+    const etoile = new RegExp(";\\s*" + nom + "\\*(?:0\\*?)?\\s*=\\s*\"?([^\";]*)\"?", "i").exec(v);
+    if (etoile) {
+      let brut = etoile[1];
+      for (let i = 1; i < 20; i++) { const s = new RegExp(";\\s*" + nom + "\\*" + i + "\\*?\\s*=\\s*\"?([^\";]*)\"?", "i").exec(v); if (!s) break; brut += s[1]; }
+      const m = /^([^']*)'[^']*'(.*)$/.exec(brut);
+      try { return decoderCharset(octetsDe(unescape(m ? m[2] : brut)), m ? m[1] || "utf-8" : "utf-8"); } catch { return brut; }
+    }
+    const simple = parametre(v, nom);
+    if (simple) return decoderMots(simple);
+  }
+  return "";
+}
+/** Base64 → octets (natif si le moteur le permet : moins de temps de calcul sur les grosses pièces). */
+function octetsBase64(t) {
+  const propre = t.replace(/[^A-Za-z0-9+/=]/g, "");
+  if (typeof Uint8Array.fromBase64 === "function") { try { return Uint8Array.fromBase64(propre.replace(/=+$/, ""), { lastChunkHandling: "loose" }); } catch {} }
+  return octetsDe(atob(propre));
+}
+/**
+ * Lecture d'un mail brut (chaîne « binaire », 1 caractère = 1 octet) : partie texte (text/plain d'abord, sinon HTML
+ * sans balises) et pièces jointes { nom, typeDeclare, inline, taille, octets? } (octets absents si trop lourde).
+ */
+export function analyserMail(binaire, profondeur = 0, pieces = []) {
   const { entetes, corps } = separer(binaire);
   const type = (entetes["content-type"] || "text/plain").toLowerCase();
-  if (/^multipart\//.test(type) && profondeur < 5) {
+  if (/^multipart\//.test(type)) {
+    if (profondeur >= 5) return { texte: null, pieces };
     const borne = parametre(entetes["content-type"], "boundary");
-    if (!borne) return null;
+    if (!borne) return { texte: null, pieces };
     const morceaux = corps.split("--" + borne).slice(1);
-    const parties = [];
-    for (const p of morceaux) { if (/^--/.test(p)) break; parties.push(p.replace(/^\r?\n/, "")); }
-    let html = null;
-    for (const p of parties) {
-      const t = partieTexte(p, profondeur + 1);
-      if (t && t.type === "text/plain") return t;
-      if (t && !html) html = t;
+    let plain = null, html = null;
+    for (const p of morceaux) {
+      if (/^--/.test(p)) break;
+      const t = analyserMail(p.replace(/^\r?\n/, ""), profondeur + 1, pieces).texte;
+      if (t && t.type === "text/plain" && !plain) plain = t;
+      if (t && t.type === "text/html" && !html) html = t;
     }
-    return html;
+    return { texte: plain || html, pieces };
   }
-  if (/attachment/i.test(entetes["content-disposition"] || "")) return null;
-  if (!/^text\/(plain|html)/.test(type)) return null;
+  const cd = entetes["content-disposition"] || "", nom = nomPartie(entetes);
   const cte = (entetes["content-transfer-encoding"] || "7bit").toLowerCase();
+  const estTexte = /^text\/(plain|html)/.test(type) && !/^\s*attachment/i.test(cd) && !nom;
+  if (!estTexte) {
+    if (/^message\//.test(type)) return { texte: null, pieces }; // mail transféré en pièce jointe : ignoré
+    const estime = cte === "base64" ? Math.floor(corps.replace(/[^A-Za-z0-9+/]/g, "").length * 3 / 4) : corps.length;
+    const piece = { nom: nom || "piece-jointe", typeDeclare: type.split(";")[0].trim(), inline: /^\s*inline/i.test(cd) || (!cd && !!entetes["content-id"]), taille: estime };
+    if (estime <= PJ_TAILLE) {
+      try { piece.octets = cte === "base64" ? octetsBase64(corps) : cte === "quoted-printable" ? octetsDe(quotedPrintable(corps)) : octetsDe(corps.replace(/\r?\n$/, "")); piece.taille = piece.octets.length; }
+      catch { piece.octets = null; }
+    }
+    pieces.push(piece);
+    return { texte: null, pieces };
+  }
   let octets;
-  if (cte === "base64") { try { octets = octetsDe(atob(corps.replace(/[^A-Za-z0-9+/=]/g, ""))); } catch { return null; } }
+  if (cte === "base64") { try { octets = octetsBase64(corps); } catch { return { texte: null, pieces }; } }
   else if (cte === "quoted-printable") octets = octetsDe(quotedPrintable(corps));
   else octets = octetsDe(corps);
   let texte = decoderCharset(octets, parametre(entetes["content-type"], "charset"));
   if (/^text\/html/.test(type)) {
-    texte = decoder(texte.replace(/<(style|script)[\s\S]*?<\/\1>/gi, "").replace(/<blockquote[\s\S]*$/i, "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div)>/gi, "\n").replace(/<[^>]+>/g, ""));
-    return { type: "text/html", texte };
+    texte = decoder(texte.replace(/<(style|script)[\s\S]*?<\/\1>/gi, "").replace(/<div[^>]*class="?gmail_signature[\s\S]*$/i, "").replace(/<blockquote[\s\S]*$/i, "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div)>/gi, "\n").replace(/<[^>]+>/g, ""));
+    return { texte: { type: "text/html", texte }, pieces };
   }
-  return { type: "text/plain", texte };
+  return { texte: { type: "text/plain", texte }, pieces };
+}
+/** Partie texte d'un mail brut (compatibilité) : { type, texte } ou null. */
+export function partieTexte(binaire) { return analyserMail(binaire).texte; }
+/**
+ * Tri des pièces d'un mail entrant : petites images « inline » (logos de signature) ignorées sans bruit ;
+ * trop lourdes, type refusé, au-delà de 5 : ignorées avec une note. → { gardees: [{nom, octets}], notes: [texte] }
+ */
+export function trierPiecesMail(pieces, installees = true) {
+  const gardees = [], notes = [];
+  for (const p of pieces) {
+    if (p.inline && /^image\//.test(p.typeDeclare) && p.taille < PJ_SIGNATURE) continue;
+    const nom = nomFichier(p.nom);
+    if (!installees) { notes.push("Pièce jointe ignorée : pièces jointes non installées (" + nom + ")"); continue; }
+    if (!p.octets || p.taille > PJ_TAILLE) { notes.push("Pièce jointe ignorée : trop lourde (" + nom + ", " + tailleLisible(p.taille) + ")"); continue; }
+    if (!typeFichier(p.octets, p.nom)) { notes.push("Pièce jointe ignorée : type non accepté (" + nom + ")"); continue; }
+    if (gardees.length >= PJ_MAX) { notes.push("Pièce jointe ignorée : " + PJ_MAX + " au plus par message (" + nom + ")"); continue; }
+    gardees.push({ nom: p.nom, octets: p.octets });
+  }
+  return { gardees, notes };
 }
 /** Retire la citation et la signature d'une réponse (Gmail, Apple Mail, Outlook, français ou anglais). */
-export function sansCitation(texte) {
+export function sansCitation(texte, signatureFin) {
   const l = String(texte || "").replace(/\r\n?/g, "\n").split("\n");
   let fin = l.length;
   for (let i = 0; i < l.length; i++) {
@@ -586,7 +1034,19 @@ export function sansCitation(texte) {
     if (/^(de|from)\s*:\s*\S/i.test(x) && /^(envoyé|sent|date|à|to)\s*:/i.test((l[i + 1] || "").trim())) { fin = i; break; }
     if (/^>/.test(x) && l.slice(i).every((y) => /^\s*(>|$)/.test(y))) { fin = i; break; }
   }
-  return texteBrut(l.slice(0, fin).filter((y) => !/^\s*>/.test(y)).join("\n"), AIDE_MAX);
+  return retirerSignature(texteBrut(l.slice(0, fin).filter((y) => !/^\s*>/.test(y)).join("\n")), signatureFin).slice(0, AIDE_MAX);
+}
+/**
+ * Signature SANS délimiteur « -- » (variable AIDE_SIGNATURE) : ses lignes, séparées par « | » ou des sauts de ligne,
+ * sont retirées quand elles TERMINENT le message (casse, espaces et ponctuation finale ignorés), puis les lignes vides de fin.
+ */
+export function retirerSignature(texte, signatureFin) {
+  const norm = (x) => String(x).toLowerCase().replace(/\s+/g, "").replace(/[.,;:!]+$/, "");
+  const lignesSig = new Set(String(signatureFin || "").split(/\r?\n|\\n|\|/).map(norm).filter(Boolean));
+  const l = String(texte || "").replace(/\r\n?/g, "\n").split("\n");
+  while (l.length && !l[l.length - 1].trim()) l.pop();
+  if (lignesSig.size) while (l.length && (lignesSig.has(norm(l[l.length - 1])) || !l[l.length - 1].trim())) l.pop();
+  return l.join("\n").trim();
 }
 
 export async function recevoirMail(message, env) {
@@ -607,10 +1067,20 @@ export async function recevoirMail(message, env) {
   const brut = new Uint8Array(await new Response(message.raw).arrayBuffer()).subarray(0, AIDE_RAW_MAX);
   let binaire = "";
   for (let i = 0; i < brut.length; i += 0x8000) binaire += String.fromCharCode.apply(null, brut.subarray(i, i + 0x8000));
-  const partie = partieTexte(binaire);
-  const texte = sansCitation(partie ? partie.texte : "");
-  if (!texte) return message.setReject("Réponse vide");
-  await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, 'prestataire', ?, 'mail')").bind(id, iso(Date.now()), texte).run();
+  const { texte: partie, pieces } = analyserMail(binaire);
+  let texte = sansCitation(partie ? partie.texte : "", env.AIDE_SIGNATURE);
+  let { gardees, notes } = trierPiecesMail(pieces, pjOk(env));
+  let fichiers = [];
+  if (gardees.length) {
+    const c = controlerFichiers(gardees); // déjà triées : ne refuse plus rien
+    fichiers = c.ok || [];
+    const q = await quotaPj(db, null, fichiers.length, true);
+    if (q) { notes.push(...fichiers.map((f) => "Pièce jointe ignorée : limite du jour atteinte (" + f.nom + ")")); fichiers = []; }
+  }
+  if (!texte && !fichiers.length) return message.setReject("Réponse vide");
+  if (notes.length) texte = (texte ? texte + "\n\n" : "") + notes.map((n) => "(" + n + ")").join("\n");
+  const msg = await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, 'prestataire', ?, 'mail') RETURNING id").bind(id, iso(Date.now()), texteBrut(texte, AIDE_MAX + 2000)).first();
+  if (fichiers.length) await stockerPj(env, id, msg.id, fichiers, "prestataire");
   await db.prepare("UPDATE demandes SET statut = 'repondue', lu_par_demandeur = 0 WHERE id = ?").bind(id).run();
 }
 
