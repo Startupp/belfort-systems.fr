@@ -896,7 +896,7 @@ try {
       await page.waitForSelector("#aide-panneau[open] .aide-form");
       // Contexte joint, visible.
       assert.equal(await page.textContent('[data-ctx="ecran"]'), "Planning (#/planning)");
-      assert.equal(await page.textContent('[data-ctx="version"]'), "5.4.1");
+      assert.equal(await page.textContent('[data-ctx="version"]'), "5.5.0");
       assert.match(await page.textContent('[data-ctx="appareil"]'), /px$/);
       assert.deepEqual(await page.$$eval(".aide-type", (l) => l.map((b) => b.textContent.trim())), ["❓Question", "💬Avis", "✨Amélioration", "⚠️Problème"]);
       // Formulaire vide : erreurs claires, rien n'est envoyé.
@@ -914,7 +914,7 @@ try {
       const envoi = journal.find((j) => j.aide && j.methode === "POST" && j.chemin === "/breteuil/aide");
       assert.equal(envoi.auth, "Bearer maquette-id-token", "ID token envoyé au Worker");
       assert.deepEqual(JSON.parse(envoi.corps).type, "probleme");
-      assert.equal(JSON.parse(envoi.corps).ecran, "Planning (#/planning)"); assert.equal(JSON.parse(envoi.corps).version, "5.4.1");
+      assert.equal(JSON.parse(envoi.corps).ecran, "Planning (#/planning)"); assert.equal(JSON.parse(envoi.corps).version, "5.5.0");
       await capturer(page, `aide-envoyee-${suffixe}`);
       // Mes demandes : la réponse de Damien est signalée, le fil s'ouvre, la pastille disparaît.
       await page.click("text=Voir mes demandes");
