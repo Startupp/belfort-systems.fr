@@ -21,6 +21,7 @@
   --entete: #5B3833;          /* en-tête : praline foncé (texte blanc 10,2:1) */
   --entete-texte: #FFFFFF;
   --entete-doux: #F1DFC6;     /* sous-titre dans l'en-tête (7,8:1) */
+  --entete-2: #8A4C45;        /* v5.7 : fin du dégradé d'en-tête (Apparence → En-tête « Dégradé ») */
   --primaire: #8A4C45;        /* praline : accents, boutons (blanc dessus 6,6:1 ; sur crème 6,1:1) */
   --primaire-fort: #6C3832;
   --primaire-pale: #F4E3DC;   /* fonds teintés */
@@ -62,7 +63,7 @@
 /* Couleurs (sombre) — mêmes valeurs dans les deux blocs (auto et choisi). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="clair"]) {
-    --entete: #2E1D19; --entete-texte: #FFFFFF; --entete-doux: #E8CFA6;
+    --entete: #2E1D19; --entete-2: #7A443D; --entete-texte: #FFFFFF; --entete-doux: #E8CFA6;
     --primaire: #E7B8A8; --primaire-fort: #F3D0C3; --primaire-pale: #3E2A24; --sur-primaire: #22160F;
     --texte: #F6ECE1; --texte-2: #DBC8B8; --texte-3: #C2AC99;
     --fond: #1C1310; --surface: #271B17; --surface-2: #30221D; --trait: #4A3530; --trait-fort: #6A4E45;
@@ -75,7 +76,7 @@
   }
 }
 :root[data-theme="sombre"] {
-  --entete: #2E1D19; --entete-texte: #FFFFFF; --entete-doux: #E8CFA6;
+  --entete: #2E1D19; --entete-2: #7A443D; --entete-texte: #FFFFFF; --entete-doux: #E8CFA6;
   --primaire: #E7B8A8; --primaire-fort: #F3D0C3; --primaire-pale: #3E2A24; --sur-primaire: #22160F;
   --texte: #F6ECE1; --texte-2: #DBC8B8; --texte-3: #C2AC99;
   --fond: #1C1310; --surface: #271B17; --surface-2: #30221D; --trait: #4A3530; --trait-fort: #6A4E45;
@@ -1361,7 +1362,7 @@ a.doc:hover { border-color: var(--primaire); }
 /* Contrastes AA vérifiés par tests/theme.test.mjs.                  */
 /* ================================================================ */
 :root[data-palette="bleu"] {
-  --entete: #14213D; --entete-texte: #FFFFFF; --entete-doux: #E9D9AE;
+  --entete: #14213D; --entete-2: #1F3A68; --entete-texte: #FFFFFF; --entete-doux: #E9D9AE;
   --primaire: #1F3A68; --primaire-fort: #172C52; --primaire-pale: #E3E9F4; --sur-primaire: #FFFFFF;
   --texte: #121A2B; --texte-2: #3E4A62; --texte-3: #56627A;
   --fond: #F5F6FA; --surface: #FFFFFF; --surface-2: #ECEFF6; --trait: #DCE1EC; --trait-fort: #B7C0D3;
@@ -1390,7 +1391,7 @@ a.doc:hover { border-color: var(--primaire); }
 /* Bleu élégant sombre — mêmes valeurs dans les deux blocs (auto et choisi). */
 @media (prefers-color-scheme: dark) {
   :root[data-palette="bleu"]:not([data-theme="clair"]) {
-    --entete: #0F1A33; --entete-texte: #FFFFFF; --entete-doux: #E2CF9E;
+    --entete: #0F1A33; --entete-2: #24427A; --entete-texte: #FFFFFF; --entete-doux: #E2CF9E;
     --primaire: #9DB4E0; --primaire-fort: #C3D3F0; --primaire-pale: #1B2A48; --sur-primaire: #0B1222;
     --texte: #EEF1F8; --texte-2: #C3CBDC; --texte-3: #A3AEC4;
     --fond: #0B1222; --surface: #111B30; --surface-2: #17233D; --trait: #26344F; --trait-fort: #3A4B6B;
@@ -1417,7 +1418,7 @@ a.doc:hover { border-color: var(--primaire); }
   }
 }
 :root[data-palette="bleu"][data-theme="sombre"] {
-  --entete: #0F1A33; --entete-texte: #FFFFFF; --entete-doux: #E2CF9E;
+  --entete: #0F1A33; --entete-2: #24427A; --entete-texte: #FFFFFF; --entete-doux: #E2CF9E;
   --primaire: #9DB4E0; --primaire-fort: #C3D3F0; --primaire-pale: #1B2A48; --sur-primaire: #0B1222;
   --texte: #EEF1F8; --texte-2: #C3CBDC; --texte-3: #A3AEC4;
   --fond: #0B1222; --surface: #111B30; --surface-2: #17233D; --trait: #26344F; --trait-fort: #3A4B6B;
@@ -1853,3 +1854,15 @@ body.premier-lancement .aide-fab { display: none; }
 .aide-col i { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-style: normal; font-size: .72rem; color: var(--texte-2); padding-bottom: 2px; }
 .aide-col-mois { font-size: .78rem; color: var(--texte-2); }
 .aide-evolution li.courant .aide-col-mois { font-weight: 800; color: var(--texte); }
+
+/* ================================================================ */
+/* v5.7 : Apparence (Gérer → Apparence) — formes et en-tête.         */
+/* Les couleurs sont posées en variables sur <html> par apparence.js */
+/* (calculées, contrastes AA garantis) ; ici seulement les attributs. */
+/* ================================================================ */
+:root[data-entete="degrade"] .barre { background: linear-gradient(120deg, var(--entete) 0%, var(--entete) 35%, var(--entete-2) 100%); }
+:root[data-entete="clair"] .barre { border-bottom: 1px solid var(--trait); }
+:root[data-entete="clair"] .barre .btn-retour, :root[data-entete="clair"] .barre .btn-rond { background: var(--surface-2); color: var(--entete-texte); }
+:root[data-entete="clair"] .barre :focus-visible { outline-color: var(--focus); }
+:root[data-coins="carre"] :is(.gt, .t, .carte-role, .carte-projet, .ligne-boite, .carte-tache, .carte-usage, .boite, .carte-frise, .carte-theme, .ap-carte, .bientot-carte, .detail) { border-radius: 6px; }
+:root[data-coins="rond"] :is(.gt, .t, .carte-role, .carte-projet, .ligne-boite, .carte-tache, .carte-usage, .boite, .carte-frise, .carte-theme, .ap-carte, .bientot-carte) { border-radius: 26px; }
