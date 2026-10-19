@@ -1624,3 +1624,119 @@ textarea.champ.aide-message { min-height: 140px; padding: 12px 14px; resize: ver
 @media (max-width: 420px) { .aide-filtres-l2 { grid-template-columns: 1fr; } }
 .aide-lignes-moi { display: contents; }
 .page > .ecran > .aide-fil, .page > .ecran > .aide-liste, .ecran > .aide-fil, .ecran > .aide-liste { max-width: 760px; }
+
+/* ================================================================ */
+/* v5.5 « Simplification » : grille droite, cartes calmes, ≥ 48 px   */
+/* Uniquement des variables de couleur existantes : les deux palettes */
+/* (crème/praline, Bleu Breteuil) et les deux thèmes suivent.        */
+/* ================================================================ */
+/* Pas d'agrandissement automatique du texte par le navigateur (Android) : le texte reste dans ses cases.
+ * La taille de police du système et le réglage « Taille du texte » restent appliqués. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.tech { font-size: .8em; font-weight: 400; color: var(--texte-2); text-transform: none; letter-spacing: 0; }
+.section > h2 .tech { color: var(--texte-3); }
+
+/* Grandes tuiles : 1 colonne sur téléphone, 2 puis 3 ; une seule action par tuile. */
+.tuiles-grandes { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 560px) { .tuiles-grandes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .tuiles-grandes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.t.gt { flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; min-height: 76px; height: auto;
+  padding: 14px 16px; text-align: left; font-size: 1rem; line-height: 1.3; border-radius: var(--rayon); }
+.t.gt .ico { width: 48px; height: 48px; flex: none; }
+.t.gt .ico .emoji { font-size: 1.6rem; }
+.t.gt .ico svg.ic { font-size: 1.5rem; }
+.t.gt .textes { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.t.gt .lib { font-weight: 700; font-size: 1.02rem; overflow-wrap: anywhere; hyphens: none; -webkit-hyphens: none; }
+.t.gt .sous { color: var(--texte-2); font-size: .88rem; font-weight: 400; line-height: 1.35; }
+.t.gt .chevron { flex: none; color: var(--texte-3); display: grid; place-items: center; width: 24px; }
+.t.gt .chevron svg.ic { font-size: 1.3rem; }
+.section-fichiers > .tuiles-grandes, .section-fichiers .tuiles-grandes { margin: 0 0 12px; }
+.section-fichiers .tuiles-grandes:last-child { margin: 12px 0 0; }
+
+/* Boutons d'action de MÊME taille : carrés arrondis, icône au-dessus, libellé court. */
+.boutons-carres { display: grid; gap: 10px; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); margin: 4px 0 16px; max-width: 480px; }
+.bc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 84px; height: auto; padding: 12px 6px;
+  border-radius: var(--rayon); border: 1px solid var(--trait-fort); background: var(--surface); color: var(--texte); box-shadow: var(--ombre);
+  font: inherit; font-weight: 700; font-size: .9rem; line-height: 1.2; text-align: center; text-decoration: none; cursor: pointer; overflow-wrap: anywhere;
+  transition: transform 90ms, background-color 90ms; }
+.bc:hover { border-color: var(--primaire); color: var(--primaire); }
+.bc:active { transform: scale(.97); background-color: var(--appui); }
+.bc .bc-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--primaire-pale); color: var(--primaire); }
+.bc .bc-ico svg.ic { font-size: 1.35rem; }
+.bc .bc-ico .emoji { font-size: 1.3rem; }
+
+/* Fil d'Ariane : UNE ligne discrète, petit texte, pas d'aspect bouton, coupée proprement. */
+.ariane { display: block; margin: -6px 0 12px; font-size: .88rem; color: var(--texte-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ariane a, .ariane span[aria-current] { display: inline; min-height: 0; padding: 0; border-radius: 0; background: none; font-weight: 600; }
+.ariane a { color: var(--texte-2); text-decoration: none; padding: 12px 0; }
+.ariane a:hover { color: var(--primaire); }
+.ariane span[aria-current] { color: var(--texte); background: none; }
+.ariane .sep { margin: 0 6px; color: var(--texte-3); }
+
+/* Feuille d'actions (EB.choisir) : les lignes grandissent avec le texte ; la feuille défile si trop haute. */
+dialog.detail { overflow-y: auto; overscroll-behavior: contain; }
+.choix-liste { display: flex; flex-direction: column; gap: 8px; max-height: none; overflow: visible; }
+.choix { flex: none; height: auto; min-height: 56px; align-items: center; }
+.choix > span { flex: 1; min-width: 0; }
+.choix b, .choix small { line-height: 1.3; white-space: normal; overflow: visible; }
+.choix small { margin-top: 2px; }
+/* L'en-tête derrière une fenêtre ouverte : voilé franchement (pas « grisé ») plutôt qu'à moitié lisible. */
+dialog.detail::backdrop { background: var(--voile); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+
+/* Carte « Vous êtes : … » */
+.carte-role { margin-top: 16px; padding: 18px; border-radius: var(--rayon); background: var(--surface); border: 1px solid var(--trait);
+  border-left: 6px solid var(--primaire); box-shadow: var(--ombre); display: grid; gap: 10px; }
+.carte-role h2 { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; margin: 0; }
+.carte-role h2 .emoji { font-size: 1.6rem; }
+.carte-role h2 strong { color: var(--primaire); }
+.carte-role .phrase-role { margin: 0; color: var(--texte-2); }
+.carte-role h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--texte-2); margin: 4px 0 6px; }
+.role-colonnes { display: grid; gap: 12px; }
+@media (min-width: 720px) { .role-colonnes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.liste-role { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.liste-role li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.35; }
+.liste-role .emoji { font-size: 1.05rem; margin-top: 1px; }
+.carte-role .demander { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--rayon-petit); background: var(--surface-2); }
+
+/* Premier lancement : grosses cartes à cocher (plusieurs choix), numéro d'ordre. */
+.cartes-usages { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .cartes-usages { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.carte-usage { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 80px; padding: 14px 16px; text-align: left; cursor: pointer;
+  border-radius: var(--rayon); border: 2px solid var(--trait); background: var(--surface); color: var(--texte); font: inherit; box-shadow: var(--ombre); }
+.carte-usage:hover { border-color: var(--primaire); }
+.carte-usage[aria-pressed="true"] { border-color: var(--primaire); background: var(--primaire-pale); }
+.carte-usage .pictogramme { font-size: 1.9rem; width: 44px; text-align: center; flex: none; }
+.carte-usage .textes { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.carte-usage b { font-size: 1.05rem; line-height: 1.3; }
+.carte-usage small { color: var(--texte-2); font-size: .88rem; line-height: 1.35; }
+.carte-usage .ordre { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--trait-fort); display: grid; place-items: center;
+  font-weight: 700; color: var(--sur-primaire); }
+.carte-usage[aria-pressed="true"] .ordre { background: var(--primaire); border-color: var(--primaire); }
+.actions.pile { display: grid; gap: 10px; margin-top: 20px; max-width: 480px; }
+.actions.pile .btn { min-height: 52px; }
+
+/* « Comment faire ? » */
+.liste-taches { display: grid; gap: 12px; }
+@media (min-width: 720px) { .liste-taches { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.carte-tache { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: var(--rayon); background: var(--surface);
+  border: 1px solid var(--trait); box-shadow: var(--ombre); }
+.carte-tache h2 { font-size: 1.05rem; margin: 0 0 4px; }
+.carte-tache p { margin: 0; color: var(--texte-2); line-height: 1.4; }
+.carte-tache .btn { align-self: flex-start; min-height: 48px; }
+/* Bouton montré : contour qui pulse + bulle « Touchez ici ». */
+.eb-montre { outline: 3px solid var(--focus) !important; outline-offset: 4px; animation: eb-pulse 1.2s ease-in-out infinite; position: relative; z-index: 5; }
+@keyframes eb-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--onde, rgba(154,106,18,.45)); } 50% { box-shadow: 0 0 0 10px transparent; } }
+.bulle-tuto { position: fixed; z-index: 60; display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 14px;
+  background: var(--entete); color: var(--entete-texte); font-weight: 700; box-shadow: var(--ombre-forte); pointer-events: none; }
+.bulle-tuto::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 14px; height: 14px; margin-left: -7px; background: inherit; transform: rotate(45deg); }
+.bulle-tuto.dessous::after { bottom: auto; top: -7px; }
+@media (prefers-reduced-motion: reduce) { .eb-montre { animation: none; } }
+
+/* Grandes cibles partout (≥ 48 px) et icônes de même taille. */
+.onglets a { min-height: 56px; }
+.action { min-height: 64px; padding: 10px 14px; }
+.btn, .btn-rond, .segments button { min-height: 48px; }
+.btn-rond { width: 48px; height: 48px; }
+.btn { border-radius: 14px; }
+.aide-comment { margin-bottom: 4px; }
+.pied-actions { margin-top: 24px; }
