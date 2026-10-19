@@ -106,7 +106,7 @@
 '        <input id="pw" type="password" autocomplete="current-password" required></div>\n' +
 '      <button class="btn" type="submit">Ouvrir</button>\n' +
 '      <p class="err" id="err" role="alert"></p>\n    </form>\n' +
-'    <p class="foot"><a href="mailto:damien.belfort@gmail.com">Contacter Belfort Systems</a></p>\n' +
+'    <p class="foot"><a href="mailto:damien@belfort-systems.fr">Contacter Belfort Systems</a></p>\n' +
 '  </main>\n</div>\n' +
 '<script type="text/plain" id="payload">' + payload + '<\/script>\n' +
 '<script src="/assets/bsv.js"><\/script>\n' +
