@@ -469,6 +469,56 @@ try {
     }
   }
 
+  /* ---------- v5.5.1 Site web : encadré « 🔑 Accès au site à prévoir » (accesPret false par défaut) ---------- */
+  for (const [nomVp, vp, extra] of [["375 clair", { width: 375, height: 812 }, {}], ["412 sombre police agrandie", { width: 412, height: 915 }, { theme: "dark", texte: "tres-grand", policeAgrandie: true }],
+    ["1280 sombre", { width: 1280, height: 900 }, { theme: "dark" }]]) {
+    const ou = `site web ${nomVp}`;
+    const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "admin", vp, choix: ["equipe"], ...extra });
+    for (const route of ["#/gerer", "#/liens", "#/guides/site", "#/guides/site/pied"]) {
+      await page.goto(BASE + route);
+      await page.waitForSelector('[data-encadre="acces-site"]');
+      assert.equal(await page.$$eval('[data-encadre="acces-site"]', (l) => l.length), 1, `${ou} ${route} : un seul encadré`);
+      const enTete = await page.evaluate(() => { const e = document.querySelector('[data-encadre="acces-site"]'), p = e.parentElement;
+        return p.classList.contains("section-site") ? p.querySelector("h2").nextElementSibling === e : e.previousElementSibling?.classList.contains("barre"); });
+      assert.ok(enTete, `${ou} ${route} : encadré en tête`);
+      assert.equal(await page.$$eval('.ecran a[href*="wp-admin"]', (l) => l.length), 0, `${ou} ${route} : aucun bouton vers l'administration WordPress`);
+      await sansChevauchement(page, ".encadre-acces .titre, .encadre-acces .texte, .encadre-acces .btn", ".encadre-acces", `${ou} ${route}`);
+      await sansDebord(page, `${ou} ${route}`);
+    }
+    // Le mode d'emploi reste lisible, le bouton WordPress est remplacé par une phrase.
+    assert.equal(await page.$$eval(".etapes li", (l) => l.length), 3);
+    assert.match(await texte(page, ".acces-attente"), /« Ouvrir les modèles » apparaîtra quand l'accès au site sera prêt/);
+    await page.goto(BASE + "#/gerer");
+    await page.waitForSelector('[data-encadre="acces-site"]');
+    assert.equal(await texte(page, '[data-encadre="acces-site"] .titre'), "🔑 Accès au site à prévoir");
+    assert.match(await texte(page, '[data-encadre="acces-site"] .texte'), /compte WordPress « éditeur » et l'accord de M\. Defecques.*rien n'est modifié\./);
+    await page.evaluate(() => document.querySelector(".section-site").scrollIntoView());
+    await capturer(page, `site-acces-a-prevoir-${nomVp.replace(/ /g, "-")}`, false);
+    // « Écrire à Damien » : panneau d'aide, type Question, message pré-rempli.
+    await page.click('[data-action="ecrire-acces-site"]');
+    await page.waitForSelector("dialog[open] #aide-message");
+    assert.equal(await page.inputValue("#aide-message"), "Je souhaite pouvoir modifier le site internet.");
+    assert.equal(await page.getAttribute('.aide-type[data-type="question"]', "aria-checked"), "true");
+    await capturer(page, `site-acces-ecrire-${nomVp.replace(/ /g, "-")}`, false);
+    if (erreurs.length) problemes.push(`${ou} : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
+    console.log("ok", ou);
+  }
+  /* accesPret: true → plus d'encadré, les boutons WordPress reviennent. */
+  {
+    const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "admin", vp: { width: 375, height: 812 }, choix: ["equipe"],
+      config: { siteWeb: { url: "https://www.breteuil.fr", admin: "https://www.breteuil.fr/wp-admin/", groupe: "Site web", accesPret: true } } });
+    await page.goto(BASE + "#/gerer");
+    await page.waitForSelector(".section-site .tuiles-grandes .t");
+    assert.equal(await page.$('[data-encadre="acces-site"]'), null, "accès prêt : pas d'encadré");
+    assert.ok(await page.$('.section-site a[href="https://www.breteuil.fr/wp-admin/upload.php"][target="_blank"]'), "accès prêt : tuile Médiathèque");
+    await page.goto(BASE + "#/guides/site/pied");
+    await page.waitForSelector('.actions a[href*="wp-admin"]');
+    assert.equal(await page.$(".acces-attente"), null);
+    if (erreurs.length) problemes.push(`site web accès prêt : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
+  }
+
   /* ---------- Stockage bloqué (navigation privée stricte) : l'appli marche, pas de boucle ---------- */
   {
     const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "gestionnaire", vp: { width: 375, height: 812 }, stockageBloque: true });

@@ -75,7 +75,7 @@ test("v5.5.1 : accès au site à prévoir (accesPret false par défaut)", () => 
   assert.equal(S.accesPret({ siteWeb: { accesPret: "oui" } }), false, "seul true ouvre");
   assert.equal(S.accesPret(PRET), true);
   assert.equal(S.ACCES.titre, "🔑 Accès au site à prévoir");
-  assert.equal(S.ACCES.texte, "Pour modifier le site, il faut un compte WordPress « éditeur » et l'accord de M. Defecques, qui gère aujourd'hui le site. En attendant, vous pouvez tout regarder sans risque : rien n'est modifié.");
+  assert.equal(S.ACCES.texte, "Pour modifier le site, il faut un compte WordPress « éditeur » et l'accord de M.\u00a0Defecques, qui gère aujourd'hui le site. En attendant, vous pouvez tout regarder sans risque : rien n'est modifié.");
   assert.deepEqual([S.ACCES.bouton, S.ACCES.type, S.ACCES.message], ["Écrire à Damien", "question", "Je souhaite pouvoir modifier le site internet."]);
   // Pas prêt : aucune tuile vers l'administration WordPress ; elles mènent au mode d'emploi. « Vérifier les liens » et « Voir le site » restent.
   const t = S.tuiles(CFG), admin = S.adresses(CFG).admin;

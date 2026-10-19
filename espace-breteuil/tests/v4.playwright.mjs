@@ -378,7 +378,10 @@ try {
         const tuilesSite = await page.$$eval(".section-site .t", (l) => l.map((a) => ({ lib: a.querySelector(".lib").textContent, href: a.getAttribute("href"), cible: a.getAttribute("target") })));
         assert.equal(tuilesSite.length, 8);
         for (const t of tuilesSite.filter((x) => /^https:/.test(x.href))) assert.equal(t.cible, "_blank", t.lib);
-        assert.ok(tuilesSite.some((t) => t.href === "https://www.breteuil.fr/wp-admin/upload.php"));
+        // v5.5.1 : accès WordPress pas encore prêt (config.siteWeb.accesPret false) → encadré, aucune tuile vers wp-admin.
+        assert.ok(!tuilesSite.some((t) => /wp-admin/.test(t.href)), "aucune tuile vers l'administration WordPress");
+        assert.ok(tuilesSite.some((t) => t.href === "#/guides/site/image"));
+        assert.match(await page.textContent('.section-site [data-encadre="acces-site"]'), /Accès au site à prévoir/);
         await page.click('#fiche-pied > summary');
         await page.waitForSelector('#fiche-pied[open] .etapes li');
         await calme(page);
@@ -899,7 +902,7 @@ try {
       await page.waitForSelector("#aide-panneau[open] .aide-form");
       // Contexte joint, visible.
       assert.equal(await page.textContent('[data-ctx="ecran"]'), "Planning (#/planning)");
-      assert.equal(await page.textContent('[data-ctx="version"]'), "5.5.0");
+      assert.equal(await page.textContent('[data-ctx="version"]'), "5.5.1");
       assert.match(await page.textContent('[data-ctx="appareil"]'), /px$/);
       assert.deepEqual(await page.$$eval(".aide-type", (l) => l.map((b) => b.textContent.trim())), ["❓Question", "💬Avis", "✨Amélioration", "⚠️Problème"]);
       // Formulaire vide : erreurs claires, rien n'est envoyé.
@@ -917,7 +920,7 @@ try {
       const envoi = journal.find((j) => j.aide && j.methode === "POST" && j.chemin === "/breteuil/aide");
       assert.equal(envoi.auth, "Bearer maquette-id-token", "ID token envoyé au Worker");
       assert.deepEqual(JSON.parse(envoi.corps).type, "probleme");
-      assert.equal(JSON.parse(envoi.corps).ecran, "Planning (#/planning)"); assert.equal(JSON.parse(envoi.corps).version, "5.5.0");
+      assert.equal(JSON.parse(envoi.corps).ecran, "Planning (#/planning)"); assert.equal(JSON.parse(envoi.corps).version, "5.5.1");
       await capturer(page, `aide-envoyee-${suffixe}`);
       // Mes demandes : la réponse de Damien est signalée, le fil s'ouvre, la pastille disparaît.
       await page.click("text=Voir mes demandes");

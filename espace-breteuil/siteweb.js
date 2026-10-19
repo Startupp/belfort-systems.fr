@@ -23,7 +23,7 @@
   /** Encadré affiché tant que l'accès n'est pas prêt (textes en un seul endroit, testés). */
   var ACCES = {
     titre: "🔑 Accès au site à prévoir",
-    texte: "Pour modifier le site, il faut un compte WordPress « éditeur » et l'accord de M. Defecques, qui gère aujourd'hui le site. " +
+    texte: "Pour modifier le site, il faut un compte WordPress « éditeur » et l'accord de M.\u00a0Defecques, qui gère aujourd'hui le site. " +
       "En attendant, vous pouvez tout regarder sans risque : rien n'est modifié.",
     bouton: "Écrire à Damien",
     type: "question",
