@@ -871,6 +871,137 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* #/reserver : « Réserver à certaines personnes »                     */
+  /* ------------------------------------------------------------------ */
+  // Choix en cours : { cle, choisis: { adresse: { nom, mail, upn, type } }, niveau }.
+  var reserve = null;
+  function personneDe(nom, adresse, type) { return { nom: nom || adresse, mail: adresse, upn: adresse, type: type || "interne" }; }
+
+  /** Suggestions : moi, puis les propriétaires du site (direction), sans doublon. */
+  function suggestionsReserve(c) {
+    var vus = {}, l = [];
+    function ajouter(nom, adresse) {
+      var a = String(adresse || "").toLowerCase();
+      if (!a || vus[a]) return;
+      vus[a] = 1; l.push(personneDe(nom, a));
+    }
+    ajouter((c.moiSp && c.moiSp.Title) || (G.compte() || {}).name, c.moi);
+    (c.proprietairesSp || []).forEach(function (u) { if (u.PrincipalType !== 8 && u.PrincipalType !== 4) ajouter(u.Title, D.adresseDe(u)); });
+    (c.proprietairesPersonnes || []).forEach(function (p) { ajouter(p.nom, p.mail); });
+    return l;
+  }
+
+  function ecranReserver(app, chemin) {
+    var segs = lireSegs(chemin); if (segs === null) segs = [nomCommun()];
+    if (!exigerConnexion(app, "Réserver")) return;
+    var gen = demarrerEcran(), cle = segs.join("/");
+    app.appendChild(EB.barre("Réserver", { href: hashChemin("acces", segs), texte: "Annuler" }));
+    var zone = h("div", null, chargement());
+    app.appendChild(zone);
+    Promise.all([
+      C.obtenir("droits:" + cle, function () { return lireDroits(segs); }, { ttl: 30000 }),
+      utilisateurs().catch(function () { return { liste: [] }; }),
+    ]).then(function (res) {
+      if (!toujoursLa(gen, zone)) return;
+      var r = res[0], c = r.o.c, suggestions = suggestionsReserve(c);
+      if (!reserve || reserve.cle !== cle) {
+        reserve = { cle: cle, choisis: {}, niveau: "modifier" };
+        if (c.moi) reserve.choisis[c.moi] = suggestions[0]; // vous-même, coché d'office
+      }
+      var dejaSuggere = {}; suggestions.forEach(function (p) { dejaSuggere[p.mail] = 1; });
+      var equipe = res[1].liste.filter(function (u) { return u.profil !== "boite" && u.accountEnabled !== false; }).map(function (u) {
+        return personneDe(u.displayName, String(u.mail || u.userPrincipalName || "").toLowerCase(), u.type === "externe" ? "externe" : "interne");
+      }).filter(function (p) { return p.mail && !dejaSuggere[p.mail]; });
+
+      zone.textContent = "";
+      zone.appendChild(h("h2", { class: "titre-objet" }, emoji("🔒"), " Qui pourra ouvrir « " + r.o.nom + " » ?"));
+      zone.appendChild(h("p", { class: "aide-ecran" }, "Cochez les personnes. Toutes les autres ne pourront plus l'ouvrir."));
+      var resume = h("p", { class: "resume-choix", role: "status" });
+      function majResume() {
+        var n = Object.keys(reserve.choisis).length;
+        resume.textContent = n ? n + " personne" + (n > 1 ? "s" : "") + " choisie" + (n > 1 ? "s" : "") + " : " + D.listeNoms(Object.keys(reserve.choisis).map(function (a) { return reserve.choisis[a].nom; })) : "Personne n'est choisi pour l'instant.";
+        continuer.disabled = !n;
+      }
+      function ligneChoix(p) {
+        var id = "choix-" + p.mail.replace(/[^a-z0-9]/g, "-");
+        var case_ = h("input", { type: "checkbox", id: id, "data-adresse": p.mail, onchange: function () {
+          if (case_.checked) reserve.choisis[p.mail] = p; else delete reserve.choisis[p.mail];
+          // Même personne affichée deux fois (suggestion et recherche) : cases synchronisées.
+          zone.querySelectorAll('input[data-adresse="' + p.mail + '"]').forEach(function (x) { x.checked = case_.checked; });
+          majResume();
+        } });
+        case_.checked = !!reserve.choisis[p.mail];
+        return h("label", { class: "ligne-choix", for: id }, case_, avatarPersonne({ displayName: p.nom }),
+          h("span", { class: "qui" }, h("b", null, p.nom + (p.mail === c.moi ? " (vous)" : "")), h("small", null, p.mail), etiquette(p.type)));
+      }
+      zone.appendChild(h("section", { class: "section" }, h("h3", null, "Direction et propriétaires du site"),
+        h("div", { class: "liste-choix", "data-liste": "suggestions" }, suggestions.map(ligneChoix))));
+      var recherche = h("input", { class: "champ recherche", type: "search", placeholder: "Chercher un prénom…", "aria-label": "Chercher une personne de l'équipe", oninput: remplir });
+      var listeEquipe = h("div", { class: "liste-choix", "data-liste": "equipe" });
+      function remplir() {
+        var q = String(recherche.value || "").trim().toLowerCase();
+        listeEquipe.textContent = "";
+        var l = equipe.filter(function (p) { return !q || (p.nom + " " + p.mail).toLowerCase().indexOf(q) > -1; });
+        l.slice(0, 40).forEach(function (p) { listeEquipe.appendChild(ligneChoix(p)); });
+        if (!l.length) listeEquipe.appendChild(h("p", { class: "vide-doux" }, equipe.length ? "Personne ne correspond." : "La liste de l'équipe n'a pas pu être chargée."));
+        else if (l.length > 40) listeEquipe.appendChild(h("p", { class: "vide-doux" }, "Écrivez un prénom pour voir les autres."));
+      }
+      zone.appendChild(h("section", { class: "section" }, h("h3", null, "Autres personnes de l'équipe"), recherche, listeEquipe));
+
+      function choixNiveau(n) {
+        var x = D.NIVEAUX[n];
+        var radio = h("input", { type: "radio", name: "niveau-reserve", id: "niveau-" + n, value: n, onchange: function () { reserve.niveau = n; } });
+        radio.checked = reserve.niveau === n;
+        return h("label", { class: "ligne-choix niveau-choix", for: "niveau-" + n }, radio, emoji(x.emoji), h("span", { class: "qui" }, h("b", null, x.nom), h("small", null, x.texte)));
+      }
+      zone.appendChild(h("section", { class: "section" }, h("h3", null, "Que pourront-elles faire ?"),
+        h("div", { class: "liste-choix", role: "radiogroup", "aria-label": "Que pourront-elles faire ?" }, choixNiveau("modifier"), choixNiveau("voir"))));
+
+      var continuer = h("button", { class: "btn large", type: "button", "data-action": "continuer-reserve", onclick: function () { confirmerReserve(segs, r); } }, emoji("🔒"), "Continuer");
+      zone.appendChild(resume);
+      zone.appendChild(h("div", { class: "actions" }, continuer));
+      remplir(); majResume();
+    }).catch(function (e) {
+      if (!toujoursLa(gen, zone)) return;
+      zone.textContent = "";
+      zone.appendChild(blocErreur(e, EB.rendre));
+      if (e.statut === 403) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour choisir qui peut ouvrir un dossier, il faut être « Propriétaire » du site du Château. Demandez à Damien."));
+    });
+  }
+
+  function confirmerReserve(segs, r) {
+    var choisis = Object.keys(reserve.choisis).map(function (a) { return reserve.choisis[a]; });
+    if (!choisis.length) { EB.toast("Choisissez au moins une personne."); return; }
+    var niveau = reserve.niveau, base = r.o.base;
+    var plan = D.planReserve(r.entrees, choisis, niveau, garde);
+    var obligatoires = D.obligatoiresReserve(plan.proteges, nomMembre, choisis);
+    var noms = choisis.map(function (p) { return p.nom; });
+    var retires = plan.retirer.map(function (e) { return nomMembre(e.membre); });
+    EB.confirmer({ emoji: "🔒", titre: "Réserver « " + r.o.nom + " » ?", deuxEtapes: false,
+      phrase: D.phraseReserve(noms, r.o.nom, obligatoires),
+      consequence: (niveau === "voir" ? "Elles pourront l'ouvrir et le lire, sans rien changer." : "Elles pourront l'ouvrir et le modifier.") +
+        (retires.length ? " Ne pourront plus l'ouvrir : " + D.listeNoms(retires) + "." : "") +
+        (r.o.fichier ? "" : " Ce qui est rangé dedans suivra ce choix."),
+      bouton: "Oui, réserver" }).then(function (ok) {
+      if (!ok) return;
+      var etapes = [];
+      if (!r.unique) etapes.push(function () { return casserHeritage(base); });
+      plan.changer.forEach(function (e) { etapes.push(function () { return retirerPrincipal(base, e.principalId).then(function () { return ajouterPrincipal(base, e.principalId, niveau); }); }); });
+      plan.ajouter.forEach(function (p) { etapes.push(function () { return donnerAcces(r.o, p, niveau); }); });
+      plan.retirer.forEach(function (e) { etapes.push(function () { return retirerPrincipal(base, e.principalId); }); });
+      var fait = 0, suite = Promise.resolve();
+      EB.toast("Un instant… (0 sur " + etapes.length + ")");
+      etapes.forEach(function (f) { suite = suite.then(f).then(function () { fait++; EB.toast("Un instant… (" + fait + " sur " + etapes.length + ")"); }); });
+      return suite.then(function () {
+        noter("Réservé à certaines personnes (" + D.NIVEAUX[niveau].nom + ")", r.o.nom + " — " + D.listeNoms(noms) + (retires.length ? " ; retirés : " + retires.join(", ") : ""));
+        reserve = null;
+        EB.toast("C'est fait : seuls " + D.listeNoms(noms) + " (et les propriétaires) peuvent ouvrir « " + r.o.nom + " ».");
+        location.hash = hashChemin("acces", segs);
+      });
+    }).catch(afficherErreur);
+  }
+
+  /* ------------------------------------------------------------------ */
   /* #/personnes                                                         */
   /* ------------------------------------------------------------------ */
   var filtrePersonnes = "tous";
@@ -1133,6 +1264,7 @@
   EB.ecran("commun", ecranCommun);
   EB.ecran("acces", ecranAcces);
   EB.ecran("restreindre", ecranRestreindre);
+  EB.ecran("reserver", ecranReserver);
   EB.ecran("personnes", ecranPersonnes);
   EB.ecran("licences-reel", ecranLicences);
   EB.ecran("organisation", ecranOrganisation);
