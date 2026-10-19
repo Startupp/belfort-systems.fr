@@ -428,6 +428,34 @@
     return r;
   }
 
+
+  /* ------------------------------------------------------------------ */
+  /* Aperçu (écran Apparence) : valeurs EXACTES des palettes d'app.css    */
+  /* (vérifiées contre app.css par tests/apparence.test.mjs)             */
+  /* ------------------------------------------------------------------ */
+  var CLES_APERCU = ["--fond", "--surface", "--surface-2", "--trait", "--texte", "--texte-2", "--primaire", "--primaire-pale", "--primaire-fort", "--sur-primaire",
+    "--entete", "--entete-2", "--entete-texte", "--entete-doux", "--or",
+    "--statut-confirmer-fond", "--statut-confirmer-texte", "--statut-envoyee-fond", "--statut-envoyee-texte",
+    "--statut-cours-fond", "--statut-cours-texte", "--statut-termine-fond", "--statut-termine-texte"];
+  var APERCU_CSS = {
+    creme: ["#FBF6EE #FFFDF8 #F3EADF #E6DACB #2A1C19 #5C4741 #8A4C45 #F4E3DC #6C3832 #FFFFFF #5B3833 #8A4C45 #FFFFFF #F1DFC6 #C9A04A #FBEFD3 #6B4400 #F4E3DC #6C3832 #E2F1E5 #24572F #ECEDE8 #4A5A4E",
+      "#1C1310 #271B17 #30221D #4A3530 #F6ECE1 #DBC8B8 #E7B8A8 #3E2A24 #F3D0C3 #22160F #2E1D19 #7A443D #FFFFFF #E8CFA6 #E2BE6A #3A2C0B #FFD98A #3E2A24 #F3D0C3 #1F3A27 #A8E2B5 #2C2A26 #C9CFC5"],
+    bleu: ["#F5F6FA #FFFFFF #ECEFF6 #DCE1EC #121A2B #3E4A62 #1F3A68 #E3E9F4 #172C52 #FFFFFF #14213D #1F3A68 #FFFFFF #E9D9AE #C9A04A #FBF1D6 #6B4400 #E3E9F4 #172C52 #E2F1E5 #24572F #ECEFEC #4A5A4E",
+      "#0B1222 #111B30 #17233D #26344F #EEF1F8 #C3CBDC #9DB4E0 #1B2A48 #C3D3F0 #0B1222 #0F1A33 #24427A #FFFFFF #E2CF9E #E2BE6A #3A2C0B #FFD98A #1B2A48 #C3D3F0 #17362A #A8E2B5 #1E2633 #C3CBC6"],
+  };
+  /** Variables de l'aperçu (sous-ensemble, valeurs exactes) + rayon, pour un réglage d'apparence et un mode. */
+  function apercu(app, sombre) {
+    var c = couleursDe(app), v = {};
+    if (c.css) APERCU_CSS[c.css][sombre ? 1 : 0].split(" ").forEach(function (x, i) { v[CLES_APERCU[i]] = x; });
+    else { var d = deriver({ primaire: c.primaire, accent: c.accent, ton: c.ton, entete: c.entete }, !!sombre); CLES_APERCU.forEach(function (k) { v[k] = d[k]; }); }
+    var coins = (app && app.coins) || "doux";
+    v["--ap-rayon"] = RAYONS[coins][0]; v["--ap-rayon-petit"] = RAYONS[coins][1];
+    var pol = POLICE_VARS[(app && app.police) || "classique"] || {};
+    v["--ap-serif"] = pol["--serif"] || "var(--serif)"; v["--ap-sans"] = pol["--sans"] || "var(--sans)";
+    v["--ap-entete-fond"] = c.entete === "degrade" ? "linear-gradient(120deg, " + v["--entete"] + " 0%, " + v["--entete"] + " 35%, " + v["--entete-2"] + " 100%)" : v["--entete"];
+    return v;
+  }
+
   var posees = [];
   /** Pose le thème sur le document (navigateur uniquement). Renvoie la couleur de l'en-tête. */
   function appliquer(doc, app, sombre) {
@@ -466,7 +494,7 @@
     PALETTES: PALETTES, TONS: TONS, COINS: COINS, POLICES: POLICES, ENTETES: ENTETES, PAIRES: PAIRES, MAX_HISTORIQUE: MAX_HISTORIQUE,
     palette: palette, deriver: deriver, controler: controler, verifierCouleur: verifierCouleur,
     defaut: defaut, valider: valider, historiser: historiser, versionPrecedente: versionPrecedente, memesReglages: memesReglages, reglagesDe: function (b) { return reglagesDe(b).r; },
-    couleursDe: couleursDe, jetons: jetons, effectif: effectif, appliquer: appliquer,
+    couleursDe: couleursDe, jetons: jetons, apercu: apercu, CLES_APERCU: CLES_APERCU, effectif: effectif, appliquer: appliquer,
     LOGO_TYPES: LOGO_TYPES, LOGO_MAX: LOGO_MAX, verifierLogo: verifierLogo, placerDansCarre: placerDansCarre,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

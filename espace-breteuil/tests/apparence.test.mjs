@@ -120,3 +120,17 @@ test("logo : PNG/JPEG/WebP ≤ 1 Mo, SVG refusé ; placement dans un carré avec
   assert.equal(A.verifierLogo({ type: "image/png", size: 1572864, name: "l.png" }), "Logo trop lourd (1,5 Mo) : 1 Mo au plus.");
   assert.deepEqual(A.placerDansCarre(400, 200, 512, 0.125), { x: 64, y: 160, l: 384, h: 192 });
 });
+
+test("aperçu : valeurs exactes des palettes d'app.css (crème, Bleu élégant, clair et sombre)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const CSS = readFileSync(new URL("../app.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const vars = (sel) => { const v = {}; for (const m of CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)) { if (m[1].trim() !== sel) continue; for (const d of m[2].matchAll(/(--[\w-]+)\s*:\s*([^;]+);?/g)) v[d[1]] = d[2].trim(); } return v; };
+  const ref = {
+    "creme-0": vars(":root"), "creme-1": { ...vars(":root"), ...vars(':root[data-theme="sombre"]') },
+    "bleu-0": { ...vars(":root"), ...vars(':root[data-palette="bleu"]') }, "bleu-1": { ...vars(":root"), ...vars(':root[data-palette="bleu"]'), ...vars(':root[data-palette="bleu"][data-theme="sombre"]') },
+  };
+  for (const [k, css] of Object.entries(ref)) {
+    const [pal, s] = k.split("-"), v = A.apercu({ palette: pal }, s === "1");
+    for (const cle of A.CLES_APERCU) assert.equal(v[cle], css[cle], `${k} ${cle}`);
+  }
+});
