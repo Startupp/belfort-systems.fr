@@ -51,7 +51,7 @@ jobs:
             echo "Création du KV RATE"
             SORTIE=$(npx wrangler kv namespace create RATE 2>&1) || { echo "$SORTIE"; exit 1; }
             echo "$SORTIE"
-            ID=$(echo "$SORTIE" | grep -oE '[0-9a-f]{32}' | head -n1)
+            ID=$(echo "$SORTIE" | grep -E '^\s*"?id"?\s*[=:]' | grep -oE '[0-9a-f]{32}' | head -n1)
           fi
           [ -n "$ID" ] || { echo "KV introuvable"; exit 1; }
           echo "id=$ID" >> "$GITHUB_OUTPUT"
@@ -69,18 +69,23 @@ jobs:
             echo "Création de la base D1 $NOM"
             SORTIE=$(npx wrangler d1 create "$NOM" 2>&1) || { echo "$SORTIE"; exit 1; }
             echo "$SORTIE"
-            ID=$(echo "$SORTIE" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -n1)
+            ID=$(echo "$SORTIE" | grep -E 'database_id|"uuid"' | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -n1)
           fi
           [ -n "$ID" ] || { echo "D1 introuvable"; exit 1; }
           echo "id=$ID" >> "$GITHUB_OUTPUT"
 
       - name: Préparer la configuration de déploiement
+        env:
+          KV_ID: ${{ steps.kv.outputs.id }}
+          D1_ID: ${{ steps.d1.outputs.id }}
         run: |
           set -euo pipefail
-          sed -e "s/REMPLACER_PAR_ID_KV/${{ steps.kv.outputs.id }}/" \
-              -e "s/REMPLACER_PAR_ID_D1/${{ steps.d1.outputs.id }}/" \
-              wrangler.toml > wrangler.ci.toml
-          grep -q REMPLACER_ wrangler.ci.toml && { echo "Identifiant manquant"; exit 1; } || true
+          echo "KV : $KV_ID"
+          echo "D1 : $D1_ID"
+          [ -n "$KV_ID" ] && [ -n "$D1_ID" ] || { echo "Identifiant manquant"; exit 1; }
+          sed -e "s/REMPLACER_PAR_ID_KV/$KV_ID/" -e "s/REMPLACER_PAR_ID_D1/$D1_ID/" wrangler.toml > wrangler.ci.toml
+          if grep -q REMPLACER_ wrangler.ci.toml; then echo "Remplacement incomplet"; cat wrangler.ci.toml; exit 1; fi
+          echo "Configuration prête."
 
       - name: Appliquer les migrations D1
         run: npx wrangler d1 migrations apply belfort_contact --remote --config wrangler.ci.toml
