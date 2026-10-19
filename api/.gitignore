@@ -2,3 +2,5 @@ node_modules/
 .wrangler/
 .dev.vars
 *.log
+wrangler.ci.toml
+wrangler.local.toml
