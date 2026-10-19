@@ -6,7 +6,7 @@
  *   - Un fichier survole la fenêtre (dragenter, types contenant "Files") → voile plein écran :
  *     « Déposer ici pour envoyer dans : <dossier> » + chemin lisible (Dossier commun › Finance › 2026).
  *     Écran sans dossier (Planning, Moi…) → « Ouvrez d'abord un dossier… » et rien n'est envoyé ;
- *     accueil de Fichiers → proposition d'envoyer dans « Mes fichiers ».
+ *     accueil de Fichiers → proposition d'envoyer dans « Mes documents ».
  *   - Dépôt → envoi dans CE dossier avec graph.js → televerser (≤ 4 Mo : PUT …:/content ; au-delà :
  *     session d'envoi), une barre de progression par fichier, puis liste rafraîchie et message.
  *   - Nom déjà pris → « Garder les deux » (par défaut, « nom (2).ext ») ou « Remplacer ».
@@ -60,7 +60,7 @@
       sous.textContent = c.lisible;
     } else {
       titre.textContent = "Ouvrez d'abord un dossier pour y déposer vos fichiers";
-      sous.textContent = c.proposerMoi ? "Ou déposez-les ici : ils iront dans « Mes fichiers »." : "Fichiers › Mes fichiers ou Dossier commun.";
+      sous.textContent = c.proposerMoi ? "Ou déposez-les ici : ils iront dans « Mes documents »." : "Documents › Mes documents ou Documents de l'équipe.";
     }
     voile.hidden = false;
     document.body.classList.add("depot-actif");
@@ -134,9 +134,9 @@
     if (!c.espace) {
       if (!c.proposerMoi) return EB.toast("Ouvrez d'abord un dossier pour y déposer vos fichiers.");
       // Ouverte seulement APRÈS l'éventuel message « trop lourd » (une seule fenêtre à la fois).
-      debut = function () { return EB.confirmer({ emoji: "⬆️", titre: "Envoyer dans « Mes fichiers » ?", deuxEtapes: false,
-        phrase: "Aucun dossier n'est ouvert. " + (t.fichiers.length > 1 ? "Les " + t.fichiers.length + " fichiers iront" : "Le fichier ira") + " dans « Mes fichiers » (votre OneDrive).",
-        bouton: "Oui, envoyer dans Mes fichiers" }).then(function (ok) { return ok ? D.cible(["onedrive"], {}) : null; }); };
+      debut = function () { return EB.confirmer({ emoji: "⬆️", titre: "Envoyer dans « Mes documents » ?", deuxEtapes: false,
+        phrase: "Aucun dossier n'est ouvert. " + (t.fichiers.length > 1 ? "Les " + t.fichiers.length + " fichiers iront" : "Le fichier ira") + " dans « Mes documents » (votre OneDrive).",
+        bouton: "Oui, envoyer dans Mes documents" }).then(function (ok) { return ok ? D.cible(["onedrive"], {}) : null; }); };
     }
     var avant = t.tropGros.length ? avertir("📦", "Fichier trop lourd (250 Mo au plus)",
       liste(t.tropGros) + (t.tropGros.length > 1 ? " ne seront pas envoyés." : " ne sera pas envoyé.") + " Déposez-le directement dans OneDrive ou SharePoint, ou demandez à Damien."

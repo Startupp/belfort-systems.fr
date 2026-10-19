@@ -29,11 +29,11 @@
     var ecran = c[0] || "";
     if (ecran === "onedrive") {
       var s = c.slice(1);
-      return { espace: "moi", segs: s, nom: s.length ? s[s.length - 1] : "Mes fichiers", lisible: fil(["Mes fichiers"].concat(s)) };
+      return { espace: "moi", segs: s, nom: s.length ? s[s.length - 1] : "Mes documents", lisible: fil(["Mes documents"].concat(s)) };
     }
     if (ecran === "commun") {
       var segs = c.length < 2 ? [nc] : c[1] === RACINE ? [] : c.slice(1);
-      return { espace: "commun", segs: segs, nom: segs.length ? (segs.length === 1 && segs[0] === nc ? "Dossier commun" : segs[segs.length - 1]) : "Documents",
+      return { espace: "commun", segs: segs, nom: segs.length ? (segs.length === 1 && segs[0] === nc ? "Documents de l'équipe" : segs[segs.length - 1]) : "Tout en haut",
         lisible: lisibleCommun(segs, nc) };
     }
     if ((ecran === "suivi" || (ecran === "moi" && c[1] === "guides")) && ctx.suiviPermis) {
@@ -43,8 +43,8 @@
     return { espace: null, proposerMoi: ecran === "fichiers" };
   }
   function lisibleCommun(segs, nc) {
-    if (!segs.length) return "Documents";
-    return segs[0] === nc ? fil(["Dossier commun"].concat(segs.slice(1))) : fil(["Documents"].concat(segs));
+    if (!segs.length) return "Tout en haut";
+    return segs[0] === nc ? fil(["Documents de l'équipe"].concat(segs.slice(1))) : fil(["Tout en haut"].concat(segs));
   }
 
   /** Noms interdits par OneDrive/SharePoint : remplacés par « - » ; espaces et points de fin retirés. */

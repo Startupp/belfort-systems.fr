@@ -196,7 +196,7 @@
     return l;
   }
   function ecranMesGuides(app) {
-    app.appendChild(EB.barre("Guides", { href: "#/moi", texte: "Moi" }));
+    app.appendChild(EB.barre("Modes d'emploi", { href: "#/moi", texte: "Moi" }));
     var zone = h("section", { class: "section section-suivi", "aria-labelledby": "g-docs" }, h("h2", { id: "g-docs" }, "Documents"));
     app.appendChild(zone);
     var corps = h("div");

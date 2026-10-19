@@ -8,15 +8,15 @@ const D = require("../depot.js");
 const CTX = { nomCommun: "Commun", suiviPermis: true };
 
 test("dossier cible selon la route", () => {
-  assert.deepEqual(D.cible(["onedrive"], CTX), { espace: "moi", segs: [], nom: "Mes fichiers", lisible: "Mes fichiers" });
-  assert.deepEqual(D.cible(["onedrive", "Notes", "2026"], CTX), { espace: "moi", segs: ["Notes", "2026"], nom: "2026", lisible: "Mes fichiers › Notes › 2026" });
-  assert.deepEqual(D.cible(["commun"], CTX), { espace: "commun", segs: ["Commun"], nom: "Dossier commun", lisible: "Dossier commun" });
-  assert.deepEqual(D.cible(["commun", "Commun", "Finance", "2026"], CTX), { espace: "commun", segs: ["Commun", "Finance", "2026"], nom: "2026", lisible: "Dossier commun › Finance › 2026" });
+  assert.deepEqual(D.cible(["onedrive"], CTX), { espace: "moi", segs: [], nom: "Mes documents", lisible: "Mes documents" });
+  assert.deepEqual(D.cible(["onedrive", "Notes", "2026"], CTX), { espace: "moi", segs: ["Notes", "2026"], nom: "2026", lisible: "Mes documents › Notes › 2026" });
+  assert.deepEqual(D.cible(["commun"], CTX), { espace: "commun", segs: ["Commun"], nom: "Documents de l'équipe", lisible: "Documents de l'équipe" });
+  assert.deepEqual(D.cible(["commun", "Commun", "Finance", "2026"], CTX), { espace: "commun", segs: ["Commun", "Finance", "2026"], nom: "2026", lisible: "Documents de l'équipe › Finance › 2026" });
   assert.deepEqual(D.cible(["commun", "Commun%20x", "Re%C3%A7us"], CTX).segs, ["Commun x", "Reçus"], "segments décodés");
-  assert.deepEqual(D.cible(["commun", "~racine"], CTX), { espace: "commun", segs: [], nom: "Documents", lisible: "Documents" });
-  assert.equal(D.cible(["commun", "Archives"], CTX).lisible, "Documents › Archives");
+  assert.deepEqual(D.cible(["commun", "~racine"], CTX), { espace: "commun", segs: [], nom: "Tout en haut", lisible: "Tout en haut" });
+  assert.equal(D.cible(["commun", "Archives"], CTX).lisible, "Tout en haut › Archives");
   assert.deepEqual(D.cible(["suivi"], CTX).segs, ["Commun", "Suivi informatique", "Guides"]);
-  assert.equal(D.cible(["moi", "guides"], CTX).lisible, "Dossier commun › Suivi informatique › Guides");
+  assert.equal(D.cible(["moi", "guides"], CTX).lisible, "Documents de l'équipe › Suivi informatique › Guides");
   assert.equal(D.cible(["moi", "guides"], { nomCommun: "Commun", suiviPermis: false }).espace, null, "Guides sans droit d'écrire");
   assert.deepEqual(D.cible(["planning"], CTX), { espace: null, proposerMoi: false });
   assert.deepEqual(D.cible(["moi"], CTX), { espace: null, proposerMoi: false });

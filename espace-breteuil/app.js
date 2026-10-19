@@ -1135,13 +1135,13 @@
     if (idFiche) {
       var f = (pack.fiches || []).filter(function (x) { return x.id === idFiche; })[0];
       if (!f) { location.hash = "#/guides/" + k; return; }
-      app.appendChild(barre(f.titre, { href: "#/guides/" + k, texte: "Guides" }));
+      app.appendChild(barre(f.titre, { href: "#/guides/" + k, texte: "Modes d'emploi" }));
       app.appendChild(h("ol", { class: "etapes" }, f.etapes.map(function (e) { return h("li", null, h("span", null, e)); })));
       if (f.lien) app.appendChild(h("div", { class: "actions" }, h("a", lienExterne(f.lien.url, { class: "btn large" }), icone("ouvrir"), f.lien.texte)));
       if (f.note) app.appendChild(h("div", { class: "note" }, icone("info"), h("span", null, f.note)));
       return;
     }
-    app.appendChild(barre("Guides Microsoft", retourHub));
+    app.appendChild(barre("Modes d'emploi", retourHub));
     app.appendChild(h("p", { class: "aide-ecran" }, "Pour faire ces gestes pour de vrai, sur le site de Microsoft."));
     app.appendChild(h("div", { class: "liste-fiches" }, (pack.fiches || []).map(function (f) {
       return h("a", { href: "#/guides/" + k + "/" + encodeURIComponent(f.id) }, icone(f.icone), h("span", null, f.titre), h("span", { class: "fleche", "aria-hidden": "true" }, "›"));
