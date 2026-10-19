@@ -6,7 +6,7 @@
   var API = (typeof window.BS_API === "string" && window.BS_API) ? window.BS_API.replace(/\/+$/, "") : "";
   // Formulaire de contact : Worker séparé (assets/config.js, BS_CONTACT_API). Sans valeur : repli mailto.
   var CONTACT_API = (typeof window.BS_CONTACT_API === "string" && window.BS_CONTACT_API) ? window.BS_CONTACT_API.replace(/\/+$/, "") : "";
-  var MAIL = "damien.belfort@gmail.com";
+  var MAIL = "damien@belfort-systems.fr";
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
   var el = function (tag, attrs, children) {
@@ -66,12 +66,13 @@
     var lire = function (cle, defaut) { var n = $('[data-prix="' + cle + '"]'); var v = n ? parseFloat(n.textContent) : NaN; return isNaN(v) ? defaut : v; };
     return {
       taux_horaire: lire("heure", 45),
-      heure_supplementaire: lire("heure_supplementaire", 45),
+      heure_supplementaire: lire("heure_supplementaire", 40),
       prestations: [
         { id: "heure", nom: "Intervention", unite: "heure", prix: lire("heure", 45) },
         { id: "tranche", nom: "Demi-heure supplémentaire", unite: "demi-heure", prix: 22.5 },
         { id: "migration", nom: "Migration Microsoft 365", unite: "forfait", prix: lire("migration", 590), inclus: "jusqu'à 5 boîtes", supplement: { nom: "boîte supplémentaire", prix: lire("migration.supplement", 70) } },
-        { id: "audit", nom: "Audit informatique", unite: "forfait", prix: lire("audit", 390) }
+        { id: "audit", nom: "Audit informatique", unite: "forfait", prix: lire("audit", 390) },
+        { id: "audit_abonnements", nom: "Audit des abonnements et contrats", unite: "forfait", prix: lire("audit_abonnements", 290) }
       ],
       forfaits_mensuels: [
         { id: "essentiel", nom: "Suivi Essentiel", prix: lire("forfait.essentiel", 149), heures: 2, assistance: "2 h d'assistance par mois", delai: "réponse le jour ouvré suivant" },
@@ -127,7 +128,7 @@
       reco.lignes.push((f.assistance || (f.heures + " h d'assistance par mois")) + ", " + f.delai);
       reco.formule = f.nom + " (" + f.prix + " € HT / mois)";
       if (f.id === "essentiel") reco.texte = "Le Suivi Essentiel prend en charge votre Microsoft 365 (arrivées et départs, licences, droits, boîtes partagées) et vérifie chaque mois la sécurité, la sauvegarde et les licences, avec un compte rendu. ";
-      if (f.id === "serenite") reco.texte = "Avec cette taille d'équipe et ce rythme, le Suivi Sérénité ajoute le suivi des postes, l'application Espace Client et une réponse dans la journée. ";
+      if (f.id === "serenite") reco.texte = "Avec cette taille d'équipe et ce rythme, le Suivi Sérénité ajoute le suivi des postes, l'application Espace Client, une revue des licences tous les 6 mois et une réponse dans la journée. ";
       if (r.site === "vivre") {
         reco.mensuel += siteWeb.prix;
         reco.lignes.push("Option site WordPress : " + siteWeb.prix + " € HT par mois");
@@ -144,9 +145,9 @@
       var inclusBoites = parseInt((migration.inclus || "").replace(/\D/g, ""), 10) || 5;
       var prixMig = migration.prix + Math.max(0, boites - inclusBoites) * sup;
       reco.ponctuel += prixMig;
-      reco.lignes.push("Migration Microsoft 365, une fois : " + (boites > inclusBoites ? "à partir de " : "") + prixMig + " € HT (" + migration.inclus + (boites > inclusBoites ? ", puis " + sup + " € HT la boîte" : "") + ")");
+      reco.lignes.push("Migration Microsoft 365, une fois : " + (boites > inclusBoites ? "à partir de " : "") + euro(prixMig) + " HT (" + migration.inclus + (boites > inclusBoites ? ", puis " + sup + " € HT la boîte" : "") + ")");
       reco.texte += "Pour commencer, je migre votre messagerie vers Microsoft 365 sans coupure : inventaire, plan de bascule, vérification avec chaque personne. ";
-      reco.formule += " + migration Microsoft 365 (" + prixMig + " € HT, une fois)";
+      reco.formule += " + migration Microsoft 365 (" + euro(prixMig) + " HT, une fois)";
       if (reco.type === "ponctuel") reco.texte += "Après la migration, le Suivi Essentiel (" + ess.prix + " € HT par mois) est une bonne suite si vous voulez rester accompagné. ";
     } else if (r.messagerie === "m365") {
       reco.texte += "Votre messagerie est déjà sur Microsoft 365 : je peux en reprendre la gestion (comptes, licences, partages) dans la formule. ";
@@ -288,7 +289,7 @@
 
       var repli = function () {
         var a = el("a", { class: "btn primary", href: lienMailto(d), text: "Envoyer par e-mail à la place" });
-        montrer("warn", ["Le service est momentanément indisponible.", "Votre message n'est pas perdu : le bouton ci-dessous ouvre votre messagerie avec tout ce que vous avez saisi. Vous pouvez aussi m'appeler au 06 09 89 74 43."], a);
+        montrer("warn", ["Le service est momentanément indisponible.", "Votre message n'est pas perdu : le bouton ci-dessous ouvre votre messagerie avec tout ce que vous avez saisi. Vous pouvez aussi m'écrire sur WhatsApp depuis le bouton « M'écrire directement »."], a);
         submit.disabled = false;
       };
 
