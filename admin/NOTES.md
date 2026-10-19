@@ -1,6 +1,7 @@
 # Tableau de bord `/admin/` — notes pour l'agent API et la suite
 
-Fichiers : `admin/index.html`, `admin/admin.css` (autonome), `admin/admin.js`, `admin/apercu/*.json` (données d'exemple, lecture seule).
+Fichiers : `admin/index.html`, `admin/admin.css` (autonome, jetons et polices du site), `admin/admin.js`, `admin/outils.js` (liste des raccourcis de la vue « Outils »), `admin/apercu/*.json` (données d'exemple, lecture seule).
+Première vue à l'ouverture : « Premier contact » (`#/premier`).
 L'ancien outil « Espaces chiffrés » est conservé tel quel : l'onglet charge `assets/bsv.js` + `assets/admin.js` sans modification (ses éléments `#p-spaces`, `#list`, `.tab`… sont dans `#ecran-espaces`).
 
 ## Ce qui dépend de l'API (contrat `docs/TABLEAU-DE-BORD.md`)
@@ -12,8 +13,12 @@ Routes appelées et **forme de réponse** (confirmées côté Worker, voir `api/
 | Appel | Réponse attendue par le panneau |
 |---|---|
 | `POST /admin/login {password}` | `{token, exp}` ; 401 = mot de passe refusé ; 429 = `Retry-After` lu pour le message d'attente |
-| `GET /admin/resume` | `{contacts_nouveaux, demandes_a_traiter, factures_en_attente, prochain_rdv:{debut,fin,avec,statut}, dernier_evenement:{date,titre}}` |
+| `GET /admin/resume` | `{contacts_nouveaux, messages_nouveaux, demandes_a_traiter, factures_en_attente, prochain_rdv:{debut,fin,avec,statut}, dernier_evenement:{date,titre}}` (`messages_nouveaux` = badge « Premier contact ») |
 | `GET /admin/journal?limit=10` | `{journal:[{id, quand, qui, action, cible, table}]}` (`table` facultatif, affiché en étiquette) |
+| `GET /admin/premier-contact` | `{messages:[{id, recu_le, nom, email, tel, sujet, formule, message, creneau, origine, statut, note, suivi_le}]}` — messages du formulaire du site lus dans la base `belfort_contact` (binding `CONTACTS`), statut `nouveau|lu|repondu|classe` et note depuis `contacts_suivi` ; 503 si la base n'est pas reliée |
+| `PATCH /admin/premier-contact/:id {statut, note}` | `{id, statut, note, suivi_le}` |
+| `GET /admin/publications` | `{configure, depot, pulls:[{numero, titre, branche, cible, auteur, brouillon, cree, maj, url, apercu}]}` ; `configure:false` quand le secret Worker `GITHUB_TOKEN` manque (bouton désactivé) |
+| `POST /admin/publications/:numero/fusionner` | `{numero, fusionne:true, sha, titre, branche}` ; 409 si brouillon, fermée ou non fusionnable ; 503 sans jeton |
 | `GET /admin/contacts` | `{contacts:[…]}` ; chaque contact peut porter `rdv:{id,debut,fin,statut,note}` (jointure `rdv.contact_id`) |
 | `PATCH /admin/contacts/:id {statut}` | `{ok:true}` |
 | `PATCH /admin/rdv/:id {statut:"confirme"}` | `{ok:true}` ; statuts `propose|confirme|annule` (route ajoutée au Worker) |
