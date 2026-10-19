@@ -628,6 +628,11 @@ Version connectée : voir la checklist de [ESPACE-BRETEUIL-CONNEXION.md](ESPACE-
 
 ## Aide et demandes (v5.4)
 
+> **v5.6** : pièces jointes (📎, capture collée, glisser-déposer ; 5 fichiers, 8 Mo ; vignettes dans le fil),
+> mail à Damien mis en forme (HTML + texte de secours), signature Gmail retirée des réponses (`AIDE_SIGNATURE`).
+> Installation : `docs/AIDE-INSTALLATION.md`, sections « Pièces jointes » et « Signature ». Tests :
+> `node api-planning/worker.test.mjs`, `node espace-breteuil/tests/aide.test.mjs`, `espace-breteuil/tests/aide-pj.playwright.mjs`.
+
 Bouton **?** en bas à droite de tous les écrans : Question, Avis, Amélioration, Problème, envoyés à
 Damien (mail) et suivis dans **Moi → Mes demandes** (pastille quand Damien a répondu). Damien répond
 au mail ou dans **Moi → Demandes (toutes)**. Code : `espace-breteuil/aide.js` (logique, testée par

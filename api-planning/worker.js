@@ -8,6 +8,8 @@
 // Tests : node api-planning/worker.test.mjs
 // Aide : liaisons AIDE_DB (D1) et AIDE_MAIL (envoi d'e-mails), variables AIDE_TENANT_ID, AIDE_CLIENT_ID,
 // AIDE_EXPEDITEUR, AIDE_DESTINATAIRE, AIDE_PRESTATAIRES, secret AIDE_SECRET — voir docs/AIDE-INSTALLATION.md.
+// v5.6 : mail à Damien en HTML (+ texte brut de secours) ; pièces jointes si la liaison KV AIDE_PJ existe
+// (sinon tout le reste marche, le bouton 📎 est caché) ; variable facultative AIDE_SIGNATURE (signature retirée des réponses).
 import { EmailMessage } from "cloudflare:email";
 const ORIGINES = ["https://espace-breteuil.pages.dev", "https://belfort-systems.fr", "https://breteuil.belfort-systems.fr"];
 const TTL_S = 600; // fraîcheur : 10 min
