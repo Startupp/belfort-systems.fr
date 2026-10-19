@@ -92,7 +92,8 @@ const SECTIONS = {
     // Reprend espace-breteuil/_headers (ignoré ici car hors racine), en attendant que l'appli
     // ne soit plus servie que par son propre projet Pages.
     nom: "Espace Breteuil (appli Microsoft 365 du client)",
-    connect: [...API, "https://graph.microsoft.com", "https://login.microsoftonline.com", "https://*.sharepoint.com"],
+    // L'appli appelle son propre Worker belfort-api (planning ICS), distinct de BS_API (belfort-admin).
+    connect: [...API, "https://belfort-api.damien-belfort.workers.dev", "https://graph.microsoft.com", "https://login.microsoftonline.com", "https://*.sharepoint.com"],
     frame: ["https://login.microsoftonline.com"],
     coop: "same-origin-allow-popups", robots: true,
   },

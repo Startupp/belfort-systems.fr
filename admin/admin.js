@@ -1004,7 +1004,7 @@
     var filtre = etat.filtreFact || 'toutes';
     var liste = fs.filter(function (f) { return filtre === 'toutes' || f.statut === filtre; });
     return html`
-      <div class="entete-vue"><div><h1>Factures</h1><p class="hint">Numérotation continue BS-AAAA-NNN attribuée à l’émission. Franchise de TVA.</p></div>
+      <div class="entete-vue"><div><h1>Factures</h1><p class="hint">Numérotation continue BS-AAAA-NNN attribuée à l’émission. Franchise de TVA. La facturation, l’URSSAF et la comptabilité se font sur <a href="https://app.indy.fr" target="_blank" rel="noopener">Indy</a> ; ces brouillons ne servent qu’aux aperçus.</p></div>
         <a class="btn sm" href="#/factures/nouvelle">Nouvelle facture</a></div>
       <div class="puces" role="group" aria-label="Filtrer">${[['toutes', 'Toutes'], ['brouillon', 'Brouillons'], ['envoyee', 'Envoyées'], ['payee', 'Payées']].map(function (f) {
         return html`<button type="button" class="puce" aria-pressed="${filtre === f[0]}" data-act="filtre-fact" data-f="${f[0]}">${f[1]}</button>`;
