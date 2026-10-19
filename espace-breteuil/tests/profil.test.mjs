@@ -44,7 +44,7 @@ test("simple collaborateur : Planning, Dossiers, Moi", () => {
   const r = P.deduire({ roles: ["autre-role"], licences: ["O365_BUSINESS_ESSENTIALS"] });
   assert.equal(r.profil, "collaborateur");
   assert.deepEqual(ids(r), ["planning", "fichiers", "moi"]);
-  for (const route of ["equipe", "gerer", "finance", "deleguer", "acces", "restreindre", "personnes"]) assert.equal(P.routePermise(route, r), false, route);
+  for (const route of ["equipe", "gerer", "finance", "deleguer", "acces", "restreindre", "reserver", "personnes"]) assert.equal(P.routePermise(route, r), false, route);
   for (const route of ["planning", "fichiers", "commun", "moi", "reglages", "journal"]) assert.ok(P.routePermise(route, r), route);
 });
 

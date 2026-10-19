@@ -443,6 +443,8 @@
           opts.emoji ? emoji(opts.emoji, "grand") : null,
           h("h2", { id: "detail-titre" }, opts.titre || "Vérifions ensemble"),
           h("p", { class: "phrase" }, opts.phrase || ""),
+          // Une seule étape : la conséquence s'affiche sous la phrase (rien n'est caché).
+          opts.deuxEtapes === false && opts.consequence ? h("p", { class: "phrase consequence" }, opts.consequence) : null,
           opts.deuxEtapes === false ? null : h("p", { class: "etape" }, "Étape 1 sur 2"),
           suite,
           h("button", { class: "btn secondaire large", type: "button", onclick: function () { terminer(false); } }, "Annuler")));
@@ -1190,7 +1192,7 @@
   function droitsChanges() {
     if (!connecte()) return;
     var e = cheminActuel()[0] || "";
-    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "site", "liens", "suivi"];
+    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "reserver", "site", "liens", "suivi"];
     if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
     else rendreOnglets(ongletDe(e), false);
   }

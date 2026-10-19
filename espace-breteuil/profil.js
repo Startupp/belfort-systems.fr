@@ -104,7 +104,7 @@
   /* Écrans réservés : route → condition. Les autres routes connectées sont ouvertes à tous. */
   var RESERVES = {
     equipe: "equipe", gerer: "plusieurs", finance: "finance", personnes: "equipe", organisation: "equipe",
-    "licences-reel": "licences", deleguer: "deleguer", acces: "gererDroits", restreindre: "gererDroits",
+    "licences-reel": "licences", deleguer: "deleguer", acces: "gererDroits", restreindre: "gererDroits", reserver: "gererDroits",
     site: "site", liens: "site", suivi: "suivi",
   };
   /** Vrai si la route (1er segment) est permise pour ce résultat de deduire(). */
@@ -126,7 +126,7 @@
   }
   /** Onglet (id) qui contient une route. */
   function ongletDe(route, r) {
-    var map = { planning: "planning", "": "planning", fichiers: "fichiers", onedrive: "fichiers", dossiers: "fichiers", commun: "fichiers", acces: "fichiers", restreindre: "fichiers", journal: "fichiers",
+    var map = { planning: "planning", "": "planning", fichiers: "fichiers", onedrive: "fichiers", dossiers: "fichiers", commun: "fichiers", acces: "fichiers", restreindre: "fichiers", reserver: "fichiers", journal: "fichiers",
       moi: "moi", reglages: "moi", details: "moi", verifier: "moi", installer: "moi", demos: "moi", aide: "moi", demandes: "moi" };
     if (map[route] != null) return map[route];
     var ids = (r ? r.onglets : onglets([])).map(function (o) { return o.id; });
