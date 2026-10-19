@@ -86,7 +86,7 @@
     { id: "ranger", titre: "Ranger un document de l'équipe", phrase: "Ouvrez le bon dossier, puis touchez « Ajouter un document ».", route: "#/commun", cible: '[data-action="televerser-commun"]', si: "editeur" },
     { id: "dossier", titre: "Créer un dossier", phrase: "Dans les documents de l'équipe, touchez « Créer un dossier » et donnez-lui un nom.", route: "#/commun", cible: '[data-action="nouveau-dossier"]', si: "editeur" },
     { id: "perso", titre: "Ranger un document personnel", phrase: "Dans « Mes documents », touchez « Ajouter ». Vous seul pourrez l'ouvrir.", route: "#/fichiers", cible: '[data-action="televerser-moi"]', si: "onedrive" },
-    { id: "lien", titre: "Envoyer un lien vers un document", phrase: "Touchez le document, puis « Copier un lien ». Collez-le dans un mail ou un message.", route: "#/fichiers", cible: '[data-tuto="recents"] ~ div .fichier, .section-fichiers .fichier' },
+    { id: "lien", titre: "Envoyer un lien vers un document", phrase: "Touchez le document, puis « Copier un lien ». Collez-le dans un mail ou un message.", route: "#/fichiers", cible: ".section-fichiers .fichier" },
     { id: "prive", titre: "Rendre un dossier privé", phrase: "Touchez « ⋯ » sur le dossier, puis « Choisir qui peut l'ouvrir ».", route: "#/commun", cible: ".tuile-menu", si: "gestionnaire" },
     { id: "epingler", titre: "Épingler un raccourci sur l'accueil", phrase: "Une adresse partagée, l'agenda ou un dossier : toujours à portée de main.", route: "#/accueil", cible: '[data-action="epingler"]' },
     { id: "texte", titre: "Agrandir le texte", phrase: "Dans Réglages, choisissez « Grand » ou « Très grand ».", route: "#/reglages", cible: '[data-reglage="texte"]' },

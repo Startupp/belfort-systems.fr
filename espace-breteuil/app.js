@@ -368,6 +368,20 @@
     attrs.type = "button"; attrs.onclick = t.onclick;
     return h("button", attrs, contenu);
   }
+  /**
+   * v5.5 : rangée de boutons d'action de MÊME taille (carrés arrondis, icône au-dessus, libellé court).
+   * liste : [{ texte, icone | emoji, action (data-action), onclick | href }] ; les null sont ignorés.
+   */
+  function boutonsCarres(liste) {
+    var l = liste.filter(Boolean);
+    return h("div", { class: "boutons-carres", style: { "--n": String(Math.max(l.length, 1)) } }, l.map(function (b) {
+      var contenu = [h("span", { class: "bc-ico", "aria-hidden": "true" }, b.emoji ? emoji(b.emoji) : icone(b.icone)), h("span", { class: "bc-lib" }, b.texte)];
+      if (b.href) return h("a", { class: "bc", href: b.href, "data-action": b.action || null }, contenu);
+      return h("button", { class: "bc", type: "button", "data-action": b.action || null, onclick: b.onclick }, contenu);
+    }));
+  }
+  /** Libellé simple + nom technique en second, en petit : « Mes documents (OneDrive) ». */
+  function avecTech(libelle, tech) { return [libelle, h("small", { class: "tech" }, " (" + tech + ")")]; }
   function grandesTuiles(liste, attrs) { return h("div", Object.assign({ class: "tuiles-grandes" }, attrs || {}), liste.filter(Boolean).map(grandeTuile)); }
 
   /** Squelette de chargement (appels Microsoft) : n lignes grises animées. */
@@ -1399,7 +1413,7 @@
   /* ------------------------------------------------------------------ */
   window.EB = {
     h: h, icone: icone, emoji: emoji, avatar: avatar, initiales: initiales, barre: barre, pied: pied, action: action,
-    tuile: tuile, tuiles: tuiles, grandeTuile: grandeTuile, grandesTuiles: grandesTuiles, squelette: squelette,
+    tuile: tuile, tuiles: tuiles, grandeTuile: grandeTuile, grandesTuiles: grandesTuiles, boutonsCarres: boutonsCarres, avecTech: avecTech, squelette: squelette,
     depart: function () { return departApresConnexion(); }, montrer: montrer, finSurbrillance: finSurbrillance,
     bandeauDemo: bandeauDemo, bandeauSimulation: bandeauSimulation,
     confirmer: confirmer, choisir: choisir, toast: toast, dialogue: dialogue, ouvrirDialogue: ouvrirDialogue, fermerDialogue: fermerDialogue,
