@@ -63,7 +63,7 @@
       var l = ((v && v.value) || []).filter(function (u) { return (u.PrincipalType == null || u.PrincipalType === 1) && !/sharepoint\\system|^app@sharepoint/i.test(u.LoginName || "") && !/^(compte syst[eè]me|system account)$/i.test(u.Title || ""); });
       var ids = l.map(function (u) { return u.Id; }), moi = c.moiSp && c.moiSp.Id;
       vider(zoneProp, "Gestionnaires (propriétaires du site)");
-      zoneProp.appendChild(h("p", { class: "aide-ecran" }, "Ils décident qui a accès au dossier commun et à chaque dossier."));
+      zoneProp.appendChild(h("p", { class: "aide-ecran" }, "Ils choisissent qui peut ouvrir chaque dossier des documents de l'équipe."));
       zoneProp.appendChild(h("div", { class: "liste-acces" }, l.map(function (u) {
         var refus = P.refusRetraitProprietaire(u.Id, moi, ids);
         return h("div", { class: "carte-acces", "data-proprietaire": D.adresseDe(u) },
@@ -82,7 +82,7 @@
         if (x.type !== "interne") { EB.toast("Seule une personne du Château (@breteuil.fr) peut être gestionnaire."); return null; }
         p = x;
         if (actuels.some(function (u) { return D.adresseDe(u) === String(p.upn || p.mail).toLowerCase(); })) { EB.toast(p.nom + " est déjà gestionnaire."); return null; }
-        return EB.confirmer({ emoji: "🏰", titre: "Rendre " + p.nom + " propriétaire ?", phrase: p.nom + " pourra décider qui a accès au dossier commun et à chaque dossier du site du Château.",
+        return EB.confirmer({ emoji: "🏰", titre: "Rendre " + p.nom + " gestionnaire ?", phrase: p.nom + " pourra choisir qui peut ouvrir chaque dossier des documents de l'équipe.",
           consequence: "Cela vaut pour tout le site, tout de suite.", bouton: "Oui, rendre gestionnaire" });
       }).then(function (ok) {
         if (!ok) return;

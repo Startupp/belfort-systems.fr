@@ -149,7 +149,7 @@
 
   function driveDe(cible) {
     if (cible.espace === "moi") return C.obtenir("fichiers:drive", function () { return G.graph("GET", "/me/drive?$select=id,webUrl"); }, { ttl: 3600000 }).then(function (d) { return d.id; });
-    return X().contexte().then(function (c) { if (!c || !c.drive) throw new Error("Le dossier commun est introuvable."); return c.drive.id; });
+    return X().contexte().then(function (c) { if (!c || !c.drive) throw new Error("Les documents de l'équipe sont introuvables."); return c.drive.id; });
   }
   function nomsExistants(drive, segs) {
     var chemin = segs.length ? "/drives/" + drive + "/root:/" + segs.map(encodeURIComponent).join("/") + ":/children" : "/drives/" + drive + "/root/children";

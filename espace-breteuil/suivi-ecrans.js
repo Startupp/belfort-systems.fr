@@ -28,7 +28,7 @@
       dossier: s.dossier || "Suivi informatique", fichier: s.fichier || "suivi.json", guides: s.guides || "Guides",
       ancien: s.ancien && s.ancien.dossier && s.ancien.fichier ? s.ancien : null };
   }
-  function messageAbsent() { return "Le dossier " + reglage().dossier + " n'est pas encore en place — Damien doit le déposer dans le dossier commun."; }
+  function messageAbsent() { return "Le dossier " + reglage().dossier + " n'est pas encore en place — Damien doit le déposer dans les documents de l'équipe."; }
 
   /* ------------------------------------------------------------------ */
   /* Lecture                                                             */
@@ -76,7 +76,7 @@
   function bandeauEtat(r) {
     if (r.etat === "absent") return h("div", { class: "bandeau info", role: "status", "data-etat": "absent" }, icone("info"), h("span", null, messageAbsent()));
     if (r.etat === "illisible") return h("div", { class: "bandeau erreur", role: "alert", "data-etat": "illisible" }, icone("exemple"),
-      h("span", null, h("strong", null, r.raison || "Le fichier de suivi n'est pas lisible."), "Damien doit le corriger dans le dossier commun."));
+      h("span", null, h("strong", null, r.raison || "Le fichier de suivi n'est pas lisible."), "Damien doit le corriger dans les documents de l'équipe."));
     return null;
   }
 

@@ -180,7 +180,7 @@
         ["📧", "Outlook : sa boîte mail et son agenda"],
         ["💬", "Teams : discussions et visios"],
         ["☁️", "OneDrive : 1 To pour ses fichiers"],
-        ["🗂️", "Le dossier commun du Château"],
+        ["🗂️", "Les documents de l'équipe"],
       ],
     },
     basic: {
@@ -191,7 +191,7 @@
         ["📧", "Outlook : sa boîte mail et son agenda"],
         ["💬", "Teams : discussions et visios"],
         ["☁️", "OneDrive : 1 To pour ses fichiers"],
-        ["🗂️", "Le dossier commun du Château"],
+        ["🗂️", "Les documents de l'équipe"],
       ],
     },
     exchange: {

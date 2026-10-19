@@ -127,7 +127,7 @@
       if (lic.ok) sonde("licences", "ok"); else sonde("licences", "erreur", "Vos licences n'ont pas pu être lues.");
       if (c.ok) {
         sonde("site", "ok");
-        if (c.v.commun) sonde("commun", null); else sonde("commun", "erreur", "Le dossier commun est introuvable.");
+        if (c.v.commun) sonde("commun", null); else sonde("commun", "erreur", "Les documents de l'équipe sont introuvables.");
         if (c.v.moiSp) sonde("sp", "ok"); else sonde("sp", "erreur", "SharePoint ne répond pas à l'appli : les droits des dossiers ne sont pas lisibles.");
       } else {
         sonde("site", "erreur", c.e && c.e.statut === 404 ? "Le site SharePoint du Château est introuvable." : ((c.e && c.e.message) || "Le site du Château ne répond pas."));

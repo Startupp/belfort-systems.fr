@@ -275,7 +275,7 @@
       zone.textContent = "";
       zone.appendChild(blocErreur(e, EB.rendre));
       if (e.statut === 404 && segs.length === 1 && segs[0] === nomCommun()) {
-        if (window.EBAcces) window.EBAcces.signaler("commun", "erreur", "Le dossier commun est introuvable.");
+        if (window.EBAcces) window.EBAcces.signaler("commun", "erreur", "Les documents de l'équipe sont introuvables.");
         zone.appendChild(h("p", { class: "aide-ecran" }, "Le dossier « " + nomCommun() + " » n'a pas été trouvé. Prévenez Damien."));
         zone.appendChild(h("a", { class: "btn", href: hashChemin("commun", []) }, "Voir tout en haut"));
       }
@@ -562,7 +562,7 @@
 
   function ecranAcces(app, chemin) {
     var segs = lireSegs(chemin); if (segs === null) segs = [nomCommun()];
-    if (!exigerConnexion(app, "Qui a accès ?")) return;
+    if (!exigerConnexion(app, "Qui peut l'ouvrir ?")) return;
     var gen = demarrerEcran();
     var nom = segs.length ? segs[segs.length - 1] : "Tout en haut";
     var barre = EB.barre("Qui peut l'ouvrir ?", { href: hashChemin("commun", segs), texte: "Retour" });

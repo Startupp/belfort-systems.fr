@@ -609,7 +609,7 @@ try {
       const { contexte, page, erreurs } = await nouvellePage(vp, "proprietaire", { variante: "suivi-absent" });
       await page.goto(BASE + "#/suivi");
       await page.waitForSelector('[data-etat="absent"]', { timeout: 8000 });
-      assert.equal(await page.textContent('[data-etat="absent"]'), "Le dossier Suivi informatique n'est pas encore en place — Damien doit le déposer dans le dossier commun.");
+      assert.equal(await page.textContent('[data-etat="absent"]'), "Le dossier Suivi informatique n'est pas encore en place — Damien doit le déposer dans les documents de l'équipe.");
       assert.equal(await page.$(".bandeau.erreur"), null, "pas d'erreur technique");
       await capturer(page, `suivi-absent-${taille}`);
       await page.goto(BASE + "#/moi/guides");
