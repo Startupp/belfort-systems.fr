@@ -468,8 +468,26 @@ réglages par défaut) :
 - `eb:usages:<id du compte>` (v5.5) : « Ce que j'utilise » (ordre des tuiles de l'accueil, écran de départ) ;
 - `eb:journal` : « Ce que j'ai fait » (dossiers, droits, délégations).
 
-Pour la session de l'onglet seulement (`sessionStorage`) : jetons MSAL et dernier profil connu
-(uniquement des rôles, pour afficher les bons onglets tout de suite).
+Jetons MSAL (v5.5.1) : `localStorage`, partagés entre onglets (un lien ouvert depuis un mail
+ne redemande plus la connexion) ; renouvellement limité à 24 h par Microsoft. Pour l'onglet seulement
+(`sessionStorage`) : dernier profil connu (uniquement des rôles) et `eb:retour` (écran demandé par
+un lien, rouvert après la connexion).
+
+**Se déconnecter** efface le cache MSAL et toutes les clés `eb:*` des deux stockages, sauf
+`eb:reglages` et `eb:planning:*`. Détails et compromis : docs/ESPACE-BRETEUIL-CONNEXION.md,
+« Session et sécurité ».
+
+## v5.5.1 — réglages dans config.js
+
+- `boitesPartagees` : adresses (ou parties avant @) des boîtes partagées. Elles restent dans
+  « Les adresses partagées » (écrans « Qui fait quoi » et « L'équipe ») même si une licence leur
+  est encore attribuée. Également repérées par le réglage Exchange `userPurpose` si la permission
+  `MailboxSettings.Read` est un jour accordée (pas demandée par l'appli), et par l'ancien indice
+  (sans licence + connexion bloquée).
+- `prestataires` : compte(s) du prestataire informatique, montrés dans un petit groupe
+  « Prestataire informatique » au lieu de « Sans licence ». **À remplir par Damien.**
+- `siteWeb.accesPret` : `false` tant que l'équipe n'a pas de compte WordPress « éditeur » ;
+  encadré « 🔑 Accès au site à prévoir » et boutons vers WordPress masqués. Mettre `true` ensuite.
 
 ## Mode « calendrier seul »
 

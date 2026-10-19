@@ -15,8 +15,20 @@
     var s = (cfg && cfg.siteWeb) || {};
     var site = String(s.url || "https://www.breteuil.fr").replace(/\/+$/, "");
     var admin = String(s.admin || site + "/wp-admin/").replace(/\/*$/, "/");
-    return { site: site, admin: admin, groupe: s.groupe || "" };
+    return { site: site, admin: admin, groupe: s.groupe || "", accesPret: s.accesPret === true };
   }
+
+  /** v5.5.1 : l'équipe peut-elle déjà modifier le site (compte WordPress « éditeur ») ? false par défaut. */
+  function accesPret(cfg) { return config(cfg).accesPret; }
+  /** Encadré affiché tant que l'accès n'est pas prêt (textes en un seul endroit, testés). */
+  var ACCES = {
+    titre: "🔑 Accès au site à prévoir",
+    texte: "Pour modifier le site, il faut un compte WordPress « éditeur » et l'accord de M.\u00a0Defecques, qui gère aujourd'hui le site. " +
+      "En attendant, vous pouvez tout regarder sans risque : rien n'est modifié.",
+    bouton: "Écrire à Damien",
+    type: "question",
+    message: "Je souhaite pouvoir modifier le site internet.",
+  };
 
   /** Adresses utiles (toutes dans l'administration WordPress du site). */
   function adresses(cfg) {
@@ -88,9 +100,16 @@
   }
   function guide(cfg, id) { return guides(cfg).filter(function (g) { return g.id === id; })[0] || null; }
 
-  /** Tuiles de la section (externe = nouvel onglet WordPress ; sinon écran de l'appli). */
+  /** Tuiles de la section (externe = nouvel onglet WordPress ; sinon écran de l'appli).
+   *  Accès pas prêt : les tuiles qui ouvriraient l'administration WordPress mènent à leur mode d'emploi. */
   function tuiles(cfg) {
-    var u = adresses(cfg);
+    var u = adresses(cfg), pret = accesPret(cfg);
+    return brutesTuiles(u).map(function (t) {
+      if (pret || !t.externe || t.href.indexOf(u.admin) !== 0) return t;
+      return { id: t.id, libelle: t.libelle, icone: t.icone, href: "#/guides/site/" + t.id, sous: "Mode d'emploi, à lire sans risque", aide: t.libelle + " : mode d'emploi (l'accès au site est à prévoir)" };
+    });
+  }
+  function brutesTuiles(u) {
     return [
       { id: "liens", libelle: "Vérifier les liens", icone: "loupe", href: "#/liens", sous: "Les liens du bas de page marchent-ils ?", aide: "Vérifier que les liens du bas de page du site marchent" },
       { id: "image", libelle: "Remplacer une image", icone: "photo", href: u.medias, externe: true, sous: "Dans les images du site", aide: "Médiathèque de WordPress (nouvel onglet)" },
@@ -179,7 +198,7 @@
     return { titre: "La vérification n'a pas abouti", texte: "Réessayez dans une minute. Si cela recommence, prévenez Damien." + (e.statut ? " (code " + e.statut + ")" : "") };
   }
 
-  var api = { config: config, adresses: adresses, guides: guides, guide: guide, tuiles: tuiles, classer: classer, decoder: decoder, trier: trier, phrase: phrase, courte: courte, messageErreur: messageErreur };
+  var api = { config: config, accesPret: accesPret, ACCES: ACCES, adresses: adresses, guides: guides, guide: guide, tuiles: tuiles, classer: classer, decoder: decoder, trier: trier, phrase: phrase, courte: courte, messageErreur: messageErreur };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.EBSiteWeb = api;
 })(typeof self !== "undefined" ? self : this);

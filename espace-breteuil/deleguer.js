@@ -35,7 +35,8 @@
   /** Compte prestataire (config.prestataires) : montré en clair, jamais caché. */
   function estPrestataire(adresse) {
     var l = ((self.EB_CONFIG || {}).prestataires || []).map(function (x) { return String(x).toLowerCase(); });
-    return !!adresse && l.indexOf(String(adresse).toLowerCase()) > -1;
+    var a = String(adresse || "").toLowerCase();
+    return !!a && l.some(function (x) { return x.indexOf("@") > -1 ? x === a : x === a.split("@")[0]; }); // adresse complète ou partie avant @
   }
   function badgePrestataire() { return h("span", { class: "etiquette prestataire", "data-etiquette": "prestataire" }, "🛠️ Prestataire informatique"); }
   /** Confirmation renforcée : taper « RETIRER » (retrait du rôle d'administrateur général). */

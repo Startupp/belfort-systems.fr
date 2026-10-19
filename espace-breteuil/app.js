@@ -939,9 +939,29 @@
       onedrive: !r || !r.droits.licences.length ? true : pr === "standard" || pr === "basic",
       editer: window.EBProfil.peutEditer(r) };
   }
+  /**
+   * v5.5.1 : « Se déconnecter » efface les données du compte sur l'appareil : toutes les clés eb:* (épingles,
+   * journal, choix, profil, retour…) dans localStorage et sessionStorage, et ce qui resterait du cache MSAL.
+   * Gardés : eb:reglages (affichage : taille, thème) et eb:planning:* (planning visible sans connexion).
+   */
+  function viderStockage() {
+    [function () { return localStorage; }, function () { return sessionStorage; }].forEach(function (f) {
+      try {
+        var s = f(), cles = [];
+        for (var i = 0; i < s.length; i++) cles.push(s.key(i));
+        cles.forEach(function (k) {
+          if (!k) return;
+          if (k === "eb:reglages" || k.indexOf("eb:planning:") === 0) return;
+          if (k.indexOf("eb:") === 0 || k.indexOf("msal.") === 0 || /login\.windows\.net|login\.microsoftonline\.com|-idtoken-|-accesstoken-|-refreshtoken-/i.test(k)) s.removeItem(k);
+        });
+      } catch (e) {}
+    });
+    usagesMemoire = {};
+  }
   function deconnecter() {
     if (window.EBAcces) window.EBAcces.oublier();
     if (G()) G().oublier();
+    viderStockage();
     if (window.EBConnecte && window.EBConnecte.oublier) window.EBConnecte.oublier();
     reglages.mode = ""; sauverReglages();
     liensOnglets = null; signatureOnglets = "";
@@ -1013,13 +1033,24 @@
     return choix.length ? U.routeDe(choix[0], null, nomCommun()) : "#/accueil";
   }
   function aller(route) { if (location.hash === route) rendre(); else location.hash = route; }
+  /** v5.5.1 : écran demandé (lien profond) à rouvrir après la connexion, gardé pour l'onglet. */
+  function retenirCible(hash) {
+    if (!hash || hash === "#" || hash === "#/" || /^#\/bienvenue/.test(hash)) return;
+    try { sessionStorage.setItem("eb:retour", hash); } catch (e) {}
+  }
+  /** Route précise demandée (ni l'accueil, ni le questionnaire) : elle passe avant le 1er choix du questionnaire. */
+  function routeDemandee() {
+    var h = location.hash || "";
+    if (!h || h === "#" || h === "#/" || h === "#/accueil" || /^#\/bienvenue/.test(h)) return "";
+    return h;
+  }
 
   /** Premier lancement : 1) « Vous êtes : … », 2) « Qu'allez-vous faire surtout ici ? ». #/bienvenue/choix = étape 2 seule (depuis Moi). */
   function ecranBienvenue(app, chemin) {
     var r = resultat(), depuisMoi = chemin[1] === "choix";
     if (!r) { app.appendChild(barre("Un instant…", null)); app.appendChild(squelette(3)); return; }
     var plusTard = depuisMoi ? null : h("button", { class: "btn secondaire large", type: "button", "data-action": "plus-tard", onclick: function () {
-      questionnaireReporte = true; etapeBienvenue = 1; aller(departApresConnexion());
+      questionnaireReporte = true; etapeBienvenue = 1; aller(routeDemandee() || departApresConnexion());
     } }, "Plus tard");
     if (!depuisMoi && etapeBienvenue === 1) {
       var me = window.EBAcces && window.EBAcces.me(), c = (G() && G().compte()) || {};
@@ -1057,7 +1088,8 @@
       h("button", { class: "btn large", type: "button", "data-action": "usages-valider", onclick: function () {
         sauverChoix(selectionUsages); selectionUsages = null; etapeBienvenue = 1;
         toast("C'est noté. Vous pourrez changer dans Moi → Ce que j'utilise.");
-        aller(depuisMoi ? "#/accueil" : departApresConnexion());
+        // v5.5.1 : arrivé par un lien précis (ex. #/comment-faire) → on y va ; sinon le 1er choix.
+        aller(depuisMoi ? "#/accueil" : routeDemandee() || departApresConnexion());
       } }, icone("coche"), "C'est parti"),
       plusTard));
   }
@@ -1406,7 +1438,9 @@
       document.body.classList.remove("premier-lancement");
       if (publique === "installer" && ecrans.installer) ecrans.installer(vue, chemin);
       else if (publique === "calendrier") ecranCalendrierSeul(vue); else ecranPremier(vue);
-      if (chemin.join("/") !== "" && chemin[0] !== "planning" && chemin[0] !== "installer") history.replaceState(null, "", location.pathname + location.search);
+      // v5.5.1 : lien profond (#/comment-faire, #/commun…) ouvert sans être connecté : on retient l'écran demandé AVANT
+      // d'effacer l'adresse ; il sera rouvert après la connexion. v5.7 : #/planning et #/installer sont publics (adresse gardée).
+      if (chemin.join("/") !== "" && chemin[0] !== "planning" && chemin[0] !== "installer") { retenirCible(location.hash); history.replaceState(null, "", location.pathname + location.search); }
       ecran = "";
     } else {
       if (ALIAS.hasOwnProperty(chemin[0])) {

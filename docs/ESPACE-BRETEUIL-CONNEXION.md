@@ -22,9 +22,9 @@ vrai :
 - les personnes : fiche « Ce que je peux utiliser », licences, étiquette **EXTERNE** ;
 - « Comprendre l'organisation ».
 
-L'appli agit **uniquement avec les droits de Pauline** (permissions déléguées). Les jetons
-sont gardés **le temps de la session de l'onglet** (voir « Session et sécurité » plus bas),
-jamais dans `localStorage`. Aucun secret n'est dans le dépôt : `clientId` et `tenantId` ne
+L'appli agit **uniquement avec les droits de Pauline** (permissions déléguées). Depuis la
+v5.5.1, les jetons sont gardés **sur l'appareil, partagés entre les onglets** (`localStorage`,
+renouvellement limité à 24 h par Microsoft ; voir « Session et sécurité » plus bas). Aucun secret n'est dans le dépôt : `clientId` et `tenantId` ne
 sont pas des secrets.
 
 Durée estimée : 30 à 45 minutes. Ordre : 1 → 2 → 3 → 4 → 5 → 6 → 7.
@@ -306,18 +306,27 @@ Le diagnostic complet, pour Damien :
 
 ## Session et sécurité (compromis assumé)
 
-MSAL garde les jetons dans **`sessionStorage`** : la connexion tient **tant que l'onglet
-ou l'appli installée reste ouvert**, sans se reconnecter à chaque écran.
+**v5.5.1 :** MSAL garde les jetons dans **`localStorage`** (réglage standard de MSAL pour une
+appli web / PWA). Avant, c'était `sessionStorage` : chaque lien ouvert depuis un mail (nouvel
+onglet) redemandait la connexion, puis l'appli perdait l'écran demandé.
 
-- **Effacé** dès qu'on ferme l'onglet ou qu'on quitte vraiment l'appli (glisser vers le
-  haut sur iPhone). Rien ne reste sur le téléphone d'un jour à l'autre.
-- **Jamais `localStorage`** pour les jetons (il survivrait à la fermeture).
-- **Risque accepté** : pendant que l'onglet est ouvert, un script malveillant exécuté
-  dans la page pourrait lire `sessionStorage`. Parade : la CSP n'autorise **que** les
-  scripts du site (`script-src 'self'`, aucun script externe, MSAL livré dans `vendor/`),
+- **Pourquoi** : un lien `…/#/comment-faire` reçu par mail s'ouvre dans un nouvel onglet ; il
+  doit arriver **directement** sur l'écran, déjà connecté. L'appli installée garde aussi la
+  session après fermeture.
+- **Durée** : jetons d'accès **1 heure** ; le jeton de renouvellement d'une appli web est
+  **limité à 24 heures par Microsoft** (non prolongeable) : au-delà, on se reconnecte.
+- **« Se déconnecter »** efface tout sur l'appareil : le cache MSAL (`clearCache`) et toutes les
+  clés `eb:*` (épingles, journal, choix « Ce que j'utilise », profil, écran à rouvrir…), dans
+  `localStorage` et `sessionStorage`. Seuls restent `eb:reglages` (taille du texte, thème) et
+  `eb:planning:*` (planning visible sans connexion). À faire sur un appareil partagé.
+- **Risque accepté** (le même qu'avant, sur une durée plus longue) : un script malveillant
+  exécuté dans la page pourrait lire les jetons. Parade inchangée : la CSP n'autorise **que**
+  les scripts du site (`script-src 'self'`, aucun script externe, MSAL livré dans `vendor/`),
   et tout texte venant de Microsoft est inséré comme texte, jamais comme HTML.
-- Les jetons d'accès durent **1 heure au plus**. « Se déconnecter de l'appli » vide le
-  cache MSAL de l'onglet. Pour couper tout de suite : § 3 « Révoquer à tout moment ».
+- Pour couper tout de suite un appareil perdu : § 3 « Révoquer à tout moment ».
+- **Lien profond** : ouvert sans être connecté, l'écran demandé est retenu (`sessionStorage`
+  « eb:retour ») puis rouvert après la connexion ; il passe avant le 1er choix du
+  questionnaire (même après « C'est parti » au premier lancement).
 - v4 : les réponses Microsoft sont gardées **en mémoire** le temps de la session (rien sur
   le disque) ; `sessionStorage` garde aussi le dernier profil connu (uniquement les rôles,
   pour afficher les bons onglets tout de suite). Sur l'appareil (`localStorage`) : réglages,

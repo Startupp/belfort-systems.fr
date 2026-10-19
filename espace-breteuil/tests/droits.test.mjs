@@ -45,6 +45,47 @@ test("noms de groupes en clair", () => {
   assert.equal(D.nomGroupe("SharingLinks.x.AnonymousView.y"), "Lien ouvert à tous");
 });
 
+test("v5.5.1 : boîtes partagées toujours à part, quelle que soit leur licence ; prestataire ; homonymes", () => {
+  const sku = { a: "O365_BUSINESS_PREMIUM", b: "O365_BUSINESS_ESSENTIALS" };
+  const LISTE = ["chanteclerc", "chanteclercdeveloppement", "hfb", "Intendance", "fetpdebreteuil@breteuil.fr"];
+  const PRESTA = { prestataires: ["damien@breteuil02.onmicrosoft.com"] };
+  const boite = (mail, licences, extra) => ({ mail, userPrincipalName: mail, accountEnabled: true, assignedLicenses: licences, ...extra });
+  // Boîte partagée qui garde une licence d'essai Business Standard (cas réel) : dans la liste → boîte.
+  assert.equal(D.profilDe(boite("chanteclerc@breteuil.fr", [{ skuId: "a" }]), sku, LISTE, PRESTA), "boite");
+  assert.equal(D.profilDe(boite("chanteclercdeveloppement@breteuil.fr", [{ skuId: "a" }]), sku, LISTE, PRESTA), "boite");
+  // … puis la même, licence retirée, connexion encore possible : toujours une boîte (pas « Sans licence »).
+  assert.equal(D.profilDe(boite("chanteclerc@breteuil.fr", []), sku, LISTE, PRESTA), "boite");
+  // Partie avant @ sans tenir compte des majuscules ; aussi via le nom de connexion.
+  assert.equal(D.profilDe({ mail: "INTENDANCE@breteuil.fr", assignedLicenses: [{ skuId: "a" }] }, sku, LISTE), "boite");
+  assert.equal(D.profilDe({ userPrincipalName: "hfb@breteuil02.onmicrosoft.com", assignedLicenses: [] , accountEnabled: true }, sku, LISTE), "boite");
+  // Une partie avant @ ne doit pas attraper un nom plus long.
+  assert.equal(D.profilDe(boite("hfb2@breteuil.fr", [{ skuId: "b" }]), sku, LISTE), "basic");
+  // Réglage Exchange userPurpose = shared : boîte même hors liste et avec licence.
+  assert.equal(D.profilDe(boite("travaux@breteuil.fr", [{ skuId: "a" }], { userPurpose: "shared" }), sku, [], PRESTA), "boite");
+  assert.equal(D.profilDe(boite("vdurand@breteuil.fr", [{ skuId: "a" }], { userPurpose: "user" }), sku, [], PRESTA), "standard");
+  // Indice historique : sans licence + connexion bloquée → boîte, sans liste.
+  assert.equal(D.profilDe(boite("klefur@breteuil.fr", [], { accountEnabled: false }), sku, [], PRESTA), "boite");
+  // FetP (adresse partagée de François et Pauline, sans licence, avec photo) : adresse complète dans la liste.
+  assert.equal(D.profilDe({ displayName: "FetP", mail: "fetpdebreteuil@breteuil.fr", accountEnabled: true, assignedLicenses: [] }, sku, LISTE, PRESTA), "boite");
+  assert.equal(D.profilDe({ displayName: "FetP", mail: "fetpdebreteuil@breteuil.fr", accountEnabled: true, assignedLicenses: [] }, sku, [], PRESTA), "aucune", "sans la liste, on ne devine pas");
+  // Prestataire (compte d'administration sans licence) : groupe à part, pas « Sans licence ».
+  assert.equal(D.profilDe({ displayName: "Damien", userPrincipalName: "Damien@breteuil02.onmicrosoft.com", accountEnabled: true, assignedLicenses: [] }, sku, LISTE, PRESTA), "prestataire");
+  assert.equal(D.profilDe({ displayName: "Damien", userPrincipalName: "damien@breteuil02.onmicrosoft.com", accountEnabled: true, assignedLicenses: [] }, sku, LISTE, {}), "aucune", "liste vide : Sans licence");
+  assert.ok(D.PROFILS.prestataire.nom && D.PROFILS.prestataire.outils.length);
+  // Licence seule, pour signaler les boîtes qui consomment encore une licence.
+  assert.equal(D.licenceDe(boite("chanteclerc@breteuil.fr", [{ skuId: "a" }]), sku), "standard");
+  assert.equal(D.licenceDe(boite("chanteclerc@breteuil.fr", []), sku), "aucune");
+  // Homonymes : deux « Valérie » → partie avant @ sous chacune ; les autres rien.
+  assert.deepEqual(D.distinguerHomonymes([
+    { id: "1", displayName: "Valérie", mail: "vdurand@breteuil.fr" }, { id: "2", displayName: "valérie ", mail: "vmartin@breteuil.fr" },
+    { id: "3", displayName: "Fanny", mail: "fmartin@breteuil.fr" }]), { 1: "vdurand", 2: "vmartin" });
+  assert.deepEqual(D.distinguerHomonymes([]), {});
+  // Libellé affiché = prénom : « Valérie Durand » et « Valérie Martin » s'affichent tous deux « Valérie ».
+  const deux = [{ id: "a", displayName: "Valérie Durand", prenom: "Valérie", mail: "vdurand@breteuil.fr" }, { id: "b", displayName: "Valérie Martin", prenom: "Valérie", userPrincipalName: "vmartin@breteuil.fr" }];
+  assert.deepEqual(D.distinguerHomonymes(deux), {});
+  assert.deepEqual(D.distinguerHomonymes(deux, (x) => x.prenom), { a: "vdurand", b: "vmartin" });
+});
+
 test("profils de licence et boîtes partagées", () => {
   const sku = { a: "O365_BUSINESS_PREMIUM", b: "O365_BUSINESS_ESSENTIALS", c: "FLOW_FREE" };
   assert.equal(D.profilDe({ assignedLicenses: [{ skuId: "c" }, { skuId: "a" }] }, sku), "standard");

@@ -378,7 +378,10 @@ try {
         const tuilesSite = await page.$$eval(".section-site .t", (l) => l.map((a) => ({ lib: a.querySelector(".lib").textContent, href: a.getAttribute("href"), cible: a.getAttribute("target") })));
         assert.equal(tuilesSite.length, 8);
         for (const t of tuilesSite.filter((x) => /^https:/.test(x.href))) assert.equal(t.cible, "_blank", t.lib);
-        assert.ok(tuilesSite.some((t) => t.href === "https://www.breteuil.fr/wp-admin/upload.php"));
+        // v5.5.1 : accès WordPress pas encore prêt (config.siteWeb.accesPret false) → encadré, aucune tuile vers wp-admin.
+        assert.ok(!tuilesSite.some((t) => /wp-admin/.test(t.href)), "aucune tuile vers l'administration WordPress");
+        assert.ok(tuilesSite.some((t) => t.href === "#/guides/site/image"));
+        assert.match(await page.textContent('.section-site [data-encadre="acces-site"]'), /Accès au site à prévoir/);
         await page.click('#fiche-pied > summary');
         await page.waitForSelector('#fiche-pied[open] .etapes li');
         await calme(page);
