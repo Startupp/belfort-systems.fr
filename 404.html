@@ -2,10 +2,10 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Page introuvable · Belfort Systems</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Page introuvable — Belfort Systems</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#2E2760">
+<meta name="theme-color" content="#10263D">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
@@ -14,22 +14,27 @@
 <body>
 <header class="site">
   <div class="container">
-    <a class="brand" href="/" aria-label="Belfort Systems — accueil"><span class="mark" aria-hidden="true">B</span>Belfort <span>Systems</span></a>
+    <a class="brand" href="/" title="Accueil"><span class="mark" aria-hidden="true">B</span>Belfort <span>Systems</span></a>
     <nav class="main" aria-label="Navigation"><a class="tel" href="tel:+33609897443"><span>06 09 89 74 43</span></a><a class="btn primary" href="/">Accueil</a></nav>
   </div>
 </header>
 <main>
-  <section class="block" style="min-height:66vh; display:grid; place-items:center; text-align:center">
+  <section class="page-404">
     <div class="container">
-      <span class="eyebrow" style="justify-content:center">Erreur 404</span>
-      <h1 style="font-size:clamp(2.2rem,7vw,3.4rem); margin:16px 0 14px">Cette page n'existe pas</h1>
-      <p style="color:var(--muted); max-width:480px; margin:0 auto 30px; font-size:1.05rem">Elle a peut-être été déplacée. Vous cherchiez sans doute les services, les formules ou le formulaire de contact.</p>
-      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap">
-        <a class="btn primary" href="/">Retour à l'accueil <span class="arrow" aria-hidden="true">→</span></a>
+      <div class="mascotte" aria-hidden="true">
+        <img src="/assets/mascotte.webp" width="301" height="291" alt="" decoding="async">
+        <span class="paupiere"></span>
+      </div>
+      <span class="kicker">Erreur 404</span>
+      <h1>Cette page n'existe pas</h1>
+      <p>Elle a peut-être été déplacée. Vous cherchiez sans doute les services, les tarifs ou le formulaire de contact.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="/">Retour à l'accueil</a>
         <a class="btn ghost" href="/#contact">Me contacter</a>
       </div>
     </div>
   </section>
 </main>
+<script src="/assets/app.js" defer></script>
 </body>
 </html>
