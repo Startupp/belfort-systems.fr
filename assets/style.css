@@ -184,14 +184,13 @@ nav.main .tel {
 nav.main .tel svg { width: 18px; height: 18px; }
 nav.main .tel:hover { background: var(--bg-2); }
 nav.main .btn { margin-left: 6px; min-height: 44px; white-space: nowrap; padding-inline: 18px; }
-@media (max-width: 1100px) and (min-width: 721px) { nav.main .tel span { display: none; } nav.main .tel { padding: 10px; } }
+@media (max-width: 1180px) and (min-width: 901px) { nav.main .tel span { display: none; } nav.main .tel { padding: 10px; } }
 .nav-toggle { display: none; }
 
 /* ---------- Héros ---------- */
 .hero {
   position: relative; isolation: isolate; overflow: hidden;
   background: var(--heros-bg); color: var(--heros-ink);
-  min-height: calc(100svh - 68px);
   display: grid; align-items: center;
   padding: clamp(64px, 9vw, 120px) 0 clamp(80px, 10vw, 140px);
 }
@@ -210,6 +209,7 @@ nav.main .btn { margin-left: 6px; min-height: 44px; white-space: nowrap; padding
   border-radius: 50%;
   background: radial-gradient(circle, rgba(42,106,163,.42) 0%, rgba(42,106,163,.12) 40%, transparent 70%);
 }
+@media (min-width: 1000px) { .hero { min-height: calc(100svh - 68px); } }
 @media (prefers-reduced-motion: no-preference) and (min-width: 721px) {
   .hero .grille { animation: respirer 9s ease-in-out infinite; }
   .hero .halo { animation: deriver 14s ease-in-out infinite alternate; }
@@ -522,13 +522,8 @@ footer .legal a { color: inherit; }
   .about-hero { grid-template-columns: 220px 1fr; gap: 28px; }
 }
 
-/* ============================================================
-   Téléphone : pratique d'abord
-   ============================================================ */
-@media (max-width: 720px) {
-  :root { --bar-h: 72px; }
-  body { font-size: 16px; }
-  html { scroll-padding-top: 72px; }
+/* Menu replié (tablette et téléphone) */
+@media (max-width: 900px) {
   header.site .container { min-height: 60px; }
   .nav-toggle {
     display: inline-grid; place-items: center; margin-left: auto;
@@ -551,6 +546,15 @@ footer .legal a { color: inherit; }
   nav.main.open { display: flex; }
   .navlink, nav.main .tel { min-height: 46px; display: flex; align-items: center; margin: 0; }
   nav.main .btn { margin: 8px 0 0; }
+}
+
+/* ============================================================
+   Téléphone : pratique d'abord
+   ============================================================ */
+@media (max-width: 720px) {
+  :root { --bar-h: 72px; }
+  body { font-size: 16px; }
+  html { scroll-padding-top: 72px; }
 
   .hero { min-height: 0; padding: 44px 0 56px; }
   .hero .grille { background-size: 24px 24px; }
