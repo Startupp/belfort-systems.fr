@@ -1,12 +1,15 @@
-/* Belfort Systems — interactions (léger, sans dépendance) */
+/* Belfort Systems — interactions de l'interface (léger, sans dépendance, un seul fichier).
+   En-tête, menu mobile, apparitions au défilement, mascotte. Les prix, le simulateur, le formulaire
+   et le calendrier sont dans site.js. */
 (function () {
   "use strict";
 
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var header = document.querySelector("header.site");
   var toggle = document.getElementById("navToggle");
   var nav = document.getElementById("mainNav");
 
-  /* Ombre du header au défilement */
+  /* Ombre de l'en-tête au défilement */
   function onScroll() {
     if (!header) return;
     if (window.scrollY > 8) header.classList.add("scrolled");
@@ -38,7 +41,7 @@
     });
   }
 
-  /* Entrée discrète vers le jeu « Sous l'Écorce », au pied de page */
+  /* Entrée discrète vers le jeu, au pied de page */
   var foot = document.querySelector("footer.site .f-bottom span");
   if (foot) {
     var egg = document.createElement("a");
@@ -50,23 +53,46 @@
     foot.insertBefore(egg, foot.firstChild);
   }
 
-  /* Apparition au défilement */
-  var reveals = document.querySelectorAll(".reveal");
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* Mascotte : clin d'œil quand elle entre à l'écran, petit saut au survol, clin d'œil au clic */
+  var mascottes = document.querySelectorAll(".mascotte");
+  function clin(m) {
+    if (reduce || m.classList.contains("wink")) return;
+    m.classList.add("wink");
+    setTimeout(function () { m.classList.remove("wink"); }, 260);
+  }
+  function hop(m) {
+    if (reduce) return;
+    m.classList.remove("hop");
+    void m.offsetWidth; // relance l'animation
+    m.classList.add("hop");
+  }
+  Array.prototype.forEach.call(mascottes, function (m) {
+    m.addEventListener("click", function () { clin(m); hop(m); });
+    m.addEventListener("mouseenter", function () { setTimeout(function () { clin(m); }, 180); });
+  });
 
+  /* Apparitions au défilement (et clin d'œil de la mascotte quand elle apparaît) */
+  var reveals = document.querySelectorAll(".reveal");
   if (reduce || !("IntersectionObserver" in window)) {
     Array.prototype.forEach.call(reveals, function (el) { el.classList.add("in"); });
     return;
   }
-
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        e.target.classList.add("in");
-        io.unobserve(e.target);
-      }
+      if (!e.isIntersecting) return;
+      e.target.classList.add("in");
+      io.unobserve(e.target);
     });
   }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
-
   Array.prototype.forEach.call(reveals, function (el) { io.observe(el); });
+
+  var ioM = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var m = e.target;
+      setTimeout(function () { clin(m); }, 500);
+      ioM.unobserve(m);
+    });
+  }, { threshold: 0.6 });
+  Array.prototype.forEach.call(mascottes, function (m) { ioM.observe(m); });
 })();
