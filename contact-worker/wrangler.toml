@@ -1,0 +1,48 @@
+# Worker « belfort-contact » : formulaire de contact du site belfort-systems.fr, et rien d'autre.
+# Indépendant de « belfort-api » (dossier api/), qui sert aussi l'Espace Breteuil.
+#
+# Aucun secret ici. TURNSTILE_SECRET (facultatif) se pose avec :
+#   npx wrangler secret put TURNSTILE_SECRET
+#
+# Les identifiants KV et D1 (REMPLACER_…) sont ceux que renvoient
+#   npx wrangler kv namespace create RATE
+#   npx wrangler d1 create belfort_contact
+# Deux façons de les renseigner (README.md du dépôt, « Formulaire de contact ») :
+#   1. les coller ici et commiter (ce ne sont pas des secrets) ;
+#   2. ne rien commiter : copier ce fichier en wrangler.local.toml (ignoré par git), y coller
+#      les identifiants, puis déployer avec `npx wrangler deploy --config wrangler.local.toml`.
+
+name = "belfort-contact"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[observability]
+enabled = true
+
+# Limitation de débit : 10 envois par heure et par adresse IP.
+[[kv_namespaces]]
+binding = "RATE"
+id = "REMPLACER_PAR_ID_KV"
+
+# Enregistrement de chaque demande (table « contacts », migrations/0001_contacts.sql).
+[[d1_databases]]
+binding = "DB"
+database_name = "belfort_contact"
+database_id = "REMPLACER_PAR_ID_D1"
+migrations_dir = "migrations"
+
+# Envoi d'e-mail (Email Workers). destination_address doit être une adresse de destination
+# vérifiée dans Cloudflare → belfort-systems.fr → Email → Email Routing → Destination addresses.
+# Si ce bloc est retiré, le Worker enregistre quand même la demande, répond 200 et le note
+# dans ses journaux.
+[[send_email]]
+name = "MAIL"
+destination_address = "damien@belfort-systems.fr"
+
+[vars]
+# Adresse d'expédition : doit appartenir au domaine géré par Email Routing.
+MAIL_DE = "contact@belfort-systems.fr"
+# Destinataire des notifications (doit être égal à destination_address ci-dessus).
+MAIL_A = "damien@belfort-systems.fr"
+# Nombre d'envois autorisés par heure et par adresse IP.
+LIMITE_PAR_HEURE = "10"

@@ -25,13 +25,16 @@ function lireConfig() {
   const f = join(SORTIE, "assets", "config.js");
   const txt = existsSync(f) ? readFileSync(f, "utf8") : "";
   const api = (txt.match(/BS_API\s*=\s*["']([^"']*)["']/) || [])[1] || "";
+  const contact = (txt.match(/BS_CONTACT_API\s*=\s*["']([^"']*)["']/) || [])[1] || "";
   const turnstile = (txt.match(/BS_TURNSTILE\s*=\s*["']([^"']*)["']/) || [])[1] || "";
-  let origineApi = "";
-  try { origineApi = api ? new URL(api).origin : ""; } catch { origineApi = ""; }
-  return { origineApi, turnstile: Boolean(turnstile) };
+  const origine = (u) => { try { return u ? new URL(u).origin : ""; } catch { return ""; } };
+  return { origineApi: origine(api), origineContact: origine(contact), turnstile: Boolean(turnstile) };
 }
 const CFG = lireConfig();
 const API = CFG.origineApi ? [CFG.origineApi] : [];
+// Worker du formulaire de contact (contact-worker/), distinct de l'API : seule la section « / »
+// l'appelle (fetch) et lui soumet le formulaire (form-action, repli sans JavaScript).
+const CONTACT = CFG.origineContact ? [CFG.origineContact] : [];
 const GOOGLE_FONTS = { style: ["https://fonts.googleapis.com"], font: ["https://fonts.gstatic.com"] };
 const TURNSTILE = CFG.turnstile ? { script: ["https://challenges.cloudflare.com"], frame: ["https://challenges.cloudflare.com"] } : {};
 
@@ -43,12 +46,13 @@ const PERMISSIONS_FERMEES = {
 };
 
 // --- Sections : le préfixe le plus long l'emporte ---------------------------------------------
-// script/style/connect/img/font/frame/media : sources ajoutées à 'self'.
+// script/style/connect/img/font/frame/media : sources ajoutées à 'self' ; formAction : à 'self'
+// dans form-action.
 const SECTIONS = {
   "/": {
     nom: "Site vitrine (accueil, qui-suis-je, 404)",
     script: [...(TURNSTILE.script || [])], frame: [...(TURNSTILE.frame || [])],
-    connect: [...API],
+    connect: [...API, ...CONTACT], formAction: [...CONTACT],
   },
   "/admin/": {
     nom: "Tableau de bord (panneau admin, données via l'API)",
@@ -68,6 +72,8 @@ const SECTIONS = {
     permissions: { camera: "(self)" }, robots: true,
   },
   "/ecorce/": { nom: "TinKnight a déménagé (page de renvoi)" },
+  // Ancienne version du jeu : conservée pour les sauvegardes, mais plus référencée
+  // (robots: noindex, et Disallow dans robots.txt). Le jeu vit sur jeu.belfort-systems.fr.
   "/ecorce/ancienne/concepts/": {
     // Planche de concepts : vignettes hébergées chez Higgsfield (CloudFront), polices Google.
     nom: "TinKnight, planche de concepts",
@@ -79,6 +85,7 @@ const SECTIONS = {
     connect: ["https://jeu-sauvegarde.damien-belfort.workers.dev", "https://0.peerjs.com", "wss://0.peerjs.com", "https://cdn.jsdelivr.net"],
     media: ["blob:", "data:"],
     permissions: { gyroscope: "(self)", accelerometer: "(self)", magnetometer: "(self)" },
+    robots: true,
   },
   "/espace-breteuil/": {
     // Reprend espace-breteuil/_headers (ignoré ici car hors racine), en attendant que l'appli
@@ -143,7 +150,7 @@ function csp(sec, emp) {
     "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    "form-action " + s(["'self'"], sec.formAction),
     "frame-ancestors 'none'",
     "upgrade-insecure-requests",
   ];

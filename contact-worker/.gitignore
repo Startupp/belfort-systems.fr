@@ -1,0 +1,5 @@
+# Copie locale de wrangler.toml avec les vrais identifiants KV/D1 (variante sans commit)
+wrangler.local.toml
+.wrangler/
+node_modules/
+.dev.vars
