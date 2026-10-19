@@ -142,6 +142,8 @@
     if (Array.isArray(c)) { c.forEach(function (x) { ajouter(el, x); }); return; }
     el.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
   }
+  /** v5.5 : espace insécable avant « ? ! : ; » et après « « » : un signe ne tombe jamais seul en début de ligne. */
+  function insecable(t) { return typeof t === "string" ? t.replace(/ ([?!:;»])/g, "\u00a0$1").replace(/« /g, "«\u00a0") : t; }
   function lienExterne(url, attrs) { return Object.assign({ href: url, target: "_blank", rel: "noopener noreferrer" }, attrs || {}); }
   function emoji(e, cls) { return h("span", { class: "emoji " + (cls || ""), "aria-hidden": "true" }, e); }
 
@@ -320,7 +322,7 @@
   function barre(titre, retour, droite, sousTitre) {
     return h("header", { class: "barre" },
       retour ? h("a", { class: "btn-retour", href: retour.href, "aria-label": "Retour : " + (retour.texte || "page précédente") }, icone("retour"), h("span", { class: "txt" }, retour.texte || "Retour")) : null,
-      h("h1", null, titre, sousTitre ? h("small", null, sousTitre) : null),
+      h("h1", null, insecable(titre), sousTitre ? h("small", null, sousTitre) : null),
       droite || null,
       window.EBAcces ? window.EBAcces.pastille() : null); // état de la connexion, en direct
   }
@@ -361,7 +363,7 @@
     var ico = t.emoji ? h("span", { class: "ico c-" + (t.teinte || "praline") }, emoji(t.emoji))
       : h("span", { class: "ico c-" + teinte }, icone(t.icone));
     var attrs = { class: "t gt" + (t.choisi ? " choisi" : ""), "data-usage": t.usage || null, "data-action": t.action || null, "data-tuto": t.tuto || null };
-    var contenu = [ico, h("span", { class: "textes" }, h("span", { class: "lib" }, t.libelle), t.sous ? h("span", { class: "sous" }, t.sous) : null),
+    var contenu = [ico, h("span", { class: "textes" }, h("span", { class: "lib" }, insecable(t.libelle)), t.sous ? h("span", { class: "sous" }, insecable(t.sous)) : null),
       t.externe ? h("span", { class: "sr" }, " (s'ouvre dans un nouvel onglet)") : null,
       h("span", { class: "chevron", "aria-hidden": "true" }, t.externe ? icone("ouvrir") : icone("droite"))];
     if (t.href) { attrs.href = t.href; if (t.externe) { attrs.target = "_blank"; attrs.rel = "noopener noreferrer"; } return h("a", attrs, contenu); }
@@ -376,7 +378,7 @@
     var l = liste.filter(Boolean);
     if (!l.length) return document.createDocumentFragment(); // rien de permis : rien d'affiché (pas de boutons grisés)
     return h("div", { class: "boutons-carres", style: { "--n": String(Math.max(l.length, 1)) } }, l.map(function (b) {
-      var contenu = [h("span", { class: "bc-ico", "aria-hidden": "true" }, b.emoji ? emoji(b.emoji) : icone(b.icone)), h("span", { class: "bc-lib" }, b.texte)];
+      var contenu = [h("span", { class: "bc-ico", "aria-hidden": "true" }, b.emoji ? emoji(b.emoji) : icone(b.icone)), h("span", { class: "bc-lib" }, insecable(b.texte))];
       if (b.href) return h("a", { class: "bc", href: b.href, "data-action": b.action || null }, contenu);
       return h("button", { class: "bc", type: "button", "data-action": b.action || null, onclick: b.onclick }, contenu);
     }));
@@ -473,7 +475,7 @@
           opts.deuxEtapes === false ? (opts.bouton || "Confirmer") : "Continuer");
         d.appendChild(h("div", { class: "contenu centre" },
           opts.emoji ? emoji(opts.emoji, "grand") : null,
-          h("h2", { id: "detail-titre" }, opts.titre || "Vérifions ensemble"),
+          h("h2", { id: "detail-titre" }, insecable(opts.titre || "Vérifions ensemble")),
           h("p", { class: "phrase" }, opts.phrase || ""),
           // Une seule étape : la conséquence s'affiche sous la phrase (rien n'est caché).
           opts.deuxEtapes === false && opts.consequence ? h("p", { class: "phrase consequence" }, opts.consequence) : null,
@@ -507,10 +509,10 @@
       var liste = h("div", { class: "choix-liste" }, elements.map(function (e) {
         return h("button", { class: "choix", type: "button", onclick: function () { terminer(e.valeur); } },
           e.avatar || (e.emoji ? emoji(e.emoji) : null),
-          h("span", null, h("b", null, e.titre), e.sous ? h("small", null, e.sous) : null));
+          h("span", null, h("b", null, insecable(e.titre)), e.sous ? h("small", null, insecable(e.sous)) : null));
       }));
       var annuler = h("button", { class: "btn secondaire large", type: "button", onclick: function () { terminer(null); } }, "Annuler");
-      d.appendChild(h("div", { class: "contenu" }, h("h2", { id: "detail-titre" }, titre), phrase ? h("p", { class: "phrase" }, phrase) : null, liste, annuler));
+      d.appendChild(h("div", { class: "contenu" }, h("h2", { id: "detail-titre" }, insecable(titre)), phrase ? h("p", { class: "phrase" }, phrase) : null, liste, annuler));
       ouvrirDialogue(d, liste.firstChild || annuler);
     });
   }
@@ -541,7 +543,7 @@
   /** Grosse ligne d'action : pictogramme + titre + une phrase. */
   function action(href, pictogramme, titre, phrase) {
     return h("a", { class: "action", href: href },
-      emoji(pictogramme), h("span", null, h("b", null, titre), phrase ? h("small", null, phrase) : null),
+      emoji(pictogramme), h("span", null, h("b", null, insecable(titre)), phrase ? h("small", null, insecable(phrase)) : null),
       h("span", { class: "fleche", "aria-hidden": "true" }, "›"));
   }
 
@@ -847,7 +849,7 @@
     var P = window.EBProfil, n = P.NIVEAUX[(r && r.niveau) || "lecteur"];
     var qui = h("strong", { class: "qui-demander" }, "…");
     var carte = h("section", { class: "carte-role", "data-niveau": n.id, "aria-labelledby": "t-role" },
-      h("h2", { id: "t-role" }, emoji(n.emoji), h("span", null, "Vous êtes : ", h("strong", null, n.nom))),
+      h("h2", { id: "t-role" }, emoji(n.emoji), h("span", null, insecable("Vous êtes : "), h("strong", null, n.nom))),
       h("p", { class: "phrase-role" }, n.phrase),
       h("div", { class: "role-colonnes" },
         h("div", null, h("h3", null, "Vous pouvez"), h("ul", { class: "liste-role peut" }, n.peut.map(puce("✅")))),
@@ -1002,7 +1004,7 @@
     var liste = U.possibles(r, ctxUsages(r));
     if (!selectionUsages) selectionUsages = (mesChoix() || []).filter(function (id) { return liste.some(function (u) { return u.id === id; }); });
     app.appendChild(barre(depuisMoi ? "Ce que j'utilise" : "Bienvenue", depuisMoi ? { href: "#/moi", texte: "Moi" } : null, null, depuisMoi ? null : "Étape 2 sur 2"));
-    app.appendChild(h("h2", { class: "question" }, "Qu'allez-vous faire surtout ici ?"));
+    app.appendChild(h("h2", { class: "question" }, insecable("Qu'allez-vous faire surtout ici ?")));
     app.appendChild(h("p", { class: "aide-ecran" }, "Touchez une ou plusieurs réponses. Elles iront en premier sur l'accueil."));
     var cartes = h("div", { class: "cartes-usages", role: "group", "aria-label": "Ce que vous allez faire" });
     function majCartes() {
@@ -1017,7 +1019,7 @@
         var i = selectionUsages.indexOf(u.id);
         if (i > -1) selectionUsages.splice(i, 1); else selectionUsages.push(u.id);
         majCartes();
-      } }, emoji(u.emoji, "pictogramme"), h("span", { class: "textes" }, h("b", null, u.titre), h("small", null, u.sous)), h("span", { class: "ordre", "aria-hidden": "true" })));
+      } }, emoji(u.emoji, "pictogramme"), h("span", { class: "textes" }, h("b", null, insecable(u.titre)), h("small", null, insecable(u.sous))), h("span", { class: "ordre", "aria-hidden": "true" })));
     });
     app.appendChild(cartes);
     majCartes();
@@ -1055,7 +1057,7 @@
     app.appendChild(h("p", { class: "aide-ecran" }, "Touchez « Montrez-moi » : l'appli ouvre le bon écran et entoure le bouton à toucher."));
     app.appendChild(h("div", { class: "liste-taches" }, U.taches(r, ctxUsages(r)).map(function (t) {
       return h("article", { class: "carte-tache", "data-tache": t.id },
-        h("div", { class: "textes" }, h("h2", null, t.titre), h("p", null, t.phrase)),
+        h("div", { class: "textes" }, h("h2", null, insecable(t.titre)), h("p", null, insecable(t.phrase))),
         h("button", { class: "btn", type: "button", "data-action": "montrer", onclick: function () { montrer(t); } }, "Montrez-moi", icone("droite")));
     })));
   }
@@ -1355,6 +1357,7 @@
       vue = h("div", { class: "ecran " + (cleEcran === dernierEcran ? "sans-anim" : dernierEcran === null ? "ouverture" : "") });
       rendreOnglets("", true);
       app.classList.add("plein-ecran");
+      document.body.classList.remove("premier-lancement");
       if (reglages.mode === "calendrier") ecranCalendrierSeul(vue); else ecranPremier(vue);
       if (chemin.join("/") !== "") history.replaceState(null, "", location.pathname + location.search);
       ecran = "";
@@ -1382,6 +1385,8 @@
       vue = h("div", { class: "ecran " + anim });
       app.classList.remove("plein-ecran");
       rendreOnglets(onglet, ecran === "bienvenue" && chemin[1] !== "choix");
+      // Premier lancement : pas de bouton « ? » flottant (il couvrirait les cartes à cocher).
+      document.body.classList.toggle("premier-lancement", ecran === "bienvenue" && chemin[1] !== "choix");
       if (ecran !== "bienvenue") etapeBienvenue = 1;
       if (reserve && !r) { enAttenteDroits = true; ecranAttente(vue); }
       else (ecrans[ecran] || ecranPlanning)(vue, chemin);
@@ -1427,7 +1432,7 @@
     ecran: function (nom, fn) { ecrans[nom] = fn; },
     definirReel: function (r) { reel = r; },
     onglet: function () {},
-    jourLong: jourLong, heure: heure, hub: hub, reglages: function () { return reglages; },
+    insecable: insecable, jourLong: jourLong, heure: heure, hub: hub, reglages: function () { return reglages; },
   };
 
   /* ------------------------------------------------------------------ */

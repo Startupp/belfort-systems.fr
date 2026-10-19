@@ -1752,3 +1752,6 @@ dialog.detail::backdrop { background: var(--voile); -webkit-backdrop-filter: blu
 /* Aucun lien de navigation en simple texte souligné : toujours l'aspect d'un bouton. */
 .lien-discret button, .lien-discret a { text-decoration: none; border: 1px solid var(--trait-fort); border-radius: 14px; background: var(--surface);
   color: var(--texte); font-weight: 700; padding: 0 20px; min-height: 48px; }
+/* Bouton « ? » flottant : caché pendant le premier lancement ; marge basse pour qu'il ne couvre jamais le dernier contrôle. */
+body.premier-lancement .aide-fab { display: none; }
+#app { padding-bottom: 104px; }

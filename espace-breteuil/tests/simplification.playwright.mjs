@@ -137,7 +137,22 @@ async function nouvellePage(navigateur, opts) {
   return { contexte, page, erreurs };
 }
 const usagesProposes = (page) => page.$$eval(".carte-usage", (l) => l.map((b) => b.dataset.usage));
-const texte = (page, sel) => page.textContent(sel);
+// Les titres utilisent des espaces insécables avant « ? : ! » : comparaison sur des espaces simples.
+const texte = async (page, sel) => String(await page.textContent(sel)).replace(/\u00a0/g, " ");
+/** Le bouton « ? » flottant ne couvre aucun contrôle de l'écran (en bas de page, là où il se pose). */
+async function fabLibre(page, ou) {
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await calme(page);
+  const r = await page.evaluate(() => {
+    const f = document.querySelector(".aide-fab"); if (!f || getComputedStyle(f).display === "none") return [];
+    const a = f.getBoundingClientRect();
+    return [...document.querySelectorAll(".ecran a, .ecran button, .ecran input")].filter((e) => e.offsetParent !== null).filter((e) => {
+      const b = e.getBoundingClientRect();
+      return Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2;
+    }).map((e) => (e.textContent || "").trim().slice(0, 30));
+  });
+  if (r.length) problemes.push(`${ou} : le bouton « ? » couvre : ${r.join(" | ")}`);
+}
 
 const serveur = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1"], { cwd: RACINE, stdio: "ignore" });
 await new Promise((ok) => setTimeout(ok, 800));
@@ -155,6 +170,7 @@ try {
         assert.match(await texte(page, ".carte-role h2"), /Vous êtes : Gestionnaire/, `${ou} : niveau réel`);
         assert.equal(await page.$(".carte-role .nepeut"), null, `${ou} : gestionnaire, rien d'interdit`);
         assert.match(await texte(page, ".barre h1"), /Bienvenue, Pauline/);
+        assert.equal(await page.isVisible(".aide-fab"), false, `${ou} : pas de bouton « ? » au premier lancement`);
         await sansDebord(page, `${ou} bienvenue`);
         if (palette === "creme") await capturer(page, `bienvenue-role-${taille}`);
         await page.click('[data-action="bienvenue-continuer"]');
@@ -165,6 +181,8 @@ try {
         await page.click('.carte-usage[data-usage="planning"]');
         assert.deepEqual(await page.$$eval('.carte-usage[aria-pressed="true"] .ordre', (l) => l.map((x) => x.textContent)), ["2", "1"], `${ou} : numéros d'ordre (planning 2e, accès 1er)`);
         await sansDebord(page, `${ou} questionnaire`);
+        assert.equal(await page.isVisible(".aide-fab"), false, `${ou} : pas de bouton « ? » sur le questionnaire`);
+        assert.ok(!/ \?$/.test(await page.textContent("h2.question")), "espace insécable avant « ? »");
         await capturer(page, `questionnaire-${taille}-${palette}`);
         await page.click('[data-action="usages-valider"]');
         await page.waitForFunction(() => location.hash === "#/acces/Commun", null, { timeout: 5000 });
@@ -177,6 +195,8 @@ try {
         assert.deepEqual(await page.$$eval('[aria-labelledby="t-mes-usages"] [data-usage]', (l) => l.map((a) => a.dataset.usage)), ["acces", "planning"], `${ou} : accueil dans l'ordre choisi`);
         assert.deepEqual(await page.$$eval('[aria-labelledby="t-autres"] [data-usage]', (l) => l.map((a) => a.dataset.usage)), ["equipe", "perso", "suivi"]);
         await sansDebord(page, `${ou} accueil`);
+        assert.equal(await page.isVisible(".aide-fab"), true, `${ou} : bouton « ? » revenu après le premier lancement`);
+        await fabLibre(page, `${ou} accueil`);
         await capturer(page, `accueil-${taille}-${palette}`);
         // Rechargement : plus de questionnaire, écran ouvert = 1er choix.
         await page.goto(BASE);
@@ -212,12 +232,14 @@ try {
         await page.goto(BASE + "#/commun/Commun/François et Pauline");
         await page.waitForSelector(".boutons-carres .bc");
         assert.equal(await texte(page, ".ariane"), "Documents de l'équipe›François et Pauline");
-        const bc = await page.$$eval(".boutons-carres .bc", (l) => l.map((b) => { const r = b.getBoundingClientRect(); return { t: b.textContent, w: Math.round(r.width), h: Math.round(r.height), y: Math.round(r.top) }; }));
+        const bc = await page.$$eval(".boutons-carres .bc", (l) => l.map((b) => { const r = b.getBoundingClientRect(); return { t: b.textContent.replace(/\u00a0/g, " "), w: Math.round(r.width), h: Math.round(r.height), y: Math.round(r.top) }; }));
         assert.deepEqual(bc.map((b) => b.t), ["Ajouter un document", "Créer un dossier", "Qui peut ouvrir ?"]);
         assert.equal(new Set(bc.map((b) => b.w)).size, 1, `${ou} : même largeur ${JSON.stringify(bc)}`);
         assert.equal(new Set(bc.map((b) => b.h)).size, 1, `${ou} : même hauteur`);
         assert.equal(new Set(bc.map((b) => b.y)).size, 1, `${ou} : sur une rangée`);
         assert.ok(bc.every((b) => b.h >= 48 && b.w >= 48));
+        assert.match(await page.textContent('[data-action="qui-peut-ouvrir"]'), /ouvrir\u00a0\?/, "« Qui peut ouvrir ? » : espace insécable");
+        await fabLibre(page, `${ou} dossier`);
         const ariane = await page.$eval(".ariane", (n) => ({ h: n.getBoundingClientRect().height, l: parseFloat(getComputedStyle(n).lineHeight) || 20 }));
         assert.ok(ariane.h < ariane.l * 1.9, `${ou} : fil d'Ariane sur une ligne (${ariane.h})`);
         await sansChevauchement(page, ".ecran .barre h1, .ariane a, .ariane span, .bc-lib, .tuile b, .fichier span", null, `${ou} dossier`);
@@ -288,6 +310,7 @@ try {
         const tuiles = await page.$$eval(".tuiles-grandes .t.gt", (l) => l.map((a) => { const r = a.getBoundingClientRect(); return { lib: a.querySelector(".lib").textContent, sous: a.querySelector(".sous")?.textContent || "", h: r.height }; }));
         assert.ok(tuiles.every((x) => x.sous && x.h >= 64), `${ou} : chaque tuile a une ligne d'explication`);
         await sansChevauchement(page, ".tuiles-grandes .lib, .tuiles-grandes .sous", ".t.gt", `${ou} gérer`);
+        await fabLibre(page, `${ou} gérer`);
         await sansDebord(page, `${ou} gérer`);
         await capturer(page, `gerer-${taille}-${palette}`);
         if (erreurs.length) problemes.push(`${ou} admin : erreurs console ${erreurs.join(" | ")}`);
@@ -322,6 +345,7 @@ try {
     await page.goto(BASE + "#/accueil");
     await page.waitForSelector(".tuiles-grandes [data-usage]");
     await sansChevauchement(page, ".t.gt .lib, .t.gt .sous", ".t.gt", `${ou} accueil`);
+    await fabLibre(page, `${ou} accueil`);
     await sansDebord(page, `${ou} accueil`);
     if (erreurs.length) problemes.push(`${ou} : erreurs console ${erreurs.join(" | ")}`);
     await contexte.close();
