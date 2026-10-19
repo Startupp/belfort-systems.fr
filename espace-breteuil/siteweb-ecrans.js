@@ -21,22 +21,42 @@
       h("span", null, "Ce n'est pas votre adresse du Château : il faut le compte du site (WordPress).")));
   }
 
+  /**
+   * v5.5.1 : encadré « 🔑 Accès au site à prévoir » (ton doux, pas une alerte), en tête de chaque écran de la
+   * section tant que config.siteWeb.accesPret n'est pas true. « Écrire à Damien » ouvre le panneau d'aide
+   * pré-rempli (Question). Renvoie null quand l'accès est prêt.
+   */
+  function encadreAcces() {
+    if (S.accesPret(CFG)) return null;
+    var A = S.ACCES;
+    return h("aside", { class: "encadre-acces", role: "note", "aria-labelledby": "t-acces-site", "data-encadre": "acces-site" },
+      h("p", { class: "titre", id: "t-acces-site" }, A.titre),
+      h("p", { class: "texte" }, A.texte),
+      h("button", { class: "btn secondaire", type: "button", "data-action": "ecrire-acces-site", onclick: function () {
+        if (window.EBAideEcrans && window.EBAideEcrans.ecrire) window.EBAideEcrans.ecrire(A.type, A.message);
+      } }, icone("mail"), A.bouton));
+  }
+
   /** Section « Site web » : rappel + tuiles (3 par ligne). */
   function section() {
     return h("section", { class: "section section-site", "aria-labelledby": "t-site" },
       h("h2", { id: "t-site" }, "Site internet"),
+      encadreAcces(),
       rappelIdentifiant(),
       EB.grandesTuiles(S.tuiles(CFG)));
   }
 
   /** Fiche dépliable (ou ouverte) : prudence, étapes, bouton vers WordPress, note. */
   function contenuGuide(g) {
+    var pret = S.accesPret(CFG);
     return [
       g.prudence ? h("div", { class: "bandeau exemple", role: "note" }, icone("exemple"), h("div", null, h("strong", null, "Prudence"), h("span", null, g.prudence))) : null,
       h("ol", { class: "etapes" }, g.etapes.map(function (e) { return h("li", null, h("span", null, e)); })),
-      h("div", { class: "actions" },
+      // Accès pas prêt : pas de bouton vers l'administration WordPress (le mode d'emploi reste lisible).
+      pret ? h("div", { class: "actions" },
         h("a", lienExterne(g.lien.url, { class: "btn large" }), icone("ouvrir"), g.lien.texte),
-        g.lien2 ? h("a", lienExterne(g.lien2.url, { class: "btn secondaire large" }), icone("ouvrir"), g.lien2.texte) : null),
+        g.lien2 ? h("a", lienExterne(g.lien2.url, { class: "btn secondaire large" }), icone("ouvrir"), g.lien2.texte) : null)
+        : h("p", { class: "note acces-attente" }, icone("cle"), h("span", null, "Le bouton « " + g.lien.texte + " » apparaîtra quand l'accès au site sera prêt.")),
       g.note ? h("div", { class: "note" }, icone("info"), h("span", null, g.note)) : null,
     ];
   }
@@ -62,10 +82,12 @@
       var g = S.guide(CFG, id);
       if (!g) { location.hash = "#/guides/site"; return; }
       app.appendChild(EB.barre(g.titre, { href: "#/guides/site", texte: "Modes d'emploi" }));
+      var e0 = encadreAcces(); if (e0) app.appendChild(e0);
       contenuGuide(g).forEach(function (x) { if (x) app.appendChild(x); });
       return;
     }
     app.appendChild(EB.barre("Site internet : modes d'emploi", EB.hub()));
+    var e1 = encadreAcces(); if (e1) app.appendChild(e1);
     app.appendChild(h("p", { class: "aide-ecran" }, "3 étapes au plus. Après chaque modification, pensez à « Rafraîchir le site »."));
     app.appendChild(rappelIdentifiant());
     app.appendChild(fiches());
@@ -114,6 +136,7 @@
   function ecranLiens(app) {
     var g0 = ++gen;
     app.appendChild(EB.barre("Vérifier les liens", EB.hub(), null, "Bas de page du site"));
+    var e2 = encadreAcces(); if (e2) app.appendChild(e2);
     app.appendChild(h("p", { class: "aide-ecran" }, "Les liens du bas de page de www.breteuil.fr (en français et en anglais) sont essayés un par un. Le résultat est gardé une heure."));
     var zone = h("div", { class: "zone-liens", "aria-live": "polite" });
     var bouton = h("button", { class: "btn large", type: "button", "data-action": "reverifier", onclick: function () { lancer(true); } }, icone("actualiser"), "Revérifier");
@@ -160,5 +183,5 @@
 
   EB.ecran("site", ecranSite);
   EB.ecran("liens", ecranLiens);
-  window.EBSiteEcrans = { section: section, guides: ecranGuides };
+  window.EBSiteEcrans = { section: section, guides: ecranGuides, encadreAcces: encadreAcces };
 })();

@@ -1251,6 +1251,13 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 /* vérificateur de liens : rouge = cassé, orange = à vérifier).      */
 /* ================================================================ */
 .section-site .bandeau { margin-bottom: 12px; }
+/* v5.5.1 : « 🔑 Accès au site à prévoir » — bien visible, ton doux (doré pâle, pas d'alerte rouge). */
+.encadre-acces { margin: 0 0 14px; padding: 14px 16px; border-radius: var(--rayon); color: var(--texte);
+  background: color-mix(in srgb, var(--or) 13%, var(--surface)); border: 1.5px solid color-mix(in srgb, var(--or) 55%, transparent); }
+.encadre-acces .titre { margin: 0 0 6px; font-weight: 700; font-size: 1.05rem; color: var(--or-texte); }
+.encadre-acces .texte { margin: 0 0 12px; line-height: 1.45; }
+.encadre-acces .btn { min-height: 44px; }
+.note.acces-attente { color: var(--texte-2); }
 .fiches-site { display: grid; gap: 10px; }
 .fiche-site { border: 1px solid var(--verre-trait); border-radius: 20px; background: var(--verre); box-shadow: var(--ombre-verre);
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); overflow: hidden; }

@@ -366,7 +366,14 @@
     return bloc;
   }
 
-  window.EBAideEcrans = { ouvrir: ouvrir, fermer: fermer, rafraichir: rafraichir, lignesMoi: lignesMoi, etat: function () { return etat; } };
+  /** v5.5.1 : ouvre « Écrire à Damien » pré-rempli (ex. encadré du Site web). Garde un brouillon déjà commencé. */
+  function ecrire(type, message) {
+    var b = etat.brouillon;
+    if (!String(b.message || "").trim()) etat.brouillon = { type: type || "", message: message || "" };
+    else if (!b.type) b.type = type || "";
+    ouvrir("nouvelle");
+  }
+  window.EBAideEcrans = { ecrire: ecrire, ouvrir: ouvrir, fermer: fermer, rafraichir: rafraichir, lignesMoi: lignesMoi, etat: function () { return etat; } };
 
   /* ------------------------------------------------------------------ */
   /* Démarrage : bouton sur tous les écrans, pastille tenue à jour       */

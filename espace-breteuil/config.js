@@ -67,7 +67,11 @@ self.EB_CONFIG = {
   /* Site web du Château (WordPress). La section « Site web » apparaît pour les administrateurs
    * généraux et pour les membres du groupe Microsoft 365 (ou de sécurité) nommé « groupe »
    * (nom affiché, sans tenir compte des majuscules). Aucune adresse personnelle ici. */
-  siteWeb: { url: "https://www.breteuil.fr", admin: "https://www.breteuil.fr/wp-admin/", groupe: "Site web" },
+  siteWeb: { url: "https://www.breteuil.fr", admin: "https://www.breteuil.fr/wp-admin/", groupe: "Site web",
+    /* v5.5.1 : false tant que l'équipe n'a pas de compte WordPress « éditeur » (accord de M. Defecques) :
+     * encadré « 🔑 Accès au site à prévoir » en tête de chaque écran, boutons vers WordPress masqués
+     * (la vérification des liens et les modes d'emploi restent). Passer à true quand l'accès est prêt. */
+    accesPret: false },
 
   /* « Suivi informatique » (v5.2) : libellés de l'écran et emplacement des données dans le dossier
    * commun. Renommer ici suffit (interface, dossier SharePoint, fichier). « ancien » = emplacement

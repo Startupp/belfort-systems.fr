@@ -12,7 +12,7 @@ const ctx = { self: {} }; vm.runInNewContext(lire("config.js"), ctx);
 const CFG = ctx.self.EB_CONFIG;
 
 test("config : site, WordPress et groupe, sans adresse personnelle", () => {
-  assert.deepEqual({ ...CFG.siteWeb }, { url: "https://www.breteuil.fr", admin: "https://www.breteuil.fr/wp-admin/", groupe: "Site web" });
+  assert.deepEqual({ ...CFG.siteWeb }, { url: "https://www.breteuil.fr", admin: "https://www.breteuil.fr/wp-admin/", groupe: "Site web", accesPret: false });
   assert.doesNotMatch(lire("siteweb.js") + lire("siteweb-ecrans.js"), /[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}/i, "aucune adresse mail dans le code");
 });
 
@@ -66,6 +66,26 @@ test("liens vérifiés : cassés (GET 404/410 seulement), à vérifier (redirig�
   assert.match(S.phrase({ statut: 503, ok: false }), /panne/);
   assert.equal(S.courte("https://www.breteuil.fr/contact/"), "breteuil.fr/contact");
   assert.equal(S.courte("https://x.fr/" + "a".repeat(100), 20).length, 20);
+});
+
+test("v5.5.1 : accès au site à prévoir (accesPret false par défaut)", () => {
+  const PRET = { ...CFG, siteWeb: { ...CFG.siteWeb, accesPret: true } };
+  assert.equal(S.accesPret(CFG), false);
+  assert.equal(S.accesPret({}), false, "absent = pas prêt");
+  assert.equal(S.accesPret({ siteWeb: { accesPret: "oui" } }), false, "seul true ouvre");
+  assert.equal(S.accesPret(PRET), true);
+  assert.equal(S.ACCES.titre, "🔑 Accès au site à prévoir");
+  assert.equal(S.ACCES.texte, "Pour modifier le site, il faut un compte WordPress « éditeur » et l'accord de M. Defecques, qui gère aujourd'hui le site. En attendant, vous pouvez tout regarder sans risque : rien n'est modifié.");
+  assert.deepEqual([S.ACCES.bouton, S.ACCES.type, S.ACCES.message], ["Écrire à Damien", "question", "Je souhaite pouvoir modifier le site internet."]);
+  // Pas prêt : aucune tuile vers l'administration WordPress ; elles mènent au mode d'emploi. « Vérifier les liens » et « Voir le site » restent.
+  const t = S.tuiles(CFG), admin = S.adresses(CFG).admin;
+  assert.equal(t.length, 8);
+  assert.ok(t.every((x) => !x.href.startsWith(admin)), "aucun lien wp-admin");
+  assert.deepEqual(t.filter((x) => ["image", "pied", "page"].includes(x.id)).map((x) => x.href), ["#/guides/site/image", "#/guides/site/pied", "#/guides/site/page"]);
+  assert.ok(t.some((x) => x.href === "#/liens") && t.some((x) => x.href === "https://www.breteuil.fr/" && x.externe));
+  // Prêt : les tuiles WordPress reviennent (nouvel onglet).
+  const tp = S.tuiles(PRET);
+  assert.deepEqual(tp.filter((x) => x.externe && x.href.startsWith(admin)).map((x) => x.id), ["image", "pied", "page"]);
 });
 
 test("entités HTML décodées en texte (cache du Worker encore ancien)", () => {
