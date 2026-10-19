@@ -559,7 +559,7 @@ dialog.detail form.contenu label { font-weight: 700; }
 /* v5.5.1 : noms longs (« chanteclercdeveloppement », « Développement ») — cellule de largeur fixe, nom sur
  * 2 lignes au plus, coupé n'importe où puis « … » ; le nom complet est dans title / aria-label. */
 .visage { min-width: 0; }
-.visages.petits .visage { flex: none; width: 76px; }
+.visages.petits .visage { flex: none; width: clamp(76px, 6.4em, 124px); }
 .visage .nom-visage { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
   max-width: 100%; word-break: break-word; overflow-wrap: anywhere; text-overflow: ellipsis; line-height: 1.2; text-align: center; }
 .visage .adresse-visage { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
