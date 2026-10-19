@@ -145,6 +145,7 @@ p { max-width: 62ch; }
 .btn.light { background: var(--heros-ink); color: var(--bleu-nuit); }
 .btn.light:hover { background: #fff; color: var(--bleu-nuit); transform: translateY(-1px); }
 .btn.sm { min-height: 40px; padding: 0 16px; font-size: .95rem; }
+.btn .arrow { display: none; }
 
 /* ---------- En-tête ---------- */
 header.site {
@@ -168,17 +169,18 @@ header.site .container { display: flex; align-items: center; gap: 18px; min-heig
 .brand span:not(.mark) { color: var(--bleu); }
 nav.main { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .navlink {
-  color: var(--ink); text-decoration: none; font-weight: 500; font-size: .98rem;
-  padding: 10px 12px; border-radius: 10px;
+  color: var(--ink); text-decoration: none; font-weight: 500; font-size: .95rem; white-space: nowrap;
+  padding: 10px 11px; border-radius: 10px;
 }
 .navlink:hover, .navlink[aria-current="page"] { background: var(--bg-2); color: var(--ink); }
 nav.main .tel {
   display: inline-flex; align-items: center; gap: 8px; margin-left: 6px;
-  color: var(--bleu); font-weight: 600; text-decoration: none; padding: 10px 12px; border-radius: 10px;
+  color: var(--bleu); font-weight: 600; text-decoration: none; padding: 10px 12px; border-radius: 10px; white-space: nowrap;
 }
 nav.main .tel svg { width: 18px; height: 18px; }
 nav.main .tel:hover { background: var(--bg-2); }
-nav.main .btn { margin-left: 6px; min-height: 44px; }
+nav.main .btn { margin-left: 6px; min-height: 44px; white-space: nowrap; padding-inline: 18px; }
+@media (max-width: 1100px) and (min-width: 721px) { nav.main .tel span { display: none; } nav.main .tel { padding: 10px; } }
 .nav-toggle { display: none; }
 
 /* ---------- Héros ---------- */
@@ -562,20 +564,20 @@ footer .legal a { color: inherit; }
   .service .ic { width: 40px; height: 40px; }
   .service h3 { flex: 1; font-size: 1.05rem; }
   .service p, .service .prix { flex-basis: 100%; }
-  .service p { font-size: .93rem; }
+  .service p { display: none; }
   .service:hover { transform: none; box-shadow: none; }
 
   .tarifs-wrap { border-radius: var(--radius); }
-  table.tarifs, table.tarifs tbody, table.tarifs tr, table.tarifs th, table.tarifs td { display: block; }
+  table.tarifs, table.tarifs tbody { display: block; }
+  table.tarifs caption { display: block; padding: 14px 16px 6px; }
   table.tarifs thead { position: absolute; left: -9999px; }
-  table.tarifs tr { border-top: 1px solid var(--line); padding: 12px 16px; }
-  table.tarifs th, table.tarifs td { padding: 0; border: 0; width: auto; }
-  table.tarifs th[scope="row"] { width: auto; margin-bottom: 2px; }
-  table.tarifs td.montant { white-space: normal; margin: 4px 0; }
+  table.tarifs tr { display: block; border-top: 1px solid var(--line); padding: 12px 16px; }
+  table.tarifs th, table.tarifs td, table.tarifs th[scope="row"] { display: block; padding: 0; border: 0; width: auto; }
+  table.tarifs td.montant { width: auto; white-space: normal; font-size: 1.05rem; margin: 2px 0 4px; }
+  table.tarifs td.montant small { font-size: .82rem; }
   table.tarifs td.detail { font-size: .92rem; }
-  table.tarifs tr.groupe { padding: 10px 16px; background: var(--bg-2); }
+  table.tarifs tr.groupe { display: block; padding: 10px 16px; background: var(--bg-2); }
   table.tarifs tr.groupe th { padding: 0; background: transparent; }
-  table.tarifs caption { padding: 14px 16px 4px; }
 
   .etapes { grid-template-columns: 1fr; gap: 10px; }
   .etape { display: grid; grid-template-columns: 44px 1fr; gap: 4px 14px; padding: 18px 16px; }
