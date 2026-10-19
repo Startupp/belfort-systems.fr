@@ -344,7 +344,7 @@ test("aide : jeton Microsoft vérifié (signature, iss, aud, exp/nbf avec 5 min 
   assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: t.join(".") })).status, 401, "charge altérée");
   const ok = await appel(W, env, "/breteuil/aide/moi", { qui: { ...FANNY, exp: maintenant - 120 } });
   assert.equal(ok.status, 200, "expiré depuis 2 min : toléré");
-  assert.deepEqual(ok.j, { prestataire: false, nom: "Fanny Martin", adresse: "fmartin@chateau-exemple.fr" });
+  assert.deepEqual(ok.j, { prestataire: false, nom: "Fanny Martin", adresse: "fmartin@chateau-exemple.fr", pj: false });
   assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: DAMIEN })).j.prestataire, true);
   // Clés en cache : un seul chargement des JWKS pour tous ces appels.
   assert.equal(globalThis.fetch.appels.filter((a) => /keys$/.test(a)).length, 1, "JWKS chargées une fois (kid inconnu : pas de rechargement avant 1 min)");
@@ -585,4 +585,138 @@ test("mail entrant : base64, HTML seul, anglais « On … wrote: », signature �
   // Pièce jointe ignorée ; charset latin-1.
   const mixte = 'Content-Type: multipart/mixed; boundary=XYZ\r\n\r\n--XYZ\r\nContent-Type: text/plain; charset=iso-8859-1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\nD=E9j=E0 fait.\r\n--XYZ\r\nContent-Type: text/plain\r\nContent-Disposition: attachment; filename=a.txt\r\n\r\npièce\r\n--XYZ--\r\n';
   assert.equal(mod.partieTexte(mixte).texte.trim(), "Déjà fait.");
+});
+
+/* ================================================================== */
+/* v5.6 : pièces jointes (KV « AIDE_PJ » simulé)                        */
+/* ================================================================== */
+function kv() {
+  const m = new Map();
+  return { m, put: async (k, v, o) => { m.set(k, { v: new Uint8Array(v), meta: o && o.metadata }); },
+    get: async (k, o) => { const x = m.get(k); if (!x) return null; return o && o.type === "stream" ? new Blob([x.v]).stream() : x.v; } };
+}
+// Petits fichiers d'exemple (signatures réelles).
+const JPG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70, 0, 1, ...new Array(64).fill(7)]);
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+const PDF = new TextEncoder().encode("%PDF-1.7\n1 0 obj << >> endobj\n%%EOF\n");
+const WEBP = new Uint8Array([...new TextEncoder().encode("RIFF"), 30, 0, 0, 0, ...new TextEncoder().encode("WEBPVP8 "), ...new Array(20).fill(1)]);
+const HEIC = new Uint8Array([0, 0, 0, 24, ...new TextEncoder().encode("ftypheic"), 0, 0, 0, 0, ...new TextEncoder().encode("mif1heic"), ...new Array(16).fill(0)]);
+const zip = (dossier) => new Uint8Array([...new TextEncoder().encode("PK\x03\x04"), ...new Array(30).fill(0), ...new TextEncoder().encode("[Content_Types].xml " + dossier + "document.xml PK\x01\x02 PK\x05\x06")]);
+
+test("pièces jointes : type réel d'après les octets (nombres magiques), pas l'extension", async () => {
+  const { typeFichier: t, nomFichier, disposition } = await charger();
+  assert.equal(t(JPG, "photo.jpg").type, "image/jpeg");
+  assert.equal(t(JPG, "capture.png").ext, "jpg", "JPEG nommé .png : vu comme JPEG");
+  assert.equal(t(PNG, "x").type, "image/png");
+  assert.equal(t(WEBP, "x.webp").type, "image/webp");
+  assert.equal(t(HEIC, "IMG_0001.HEIC").type, "image/heic");
+  assert.equal(t(PDF, "devis.pdf").type, "application/pdf");
+  assert.equal(t(zip("word/"), "lettre.docx").ext, "docx");
+  assert.equal(t(zip("xl/"), "budget.xlsx").ext, "xlsx");
+  assert.equal(t(zip("ppt/"), "expo.pptx").ext, "pptx");
+  assert.equal(t(zip("xl/"), "faux.docx"), null, "ZIP sans word/ : refusé");
+  assert.equal(t(zip("word/"), "archive.zip"), null, "ZIP quelconque : refusé");
+  assert.equal(t(new TextEncoder().encode("Bonjour, été"), "notes.txt").type, "text/plain; charset=utf-8");
+  assert.equal(t(new Uint8Array([0x42, 0xe9, 0x74, 0xe9]), "ancien.txt").type, "text/plain; charset=windows-1252");
+  assert.equal(t(new TextEncoder().encode("<svg onload=alert(1)>"), "image.svg"), null, "SVG refusé");
+  assert.equal(t(new TextEncoder().encode("<html><script>"), "page.html"), null, "HTML refusé");
+  assert.equal(t(new TextEncoder().encode("<html>"), "x.txt").type.startsWith("text/plain"), true, "texte : servi en text/plain (jamais HTML)");
+  assert.equal(t(new Uint8Array([0x4d, 0x5a, 0x90, 0]), "virus.pdf"), null, "exécutable renommé .pdf : refusé");
+  assert.equal(t(new Uint8Array([65, 0, 66]), "binaire.txt"), null, "octet nul : pas du texte");
+  assert.equal(t(new Uint8Array(0), "vide.pdf"), null);
+  // Noms : chemin, contrôles, extension corrigée selon le type réel, longueur.
+  assert.equal(nomFichier("C:\\Users\\x\\capture.png", "jpg"), "capture.jpg");
+  assert.equal(nomFichier("../../etc/passwd\u0007", "txt"), "passwd.txt");
+  assert.equal(nomFichier("Photo.JPEG", "jpg"), "Photo.JPEG");
+  assert.equal(nomFichier("rapport v2.final", "pdf"), "rapport v2.final.pdf");
+  assert.equal(nomFichier("", "pdf"), "fichier.pdf");
+  assert.ok(nomFichier("é".repeat(300) + ".pdf", "pdf").length <= 100 && nomFichier("é".repeat(300) + ".pdf", "pdf").endsWith(".pdf"));
+  assert.equal(disposition("Été 2026.pdf", true), "inline; filename=\"Ete 2026.pdf\"; filename*=UTF-8''%C3%89t%C3%A9%202026.pdf");
+  assert.match(disposition('a"b.txt', false), /^attachment; filename="a_b\.txt"/);
+});
+
+function formulaire(donnees, fichiers) {
+  const fd = new FormData();
+  fd.set("donnees", JSON.stringify(donnees));
+  for (const [nom, octets, type] of fichiers) fd.append("fichier", new File([octets], nom, { type: type || "application/octet-stream" }));
+  return fd;
+}
+async function envoyerFd(W, env, chemin, qui, fd) {
+  const r = await W.fetch(new Request("https://belfort-api.exemple.workers.dev" + chemin, { method: "POST", headers: { Origin: ORIGINE, Authorization: "Bearer " + await jeton(qui) }, body: fd }), env);
+  return { status: r.status, j: await r.json() };
+}
+async function lirePj(W, env, chemin, qui) {
+  const r = await W.fetch(new Request("https://belfort-api.exemple.workers.dev" + chemin, { headers: { Origin: ORIGINE, Authorization: "Bearer " + await jeton(qui) } }), env);
+  return r;
+}
+
+test("pièces jointes : envoi multipart (création et message), KV + D1, mail qui les liste, lecture réservée", async () => {
+  const W = (await prete()).default, env = envAide({ AIDE_PJ: kv() });
+  assert.equal((await appel(W, env, "/breteuil/aide/moi", { qui: FANNY })).j.pj, true, "capacité annoncée");
+  assert.equal((await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.pj, true);
+  const r = await envoyerFd(W, env, "/breteuil/aide", FANNY, formulaire({ type: "probleme", message: "Voir la capture", ecran: "Planning" },
+    [["capture.png", JPG, "image/png"], ["Devis été.pdf", PDF, "application/pdf"]]));
+  assert.equal(r.status, 201, JSON.stringify(r.j));
+  assert.deepEqual(r.j.pj.map((p) => [p.nom, p.type, p.apercu]), [["capture.jpg", "image/jpeg", true], ["Devis été.pdf", "application/pdf", false]]);
+  // KV : clé pj/<demande>/<uuid>, métadonnées.
+  const cles = [...env.AIDE_PJ.m.keys()];
+  assert.equal(cles.length, 2); assert.match(cles[0], /^pj\/1\/[0-9a-f-]{36}$/);
+  assert.deepEqual(Object.keys(env.AIDE_PJ.m.get(cles[0]).meta).sort(), ["auteur", "date", "nom", "taille", "type"]);
+  // Mail : pièces listées avec lien vers l'appli, aucun octet joint.
+  const x = lireMime(env.envoyes[0].raw);
+  assert.ok(x.corps.includes("capture.jpg (") && x.corps.includes("#/aide/1/pj/1"), "texte : pièces + liens");
+  assert.ok(x.html.includes("Devis été.pdf") && x.html.includes("#/aide/1/pj/2"), "HTML : pièces + liens");
+  assert.doesNotMatch(env.envoyes[0].raw, /Content-Disposition: attachment/);
+  // Fil : pièces sous le bon message.
+  const fil = await appel(W, env, "/breteuil/aide/1", { qui: FANNY });
+  assert.deepEqual(fil.j.messages[0].pj.map((p) => p.id), [1, 2]);
+  // Lecture : demandeur et prestataire oui, autre personne non (404), sans jeton non (401), autre demande non.
+  const ok = await lirePj(W, env, "/breteuil/aide/1/pj/1", FANNY);
+  assert.equal(ok.status, 200); assert.equal(ok.headers.get("Content-Type"), "image/jpeg");
+  assert.equal(ok.headers.get("Content-Disposition"), "inline; filename=\"capture.jpg\"; filename*=UTF-8''capture.jpg");
+  assert.equal(ok.headers.get("X-Content-Type-Options"), "nosniff"); assert.match(ok.headers.get("Content-Security-Policy"), /sandbox/);
+  assert.deepEqual(new Uint8Array(await ok.arrayBuffer()), JPG);
+  assert.equal((await lirePj(W, env, "/breteuil/aide/1/pj/2", DAMIEN)).status, 200, "prestataire");
+  assert.equal((await lirePj(W, env, "/breteuil/aide/1/pj/1", CAMILLE)).status, 404, "autre personne : 404");
+  assert.equal((await W.fetch(new Request("https://x.dev/breteuil/aide/1/pj/1", { headers: { Origin: ORIGINE } }), env)).status, 401);
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: CAMILLE, corps: { type: "avis", message: "x" } });
+  assert.equal((await lirePj(W, env, "/breteuil/aide/2/pj/1", CAMILLE)).status, 404, "pièce d'une autre demande via sa propre demande : 404");
+  assert.equal((await lirePj(W, env, "/breteuil/aide/1/pj/abc", DAMIEN)).status, 404);
+  // Message avec fichier seul (sans texte), côté prestataire aussi.
+  const rep = await envoyerFd(W, env, "/breteuil/aide/1/messages", DAMIEN, formulaire({ texte: "" }, [["notes.txt", new TextEncoder().encode("Étapes : 1, 2, 3")]]));
+  assert.equal(rep.status, 201); assert.equal(rep.j.pj[0].type, "text/plain; charset=utf-8");
+  const t = await lirePj(W, env, "/breteuil/aide/1/pj/3", FANNY);
+  assert.match(t.headers.get("Content-Disposition"), /^attachment;/, "texte : téléchargé, jamais affiché");
+  // Message client avec fichier → mail « Nouveau message » qui le liste.
+  await envoyerFd(W, env, "/breteuil/aide/1/messages", FANNY, formulaire({ texte: "Et le PDF" }, [["b.pdf", PDF]]));
+  const dernier = lireMime(env.envoyes.at(-1).raw);
+  assert.ok(dernier.html.includes("Nouveau message sur la demande n°1") && dernier.html.includes("b.pdf"));
+});
+
+test("pièces jointes : refus clairs (nombre, poids, type, non installées), quotas", async () => {
+  const W = (await prete()).default, env = envAide({ AIDE_PJ: kv() });
+  const post = (fichiers, qui = FANNY) => envoyerFd(W, env, "/breteuil/aide", qui, formulaire({ type: "avis", message: "x" }, fichiers));
+  let r = await post(Array.from({ length: 6 }, (_, i) => ["p" + i + ".pdf", PDF]));
+  assert.equal(r.status, 400); assert.equal(r.j.code, "trop_de_fichiers");
+  r = await post([["gros.pdf", new Uint8Array(8 * 1024 * 1024 + 1).fill(37)]]);
+  assert.equal(r.status, 413); assert.equal(r.j.code, "fichier_trop_lourd"); assert.match(r.j.erreur, /gros\.pdf.*8 Mo/);
+  r = await post([["virus.pdf", new Uint8Array([0x4d, 0x5a, 1, 2])]]);
+  assert.equal(r.j.code, "type_fichier"); assert.match(r.j.erreur, /virus\.pdf/);
+  assert.equal((await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes.length, 0, "rien créé si un fichier est refusé");
+  assert.equal(env.AIDE_PJ.m.size, 0);
+  // Sans liaison AIDE_PJ : le reste marche, les fichiers sont refusés clairement, la capacité est annoncée « false ».
+  const sans = envAide();
+  assert.equal((await appel(W, sans, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "sans fichier" } })).status, 201);
+  const r2 = await envoyerFd(W, sans, "/breteuil/aide", FANNY, formulaire({ type: "avis", message: "x" }, [["a.pdf", PDF]]));
+  assert.equal(r2.j.code, "pj_non_installees");
+  // Quota par personne (40 / 24 h) ; le prestataire n'y est pas soumis.
+  env.AIDE_DB.brut.exec("INSERT INTO pieces_jointes(demande_id, message_id, nom, type, taille, cle, cree_le, auteur) SELECT 1, 1, 'x', 'application/pdf', 1, 'k', '" + new Date().toISOString() + "', 'oid-fanny' FROM (WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 39) SELECT i FROM n)");
+  r = await post([["a.pdf", PDF], ["b.pdf", PDF]]);
+  assert.equal(r.status, 429); assert.equal(r.j.code, "trop_de_pj");
+  assert.equal((await post([["a.pdf", PDF]], CAMILLE)).status, 201, "autre personne : permis");
+  // Quota global (écritures KV gratuites).
+  env.AIDE_DB.brut.exec("UPDATE pieces_jointes SET auteur = 'oid-autre'");
+  env.AIDE_DB.brut.exec("INSERT INTO pieces_jointes(demande_id, message_id, nom, type, taille, cle, cree_le, auteur) SELECT 1, 1, 'x', 'application/pdf', 1, 'k', '" + new Date().toISOString() + "', 'oid-autre' FROM (WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 900) SELECT i FROM n)");
+  r = await post([["a.pdf", PDF]], DAMIEN);
+  assert.equal(r.status, 429); assert.equal(r.j.code, "quota_pj");
 });

@@ -19,7 +19,7 @@ function cors(origine) {
     "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Max-Age": "600",
-    "Access-Control-Expose-Headers": "X-Planning-Etat, X-Planning-Date",
+    "Access-Control-Expose-Headers": "X-Planning-Etat, X-Planning-Date, Content-Disposition",
     "Vary": "Origin",
   };
 }
@@ -304,6 +304,9 @@ async function tables(db) {
     db.prepare("CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY, demande_id INTEGER, cree TEXT, auteur TEXT, texte TEXT, origine TEXT)"),
     db.prepare("CREATE INDEX IF NOT EXISTS demandes_oid ON demandes(oid, cree)"),
     db.prepare("CREATE INDEX IF NOT EXISTS messages_demande ON messages(demande_id, id)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS pieces_jointes(id INTEGER PRIMARY KEY, demande_id INTEGER, message_id INTEGER, nom TEXT, type TEXT, taille INTEGER, cle TEXT, cree_le TEXT, auteur TEXT)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS pj_demande ON pieces_jointes(demande_id, id)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS pj_quota ON pieces_jointes(cree_le, auteur)"),
   ]);
   aideTablesPretes = { db };
 }
@@ -461,6 +464,110 @@ export function htmlMail(p) {
 </html>`;
 }
 
+/* ---------- Pièces jointes (v5.6) : Workers KV « AIDE_PJ », index dans D1 « pieces_jointes » ---------- */
+const PJ_MAX = 5;                       // fichiers par message
+const PJ_TAILLE = 8 * 1024 * 1024;      // 8 Mo par fichier
+const PJ_SIGNATURE = 5 * 1024;          // mail entrant : image « inline » plus petite = logo de signature, ignorée
+const PJ_PERSONNE_JOUR = 40;            // fichiers par personne et par 24 h (hors prestataire)
+const PJ_JOUR = 900;                    // tous comptes : KV gratuit = 1000 écritures par jour (marge)
+const PJ_TYPES = {
+  jpg: { type: "image/jpeg", inline: true, image: true }, png: { type: "image/png", inline: true, image: true },
+  webp: { type: "image/webp", inline: true, image: true }, heic: { type: "image/heic", inline: false },
+  pdf: { type: "application/pdf", inline: true },
+  docx: { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", inline: false, dossier: "word/" },
+  xlsx: { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", inline: false, dossier: "xl/" },
+  pptx: { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation", inline: false, dossier: "ppt/" },
+  txt: { type: "text/plain; charset=utf-8", inline: false },
+};
+const pjOk = (env) => !!(env && env.AIDE_PJ && typeof env.AIDE_PJ.put === "function");
+const ascii = (o, debut, fin) => String.fromCharCode(...o.subarray(debut, fin));
+function extension(nom) { const m = /\.([a-z0-9]{1,5})$/i.exec(String(nom || "")); return m ? m[1].toLowerCase() : ""; }
+
+/**
+ * Type RÉEL d'un fichier, d'après ses premiers octets (« nombres magiques »), jamais d'après le nom seul.
+ * → { ext, type, inline, image } ou null (type refusé). Le nom ne sert qu'à distinguer docx/xlsx/pptx (tous des ZIP)
+ * et le texte brut (sans signature) ; l'archive doit alors contenir le bon dossier (word/, xl/, ppt/).
+ */
+export function typeFichier(octets, nom) {
+  const o = octets instanceof Uint8Array ? octets : new Uint8Array(octets || []), n = o.length, ext = extension(nom);
+  const r = (e) => ({ ext: e, ...PJ_TYPES[e] });
+  if (n >= 3 && o[0] === 0xff && o[1] === 0xd8 && o[2] === 0xff) return r("jpg");
+  if (n >= 8 && ascii(o, 0, 8) === "\x89PNG\r\n\x1a\n") return r("png");
+  if (n >= 12 && ascii(o, 0, 4) === "RIFF" && ascii(o, 8, 12) === "WEBP") return r("webp");
+  if (n >= 12 && ascii(o, 4, 8) === "ftyp" && /^(heic|heix|hevc|hevx|heim|heis|hevm|hevs|mif1|msf1)$/.test(ascii(o, 8, 12))) return r("heic");
+  if (n >= 5 && ascii(o, 0, 5) === "%PDF-") return r("pdf");
+  if (n >= 4 && ascii(o, 0, 4) === "PK\x03\x04") {
+    if (!["docx", "xlsx", "pptx"].includes(ext)) return null;
+    // Le répertoire central (fin du ZIP) liste tous les noms : on y cherche « word/ », « xl/ » ou « ppt/ ».
+    const fin = new TextDecoder("latin1").decode(o.subarray(Math.max(0, n - 65536)));
+    return fin.includes(PJ_TYPES[ext].dossier) && fin.includes("[Content_Types].xml") ? r(ext) : null;
+  }
+  if (ext === "txt" && n > 0) {
+    const debut = o.subarray(0, 8192);
+    if (debut.includes(0)) return null; // octet nul : pas du texte
+    try { new TextDecoder("utf-8", { fatal: true }).decode(o.subarray(0, 65536), { stream: true }); return r("txt"); }
+    catch { return { ...r("txt"), type: "text/plain; charset=windows-1252" }; }
+  }
+  return null;
+}
+/** Nom de fichier sûr : sans chemin ni caractère de contrôle, 100 caractères au plus, extension = type réel. */
+export function nomFichier(nom, ext) {
+  let s = String(nom == null ? "" : nom).split(/[\\/]/).pop().normalize("NFC")
+    .replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069"<>|:*?]/g, "").replace(/\s+/g, " ").trim().replace(/^\.+/, "");
+  if (ext) {
+    const actuelle = extension(s), equiv = { jpeg: "jpg", jpe: "jpg", heif: "heic" }, connue = Object.hasOwn(PJ_TYPES, actuelle) || Object.hasOwn(equiv, actuelle);
+    if ((equiv[actuelle] || actuelle) !== ext) s = (connue ? s.slice(0, -actuelle.length - 1) : s) + "." + ext; // « photo.png » en vrai JPEG → « photo.jpg »
+  }
+  if (!s || s === "." + ext) s = "fichier" + (ext ? "." + ext : "");
+  if (s.length > 100) { const e = extension(s); s = s.slice(0, 100 - (e ? e.length + 1 : 0)).trim() + (e ? "." + e : ""); }
+  return s;
+}
+/** En-tête Content-Disposition (RFC 6266 : filename ASCII de secours + filename* UTF-8). */
+export function disposition(nom, inline) {
+  const secours = String(nom).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x20-\x7e]|["\\]/g, "_");
+  const utf8 = encodeURIComponent(nom).replace(/['()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
+  return (inline ? "inline" : "attachment") + '; filename="' + secours + "\"; filename*=UTF-8''" + utf8;
+}
+/** Contrôle d'une liste de fichiers {nom, octets} → { ok: [{nom, octets, t}], erreur?: {code, erreur} }. */
+export function controlerFichiers(fichiers) {
+  if (fichiers.length > PJ_MAX) return { erreur: { code: "trop_de_fichiers", erreur: PJ_MAX + " fichiers au plus par message." } };
+  const ok = [];
+  for (const f of fichiers) {
+    if (f.octets.length > PJ_TAILLE) return { erreur: { code: "fichier_trop_lourd", erreur: "« " + nomFichier(f.nom) + " » est trop lourd (8 Mo au plus)." } };
+    if (!f.octets.length) return { erreur: { code: "fichier_vide", erreur: "« " + nomFichier(f.nom) + " » est vide." } };
+    const t = typeFichier(f.octets, f.nom);
+    if (!t) return { erreur: { code: "type_fichier", erreur: "« " + nomFichier(f.nom) + " » : type de fichier non accepté (photos, PDF, Word, Excel, PowerPoint, texte)." } };
+    ok.push({ nom: nomFichier(f.nom, t.ext), octets: f.octets, t });
+  }
+  return { ok };
+}
+/** Quota de pièces jointes : par personne (24 h) et pour tout le compte (écritures KV gratuites). */
+async function quotaPj(db, oid, nombre, prestataire) {
+  if (!nombre) return null;
+  const depuis = iso(Date.now() - 86400000);
+  const tous = await db.prepare("SELECT COUNT(*) AS n FROM pieces_jointes WHERE cree_le > ?").bind(depuis).first();
+  if (tous && tous.n + nombre > PJ_JOUR) return { code: "quota_pj", erreur: "Limite du jour atteinte pour les pièces jointes. Réessayez demain." };
+  if (prestataire || !oid) return null;
+  const moi = await db.prepare("SELECT COUNT(*) AS n FROM pieces_jointes WHERE auteur = ? AND cree_le > ?").bind(oid, depuis).first();
+  if (moi && moi.n + nombre > PJ_PERSONNE_JOUR) return { code: "trop_de_pj", erreur: "Beaucoup de pièces jointes aujourd'hui : réessayez demain." };
+  return null;
+}
+/** Enregistre les fichiers contrôlés : octets dans KV (pj/<demande>/<uuid>), ligne dans D1. → [{id, nom, type, taille}] */
+async function stockerPj(env, demandeId, messageId, fichiers, auteur) {
+  const faits = [], echecs = [];
+  for (const f of fichiers) {
+    const cle = "pj/" + demandeId + "/" + crypto.randomUUID(), cree = iso(Date.now());
+    try {
+      await env.AIDE_PJ.put(cle, f.octets, { metadata: { nom: f.nom, type: f.t.type, taille: f.octets.length, auteur, date: cree } });
+      const r = await env.AIDE_DB.prepare("INSERT INTO pieces_jointes(demande_id, message_id, nom, type, taille, cle, cree_le, auteur) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id")
+        .bind(demandeId, messageId, f.nom, f.t.type, f.octets.length, cle, cree, auteur).first();
+      faits.push({ id: r.id, nom: f.nom, type: f.t.type, taille: f.octets.length });
+    } catch (e) { console.error("Aide, pièce jointe :", e && e.message); echecs.push("Pièce jointe non enregistrée : " + f.nom); }
+  }
+  return { faits, echecs };
+}
+const vuePj = (p) => ({ id: p.id, nom: p.nom, type: p.type, taille: p.taille, apercu: /^image\/(jpeg|png|webp)$/.test(p.type) });
+
 async function hmacHex(secret, texte) {
   const cle = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(secret)), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", cle, new TextEncoder().encode(String(texte))));
@@ -515,6 +622,29 @@ function vueDemande(r, moi, prestataire) {
     nonLu: !prestataire && r.oid === moi.oid && r.lu_par_demandeur === 0, dernier: r.dernier || r.cree, nbMessages: r.nb || 0,
     extrait: r.extrait != null ? ligneCourte(r.extrait, 140) : undefined, dernierAuteur: r.dernier_auteur || undefined };
 }
+/**
+ * Corps d'un envoi : JSON (sans fichier, comme avant) ou multipart/form-data (v5.6) avec un champ « donnees »
+ * (le même JSON) et jusqu'à 5 champs « fichier ». → { c, fichiers: [{ nom, octets }] }
+ */
+async function lireEnvoi(req) {
+  if (!/^multipart\/form-data/i.test(req.headers.get("Content-Type") || "")) return { c: await lireCorps(req), fichiers: [] };
+  const longueur = Number(req.headers.get("Content-Length") || 0);
+  if (longueur > PJ_MAX * PJ_TAILLE + 1024 * 1024) throw Object.assign(new Error("trop lourd"), { statut: 413 });
+  let fd;
+  try { fd = await req.formData(); } catch { throw Object.assign(new Error("multipart invalide"), { statut: 400 }); }
+  const brut = fd.get("donnees");
+  if (typeof brut !== "string" || brut.length > 20000) throw Object.assign(new Error("donnees"), { statut: 400 });
+  let c;
+  try { c = JSON.parse(brut || "{}"); } catch { c = null; }
+  if (!c || typeof c !== "object" || Array.isArray(c)) throw Object.assign(new Error("JSON invalide"), { statut: 400 });
+  const fichiers = [];
+  for (const f of fd.getAll("fichier")) {
+    if (!f || typeof f === "string" || typeof f.arrayBuffer !== "function") continue;
+    if (fichiers.length >= PJ_MAX) { fichiers.push({ nom: f.name, octets: new Uint8Array(0) }); break; } // compté, refusé plus loin
+    fichiers.push({ nom: f.name, octets: f.size > PJ_TAILLE ? new Uint8Array(PJ_TAILLE + 1) : new Uint8Array(await f.arrayBuffer()) });
+  }
+  return { c, fichiers };
+}
 async function lireCorps(req) {
   const t = await req.text();
   if (t.length > 20000) throw Object.assign(new Error("trop long"), { statut: 413 });
@@ -525,6 +655,17 @@ async function demandeAccessible(db, id, moi, prestataire) {
   const d = await db.prepare("SELECT * FROM demandes WHERE id = ?").bind(id).first();
   if (!d || (!prestataire && d.oid !== moi.oid)) return null; // 404 dans les deux cas : on ne révèle rien
   return d;
+}
+
+/** Fichiers d'un envoi : installés ? contrôlés (nombre, poids, type réel) ? quota ? → { ok: [...] } ou { reponse, statut }. */
+async function preparerPj(env, db, moi, prestataire, fichiers) {
+  if (!fichiers.length) return { ok: [] };
+  if (!pjOk(env)) return { reponse: { ok: false, code: "pj_non_installees", erreur: "Les pièces jointes ne sont pas encore installées." }, statut: 400 };
+  const c = controlerFichiers(fichiers);
+  if (c.erreur) return { reponse: { ok: false, ...c.erreur }, statut: c.erreur.code === "fichier_trop_lourd" ? 413 : 400 };
+  const q = await quotaPj(db, moi.oid, c.ok.length, prestataire);
+  if (q) return { reponse: { ok: false, ...q }, statut: 429 };
+  return { ok: c.ok };
 }
 
 async function routeAide(req, url, env, origine) {
@@ -540,10 +681,10 @@ async function routeAide(req, url, env, origine) {
   const m = req.method;
   try {
     await tables(db);
-    if (segments.length === 1 && segments[0] === "moi" && m === "GET") return repondre({ prestataire, nom: moi.nom, adresse: moi.adresse }, 200);
+    if (segments.length === 1 && segments[0] === "moi" && m === "GET") return repondre({ prestataire, nom: moi.nom, adresse: moi.adresse, pj: pjOk(env) }, 200);
 
     if (segments.length === 0 && m === "POST") {
-      const c = await lireCorps(req);
+      const { c, fichiers } = await lireEnvoi(req);
       const type = String(c.type || ""), texte = texteBrut(c.message);
       if (!Object.hasOwn(AIDE_TYPES, type)) return repondre({ ok: false, code: "type_invalide", erreur: "Type de demande inconnu." }, 400);
       if (!texte) return repondre({ ok: false, code: "message_vide", erreur: "Le message est vide." }, 400);
@@ -551,14 +692,17 @@ async function routeAide(req, url, env, origine) {
       const maintenant = Date.now();
       const n = await db.prepare("SELECT COUNT(*) AS n FROM demandes WHERE oid = ? AND cree > ?").bind(moi.oid, iso(maintenant - 3600000)).first();
       if (n && n.n >= AIDE_LIMITE_HEURE) return repondre({ ok: false, code: "trop_de_demandes", erreur: "Trop de demandes en une heure." }, 429);
+      const pj = await preparerPj(env, db, moi, prestataire, fichiers);
+      if (pj.reponse) return repondre(pj.reponse, pj.statut);
       const d = { cree: iso(maintenant), oid: moi.oid, nom: moi.nom, adresse: moi.adresse, type, statut: "nouvelle",
         ecran: ligneCourte(c.ecran, 120), version: ligneCourte(c.version, 20), appareil: ligneCourte(c.appareil, 120) };
       const r = await db.prepare("INSERT INTO demandes(cree, oid, nom, adresse, type, statut, ecran, version, appareil, lu_par_demandeur) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1) RETURNING id")
         .bind(d.cree, d.oid, d.nom, d.adresse, d.type, d.statut, d.ecran, d.version, d.appareil).first();
       d.id = r.id;
-      await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, 'client', ?, 'appli')").bind(d.id, d.cree, texte).run();
-      const mailEnvoye = await essayerMail(env, d, texte, true);
-      return repondre({ ok: true, id: d.id, statut: d.statut, mailEnvoye }, 201);
+      const msg = await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, 'client', ?, 'appli') RETURNING id").bind(d.id, d.cree, texte).first();
+      const { faits, echecs } = pj.ok.length ? await stockerPj(env, d.id, msg.id, pj.ok, moi.oid) : { faits: [], echecs: [] };
+      const mailEnvoye = await essayerMail(env, d, texte, true, faits, echecs);
+      return repondre({ ok: true, id: d.id, statut: d.statut, mailEnvoye, pj: faits.map(vuePj), pjEchecs: echecs }, 201);
     }
 
     if (segments.length === 0 && m === "GET") {
@@ -572,7 +716,7 @@ async function routeAide(req, url, env, origine) {
         "(SELECT texte FROM messages WHERE demande_id = d.id ORDER BY id LIMIT 1) AS extrait, (SELECT auteur FROM messages WHERE demande_id = d.id ORDER BY id DESC LIMIT 1) AS dernier_auteur " +
         "FROM demandes d" + (conditions.length ? " WHERE " + conditions.join(" AND ") : "") + " ORDER BY dernier DESC, d.id DESC LIMIT 200";
       const r = await db.prepare(sql).bind(...valeurs).all();
-      return repondre({ prestataire, demandes: (r.results || []).map((x) => vueDemande(x, moi, prestataire)) }, 200);
+      return repondre({ prestataire, pj: pjOk(env), demandes: (r.results || []).map((x) => vueDemande(x, moi, prestataire)) }, 200);
     }
 
     const id = segments[0] && /^\d{1,9}$/.test(segments[0]) ? Number(segments[0]) : null;
@@ -583,15 +727,17 @@ async function routeAide(req, url, env, origine) {
 
     if (segments.length === 1 && m === "GET") {
       const msgs = await db.prepare("SELECT id, cree, auteur, texte, origine FROM messages WHERE demande_id = ? ORDER BY id").bind(id).all();
+      const pjs = (await db.prepare("SELECT id, message_id, nom, type, taille FROM pieces_jointes WHERE demande_id = ? ORDER BY id").bind(id).all()).results || [];
+      const messages = (msgs.results || []).map((x) => ({ ...x, pj: pjs.filter((p) => p.message_id === x.id).map(vuePj) }));
       const nonLu = proprietaire && d.lu_par_demandeur === 0;
       if (nonLu) await db.prepare("UPDATE demandes SET lu_par_demandeur = 1 WHERE id = ?").bind(id).run();
-      return repondre({ prestataire, demande: { ...vueDemande(d, moi, prestataire), nonLu: false }, messages: msgs.results || [] }, 200);
+      return repondre({ prestataire, pj: pjOk(env), demande: { ...vueDemande(d, moi, prestataire), nonLu: false }, messages }, 200);
     }
 
     if (segments.length === 2 && segments[1] === "messages" && m === "POST") {
-      const c = await lireCorps(req);
+      const { c, fichiers } = await lireEnvoi(req);
       const texte = texteBrut(c.texte);
-      if (!texte) return repondre({ ok: false, code: "message_vide", erreur: "Le message est vide." }, 400);
+      if (!texte && !fichiers.length) return repondre({ ok: false, code: "message_vide", erreur: "Le message est vide." }, 400);
       if (texte.length > AIDE_MAX) return repondre({ ok: false, code: "message_trop_long", erreur: "4000 caractères au plus." }, 400);
       const maintenant = Date.now();
       const auteur = prestataire ? "prestataire" : "client";
@@ -599,15 +745,34 @@ async function routeAide(req, url, env, origine) {
         const n = await db.prepare("SELECT COUNT(*) AS n FROM messages m JOIN demandes d ON d.id = m.demande_id WHERE d.oid = ? AND m.auteur = 'client' AND m.cree > ?").bind(moi.oid, iso(maintenant - 3600000)).first();
         if (n && n.n >= AIDE_MESSAGES_HEURE) return repondre({ ok: false, code: "trop_de_messages", erreur: "Trop de messages en une heure." }, 429);
       }
-      await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, ?, ?, 'appli')").bind(id, iso(maintenant), auteur, texte).run();
+      const pj = await preparerPj(env, db, moi, prestataire, fichiers);
+      if (pj.reponse) return repondre(pj.reponse, pj.statut);
+      const msg = await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, ?, ?, 'appli') RETURNING id").bind(id, iso(maintenant), auteur, texte).first();
+      const { faits, echecs } = pj.ok.length ? await stockerPj(env, id, msg.id, pj.ok, prestataire ? "prestataire" : moi.oid) : { faits: [], echecs: [] };
       let mailEnvoye = null;
       if (auteur === "client") {
         await db.prepare("UPDATE demandes SET statut = 'nouvelle' WHERE id = ?").bind(id).run();
-        mailEnvoye = await essayerMail(env, d, texte, false);
+        mailEnvoye = await essayerMail(env, d, texte, false, faits, echecs);
       } else {
         await db.prepare("UPDATE demandes SET statut = 'repondue', lu_par_demandeur = 0 WHERE id = ?").bind(id).run();
       }
-      return repondre({ ok: true, statut: auteur === "client" ? "nouvelle" : "repondue", mailEnvoye }, 201);
+      return repondre({ ok: true, statut: auteur === "client" ? "nouvelle" : "repondue", mailEnvoye, pj: faits.map(vuePj), pjEchecs: echecs }, 201);
+    }
+
+    // Pièce jointe : mêmes droits que le fil (demandeur ou prestataire), rendue avec son type RÉEL.
+    if (segments.length === 3 && segments[1] === "pj" && m === "GET") {
+      const pjId = /^\d{1,9}$/.test(segments[2]) ? Number(segments[2]) : null;
+      const p = pjId == null ? null : await db.prepare("SELECT * FROM pieces_jointes WHERE id = ? AND demande_id = ?").bind(pjId, id).first();
+      if (!p) return repondre({ ok: false, code: "introuvable", erreur: "Pièce jointe introuvable." }, 404);
+      if (!pjOk(env)) return repondre({ ok: false, code: "pj_non_installees", erreur: "Les pièces jointes ne sont pas installées." }, 503);
+      const corps = await env.AIDE_PJ.get(p.cle, { type: "stream" });
+      if (!corps) return repondre({ ok: false, code: "introuvable", erreur: "Pièce jointe introuvable." }, 404);
+      const t = Object.values(PJ_TYPES).find((x) => x.type === p.type);
+      return new Response(corps, { status: 200, headers: {
+        "Content-Type": p.type, "Content-Length": String(p.taille), "Content-Disposition": disposition(p.nom, !!(t && t.inline)),
+        "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox", ...cors(origine),
+      } });
     }
 
     if (segments.length === 1 && m === "PATCH") {
