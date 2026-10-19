@@ -10,6 +10,8 @@
 /offre/preparation-poste    /?offre=preparation-poste#contact    302
 /offre/migration-365        /?offre=migration-365#contact        302
 /offre/suivi                /?offre=suivi#contact                302
+/rendez-vous                /?offre=rendez-vous#calendrier       302
+/rdv                        /?offre=rendez-vous#calendrier       302
 
 # Ancienne adresse de la page « concepts » du jeu (déplacée dans ecorce/ancienne/).
 /ecorce/concepts      /ecorce/ancienne/concepts/  301

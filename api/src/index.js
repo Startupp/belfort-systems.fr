@@ -38,7 +38,8 @@ const CANAUX = ["Mail", "WhatsApp", "SMS", "Téléphone", "Sur place", "Teams", 
 const FORMULES = ["forfait", "heure", "abonnement", "devis", "autre"];
 
 // Créneaux d'une heure proposés les jours ouvrés (heure de Paris).
-const HEURES_CRENEAUX = [9, 10, 11, 14, 15, 16, 17];
+// Créneaux d'une heure proposés au public : 9 h – 12 h et 14 h – 17 h, du lundi au vendredi.
+const HEURES_CRENEAUX = [9, 10, 11, 14, 15, 16];
 
 // ---------------------------------------------------------------------------
 // Erreurs HTTP
