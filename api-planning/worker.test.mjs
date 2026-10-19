@@ -720,3 +720,88 @@ test("pièces jointes : refus clairs (nombre, poids, type, non installées), quo
   r = await post([["a.pdf", PDF]], DAMIEN);
   assert.equal(r.status, 429); assert.equal(r.j.code, "quota_pj");
 });
+
+/* ---------- v5.6 : mail entrant avec pièces jointes, signature sans « -- » ---------- */
+const b64l = (o) => Buffer.from(o).toString("base64").replace(/.{76}/g, "$&\r\n");
+function reponseAvecPj(a, de, { texte = "Voici le devis signé.\r\n\r\nBELFORT Damien,\r\n06 00 00 00 00\r\n", gros = false, zip = false, six = false } = {}) {
+  const pdfs = six ? Array.from({ length: 6 }, (_, i) => ["p" + i + ".pdf", PDF]) : [];
+  return [
+    `From: Damien <${de}>`, `To: ${a}`, "Subject: Re: demande", "MIME-Version: 1.0",
+    'Content-Type: multipart/mixed; boundary="mixte01"', "",
+    "--mixte01", 'Content-Type: multipart/related; boundary="rel02"', "",
+    "--rel02", 'Content-Type: multipart/alternative; boundary="alt03"', "",
+    "--alt03", 'Content-Type: text/plain; charset="UTF-8"', "Content-Transfer-Encoding: quoted-printable", "",
+    texte + "Le lun. 19 oct. 2026 =C3=A0 10:00, Espace Breteuil a =C3=A9crit :", "> cité", "",
+    "--alt03", 'Content-Type: text/html; charset="UTF-8"', "", "<div>Voici le devis sign&eacute;.</div>", "",
+    "--alt03--", "",
+    "--rel02", "Content-Type: image/png; name=\"logo.png\"", "Content-Disposition: inline; filename=\"logo.png\"", "Content-ID: <ii_logo>", "Content-Transfer-Encoding: base64", "",
+    b64l(PNG), "",
+    "--rel02--", "",
+    "--mixte01", "Content-Type: application/pdf; name=\"=?UTF-8?B?RGV2aXMgw6l0w6kucGRm?=\"", "Content-Disposition: attachment; filename*=UTF-8''Devis%20%C3%A9t%C3%A9.pdf", "Content-Transfer-Encoding: base64", "",
+    b64l(PDF), "",
+    "--mixte01", "Content-Type: image/jpeg; name=\"=?UTF-8?Q?Capture_=C3=A9cran.jpg?=\"", "Content-Disposition: attachment", "Content-Transfer-Encoding: base64", "",
+    b64l(JPG), "",
+    ...(gros ? ["--mixte01", "Content-Type: application/pdf; name=\"plan.pdf\"", "Content-Disposition: attachment; filename=\"plan.pdf\"", "Content-Transfer-Encoding: base64", "",
+      b64l(Buffer.concat([Buffer.from("%PDF-1.7\n"), Buffer.alloc(9 * 1024 * 1024, 65)])), ""] : []),
+    ...(zip ? ["--mixte01", "Content-Type: application/zip; name=\"photos.zip\"", "Content-Disposition: attachment; filename=\"photos.zip\"", "Content-Transfer-Encoding: base64", "",
+      b64l(Buffer.from("PK\x03\x04zzzz")), ""] : []),
+    ...pdfs.flatMap(([n, o]) => ["--mixte01", `Content-Type: application/pdf; name="${n}"`, `Content-Disposition: attachment; filename="${n}"`, "Content-Transfer-Encoding: base64", "", b64l(o), ""]),
+    "--mixte01--", "",
+  ].join("\r\n");
+}
+
+test("mail entrant : extraction des pièces jointes (RFC 2231 / 2047, imbriquées), logo de signature ignoré", async () => {
+  const mod = await charger();
+  const { texte, pieces } = mod.analyserMail(reponseAvecPj("a@x.fr", "d@x.fr"));
+  assert.equal(texte.type, "text/plain");
+  assert.deepEqual(pieces.map((p) => [p.nom, p.typeDeclare, p.inline, p.taille]), [
+    ["logo.png", "image/png", true, PNG.length], ["Devis été.pdf", "application/pdf", false, PDF.length], ["Capture écran.jpg", "image/jpeg", false, JPG.length]]);
+  assert.deepEqual(pieces[1].octets, PDF);
+  const tri = mod.trierPiecesMail(pieces);
+  assert.deepEqual(tri.gardees.map((g) => g.nom), ["Devis été.pdf", "Capture écran.jpg"], "logo inline < 5 Ko ignoré");
+  assert.deepEqual(tri.notes, []);
+  const gros = mod.trierPiecesMail(mod.analyserMail(reponseAvecPj("a@x.fr", "d@x.fr", { gros: true, zip: true })).pieces);
+  assert.deepEqual(gros.notes, ["Pièce jointe ignorée : trop lourde (plan.pdf, 9 Mo)", "Pièce jointe ignorée : type non accepté (photos.zip)"]);
+  const six = mod.trierPiecesMail(mod.analyserMail(reponseAvecPj("a@x.fr", "d@x.fr", { six: true })).pieces);
+  assert.equal(six.gardees.length, 5); assert.equal(six.notes.length, 3, "au-delà de 5 : ignorées avec une note");
+  assert.deepEqual(mod.trierPiecesMail(pieces, false).notes, ["Pièce jointe ignorée : pièces jointes non installées (Devis été.pdf)", "Pièce jointe ignorée : pièces jointes non installées (Capture écran.jpg)"]);
+  assert.equal(mod.decoderMots("=?UTF-8?Q?R=C3=A9ponse_rapide?= =?UTF-8?B?w6l0w6k=?="), "Réponse rapideété");
+});
+
+test("mail entrant : réponse avec pièces jointes → fil + KV ; signature AIDE_SIGNATURE retirée ; notes d'ignorées", async () => {
+  const mod = await prete(), W = mod.default, env = envAide({ AIDE_PJ: kv(), AIDE_SIGNATURE: "BELFORT Damien,|06 00 00 00 00" });
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "probleme", message: "Devis ?" } });
+  const a = `demande+1-${await mod.signature(env.AIDE_SECRET, 1)}@aide.exemple.fr`;
+  const m = mailEntrant(a, PRESTA, reponseAvecPj(a, PRESTA, { zip: true }));
+  await W.email(m, env, {});
+  assert.equal(m.rejet, null);
+  const fil = await appel(W, env, "/breteuil/aide/1", { qui: FANNY });
+  const dernier = fil.j.messages.at(-1);
+  assert.equal(dernier.texte, "Voici le devis signé.\n\n(Pièce jointe ignorée : type non accepté (photos.zip))", "signature et citation retirées, note ajoutée");
+  assert.deepEqual(dernier.pj.map((p) => [p.nom, p.type]), [["Devis été.pdf", "application/pdf"], ["Capture écran.jpg", "image/jpeg"]]);
+  assert.equal(env.AIDE_PJ.m.size, 2);
+  assert.equal((await lirePj(W, env, "/breteuil/aide/1/pj/" + dernier.pj[0].id, FANNY)).status, 200);
+  // Pièce jointe seule, sans texte : acceptée.
+  const seul = mailEntrant(a, PRESTA, reponseAvecPj(a, PRESTA, { texte: "\r\n" }));
+  await W.email(seul, env, {});
+  assert.equal(seul.rejet, null);
+  // Sans liaison AIDE_PJ : texte gardé, note « non installées ».
+  const env2 = envAide({ AIDE_SIGNATURE: "BELFORT Damien,\n06 00 00 00 00" });
+  await appel(W, env2, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "avis", message: "x" } });
+  const m2 = mailEntrant(a, PRESTA, reponseAvecPj(a, PRESTA));
+  await W.email(m2, env2, {});
+  assert.match((await appel(W, env2, "/breteuil/aide/1", { qui: FANNY })).j.messages.at(-1).texte, /^Voici le devis signé\.\n\n\(Pièce jointe ignorée : pièces jointes non installées \(Devis été\.pdf\)\)/);
+});
+
+test("signature sans délimiteur : retirée seulement en fin de message, lignes vides de fin retirées", async () => {
+  const { sansCitation, retirerSignature } = await charger();
+  const SIG = "BELFORT Damien,|06 09 00 00 00";
+  assert.equal(sansCitation("C'est fait.\n\nBELFORT Damien,\n06 09 00 00 00\n\n\n", SIG), "C'est fait.");
+  assert.equal(sansCitation("C'est fait.\nBelfort damien\n06 09 00 00 00", SIG), "C'est fait.", "casse, virgule et espaces ignorés");
+  assert.equal(sansCitation("C'est fait.\n0609000000", SIG), "C'est fait.", "téléphone sans espaces");
+  assert.equal(sansCitation("BELFORT Damien, voici la réponse.\nMerci", SIG), "BELFORT Damien, voici la réponse.\nMerci", "pas en fin : gardé");
+  assert.equal(sansCitation("Appelez le 06 09 00 00 00 si besoin.\nBonne journée", SIG), "Appelez le 06 09 00 00 00 si besoin.\nBonne journée");
+  assert.equal(retirerSignature("Ok\n\n\n", ""), "Ok", "sans variable : lignes vides de fin retirées");
+  assert.equal(retirerSignature("Ok\nBELFORT Damien,", "BELFORT Damien,\\n06 09 00 00 00"), "Ok", "« \\n » littéral accepté");
+  assert.equal(sansCitation("Merci !\n-- \nDamien Belfort", SIG), "Merci !", "« -- » toujours géré");
+});

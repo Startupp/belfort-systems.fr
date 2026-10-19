@@ -223,7 +223,7 @@ const AIDE_LIMITE_HEURE = 10;        // demandes par heure et par personne
 const AIDE_MESSAGES_HEURE = 40;      // messages par heure et par personne (garde-fou)
 const AIDE_TOLERANCE_S = 300;        // horloges : 5 min de tolérance (exp / nbf)
 const AIDE_CLES_TTL_MS = 6 * 3600 * 1000;
-const AIDE_RAW_MAX = 2 * 1024 * 1024; // mail entrant : 2 Mo au plus
+const AIDE_RAW_MAX = 25 * 1024 * 1024; // mail entrant : 25 Mo au plus (limite d'Email Routing ; pièces jointes comprises)
 let aideTablesPretes = null;          // base partagée par isolat : tables créées une fois
 let aideCles = null;                  // { tenant, quand, issuer, cles: Map(kid → CryptoKey) }
 
@@ -820,40 +820,104 @@ function parametre(valeur, nom) {
   const m = new RegExp(";\\s*" + nom + "\\s*=\\s*(\"([^\"]*)\"|([^;\\s]+))", "i").exec(valeur || "");
   return m ? (m[2] ?? m[3]) : "";
 }
-/** Partie texte d'un mail brut (chaîne « binaire », 1 caractère = 1 octet) : text/plain d'abord, sinon HTML sans balises. */
-export function partieTexte(binaire, profondeur = 0) {
+/** Mots encodés RFC 2047 (=?charset?B|Q?…?=) d'un en-tête (nom de fichier, sujet). */
+export function decoderMots(v) {
+  return String(v || "").replace(/\?=\s+=\?/g, "?==?").replace(/=\?([^?]+)\?([bq])\?([^?]*)\?=/gi, (m, cs, enc, t) => {
+    try {
+      const bin = enc.toLowerCase() === "b" ? atob(t.replace(/[^A-Za-z0-9+/=]/g, "")) : quotedPrintable(t.replace(/_/g, " "));
+      return decoderCharset(octetsDe(bin), cs);
+    } catch { return m; }
+  });
+}
+/** Nom de fichier d'une partie : filename / name, RFC 2231 (filename*=UTF-8''…, suites *0*, *1*…) ou RFC 2047. */
+function nomPartie(entetes) {
+  for (const [h, nom] of [["content-disposition", "filename"], ["content-type", "name"]]) {
+    const v = entetes[h] || "";
+    const etoile = new RegExp(";\\s*" + nom + "\\*(?:0\\*?)?\\s*=\\s*\"?([^\";]*)\"?", "i").exec(v);
+    if (etoile) {
+      let brut = etoile[1];
+      for (let i = 1; i < 20; i++) { const s = new RegExp(";\\s*" + nom + "\\*" + i + "\\*?\\s*=\\s*\"?([^\";]*)\"?", "i").exec(v); if (!s) break; brut += s[1]; }
+      const m = /^([^']*)'[^']*'(.*)$/.exec(brut);
+      try { return decoderCharset(octetsDe(unescape(m ? m[2] : brut)), m ? m[1] || "utf-8" : "utf-8"); } catch { return brut; }
+    }
+    const simple = parametre(v, nom);
+    if (simple) return decoderMots(simple);
+  }
+  return "";
+}
+/** Base64 → octets (natif si le moteur le permet : moins de temps de calcul sur les grosses pièces). */
+function octetsBase64(t) {
+  const propre = t.replace(/[^A-Za-z0-9+/=]/g, "");
+  if (typeof Uint8Array.fromBase64 === "function") { try { return Uint8Array.fromBase64(propre.replace(/=+$/, ""), { lastChunkHandling: "loose" }); } catch {} }
+  return octetsDe(atob(propre));
+}
+/**
+ * Lecture d'un mail brut (chaîne « binaire », 1 caractère = 1 octet) : partie texte (text/plain d'abord, sinon HTML
+ * sans balises) et pièces jointes { nom, typeDeclare, inline, taille, octets? } (octets absents si trop lourde).
+ */
+export function analyserMail(binaire, profondeur = 0, pieces = []) {
   const { entetes, corps } = separer(binaire);
   const type = (entetes["content-type"] || "text/plain").toLowerCase();
-  if (/^multipart\//.test(type) && profondeur < 5) {
+  if (/^multipart\//.test(type)) {
+    if (profondeur >= 5) return { texte: null, pieces };
     const borne = parametre(entetes["content-type"], "boundary");
-    if (!borne) return null;
+    if (!borne) return { texte: null, pieces };
     const morceaux = corps.split("--" + borne).slice(1);
-    const parties = [];
-    for (const p of morceaux) { if (/^--/.test(p)) break; parties.push(p.replace(/^\r?\n/, "")); }
-    let html = null;
-    for (const p of parties) {
-      const t = partieTexte(p, profondeur + 1);
-      if (t && t.type === "text/plain") return t;
-      if (t && !html) html = t;
+    let plain = null, html = null;
+    for (const p of morceaux) {
+      if (/^--/.test(p)) break;
+      const t = analyserMail(p.replace(/^\r?\n/, ""), profondeur + 1, pieces).texte;
+      if (t && t.type === "text/plain" && !plain) plain = t;
+      if (t && t.type === "text/html" && !html) html = t;
     }
-    return html;
+    return { texte: plain || html, pieces };
   }
-  if (/attachment/i.test(entetes["content-disposition"] || "")) return null;
-  if (!/^text\/(plain|html)/.test(type)) return null;
+  const cd = entetes["content-disposition"] || "", nom = nomPartie(entetes);
   const cte = (entetes["content-transfer-encoding"] || "7bit").toLowerCase();
+  const estTexte = /^text\/(plain|html)/.test(type) && !/^\s*attachment/i.test(cd) && !nom;
+  if (!estTexte) {
+    if (/^message\//.test(type)) return { texte: null, pieces }; // mail transféré en pièce jointe : ignoré
+    const estime = cte === "base64" ? Math.floor(corps.replace(/[^A-Za-z0-9+/]/g, "").length * 3 / 4) : corps.length;
+    const piece = { nom: nom || "piece-jointe", typeDeclare: type.split(";")[0].trim(), inline: /^\s*inline/i.test(cd) || (!cd && !!entetes["content-id"]), taille: estime };
+    if (estime <= PJ_TAILLE) {
+      try { piece.octets = cte === "base64" ? octetsBase64(corps) : cte === "quoted-printable" ? octetsDe(quotedPrintable(corps)) : octetsDe(corps.replace(/\r?\n$/, "")); piece.taille = piece.octets.length; }
+      catch { piece.octets = null; }
+    }
+    pieces.push(piece);
+    return { texte: null, pieces };
+  }
   let octets;
-  if (cte === "base64") { try { octets = octetsDe(atob(corps.replace(/[^A-Za-z0-9+/=]/g, ""))); } catch { return null; } }
+  if (cte === "base64") { try { octets = octetsBase64(corps); } catch { return { texte: null, pieces }; } }
   else if (cte === "quoted-printable") octets = octetsDe(quotedPrintable(corps));
   else octets = octetsDe(corps);
   let texte = decoderCharset(octets, parametre(entetes["content-type"], "charset"));
   if (/^text\/html/.test(type)) {
-    texte = decoder(texte.replace(/<(style|script)[\s\S]*?<\/\1>/gi, "").replace(/<blockquote[\s\S]*$/i, "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div)>/gi, "\n").replace(/<[^>]+>/g, ""));
-    return { type: "text/html", texte };
+    texte = decoder(texte.replace(/<(style|script)[\s\S]*?<\/\1>/gi, "").replace(/<div[^>]*class="?gmail_signature[\s\S]*$/i, "").replace(/<blockquote[\s\S]*$/i, "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div)>/gi, "\n").replace(/<[^>]+>/g, ""));
+    return { texte: { type: "text/html", texte }, pieces };
   }
-  return { type: "text/plain", texte };
+  return { texte: { type: "text/plain", texte }, pieces };
+}
+/** Partie texte d'un mail brut (compatibilité) : { type, texte } ou null. */
+export function partieTexte(binaire) { return analyserMail(binaire).texte; }
+/**
+ * Tri des pièces d'un mail entrant : petites images « inline » (logos de signature) ignorées sans bruit ;
+ * trop lourdes, type refusé, au-delà de 5 : ignorées avec une note. → { gardees: [{nom, octets}], notes: [texte] }
+ */
+export function trierPiecesMail(pieces, installees = true) {
+  const gardees = [], notes = [];
+  for (const p of pieces) {
+    if (p.inline && /^image\//.test(p.typeDeclare) && p.taille < PJ_SIGNATURE) continue;
+    const nom = nomFichier(p.nom);
+    if (!installees) { notes.push("Pièce jointe ignorée : pièces jointes non installées (" + nom + ")"); continue; }
+    if (!p.octets || p.taille > PJ_TAILLE) { notes.push("Pièce jointe ignorée : trop lourde (" + nom + ", " + tailleLisible(p.taille) + ")"); continue; }
+    if (!typeFichier(p.octets, p.nom)) { notes.push("Pièce jointe ignorée : type non accepté (" + nom + ")"); continue; }
+    if (gardees.length >= PJ_MAX) { notes.push("Pièce jointe ignorée : " + PJ_MAX + " au plus par message (" + nom + ")"); continue; }
+    gardees.push({ nom: p.nom, octets: p.octets });
+  }
+  return { gardees, notes };
 }
 /** Retire la citation et la signature d'une réponse (Gmail, Apple Mail, Outlook, français ou anglais). */
-export function sansCitation(texte) {
+export function sansCitation(texte, signatureFin) {
   const l = String(texte || "").replace(/\r\n?/g, "\n").split("\n");
   let fin = l.length;
   for (let i = 0; i < l.length; i++) {
@@ -867,7 +931,19 @@ export function sansCitation(texte) {
     if (/^(de|from)\s*:\s*\S/i.test(x) && /^(envoyé|sent|date|à|to)\s*:/i.test((l[i + 1] || "").trim())) { fin = i; break; }
     if (/^>/.test(x) && l.slice(i).every((y) => /^\s*(>|$)/.test(y))) { fin = i; break; }
   }
-  return texteBrut(l.slice(0, fin).filter((y) => !/^\s*>/.test(y)).join("\n"), AIDE_MAX);
+  return retirerSignature(texteBrut(l.slice(0, fin).filter((y) => !/^\s*>/.test(y)).join("\n")), signatureFin).slice(0, AIDE_MAX);
+}
+/**
+ * Signature SANS délimiteur « -- » (variable AIDE_SIGNATURE) : ses lignes, séparées par « | » ou des sauts de ligne,
+ * sont retirées quand elles TERMINENT le message (casse, espaces et ponctuation finale ignorés), puis les lignes vides de fin.
+ */
+export function retirerSignature(texte, signatureFin) {
+  const norm = (x) => String(x).toLowerCase().replace(/\s+/g, "").replace(/[.,;:!]+$/, "");
+  const lignesSig = new Set(String(signatureFin || "").split(/\r?\n|\\n|\|/).map(norm).filter(Boolean));
+  const l = String(texte || "").replace(/\r\n?/g, "\n").split("\n");
+  while (l.length && !l[l.length - 1].trim()) l.pop();
+  if (lignesSig.size) while (l.length && (lignesSig.has(norm(l[l.length - 1])) || !l[l.length - 1].trim())) l.pop();
+  return l.join("\n").trim();
 }
 
 export async function recevoirMail(message, env) {
@@ -888,10 +964,20 @@ export async function recevoirMail(message, env) {
   const brut = new Uint8Array(await new Response(message.raw).arrayBuffer()).subarray(0, AIDE_RAW_MAX);
   let binaire = "";
   for (let i = 0; i < brut.length; i += 0x8000) binaire += String.fromCharCode.apply(null, brut.subarray(i, i + 0x8000));
-  const partie = partieTexte(binaire);
-  const texte = sansCitation(partie ? partie.texte : "");
-  if (!texte) return message.setReject("Réponse vide");
-  await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, 'prestataire', ?, 'mail')").bind(id, iso(Date.now()), texte).run();
+  const { texte: partie, pieces } = analyserMail(binaire);
+  let texte = sansCitation(partie ? partie.texte : "", env.AIDE_SIGNATURE);
+  let { gardees, notes } = trierPiecesMail(pieces, pjOk(env));
+  let fichiers = [];
+  if (gardees.length) {
+    const c = controlerFichiers(gardees); // déjà triées : ne refuse plus rien
+    fichiers = c.ok || [];
+    const q = await quotaPj(db, null, fichiers.length, true);
+    if (q) { notes.push(...fichiers.map((f) => "Pièce jointe ignorée : limite du jour atteinte (" + f.nom + ")")); fichiers = []; }
+  }
+  if (!texte && !fichiers.length) return message.setReject("Réponse vide");
+  if (notes.length) texte = (texte ? texte + "\n\n" : "") + notes.map((n) => "(" + n + ")").join("\n");
+  const msg = await db.prepare("INSERT INTO messages(demande_id, cree, auteur, texte, origine) VALUES (?, ?, 'prestataire', ?, 'mail') RETURNING id").bind(id, iso(Date.now()), texteBrut(texte, AIDE_MAX + 2000)).first();
+  if (fichiers.length) await stockerPj(env, id, msg.id, fichiers, "prestataire");
   await db.prepare("UPDATE demandes SET statut = 'repondue', lu_par_demandeur = 0 WHERE id = ?").bind(id).run();
 }
 
