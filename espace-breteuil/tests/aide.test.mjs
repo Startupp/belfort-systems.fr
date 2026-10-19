@@ -78,13 +78,13 @@ test("client du Worker : jeton d'identité en Authorization, routes et erreurs",
   await assert.rejects(horsLigne.moi(), (e) => e.code === "hors_ligne");
 });
 
-test("intégration : scripts chargés, coquille hors ligne, version 5.4.x, jamais innerHTML", () => {
+test("intégration : scripts chargés, coquille hors ligne, version 5.4.x ou plus, jamais innerHTML", () => {
   const index = lire("index.html"), sw = lire("sw.js");
   for (const f of ["aide.js", "aide-ecrans.js"]) {
     assert.ok(index.includes(`<script src="${f}"></script>`), f + " dans index.html");
     assert.ok(sw.includes(`"./${f}"`), f + " dans sw.js");
   }
-  assert.match(lire("version.js"), /EB_VERSION = "5\.4\.\d+"/);
+  assert.match(lire("version.js"), /EB_VERSION = "5\.([4-9]|\d{2})\.\d+"/);
   for (const f of ["aide.js", "aide-ecrans.js"]) assert.doesNotMatch(lire(f).replace(/^\s*(\/\/|\*|\/\*).*$/gm, ""), /innerHTML|outerHTML|insertAdjacentHTML/, f);
   assert.match(lire("graph.js"), /jetonIdentite/, "graph.js : jeton d'identité pour le Worker");
 });

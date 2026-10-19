@@ -233,7 +233,7 @@ test("dépôt public : aucune donnée client dans le code ni dans l'exemple", ()
 test("config.js : libellés, dossier et fichier du Suivi informatique en UNE constante", async () => {
   const vm = await import("node:vm");
   const ctx = { self: {} }; vm.runInNewContext(lire("config.js"), ctx);
-  assert.deepEqual(JSON.parse(JSON.stringify(ctx.self.EB_CONFIG.suivi)), { libelle: "Suivi informatique", tuile: "Suivi informatique — tout ce qui a été fait pour vous",
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.self.EB_CONFIG.suivi)), { libelle: "Suivi informatique", tuile: "Ce que Damien a fait pour le Château",
     dossier: "Suivi informatique", fichier: "suivi.json", guides: "Guides", ancien: { dossier: "Pilotage", fichier: "pilotage.json" } });
   const ecrans = lire("suivi-ecrans.js");
   assert.match(ecrans, /EB_CONFIG\.suivi/);
