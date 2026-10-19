@@ -249,6 +249,7 @@
     var depuisCommun = segs[0] === nomCommun();
     var parts = depuisCommun ? [{ nom: "Documents de l'équipe", segs: [nomCommun()] }] : [{ nom: "Tout en haut", segs: [] }];
     segs.forEach(function (x, i) { if (!(depuisCommun && i === 0)) parts.push({ nom: x, segs: segs.slice(0, i + 1) }); });
+    if (parts.length < 2) return null; // tout en haut : le titre suffit, pas de fil qui le répète
     parts.forEach(function (p, i) {
       if (i) f.appendChild(h("span", { class: "sep", "aria-hidden": "true" }, "›"));
       f.appendChild(i === parts.length - 1 ? h("span", { "aria-current": "page" }, p.nom) : h("a", { href: hashChemin(prefixe, p.segs) }, p.nom));
@@ -263,7 +264,7 @@
     var titre = segs.length === 1 && segs[0] === nomCommun() ? "Documents de l'équipe" : segs.length ? segs[segs.length - 1] : "Tout en haut";
     var gen = demarrerEcran();
     app.appendChild(EB.barre(titre, { href: segs.length > 1 ? hashChemin("commun", segs.slice(0, -1)) : "#/fichiers", texte: segs.length > 1 ? "Retour" : "Documents" }));
-    app.appendChild(filAriane(segs, "commun"));
+    var fil = filAriane(segs, "commun"); if (fil) app.appendChild(fil);
     var zone = h("div", null, chargement(4, "tuiles"));
     app.appendChild(zone);
 
@@ -566,7 +567,7 @@
     var nom = segs.length ? segs[segs.length - 1] : "Tout en haut";
     var barre = EB.barre("Qui peut l'ouvrir ?", { href: hashChemin("commun", segs), texte: "Retour" });
     app.appendChild(barre);
-    app.appendChild(filAriane(segs, "acces"));
+    var filA = filAriane(segs, "acces"); if (filA) app.appendChild(filA);
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     avecMaj("droits:" + segs.join("/"), function () { return lireDroits(segs); }, gen, zone, function (r) {

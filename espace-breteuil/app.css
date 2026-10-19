@@ -1740,3 +1740,12 @@ dialog.detail::backdrop { background: var(--voile); -webkit-backdrop-filter: blu
 .btn { border-radius: 14px; }
 .aide-comment { margin-bottom: 4px; }
 .pied-actions { margin-top: 24px; }
+.question { font-size: 1.3rem; margin: 4px 0 6px; line-height: 1.3; }
+.zone-epingles .entete-section h2, .section-fichiers .entete-section h2 { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--or-texte); }
+/* v5.5 : la section « Documents de l'équipe » redevient une section calme (la grande tuile suffit à l'appel). */
+.section-fichiers:has(#t-commun) { padding: 0; border-radius: 0; color: inherit; background: none; box-shadow: none; overflow: visible; }
+.section-fichiers:has(#t-commun)::before { display: none; }
+.section-fichiers:has(#t-commun) h2 { font-family: var(--sans); font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--or-texte); }
+.section-fichiers:has(#t-commun) .t:not(.gt) { background-color: var(--surface); }
+.section-fichiers:has(#t-commun) .vide-doux { color: var(--texte-2); }
+.section-fichiers:has(#t-commun) :focus-visible { outline-color: var(--focus); }

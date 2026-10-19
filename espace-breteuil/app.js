@@ -1000,7 +1000,8 @@
     }
     var liste = U.possibles(r, ctxUsages(r));
     if (!selectionUsages) selectionUsages = (mesChoix() || []).filter(function (id) { return liste.some(function (u) { return u.id === id; }); });
-    app.appendChild(barre("Qu'allez-vous faire surtout ici ?", depuisMoi ? { href: "#/moi", texte: "Moi" } : null, null, depuisMoi ? "Ce que j'utilise" : "Étape 2 sur 2"));
+    app.appendChild(barre(depuisMoi ? "Ce que j'utilise" : "Bienvenue", depuisMoi ? { href: "#/moi", texte: "Moi" } : null, null, depuisMoi ? null : "Étape 2 sur 2"));
+    app.appendChild(h("h2", { class: "question" }, "Qu'allez-vous faire surtout ici ?"));
     app.appendChild(h("p", { class: "aide-ecran" }, "Touchez une ou plusieurs réponses. Elles iront en premier sur l'accueil."));
     var cartes = h("div", { class: "cartes-usages", role: "group", "aria-label": "Ce que vous allez faire" });
     function majCartes() {

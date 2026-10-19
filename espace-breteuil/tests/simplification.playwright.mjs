@@ -68,6 +68,7 @@ const calme = (page) => page.evaluate(() => Promise.race([new Promise((ok) => se
 async function capturer(page, nom, pleine = true) {
   if (!SORTIE) return;
   if (pleine) await page.evaluate(() => window.scrollTo(0, 0));
+  await page.evaluate(() => document.getElementById("toast")?.classList.remove("visible"));
   await calme(page);
   await page.screenshot({ path: `${SORTIE}/${nom}.png`, fullPage: pleine });
   captures++;
@@ -158,7 +159,7 @@ try {
         if (palette === "creme") await capturer(page, `bienvenue-role-${taille}`);
         await page.click('[data-action="bienvenue-continuer"]');
         await page.waitForSelector(".carte-usage");
-        assert.match(await texte(page, ".barre h1"), /^Qu'allez-vous faire surtout ici \?/);
+        assert.equal(await texte(page, "h2.question"), "Qu'allez-vous faire surtout ici ?");
         assert.deepEqual(await usagesProposes(page), ["planning", "equipe", "perso", "acces", "suivi"], `${ou} : choix selon les droits`);
         await page.click('.carte-usage[data-usage="acces"]');
         await page.click('.carte-usage[data-usage="planning"]');
