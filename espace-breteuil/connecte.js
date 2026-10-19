@@ -1321,8 +1321,12 @@
     apresConnexion: function () {
       if (window.EBAcces) window.EBAcces.charger();
       var hash = location.hash || "#/";
-      if (hash === "#/" || hash === "#") location.hash = EB.depart(); // v5.5 : 1er choix de « Ce que j'utilise » (sinon l'accueil)
-      else EB.rendre();
+      if (hash === "#/" || hash === "#") {
+        // v5.5.1 : écran demandé avant la connexion (lien profond) d'abord ; sinon le 1er choix de « Ce que j'utilise ».
+        var cible = null;
+        try { cible = sessionStorage.getItem("eb:retour"); sessionStorage.removeItem("eb:retour"); } catch (e) {}
+        location.hash = cible && cible !== "#/" && cible !== "#" ? cible : EB.depart();
+      } else EB.rendre();
     },
     oublier: oublier,
     oublierContexte: oublierContexte,

@@ -139,7 +139,7 @@ async function sansChevauchement(page, sel, boite, ou) {
 async function nouvellePage(navigateur, opts) {
   const p = PROFILS[opts.profil];
   const contexte = await navigateur.newContext({ viewport: opts.vp, deviceScaleFactor: 1, serviceWorkers: "block", locale: "fr-FR", colorScheme: opts.theme || "light" });
-  await contexte.addInitScript((m) => { self.EB_MAQUETTE = m; }, { compte: { name: p.moi.displayName, username: p.moi.mail, localAccountId: p.moi.id }, permissions: [], ...(opts.scopes ? { scopes: { graph: opts.scopes } } : {}) });
+  await contexte.addInitScript((m) => { self.EB_MAQUETTE = m; }, { compte: { name: p.moi.displayName, username: p.moi.mail, localAccountId: p.moi.id }, permissions: [], ...(opts.scopes ? { scopes: { graph: opts.scopes } } : {}), ...(opts.deconnecte ? { deconnecte: true } : {}) });
   // Réglages de config.js propres au test (ex. prestataires, vide dans le dépôt) : posés au chargement de config.js.
   if (opts.config) await contexte.addInitScript((extra) => {
     let c; Object.defineProperty(self, "EB_CONFIG", { configurable: true, get: () => c, set: (v) => { c = Object.assign(v, extra); } });
@@ -516,6 +516,56 @@ try {
     await page.waitForSelector('.actions a[href*="wp-admin"]');
     assert.equal(await page.$(".acces-attente"), null);
     if (erreurs.length) problemes.push(`site web accès prêt : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
+  }
+
+  /* ---------- v5.5.1 Lien profond ouvert depuis un mail : non connecté → connexion → écran demandé ; 2e onglet déjà connecté ---------- */
+  for (const [taille, vp] of [["375", { width: 375, height: 812 }], ["1280", { width: 1280, height: 900 }]]) {
+    const ou = `lien profond ${taille}`;
+    const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "gestionnaire", vp, deconnecte: true, choix: ["equipe"] });
+    await page.goto(BASE + "#/comment-faire");
+    await page.waitForSelector('[data-action="connexion"]');
+    assert.equal(await page.evaluate(() => sessionStorage.getItem("eb:retour")), "#/comment-faire", `${ou} : écran demandé retenu avant la connexion`);
+    await page.click('[data-action="connexion"]');
+    await page.waitForSelector(".carte-tache");
+    assert.equal(await page.evaluate(() => location.hash), "#/comment-faire", `${ou} : arrive sur l'écran demandé (pas « Documents de l'équipe »)`);
+    if (taille === "375") await capturer(page, "lien-profond-apres-connexion-375", false);
+    // 2e onglet (lien d'un autre mail) : déjà connecté, directement sur l'écran demandé.
+    const page2 = await contexte.newPage();
+    await page2.goto(BASE + "#/installer");
+    await page2.waitForSelector(".ecran .barre h1");
+    assert.equal(await page2.$('[data-action="connexion"]'), null, `${ou} : 2e onglet déjà connecté`);
+    assert.equal(await page2.evaluate(() => location.hash), "#/installer", `${ou} : 2e onglet sur #/installer`);
+    const page3 = await contexte.newPage();
+    await page3.goto(BASE + "#/commun/Commun");
+    await page3.waitForSelector(".tuile-menu");
+    assert.equal(await page3.evaluate(() => location.hash), "#/commun/Commun");
+    // Se déconnecter : plus aucune donnée du compte sur l'appareil ; un nouvel onglet redemande la connexion.
+    await page3.evaluate(() => { localStorage.setItem("eb:epingles", "[]"); localStorage.setItem("eb:journal", "[]"); });
+    await page3.goto(BASE + "#/moi");
+    await page3.click('[data-action="deconnexion"]');
+    await page3.waitForSelector('[data-action="connexion"]');
+    const restes = await page3.evaluate(() => [...Array(localStorage.length).keys()].map((i) => localStorage.key(i)).concat([...Array(sessionStorage.length).keys()].map((i) => sessionStorage.key(i))));
+    assert.deepEqual(restes.filter((k) => /^(eb:|msal\.)/.test(k) && k !== "eb:reglages" && !k.startsWith("eb:planning:")), [], `${ou} : clés restantes ${restes}`);
+    const page4 = await contexte.newPage();
+    await page4.goto(BASE + "#/comment-faire");
+    await page4.waitForSelector('[data-action="connexion"]');
+    if (erreurs.length) problemes.push(`${ou} : erreurs console ${erreurs.join(" | ")}`);
+    await contexte.close();
+    console.log("ok", ou);
+  }
+  /* Premier lancement (questionnaire) : après « C'est parti », retour à l'écran demandé, pas au 1er choix. */
+  {
+    const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "gestionnaire", vp: { width: 375, height: 812 }, deconnecte: true });
+    await page.goto(BASE + "#/installer");
+    await page.click('[data-action="connexion"]');
+    await page.click('[data-action="bienvenue-continuer"]');
+    await page.click('.carte-usage[data-usage="equipe"]');
+    await page.click('[data-action="usages-valider"]');
+    await page.waitForFunction(() => location.hash === "#/installer", null, { timeout: 5000 });
+    await page.waitForSelector(".ecran .barre h1");
+    assert.equal(await page.$(".carte-usage"), null);
+    if (erreurs.length) problemes.push(`lien profond + questionnaire : erreurs console ${erreurs.join(" | ")}`);
     await contexte.close();
   }
 
