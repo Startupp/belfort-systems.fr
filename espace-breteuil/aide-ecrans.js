@@ -119,9 +119,14 @@
     var corps = h("div", { class: "contenu aide-corps" });
     panneau.appendChild(tete); panneau.appendChild(corps);
     if (!connecte()) { vueDeconnecte(corps); return; }
+    if (etat.vue === "nouvelle" || etat.vue === "mes") {
+      // v5.5 : le tutoriel d'abord — souvent, la réponse y est déjà.
+      corps.appendChild(h("a", { class: "action aide-comment", href: "#/comment-faire", "data-action": "comment-faire", onclick: function () { fermer(); } },
+        emoji("❓"), h("span", null, h("b", null, "Comment faire ?"), h("small", null, "Les gestes de tous les jours, pas à pas")), h("span", { class: "fleche", "aria-hidden": "true" }, "›")));
+    }
     if (etat.vue !== "fil") {
       var seg = h("div", { class: "segments aide-onglets", role: "group", "aria-label": "Aide", style: { "--n": "2" } },
-        h("button", { type: "button", "aria-pressed": String(etat.vue === "nouvelle" || etat.vue === "envoyee"), "data-aide-vue": "nouvelle", onclick: function () { etat.vue = "nouvelle"; dessiner(); } }, "Nouvelle demande"),
+        h("button", { type: "button", "aria-pressed": String(etat.vue === "nouvelle" || etat.vue === "envoyee"), "data-aide-vue": "nouvelle", onclick: function () { etat.vue = "nouvelle"; dessiner(); } }, "Écrire à Damien"),
         h("button", { type: "button", "aria-pressed": String(etat.vue === "mes"), "data-aide-vue": "mes", onclick: function () { etat.vue = "mes"; dessiner(); } },
           etat.prestataire ? "Demandes" : "Mes demandes", h("span", { class: "aide-compte", "data-aide-compte": "", hidden: !etat.nonLues }, etat.nonLues ? String(etat.nonLues) : "")));
       corps.appendChild(seg);
@@ -226,7 +231,7 @@
     charge.then(function (liste) {
       zone.textContent = ""; zone.removeAttribute("aria-busy");
       if (opts.surListe) opts.surListe(liste);
-      if (!liste.length) { zone.appendChild(h("p", { class: "vide" }, opts.filtres ? "Aucune demande ne correspond." : "Aucune demande pour le moment. Écrivez à Damien avec « Nouvelle demande ».")); return; }
+      if (!liste.length) { zone.appendChild(h("p", { class: "vide" }, opts.filtres ? "Aucune demande ne correspond." : "Aucune demande pour le moment. Écrivez à Damien avec « Écrire à Damien ».")); return; }
       liste.forEach(function (d) { zone.appendChild(carte(d, { panneau: opts.panneau, prestataire: etat.prestataire })); });
     }, function (e) { zone.textContent = ""; zone.removeAttribute("aria-busy"); zone.appendChild(erreurBloc(e)); });
   }
@@ -301,7 +306,7 @@
     }
     app.appendChild(EB.barre("Mes demandes", { href: "#/moi", texte: "Moi" }, null, "Envoyées à Damien"));
     app.appendChild(h("div", { class: "actions aide-actions" },
-      h("button", { class: "btn large", type: "button", "data-action": "aide-nouvelle", onclick: function () { ouvrir("nouvelle"); } }, icone("plus"), "Nouvelle demande"),
+      h("button", { class: "btn large", type: "button", "data-action": "aide-nouvelle", onclick: function () { ouvrir("nouvelle"); } }, icone("plus"), "Écrire à Damien"),
       etat.prestataire ? h("a", { class: "btn secondaire large", href: "#/demandes" }, "Toutes les demandes (prestataire)") : null));
     vueListe(app, {});
   }

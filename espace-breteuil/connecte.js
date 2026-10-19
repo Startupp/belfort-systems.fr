@@ -1275,7 +1275,7 @@
     apresConnexion: function () {
       if (window.EBAcces) window.EBAcces.charger();
       var hash = location.hash || "#/";
-      if (hash === "#/" || hash === "#" || hash === "#/accueil") location.hash = "#/planning"; // hashchange → rendu
+      if (hash === "#/" || hash === "#") location.hash = EB.depart(); // v5.5 : 1er choix de « Ce que j'utilise » (sinon l'accueil)
       else EB.rendre();
     },
     oublier: oublier,

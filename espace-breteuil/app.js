@@ -946,6 +946,153 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* v5.5 : « Ce que j'utilise » (choix gardés sur l'appareil, par compte) */
+  /* ------------------------------------------------------------------ */
+  var U = window.EBUsages, usagesMemoire = {}, questionnaireReporte = false, etapeBienvenue = 1, selectionUsages = null;
+  function nomCommun() { return (CONFIG.sharepoint && CONFIG.sharepoint.dossierCommun) || "Commun"; }
+  function cleUsages() { return U.cle(G() && G().compte()); }
+  /** Choix de la personne (liste d'ids), ou null si jamais répondu. Stockage en échec : mémoire de la session. */
+  function mesChoix() {
+    var k = cleUsages();
+    if (Object.prototype.hasOwnProperty.call(usagesMemoire, k)) return usagesMemoire[k];
+    return U.lireChoix(lire(k, null));
+  }
+  function sauverChoix(l) { var k = cleUsages(); usagesMemoire[k] = l.slice(); ecrire(k, { choix: l.slice(), quand: new Date().toISOString() }); }
+  function besoinQuestionnaire() { return connecte() && !!resultat() && mesChoix() === null && !questionnaireReporte; }
+  /** Écran ouvert après la connexion : le 1er choix (droits encore inconnus : on fait confiance au choix gardé). */
+  function departApresConnexion() {
+    var r = resultat(), choix = mesChoix() || [];
+    if (r) return U.depart(choix, r, ctxUsages(r), nomCommun());
+    return choix.length ? U.routeDe(choix[0], null, nomCommun()) : "#/accueil";
+  }
+  function aller(route) { if (location.hash === route) rendre(); else location.hash = route; }
+
+  /** Premier lancement : 1) « Vous êtes : … », 2) « Qu'allez-vous faire surtout ici ? ». #/bienvenue/choix = étape 2 seule (depuis Moi). */
+  function ecranBienvenue(app, chemin) {
+    var r = resultat(), depuisMoi = chemin[1] === "choix";
+    if (!r) { app.appendChild(barre("Un instant…", null)); app.appendChild(squelette(3)); return; }
+    var plusTard = depuisMoi ? null : h("button", { class: "btn secondaire large", type: "button", "data-action": "plus-tard", onclick: function () {
+      questionnaireReporte = true; etapeBienvenue = 1; aller(departApresConnexion());
+    } }, "Plus tard");
+    if (!depuisMoi && etapeBienvenue === 1) {
+      var me = window.EBAcces && window.EBAcces.me(), c = (G() && G().compte()) || {};
+      var prenom = String((me && (me.givenName || me.displayName)) || c.name || "").split(" ")[0];
+      app.appendChild(barre(prenom ? "Bienvenue, " + prenom : "Bienvenue", null, null, "Étape 1 sur 2"));
+      app.appendChild(carteRole(r));
+      app.appendChild(h("div", { class: "actions pile" },
+        h("button", { class: "btn large", type: "button", "data-action": "bienvenue-continuer", onclick: function () { etapeBienvenue = 2; rendre(); } }, "Continuer", icone("droite")),
+        plusTard));
+      return;
+    }
+    var liste = U.possibles(r, ctxUsages(r));
+    if (!selectionUsages) selectionUsages = (mesChoix() || []).filter(function (id) { return liste.some(function (u) { return u.id === id; }); });
+    app.appendChild(barre("Qu'allez-vous faire surtout ici ?", depuisMoi ? { href: "#/moi", texte: "Moi" } : null, null, depuisMoi ? "Ce que j'utilise" : "Étape 2 sur 2"));
+    app.appendChild(h("p", { class: "aide-ecran" }, "Touchez une ou plusieurs réponses. Elles iront en premier sur l'accueil."));
+    var cartes = h("div", { class: "cartes-usages", role: "group", "aria-label": "Ce que vous allez faire" });
+    function majCartes() {
+      Array.prototype.forEach.call(cartes.children, function (b) {
+        var i = selectionUsages.indexOf(b.getAttribute("data-usage"));
+        b.setAttribute("aria-pressed", String(i > -1));
+        b.querySelector(".ordre").textContent = i > -1 ? String(i + 1) : "";
+      });
+    }
+    liste.forEach(function (u) {
+      cartes.appendChild(h("button", { class: "carte-usage", type: "button", "data-usage": u.id, "aria-pressed": "false", onclick: function () {
+        var i = selectionUsages.indexOf(u.id);
+        if (i > -1) selectionUsages.splice(i, 1); else selectionUsages.push(u.id);
+        majCartes();
+      } }, emoji(u.emoji, "pictogramme"), h("span", { class: "textes" }, h("b", null, u.titre), h("small", null, u.sous)), h("span", { class: "ordre", "aria-hidden": "true" })));
+    });
+    app.appendChild(cartes);
+    majCartes();
+    app.appendChild(h("div", { class: "actions pile" },
+      h("button", { class: "btn large", type: "button", "data-action": "usages-valider", onclick: function () {
+        sauverChoix(selectionUsages); selectionUsages = null; etapeBienvenue = 1;
+        toast("C'est noté. Vous pourrez changer dans Moi → Ce que j'utilise.");
+        aller(depuisMoi ? "#/accueil" : departApresConnexion());
+      } }, icone("coche"), "C'est parti"),
+      plusTard));
+  }
+
+  /** Accueil : grandes tuiles (mes choix d'abord), mes épingles, « Comment faire ? ». */
+  function ecranAccueil(app) {
+    var r = resultat();
+    app.appendChild(barre("Accueil", null, null, maj(jourLong(aujourdhui()))));
+    var liste = U.possibles(r, ctxUsages(r)), o = U.ordonner(mesChoix(), liste);
+    function vers(l) { return grandesTuiles(l.map(function (u) { return { href: U.routeDe(u.id, r, nomCommun()), emoji: u.emoji, libelle: u.court, sous: u.sous, usage: u.id }; })); }
+    if (o.choisis.length) {
+      app.appendChild(h("section", { class: "section", "aria-labelledby": "t-mes-usages" }, h("h2", { id: "t-mes-usages" }, "Ce que j'utilise"), vers(o.choisis)));
+      if (o.autres.length) app.appendChild(h("section", { class: "section", "aria-labelledby": "t-autres" }, h("h2", { id: "t-autres" }, "Autres choses possibles"), vers(o.autres)));
+    } else app.appendChild(h("section", { class: "section", "aria-labelledby": "t-que-faire" }, h("h2", { id: "t-que-faire" }, "Que voulez-vous faire ?"), vers(liste)));
+    if (window.EBEpingles) app.appendChild(window.EBEpingles.section());
+    app.appendChild(h("section", { class: "section" }, h("h2", null, "Aide"), h("div", { class: "actions-liste" },
+      action("#/comment-faire", "❓", "Comment faire ?", "Les gestes de tous les jours, pas à pas"),
+      action("#/bienvenue/choix", "🧭", "Changer ce que j'utilise", "Choisir les tuiles du haut"))));
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* v5.5 : « Comment faire ? » + « Montrez-moi » (bouton entouré)       */
+  /* ------------------------------------------------------------------ */
+  function ecranCommentFaire(app) {
+    var r = resultat();
+    app.appendChild(barre("Comment faire ?", { href: "#/accueil", texte: "Accueil" }));
+    app.appendChild(h("p", { class: "aide-ecran" }, "Touchez « Montrez-moi » : l'appli ouvre le bon écran et entoure le bouton à toucher."));
+    app.appendChild(h("div", { class: "liste-taches" }, U.taches(r, ctxUsages(r)).map(function (t) {
+      return h("article", { class: "carte-tache", "data-tache": t.id },
+        h("div", { class: "textes" }, h("h2", null, t.titre), h("p", null, t.phrase)),
+        h("button", { class: "btn", type: "button", "data-action": "montrer", onclick: function () { montrer(t); } }, "Montrez-moi", icone("droite")));
+    })));
+  }
+  var surbrillance = null;
+  function mouvementReduit() { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } }
+  function finSurbrillance() {
+    var s = surbrillance; if (!s) return;
+    surbrillance = null;
+    clearInterval(s.minuteur);
+    if (s.el) s.el.classList.remove("eb-montre");
+    if (s.bulle) s.bulle.remove();
+    if (s.fermer) document.removeEventListener("pointerdown", s.fermer, true);
+    if (s.touche) document.removeEventListener("keydown", s.touche, true);
+    if (s.placer) { window.removeEventListener("scroll", s.placer, true); window.removeEventListener("resize", s.placer); }
+  }
+  function estVisible(el) { var b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0 && getComputedStyle(el).visibility !== "hidden"; }
+  /** Va à l'écran de la tâche, attend le bouton (8 s au plus), l'entoure et affiche « Touchez ici ». */
+  function montrer(t) {
+    finSurbrillance();
+    var s = { tache: t.id }, debut = Date.now(), route = U.routeTache(t, resultat());
+    surbrillance = s;
+    if (route && location.hash !== route) location.hash = route;
+    s.minuteur = setInterval(function () {
+      if (surbrillance !== s) return;
+      var el = Array.prototype.filter.call(document.querySelectorAll(t.cible), estVisible)[0];
+      if (!el) { if (Date.now() - debut > 8000) { finSurbrillance(); toast("Ce bouton n'est pas visible pour le moment."); } return; }
+      clearInterval(s.minuteur);
+      entourer(s, el);
+    }, 150);
+  }
+  function entourer(s, el) {
+    s.el = el;
+    el.classList.add("eb-montre");
+    el.scrollIntoView({ block: "center", behavior: mouvementReduit() ? "auto" : "smooth" });
+    s.bulle = h("div", { class: "bulle-tuto", role: "status", "data-tache": s.tache }, emoji("👆"), h("span", null, "Touchez ici"));
+    document.body.appendChild(s.bulle);
+    s.placer = function () {
+      if (!document.body.contains(el)) { finSurbrillance(); return; }
+      var b = el.getBoundingClientRect(), bb = s.bulle.getBoundingClientRect();
+      var dessous = b.top - bb.height - 12 < 64;
+      s.bulle.style.top = Math.round(dessous ? b.bottom + 12 : b.top - bb.height - 12) + "px";
+      s.bulle.style.left = Math.round(Math.max(8, Math.min(window.innerWidth - bb.width - 8, b.left + b.width / 2 - bb.width / 2))) + "px";
+      s.bulle.classList.toggle("dessous", dessous);
+    };
+    s.placer(); setTimeout(function () { if (surbrillance === s) s.placer(); }, 450);
+    // Toucher n'importe où ferme (le toucher atteint quand même le bouton) ; Échap aussi.
+    s.fermer = function () { setTimeout(finSurbrillance, 0); };
+    s.touche = function (e) { if (e.key === "Escape") finSurbrillance(); };
+    setTimeout(function () { if (surbrillance !== s) return; document.addEventListener("pointerdown", s.fermer, true); document.addEventListener("keydown", s.touche, true); }, 60);
+    window.addEventListener("scroll", s.placer, true); window.addEventListener("resize", s.placer);
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Démos (Réglages → « Afficher les démos ») : données fictives        */
   /* ------------------------------------------------------------------ */
   var ABSENCES_RETIREES = ["absences"]; // v4 : aucune fonction d'absence ni de pointage visible
@@ -1002,25 +1149,25 @@
           Array.prototype.forEach.call(seg.children, function (b, i) { b.setAttribute("aria-pressed", String(options[i][0] === o[0])); });
         } }, o[1]));
     });
-    return h("div", { class: "boite reglage" }, h("h2", null, titre), aide ? h("p", null, aide) : null, seg);
+    return h("div", { class: "boite reglage", "data-reglage": cleR }, h("h2", null, titre), aide ? h("p", null, aide) : null, seg);
   }
 
   function ecranReglages(app) {
     app.appendChild(barre("Réglages", { href: "#/moi", texte: "Moi" }, null, "Gardés sur cet appareil uniquement"));
     app.appendChild(h("h2", { class: "titre-groupe" }, "Affichage"));
     app.appendChild(h("div", { class: "grille-reglages" },
-      choix("Taille de l'interface", "Texte, boutons et tuiles, ensemble.", "texte", [["petit", "Petit"], ["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
+      choix("Taille du texte", "Texte, boutons et tuiles, ensemble.", "texte", [["petit", "Petit"], ["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
       choix("Couleurs", "Crème et praline par défaut, ou Bleu Breteuil : bleu nuit et doré.", "palette", [["creme", "Crème et praline"], ["bleu", "Bleu Breteuil"]]),
       choix("Clair ou sombre", "« Auto » suit le réglage du téléphone.", "theme", [["auto", "Auto"], ["clair", "Clair"], ["sombre", "Sombre"]])));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Planning"));
     app.appendChild(h("div", { class: "grille-reglages" },
-      choix("Affichage au départ", null, "vue", VUES),
+      choix("Vue au départ", null, "vue", VUES),
       choix("Rendez-vous passés", null, "passes", [["afficher", "Afficher"], ["masquer", "Masquer"]])));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Démos et version"));
     app.appendChild(h("div", { class: "grille-reglages" },
-      choix("Afficher les démos", "Écrans d'essai avec des données fictives (rien n'est modifié chez Microsoft). Ils apparaissent dans Moi → Démos.",
+      choix("Montrer les écrans d'essai", "Données fictives : rien n'est modifié chez Microsoft. Ils apparaissent dans Moi → Démos.",
         "demos", [[false, "Non"], [true, "Oui"]], null, { structure: true }),
       reglages.demos ? h("div", { class: "boite reglage" },
         h("p", null, "Les essais faits dans la démo restent sur cet appareil."),
@@ -1031,7 +1178,7 @@
       h("div", { class: "boite reglage version" },
         h("h2", null, "Version " + VERSION),
         h("p", null, "L'appli se met à jour toute seule."),
-        h("button", { class: "btn secondaire", type: "button", onclick: function () { verifierMiseAJour(true); } }, icone("actualiser"), "Rechercher une mise à jour"))));
+        h("button", { class: "btn secondaire", type: "button", onclick: function () { verifierMiseAJour(true); } }, icone("actualiser"), "Chercher une mise à jour"))));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Pour Damien"));
     app.appendChild(h("div", { class: "actions-liste" },
@@ -1126,11 +1273,11 @@
     else app.appendChild(barre("Détails techniques", { href: "#/reglages", texte: "Réglages" }));
   }
   var ecrans = {
-    planning: ecranPlanning, moi: ecranMoi, equipe: ecranGerer, finance: ecranGerer, gerer: ecranGerer, demos: ecranDemos,
+    accueil: ecranAccueil, "comment-faire": ecranCommentFaire, bienvenue: ecranBienvenue, planning: ecranPlanning, moi: ecranMoi, equipe: ecranGerer, finance: ecranGerer, gerer: ecranGerer, demos: ecranDemos,
     reglages: ecranReglages, installer: ecranInstaller, guides: ecranGuides, details: ecranDetails,
   };
   /* Anciennes adresses (v2, v3) → leur seul endroit en v4. */
-  var ALIAS = { "": "planning", accueil: "planning", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "fichiers", dossiers: "fichiers", plus: "moi", verifier: "details", pilotage: "suivi" }; // v5.2 : #/pilotage → #/suivi
+  var ALIAS = { "": "accueil", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "fichiers", dossiers: "fichiers", plus: "moi", verifier: "details", pilotage: "suivi" }; // v5.2 : #/pilotage → #/suivi
   function ongletsActuels() { var r = resultat(); return r ? r.onglets : window.EBProfil.onglets([]); }
   function ongletDe(ecran) {
     if (ECRANS_DEMO.indexOf(ecran) > -1) return "moi";
@@ -1142,6 +1289,7 @@
     var e = chemin[0] || "";
     if (ongletsActuels().some(function (o) { return o.id === e; }) && chemin.length < 2) return 0;
     if (e === "onedrive" && chemin.length < 2) return 1;
+    if (e === "comment-faire" || e === "bienvenue") return 1;
     if (e === "demos" || e === "reglages" || e === "installer" || e === "deleguer" || e === "personnes" && chemin.length < 2) return 1;
     if (e === "details") return 2;
     return Math.max(1, chemin.filter(Boolean).length);
@@ -1207,6 +1355,8 @@
         history.replaceState(null, "", "#/planning");
         chemin = ["planning"]; ecran = "planning";
       }
+      // v5.5 : premier lancement (droits connus, jamais répondu) → « Bienvenue », sans changer l'adresse.
+      if (besoinQuestionnaire() && ["bienvenue", "details", "reglages"].indexOf(ecran) < 0) { chemin = ["bienvenue"]; ecran = "bienvenue"; }
       cleEcran = chemin.join("/");
       onglet = ongletDe(ecran); niveau = niveauDe(chemin);
       var memeEcran = cleEcran === dernierEcran;
@@ -1214,7 +1364,8 @@
         : onglet !== dernierOnglet ? "" : niveau > dernierNiveau ? "avant" : niveau < dernierNiveau ? "arriere" : "";
       vue = h("div", { class: "ecran " + anim });
       app.classList.remove("plein-ecran");
-      rendreOnglets(onglet, false);
+      rendreOnglets(onglet, ecran === "bienvenue" && chemin[1] !== "choix");
+      if (ecran !== "bienvenue") etapeBienvenue = 1;
       if (reserve && !r) { enAttenteDroits = true; ecranAttente(vue); }
       else (ecrans[ecran] || ecranPlanning)(vue, chemin);
     }
@@ -1237,7 +1388,8 @@
   function droitsChanges() {
     if (!connecte()) return;
     var e = cheminActuel()[0] || "";
-    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "reserver", "site", "liens", "suivi"];
+    if (besoinQuestionnaire()) { rendre(); return; }
+    var dependants = ["accueil", "comment-faire", "bienvenue", "moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "reserver", "site", "liens", "suivi"];
     if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
     else rendreOnglets(ongletDe(e), false);
   }
@@ -1247,7 +1399,8 @@
   /* ------------------------------------------------------------------ */
   window.EB = {
     h: h, icone: icone, emoji: emoji, avatar: avatar, initiales: initiales, barre: barre, pied: pied, action: action,
-    tuile: tuile, tuiles: tuiles, squelette: squelette,
+    tuile: tuile, tuiles: tuiles, grandeTuile: grandeTuile, grandesTuiles: grandesTuiles, squelette: squelette,
+    depart: function () { return departApresConnexion(); }, montrer: montrer, finSurbrillance: finSurbrillance,
     bandeauDemo: bandeauDemo, bandeauSimulation: bandeauSimulation,
     confirmer: confirmer, choisir: choisir, toast: toast, dialogue: dialogue, ouvrirDialogue: ouvrirDialogue, fermerDialogue: fermerDialogue,
     exiger: exiger, estOuvert: estOuvert, rendre: rendre, lire: lire, ecrire: ecrire,
@@ -1277,7 +1430,7 @@
     Promise.all([json, graph.catch(function () { return false; })]).then(function (r) {
       var estCo = r[1];
       if (estCo && window.EBAcces) window.EBAcces.charger(); // droits réels, en arrière-plan
-      if (estCo && (!location.hash || location.hash === "#/" || location.hash === "#")) history.replaceState(null, "", "#/planning");
+      if (estCo && (!location.hash || location.hash === "#/" || location.hash === "#")) history.replaceState(null, "", departApresConnexion());
       if (estCo || dernierEcran === null) rendre(); // calendrier seul déjà affiché : rien à refaire
       return planningPromis;
     }).then(planningPret); // seules les parties qui affichent le planning sont redessinées
