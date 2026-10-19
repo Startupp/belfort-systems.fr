@@ -142,6 +142,17 @@ Pour faire de la place : tableau de bord → **Storage & Databases** → **KV** 
 rangées par demande (`pj/<n° de demande>/…`) ; supprimez celles d'une demande ancienne, puis dans **D1** →
 `breteuil-aide` → **Console** : `DELETE FROM pieces_jointes WHERE demande_id = <n°>;`.
 
+## Filtres, requalification et statistiques (v5.6) — rien à installer
+
+- **Filtres** en tête de « Mes demandes » et de « Demandes » : **En cours** (Nouvelle + Répondue, par défaut) /
+  **Résolues** / **Toutes**, avec le nombre sur chaque bouton.
+- **Requalifier** (vous seul, dans une demande) : changer le type, cocher **Facturable** (par défaut : oui pour un
+  Problème, non sinon), noter le **temps passé** (boutons + 15 min / + 30 min / + 1 h / + 2 h qui s'ajoutent, ou
+  champ libre : « 45 », « 1h30 »). Le salarié ne voit ni « facturable » ni le temps.
+- **Statistiques** : **Demandes → Statistiques** ou **Gérer → Demandes d'aide → Statistiques** (`#/demandes/stats`) :
+  le mois en chiffres, par type, par personne, les 6 derniers mois, **Exporter le mois (CSV)** pour Excel.
+- Les colonnes nécessaires s'ajoutent toutes seules à la base `breteuil-aide` au premier appel (rien n'est effacé).
+
 ## Signature retirée des réponses par mail (facultatif)
 
 Votre signature Gmail n'a pas de ligne « -- » : elle s'ajoutait à la fin de vos réponses dans l'appli.
