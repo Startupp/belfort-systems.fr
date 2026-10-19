@@ -62,16 +62,16 @@ const AVEC_GERER = { High: "432", Low: String(2 ** 24 + 0xFFFF) }, SANS_GERER = 
 
 const PROFILS = {
   admin: { user: "u2", roles: [{ id: "r1", displayName: "Global Administrator", roleTemplateId: GA }], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "fichiers", "gerer", "moi"], interdits: [], autorises: ["deleguer", "personnes", "licences-reel"] },
+    attendus: ["accueil", "planning", "fichiers", "gerer", "moi"], interdits: [], autorises: ["deleguer", "personnes", "licences-reel"] },
   proprietaire: { user: "u1", roles: [], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "fichiers", "equipe", "moi"], interdits: ["deleguer", "finance", "gerer"], autorises: ["personnes", "acces/Commun"] },
+    attendus: ["accueil", "planning", "fichiers", "equipe", "moi"], interdits: ["deleguer", "finance", "gerer"], autorises: ["personnes", "acces/Commun"] },
   facturation: { user: "u3", roles: [{ id: "r2", displayName: "Billing Administrator", roleTemplateId: BILLING }], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "fichiers", "finance", "moi"], interdits: ["deleguer", "personnes", "acces/Commun", "gerer"], autorises: ["licences-reel"] },
+    attendus: ["accueil", "planning", "fichiers", "finance", "moi"], interdits: ["deleguer", "personnes", "acces/Commun", "gerer"], autorises: ["licences-reel"] },
   collaborateur: { user: "u4", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"], groupes: [{ id: "g2", displayName: "Accueil" }],
-    attendus: ["planning", "fichiers", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "absences", "site", "liens", "guides/site"], autorises: [] },
+    attendus: ["accueil", "planning", "fichiers", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "absences", "site", "liens", "guides/site"], autorises: [] },
   // Membre du groupe « Site web » (nom en majuscules : comparaison sans casse), aucun autre droit.
   siteweb: { user: "u7", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"], groupes: [{ id: "g2", displayName: "Accueil" }, { id: "g1", displayName: "SITE WEB" }],
-    attendus: ["planning", "fichiers", "site", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "guides/admin"], autorises: ["liens", "guides/site", "guides/site/pied"] },
+    attendus: ["accueil", "planning", "fichiers", "site", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "guides/admin"], autorises: ["liens", "guides/site", "guides/site/pied"] },
 };
 // Réponse maquettée du Worker (GET /breteuil/site/liens) : 1 cassé, 1 redirigé, 4 bons.
 const LIENS = { verifieLe: "2026-10-18T12:05:00.000Z", liens: [
@@ -282,7 +282,7 @@ try {
       await page.goto(BASE);
       await page.waitForSelector(".gros-bouton");
       const boutons = await page.$$eval(".gros-bouton", (l) => l.map((b) => b.querySelector("b").textContent));
-      assert.deepEqual(boutons, ["Voir le calendrier", "Se connecter"], "premier écran : 2 boutons");
+      assert.deepEqual(boutons, ["Voir le planning", "Se connecter"], "premier écran : 2 boutons");
       assert.equal(await page.isVisible("#onglets"), false, "premier écran : pas d'onglets");
       assert.equal(await page.$$eval(".tuiles, .pastille-demo, .t", (l) => l.length), 0, "premier écran : ni tuiles ni démo");
       await controlesCommuns(page, `premier ${taille}`);
@@ -308,7 +308,7 @@ try {
       await page.waitForFunction((n) => document.querySelectorAll("#onglets a").length === n, p.attendus.length, { timeout: 8000 });
       await page.waitForFunction((ids) => [...document.querySelectorAll("#onglets a")].map((a) => a.dataset.onglet).join() === ids.join(), p.attendus, { timeout: 8000 });
       assert.deepEqual(await ongletsVisibles(page), p.attendus, `${nom} : onglets attendus`);
-      assert.ok(p.attendus.length <= 4);
+      assert.ok(p.attendus.length <= 5);
       await page.waitForSelector(".pastille-etat.vert", { timeout: 8000 });
       for (const onglet of p.attendus) {
         await page.click(`#onglets a[data-onglet="${onglet}"]`);
@@ -321,7 +321,9 @@ try {
       await page.goto(BASE + "#/fichiers");
       await page.waitForSelector('[data-fichier="Menu de Noël.docx"]');
       await page.waitForSelector('#t-commun ~ div .tuiles, .section-fichiers .tuiles');
-      assert.deepEqual(await page.$$eval(".section-fichiers h2", (l) => l.map((x) => x.textContent)), ["Récents", "Mes fichiers", "Dossier commun"]);
+      assert.deepEqual(await page.$$eval(".section-fichiers h2", (l) => l.map((x) => x.textContent)), ["Documents de l'équipe (SharePoint)", "Ouverts récemment", "Mes documents (OneDrive)"]);
+      await page.goto(BASE + "#/commun/Commun");
+      await page.waitForSelector(".grille.dossiers");
       const quiAcces = !!(await page.$('a[href^="#/acces"]'));
       assert.equal(quiAcces, nom === "proprietaire" || nom === "admin", `${nom} : « Qui a accès » selon le droit réel`);
       for (const route of p.interdits) {
@@ -338,19 +340,19 @@ try {
         await page.goto(BASE + "#/fichiers");
         await page.click('[data-fichier="Menu de Noël.docx"]');
         assert.ok(await page.isVisible('dialog .choix:has-text("Ouvrir dans Word")'), "ouvrir dans Office");
-        await page.click('dialog .choix:has-text("Copier un lien de partage")');
+        await page.click('dialog .choix:has-text("Copier un lien")');
         await page.waitForFunction(() => /Lien copié|Sélectionnez/.test((document.getElementById("toast")?.textContent || "") + (document.querySelector("dialog[open]")?.textContent || "")));
         const lien = journal.find((x) => x.methode === "POST" && /\/createLink$/.test(x.chemin));
         assert.ok(lien, "createLink envoyé"); assert.deepEqual(JSON.parse(lien.corps), { type: "view", scope: "organization" });
         await page.keyboard.press("Escape");
         const [choixFichier] = await Promise.all([page.waitForEvent("filechooser"), page.click('[data-action="televerser-moi"]')]);
         await choixFichier.setFiles({ name: "Compte rendu.txt", mimeType: "text/plain", buffer: Buffer.from("bonjour") });
-        await page.click('dialog button:has-text("Oui, téléverser")');
-        await page.waitForFunction(() => /téléversé/.test(document.getElementById("toast")?.textContent || ""));
+        await page.click('dialog button:has-text("Oui, ajouter")');
+        await page.waitForFunction(() => /ajouté/.test(document.getElementById("toast")?.textContent || ""));
         assert.ok(journal.some((x) => x.methode === "PUT" && x.chemin === "/v1.0/drives/od1/root:/Compte rendu.txt:/content"), "PUT de téléversement");
         await capturer(page, `collaborateur-fichiers-televerse-${taille}`);
         // Épingles : boîte partagée → Outlook web, ordre au clavier, retrait.
-        await page.goto(BASE + "#/planning");
+        await page.goto(BASE + "#/accueil");
         await page.click('[data-action="epingler"]');
         await page.click('dialog .choix:has-text("contact@breteuil.fr")');
         await page.click('[data-action="epingler"]');
@@ -371,7 +373,7 @@ try {
       if (nom === "siteweb") {
         // Onglet Site : rappel de l'identifiant WordPress, 8 tuiles, liens WordPress dans un nouvel onglet.
         await page.goto(BASE + "#/site");
-        await page.waitForSelector(".section-site .tuiles .t");
+        await page.waitForSelector(".section-site .tuiles-grandes .t");
         assert.match(await page.textContent(".section-site .bandeau"), /propre identifiant/);
         const tuilesSite = await page.$$eval(".section-site .t", (l) => l.map((a) => ({ lib: a.querySelector(".lib").textContent, href: a.getAttribute("href"), cible: a.getAttribute("target") })));
         assert.equal(tuilesSite.length, 8);
@@ -494,15 +496,14 @@ try {
       const { contexte, page, erreurs, journal } = await nouvellePage(vp, nom);
       await page.goto(BASE + "#/planning");
       await page.waitForFunction((n) => document.querySelectorAll("#onglets a").length === n, PROFILS[nom].attendus.length, { timeout: 8000 });
-      const gestion = PROFILS[nom].attendus[2];
+      const gestion = PROFILS[nom].attendus[3];
       if (nom !== "collaborateur") {
         // Tuile en tête de l'onglet de gestion (avant toute section).
         await page.goto(BASE + "#/" + gestion);
-        await page.waitForSelector(".carte-suivi");
-        assert.ok(await page.evaluate(() => { const t = document.querySelector(".carte-suivi"), s = document.querySelector(".ecran .section");
-          return !s || !!(t.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING); }), `${nom} : tuile Suivi informatique en tête`);
-        assert.match(await page.textContent(".carte-suivi"), /^Suivi informatique — tout ce qui a été fait pour vous/);
-        await page.click(".carte-suivi");
+        await page.waitForSelector('[data-action="suivi"]');
+        assert.ok(await page.evaluate(() => document.querySelector(".ecran .section [data-action=suivi]") === document.querySelector(".ecran .section .t")), `${nom} : tuile Suivi informatique en tête`);
+        assert.match(await page.textContent('[data-action="suivi"]'), /Suivi informatique\s*Ce que Damien a fait pour le Château/);
+        await page.click('[data-action="suivi"]');
         await page.waitForFunction(() => location.hash === "#/suivi");
         await page.waitForSelector(".frise-suivi .etape-frise");
         assert.equal((await page.textContent(".barre h1")).startsWith("Suivi informatique"), true, "titre « Suivi informatique »");
@@ -782,7 +783,7 @@ try {
       await page.waitForSelector(".voile-depot:not([hidden])");
       assert.equal(await page.getAttribute(".voile-depot", "role"), "dialog");
       assert.equal(await page.textContent(".voile-titre"), "Déposer ici pour envoyer dans : Finance");
-      assert.equal(await page.textContent(".voile-chemin"), "Dossier commun › Finance");
+      assert.equal(await page.textContent(".voile-chemin"), "Documents de l'équipe › Finance");
       await capturer(page, `depot-voile-${palette}-1280`);
       assert.equal(await page.isVisible(".voile-depot"), true, "le voile reste tant que le fichier survole");
       assert.equal(await lacher(), true, "le navigateur n'ouvre pas le fichier");
@@ -809,7 +810,7 @@ try {
       await page.click('dialog button:has-text("J\'ai compris")');
       // Planning : aucun dossier ouvert → voile explicatif, rien n'est envoyé.
       await page.goto(BASE + "#/planning");
-      await page.waitForSelector('[data-action="epingler"]');
+      await page.waitForSelector('.bloc-planning');
       const avant = puts().length;
       await survoler(["Planning.txt"]);
       await page.waitForSelector(".voile-depot.sans-cible:not([hidden])");
@@ -822,13 +823,13 @@ try {
       await page.goto(BASE + "#/fichiers");
       await page.waitForSelector('[data-fichier="Menu de Noël.docx"]');
       await survoler(["Mémo.txt"]);
-      assert.match(await page.textContent(".voile-chemin"), /Mes fichiers/);
+      assert.match(await page.textContent(".voile-chemin"), /Mes documents/);
       await lacher();
-      await page.click('dialog button:has-text("Oui, envoyer dans Mes fichiers")');
-      await page.waitForFunction(() => /1 fichier envoyé dans Mes fichiers/.test(document.getElementById("toast")?.textContent || ""));
+      await page.click('dialog button:has-text("Oui, envoyer dans Mes documents")');
+      await page.waitForFunction(() => /1 fichier envoyé dans Mes documents/.test(document.getElementById("toast")?.textContent || ""));
       assert.equal(puts().at(-1).chemin, "/v1.0/drives/od1/root:/Mémo.txt:/content");
       // Les épingles se réordonnent toujours en glissant (gestes au pointeur, non touchés par le dépôt).
-      await page.goto(BASE + "#/planning");
+      await page.goto(BASE + "#/accueil");
       for (const b of ["contact@breteuil.fr", "finance@breteuil.fr"]) { await page.click('[data-action="epingler"]'); await page.click(`dialog .choix:has-text("${b}")`); }
       const a = await page.locator('[data-epingle="https://outlook.office.com/mail/contact%40breteuil.fr/"]').boundingBox();
       const z = await page.locator('[data-epingle="https://outlook.office.com/mail/finance%40breteuil.fr/"]').boundingBox();
@@ -849,7 +850,7 @@ try {
       const { contexte, page, erreurs } = await nouvellePage(vp, "collaborateur", { variante: "commun-introuvable" });
       await page.goto(BASE + "#/fichiers");
       await page.waitForSelector(".pastille-etat.orange", { timeout: 8000 });
-      await page.waitForSelector('.zone-alerte .bandeau.erreur:has-text("Le dossier commun est introuvable")');
+      await page.waitForSelector('.zone-alerte .bandeau.erreur:has-text("introuvables")');
       await capturer(page, `probleme-commun-introuvable-${taille}`);
       // Les 404 de la maquette sont voulus ici : seules les autres erreurs comptent.
       const autres = erreurs.filter((e) => !/404/.test(e));

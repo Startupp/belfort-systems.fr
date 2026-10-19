@@ -374,6 +374,7 @@
    */
   function boutonsCarres(liste) {
     var l = liste.filter(Boolean);
+    if (!l.length) return document.createDocumentFragment(); // rien de permis : rien d'affiché (pas de boutons grisés)
     return h("div", { class: "boutons-carres", style: { "--n": String(Math.max(l.length, 1)) } }, l.map(function (b) {
       var contenu = [h("span", { class: "bc-ico", "aria-hidden": "true" }, b.emoji ? emoji(b.emoji) : icone(b.icone)), h("span", { class: "bc-lib" }, b.texte)];
       if (b.href) return h("a", { class: "bc", href: b.href, "data-action": b.action || null }, contenu);
