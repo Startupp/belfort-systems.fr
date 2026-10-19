@@ -84,7 +84,7 @@ jobs:
           echo "D1 : $D1_ID"
           [ -n "$KV_ID" ] && [ -n "$D1_ID" ] || { echo "Identifiant manquant"; exit 1; }
           sed -e "s/REMPLACER_PAR_ID_KV/$KV_ID/" -e "s/REMPLACER_PAR_ID_D1/$D1_ID/" wrangler.toml > wrangler.ci.toml
-          if grep -q REMPLACER_ wrangler.ci.toml; then echo "Remplacement incomplet"; cat wrangler.ci.toml; exit 1; fi
+          if grep -q REMPLACER_PAR_ID wrangler.ci.toml; then echo "Remplacement incomplet"; cat wrangler.ci.toml; exit 1; fi
           echo "Configuration prête."
 
       - name: Appliquer les migrations D1
