@@ -430,6 +430,11 @@ table.tarifs tr.devis td.montant { color: var(--brique-texte); font-size: 1rem; 
 .contact-side { display: grid; gap: 22px; }
 .direct { display: grid; gap: 10px; }
 .direct .btn { justify-content: flex-start; }
+.direct summary { list-style: none; cursor: pointer; width: fit-content; }
+.direct summary::-webkit-details-marker { display: none; }
+.direct summary::after { content: "+"; margin-left: 10px; font-weight: 700; }
+.direct[open] summary::after { content: "–"; }
+.direct summary:focus-visible { outline: 3px solid var(--bleu-2); outline-offset: 2px; }
 .question { display: flex; align-items: flex-end; gap: 14px; }
 .question .mascotte { width: 86px; }
 .question p { color: var(--muted); font-size: .95rem; margin: 0; }
@@ -601,9 +606,9 @@ footer .legal a { color: inherit; }
   .f-top { grid-template-columns: 1fr; gap: 22px; }
   footer.site { padding-bottom: 28px; }
 
-  /* Barre fixe : Appeler · WhatsApp · Devis */
+  /* Barre fixe : WhatsApp · Devis */
   .barre-mobile {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 95;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--surface) 92%, transparent);

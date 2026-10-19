@@ -14,7 +14,6 @@
       "prix": 45,
       "min": 1,
       "description": "Dépannage, installation, configuration, formation : sur site comme à distance. Première heure due, puis par demi-heure (22,50 €). Déplacement inclus à moins de 30 km.",
-      "a_valider": false,
       "tranche": 22.5
     },
     {
@@ -24,8 +23,7 @@
       "unite": "demi-heure",
       "prix": 22.5,
       "min": 1,
-      "description": "Après la première heure, sur site comme à distance.",
-      "a_valider": false
+      "description": "Après la première heure, sur site comme à distance."
     },
     {
       "id": "audit",
@@ -33,17 +31,15 @@
       "nom": "Audit informatique",
       "unite": "forfait",
       "prix": 390,
-      "description": "État des lieux du parc, des accès, des sauvegardes et du réseau, rapport écrit avec priorités. Déduit du prix si une migration Microsoft 365 suit.",
-      "a_valider": false
+      "description": "État des lieux du parc, des accès, des sauvegardes et du réseau, rapport écrit avec priorités. Déduit du prix si une migration Microsoft 365 suit."
     },
     {
       "id": "audit_abonnements",
       "categorie": "Audit",
-      "nom": "Audit des abonnements informatiques",
+      "nom": "Audit des abonnements et contrats",
       "unite": "forfait",
       "prix": 290,
-      "description": "Inventaire de vos licences et abonnements (Microsoft 365, logiciels, hébergement, domaines), doublons et économies possibles, rapport écrit.",
-      "a_valider": false
+      "description": "Inventaire de vos licences, abonnements et contrats (Microsoft 365, logiciels, hébergement, domaines, opérateurs), doublons et économies possibles, rapport écrit."
     },
     {
       "id": "migration",
@@ -56,8 +52,7 @@
         "nom": "boîte supplémentaire",
         "prix": 70
       },
-      "description": "Inventaire, plan de bascule, migration des boîtes et agendas sans coupure, installation d'Office, vérification avec chaque personne.",
-      "a_valider": false
+      "description": "Inventaire, plan de bascule, migration des boîtes et agendas sans coupure, installation d'Office, vérification avec chaque personne."
     },
     {
       "id": "guides",
@@ -65,8 +60,7 @@
       "nom": "Pack guides",
       "unite": "forfait",
       "prix": 250,
-      "description": "Des guides d'une page par usage (messagerie, agenda, partage, téléphone), pour que l'équipe soit autonome.",
-      "a_valider": false
+      "description": "Des guides d'une page par usage (messagerie, agenda, partage, téléphone), pour que l'équipe soit autonome."
     },
     {
       "id": "accompagnement",
@@ -75,8 +69,7 @@
       "unite": "forfait",
       "prix": 300,
       "inclus": "8 heures",
-      "description": "8 heures de présence et d'assistance dans les jours qui suivent la migration.",
-      "a_valider": false
+      "description": "8 heures de présence et d'assistance dans les jours qui suivent la migration."
     },
     {
       "id": "poste",
@@ -84,8 +77,7 @@
       "nom": "Préparation d'un poste",
       "unite": "poste",
       "prix": 149,
-      "description": "Mise en route, comptes, messagerie, imprimantes, sauvegarde, transfert des données : un ordinateur prêt à l'emploi.",
-      "a_valider": false
+      "description": "Mise en route, comptes, messagerie, imprimantes, sauvegarde, transfert des données : un ordinateur prêt à l'emploi."
     },
     {
       "id": "app",
@@ -94,8 +86,7 @@
       "unite": "forfait",
       "prix": 790,
       "mensuel": 89,
-      "description": "Une page, une icône : vos outils, guides et demandes regroupés dans une interface pensée pour des personnes non techniques. 790 € la mise en place, puis 89 € par mois (hébergement, mises à jour, évolutions).",
-      "a_valider": false
+      "description": "Une page, une icône : vos outils, guides et demandes regroupés dans une interface pensée pour des personnes non techniques. 790 € la mise en place, puis 89 € par mois (hébergement, mises à jour, évolutions)."
     },
     {
       "id": "devis",
@@ -103,8 +94,7 @@
       "nom": "Sur devis",
       "unite": "devis",
       "prix": null,
-      "description": "Développement sur mesure, automatisations, réseau et Wi-Fi, NAS et sauvegardes, reprise de site, modules métier.",
-      "a_valider": false
+      "description": "Développement sur mesure, automatisations, réseau et Wi-Fi (portail captif), NAS et sauvegardes, reprise d'un site web, modules métier. Devis gratuit sous 48 h."
     }
   ],
   "forfaits_mensuels": [
@@ -116,12 +106,11 @@
       "assistance": "2 h d'assistance par mois",
       "delai": "réponse le jour ouvré suivant",
       "inclus": [
-        "Gestion Microsoft 365 : arrivées et départs, licences, droits, boîtes partagées",
+        "Gestion des licences et des comptes Microsoft 365 : arrivées et départs, droits, boîtes partagées",
         "2 h d'assistance incluses",
         "Contrôle mensuel (sécurité, sauvegarde, licences) avec compte rendu"
       ],
-      "pour": "Une petite structure qui veut un Microsoft 365 propre et suivi, sans y penser.",
-      "a_valider": false
+      "pour": "Une petite structure qui veut un Microsoft 365 propre et suivi, sans y penser."
     },
     {
       "id": "serenite",
@@ -134,10 +123,10 @@
         "Tout l'Essentiel",
         "5 h d'assistance incluses",
         "Suivi des postes (mises à jour, inventaire)",
-        "Application Espace Client incluse"
+        "Application Espace Client incluse",
+        "Revue des licences tous les 6 mois"
       ],
-      "pour": "Une équipe qui veut un technicien régulièrement présent et réactif.",
-      "a_valider": false
+      "pour": "Une équipe qui veut un technicien régulièrement présent et réactif."
     }
   ],
   "site_web": {
@@ -149,15 +138,14 @@
       "Mises à jour",
       "Sauvegardes",
       "Petites modifications"
-    ],
-    "a_valider": false
+    ]
   },
-  "heure_supplementaire": 45,
+  "heure_supplementaire": 40,
   "conditions": {
-    "paiement": "Paiement à 30 jours par virement.",
+    "paiement": "Paiement à 30 jours par virement. Devis gratuit sous 48 h.",
     "retard": "Pénalités de retard au taux légal et indemnité forfaitaire de 40 € pour frais de recouvrement.",
     "engagement": "Sans engagement, résiliable avec un mois de préavis.",
-    "heures": "Heures au-delà du forfait : 45 € HT de l'heure. Heures non utilisées non reportées."
+    "heures": "Heures au-delà du forfait : 40 € HT de l'heure. Heures non utilisées non reportées."
   },
   "tranche_minutes": 30,
   "tranche_prix": 22.5,
