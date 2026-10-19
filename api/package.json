@@ -1,5 +1,5 @@
 {
-  "name": "belfort-api",
+  "name": "belfort-admin",
   "version": "1.0.0",
   "private": true,
   "description": "Service Cloudflare (Worker + D1 + KV) du site belfort-systems.fr",

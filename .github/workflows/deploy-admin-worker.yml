@@ -1,0 +1,108 @@
+name: Déployer le Worker belfort-admin
+
+# Déploie le service du tableau de bord (api/) à chaque fusion sur main.
+# Secrets du dépôt : CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, ADMIN_PASSWORD (mot de passe
+# du tableau de bord ; s'il est absent, le secret du Worker n'est pas touché).
+# La base D1 « belfort-systems » et le KV du Worker sont créés s'ils n'existent pas ; le schéma
+# (api/schema.sql, idempotent) est appliqué à chaque déploiement.
+# Ce workflow ne touche jamais au Worker « belfort-api » (Espace Breteuil).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - ".github/workflows/deploy-admin-worker.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-admin-worker
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Installer wrangler
+        run: npm install --no-save wrangler@4
+
+      - name: Base D1 « belfort-systems » (création si absente)
+        id: d1
+        run: |
+          set -euo pipefail
+          NOM="belfort-systems"
+          LISTE=$(npx wrangler d1 list --json 2>/dev/null) || LISTE="[]"
+          echo "$LISTE" | jq -e 'type=="array"' >/dev/null 2>&1 || LISTE="[]"
+          ID=$(echo "$LISTE" | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
+          if [ -z "$ID" ]; then
+            echo "Création de la base D1 $NOM"
+            SORTIE=$(npx wrangler d1 create "$NOM" 2>&1) || { echo "$SORTIE"; exit 1; }
+            echo "$SORTIE"
+            ID=$(echo "$SORTIE" | grep -E 'database_id|"uuid"' | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -n1)
+          fi
+          [ -n "$ID" ] || { echo "D1 introuvable"; exit 1; }
+          echo "D1 : $ID"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: KV du tableau de bord (création si absent)
+        id: kv
+        run: |
+          set -euo pipefail
+          ACTUEL=$(grep -E '^\s*id\s*=' wrangler.toml | grep -oE '[0-9a-f]{32}' | head -n1 || true)
+          LISTE=$(npx wrangler kv namespace list 2>/dev/null) || LISTE="[]"
+          echo "$LISTE" | jq -e 'type=="array"' >/dev/null 2>&1 || LISTE="[]"
+          ID=""
+          if [ -n "$ACTUEL" ]; then
+            ID=$(echo "$LISTE" | jq -r --arg i "$ACTUEL" '.[] | select(.id==$i) | .id' | head -n1)
+          fi
+          if [ -z "$ID" ]; then
+            ID=$(echo "$LISTE" | jq -r '.[] | select(.title=="belfort-admin-KV") | .id' | head -n1)
+          fi
+          if [ -z "$ID" ]; then
+            echo "Création du KV belfort-admin-KV"
+            SORTIE=$(npx wrangler kv namespace create KV 2>&1) || { echo "$SORTIE"; exit 1; }
+            echo "$SORTIE"
+            ID=$(echo "$SORTIE" | grep -E '^\s*"?id"?\s*[=:]' | grep -oE '[0-9a-f]{32}' | head -n1)
+          fi
+          [ -n "$ID" ] || { echo "KV introuvable"; exit 1; }
+          echo "KV : $ID"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Préparer la configuration de déploiement
+        env:
+          KV_ID: ${{ steps.kv.outputs.id }}
+          D1_ID: ${{ steps.d1.outputs.id }}
+        run: |
+          set -euo pipefail
+          [ -n "$KV_ID" ] && [ -n "$D1_ID" ] || { echo "Identifiant manquant"; exit 1; }
+          sed -E -e "s/^(\s*database_id\s*=\s*)\"[^\"]*\"/\1\"$D1_ID\"/" \
+                 -e "s/^(\s*id\s*=\s*)\"[^\"]*\"/\1\"$KV_ID\"/" \
+                 wrangler.toml > wrangler.ci.toml
+          grep -E '^\s*(name|database_id|id)\s*=' wrangler.ci.toml
+          grep -q '^name = "belfort-admin"' wrangler.ci.toml || { echo "Nom du Worker inattendu"; exit 1; }
+
+      - name: Appliquer le schéma D1
+        run: npx wrangler d1 execute belfort-systems --remote --file=schema.sql --config wrangler.ci.toml --yes
+
+      - name: Déployer
+        run: npx wrangler deploy --config wrangler.ci.toml
+
+      - name: Poser le mot de passe du tableau de bord
+        if: ${{ env.ADMIN_PASSWORD != '' }}
+        run: printf '%s' "$ADMIN_PASSWORD" | npx wrangler secret put ADMIN_PASSWORD --config wrangler.ci.toml

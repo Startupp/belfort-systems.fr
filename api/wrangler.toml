@@ -1,11 +1,12 @@
-# Configuration du Worker « belfort-api » (service du site belfort-systems.fr).
+# Configuration du Worker « belfort-admin » : service du site belfort-systems.fr
+# (tableau de bord /admin/, disponibilités, demandes, factures).
+# Distinct de « belfort-api », qui sert l'Espace Breteuil et n'est pas géré par ce dossier.
 # Aucun secret ici : ADMIN_PASSWORD (et SESSION_SALT, facultatif) sont des secrets
-# Worker, posés par le workflow GitHub ou par `wrangler secret put`.
-# BRETEUIL_ICS_URL (adresse ICS publiée du calendrier « Contact » du Château, pour
-# l'Espace Breteuil) se pose à la main : `npx wrangler secret put BRETEUIL_ICS_URL`.
-# Calendriers supplémentaires (ex. Google Agenda tenu par l'accueil) : BRETEUIL_ICS_URL_2 … _4.
+# Worker, posés par le workflow .github/workflows/deploy-admin-worker.yml depuis les
+# secrets du dépôt GitHub, ou par `npx wrangler secret put ADMIN_PASSWORD`.
+# Les identifiants D1 et KV ci-dessous sont vérifiés et remplacés au déploiement.
 
-name = "belfort-api"
+name = "belfort-admin"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 
