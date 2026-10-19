@@ -331,7 +331,7 @@
     return parts.length ? parts : ['premier'];
   }
   function naviguer(h) { location.hash = '#/' + h; }
-  var VUES = { premier: vuePremierContact, aujourdhui: vueAujourdhui, boite: vueBoite, projets: vueProjets, factures: vueFactures, publications: vuePublications, clients: vueClients, reglages: vueReglages, plus: vuePlus, espaces: vueEspaces };
+  var VUES = { premier: vuePremierContact, aujourdhui: vueAujourdhui, boite: vueBoite, projets: vueProjets, factures: vueFactures, publications: vuePublications, outils: vueOutils, clients: vueClients, reglages: vueReglages, plus: vuePlus, espaces: vueEspaces };
   var SOUS_PLUS = ['factures', 'publications', 'outils', 'clients', 'reglages', 'espaces'];
   var rendu = 0;
   async function router(silencieux) {
@@ -499,6 +499,39 @@
         <p class="petit">Vérifiez d’abord l’aperçu sur téléphone puis sur PC.</p>`,
       action: function () { return api('/admin/publications/' + d.numero + '/fusionner', { method: 'POST' }); }, succes: 'Fusionnée : mise en ligne en cours.' });
   };
+
+  /* ============================================================
+     ÉCRAN : OUTILS (raccourcis ; liste dans admin/outils.js)
+     ============================================================ */
+  var ICONES = {
+    indy: '<path d="M4 7h16v10H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    cloud: '<path d="M7 18a4 4 0 0 1-.5-8A5.5 5.5 0 0 1 17 9a4.5 4.5 0 0 1 .5 9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+    github: '<path d="M12 3a9 9 0 0 0-2.8 17.5c.4.1.6-.2.6-.4v-1.6c-2.5.5-3-1.1-3-1.1-.4-1-1-1.3-1-1.3-.8-.6.1-.6.1-.6.9.1 1.4.9 1.4.9.8 1.4 2.1 1 2.6.8.1-.6.3-1 .6-1.2-2-.2-4.1-1-4.1-4.4 0-1 .3-1.8.9-2.4-.1-.2-.4-1.2.1-2.4 0 0 .8-.2 2.5.9a8.6 8.6 0 0 1 4.6 0c1.7-1.1 2.5-.9 2.5-.9.5 1.2.2 2.2.1 2.4.6.6.9 1.4.9 2.4 0 3.4-2.1 4.2-4.1 4.4.3.3.6.8.6 1.6v2.4c0 .2.2.5.6.4A9 9 0 0 0 12 3z" fill="currentColor"/>',
+    actions: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 9l5 3-5 3z" fill="currentColor"/>',
+    loupe: '<circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    fiche: '<path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="11" r="2" fill="currentColor"/>',
+    notion: '<path d="M6 4h10l2 2v14H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 9v6M9 9l6 6V9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+    linkedin: '<rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10v6M8 7.5v.2M12 16v-3.5a2 2 0 0 1 4 0V16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    canva: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M14.5 10a3 3 0 1 0 0 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    malt: '<path d="M7 17l10-10M7 7l10 10M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    urssaf: '<path d="M5 20V9l7-5 7 5v11z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 20v-6h6v6" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+    inpi: '<path d="M6 4h12v16H6z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    kit: '<path d="M4 8h16v11H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 8V6h6v2M4 13h16" fill="none" stroke="currentColor" stroke-width="1.8"/>'
+  };
+  function iconeOutil(o) {
+    if (o.ico && ICONES[o.ico]) return html`<span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true">${raw(ICONES[o.ico])}</svg></span>`;
+    return html`<span class="ico">${(o.lettre || o.nom || '?').slice(0, 2)}</span>`;
+  }
+  async function vueOutils() {
+    var outils = Array.isArray(window.BS_OUTILS) ? window.BS_OUTILS : [];
+    return html`
+      <div class="entete-vue"><div><h1>Outils</h1><p class="hint">Raccourcis vers les services utilisés au quotidien. Chaque lien s’ouvre dans un nouvel onglet ; la liste se modifie dans <code>admin/outils.js</code>.</p></div></div>
+      <div class="outils-grille">${outils.map(function (o) {
+        var hote = o.hote; if (hote === undefined) { try { hote = new URL(o.url).host.replace(/^www\./, ''); } catch (e) { hote = ''; } }
+        return html`<a class="outil" href="${o.url}" target="_blank" rel="noopener">${iconeOutil(o)}<span class="corps"><b>${o.nom}</b><small>${o.ligne || ''}</small><span class="lien">${hote}</span></span></a>`;
+      })}</div>
+      ${outils.length ? '' : html`<p class="vide">Aucun raccourci : vérifiez <code>admin/outils.js</code>.</p>`}`;
+  }
 
   /* ============================================================
      ÉCRAN : AUJOURD'HUI

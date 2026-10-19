@@ -41,7 +41,7 @@ done
 
 # 3. Panneau admin : le code seulement (pas admin/apercu/, pas les notes)
 mkdir -p "$SORTIE/admin"
-cp admin/index.html admin/admin.css admin/admin.js "$SORTIE/admin/"
+cp admin/index.html admin/admin.css admin/admin.js admin/outils.js "$SORTIE/admin/"
 
 # 4. Retrait des fichiers de développement dans les dossiers copiés.
 #    Les _headers / _redirects des sous-dossiers sont ignorés par Cloudflare Pages
