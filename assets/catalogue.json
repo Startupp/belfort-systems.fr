@@ -1,122 +1,132 @@
 {
-  "version": "2026-10-18",
+  "version": "2026-10-19",
   "devise": "EUR",
   "tva": "Franchise en base — TVA non applicable, art. 293 B du CGI",
-  "note": "Grille à partir du tarif de référence de 45 € HT l'heure, facturée par tranches de 30 minutes. Les montants marqués a_valider sont des propositions à confirmer par Damien.",
+  "note": "Grille à partir du tarif de référence de 45 € HT l'heure : première heure due, puis facturation par demi-heure. Déplacement inclus à moins de 30 km de Magny-les-Hameaux.",
   "taux_horaire": 45,
-  "zone": "Yvelines (78) et sud-ouest de l'Île-de-France ; déplacement offert dans un rayon de 20 km autour de Magny-les-Hameaux",
+  "zone": "Yvelines (78) et alentours ; déplacement inclus dans un rayon de 30 km autour de Magny-les-Hameaux",
   "prestations": [
     {
       "id": "heure",
-      "categorie": "Assistance",
-      "nom": "Intervention ponctuelle",
+      "categorie": "Support et dépannage",
+      "nom": "Intervention",
       "unite": "heure",
       "prix": 45,
       "min": 1,
-      "description": "Dépannage, installation, configuration, formation : sur site comme à distance, facturé par tranches de 30 minutes (22,50 €). Les 15 premières minutes à distance sont offertes.",
+      "description": "Dépannage, installation, configuration, formation : sur site comme à distance. Première heure due, puis par demi-heure (22,50 €). Déplacement inclus à moins de 30 km.",
       "a_valider": false,
       "tranche": 22.5
     },
     {
       "id": "tranche",
-      "categorie": "Assistance",
-      "nom": "Tranche de 30 minutes",
-      "unite": "tranche de 30 min",
+      "categorie": "Support et dépannage",
+      "nom": "Demi-heure supplémentaire",
+      "unite": "demi-heure",
       "prix": 22.5,
       "min": 1,
-      "description": "Sur site comme à distance. Les 15 premières minutes à distance sont offertes.",
+      "description": "Après la première heure, sur site comme à distance.",
       "a_valider": false
     },
     {
-      "id": "deplacement",
-      "categorie": "Assistance",
-      "nom": "Forfait déplacement au-delà de 20 km",
+      "id": "audit",
+      "categorie": "Audit",
+      "nom": "Audit informatique",
       "unite": "forfait",
-      "prix": 15,
-      "description": "Ajouté une fois par intervention au-delà de 20 km.",
-      "a_valider": true
+      "prix": 390,
+      "description": "État des lieux du parc, des accès, des sauvegardes et du réseau, rapport écrit avec priorités. Déduit du prix si une migration Microsoft 365 suit.",
+      "a_valider": false
     },
     {
-      "id": "poste",
-      "categorie": "Postes de travail",
-      "nom": "Installation complète d'un ordinateur",
-      "unite": "poste",
-      "prix": 70,
-      "description": "Mise en route, comptes, messagerie, imprimantes, sauvegarde, transfert des données : environ 2 heures.",
-      "a_valider": true
-    },
-    {
-      "id": "montage",
-      "categorie": "Postes de travail",
-      "nom": "Montage ou amélioration d'un ordinateur",
-      "unite": "devis",
-      "prix": null,
-      "description": "Choix des pièces, montage, installation. Les pièces sont facturées à part sur devis.",
-      "a_valider": true
+      "id": "audit_abonnements",
+      "categorie": "Audit",
+      "nom": "Audit des abonnements informatiques",
+      "unite": "forfait",
+      "prix": 290,
+      "description": "Inventaire de vos licences et abonnements (Microsoft 365, logiciels, hébergement, domaines), doublons et économies possibles, rapport écrit.",
+      "a_valider": false
     },
     {
       "id": "migration",
       "categorie": "Messagerie et Microsoft 365",
-      "nom": "Migration de la messagerie vers Microsoft 365",
+      "nom": "Migration Microsoft 365",
       "unite": "forfait",
-      "prix": 390,
-      "inclus": "jusqu'à 10 boîtes",
+      "prix": 590,
+      "inclus": "jusqu'à 5 boîtes",
       "supplement": {
         "nom": "boîte supplémentaire",
-        "prix": 20
+        "prix": 70
       },
-      "description": "Inventaire, bascule des boîtes et des agendas, installation d'Office, guides de prise en main, 30 jours de suivi.",
-      "a_valider": true
-    },
-    {
-      "id": "audit",
-      "categorie": "Conseil",
-      "nom": "Audit informatique",
-      "unite": "forfait",
-      "prix": 175,
-      "description": "Une demi-journée sur place : état des lieux du parc, des accès, des sauvegardes et du réseau, rapport écrit avec priorités.",
-      "a_valider": true
+      "description": "Inventaire, plan de bascule, migration des boîtes et agendas sans coupure, installation d'Office, vérification avec chaque personne.",
+      "a_valider": false
     },
     {
       "id": "guides",
-      "categorie": "Conseil",
-      "nom": "Guides et procédures sur mesure",
-      "unite": "heure",
-      "prix": 45,
-      "description": "Fiches simples pour vos équipes : une page, sans jargon.",
+      "categorie": "Messagerie et Microsoft 365",
+      "nom": "Pack guides",
+      "unite": "forfait",
+      "prix": 250,
+      "description": "Des guides d'une page par usage (messagerie, agenda, partage, téléphone), pour que l'équipe soit autonome.",
+      "a_valider": false
+    },
+    {
+      "id": "accompagnement",
+      "categorie": "Messagerie et Microsoft 365",
+      "nom": "Accompagnement après bascule",
+      "unite": "forfait",
+      "prix": 300,
+      "inclus": "8 heures",
+      "description": "8 heures de présence et d'assistance dans les jours qui suivent la migration.",
+      "a_valider": false
+    },
+    {
+      "id": "poste",
+      "categorie": "Postes de travail",
+      "nom": "Préparation d'un poste",
+      "unite": "poste",
+      "prix": 149,
+      "description": "Mise en route, comptes, messagerie, imprimantes, sauvegarde, transfert des données : un ordinateur prêt à l'emploi.",
       "a_valider": false
     },
     {
       "id": "app",
-      "categorie": "Outils sur mesure",
-      "nom": "Espace client ou application simplifiée",
+      "categorie": "Application sur mesure",
+      "nom": "Application Espace Client",
+      "unite": "forfait",
+      "prix": 790,
+      "mensuel": 89,
+      "description": "Une page, une icône : vos outils, guides et demandes regroupés dans une interface pensée pour des personnes non techniques. 790 € la mise en place, puis 89 € par mois (hébergement, mises à jour, évolutions).",
+      "a_valider": false
+    },
+    {
+      "id": "devis",
+      "categorie": "Sur devis",
+      "nom": "Sur devis",
       "unite": "devis",
-      "prix": 490,
-      "prefixe": "à partir de",
-      "description": "Une page, une icône : vos outils regroupés dans une interface pensée pour des personnes non techniques.",
-      "a_valider": true
+      "prix": null,
+      "description": "Développement sur mesure, automatisations, réseau et Wi-Fi, NAS et sauvegardes, reprise de site, modules métier.",
+      "a_valider": false
     }
   ],
   "forfaits_mensuels": [
     {
       "id": "essentiel",
-      "nom": "Essentiel",
-      "prix": 150,
+      "nom": "Suivi Essentiel",
+      "prix": 149,
       "heures": 2,
-      "assistance": "2 h d'assistance à distance par mois",
+      "assistance": "2 h d'assistance par mois",
       "delai": "réponse le jour ouvré suivant",
       "inclus": [
         "Gestion Microsoft 365 : arrivées et départs, licences, droits, boîtes partagées",
-        "2 h d'assistance à distance incluses",
+        "2 h d'assistance incluses",
         "Contrôle mensuel (sécurité, sauvegarde, licences) avec compte rendu"
       ],
       "pour": "Une petite structure qui veut un Microsoft 365 propre et suivi, sans y penser.",
-      "a_valider": true
+      "a_valider": false
     },
     {
       "id": "serenite",
-      "nom": "Sérénité",
-      "prix": 290,
+      "nom": "Suivi Sérénité",
+      "prix": 249,
       "heures": 5,
       "assistance": "5 h d'assistance par mois",
       "delai": "réponse dans la journée",
@@ -124,23 +134,23 @@
         "Tout l'Essentiel",
         "5 h d'assistance incluses",
         "Suivi des postes (mises à jour, inventaire)",
-        "Une demi-journée sur site par mois"
+        "Application Espace Client incluse"
       ],
       "pour": "Une équipe qui veut un technicien régulièrement présent et réactif.",
-      "a_valider": true
+      "a_valider": false
     }
   ],
   "site_web": {
     "id": "site",
-    "nom": "Option Site WordPress",
-    "prix": 150,
+    "nom": "Option site WordPress",
+    "prix": 120,
     "unite": "mois",
     "inclus": [
       "Mises à jour",
       "Sauvegardes",
       "Petites modifications"
     ],
-    "a_valider": true
+    "a_valider": false
   },
   "heure_supplementaire": 45,
   "conditions": {
@@ -151,5 +161,5 @@
   },
   "tranche_minutes": 30,
   "tranche_prix": 22.5,
-  "distance_offert_minutes": 15
+  "deplacement_inclus_km": 30
 }
