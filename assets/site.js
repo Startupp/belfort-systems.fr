@@ -1,9 +1,11 @@
 /* Belfort Systems — site public : prix depuis le catalogue, simulateur, contact, calendrier.
-   Sans dépendance. Lit window.BS_API (assets/config.js). Jamais d'innerHTML avec une donnée externe. */
+   Sans dépendance. Lit window.BS_API et window.BS_CONTACT_API (assets/config.js). Jamais d'innerHTML avec une donnée externe. */
 (function () {
   "use strict";
 
   var API = (typeof window.BS_API === "string" && window.BS_API) ? window.BS_API.replace(/\/+$/, "") : "";
+  // Formulaire de contact : Worker séparé (assets/config.js, BS_CONTACT_API). Sans valeur : repli mailto.
+  var CONTACT_API = (typeof window.BS_CONTACT_API === "string" && window.BS_CONTACT_API) ? window.BS_CONTACT_API.replace(/\/+$/, "") : "";
   var MAIL = "damien.belfort@gmail.com";
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
@@ -227,7 +229,7 @@
   }
 
   /* ------------------------------------------------------------------
-     3. Formulaire de contact : POST BS_API/contact, repli mailto
+     3. Formulaire de contact : POST BS_CONTACT_API/contact, repli mailto
      ------------------------------------------------------------------ */
   function initContact() {
     var form = $("#contact-form");
@@ -290,10 +292,10 @@
         submit.disabled = false;
       };
 
-      if (!API || !window.fetch) { repli(); return; }
+      if (!CONTACT_API || !window.fetch) { repli(); return; }
       var ctrl = typeof AbortController === "function" ? new AbortController() : null;
       var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 10000) : null;
-      fetch(API + "/contact", {
+      fetch(CONTACT_API + "/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify(d),
@@ -309,7 +311,7 @@
             var cf = $("#cal-choix"); if (cf) cf.textContent = "";
             submit.disabled = false;
           } else if (r.status === 400 || r.status === 422 || r.status === 429) {
-            montrer("err", [(json && json.erreur) || "Le message n'a pas pu être pris en compte. Vérifiez les champs et réessayez dans un instant."]);
+            montrer("err", [(json && (json.error || json.erreur)) || "Le message n'a pas pu être pris en compte. Vérifiez les champs et réessayez dans un instant."]);
             submit.disabled = false;
           } else {
             repli();
