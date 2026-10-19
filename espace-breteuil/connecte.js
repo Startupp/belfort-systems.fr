@@ -4,7 +4,8 @@
  *   (v4 : l'onglet est « Fichiers », fichiers.js ; #/dossiers y renvoie)
  *   #/commun[/chemin…]        dossier commun : grosses tuiles, fil d'Ariane, créer, renommer, déplacer
  *   #/acces/chemin…           qui a accès (bibliothèque : #/acces/~racine) + gérer les accès
- *   #/restreindre/chemin…     « Partager uniquement avec… »
+ *   #/restreindre/chemin…     « Retirer certaines personnes… » (cocher qui garde l'accès)
+ *   #/reserver/chemin…        « Réserver à certaines personnes » (seules les personnes choisies)
  *   #/personnes[/id]          personnes du Château, « Ce que je peux utiliser »
  *   #/licences-reel           les 2 licences expliquées, combien chacune en a
  *   #/organisation            « Comprendre l'organisation » (réel si connecté, sinon exemple)
@@ -75,6 +76,7 @@
       return deplierGroupe(c.proprietairesSp).catch(function () { return { personnes: [] }; }).then(function (res) {
         res.personnes.forEach(function (p) { var a = String(p.mail || "").toLowerCase(); if (a && c.proprietaires.indexOf(a) === -1) c.proprietaires.push(a); });
         c.proprietairesNoms = res.personnes.map(function (p) { return p.nom; });
+        c.proprietairesPersonnes = res.personnes; // [{ nom, mail }] : suggestions de « Réserver à certaines personnes »
         c.estProprietaire = c.proprietaires.indexOf(c.moi) > -1 || (!!c.moiSp && c.proprietairesSp.some(function (u) { return u.Id === c.moiSp.Id; }));
         ctx = c;
         return c;
@@ -456,8 +458,8 @@
     return contexte().then(function (c) {
       var liste = "/_api/web/lists(guid'" + c.listId + "')";
       if (!segs.length) return { base: liste, itemId: null, nom: c.drive.name || "Documents", c: c };
-      return G.graph("GET", urlItem(c.drive.id, segs) + "?$select=id,name&$expand=listItem($select=id)").then(function (it) {
-        return { base: liste + "/items(" + it.listItem.id + ")", itemId: it.id, nom: it.name, c: c };
+      return G.graph("GET", urlItem(c.drive.id, segs) + "?$select=id,name,file&$expand=listItem($select=id)").then(function (it) {
+        return { base: liste + "/items(" + it.listItem.id + ")", itemId: it.id, nom: it.name, fichier: !!it.file, c: c };
       });
     });
   }
@@ -493,29 +495,46 @@
       actions || null);
   }
 
+  /** « dossier » ou « fichier », pour des phrases justes. */
+  function quoi(o) { return o && o.fichier ? "fichier" : "dossier"; }
+
   function ecranAcces(app, chemin) {
     var segs = lireSegs(chemin); if (segs === null) segs = [nomCommun()];
     if (!exigerConnexion(app, "Qui a accès ?")) return;
     var gen = demarrerEcran();
     var nom = segs.length ? segs[segs.length - 1] : "Toute la bibliothèque";
-    app.appendChild(EB.barre("Qui a accès ?", { href: hashChemin("commun", segs), texte: "Retour" }));
+    var barre = EB.barre("Qui a accès ?", { href: hashChemin("commun", segs), texte: "Retour" });
+    app.appendChild(barre);
     app.appendChild(filAriane(segs, "acces"));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     avecMaj("droits:" + segs.join("/"), function () { return lireDroits(segs); }, gen, zone, function (r) {
       zone.textContent = "";
+      var fichier = r.o.fichier;
+      // Un fichier ne s'ouvre pas comme un dossier : le retour mène au dossier qui le contient.
+      var retour = barre.querySelector(".btn-retour");
+      if (fichier && retour) retour.setAttribute("href", hashChemin("commun", segs.slice(0, -1)));
       var parent = segs.length > 1 ? "« " + segs[segs.length - 2] + " »" : segs.length === 1 ? "la bibliothèque Documents" : "le site du Château";
-      zone.appendChild(h("h2", { class: "titre-objet" }, emoji(segs.length ? "📁" : "📚"), " ", nom));
+      zone.appendChild(h("h2", { class: "titre-objet" }, emoji(fichier ? emojiFichier(nom) : segs.length ? "📁" : "📚"), " ", nom));
       zone.appendChild(r.unique
-        ? h("div", { class: "heritage perso" }, emoji("✋"), h("div", null, h("b", null, "Droits personnalisés"), h("span", null, "Ce dossier a ses propres accès, différents de " + parent + ".")))
-        : h("div", { class: "heritage herite" }, emoji("🔗"), h("div", null, h("b", null, "Hérités du dossier parent"), h("span", null, "Les mêmes personnes que pour " + parent + " y ont accès. Les sous-dossiers suivent aussi, sauf exception."))));
+        ? h("div", { class: "heritage perso", "data-etat": "reserve" }, emoji("🔒"), h("div", null, h("b", null, "Accès réservé"), h("span", null, "Seules les personnes ci-dessous peuvent ouvrir ce " + quoi(r.o) + ".")))
+        : h("div", { class: "heritage herite", "data-etat": "visible" }, emoji("👥"), h("div", null, h("b", null, "Visible par toute l'équipe"), h("span", null, "Les mêmes personnes que pour " + parent + " peuvent l'ouvrir."))));
+
+      // Les deux actions que l'on cherche le plus : réserver, ou rendre visible à nouveau.
+      if (segs.length) {
+        zone.appendChild(h("div", { class: "actions-acces" },
+          h("a", { class: "carte-action principale", href: hashChemin("reserver", segs), "data-action": "reserver" },
+            emoji("🔒"), h("span", null, h("b", null, "Réserver à certaines personnes"), h("small", null, "Personne d'autre ne pourra l'ouvrir"))),
+          r.unique ? h("button", { class: "carte-action", type: "button", "data-action": "rendre-visible", onclick: function () { retablir(segs, r, parent); } },
+            emoji("🔓"), h("span", null, h("b", null, "Rendre à nouveau visible par tous"), h("small", null, "Mêmes accès que " + parent))) : null));
+      }
 
       var boutons = h("div", { class: "actions" });
-      if (!r.unique) boutons.appendChild(h("a", { class: "btn", href: hashChemin("restreindre", segs) }, emoji("✋"), "Partager uniquement avec…"));
-      boutons.appendChild(h("button", { class: "btn" + (r.unique ? "" : " secondaire"), type: "button", onclick: function () { ajouterPersonne(segs, r); } }, icone("plus"), "Ajouter une personne"));
-      if (r.unique) boutons.appendChild(h("button", { class: "btn secondaire", type: "button", onclick: function () { retablir(segs, r, parent); } }, emoji("🔗"), "Rétablir les droits du dossier parent"));
+      boutons.appendChild(h("button", { class: "btn secondaire", type: "button", onclick: function () { ajouterPersonne(segs, r); } }, icone("plus"), "Ajouter une personne"));
+      if (!r.unique) boutons.appendChild(h("a", { class: "btn secondaire", href: hashChemin("restreindre", segs) }, emoji("✋"), "Retirer certaines personnes…"));
       zone.appendChild(boutons);
 
+      zone.appendChild(h("h3", { class: "sous-titre-acces" }, "Qui peut l'ouvrir aujourd'hui"));
       zone.appendChild(h("div", { class: "liste-acces" }, r.entrees.map(function (e) {
         var groupe = e.membre.PrincipalType === 8 || e.membre.PrincipalType === 4;
         var acts = h("span", { class: "acts" });
@@ -523,8 +542,8 @@
         if (r.unique && !garde(e.membre)) acts.appendChild(h("button", { class: "btn petit secondaire", type: "button", onclick: function () { changerAcces(segs, r, e); } }, "Modifier"));
         return carteAcces(e, acts);
       })));
-      zone.appendChild(h("div", { class: "note" }, emoji("🚫"), h("span", null, "Toute personne absente de cette liste n'a pas accès (« Pas d'accès »).")));
-      if (!r.unique) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour changer les accès d'un dossier qui suit son parent, touchez « Partager uniquement avec… » : il aura alors ses propres droits."));
+      zone.appendChild(h("div", { class: "note" }, emoji("🚫"), h("span", null, "Toute personne absente de cette liste ne peut pas l'ouvrir.")));
+      if (!r.unique) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour changer une personne en particulier, touchez d'abord « Réserver à certaines personnes » ou « Retirer certaines personnes… »."));
     }).catch(function (e) {
       if (!toujoursLa(gen, zone)) return;
       zone.textContent = "";
@@ -672,8 +691,8 @@
       if (!n) return null;
       niveau = n;
       var nomObj = r.o.nom;
-      var phrase = p.nom + " pourra « " + D.NIVEAUX[niveau].nom.toLowerCase() + " » le dossier « " + nomObj + " »" + (r.unique ? "." : ", qui aura alors ses propres droits (il ne suivra plus son dossier parent).");
-      var csq = p.type === "interne" ? "Ses sous-dossiers suivent ces droits, sauf exception." :
+      var phrase = p.nom + " pourra « " + D.NIVEAUX[niveau].nom.toLowerCase() + " » le " + quoi(r.o) + " « " + nomObj + " »" + (r.unique ? "." : ". Ensuite, ses accès se géreront à part de ceux du dossier au-dessus.");
+      var csq = p.type === "interne" ? (r.o.fichier ? "Cela ne concerne que ce fichier." : "Ce qui est rangé dedans suit ce choix, sauf exception.") :
         p.nom + " recevra un mail d'invitation de Microsoft. Sans adresse @breteuil.fr, cette personne est « Externe ».";
       return EB.confirmer({ emoji: "➕", titre: "Donner l'accès ?", phrase: phrase, consequence: csq, bouton: "Oui, donner l'accès" });
     }).then(function (ok) {
@@ -693,13 +712,13 @@
     EB.choisir(nom, [
       { valeur: "voir", emoji: "👁️", titre: "Peut voir", sous: e.niveau === "voir" ? "C'est le niveau actuel" : D.NIVEAUX.voir.texte },
       { valeur: "modifier", emoji: "✏️", titre: "Peut modifier", sous: e.niveau === "modifier" ? "C'est le niveau actuel" : D.NIVEAUX.modifier.texte },
-      { valeur: "aucun", emoji: "🚫", titre: "Pas d'accès", sous: "Retirer l'accès à ce dossier" },
+      { valeur: "aucun", emoji: "🚫", titre: "Pas d'accès", sous: "Ne pourra plus l'ouvrir" },
     ]).then(function (v) {
       if (!v || v === e.niveau) return null;
       if (garde(e.membre)) { EB.toast("Impossible : " + garde(e.membre) + "."); return null; }
       var phrase = v === "aucun" ? nom + " n'aura plus accès à « " + r.o.nom + " »." : nom + " passera à « " + D.NIVEAUX[v].nom + " » sur « " + r.o.nom + " ».";
       return EB.confirmer({ emoji: v === "aucun" ? "🚫" : "✏️", titre: v === "aucun" ? "Retirer l'accès ?" : "Changer le niveau ?", phrase: phrase,
-        consequence: v === "aucun" ? "Les sous-dossiers qui suivent ce dossier seront aussi fermés pour " + nom + "." : "Cela vaut aussi pour les sous-dossiers qui suivent ce dossier.",
+        consequence: r.o.fichier ? "Cela ne concerne que ce fichier." : v === "aucun" ? "Ce qui est rangé dans ce dossier sera aussi fermé pour " + nom + "." : "Cela vaut aussi pour ce qui est rangé dans ce dossier.",
         bouton: v === "aucun" ? "Oui, retirer l'accès" : "Oui, changer" }).then(function (ok) {
         if (!ok) return;
         return retirerPrincipal(r.o.base, e.principalId).then(function () {
@@ -714,28 +733,30 @@
   }
 
   function retablir(segs, r, parent) {
-    EB.confirmer({ emoji: "🔗", titre: "Rétablir les droits du dossier parent ?", phrase: "« " + r.o.nom + " » aura de nouveau exactement les mêmes accès que " + parent + ".",
-      consequence: "Les accès ajoutés ou retirés à la main sur ce dossier seront effacés.", bouton: "Oui, rétablir" }).then(function (ok) {
+    EB.confirmer({ emoji: "🔓", titre: "Rendre « " + r.o.nom + " » visible par tous ?", deuxEtapes: false,
+      phrase: "« " + r.o.nom + " » aura de nouveau les mêmes accès que " + parent + " : toute l'équipe qui ouvre " + parent + " pourra l'ouvrir.",
+      consequence: "La liste de personnes choisie pour ce " + quoi(r.o) + " sera effacée.", bouton: "Oui, rendre visible" }).then(function (ok) {
       if (!ok) return;
+      EB.toast("Un instant…");
       return G.sp("POST", r.o.base + "/resetroleinheritance").then(function () {
-        noter("Droits du parent rétablis", r.o.nom);
-        EB.toast("Les droits suivent de nouveau " + parent + ".");
+        noter("Rendu visible par tous", r.o.nom);
+        EB.toast("C'est fait : « " + r.o.nom + " » a les mêmes accès que " + parent + ".");
         EB.rendre();
       });
     }).catch(afficherErreur);
   }
 
   /* ------------------------------------------------------------------ */
-  /* #/restreindre : « Partager uniquement avec… »                       */
+  /* #/restreindre : « Retirer certaines personnes… »                    */
   /* ------------------------------------------------------------------ */
   var brouillon = null; // { cle, garder: {principalId: bool}, ajouts: [{p, niveau}] }
 
   function ecranRestreindre(app, chemin) {
     var segs = lireSegs(chemin); if (segs === null) segs = [nomCommun()];
-    if (!exigerConnexion(app, "Partager uniquement avec…")) return;
+    if (!exigerConnexion(app, "Retirer certaines personnes")) return;
     var gen = demarrerEcran(), cleB = segs.join("/");
     if (!brouillon || brouillon.cle !== cleB) brouillon = { cle: cleB, garder: {}, ajouts: [] };
-    app.appendChild(EB.barre("Partager uniquement avec…", { href: hashChemin("acces", segs), texte: "Annuler" }));
+    app.appendChild(EB.barre("Retirer certaines personnes", { href: hashChemin("acces", segs), texte: "Annuler" }));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     C.obtenir("droits:" + segs.join("/"), function () { return lireDroits(segs); }, { ttl: 30000 }).then(function (r) {
@@ -775,11 +796,11 @@
   function executerRestriction(segs, r, gardes, perdus) {
     var noms = function (l) { return l.map(function (e) { return nomMembre(e.membre); }).join(", ") || "personne"; };
     var ajouts = brouillon.ajouts.slice();
-    var phrase = "« " + r.o.nom + " » aura ses propres droits. Garderont l'accès : " + noms(gardes) + "." +
+    var phrase = "« " + r.o.nom + " » sera réservé. Garderont l'accès : " + noms(gardes) + "." +
       (perdus.length ? " Perdront l'accès : " + noms(perdus) + "." : "") +
       (ajouts.length ? " Recevront l'accès : " + ajouts.map(function (a) { return a.p.nom + " (" + D.NIVEAUX[a.niveau].nom + ")"; }).join(", ") + "." : "");
     EB.confirmer({ emoji: "✋", titre: "Récapitulatif", phrase: phrase,
-      consequence: "Les sous-dossiers de « " + r.o.nom + " » suivront ces nouveaux droits." + (perdus.length ? " " + noms(perdus) + " ne pourront plus l'ouvrir." : ""),
+      consequence: (r.o.fichier ? "" : "Ce qui est rangé dans « " + r.o.nom + " » suivra ce choix.") + (perdus.length ? " " + noms(perdus) + " ne pourront plus l'ouvrir." : ""),
       bouton: "Oui, appliquer" }).then(function (ok) {
       if (!ok) return;
       EB.toast("Un instant…");
@@ -787,9 +808,9 @@
       perdus.forEach(function (e) { suite = suite.then(function () { return retirerPrincipal(r.o.base, e.principalId); }); });
       ajouts.forEach(function (a) { suite = suite.then(function () { return donnerAcces(r.o, a.p, a.niveau); }); });
       return suite.then(function () {
-        noter("Partagé uniquement avec une liste", r.o.nom + " — retirés : " + noms(perdus) + (ajouts.length ? " ; ajoutés : " + ajouts.map(function (a) { return a.p.nom; }).join(", ") : ""));
+        noter("Accès retirés à certaines personnes", r.o.nom + " — retirés : " + noms(perdus) + (ajouts.length ? " ; ajoutés : " + ajouts.map(function (a) { return a.p.nom; }).join(", ") : ""));
         brouillon = null;
-        EB.toast("C'est fait : « " + r.o.nom + " » a ses propres droits.");
+        EB.toast("C'est fait : « " + r.o.nom + " » est réservé.");
         location.hash = hashChemin("acces", segs);
       });
     }).catch(function (e) { afficherErreur(e); });
