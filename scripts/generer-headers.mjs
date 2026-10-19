@@ -213,7 +213,7 @@ const sansCache = [];
   for (const nom of readdirSync(dir)) {
     const p = join(dir, nom);
     if (statSync(p).isDirectory()) { chercher(p); continue; }
-    if (["sw.js", "version.js", "config.js", "maj.json", "manifest.webmanifest"].includes(nom)) sansCache.push("/" + relative(SORTIE, p).split(sep).join("/"));
+    if (["sw.js", "version.js", "config.js", "maj.json", "manifest.webmanifest", "site.webmanifest"].includes(nom)) sansCache.push("/" + relative(SORTIE, p).split(sep).join("/"));
   }
 })(SORTIE);
 for (const c of sansCache.sort()) ajouter(c, ["Cache-Control: " + (c.endsWith("maj.json") ? "no-store" : "no-cache")]);

@@ -25,7 +25,7 @@ erreur()  { if [ -n "${GITHUB_ACTIONS:-}" ]; then echo "::error::$*";   else ech
 rm -rf "$SORTIE" && mkdir "$SORTIE"
 
 # 1. Fichiers racine
-RACINE_FICHIERS="index.html 404.html favicon.svg robots.txt sitemap.xml"
+RACINE_FICHIERS="index.html 404.html favicon.svg site.webmanifest robots.txt sitemap.xml"
 # CNAME et .nojekyll ne servent qu'à GitHub Pages (Cloudflare définit CF_PAGES=1).
 if [ -z "${CF_PAGES:-}" ]; then RACINE_FICHIERS="$RACINE_FICHIERS CNAME .nojekyll"; fi
 for f in $RACINE_FICHIERS; do
