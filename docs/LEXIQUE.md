@@ -38,7 +38,7 @@ l'appli affiche « Lecteur » (jamais plus que sûr) mais ne cache pas les bouto
 | Fichiers | **Documents** | Mes documents et ceux de l'équipe. |
 | Équipe | Équipe | Pour les gestionnaires : l'équipe, qui fait quoi. |
 | Finance | **Factures** | Pour la facturation : factures, abonnements, paiement. |
-| Site | **Site internet** | Pour le groupe « Site web » : modifier www.breteuil.fr. |
+| Site | Site (titre de l'écran : **Site internet**) | Pour le groupe « Site web » : modifier www.breteuil.fr. |
 | Gérer | Gérer | Plusieurs sections de gestion à la fois. |
 | Moi | Moi | Mon compte, mon niveau, mes réglages. |
 
@@ -260,3 +260,13 @@ l'appli affiche « Lecteur » (jamais plus que sûr) mais ne cache pas les bouto
 | Ou déposez-les ici : ils iront dans « Mes fichiers ». | … « Mes documents ». | — |
 | Envoyer dans « Mes fichiers » ? · Oui, envoyer dans Mes fichiers | Envoyer dans « Mes documents » ? · **Oui, envoyer dans Mes documents** | — |
 | Fichiers › Mes fichiers ou Dossier commun. | Documents › Mes documents ou Documents de l'équipe. | — |
+
+## Retours de Damien sur téléphone (Android, police agrandie) — corrigés en v5.5
+
+| Constat | Correction |
+|---|---|
+| Feuille d'actions : sous-titres qui passent sous la ligne suivante | Lignes à hauteur libre (min-height), feuille qui défile, sous-titres raccourcis (« Dans un autre dossier », « Pour les personnes du Château »), pas d'agrandissement automatique du texte par le navigateur. Test automatique de non-chevauchement. |
+| Fil d'Ariane en grosses pastilles sur 2 lignes | Une ligne discrète en petit texte, coupée proprement ; masqué quand il répéterait le titre. |
+| « + Nouveau dossier », « Téléverser », « Qui a accès ? » de tailles différentes | Rangée de boutons de même taille, icône au-dessus : « Ajouter un document », « Créer un dossier », « Qui peut ouvrir ? » (Gestionnaire). |
+| Titre de l'en-tête « grisé » derrière une feuille | Voile net (flou) derrière les fenêtres. |
+| Lien vers le dossier commun qui ressemble à une phrase | Grande tuile « 📁 Documents de l'équipe — Ouvrir le dossier partagé du Château › » ; plus aucun lien de navigation en texte simple. |

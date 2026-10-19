@@ -1,8 +1,56 @@
-# Espace Breteuil — application (v4.0.0)
+# Espace Breteuil — application (v5.5.0)
 
 Application installable (PWA) pour l'équipe du Château de Breteuil, **sur mobile d'abord**,
 branchée sur le vrai tenant Microsoft. Pour des personnes non techniques : écrans courts,
 cibles tactiles d'au moins 44 px, confirmation avant chaque changement.
+
+## v5.5 « Simplification » : clair, droit, carré
+
+But : qu'un enfant de 10 ans s'y retrouve. Tous les libellés sont dans **[docs/LEXIQUE.md](LEXIQUE.md)**
+(ancien texte → nouveau texte → ce que ça fait) ; règles : pas de jargon, un verbe d'abord, le nom
+technique en second et en petit (« Mes documents *(OneDrive)* »).
+
+**Onglets (5 au plus)** : **Accueil** · Planning · **Documents** · [Équipe | **Factures** | Site | Gérer] · Moi.
+
+**Niveau affiché, toujours lu chez Microsoft** (`profil.js` → `deduire().niveau`, jamais choisi) :
+
+| Niveau | Droit réel (REST `effectivebasepermissions` du site) | Ce qui change à l'écran |
+|---|---|---|
+| **Lecteur** | ni AddListItems ni EditListItems | « Ajouter un document », « Créer un dossier », « Changer le nom », « Ranger ailleurs » **n'apparaissent pas** (pas de boutons grisés) |
+| **Éditeur** | AddListItems + EditListItems | boutons d'ajout visibles |
+| **Gestionnaire** | ManagePermissions ou propriétaire du site | en plus « Qui peut ouvrir ? » / « Choisir qui peut l'ouvrir » |
+
+Droit illisible (SharePoint ne répond pas) : affiché « Lecteur », mais les boutons d'ajout restent
+(Microsoft refusera s'il le faut). La carte « Vous êtes : … » (Moi et premier lancement) dit ce que
+la personne peut et ne peut pas faire, et **à qui demander** (noms des gestionnaires lus sur le site).
+
+**Premier lancement après connexion** (une fois par compte, sur l'appareil) : 1) carte du niveau ;
+2) « Qu'allez-vous faire surtout ici ? », plusieurs grosses cartes à toucher, **seulement ce à quoi
+la personne a accès** (`usages.js`, testé) : planning ; documents de l'équipe ; mes documents
+(licence avec OneDrive) ; choisir qui a accès (Gestionnaire) ; site internet (groupe « Site web ») ;
+factures (rôle facturation) ; suivi informatique (mêmes profils que `#/suivi`). Résultat : l'Accueil
+montre ces tuiles d'abord, dans l'ordre choisi, et l'écran ouvert après la connexion est le 1er choix.
+« Plus tard » : redemandé à la prochaine ouverture. Changer : Moi → « Ce que j'utilise »
+(`#/bienvenue/choix`). Stockage `eb:usages:<id du compte>` ; s'il est bloqué, le choix vaut pour la
+session et l'appli marche.
+
+**« Comment faire ? »** (`#/comment-faire`, depuis l'Accueil, Moi et le panneau « ? ») : tâches
+dites comme on les pense (« Ranger un document », « Retrouver un document », « Voir qui travaille
+aujourd'hui », « Rendre un dossier privé », « Demander de l'aide à Damien »…), filtrées par niveau.
+« Montrez-moi » ouvre le bon écran et entoure le bouton (contour qui pulse + bulle « Touchez ici ») ;
+toucher n'importe où ou Échap ferme. Pas de fausses captures d'écran.
+
+**Mise en page** : grandes tuiles en grille droite (1 colonne sur téléphone, 2 puis 3), un titre +
+une ligne, une seule action par carte ; boutons d'action de même taille (carrés arrondis, icône
+au-dessus) ; fil d'Ariane sur une ligne discrète ; feuilles d'actions dont les lignes grandissent
+avec le texte (et qui défilent) ; aucun lien de navigation en simple texte ; cibles ≥ 48 px ;
+mêmes couleurs (crème/praline et Bleu Breteuil, clair et sombre, contrastes AA). Les épingles
+sont sur l'Accueil (le Planning ne montre que le planning). Gérer : tuile **🛠️ Suivi informatique**
+en tête (`#/suivi`).
+
+Tests : `tests/profil.test.mjs` (niveaux), `tests/usages.test.mjs` (questionnaire, ordre, tutoriel),
+`tests/simplification.playwright.mjs` (premier lancement, Lecteur, tutoriel, Gérer, chevauchement
+de texte y compris 412 px sombre en police agrandie, stockage bloqué).
 
 ## Ce que voit chacun (v4 : selon les DROITS RÉELS)
 
@@ -258,10 +306,11 @@ espace-breteuil/            ← autonome : peut être servi tel quel sur un autr
                             réglages, onglets, transitions, mises à jour
   diagnostic.js/.css        « Détails techniques » (Réglages)
   cache.js                  cache de session en mémoire (dernier état connu puis mise à jour, testé)
-  profil.js                 droits réels → profil, onglets, garde-fous, pastille (testé)
+  profil.js                 droits réels → profil, niveau (Lecteur/Éditeur/Gestionnaire), onglets, garde-fous, pastille (testé)
+  usages.js                 v5.5 « Ce que j'utilise » (questionnaire) et « Comment faire ? » (testé)
   acces.js                  détection des droits en arrière-plan, sondes, pastille d'état
   deleguer.js               écran « Déléguer » (propriétaires du site, rôles d'annuaire)
-  fichiers.js               onglet Fichiers (Récents, Mes fichiers, Dossier commun)
+  fichiers.js               onglet Documents (Documents de l'équipe, Ouverts récemment, Mes documents)
   depot.js                  v5.3.1 glisser-déposer : dossier cible selon la route, noms, conflits (testé)
   depot-ecran.js            v5.3.1 glisser-déposer : voile « Déposer ici… », envoi, progression
   epingles.js               « Mes épingles » ; boites-partagees.json = boîtes proposées
@@ -416,6 +465,7 @@ réglages par défaut) :
   clair / sombre), vue du planning au départ, événements passés, zoom de la grille, mode
   « calendrier seul », « Afficher les démos » ;
 - `eb:epingles` : les épingles de l'accueil ;
+- `eb:usages:<id du compte>` (v5.5) : « Ce que j'utilise » (ordre des tuiles de l'accueil, écran de départ) ;
 - `eb:journal` : « Ce que j'ai fait » (dossiers, droits, délégations).
 
 Pour la session de l'onglet seulement (`sessionStorage`) : jetons MSAL et dernier profil connu
