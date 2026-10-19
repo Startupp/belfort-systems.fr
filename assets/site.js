@@ -199,6 +199,34 @@
     setTimeout(function () { var n = $("#c-nom"); if (n) n.focus({ preventScroll: true }); }, 500);
   }
 
+  /* Liens directs vers une offre (fiche Google, carte de visite, mails) :
+     /?offre=<id>#contact pré-remplit le formulaire. Ids = assets/offres.json sans réseau : table ci-dessous. */
+  var OFFRES = {
+    "audit-informatique": { sujet: "Autre", formule: "Audit informatique (390 € HT, déduit si une migration suit)",
+      message: "Bonjour,\nje souhaite un audit informatique de ma structure (parc, accès, licences, sauvegardes).\n\nMa structure et le nombre de postes : " },
+    "audit-abonnements": { sujet: "Autre", formule: "Audit des abonnements et contrats (290 € HT)",
+      message: "Bonjour,\nje souhaite un audit de mes abonnements informatiques (internet, téléphonie, logiciels, licences) pour repérer les doublons.\n\nMa structure : " },
+    "preparation-poste": { sujet: "Nouveau poste ou matériel", formule: "Préparation d'un poste (149 € HT par poste)",
+      message: "Bonjour,\nj'ai un ou plusieurs postes à préparer (installation, comptes, Office, transfert des données).\n\nNombre de postes et date souhaitée : " },
+    "migration-365": { sujet: "Migration de messagerie", formule: "Migration Microsoft 365 (590 € HT jusqu'à 5 boîtes, puis 70 € par boîte)",
+      message: "Bonjour,\nje souhaite migrer ma messagerie vers Microsoft 365 sans coupure.\n\nNombre de boîtes et messagerie actuelle : " },
+    "suivi": { sujet: "Formule mensuelle", formule: "Formule Suivi (Essentiel 149 € ou Sérénité 249 € HT / mois)",
+      message: "Bonjour,\nje cherche un suivi informatique mensuel pour ma structure.\n\nNombre de postes et besoins : " }
+  };
+
+  function initLienOffre() {
+    var id;
+    try { id = new URLSearchParams(window.location.search).get("offre"); } catch (e) { return; }
+    var o = id && OFFRES[id];
+    if (!o) return;
+    var formule = $("#c-formule"), sujet = $("#c-sujet"), message = $("#c-message");
+    if (formule) formule.value = o.formule;
+    if (sujet) sujet.value = o.sujet;
+    if (message && !message.value.trim()) message.value = o.message;
+    var contact = $("#contact");
+    if (contact) setTimeout(function () { contact.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150);
+  }
+
   function initSimulateur() {
     var form = $("#sim");
     if (!form) return;
@@ -473,6 +501,7 @@
     initChoisir();
     initContact();
     initCalendrier();
+    initLienOffre();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", demarrer);
   else demarrer();
