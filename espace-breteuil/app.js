@@ -1102,7 +1102,8 @@
     // Toucher n'importe où ferme (le toucher atteint quand même le bouton) ; Échap aussi.
     s.fermer = function () { setTimeout(finSurbrillance, 0); };
     s.touche = function (e) { if (e.key === "Escape") finSurbrillance(); };
-    setTimeout(function () { if (surbrillance !== s) return; document.addEventListener("pointerdown", s.fermer, true); document.addEventListener("keydown", s.touche, true); }, 60);
+    // (le toucher sur « Montrez-moi » est déjà fini : l'écran est affiché quand le bouton est trouvé)
+    document.addEventListener("pointerdown", s.fermer, true); document.addEventListener("keydown", s.touche, true);
     window.addEventListener("scroll", s.placer, true); window.addEventListener("resize", s.placer);
   }
 
