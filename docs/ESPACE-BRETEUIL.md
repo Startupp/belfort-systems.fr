@@ -1,4 +1,4 @@
-# Espace Breteuil — application (v5.5.0)
+# Espace Breteuil — application (v5.5.1)
 
 Application installable (PWA) pour l'équipe du Château de Breteuil, **sur mobile d'abord**,
 branchée sur le vrai tenant Microsoft. Pour des personnes non techniques : écrans courts,
