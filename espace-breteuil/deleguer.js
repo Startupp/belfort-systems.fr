@@ -15,9 +15,13 @@
  *      donner   POST   /roleManagement/directory/roleAssignments { roleDefinitionId, principalId, directoryScopeId: "/" }
  *      retirer  GET    /roleManagement/directory/roleAssignments?$filter=principalId eq … and roleDefinitionId eq …
  *               DELETE /roleManagement/directory/roleAssignments/<id>
- * Garde-fous (profil.js, testés) : jamais son propre rôle d'administrateur général, jamais le
- * dernier administrateur général, jamais le dernier propriétaire ni soi-même ; confirmation
- * en 2 étapes ; chaque action notée dans le journal (« Journal des délégations »).
+ * Garde-fous (profil.js, testés) : jamais le dernier administrateur général (v5.7 : se retirer
+ * soi-même est permis s'il en reste un autre), jamais le dernier propriétaire ni soi-même ;
+ * confirmation en 2 étapes avec l'encadré « Toute modification prend effet immédiatement chez
+ * Microsoft » ; retrait d'administrateur général : il faut en plus taper « RETIRER ».
+ * v5.7 : le compte prestataire (config.prestataires) est marqué « 🛠️ Prestataire informatique »,
+ * en clair ; on peut lui retirer ses rôles comme à n'importe qui. Rien de caché.
+ * Chaque action est notée dans le journal (« Journal des délégations »).
  */
 (function () {
   "use strict";
@@ -26,6 +30,31 @@
   var h = EB.h, icone = EB.icone, emoji = EB.emoji;
   var X = function () { return window.EBConnecte; };
   var PERM = P.PERMISSION_ROLES;
+  /* v5.7 : rappelé dans CHAQUE confirmation. */
+  var ENCADRE = "Toute modification prend effet immédiatement chez Microsoft.";
+  /** Compte prestataire (config.prestataires) : montré en clair, jamais caché. */
+  function estPrestataire(adresse) {
+    var l = ((self.EB_CONFIG || {}).prestataires || []).map(function (x) { return String(x).toLowerCase(); });
+    return !!adresse && l.indexOf(String(adresse).toLowerCase()) > -1;
+  }
+  function badgePrestataire() { return h("span", { class: "etiquette prestataire", "data-etiquette": "prestataire" }, "🛠️ Prestataire informatique"); }
+  /** Confirmation renforcée : taper « RETIRER » (retrait du rôle d'administrateur général). */
+  function taperRetirer(titre, phrase) {
+    return new Promise(function (fin) {
+      var d = EB.dialogue(), fini = false;
+      function terminer(v) { if (fini) return; fini = true; EB.fermerDialogue(); fin(v); }
+      d.oncancel = function () { terminer(false); };
+      var champ = h("input", { class: "champ", type: "text", id: "taper-retirer", autocomplete: "off", autocapitalize: "characters", spellcheck: "false", "data-action": "taper-retirer" });
+      var ok = h("button", { class: "btn large danger", type: "submit", disabled: true, "data-action": "confirmer-retirer" }, "Retirer définitivement ce rôle");
+      champ.addEventListener("input", function () { ok.disabled = champ.value.trim().toUpperCase() !== "RETIRER"; });
+      d.appendChild(h("form", { class: "contenu", onsubmit: function (e) { e.preventDefault(); if (!ok.disabled) terminer(true); } },
+        emoji("✋", "grand"), h("h2", { id: "detail-titre" }, titre), h("p", { class: "phrase" }, phrase),
+        h("p", { class: "encadre-confirmation", role: "note" }, emoji("⚠️"), " " + ENCADRE + " Retirer un administrateur lui retire tout de suite l'accès à l'administration."),
+        h("label", { for: "taper-retirer" }, "Pour confirmer, tapez RETIRER :"), champ, ok,
+        h("button", { class: "btn secondaire large", type: "button", onclick: function () { terminer(false); } }, "Non, annuler")));
+      EB.ouvrirDialogue(d, champ);
+    });
+  }
 
   function moiId() { var m = window.EBAcces && window.EBAcces.me(); return m && m.id; }
   function journal() {
@@ -43,7 +72,7 @@
     var gen = {};
     ecran.gen = gen;
     function la(el) { return ecran.gen === gen && document.body.contains(el); }
-    app.appendChild(EB.barre("Donner un rôle", EB.hub()));
+    app.appendChild(EB.barre("Rôles et administrateurs", EB.hub()));
     app.appendChild(h("div", { class: "bandeau info", role: "note" }, icone("info"), h("div", null,
       h("strong", null, "Changements réels"), h("span", null, "Ils s'appliquent tout de suite chez Microsoft. Chaque action demande 2 confirmations et est notée dans le journal."))));
 
@@ -68,7 +97,7 @@
         var refus = P.refusRetraitProprietaire(u.Id, moi, ids);
         return h("div", { class: "carte-acces", "data-proprietaire": D.adresseDe(u) },
           X().avatarPersonne({ Title: u.Title, displayName: u.Title }),
-          h("span", { class: "qui" }, h("b", null, u.Title), h("small", null, D.adresseDe(u)), refus ? h("span", { class: "etiquettes" }, h("span", { class: "etiquette protege", title: refus }, "🔒 " + (u.Id === moi ? "Vous" : "Dernier"))) : null),
+          h("span", { class: "qui" }, h("b", null, u.Title), h("small", null, D.adresseDe(u)), estPrestataire(D.adresseDe(u)) ? h("span", { class: "etiquettes" }, badgePrestataire()) : null, refus ? h("span", { class: "etiquettes" }, h("span", { class: "etiquette protege", title: refus }, "🔒 " + (u.Id === moi ? "Vous" : "Dernier"))) : null),
           h("span", { class: "acts" }, h("button", { class: "btn petit secondaire", type: "button", disabled: !!refus, title: refus || null,
             onclick: function () { retirerProprietaire(c, u, ids); } }, "Retirer")));
       })));
@@ -82,7 +111,7 @@
         if (x.type !== "interne") { EB.toast("Seule une personne du Château (@breteuil.fr) peut être gestionnaire."); return null; }
         p = x;
         if (actuels.some(function (u) { return D.adresseDe(u) === String(p.upn || p.mail).toLowerCase(); })) { EB.toast(p.nom + " est déjà gestionnaire."); return null; }
-        return EB.confirmer({ emoji: "🏰", titre: "Rendre " + p.nom + " gestionnaire ?", phrase: p.nom + " pourra choisir qui peut ouvrir chaque dossier des documents de l'équipe.",
+        return EB.confirmer({ encadre: ENCADRE, emoji: "🏰", titre: "Rendre " + p.nom + " gestionnaire ?", phrase: p.nom + " pourra choisir qui peut ouvrir chaque dossier des documents de l'équipe.",
           consequence: "Cela vaut pour tout le site, tout de suite.", bouton: "Oui, rendre gestionnaire" });
       }).then(function (ok) {
         if (!ok) return;
@@ -99,7 +128,7 @@
     function retirerProprietaire(c, u, ids) {
       var refus = P.refusRetraitProprietaire(u.Id, c.moiSp && c.moiSp.Id, ids);
       if (refus) { EB.toast(refus); return; }
-      EB.confirmer({ emoji: "🏰", titre: "Retirer " + u.Title + " des gestionnaires ?", phrase: u.Title + " ne pourra plus changer qui a accès aux dossiers.",
+      EB.confirmer({ encadre: ENCADRE, emoji: "🏰", titre: "Retirer " + u.Title + " des gestionnaires ?", phrase: u.Title + " ne pourra plus changer qui a accès aux dossiers.",
         consequence: "Ses autres accès (voir, modifier) ne changent pas.", bouton: "Oui, retirer" }).then(function (ok) {
         if (!ok) return;
         return G.sp("POST", "/_api/web/sitegroups/getbyid(" + c.groupeProprietaires.Id + ")/users/removebyid(" + u.Id + ")").then(function () {
@@ -144,7 +173,9 @@
             return h("div", { class: "carte-acces", "data-titulaire": m.id },
               X().avatarPersonne({ id: m.id, displayName: m.displayName }),
               h("span", { class: "qui" }, h("b", null, m.displayName), h("small", null, m.mail || m.userPrincipalName || ""),
-                refus ? h("span", { class: "etiquettes" }, h("span", { class: "etiquette protege", title: refus }, "🔒 " + (m.id === moiId() ? "Vous" : "Dernier"))) : null),
+                estPrestataire(m.userPrincipalName) || estPrestataire(m.mail) || refus || m.id === moiId() ? h("span", { class: "etiquettes" },
+                  estPrestataire(m.userPrincipalName) || estPrestataire(m.mail) ? badgePrestataire() : null,
+                  refus ? h("span", { class: "etiquette protege", title: refus }, "🔒 Dernier") : m.id === moiId() ? h("span", { class: "etiquette protege" }, "Vous") : null) : null),
               h("span", { class: "acts" }, h("button", { class: "btn petit secondaire", type: "button", disabled: !permission || !!refus, title: refus || (!permission ? "Autorisation nécessaire" : null),
                 onclick: function () { retirerRole(cle, m, adminIds); } }, "Retirer")));
           }) : h("p", { class: "vide-doux" }, "Personne pour l'instant.")),
@@ -161,7 +192,7 @@
         return G.graph("GET", "/users/" + encodeURIComponent(p.upn || p.mail) + "?$select=id,displayName").then(function (u) {
           id = u.id;
           if (actuels.some(function (m) { return m.id === id; })) { EB.toast(p.nom + " a déjà ce rôle."); return null; }
-          return EB.confirmer({ emoji: "🔑", titre: "Donner le rôle à " + p.nom + " ?", phrase: p.nom + " deviendra « " + R.nom + " ». " + R.phrase,
+          return EB.confirmer({ encadre: ENCADRE, emoji: "🔑", titre: "Donner le rôle à " + p.nom + " ?", phrase: p.nom + " deviendra « " + R.nom + " ». " + R.phrase,
             consequence: cle === "admin" ? "Attention : un administrateur général peut TOUT faire, y compris retirer vos propres droits." : "Cela prend effet tout de suite chez Microsoft.",
             bouton: "Oui, donner le rôle" });
         });
@@ -181,8 +212,14 @@
       var R = P.ROLES[cle];
       var refus = P.refusRetraitRole(cle, m.id, moiId(), adminIds);
       if (refus) { EB.toast(refus); return; }
-      EB.confirmer({ emoji: "🔑", titre: "Retirer le rôle à " + m.displayName + " ?", phrase: m.displayName + " ne sera plus « " + R.nom + " ».",
-        consequence: "Son compte, ses mails et ses fichiers ne changent pas : seul ce rôle est retiré.", bouton: "Oui, retirer le rôle" }).then(function (ok) {
+      var moi = m.id === moiId(), presta = estPrestataire(m.userPrincipalName) || estPrestataire(m.mail);
+      var consequence = (presta ? "Damien (prestataire informatique) ne pourra plus faire ce que permet ce rôle pour le Château. " : "")
+        + (moi ? "Vous perdrez vous-même ce rôle tout de suite. " : "") + "Son compte, ses mails et ses fichiers ne changent pas : seul ce rôle est retiré.";
+      var etape = EB.confirmer({ encadre: ENCADRE, emoji: "🔑", titre: (moi ? "Vous retirer le rôle « " + R.nom + " »" : "Retirer le rôle à " + m.displayName) + " ?", phrase: (moi ? "Vous" : m.displayName) + " ne " + (moi ? "serez" : "sera") + " plus « " + R.nom + " ».",
+        consequence: consequence, bouton: "Oui, retirer le rôle" });
+      // Administrateur général : en plus, taper « RETIRER ».
+      if (P.retraitRenforce(cle)) etape = etape.then(function (ok) { return ok && taperRetirer("Dernière vérification", consequence); });
+      etape.then(function (ok) {
         if (!ok) return;
         var filtre = "principalId eq '" + m.id + "' and roleDefinitionId eq '" + R.id + "'";
         return G.graph("GET", "/roleManagement/directory/roleAssignments?$filter=" + encodeURIComponent(filtre), undefined, { scopes: [PERM] }).then(function (j) {

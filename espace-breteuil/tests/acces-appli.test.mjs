@@ -36,3 +36,18 @@ test("garde-fous et corps Graph", () => {
   assert.deepEqual(X.corpsAffectation("sp1", "u4"), { principalId: "u4", resourceId: "sp1", appRoleId: "00000000-0000-0000-0000-000000000000" });
   assert.equal(X.resume(e), "Seules les personnes cochées peuvent se connecter (1 personne).");
 });
+
+test("prestataire informatique : affiché en clair, coché par défaut, retirable", () => {
+  const util = UTIL.concat([U("dam", "Damien Belfort", { mail: null, userPrincipalName: "damien@breteuil02.onmicrosoft.com" })]);
+  const e = X.etat({ id: "sp1", appRoleAssignmentRequired: false }, [], util, ["u2"], "u1", ["DAMIEN@breteuil02.onmicrosoft.com"]);
+  const d = e.lignes.find((l) => l.id === "dam");
+  assert.deepEqual([d.prestataire, d.verrouille, d.raison], [true, false, "Prestataire informatique"]);
+  assert.deepEqual(e.lignes.slice(0, 3).map((l) => l.id), ["u2", "u1", "dam"], "juste après les verrouillés");
+  assert.equal(X.afficheeCochee(e, d), true, "coché par défaut");
+  assert.deepEqual(X.aAffecterAvantRestriction(e), ["u2", "u1", "dam"]);
+  assert.deepEqual(X.aAffecterAvantRestriction(e, { sansPrestataire: true }), ["u2", "u1"], "retiré : pas réaffecté");
+  assert.equal(X.afficheeCochee(e, d, { sansPrestataire: true }), false);
+  assert.equal(X.refusDecocher(d), "", "François peut le retirer (avec confirmation à l'écran)");
+  const r = X.etat({ id: "sp1", appRoleAssignmentRequired: true }, [], util, ["u2"], "u1", ["damien@breteuil02.onmicrosoft.com"]);
+  assert.equal(X.afficheeCochee(r, r.lignes.find((l) => l.id === "dam")), false, "restreint et pas affecté : décoché (vrai état)");
+});

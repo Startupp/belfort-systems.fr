@@ -350,7 +350,7 @@
         var n = A.reglagesDe(sauve); n.logo = null; n.icone = sauve.icone;
         ecrire(n).then(function () { EB.toast("Logo retiré."); EB.rendre(); });
       });
-    } }, "Retirer le logo") : null);
+    } }, "Retirer le logo"));
     if (sauve && sauve.icone) sec.appendChild(h("p", { class: "aide-ecran", "data-etat": "icone" }, "Icône d'installation n° " + sauve.icone.version + " proposée" +
       (sauve.icone.demande ? " (demande n° " + sauve.icone.demande + " envoyée à Damien)" : "") + ". " + (Number((CFG.icone || {}).version || 1) >= sauve.icone.version ? "Elle est publiée." : "Damien doit encore la publier.")));
     return sec;
@@ -453,6 +453,7 @@
   }
 
   EB.ecran("apparence", ecran);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") charger(); }); // relu au plus toutes les 10 min
   window.EBApparenceEcrans = { charger: charger, partage: partage, logo: logo, imgLogo: imgLogo, majLogos: majLogos, peutModifier: peutModifier, tuile: tuile, ligneMoi: ligneMoi,
     verifierIcone: verifierIcone, plateforme: plateforme, oublierBrouillon: function () { etat.brouillon = null; etat.logo = null; } };
 })();

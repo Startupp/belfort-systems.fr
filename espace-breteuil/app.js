@@ -34,8 +34,9 @@
     try { if (valeur == null) localStorage.removeItem(cle); else localStorage.setItem(cle, JSON.stringify(valeur)); return true; } catch (e) { return false; }
   }
 
-  var REGLAGES_DEFAUT = { vue: "semaine", texte: "normal", theme: "auto", palette: "creme", passes: "afficher", mode: "", demos: false, zoom: 0 };
-  var reglages = Object.assign({}, REGLAGES_DEFAUT, lire("eb:reglages", {}));
+  /* v5.7 : palette « chateau » (défaut) = suivre l'apparence choisie pour tout le Château (Gérer › Apparence). */
+  var REGLAGES_DEFAUT = { vue: "semaine", texte: "normal", theme: "auto", palette: "chateau", paletteV: 2, passes: "afficher", mode: "", demos: false, zoom: 0 };
+  var reglages = Object.assign({}, REGLAGES_DEFAUT, (window.EBMigrerReglages || function (x) { return x; })(lire("eb:reglages", {}) || {}));
   if (reglages.calendrierSeul) reglages.mode = "calendrier"; // reprise v3
   ["calendrierSeul", "monEspace", "moi", "ouvrirMonEspace"].forEach(function (k) { delete reglages[k]; });
   function sauverReglages() { ecrire("eb:reglages", reglages); appliquerAffichage(); }
@@ -320,7 +321,8 @@
   /* ------------------------------------------------------------------ */
   /** En-tête bleu de chaque écran : bouton retour (sauf écrans d'onglet), titre, actions à droite. */
   function barre(titre, retour, droite, sousTitre) {
-    return h("header", { class: "barre" },
+    var AE = window.EBApparenceEcrans, logoChateau = !retour && AE && AE.logo() ? AE.imgLogo("logo", true) : null;
+    return h("header", { class: "barre" }, logoChateau,
       retour ? h("a", { class: "btn-retour", href: retour.href, "aria-label": "Retour : " + (retour.texte || "page précédente") }, icone("retour"), h("span", { class: "txt" }, retour.texte || "Retour")) : null,
       h("h1", null, insecable(titre), sousTitre ? h("small", null, sousTitre) : null),
       droite || null,
@@ -477,6 +479,7 @@
           opts.emoji ? emoji(opts.emoji, "grand") : null,
           h("h2", { id: "detail-titre" }, insecable(opts.titre || "Vérifions ensemble")),
           h("p", { class: "phrase" }, opts.phrase || ""),
+          opts.encadre ? h("p", { class: "encadre-confirmation", role: "note" }, emoji("⚠️"), " ", opts.encadre) : null,
           // Une seule étape : la conséquence s'affiche sous la phrase (rien n'est caché).
           opts.deuxEtapes === false && opts.consequence ? h("p", { class: "phrase consequence" }, opts.consequence) : null,
           opts.deuxEtapes === false ? null : h("p", { class: "etape" }, "Étape 1 sur 2"),
@@ -491,6 +494,7 @@
           emoji("✋", "grand"),
           h("h2", { id: "detail-titre" }, "Dernière vérification"),
           h("p", { class: "phrase" }, opts.consequence || opts.phrase || ""),
+          opts.encadre ? h("p", { class: "encadre-confirmation", role: "note" }, emoji("⚠️"), " ", opts.encadre) : null,
           h("p", { class: "etape" }, "Étape 2 sur 2"),
           ok,
           h("button", { class: "btn secondaire large", type: "button", onclick: function () { terminer(false); } }, "Non, annuler")));
@@ -570,9 +574,19 @@
   /* ------------------------------------------------------------------ */
   function ecranPremier(app) {
     var g = G(), configure = g && g.estConfigure();
+    var AE = window.EBApparenceEcrans, ED = g && g.erreurDetail && g.erreurDetail();
+    // v5.7 : Microsoft a refusé la connexion (« Affectation requise » et personne non cochée) → message clair.
+    if (ED && ED.code === "AADSTS50105" && window.EBAppliEcrans) {
+      app.appendChild(h("div", { class: "premier" },
+        h("div", { class: "premier-tete" }, h("span", { class: "eb-anneau grand lent premier-anneau" }, AE ? AE.imgLogo("premier-logo") : h("img", { class: "premier-logo", src: "icones/icon.svg", alt: "" })), h("h1", { class: "reflet" }, "Espace Breteuil")),
+        window.EBAppliEcrans.carteRefus(function () { reglages.mode = "calendrier"; sauverReglages(); history.replaceState(null, "", "#/planning"); rendre(); },
+          function () { Promise.resolve(g.connecter()).catch(function () {}); }),
+        h("p", { class: "premier-pied" }, "Belfort Systems · 06 09 89 74 43")));
+      return;
+    }
     app.appendChild(h("div", { class: "premier" },
       h("div", { class: "premier-tete" },
-        h("span", { class: "eb-anneau grand lent premier-anneau" }, h("img", { class: "premier-logo", src: "icones/icon.svg", alt: "", width: "64", height: "64" })),
+        h("span", { class: "eb-anneau grand lent premier-anneau" }, AE ? AE.imgLogo("premier-logo") : h("img", { class: "premier-logo", src: "icones/icon.svg", alt: "", width: "64", height: "64" })),
         h("h1", { class: "reflet" }, "Espace Breteuil"),
         h("p", null, "Château de Breteuil"),
         h("p", { class: "premier-date" }, h("span", { class: "reflet" }, maj(jourLong(aujourdhui()))))),
@@ -687,19 +701,26 @@
     app.appendChild(barre("Planning", null, actualiser, maj(jourLong(aujourdhui()))));
     // v5.5 : les épingles sont sur l'Accueil ; le Planning ne montre que le planning.
     blocPlanning(app, null); // v4 : plus de bandeau d'absences ni de pointage (planning en lecture seule)
+    if (window.EBAppliEcrans) app.appendChild(window.EBAppliEcrans.partagePlanning()); // v5.7 : lien public pour l'équipe
   }
 
   /* Mode « calendrier seul » (choisi sur le premier écran, mémorisé sur l'appareil). */
   function ecranCalendrierSeul(app) {
     app.appendChild(barre("Planning du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Recharger le planning", onclick: actualiserPlanning }, icone("actualiser")), "Sans connexion"));
+    // v5.7 : employés sans compte — un gros bouton pour mettre le planning sur l'écran d'accueil.
+    if (!estInstallee()) app.appendChild(h("a", { class: "gros-bouton ajouter-ecran", href: "#/installer", "data-action": "ajouter-ecran" },
+      h("span", { class: "eb-anneau" }, emoji("📲")), h("span", null, h("b", null, "Ajouter à l'écran d'accueil"), h("small", null, "Le planning en un geste, sans connexion")), h("span", { class: "chevron" }, icone("droite"))));
     var corps = h("div", { class: "calendrier-seul" });
     app.appendChild(corps);
     corps.appendChild(blocAujourdhui());
     corps.appendChild(h("h2", { class: "titre-groupe", id: "tout-le-planning", tabindex: "-1" }, "Tout le planning"));
     blocPlanning(corps, null);
     app.appendChild(h("div", { class: "barre-bas" },
-      h("button", { class: "btn-verre", type: "button", "data-action": "accueil", onclick: function () {
-        reglages.mode = ""; sauverReglages(); rendre();
+      estInstallee() ? h("button", { class: "btn-verre", type: "button", "data-action": "connexion-discrete", onclick: function () {
+        var g = G(); if (g && g.estConfigure()) Promise.resolve(g.connecter()).catch(function () {});
+      } }, icone("cle"), "Se connecter")
+      : h("button", { class: "btn-verre", type: "button", "data-action": "accueil", onclick: function () {
+        reglages.mode = ""; sauverReglages(); history.replaceState(null, "", location.pathname + location.search); rendre();
       } }, icone("gauche"), "Accueil"),
       h("button", { class: "btn-verre large", type: "button", onclick: function () {
         var c = document.getElementById("tout-le-planning");
@@ -876,7 +897,9 @@
       window.EBAideEcrans ? window.EBAideEcrans.lignesMoi() : null, // v5.4 : Mes demandes (+ Demandes pour le prestataire)
       action("#/reglages", "⚙️", "Réglages", "Taille du texte, couleurs, planning"),
       reglages.demos ? action("#/demos", "🧪", "Démos", "Écrans d'essai, données fictives") : null,
-      estInstallee() ? null : action("#/installer", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil"),
+      estInstallee() ? action("#/installer", "📲", "Gérer l'application", "Version, mise à jour, désinstaller") : action("#/installer", "📲", "Installer l'application", "Une icône sur l'écran d'accueil"),
+      window.EBApparenceEcrans ? window.EBApparenceEcrans.ligneMoi() : null,
+      r && r.droits.adminApplis && !ongletGestion() ? action("#/acces-appli", "🔐", "Qui peut utiliser l'application", "Réglé chez Microsoft") : null,
       h("a", { class: "action", href: "tel:+33609897443" }, emoji("📞"), h("span", null, h("b", null, "Appeler Damien"), h("small", null, "Belfort Systems · 06 09 89 74 43")), h("span", { class: "fleche", "aria-hidden": "true" }, "›")),
       h("button", { class: "action", type: "button", "data-action": "deconnexion", onclick: deconnecter }, emoji("🚪"), h("span", null, h("b", null, "Se déconnecter"), h("small", null, "Quitter sur cet appareil")), h("span", { class: "fleche", "aria-hidden": "true" }, "›"))));
 
@@ -955,11 +978,16 @@
       { href: "#/guides/finance", icone: "livre", libelle: "Modes d'emploi", sous: "Les gestes de facturation, pas à pas" },
     ]));
     if (sec.indexOf("deleguer") > -1) app.appendChild(bloc("Administration", [
-      { href: "#/deleguer", icone: "etoile", libelle: "Donner un rôle", sous: "Qui peut gérer quoi chez Microsoft" },
+      { href: "#/deleguer", icone: "etoile", libelle: "Rôles et administrateurs", sous: "Administrateurs généraux et autres rôles Microsoft", action: "roles-admins" },
       { href: "#/guides/admin", icone: "livre", libelle: "Modes d'emploi", sous: "Les gestes d'administration, pas à pas" },
       { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Réglages Microsoft", sous: "Le site d'administration Microsoft 365" },
     ]));
     if (sec.indexOf("site") > -1 && window.EBSiteEcrans) app.appendChild(window.EBSiteEcrans.section());
+    if (r.droits.adminApplis) app.appendChild(bloc("Application", [
+      { href: "#/acces-appli", emoji: "🔐", teinte: "corail", libelle: "Qui peut utiliser l'application", sous: "Tout le monde, ou seulement certaines personnes", action: "acces-appli" },
+    ]));
+    if (window.EBApparenceEcrans) app.appendChild(window.EBApparenceEcrans.tuile(grandesTuiles)); // v5.7 : selon le droit de modifier apparence.json
+    if (window.EBAppliEcrans) ajouter(app, window.EBAppliEcrans.bientot("Bientôt"));
     if (window.EBAideEcrans) app.appendChild(window.EBAideEcrans.blocGerer(grandesTuiles)); // v5.6 : prestataire seulement
   }
 
@@ -1044,6 +1072,7 @@
       if (o.autres.length) app.appendChild(h("section", { class: "section", "aria-labelledby": "t-autres" }, h("h2", { id: "t-autres" }, "Autres choses possibles"), vers(o.autres)));
     } else app.appendChild(h("section", { class: "section", "aria-labelledby": "t-que-faire" }, h("h2", { id: "t-que-faire" }, "Que voulez-vous faire ?"), vers(liste)));
     if (window.EBEpingles) app.appendChild(window.EBEpingles.section());
+    if (window.EBAppliEcrans && r && (r.niveau === "gestionnaire" || r.sections.length)) ajouter(app, window.EBAppliEcrans.bientot("Bientôt")); // v5.7 : direction
     app.appendChild(h("section", { class: "section" }, h("h2", null, "Aide"), h("div", { class: "actions-liste" },
       action("#/comment-faire", "❓", "Comment faire ?", "Les gestes de tous les jours, pas à pas"),
       action("#/bienvenue/choix", "🧭", "Changer ce que j'utilise", "Choisir les tuiles du haut"))));
@@ -1172,12 +1201,25 @@
     return h("div", { class: "boite reglage", "data-reglage": cleR }, h("h2", null, titre), aide ? h("p", null, aide) : null, seg);
   }
 
+  /** v5.7 : « Comme le Château » (défaut), Crème et praline, Bleu élégant, ou une autre palette (liste). */
+  function choixCouleurs() {
+    var A = window.EBApparence, autre = A && reglages.palette !== "chateau" && reglages.palette !== "creme" && reglages.palette !== "bleu" ? A.palette(reglages.palette) : null;
+    var options = [["chateau", "Comme le Château"], ["creme", "Crème et praline"], ["bleu", "Bleu élégant"]];
+    if (autre) options.push([autre.id, autre.nom]);
+    var boite = choix("Couleurs", "Par défaut, l'appli suit l'apparence choisie pour tout le Château. Votre choix ne change que cet appareil.", "palette", options, null, { structure: true });
+    if (A) boite.appendChild(h("button", { class: "btn secondaire petit autres-palettes", type: "button", "data-action": "autres-palettes", onclick: function () {
+      choisir("Choisir une palette", A.PALETTES.map(function (p) { return { valeur: p.id, titre: p.nom, sous: p.phrase }; }), "Seulement sur cet appareil.").then(function (v) {
+        if (v) { reglages.palette = v; sauverReglages(); rendre(); }
+      });
+    } }, "Autres palettes…"));
+    return boite;
+  }
   function ecranReglages(app) {
     app.appendChild(barre("Réglages", { href: "#/moi", texte: "Moi" }, null, "Gardés sur cet appareil uniquement"));
     app.appendChild(h("h2", { class: "titre-groupe" }, "Affichage"));
     app.appendChild(h("div", { class: "grille-reglages" },
       choix("Taille du texte", "Texte, boutons et tuiles, ensemble.", "texte", [["petit", "Petit"], ["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
-      choix("Couleurs", "Crème et praline par défaut, ou Bleu élégant : bleu nuit et doré.", "palette", [["creme", "Crème et praline"], ["bleu", "Bleu élégant"]]),
+      choixCouleurs(),
       choix("Clair ou sombre", "« Auto » suit le réglage du téléphone.", "theme", [["auto", "Auto"], ["clair", "Clair"], ["sombre", "Sombre"]])));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Planning"));
@@ -1211,53 +1253,53 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Écran : installer                                                   */
-  /* ------------------------------------------------------------------ */
-  function ecranInstaller(app) {
-    app.appendChild(barre("Installer l'appli", { href: "#/moi", texte: "Moi" }));
-    if (estInstallee()) { app.appendChild(h("div", { class: "boite" }, h("p", null, "C'est fait : l'Espace Breteuil est installé sur ce téléphone."))); return; }
-    app.appendChild(h("p", { class: "aide-ecran" }, "L'Espace Breteuil s'installe comme une appli, sans compte et sans mot de passe."));
-    if (invitationInstallation) app.appendChild(h("div", { class: "actions" }, h("button", { class: "btn large", type: "button", onclick: function () {
-      var inv = invitationInstallation; invitationInstallation = null;
-      inv.prompt(); inv.userChoice.then(rendre, rendre);
-    } }, icone("installer"), "Installer maintenant")));
-    app.appendChild(h("div", { class: "boite" }, h("h3", null, emoji("🍎"), " iPhone ou iPad (Safari)"),
-      h("ol", { class: "etapes" },
-        h("li", null, h("span", null, "Touchez le bouton Partager (le carré avec une flèche vers le haut).")),
-        h("li", null, h("span", null, "Choisissez « Sur l'écran d'accueil ».")),
-        h("li", null, h("span", null, "Touchez « Ajouter ». C'est fini.")))));
-    app.appendChild(h("div", { class: "boite" }, h("h3", null, emoji("🤖"), " Android (Chrome)"),
-      h("ol", { class: "etapes" },
-        h("li", null, h("span", null, "Touchez les trois petits points en haut à droite.")),
-        h("li", null, h("span", null, "Choisissez « Installer l'application ».")),
-        h("li", null, h("span", null, "Confirmez. C'est fini.")))));
-  }
-
-  /* ------------------------------------------------------------------ */
   /* Mises à jour (service worker)                                       */
   /* ------------------------------------------------------------------ */
-  var enregistrement = null, rechargementEnCours = false;
-  function afficherMiseAJour(attente) {
-    var m = document.getElementById("maj");
-    m.textContent = "";
-    m.appendChild(h("span", null, emoji("✨"), " Nouvelle version disponible"));
-    m.appendChild(h("button", { class: "btn", type: "button", onclick: function () { activer(attente); } }, "Mettre à jour"));
-    m.hidden = false;
-  }
+  /*
+   * v5.7 : mises à jour SILENCIEUSES. Une nouvelle version s'installe en arrière-plan puis s'active d'elle-même
+   * (skipWaiting + rechargement) au bon moment : appli mise en arrière-plan, ou 45 s sans toucher l'écran,
+   * jamais pendant une saisie (champ actif, fenêtre ouverte, brouillon d'Apparence non appliqué).
+   * Au lancement suivant : petit message « Application mise à jour (5.7.0) ».
+   */
+  var enregistrement = null, rechargementEnCours = false, enAttente = null, minuteurCalme = null;
   function activer(attente) {
-    if (!attente) return;
+    if (!attente || rechargementEnCours) return;
     rechargementEnCours = true;
     attente.postMessage({ type: "SKIP_WAITING" });
   }
   function enTrainDeSaisir() {
     var a = document.activeElement;
-    return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) || !!(document.getElementById("detail") || {}).open;
+    return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) || !!(document.getElementById("detail") || {}).open
+      || !!document.querySelector('[data-modifie="oui"]') || !!document.querySelector(".aide-panneau[open], .aide-panneau.ouvert");
   }
+  /** Une version attend : l'activer dès que c'est sans gêne. */
+  function quandCalme() {
+    if (!enAttente) return;
+    if (document.visibilityState === "hidden" && !enTrainDeSaisir()) { activer(enAttente); return; }
+    clearTimeout(minuteurCalme);
+    minuteurCalme = setTimeout(function () { if (enAttente && !enTrainDeSaisir()) activer(enAttente); else quandCalme(); }, 45000);
+  }
+  ["pointerdown", "keydown", "scroll"].forEach(function (t) { window.addEventListener(t, function () { if (enAttente) quandCalme(); }, { passive: true, capture: true }); });
+  document.addEventListener("visibilitychange", function () { if (enAttente) quandCalme(); });
+  function attendre(w) { enAttente = w; quandCalme(); }
+  /** Recherche manuelle (Gérer l'application). Renvoie "nouvelle" | "a-jour" | "erreur". */
   function verifierMiseAJour(manuel) {
-    if (!enregistrement) { if (manuel) toast("Les mises à jour ne sont pas disponibles ici."); return; }
-    enregistrement.update().then(function () {
-      if (manuel && !enregistrement.waiting && !enregistrement.installing) toast("L'appli est à jour (version " + VERSION + ").");
-    }).catch(function () { if (manuel) toast("Pas de connexion : réessayez plus tard."); });
+    if (!enregistrement) { if (manuel) toast("Les mises à jour ne sont pas disponibles ici."); return Promise.resolve("erreur"); }
+    return enregistrement.update().then(function () {
+      var w = enregistrement.waiting || enregistrement.installing;
+      if (!w) { if (manuel) toast("L'appli est à jour (version " + VERSION + ")."); return "a-jour"; }
+      if (manuel) {
+        if (enregistrement.waiting) activer(enregistrement.waiting);
+        else w.addEventListener("statechange", function () { if (w.state === "installed") activer(w); });
+      }
+      return "nouvelle";
+    }).catch(function () { if (manuel) toast("Pas de connexion : réessayez plus tard."); return "erreur"; });
+  }
+  /** Message discret après une mise à jour (version différente du dernier lancement). */
+  function annoncerVersion() {
+    var avant = lire("eb:version", null);
+    ecrire("eb:version", VERSION);
+    if (avant && avant !== VERSION) setTimeout(function () { toast("Application mise à jour (" + VERSION + ")"); }, 600);
   }
   function demarrerMisesAJour() {
     if (!("serviceWorker" in navigator)) return;
@@ -1267,14 +1309,12 @@
     navigator.serviceWorker.register("sw.js", { scope: "./" }).then(function (reg) {
       enregistrement = reg;
       // Une version attendait déjà : on est au lancement, personne ne saisit → mise à jour tout de suite.
-      if (reg.waiting && navigator.serviceWorker.controller) {
-        if (!enTrainDeSaisir()) activer(reg.waiting); else afficherMiseAJour(reg.waiting);
-      }
+      if (reg.waiting && navigator.serviceWorker.controller) { if (!enTrainDeSaisir()) activer(reg.waiting); else attendre(reg.waiting); }
       reg.addEventListener("updatefound", function () {
         var nouveau = reg.installing;
         if (!nouveau) return;
         nouveau.addEventListener("statechange", function () {
-          if (nouveau.state === "installed" && navigator.serviceWorker.controller) afficherMiseAJour(nouveau);
+          if (nouveau.state === "installed" && navigator.serviceWorker.controller) attendre(nouveau);
         });
       });
       var derniere = Date.now();
@@ -1294,7 +1334,7 @@
   }
   var ecrans = {
     accueil: ecranAccueil, "comment-faire": ecranCommentFaire, bienvenue: ecranBienvenue, planning: ecranPlanning, moi: ecranMoi, equipe: ecranGerer, finance: ecranGerer, gerer: ecranGerer, demos: ecranDemos,
-    reglages: ecranReglages, installer: ecranInstaller, guides: ecranGuides, details: ecranDetails,
+    reglages: ecranReglages, guides: ecranGuides, details: ecranDetails, // installer, apparence, acces-appli, admins : modules v5.7
   };
   /* Anciennes adresses (v2, v3) → leur seul endroit en v4. */
   var ALIAS = { "": "accueil", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "fichiers", dossiers: "fichiers", plus: "moi", verifier: "details", pilotage: "suivi" }; // v5.2 : #/pilotage → #/suivi
@@ -1310,7 +1350,7 @@
     if (ongletsActuels().some(function (o) { return o.id === e; }) && chemin.length < 2) return 0;
     if (e === "onedrive" && chemin.length < 2) return 1;
     if (e === "comment-faire" || e === "bienvenue") return 1;
-    if (e === "demos" || e === "reglages" || e === "installer" || e === "deleguer" || e === "personnes" && chemin.length < 2) return 1;
+    if (e === "demos" || e === "reglages" || e === "installer" || e === "deleguer" || e === "apparence" || e === "acces-appli" || e === "personnes" && chemin.length < 2) return 1;
     if (e === "details") return 2;
     return Math.max(1, chemin.filter(Boolean).length);
   }
@@ -1354,13 +1394,18 @@
     enAttenteDroits = false;
     if (!connecte()) {
       // Pas connecté : 2 boutons, ou le calendrier seul. Rien d'autre (ni onglets, ni démo).
-      cleEcran = reglages.mode === "calendrier" ? "~calendrier" : "~premier";
+      // v5.7 : #/planning et #/installer s'ouvrent SANS connexion (employés sans compte) ; l'appli installée
+      // par quelqu'un de non connecté s'ouvre directement sur le planning (« Se connecter » reste discret en bas).
+      var refus = G() && G().erreurDetail && G().erreurDetail(), refuse = refus && refus.code === "AADSTS50105";
+      var publique = chemin[0] === "installer" ? "installer" : (chemin[0] === "planning" || reglages.mode === "calendrier" || (estInstallee() && !refuse)) ? "calendrier" : "premier";
+      cleEcran = "~" + publique;
       vue = h("div", { class: "ecran " + (cleEcran === dernierEcran ? "sans-anim" : dernierEcran === null ? "ouverture" : "") });
       rendreOnglets("", true);
-      app.classList.add("plein-ecran");
+      app.classList.toggle("plein-ecran", publique !== "installer");
       document.body.classList.remove("premier-lancement");
-      if (reglages.mode === "calendrier") ecranCalendrierSeul(vue); else ecranPremier(vue);
-      if (chemin.join("/") !== "") history.replaceState(null, "", location.pathname + location.search);
+      if (publique === "installer" && ecrans.installer) ecrans.installer(vue, chemin);
+      else if (publique === "calendrier") ecranCalendrierSeul(vue); else ecranPremier(vue);
+      if (chemin.join("/") !== "" && chemin[0] !== "planning" && chemin[0] !== "installer") history.replaceState(null, "", location.pathname + location.search);
       ecran = "";
     } else {
       if (ALIAS.hasOwnProperty(chemin[0])) {
@@ -1412,7 +1457,7 @@
     if (!connecte()) return;
     var e = cheminActuel()[0] || "";
     if (besoinQuestionnaire()) { rendre(); return; }
-    var dependants = ["accueil", "comment-faire", "bienvenue", "moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "reserver", "site", "liens", "suivi"];
+    var dependants = ["accueil", "comment-faire", "bienvenue", "moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "reserver", "site", "liens", "suivi", "apparence", "acces-appli", "installer"];
     if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
     else rendreOnglets(ongletDe(e), false);
   }
@@ -1434,6 +1479,9 @@
     definirReel: function (r) { reel = r; },
     onglet: function () {},
     insecable: insecable, jourLong: jourLong, heure: heure, hub: hub, reglages: function () { return reglages; },
+    // v5.7 : installation et mises à jour
+    estInstallee: estInstallee, invitation: function () { return invitationInstallation; }, utiliserInvitation: function () { invitationInstallation = null; },
+    verifierMiseAJour: verifierMiseAJour, connecte: connecte,
   };
 
   /* ------------------------------------------------------------------ */
@@ -1441,6 +1489,7 @@
   /* ------------------------------------------------------------------ */
   function demarrer() {
     appliquerAffichage();
+    annoncerVersion();
     var graph = window.EBGraph ? window.EBGraph.init() : Promise.resolve(false);
     if (window.EBAcces) window.EBAcces.surChangement(droitsChanges);
     var json = Promise.all([
@@ -1453,6 +1502,8 @@
     Promise.all([json, graph.catch(function () { return false; })]).then(function (r) {
       var estCo = r[1];
       if (estCo && window.EBAcces) window.EBAcces.charger(); // droits réels, en arrière-plan
+      if (estCo && window.EBApparenceEcrans) window.EBApparenceEcrans.charger(); // v5.7 : apparence du Château (cache 10 min)
+      if (window.EBApparenceEcrans) window.EBApparenceEcrans.verifierIcone(); // v5.7 : iPhone/iPad installé, logo changé
       if (estCo && (!location.hash || location.hash === "#/" || location.hash === "#")) history.replaceState(null, "", departApresConnexion());
       if (estCo || dernierEcran === null) rendre(); // calendrier seul déjà affiché : rien à refaire
       return planningPromis;

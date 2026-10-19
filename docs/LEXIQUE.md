@@ -15,7 +15,7 @@ de l'appli (titres, onglets, boutons, menus, messages), l'ancien texte, le nouve
    « restreint », « héritage cassé »), « Gestionnaire » (pas « propriétaire du site »).
 5. **Une phrase courte** sous chaque tuile ; une seule action principale par carte.
 6. Les écrans **Démos** (cachés, données fictives), **Détails techniques** (pour Damien) et
-   **Donner un rôle** (administrateur général) gardent quelques termes techniques : ils ne sont pas
+   **Rôles et administrateurs** (administrateur général) gardent quelques termes techniques : ils ne sont pas
    destinés au personnel.
 
 ## Les 3 niveaux (affichés dans Moi et au premier lancement)
@@ -189,7 +189,7 @@ l'appli affiche « Lecteur » (jamais plus que sûr) mais ne cache pas les bouto
 |---|---|---|
 | (grande ligne) Suivi informatique — tout ce qui a été fait pour vous | Tuile **🛠️ Suivi informatique** · *Ce que Damien a fait pour le Château* | #/suivi. |
 | Administration | Administration | — |
-| Déléguer | **Donner un rôle** · *Qui peut gérer quoi chez Microsoft* | #/deleguer. |
+| Déléguer | **Rôles et administrateurs** · *Administrateurs généraux et autres rôles Microsoft* | #/deleguer (v5.7 : anciennement « Donner un rôle »). |
 | Guides | **Modes d'emploi** · *Les gestes pas à pas* | — |
 | Centre d'admin | **Réglages Microsoft** · *Le site d'administration Microsoft 365* | Nouvel onglet. |
 | Personnes | **L'équipe** · *Les comptes et adresses partagées* | #/personnes. |

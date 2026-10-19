@@ -71,7 +71,9 @@ test("ManagePermissions lu dans effectivebasepermissions", () => {
 });
 
 test("garde-fous : ni son propre rôle d'administrateur général, ni le dernier", () => {
-  assert.match(P.refusRetraitRole("admin", "moi", "moi", ["moi", "francois"]), /propre rôle/);
+  assert.equal(P.refusRetraitRole("admin", "moi", "moi", ["moi", "francois"]), null, "v5.7 : se retirer est permis (confirmation renforcée), sauf dernier");
+  assert.match(P.refusRetraitRole("admin", "moi", "moi", ["moi"]), /dernier administrateur/);
+  assert.equal(P.retraitRenforce("admin"), true); assert.equal(P.retraitRenforce("facturation"), false);
   assert.match(P.refusRetraitRole("admin", "francois", "moi", ["francois"]), /dernier administrateur/);
   assert.equal(P.refusRetraitRole("admin", "francois", "moi", ["moi", "francois"]), null);
   assert.equal(P.refusRetraitRole("facturation", "moi", "moi", ["moi"]), null, "on peut se retirer un autre rôle");

@@ -43,15 +43,18 @@
    * Renvoie { restreint, lignes, groupes, nbCoches }. Les lignes « verrouillées » ne peuvent pas être décochées
    * (vous-même et les administrateurs généraux) : sinon personne ne pourrait plus rouvrir l'accès.
    */
-  function etat(sp, affectations, utilisateurs, admins, moiId) {
-    var parId = {};
+  function etat(sp, affectations, utilisateurs, admins, moiId, prestataires) {
+    var parId = {}, presta = (prestataires || []).map(min);
     (affectations || []).forEach(function (a) { if (a && a.principalType === "User") parId[a.principalId] = a; });
     admins = (admins || []).map(String);
     var lignes = (utilisateurs || []).filter(estMembre).map(function (u) {
       var a = parId[u.id], moi = u.id === moiId, admin = admins.indexOf(u.id) > -1;
+      // Prestataire informatique (config.prestataires) : affiché EN CLAIR, coché par défaut, retirable (avec confirmation).
+      var estPresta = !moi && !admin && (presta.indexOf(min(u.mail)) > -1 || presta.indexOf(min(u.userPrincipalName)) > -1);
       return { id: u.id, nom: u.displayName || u.mail || u.userPrincipalName || "?", mail: min(u.mail || u.userPrincipalName),
-        coche: !!a, affectationId: a ? a.id : null, verrouille: moi || admin, raison: moi ? "Vous" : admin ? "Administrateur général" : "" };
-    }).sort(function (x, y) { return (y.verrouille - x.verrouille) || x.nom.localeCompare(y.nom, "fr"); });
+        coche: !!a, affectationId: a ? a.id : null, verrouille: moi || admin, prestataire: estPresta,
+        raison: moi ? "Vous" : admin ? "Administrateur général" : estPresta ? "Prestataire informatique" : "" };
+    }).sort(function (x, y) { return (y.verrouille - x.verrouille) || (y.prestataire - x.prestataire) || x.nom.localeCompare(y.nom, "fr"); });
     var groupes = (affectations || []).filter(function (a) { return a && a.principalType === "Group"; })
       .map(function (a) { return { id: a.principalId, nom: a.principalDisplayName || "Groupe", affectationId: a.id }; });
     return { restreint: !!(sp && sp.appRoleAssignmentRequired), lignes: lignes, groupes: groupes,
@@ -59,8 +62,14 @@
   }
 
   /** Personnes à affecter AVANT de restreindre (vous + administrateurs généraux pas encore cochés). */
-  function aAffecterAvantRestriction(e) {
-    return e.lignes.filter(function (l) { return l.verrouille && !l.coche; }).map(function (l) { return l.id; });
+  function aAffecterAvantRestriction(e, opts) {
+    var sansPresta = !!(opts && opts.sansPrestataire);
+    return e.lignes.filter(function (l) { return !l.coche && (l.verrouille || (l.prestataire && !sansPresta)); }).map(function (l) { return l.id; });
+  }
+  /** Case affichée cochée ? Le prestataire l'est par défaut tant que l'accès n'est pas restreint (il sera affecté au passage). */
+  function afficheeCochee(e, l, opts) {
+    if (l.coche || l.verrouille) return true;
+    return !!(l.prestataire && !e.restreint && !(opts && opts.sansPrestataire));
   }
   /** Peut-on décocher cette ligne ? → "" ou la raison (phrase simple). */
   function refusDecocher(l) {
@@ -79,7 +88,7 @@
   }
 
   var api = { ROLE_DEFAUT: ROLE_DEFAUT, ROLES_ADMIN: ROLES_ADMIN, GA: GA, SCOPES_ECRIRE: SCOPES_ECRIRE, peutGerer: peutGerer, peutGererWids: peutGererWids,
-    etat: etat, aAffecterAvantRestriction: aAffecterAvantRestriction, refusDecocher: refusDecocher, corpsAffectation: corpsAffectation, resume: resume };
+    etat: etat, aAffecterAvantRestriction: aAffecterAvantRestriction, afficheeCochee: afficheeCochee, refusDecocher: refusDecocher, corpsAffectation: corpsAffectation, resume: resume };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.EBAccesAppli = api;
 })(typeof self !== "undefined" ? self : this);

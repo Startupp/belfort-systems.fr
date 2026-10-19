@@ -1,8 +1,8 @@
 /* Espace Breteuil — service worker.
  * - Le numéro de version vient de version.js : le changer = nouvelle version publiée.
- * - Une nouvelle version s'installe en arrière-plan puis ATTEND : l'appli affiche
- *   « Nouvelle version disponible — Mettre à jour » (message SKIP_WAITING), ou
- *   l'active d'elle-même au lancement suivant (voir app.js).
+ * - Une nouvelle version s'installe en arrière-plan puis ATTEND ; v5.7 : l'appli l'active d'elle-même
+ *   (message SKIP_WAITING) quand c'est sans gêne — mise en arrière-plan, ou 45 s sans toucher l'écran,
+ *   jamais pendant une saisie — puis affiche « Application mise à jour (x.y.z) » (voir app.js).
  * - Coquille en cache : l'appli s'ouvre hors ligne.
  * - Pages, JSON, ICS : réseau d'abord, cache en secours. Le reste : cache d'abord.
  * Le planning (autre domaine : le Worker) est gardé par l'appli dans « eb-planning ».
@@ -13,7 +13,7 @@ var VERSION = "eb-v" + (self.EB_VERSION || "0");
 var COQUILLE = [
   "./", "./index.html", "./app.css", "./prechargement.js", "./version.js", "./config.js",
   "./ics.js", "./demo.js", "./resume.js", "./droits.js", "./erreurs.js", "./graph.js", "./diagnostic.js", "./diagnostic.css", "./app.js", "./connecte.js",
-  "./cache.js", "./profil.js", "./usages.js", "./acces.js", "./deleguer.js", "./siteweb.js", "./siteweb-ecrans.js", "./suivi.js", "./suivi-ecrans.js", "./depot.js", "./depot-ecran.js", "./aide.js", "./aide-ecrans.js", "./fichiers.js", "./epingles.js", "./liste-boites.js", "./boites-partagees.json",
+  "./cache.js", "./profil.js", "./usages.js", "./acces.js", "./deleguer.js", "./siteweb.js", "./siteweb-ecrans.js", "./suivi.js", "./suivi-ecrans.js", "./depot.js", "./depot-ecran.js", "./aide.js", "./aide-ecrans.js", "./apparence.js", "./apparence-ecrans.js", "./plateforme.js", "./acces-appli.js", "./appli-ecrans.js", "./fichiers.js", "./epingles.js", "./liste-boites.js", "./boites-partagees.json",
   "./demos/demos.css", "./demos/donnees.js", "./demos/commun.js", "./demos/roles.js", "./demos/equipe.js",
   "./demos/boites.js", "./demos/finance.js", "./demos/securite.js",
   "./personnes.json", "./fiches.json", "./exemple.ics", "./exemple-accueil.ics", "./manifest.webmanifest",

@@ -60,4 +60,15 @@ self.EB_CONFIG = {
   suivi: { libelle: "Suivi informatique", tuile: "Ce que Damien a fait pour le Château",
     dossier: "Suivi informatique", fichier: "suivi.json", guides: "Guides", ancien: { dossier: "Pilotage", fichier: "pilotage.json" } },
 
+  /* v5.7 « Apparence » : fichier partagé dans le dossier du suivi (<Commun>/<suivi.dossier>/apparence.json) et sous-dossier
+   * des icônes proposées. icone.version = version de l'icône PUBLIÉE dans espace-breteuil/icones/ : Damien l'augmente
+   * quand il publie une nouvelle icône (voir docs, « Publier l'icône ») → bandeau « Le logo a changé » sur iPhone/iPad. */
+  apparence: { fichier: "apparence.json", icones: "Icônes" },
+  icone: { version: 1 },
+
+  /* v5.7 « Bientôt » : cartes d'annonce (Accueil pour la direction, et Gérer). Aucune donnée du client ici. */
+  bientot: [
+    { titre: "HACCP Restauration — bientôt disponible", emoji: "🍽️", texte: "Les relevés d'hygiène de la restauration (températures, nettoyages, traçabilité) arriveront ici. En préparation avec l'équipe restauration." },
+  ],
+
 };

@@ -174,7 +174,6 @@
   function ongletDe(route, r) {
     var map = { accueil: "accueil", "comment-faire": "accueil", bienvenue: "accueil", planning: "planning", "": "accueil", fichiers: "fichiers", onedrive: "fichiers", dossiers: "fichiers", commun: "fichiers", acces: "fichiers", restreindre: "fichiers", reserver: "fichiers", journal: "fichiers",
       moi: "moi", reglages: "moi", details: "moi", verifier: "moi", installer: "moi", demos: "moi", aide: "moi", demandes: "moi" };
-    if (route === "planning-public") return "planning";
     if (map[route] != null) return map[route];
     var g = ongletGestion(r ? r.onglets : onglets([]));
     return g ? g.id : "moi";
@@ -188,10 +187,12 @@
    * Renvoie null si c'est permis, sinon la raison (phrase simple).
    */
   function refusRetraitRole(role, cibleId, moiId, titulaires) {
-    if (role === "admin" && cibleId && cibleId === moiId) return "Vous ne pouvez pas retirer votre propre rôle d'administrateur général.";
+    // v5.7 : on peut retirer son propre rôle d'administrateur général (confirmation renforcée), sauf s'il est le dernier.
     if (role === "admin" && (titulaires || []).filter(Boolean).length <= 1) return "Impossible de retirer le dernier administrateur général : il en faut toujours au moins un.";
     return null;
   }
+  /** v5.7 : retrait demandant de taper « RETIRER » (rôle d'administrateur général, à quelqu'un ou à soi-même). */
+  function retraitRenforce(role) { return role === "admin"; }
   /** Peut-on retirer cette personne des propriétaires du site ? */
   function refusRetraitProprietaire(cibleId, moiId, proprietaires) {
     if (cibleId != null && cibleId === moiId) return "Vous ne pouvez pas vous retirer vous-même des propriétaires du site.";
@@ -226,7 +227,7 @@
   var api = {
     ROLES: ROLES, ROLES_DELEGABLES: ROLES_DELEGABLES, PERMISSION_ROLES: PERMISSION_ROLES, LIBELLES: LIBELLES,
     NIVEAUX: NIVEAUX, ongletGestion: ongletGestion, niveauDe: niveauDe, editerDe: editerDe, peutEditer: peutEditer,
-    aLeBit: aLeBit, gererDroitsDe: gererDroitsDe, cleDeRole: cleDeRole, estMembreDe: estMembreDe, deduire: deduire, onglets: onglets,
+    aLeBit: aLeBit, retraitRenforce: retraitRenforce, gererDroitsDe: gererDroitsDe, cleDeRole: cleDeRole, estMembreDe: estMembreDe, deduire: deduire, onglets: onglets,
     routePermise: routePermise, ongletDe: ongletDe, refusRetraitRole: refusRetraitRole,
     refusRetraitProprietaire: refusRetraitProprietaire, aLaPermission: aLaPermission, pastille: pastille,
   };
