@@ -35,6 +35,9 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      # Jeton GitHub fine-grained limité à ce dépôt (Contents + Pull requests : lecture/écriture),
+      # pour la vue « Publications » du tableau de bord. Facultatif.
+      JETON_GITHUB_ADMIN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -127,3 +130,7 @@ jobs:
       - name: Poser le mot de passe du tableau de bord
         if: ${{ env.ADMIN_PASSWORD != '' }}
         run: printf '%s' "$ADMIN_PASSWORD" | npx wrangler secret put ADMIN_PASSWORD --config wrangler.ci.toml
+
+      - name: Poser le jeton GitHub de la vue « Publications »
+        if: ${{ env.JETON_GITHUB_ADMIN != '' }}
+        run: printf '%s' "$JETON_GITHUB_ADMIN" | npx wrangler secret put GITHUB_TOKEN --config wrangler.ci.toml

@@ -141,6 +141,7 @@
     var c = chemin.split('?')[0];
     if (c === '/admin/resume') return chargerApercu('resume');
     if (c === '/admin/premier-contact') return chargerApercu('premier-contact');
+    if (c === '/admin/publications') return chargerApercu('publications');
     if (c === '/admin/contacts') return chargerApercu('contacts');
     if (c === '/admin/projets') return chargerApercu('projets');
     if (/^\/admin\/projets\/[^/]+$/.test(c)) return chargerApercu('projet-exemple');
@@ -330,8 +331,8 @@
     return parts.length ? parts : ['premier'];
   }
   function naviguer(h) { location.hash = '#/' + h; }
-  var VUES = { premier: vuePremierContact, aujourdhui: vueAujourdhui, boite: vueBoite, projets: vueProjets, factures: vueFactures, clients: vueClients, reglages: vueReglages, plus: vuePlus, espaces: vueEspaces };
-  var SOUS_PLUS = ['factures', 'clients', 'reglages', 'espaces'];
+  var VUES = { premier: vuePremierContact, aujourdhui: vueAujourdhui, boite: vueBoite, projets: vueProjets, factures: vueFactures, publications: vuePublications, clients: vueClients, reglages: vueReglages, plus: vuePlus, espaces: vueEspaces };
+  var SOUS_PLUS = ['factures', 'publications', 'outils', 'clients', 'reglages', 'espaces'];
   var rendu = 0;
   async function router(silencieux) {
     if ($('app').hidden) return;
@@ -465,6 +466,38 @@
   ACTIONS['msg-note'] = async function (d) {
     await action({ titre: 'Note sur ce message', champs: [{ id: 'note', label: 'Note (pour vous seul)', type: 'textarea', valeur: d.note, placeholder: 'Rappelé le 12, devis à envoyer…' }],
       valider: 'Enregistrer', action: function (v) { return api('/admin/premier-contact/' + d.id, { method: 'PATCH', body: { note: v.note } }); }, succes: 'Note enregistrée.' });
+  };
+
+  /* ============================================================
+     ÉCRAN : PUBLICATIONS (demandes de fusion GitHub → mise en ligne)
+     GET /admin/publications ; POST /admin/publications/:numero/fusionner.
+     Sans jeton GitHub côté serveur : {configure:false}, bouton désactivé.
+     ============================================================ */
+  async function vuePublications() {
+    var r = await api('/admin/publications');
+    var pulls = r.pulls || [];
+    var ok = !!r.configure;
+    return html`
+      <div class="entete-vue"><div><h1>Publications</h1><p class="hint">Modifications proposées sur le site (dépôt ${r.depot || 'Startupp/belfort-systems.fr'}). « Review & Merge » met en ligne après confirmation.</p></div>
+        <button type="button" class="btn ghost sm" data-act="recharger">Actualiser</button></div>
+      ${ok ? '' : html`<p class="note avert"><strong>Jeton GitHub non configuré.</strong> Ajoutez le secret <code>ADMIN_GITHUB_TOKEN</code> au dépôt GitHub (jeton fine-grained limité au dépôt, droits Contents et Pull requests en lecture/écriture) puis relancez le déploiement du Worker.</p>`}
+      <div class="carte">${pulls.length ? pulls.map(function (p) {
+        return html`<article class="pr" id="pr-${p.numero}">
+          <div class="tete"><b>${p.titre}</b><span class="numero">#${p.numero}</span></div>
+          <div class="meta"><span class="branche">${p.branche}</span><span>→ ${p.cible || 'main'}</span><span>ouverte ${ecoule(p.cree)}</span>${p.maj && p.maj !== p.cree ? html`<span>· mise à jour ${ecoule(p.maj)}</span>` : ''}${p.auteur ? html`<span>· ${p.auteur}</span>` : ''}${p.brouillon ? html`<span class="etiquette brouillon">Brouillon</span>` : ''}</div>
+          <div class="actions">
+            <a class="btn ghost sm" href="${p.apercu}" target="_blank" rel="noopener">Aperçu</a>
+            <a class="btn ghost sm" href="${p.url}" target="_blank" rel="noopener">Voir sur GitHub</a>
+            <button type="button" class="btn sm" data-act="pr-fusionner" data-numero="${p.numero}" data-titre="${p.titre}" data-branche="${p.branche}" data-cible="${p.cible || 'main'}" ${ok && !p.brouillon ? '' : 'disabled'} title="${ok ? (p.brouillon ? 'Brouillon : à finaliser sur GitHub d’abord' : 'Fusionner dans ' + (p.cible || 'main')) : 'Jeton GitHub non configuré'}">Review &amp; Merge</button>
+          </div></article>`;
+      }) : html`<p class="vide">${ok ? 'Aucune modification en attente.' : 'Jeton GitHub non configuré : la liste ne peut pas être lue.'}</p>`}</div>
+      <p class="aide">L’aperçu Cloudflare Pages d’une branche est à <code>https://&lt;branche&gt;.belfort-systems-fr.pages.dev</code> (branche en minuscules, caractères spéciaux remplacés par des tirets). Après fusion, le site se met à jour en une à deux minutes.</p>`;
+  }
+  ACTIONS['pr-fusionner'] = async function (d) {
+    await action({ titre: 'Fusionner « ' + d.titre + ' » dans ' + d.cible + ' ?', danger: false, valider: 'Fusionner et publier',
+      corps: html`<p>La branche <code>${d.branche}</code> sera fusionnée dans <code>${d.cible}</code> (fusion classique) et le site sera mis en ligne par Cloudflare Pages. Cette action ne se défait pas depuis ici.</p>
+        <p class="petit">Vérifiez d’abord l’aperçu sur téléphone puis sur PC.</p>`,
+      action: function () { return api('/admin/publications/' + d.numero + '/fusionner', { method: 'POST' }); }, succes: 'Fusionnée : mise en ligne en cours.' });
   };
 
   /* ============================================================
@@ -1210,6 +1243,8 @@
   async function vuePlus() {
     return html`<h1>Plus</h1><div class="carte">
       <a class="ligne-clic" href="#/factures"><b>Factures</b><span class="meta">Brouillons et factures émises depuis le tableau de bord</span></a>
+      <a class="ligne-clic" href="#/publications"><b>Publications</b><span class="meta">Modifications du site en attente, aperçu et mise en ligne</span></a>
+      <a class="ligne-clic" href="#/outils"><b>Outils</b><span class="meta">Raccourcis : Indy, Cloudflare, GitHub, Search Console…</span></a>
       <a class="ligne-clic" href="#/clients"><b>Clients</b><span class="meta">Jetons d’accès, espaces /clients/</span></a>
       <a class="ligne-clic" href="#/reglages"><b>Réglages</b><span class="meta">Thème, taille du texte, déconnexion</span></a>
       <a class="ligne-clic" href="#/espaces"><b>Espaces chiffrés (ancien outil)</b><span class="meta">Génération et rotation des pages chiffrées</span></a></div>`;

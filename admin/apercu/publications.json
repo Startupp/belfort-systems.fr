@@ -1,0 +1,43 @@
+{
+ "ok": true,
+ "configure": true,
+ "depot": "Startupp/belfort-systems.fr",
+ "pulls": [
+  {
+   "numero": 42,
+   "titre": "Page d'accueil : nouveau bloc « Pour qui ? »",
+   "branche": "feat/bloc-pour-qui",
+   "cible": "main",
+   "auteur": "Startupp",
+   "brouillon": false,
+   "cree": "2026-10-18T10:15:00Z",
+   "maj": "2026-10-19T08:40:00Z",
+   "url": "https://github.com/Startupp/belfort-systems.fr/pull/42",
+   "apercu": "https://feat-bloc-pour-qui.belfort-systems-fr.pages.dev"
+  },
+  {
+   "numero": 41,
+   "titre": "Correction d'une faute dans le pied de page",
+   "branche": "fix/pied-de-page",
+   "cible": "main",
+   "auteur": "Startupp",
+   "brouillon": false,
+   "cree": "2026-10-12T17:02:00Z",
+   "maj": "2026-10-12T17:02:00Z",
+   "url": "https://github.com/Startupp/belfort-systems.fr/pull/41",
+   "apercu": "https://fix-pied-de-page.belfort-systems-fr.pages.dev"
+  },
+  {
+   "numero": 40,
+   "titre": "Essai : nouvelle grille tarifaire (à ne pas publier encore)",
+   "branche": "feat/grille-2027",
+   "cible": "main",
+   "auteur": "Startupp",
+   "brouillon": true,
+   "cree": "2026-10-05T09:00:00Z",
+   "maj": "2026-10-05T09:00:00Z",
+   "url": "https://github.com/Startupp/belfort-systems.fr/pull/40",
+   "apercu": "https://feat-grille-2027.belfort-systems-fr.pages.dev"
+  }
+ ]
+}
