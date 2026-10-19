@@ -43,7 +43,8 @@ jobs:
         id: kv
         run: |
           set -euo pipefail
-          LISTE=$(npx wrangler kv namespace list 2>/dev/null || echo "[]")
+          LISTE=$(npx wrangler kv namespace list 2>/dev/null) || LISTE="[]"
+          echo "$LISTE" | jq -e 'type=="array"' >/dev/null 2>&1 || LISTE="[]"
           echo "Espaces KV existants : $LISTE"
           ID=$(echo "$LISTE" | jq -r '.[] | select(.title | test("RATE$")) | .id' | head -n1)
           if [ -z "$ID" ]; then
@@ -60,7 +61,8 @@ jobs:
         run: |
           set -euo pipefail
           NOM="belfort_contact"
-          LISTE=$(npx wrangler d1 list --json 2>/dev/null || echo "[]")
+          LISTE=$(npx wrangler d1 list --json 2>/dev/null) || LISTE="[]"
+          echo "$LISTE" | jq -e 'type=="array"' >/dev/null 2>&1 || LISTE="[]"
           echo "Bases D1 existantes : $LISTE"
           ID=$(echo "$LISTE" | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
           if [ -z "$ID" ]; then
