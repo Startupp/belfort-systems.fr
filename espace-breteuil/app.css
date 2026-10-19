@@ -556,6 +556,18 @@ dialog.detail form.contenu label { font-weight: 700; }
 .visage .avatar { width: 44px; height: 44px; font-size: .95rem; }
 .visages.petits .visage { width: 70px; font-size: .85rem; }
 .visages.petits .avatar { width: 46px; height: 46px; font-size: 1rem; }
+/* v5.5.1 : noms longs (« chanteclercdeveloppement », « Développement ») — cellule de largeur fixe, nom sur
+ * 2 lignes au plus, coupé n'importe où puis « … » ; le nom complet est dans title / aria-label. */
+.visage { min-width: 0; }
+.visages.petits .visage { flex: none; width: 76px; }
+.visage .nom-visage { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+  max-width: 100%; word-break: break-word; overflow-wrap: anywhere; text-overflow: ellipsis; line-height: 1.2; text-align: center; }
+.visage .adresse-visage { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: .72rem; font-weight: 500; color: var(--texte-2); line-height: 1.2; }
+/* Petit groupe « Prestataire informatique » (Damien), à part et discret. */
+.groupe-schema.prestataire .titre-groupe-schema { font-size: .95rem; min-height: 44px; color: var(--texte-2); }
+.groupe-schema.prestataire .avatar { width: 38px; height: 38px; font-size: .85rem; }
+.boites-licence { margin: 8px 0 0; }
 .vide-doux { color: var(--texte-3); margin: 0; }
 
 /* Dossier commun */
@@ -1007,6 +1019,8 @@ body::before { content: ""; position: fixed; inset: -25%; z-index: -1; pointer-e
 .eb-anneau.rond { border-radius: 50%; }
 .eb-anneau.lent, .verrou .pastille.pastille { animation-duration: 14s; }
 .eb-anneau svg.ic { font-size: 1.3rem; }
+.eb-anneau.photo { overflow: hidden; padding: 0; }
+.eb-anneau.photo img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
 .action > .emoji, .droit > .emoji, .fichier > .emoji, .choix > .emoji, .carte-role .tete > .emoji {
   width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex: none; font-size: 1.2rem; text-align: center; }
 .tuile .pastille.pastille { --fi: var(--primaire-pale); }

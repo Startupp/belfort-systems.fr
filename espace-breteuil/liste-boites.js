@@ -8,7 +8,7 @@
  * Aussi dans la démo « Boîtes mail » (données fictives), avec un bouton « Régler » (photo, accès).
  * Sur téléphone, la ligne passe sur deux niveaux (requête de conteneur) ; jamais de défilement de côté.
  *
- * boites : [{ nom, adresse, qui }] — qui : [{ nom, couleur }] ; [] = personne ; null = inconnu
+ * boites : [{ nom, adresse, qui, photo? }] — photo() → adresse de la photo de profil ou null ; qui : [{ nom, couleur }] ; [] = personne ; null = inconnu
  * (vraies données : Microsoft Graph ne donne pas les accès aux boîtes, ils se règlent dans Exchange).
  */
 (function () {
@@ -57,8 +57,15 @@
     ouvrir.addEventListener("click", function (ev) {
       if (window.EBEpingles && window.EBEpingles.ouvrir) { ev.preventDefault(); window.EBEpingles.ouvrir({ type: "boite", titre: b.nom, adresse: b.adresse, url: url }); }
     });
+    // v5.5.1 : photo de profil de la boîte s'il y en a une (b.photo() → adresse blob: ou null), sinon l'enveloppe.
+    var anneau = h("span", { class: "eb-anneau rond d" + (i % 5 + 1), "aria-hidden": "true" }, icone("mail"));
+    if (typeof b.photo === "function") Promise.resolve().then(b.photo).then(function (url) {
+      if (!url) return;
+      anneau.textContent = ""; anneau.classList.add("photo");
+      anneau.appendChild(h("img", { src: url, alt: "" }));
+    }, function () {});
     return h("li", { class: "ligne-boite", "data-boite": b.adresse },
-      h("span", { class: "eb-anneau rond d" + (i % 5 + 1), "aria-hidden": "true" }, icone("mail")),
+      anneau,
       h("span", { class: "quoi" }, h("b", null, b.nom), h("small", null, b.adresse)),
       pastilles(b.qui),
       h("span", { class: "actes" }, ouvrir, epingler ? boutonEpingler(b) : null,
