@@ -36,6 +36,9 @@
   }
   function aDesFichiers(e) {
     var t = e.dataTransfer && e.dataTransfer.types;
+    // v5.6 : un formulaire « Aide » avec pièces jointes est affiché → c'est lui qui reçoit les fichiers.
+    var aide = document.querySelector(".aide-pj-cible");
+    if (aide && aide.getClientRects().length) return false;
     return !!t && Array.prototype.indexOf.call(t, "Files") > -1;
   }
 
