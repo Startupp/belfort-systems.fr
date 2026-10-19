@@ -50,7 +50,9 @@
     var lignes = (utilisateurs || []).filter(estMembre).map(function (u) {
       var a = parId[u.id], moi = u.id === moiId, admin = admins.indexOf(u.id) > -1;
       // Prestataire informatique (config.prestataires) : affiché EN CLAIR, coché par défaut, retirable (avec confirmation).
-      var estPresta = !moi && !admin && (presta.indexOf(min(u.mail)) > -1 || presta.indexOf(min(u.userPrincipalName)) > -1);
+      // Même s'il est aussi administrateur général : il reste retirable par François (rien de verrouillé ni de caché pour lui).
+      var estPresta = !moi && (presta.indexOf(min(u.mail)) > -1 || presta.indexOf(min(u.userPrincipalName)) > -1);
+      if (estPresta) admin = false;
       return { id: u.id, nom: u.displayName || u.mail || u.userPrincipalName || "?", mail: min(u.mail || u.userPrincipalName),
         coche: !!a, affectationId: a ? a.id : null, verrouille: moi || admin, prestataire: estPresta,
         raison: moi ? "Vous" : admin ? "Administrateur général" : estPresta ? "Prestataire informatique" : "" };

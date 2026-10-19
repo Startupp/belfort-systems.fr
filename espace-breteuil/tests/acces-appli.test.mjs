@@ -51,3 +51,10 @@ test("prestataire informatique : affiché en clair, coché par défaut, retirabl
   const r = X.etat({ id: "sp1", appRoleAssignmentRequired: true }, [], util, ["u2"], "u1", ["damien@breteuil02.onmicrosoft.com"]);
   assert.equal(X.afficheeCochee(r, r.lignes.find((l) => l.id === "dam")), false, "restreint et pas affecté : décoché (vrai état)");
 });
+
+test("prestataire aussi administrateur général : toujours affiché comme prestataire, retirable", () => {
+  const util = UTIL.concat([U("dam", "Damien", { mail: "damien@exemple.onmicrosoft.com" })]);
+  const e = X.etat({ id: "sp1", appRoleAssignmentRequired: false }, [], util, ["u2", "dam"], "u1", ["damien@exemple.onmicrosoft.com"]);
+  const d = e.lignes.find((l) => l.id === "dam");
+  assert.deepEqual([d.prestataire, d.verrouille], [true, false]);
+});
