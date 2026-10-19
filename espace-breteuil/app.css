@@ -1624,6 +1624,41 @@ textarea.champ.aide-message { min-height: 140px; padding: 12px 14px; resize: ver
 @media (max-width: 420px) { .aide-filtres-l2 { grid-template-columns: 1fr; } }
 .aide-lignes-moi { display: contents; }
 .page > .ecran > .aide-fil, .page > .ecran > .aide-liste, .ecran > .aide-fil, .ecran > .aide-liste { max-width: 760px; }
+/* v5.6 : pièces jointes */
+.aide-pj { display: grid; gap: 8px; }
+.aide-pj-ligne { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.aide-pj-bouton { min-height: 44px; flex: none; }
+.aide-pj-bouton[disabled] { opacity: .5; cursor: not-allowed; }
+.aide-pj-aide { flex: 1 1 200px; color: var(--texte-2); font-size: .82rem; line-height: 1.35; }
+.aide-pj-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.aide-pj-puces, .aide-pieces { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.aide-pj-puces { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+.aide-pj-puces:empty { display: none; }
+.aide-pj-puce { display: flex; align-items: center; gap: 8px; max-width: 100%; min-width: 0; padding: 4px 4px 4px 8px; border-radius: var(--rayon-petit);
+  border: 1px solid var(--trait-fort); background: var(--surface); }
+.aide-pj-puce.prepa { opacity: .7; }
+.aide-pj-mini { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; flex: none; }
+.aide-pj-nom { display: grid; min-width: 0; line-height: 1.25; }
+.aide-pj-nom { flex: 1 1 auto; }
+.aide-pj-nom b { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aide-fichier .aide-pj-nom b { max-width: 26ch; }
+.aide-pj-nom small { color: var(--texte-2); font-size: .78rem; }
+.aide-pj-retirer { width: 44px; height: 44px; flex: none; }
+.aide-pj-erreur:empty { display: none; }
+.aide-pj-cible { transition: outline-color .15s; outline: 2px dashed transparent; outline-offset: 6px; border-radius: var(--rayon-petit); }
+.aide-pj-cible.aide-pj-survol { outline-color: var(--or); background: color-mix(in srgb, var(--or) 7%, transparent); }
+.aide-pieces { margin-top: 4px; }
+.aide-piece.cible { outline: 3px solid var(--or); outline-offset: 2px; border-radius: 10px; }
+.aide-vignette-btn { display: block; padding: 0; border: 1px solid var(--trait); border-radius: 8px; overflow: hidden; background: var(--surface-2); cursor: zoom-in; }
+.aide-vignette { display: block; width: 120px; height: 90px; object-fit: cover; }
+.aide-piece:not(.chargee) .aide-vignette { visibility: hidden; }
+.aide-fichier { display: flex; align-items: center; gap: 8px; min-height: 48px; max-width: 100%; padding: 6px 12px 6px 8px; border-radius: 8px;
+  border: 1px solid var(--trait-fort); background: var(--surface); color: var(--texte); font: inherit; text-align: left; cursor: pointer; }
+.aide-fichier:hover, .aide-vignette-btn:hover { border-color: var(--primaire); }
+.aide-fichier:focus-visible, .aide-vignette-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+dialog.aide-visionneuse { width: min(960px, calc(100vw - 24px)); }
+.aide-vision-corps { display: grid; gap: 12px; }
+.aide-vision-img { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; border-radius: 8px; object-fit: contain; }
 
 /* ================================================================ */
 /* v5.5 « Simplification » : grille droite, cartes calmes, ≥ 48 px   */

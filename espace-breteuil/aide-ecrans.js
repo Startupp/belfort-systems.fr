@@ -8,6 +8,9 @@
  *   #/aide/<n°>     une demande (lien envoyé dans le mail à Damien)
  *   #/demandes      toutes les demandes, filtrables — réservé au prestataire (le Worker le décide :
  *                   GET /breteuil/aide/moi → { prestataire } ; liste d'adresses dans le Worker, jamais ici).
+ *   v5.6 : pièces jointes (« 📎 Joindre un fichier », glisser-déposer, coller une capture) dans « Nouvelle demande »
+ *          et « Ajouter un message » ; vignettes et fichiers sous chaque message (lus avec le jeton → blob:).
+ *   #/aide/<n°>/pj/<id>  la demande, pièce jointe mise en évidence (lien des mails).
  * Logique testable : aide.js. Texte uniquement (fabrique EB.h) : jamais de HTML venu du Worker.
  */
 (function () {
@@ -23,6 +26,7 @@
 
   var etat = {
     prestataire: null,        // null = inconnu
+    pj: null,                 // v5.6 : pièces jointes installées côté Worker ? (null = inconnu)
     liste: null,              // mes demandes (ou toutes pour le prestataire), dernière lecture
     nonLues: 0,
     nonConfiguree: false,
@@ -87,6 +91,7 @@
     return C.lister().then(function (j) {
       etat.nonConfiguree = false;
       etat.prestataire = !!j.prestataire;
+      if (j.pj != null) etat.pj = !!j.pj;
       etat.liste = j.demandes || [];
       etat.nonLues = A.nonLues(etat.liste, etat.prestataire);
       majPastille();
@@ -97,6 +102,151 @@
     });
   }
   function rafraichirDiscret() { rafraichir(false).catch(function () {}); }
+
+  /* ------------------------------------------------------------------ */
+  /* v5.6 : pièces jointes                                               */
+  /* ------------------------------------------------------------------ */
+  /** Image réduite dans le navigateur (2000 px au plus, JPEG 0,85). Illisible (HEIC hors Safari…) : envoyée telle quelle. */
+  function reduireImage(f) {
+    if (!A.estImage(f) || typeof createImageBitmap !== "function") return Promise.resolve(f);
+    var d;
+    return createImageBitmap(f).then(function (bmp) {
+      d = A.dimensions(bmp.width, bmp.height);
+      var c = document.createElement("canvas"); c.width = d.l; c.height = d.h;
+      var ctx = c.getContext("2d");
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, d.l, d.h); // transparence (PNG) → blanc
+      ctx.drawImage(bmp, 0, 0, d.l, d.h);
+      if (bmp.close) bmp.close();
+      return new Promise(function (ok) { c.toBlob(ok, "image/jpeg", A.PJ_QUALITE); });
+    }).then(function (b) {
+      if (!b) return f;
+      if (!d.reduit && b.size >= f.size && A.typePj(f) !== "heic") return f; // déjà petite : on garde l'originale
+      try { return new File([b], A.nomJpeg(f.name), { type: "image/jpeg" }); } catch (e) { b.name = A.nomJpeg(f.name); return b; }
+    }, function () { return f; });
+  }
+
+  /**
+   * Sélecteur de pièces jointes : bouton, liste de puces (nom, taille, retirer), glisser-déposer et coller sur `cible`.
+   * → { el, fichiers() : [{ fichier, nom }], pret() : Promise, vider() }.
+   */
+  function selecteurPj(cible) {
+    var liste = [], enCours = 0, attente = Promise.resolve();
+    var input = h("input", { type: "file", multiple: true, accept: A.PJ_ACCEPT, class: "aide-pj-input", tabindex: "-1", "aria-hidden": "true",
+      onchange: function () { ajouter(input.files); input.value = ""; } });
+    var bouton = h("button", { type: "button", class: "btn secondaire aide-pj-bouton", "data-action": "aide-joindre", onclick: function () { input.click(); } },
+      emoji("📎"), "Joindre un fichier");
+    var puces = h("ul", { class: "aide-pj-puces", "aria-label": "Fichiers joints", "aria-live": "polite" });
+    var err = h("p", { class: "erreur aide-pj-erreur", role: "alert" });
+    var el = h("div", { class: "aide-pj" },
+      h("div", { class: "aide-pj-ligne" }, bouton, h("small", { class: "aide-pj-aide" }, "Photo, capture d'écran, PDF, Word, Excel… 5\u00a0fichiers, 8\u00a0Mo chacun. Vous pouvez aussi coller une capture ou glisser un fichier ici.")),
+      input, puces, err);
+    function dessinerPuces() {
+      puces.textContent = "";
+      liste.forEach(function (x) {
+        var nom = x.fichier ? x.nom : (x.brut.name || "capture");
+        puces.appendChild(h("li", { class: "aide-pj-puce" + (x.fichier ? "" : " prepa"), "data-pj-nom": nom },
+          x.apercu ? h("img", { class: "aide-pj-mini", src: x.apercu, alt: "" }) : emoji(x.fichier && /^image\//.test(x.fichier.type) ? "🖼️" : "📄"),
+          h("span", { class: "aide-pj-nom" }, h("b", null, nom), h("small", null, x.fichier ? A.tailleLisible(x.fichier.size) : "Préparation…")),
+          h("button", { type: "button", class: "btn-rond aide-pj-retirer", "aria-label": "Retirer " + nom, "data-action": "aide-pj-retirer", onclick: function () {
+            liste.splice(liste.indexOf(x), 1); if (x.apercu) URL.revokeObjectURL(x.apercu); dessinerPuces(); bouton.disabled = liste.length >= A.PJ_MAX;
+          } }, icone("croix"))));
+      });
+      bouton.disabled = liste.length >= A.PJ_MAX;
+    }
+    function ajouter(fichiers) {
+      var c = A.controlerAjout(liste, fichiers, false);
+      err.textContent = c.erreurs.join(" ");
+      c.ajouts.forEach(function (f) {
+        var x = { brut: f, fichier: null, nom: "", apercu: null };
+        liste.push(x); enCours++;
+        var p = reduireImage(f).then(function (r) {
+          enCours--;
+          if (liste.indexOf(x) < 0) return;
+          var apres = A.controlerAjout([], [r], true);
+          if (apres.erreurs.length) { liste.splice(liste.indexOf(x), 1); err.textContent = (err.textContent ? err.textContent + " " : "") + apres.erreurs.join(" "); }
+          else {
+            x.fichier = r; x.nom = r.name || A.nomJpeg(f.name);
+            if (/^image\/(jpeg|png|webp)$/.test(r.type)) x.apercu = URL.createObjectURL(r);
+          }
+          dessinerPuces();
+        });
+        attente = attente.then(function () { return p; });
+      });
+      dessinerPuces();
+    }
+    // Coller (Ctrl+V / appui long → Coller) une capture d'écran ; glisser-déposer des fichiers.
+    cible.classList.add("aide-pj-cible");
+    cible.addEventListener("paste", function (e) {
+      var fs = e.clipboardData && e.clipboardData.files;
+      if (fs && fs.length) { e.preventDefault(); ajouter(fs); }
+    });
+    function avecFichiers(e) { var t = e.dataTransfer && e.dataTransfer.types; return !!t && Array.prototype.indexOf.call(t, "Files") > -1; }
+    ["dragenter", "dragover"].forEach(function (k) { cible.addEventListener(k, function (e) {
+      if (!avecFichiers(e)) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "copy"; cible.classList.add("aide-pj-survol");
+    }); });
+    cible.addEventListener("dragleave", function (e) { if (!cible.contains(e.relatedTarget)) cible.classList.remove("aide-pj-survol"); });
+    cible.addEventListener("drop", function (e) {
+      if (!avecFichiers(e)) return; e.preventDefault(); e.stopPropagation(); cible.classList.remove("aide-pj-survol"); ajouter(e.dataTransfer.files);
+    });
+    return {
+      el: el,
+      fichiers: function () { return liste.filter(function (x) { return x.fichier; }).map(function (x) { return { fichier: x.fichier, nom: x.nom }; }); },
+      pret: function () { return attente.then(function () { return enCours === 0; }); },
+      vider: function () { liste.forEach(function (x) { if (x.apercu) URL.revokeObjectURL(x.apercu); }); liste = []; err.textContent = ""; dessinerPuces(); },
+    };
+  }
+  /** Place le sélecteur dans `place` dès que l'on sait que les pièces jointes sont installées (sinon : rien, bouton caché). */
+  function brancherPj(form, place) {
+    var sel = null;
+    function monter() { if (!sel && etat.pj) { sel = selecteurPj(form); place.appendChild(sel.el); } }
+    monter();
+    if (etat.pj === null && connecte()) C.moi().then(function (j) { etat.pj = !!j.pj; monter(); }, function () {});
+    return { sel: function () { return sel; } };
+  }
+
+  /* ---------- Pièces jointes d'un message (fil) ---------- */
+  var blobs = {}; // "n°/pj" → blob: (gardés pendant la session : pas de nouveau téléchargement à chaque affichage)
+  function lirePiece(id, p) {
+    var k = id + "/" + p.id;
+    if (!blobs[k]) blobs[k] = C.piece(id, p.id).then(function (b) { return URL.createObjectURL(b); }, function (e) { delete blobs[k]; throw e; });
+    return blobs[k];
+  }
+  function telecharger(url, nom) {
+    var a = h("a", { href: url, download: nom, hidden: true });
+    document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 1000);
+  }
+  var visionneuse = h("dialog", { class: "detail aide-visionneuse", "aria-label": "Pièce jointe" });
+  visionneuse.addEventListener("click", function (e) { if (e.target === visionneuse) visionneuse.close(); });
+  function voirImage(url, nom) {
+    visionneuse.textContent = "";
+    visionneuse.appendChild(h("div", { class: "aide-tete" }, h("h2", { tabindex: "-1" }, nom),
+      h("button", { class: "btn-rond aide-fermer", type: "button", "aria-label": "Fermer", onclick: function () { visionneuse.close(); } }, icone("croix"))));
+    visionneuse.appendChild(h("div", { class: "contenu aide-vision-corps" }, h("img", { src: url, alt: nom, class: "aide-vision-img" }),
+      h("button", { class: "btn secondaire large", type: "button", onclick: function () { telecharger(url, nom); } }, "Télécharger")));
+    if (!document.body.contains(visionneuse)) document.body.appendChild(visionneuse);
+    if (visionneuse.showModal) visionneuse.showModal(); else visionneuse.setAttribute("open", "");
+  }
+  function piecesMessage(id, pj, cible) {
+    if (!pj || !pj.length) return null;
+    var ul = h("ul", { class: "aide-pieces", "aria-label": "Pièces jointes" });
+    pj.forEach(function (p) {
+      var li = h("li", { class: "aide-piece" + (String(p.id) === String(cible) ? " cible" : ""), "data-pj": String(p.id) });
+      if (p.apercu) {
+        var img = h("img", { class: "aide-vignette", alt: p.nom, width: "120", height: "90" });
+        var b = h("button", { type: "button", class: "aide-vignette-btn", "aria-label": "Voir " + p.nom + " (" + A.tailleLisible(p.taille) + ")", "data-action": "aide-voir-pj",
+          onclick: function () { lirePiece(id, p).then(function (u) { voirImage(u, p.nom); }, function (e) { EB.toast(A.messageErreur(e)); }); } }, img);
+        li.appendChild(b);
+        lirePiece(id, p).then(function (u) { img.src = u; li.classList.add("chargee"); }, function () { li.classList.add("echec"); img.alt = p.nom + " (non disponible)"; });
+      } else {
+        li.appendChild(h("button", { type: "button", class: "aide-fichier", "data-action": "aide-ouvrir-pj", "aria-label": "Télécharger " + p.nom + " (" + A.tailleLisible(p.taille) + ")",
+          onclick: function () { lirePiece(id, p).then(function (u) { telecharger(u, p.nom); }, function (e) { EB.toast(A.messageErreur(e)); }); } },
+          emoji(/pdf/.test(p.type) ? "📕" : /word/.test(p.type) ? "📘" : /sheet/.test(p.type) ? "📗" : /presentation/.test(p.type) ? "📙" : /^image/.test(p.type) ? "🖼️" : "📄"),
+          h("span", { class: "aide-pj-nom" }, h("b", null, p.nom), h("small", null, A.tailleLisible(p.taille)))));
+      }
+      ul.appendChild(li);
+    });
+    return ul;
+  }
 
   /* ------------------------------------------------------------------ */
   /* Panneau                                                             */
@@ -171,13 +321,19 @@
     var ctx = contexte();
     var envoyer = h("button", { class: "btn large", type: "submit", "data-action": "aide-envoyer" }, icone("coche"), "Envoyer à Damien");
     var retour = h("div", { "aria-live": "polite" });
+    var placePj = h("div", { class: "aide-champ aide-place-pj" });
+    var pj = null;
     var form = h("form", { class: "aide-form", novalidate: true, onsubmit: function (e) {
       e.preventDefault();
       var v = A.valider({ type: b.type, message: zone.value });
       erreurType.textContent = v.erreurs.type || ""; erreurMsg.textContent = v.erreurs.message || "";
       if (!v.ok) { (v.erreurs.type ? puces.querySelector('[tabindex="0"]') : zone).focus(); return; }
       envoyer.disabled = true; envoyer.classList.add("en-cours"); retour.textContent = "";
-      C.creer({ type: v.donnees.type, message: v.donnees.message, ecran: ctx.ecran, version: ctx.version, appareil: ctx.appareil }).then(function (j) {
+      var sel = pj && pj.sel();
+      Promise.resolve(sel ? sel.pret() : true).then(function () {
+        return C.creer({ type: v.donnees.type, message: v.donnees.message, ecran: ctx.ecran, version: ctx.version, appareil: ctx.appareil }, sel ? sel.fichiers() : []);
+      }).then(function (j) {
+        if (sel) sel.vider();
         etat.brouillon = { type: "", message: "" };
         etat.envoyee = j.id; etat.vue = "envoyee";
         etat.derniereLecture = 0; rafraichirDiscret();
@@ -190,6 +346,7 @@
     } },
       h("fieldset", { class: "aide-champ" }, h("legend", null, "Type de demande"), puces, erreurType),
       h("div", { class: "aide-champ" }, h("label", { for: "aide-message" }, "Votre message"), zone, cpt, erreurMsg),
+      placePj,
       h("div", { class: "aide-contexte", "aria-label": "Joint automatiquement à votre demande" },
         h("b", null, "Joint automatiquement"),
         h("dl", null,
@@ -198,6 +355,7 @@
           h("div", null, h("dt", null, "Appareil"), h("dd", { "data-ctx": "appareil" }, ctx.appareil)))),
       retour, envoyer);
     corps.appendChild(form);
+    pj = brancherPj(form, placePj);
     if (etat.nonConfiguree) retour.appendChild(erreurBloc({ code: "aide_non_configuree" }));
   }
 
@@ -245,8 +403,14 @@
     function charger() {
       return C.lire(id).then(function (j) {
         etat.prestataire = !!j.prestataire;
+        if (j.pj != null) etat.pj = !!j.pj;
         zone.textContent = ""; zone.removeAttribute("aria-busy");
         afficher(j);
+        if (opts.cible) {
+          var c = zone.querySelector('[data-pj="' + String(opts.cible).replace(/\D/g, "") + '"]');
+          if (c) { c.scrollIntoView({ block: "center" }); var bt = c.querySelector("button"); if (bt) bt.focus({ preventScroll: true }); }
+          opts.cible = null;
+        }
         etat.derniereLecture = 0; rafraichirDiscret(); // la pastille baisse : la réponse est lue
       }, function (e) { zone.textContent = ""; zone.removeAttribute("aria-busy"); zone.appendChild(erreurBloc(e)); });
     }
@@ -261,21 +425,27 @@
         var qui = deDamien ? "Damien" : presta ? d.nom : "Vous";
         fil.appendChild(h("li", { class: "aide-bulle " + (deDamien ? "damien" : "client") },
           h("span", { class: "aide-bulle-qui" }, h("b", null, qui), " · " + quand(m.cree) + (m.origine === "mail" ? " · par mail" : "")),
-          h("span", { class: "aide-bulle-texte" }, m.texte)));
+          m.texte ? h("span", { class: "aide-bulle-texte" }, m.texte) : null,
+          piecesMessage(d.id, m.pj, opts.cible)));
       });
       zone.appendChild(fil);
       // Répondre
       var champ = h("textarea", { class: "champ aide-message", id: "aide-reponse-" + d.id, rows: "3", maxlength: String(A.MAX), placeholder: presta ? "Votre réponse au client…" : "Ajouter un message pour Damien…" });
       var err = h("p", { class: "erreur", "aria-live": "polite" });
       var envoyer = h("button", { class: "btn large", type: "submit", "data-action": "aide-repondre" }, icone("coche"), presta ? "Envoyer la réponse" : "Envoyer");
-      zone.appendChild(h("form", { class: "aide-form", novalidate: true, onsubmit: function (e) {
+      var placePj = h("div", { class: "aide-place-pj" }), pjFil = null;
+      var formRep = h("form", { class: "aide-form", novalidate: true, onsubmit: function (e) {
         e.preventDefault();
-        var v = A.validerReponse(champ.value);
+        var sel = pjFil && pjFil.sel();
+        var v = A.validerReponse(champ.value, !!(sel && sel.fichiers().length));
         if (!v.ok) { err.textContent = v.erreur; champ.focus(); return; }
         envoyer.disabled = true; err.textContent = "";
-        C.repondre(d.id, v.texte).then(function () { EB.toast(presta ? "Réponse envoyée." : "Message envoyé à Damien."); zone.textContent = ""; charger(); },
-          function (x) { envoyer.disabled = false; err.textContent = A.messageErreur(x); });
-      } }, h("label", { for: champ.id }, presta ? "Répondre" : "Ajouter un message"), champ, err, envoyer));
+        Promise.resolve(sel ? sel.pret() : true).then(function () { return C.repondre(d.id, v.texte, sel ? sel.fichiers() : []); })
+          .then(function () { if (sel) sel.vider(); EB.toast(presta ? "Réponse envoyée." : "Message envoyé à Damien."); zone.textContent = ""; charger(); },
+            function (x) { envoyer.disabled = false; err.textContent = A.messageErreur(x); });
+      } }, h("label", { for: champ.id }, presta ? "Répondre" : "Ajouter un message"), champ, placePj, err, envoyer);
+      zone.appendChild(formRep);
+      pjFil = brancherPj(formRep, placePj);
       // Statut
       if (presta) {
         var seg = h("div", { class: "segments aide-statuts", role: "group", "aria-label": "Statut de la demande", style: { "--n": "3" } });
@@ -301,7 +471,8 @@
     var id = chemin && chemin[1] && /^\d+$/.test(chemin[1]) ? Number(chemin[1]) : null;
     if (id) {
       app.appendChild(EB.barre("Demande n° " + id, etat.prestataire ? { href: "#/demandes", texte: "Demandes" } : { href: "#/aide", texte: "Mes demandes" }));
-      vueFil(app, id, {});
+      // v5.6 : #/aide/<n°>/pj/<id> (lien d'une pièce jointe dans le mail) → la pièce est mise en évidence.
+      vueFil(app, id, { cible: chemin[2] === "pj" && /^\d+$/.test(chemin[3] || "") ? chemin[3] : null });
       return;
     }
     app.appendChild(EB.barre("Mes demandes", { href: "#/moi", texte: "Moi" }, null, "Envoyées à Damien"));

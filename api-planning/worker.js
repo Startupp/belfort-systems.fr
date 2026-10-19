@@ -392,14 +392,16 @@ export function htmlMail(p) {
   const POL = "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
   const SERIF = "font-family:Georgia,'Times New Roman',serif;";
   const titre = p.premier ? "Nouvelle demande" : "Nouveau message sur la demande n°" + p.id;
-  const texte = e(p.texte || "").replace(/\r?\n/g, "<br>");
+  // Espace insécable autour de « » et avant : ; ! ? (un signe ne tombe jamais seul en début de ligne).
+  const insecable = (t) => t.replace(/« /g, "«&nbsp;").replace(/ ([»:;!?])/g, "&nbsp;$1");
+  const texte = insecable(e(p.texte || "")).replace(/\r?\n/g, "<br>");
   const extrait = e(ligneCourte(p.texte || "", 110));
   const ligneMeta = (k, v) => `<tr><td class="eb-doux" style="${POL}padding:6px 12px 6px 0;font-size:13px;color:#7A6458;white-space:nowrap;vertical-align:top;">${k}</td>` +
     `<td class="eb-texte" style="${POL}padding:6px 0;font-size:13px;color:#2B1F1B;word-break:break-word;">${e(v || "—")}</td></tr>`;
   const pj = (p.pj || []).map((f) => `<tr><td style="padding:0 0 8px 0;">` +
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="eb-carte-pj" style="border:1px solid #E6D9C6;border-radius:8px;background:#FFFFFF;"><tr>` +
     `<td style="${POL}padding:10px 12px;font-size:14px;color:#2B1F1B;word-break:break-all;" class="eb-texte">📎&nbsp;<b>${e(f.nom)}</b> <span class="eb-doux" style="color:#7A6458;font-size:12px;white-space:nowrap;">${e(tailleLisible(f.taille))}</span></td>` +
-    `<td align="right" style="${POL}padding:10px 12px;font-size:13px;white-space:nowrap;"><a href="${e(f.lien)}" style="color:#8A6A1F;font-weight:700;text-decoration:underline;">Ouvrir</a></td>` +
+    `<td align="right" style="${POL}padding:10px 12px;font-size:13px;white-space:nowrap;"><a href="${e(f.lien)}" class="eb-lien" style="color:#8A6A1F;font-weight:700;text-decoration:underline;">Ouvrir</a></td>` +
     `</tr></table></td></tr>`).join("");
   const ignorees = (p.ignorees || []).map((t) => `<tr><td class="eb-doux" style="${POL}padding:0 0 6px 0;font-size:12px;color:#7A6458;">${e(t)}</td></tr>`).join("");
   return `<!DOCTYPE html>
@@ -418,6 +420,9 @@ export function htmlMail(p) {
     .eb-citation { background:#231A17 !important; }
     .eb-texte { color:#F3EAE0 !important; }
     .eb-doux { color:#C9B8AA !important; }
+    .eb-lien { color:#E2BE6E !important; }
+    .eb-trait { border-color:#4A3A33 !important; }
+    td.eb-bouton, a.eb-bouton { background:#C9A04A !important; color:#2B1F1B !important; }
   }
   @media (max-width: 480px) { .eb-pad { padding-left:18px !important; padding-right:18px !important; } }
 </style>
@@ -443,19 +448,19 @@ export function htmlMail(p) {
   </tr></table>
   ${pj || ignorees ? `<div class="eb-texte" style="${POL}font-size:14px;font-weight:700;color:#2B1F1B;padding:20px 0 8px;">Pièces jointes</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${pj}${ignorees}</table>` : ""}
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;border-top:1px solid #EFE4D4;width:100%;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="eb-trait" style="margin-top:18px;border-top:1px solid #EFE4D4;width:100%;">
     ${ligneMeta("Écran", p.ecran)}${ligneMeta("Version", p.version)}${ligneMeta("Appareil", p.appareil)}${ligneMeta("Date", dateFr(p.date || Date.now()))}
   </table>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;"><tr><td align="center">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-      <td bgcolor="#5B3833" style="background:#5B3833;border-radius:8px;">
-        <a href="${e(p.lien)}" style="display:inline-block;padding:14px 32px;${POL}font-size:16px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:8px;">Ouvrir la demande</a>
+      <td bgcolor="#5B3833" class="eb-bouton" style="background:#5B3833;border-radius:8px;">
+        <a href="${e(p.lien)}" class="eb-bouton" style="display:inline-block;padding:14px 32px;${POL}font-size:16px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:8px;">Ouvrir la demande</a>
       </td>
     </tr></table>
   </td></tr></table>
 </td></tr>
 <tr><td class="eb-doux" style="${POL}padding:18px 12px 0;font-size:13px;line-height:1.5;color:#7A6458;text-align:center;">
-  Répondez simplement à ce mail : votre réponse s'ajoute à la demande.
+  Répondez simplement à ce mail&nbsp;: votre réponse s'ajoute à la demande.
 </td></tr>
 </table>
 </td></tr>

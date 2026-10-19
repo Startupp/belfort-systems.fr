@@ -375,7 +375,7 @@ test("aide : création, mail sortant MIME (sujet exact encodé RFC 2047, Reply-T
   assert.ok(x.html.includes("Le planning ne s&#39;affiche plus &lt;b&gt;depuis ce matin&lt;/b&gt;."), "message échappé");
   assert.ok(!x.html.includes("<b>depuis"), "aucune balise venue de l'utilisateur");
   for (const attendu of ["Espace Breteuil</span> · Demande n°1", ">Problème</td>", "Fanny Martin", "fmartin@chateau-exemple.fr", "Ouvrir la demande",
-    'href="https://espace-breteuil.pages.dev/#/aide/1"', "Répondez simplement à ce mail : votre réponse s&#39;ajoute à la demande.".replace("s&#39;", "s'"), "Nouvelle demande"]) assert.ok(x.html.includes(attendu), "HTML : " + attendu);
+    'href="https://espace-breteuil.pages.dev/#/aide/1"', "Répondez simplement à ce mail&nbsp;: votre réponse s'ajoute à la demande.", "Nouvelle demande"]) assert.ok(x.html.includes(attendu), "HTML : " + attendu);
   for (const attendu of ["Nom : Fanny Martin", "Adresse : fmartin@chateau-exemple.fr", "Écran : Planning", "Version : 5.4.0", "Appareil : iPhone (Safari)",
     "Le planning ne s'affiche plus <b>depuis ce matin</b>.", "https://espace-breteuil.pages.dev/#/aide/1"]) assert.ok(x.corps.includes(attendu), "corps : " + attendu);
   assert.ok(!x.corps.includes("\u0007"), "caractères de contrôle retirés");
