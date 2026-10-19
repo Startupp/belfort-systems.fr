@@ -294,20 +294,66 @@
         var segsD = segs.concat([d.name]);
         return h("div", { class: "tuile dossier" + (segsD.join("/") === nomCommun() ? " commun" : "") },
           h("span", { class: "pastille" }, emoji(segsD.join("/") === nomCommun() ? "🏰" : "📁")),
-          h("a", { class: "tuile-lien", href: hashChemin("commun", segsD) }, h("b", null, d.name)),
+          h("a", { class: "tuile-lien", href: hashChemin("commun", segsD), "data-nom": d.name }, h("b", null, d.name)),
           h("span", { class: "sous" }, (d.folder.childCount || 0) + " élément" + ((d.folder.childCount || 0) > 1 ? "s" : "")),
           h("button", { class: "tuile-menu", type: "button", "aria-label": "Plus d'actions pour " + d.name, onclick: function () { menuDossier(d, segs, segsD); } }, "⋯"));
       })));
       if (fichiers.length) zone.appendChild(h("section", { class: "section" }, h("h2", null, "Fichiers"),
         h("div", { class: "liste-fichiers" }, fichiers.map(function (f) {
-          return window.EBFichiers ? window.EBFichiers.ligne(Object.assign({ parentReference: { driveId: r.c.drive.id } }, f)) : h("a", EBlien(f.webUrl), emoji(emojiFichier(f.name)), h("span", null, f.name), icone("ouvrir"));
+          return window.EBFichiers ? window.EBFichiers.ligne(Object.assign({ parentReference: { driveId: r.c.drive.id } }, f), { extras: actionsFichier(f, segs) })
+            : h("a", EBlien(f.webUrl), emoji(emojiFichier(f.name)), h("span", null, f.name), icone("ouvrir"));
         }))));
+      if (peutGererDroits()) marquerReserves(r.c, segs, zone);
     }
   }
   function EBlien(url) { return { href: url, target: "_blank", rel: "noopener noreferrer", class: "fichier" }; }
   function emojiFichier(nom) {
     var x = String(nom).split(".").pop().toLowerCase();
     return { pdf: "📕", doc: "📝", docx: "📝", xls: "📊", xlsx: "📊", csv: "📊", ppt: "📽️", pptx: "📽️", jpg: "🖼️", jpeg: "🖼️", png: "🖼️", heic: "🖼️", mp4: "🎬", zip: "🗜️" }[x] || "📄";
+  }
+
+  /**
+   * Noms des dossiers et fichiers « réservés » (accès choisis à part) d'un dossier : UNE requête
+   * SharePoint pour tout le dossier (pas une par élément). Au mieux : en cas d'échec, aucun badge.
+   */
+  function reservesDuDossier(c, segs) {
+    return C.obtenir("enfants:reserve:" + segs.join("/"), function () {
+      var racine = decodeURIComponent(new URL(c.drive.webUrl).pathname).replace(/\/+$/, "");
+      var chemin = racine + (segs.length ? "/" + segs.join("/") : "");
+      return G.sp("GET", "/_api/web/GetFolderByServerRelativePath(decodedurl='" + encodeURIComponent(chemin.replace(/'/g, "''")) + "')" +
+        "?$select=Folders/Name,Folders/ListItemAllFields/HasUniqueRoleAssignments,Files/Name,Files/ListItemAllFields/HasUniqueRoleAssignments" +
+        "&$expand=Folders/ListItemAllFields,Files/ListItemAllFields").then(function (r) {
+        var noms = [];
+        ((r && r.Folders) || []).concat((r && r.Files) || []).forEach(function (x) { if (x.ListItemAllFields && x.ListItemAllFields.HasUniqueRoleAssignments) noms.push(x.Name); });
+        return noms;
+      });
+    }, { ttl: 60000 });
+  }
+  function badgeReserve() { return h("span", { class: "etiquette reserve", title: "Seules certaines personnes peuvent l'ouvrir" }, "🔒 Réservé"); }
+  function marquerReserves(c, segs, zone) {
+    if (!c.drive || !c.drive.webUrl) return;
+    reservesDuDossier(c, segs).then(function (noms) {
+      if (!document.body.contains(zone)) return;
+      noms.forEach(function (n) {
+        zone.querySelectorAll(".tuile-lien[data-nom], .fichier[data-fichier]").forEach(function (el) {
+          if ((el.getAttribute("data-nom") || el.getAttribute("data-fichier")) !== n || el.querySelector(".etiquette.reserve")) return;
+          (el.classList.contains("fichier") ? el.querySelector("span:not(.emoji)") || el : el).appendChild(badgeReserve());
+        });
+      });
+    }).catch(function () {});
+  }
+  /** Réservé d'après ce qui est DÉJÀ chargé (aucune requête) : vrai, faux, ou undefined si inconnu. */
+  function reserveConnu(segsParent, nom) {
+    var l = C.connu("enfants:reserve:" + segsParent.join("/"));
+    return l ? l.indexOf(nom) > -1 : undefined;
+  }
+
+  /** Actions en plus pour un fichier du dossier commun (menu « ⋯ »). */
+  function actionsFichier(f, segs) {
+    return [
+      peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Qui a accès ?", sous: "Voir et choisir qui peut l'ouvrir", action: function () { location.hash = hashChemin("acces", segs.concat([f.name])); } } : null,
+      { valeur: "deplacer", emoji: "📦", titre: "Déplacer vers…", sous: "Le ranger dans un autre dossier", action: function () { deplacer(f, segs); } },
+    ].filter(Boolean);
   }
 
   /** Demande un nom dans une fenêtre simple. */
@@ -365,7 +411,7 @@
   function menuDossier(d, segsParent, segsD) {
     EB.choisir("« " + d.name + " »", [
       { valeur: "ouvrir", emoji: "📂", titre: "Ouvrir" },
-      peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Qui a accès ?", sous: "Voir et changer les droits" } : null,
+      peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Qui a accès ?", sous: "Voir et choisir qui peut l'ouvrir" } : null,
       { valeur: "renommer", emoji: "✏️", titre: "Renommer" },
       { valeur: "deplacer", emoji: "📦", titre: "Déplacer vers…", sous: "Le ranger dans un autre dossier" },
       { valeur: "lien", emoji: "🔗", titre: "Copier un lien de partage", sous: "Interne : seules les personnes du Château l'ouvrent" },
@@ -413,7 +459,9 @@
         contexte().then(function (c) { return G.graphTout(urlItem(c.drive.id, courant, "children") + "?$select=id,name,folder&$top=500"); }).then(function (enf) {
           liste.textContent = "";
           enf.filter(function (x) { return x.folder && x.id !== exclu; }).sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); }).forEach(function (x) {
-            liste.appendChild(h("button", { class: "choix", type: "button", onclick: function () { courant.push(x.name); afficher(); } }, emoji("📁"), h("span", null, h("b", null, x.name))));
+            var reserve = reserveConnu(courant, x.name) === true;
+            liste.appendChild(h("button", { class: "choix", type: "button", "data-nom": x.name, onclick: function () { courant.push(x.name); afficher(); } }, emoji(reserve ? "🔒" : "📁"),
+              h("span", null, h("b", null, x.name), reserve ? h("small", null, "Accès réservé") : null)));
           });
           if (!liste.childNodes.length) liste.appendChild(h("p", { class: "vide-doux" }, "Pas de sous-dossier ici."));
         }).catch(function (e) { liste.textContent = ""; liste.appendChild(blocErreur(e)); });
@@ -422,20 +470,26 @@
     });
   }
 
+  /** Déplacer un dossier ou un fichier (d : élément Graph, avec .file pour un fichier). */
   function deplacer(d, segsParent) {
-    if (segsParent.length === 0 && d.name === nomCommun()) { EB.toast("Le dossier « " + nomCommun() + " » reste à sa place."); return; }
+    var estFichier = !!d.file;
+    if (!estFichier && segsParent.length === 0 && d.name === nomCommun()) { EB.toast("Le dossier « " + nomCommun() + " » reste à sa place."); return; }
     choisirDestination(segsParent, d.id).then(function (cible) {
       if (!cible) return;
       if (cible.join("/") === segsParent.join("/")) { EB.toast("Il est déjà rangé ici."); return; }
       var ou = cible.length ? "« " + cible[cible.length - 1] + " »" : "tout en haut de la bibliothèque";
-      return EB.confirmer({ emoji: "📦", titre: "Déplacer « " + d.name + " » ?", phrase: "Le dossier et tout son contenu iront dans " + ou + ".",
-        consequence: "S'il suivait les droits de son ancien dossier, il suivra désormais ceux de " + ou + ".", bouton: "Oui, déplacer" }).then(function (ok) {
+      var reserve = cible.length ? reserveConnu(cible.slice(0, -1), cible[cible.length - 1]) === true : false;
+      var csq = reserve ? "Il ne sera visible que par les personnes qui ont accès à ce dossier."
+        : "S'il suivait les accès de son ancien dossier, il suivra désormais ceux de " + ou + ".";
+      return EB.confirmer({ emoji: reserve ? "🔒" : "📦", titre: "Déplacer « " + d.name + " » ?",
+        phrase: (estFichier ? "Le fichier ira dans " : "Le dossier et tout son contenu iront dans ") + ou + "." + (reserve ? " " + ou + " a un accès réservé." : ""),
+        consequence: csq, bouton: "Oui, déplacer" }).then(function (ok) {
         if (!ok) return;
         return contexte().then(function (c) {
           return G.graph("GET", urlItem(c.drive.id, cible) + "?$select=id").then(function (t) {
             return G.graph("PATCH", "/drives/" + c.drive.id + "/items/" + d.id, { parentReference: { id: t.id } });
           });
-        }).then(function () { noter("Dossier déplacé", d.name + " → " + (cible.join(" / ") || "Documents")); EB.toast("C'est rangé."); EB.rendre(); });
+        }).then(function () { noter(estFichier ? "Fichier déplacé" : "Dossier déplacé", d.name + " → " + (cible.join(" / ") || "Documents")); EB.toast("C'est rangé."); EB.rendre(); });
       });
     }).catch(afficherErreur);
   }

@@ -57,16 +57,19 @@
     EB.ouvrirDialogue(d, champ); champ.select();
   }
 
-  /** Menu d'un fichier : Office, web, lien interne (et épingler un dossier). */
+  /** Menu d'un fichier : Office, web, actions en plus (x.extras), lien interne (et épingler un dossier). */
   function menu(x) {
     var office = !x.dossier && lienOffice(x.nom, x.webUrl);
     var choix = [
       office ? { valeur: "office", emoji: "🖥️", titre: "Ouvrir dans " + NOM_APPLI[office.split(":")[0]], sous: "Avec l'appli Office de cet appareil" } : null,
       x.webUrl ? { valeur: "web", emoji: "🌐", titre: "Ouvrir sur le web", sous: "Dans le navigateur (Office en ligne)" } : null,
+    ].concat(x.extras || []).concat([
       { valeur: "lien", emoji: "🔗", titre: "Copier un lien de partage", sous: "Interne : seules les personnes du Château l'ouvrent" },
       x.dossier && window.EBEpingles ? { valeur: "epingler", emoji: "📌", titre: "Épingler sur l'accueil", sous: "Un raccourci en haut du Planning" } : null,
-    ].filter(Boolean);
+    ]).filter(Boolean);
     EB.choisir("« " + x.nom + " »", choix).then(function (v) {
+      var extra = (x.extras || []).filter(function (e) { return e.valeur === v; })[0];
+      if (extra) return extra.action();
       if (v === "office") location.href = office;
       else if (v === "web") window.open(x.webUrl, "_blank", "noopener");
       else if (v === "lien") copierLien(x);
@@ -77,6 +80,7 @@
   function ligne(item, opts) {
     var x = ref(item); opts = opts || {};
     if (opts.hash) x.hash = opts.hash;
+    if (opts.extras) x.extras = opts.extras; // actions en plus (dossier commun : Qui a accès ?, Déplacer vers…)
     return h("button", { class: "fichier", type: "button", "data-fichier": x.nom, onclick: function () { if (x.dossier && opts.hash) location.hash = opts.hash; else menu(x); } },
       emoji(x.dossier ? "📁" : emojiFichier(x.nom)), h("span", null, x.nom, opts.sous ? h("small", null, opts.sous) : null),
       h("span", { class: "fleche", "aria-hidden": "true" }, x.dossier && opts.hash ? "›" : "⋯"));
