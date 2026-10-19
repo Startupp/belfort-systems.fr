@@ -154,7 +154,8 @@ async function preparer(contexte, nomProfil, opts = {}) {
         if (req.method() === "PUT") return route.fulfill({ status: 201, headers: CORS, body: JSON.stringify({ id: "nouveau", name: "x" }) });
         return route.fulfill({ status: req.method() === "POST" ? 201 : 204, headers: CORS, body: req.method() === "POST" ? JSON.stringify({ id: "ra-nouveau" }) : "" });
       }
-      const v = r[chemin];
+      // v5.7 : dossier du suivi listé pour trouver apparence.json (absent ici : dossier vide, l'apparence d'origine).
+      const v = r[chemin] || (chemin === "/v1.0/drives/drive1/root:/Commun/Suivi informatique:/children" ? { value: [] } : null);
       if (!v) return route.fulfill({ status: 404, headers: CORS, body: JSON.stringify({ error: { code: "itemNotFound", message: "introuvable " + chemin } }) });
       return route.fulfill({ status: 200, headers: CORS, body: JSON.stringify(v) });
     });
@@ -464,7 +465,8 @@ try {
         await page.click('[data-action="autoriser-roles"]');
         await page.waitForSelector('[data-action="donner-facturation"]:not([disabled])');
         assert.equal(await page.$('[data-permission="manquante"]'), null);
-        assert.ok(await page.isDisabled('[data-titulaire="u2"] button'), "garde-fou : son propre rôle d'administrateur général");
+        // v5.7 : se retirer son propre rôle d'administrateur général est permis s'il en reste un autre (taper « RETIRER »).
+        assert.equal(await page.isDisabled('[data-titulaire="u2"] button'), false, "v5.7 : son propre rôle, retirable avec confirmation renforcée");
         assert.ok(await page.isDisabled('[data-proprietaire="fdebreteuil@breteuil.fr"] button'), "garde-fou : se retirer soi-même des propriétaires");
         await capturer(page, `admin-deleguer-${taille}`);
         // Donner le rôle Facturation à Fanny : choix, 2 confirmations, POST roleAssignments.
@@ -716,7 +718,7 @@ try {
         const { contexte, page, erreurs } = await nouvellePage(vp, "collaborateur", { theme });
         await page.goto(BASE + "#/reglages");
         await page.waitForSelector('.reglage button:has-text("Bleu élégant")');
-        assert.equal(await page.getAttribute('.reglage button:has-text("Crème et praline")', "aria-pressed"), "true", "crème par défaut");
+        assert.equal(await page.getAttribute('.reglage button:has-text("Comme le Château")', "aria-pressed"), "true", "v5.7 : « Comme le Château » par défaut (crème tant que rien n'est choisi)");
         await page.click('.reglage button:has-text("Bleu élégant")');
         await verifier(page, "réglage");
         assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("eb:reglages"))).palette, "bleu", "mémorisé sur l'appareil");

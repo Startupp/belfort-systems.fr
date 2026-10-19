@@ -47,12 +47,22 @@
   }
   function reappliquer() { if (window.EBAppliquerPalette) window.EBAppliquerPalette(EB.reglages()); }
 
+  /** apparence.json dans le dossier (liste du dossier : pas d'erreur 404 dans la console quand il n'existe pas encore). */
+  function trouverFichier(c) {
+    var nom = reglage().fichier.toLowerCase();
+    return G.graph("GET", base(c) + ":/children?$select=id,name,file&$top=200").then(function (j) {
+      return ((j && j.value) || []).filter(function (x) { return x && x.file && String(x.name).toLowerCase() === nom; })[0] || null;
+    }, function (e) { if (introuvable(e)) return null; throw e; });
+  }
   /** Lit apparence.json (null s'il n'existe pas encore). */
   function lireFichier(c) {
-    return G.graph("GET", base(c) + "/" + encodeURIComponent(reglage().fichier) + ":/content").then(function (j) {
-      var v = A.valider(j);
-      return v.ok ? v.donnees : null;
-    }, function (e) { if (introuvable(e)) return null; throw e; });
+    return trouverFichier(c).then(function (f) {
+      if (!f) return null;
+      return G.graph("GET", "/drives/" + c.drive.id + "/items/" + encodeURIComponent(f.id) + "/content").then(function (j) {
+        var v = A.valider(j);
+        return v.ok ? v.donnees : null;
+      });
+    });
   }
   var enCours = null;
   /** Charge le thème du Château (cache 10 min), le réapplique s'il a changé, met le logo à jour. */
@@ -119,9 +129,10 @@
     return C.obtenir("apparence:droit", function () {
       return X().contexte().then(function (c) {
         var P = window.EBProfil;
-        return droitsDe(cheminServeur(c, reglage().fichier), "File").then(function (p) { return P.aLeBit(p.Low, p.High, 2); }, function (e) {
-          if (!introuvable(e)) throw e;
-          return droitsDe(cheminServeur(c), "Folder").then(function (p) { return P.aLeBit(p.Low, p.High, 1); });
+        // Fichier présent : droit de le MODIFIER ; sinon : droit d'AJOUTER un fichier dans le dossier.
+        return trouverFichier(c).then(function (f) {
+          return f ? droitsDe(cheminServeur(c, f.name), "File").then(function (p) { return P.aLeBit(p.Low, p.High, 2); })
+            : droitsDe(cheminServeur(c), "Folder").then(function (p) { return P.aLeBit(p.Low, p.High, 1); });
         });
       }).catch(function () { return false; });
     }, { ttl: 5 * 60000 });

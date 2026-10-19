@@ -402,7 +402,7 @@ try {
         await page.goto(BASE + "#/gerer");
         await page.waitForSelector('.tuiles-grandes a[data-action="suivi"]');
         const titres = await page.$$eval(".ecran .section > h2", (l) => l.map((x) => x.textContent));
-        assert.deepEqual(titres, ["Informatique", "Équipe", "Factures", "Administration", "Site internet"], `${ou} : sections de Gérer`);
+        assert.deepEqual(titres, ["Informatique", "Équipe", "Factures", "Administration", "Site internet", "Application", "Bientôt"], `${ou} : sections de Gérer (v5.7 : Application, Bientôt)`);
         const tuiles = await page.$$eval(".tuiles-grandes .t.gt", (l) => l.map((a) => { const r = a.getBoundingClientRect(); return { lib: a.querySelector(".lib").textContent, sous: a.querySelector(".sous")?.textContent || "", h: r.height }; }));
         assert.ok(tuiles.every((x) => x.sous && x.h >= 64), `${ou} : chaque tuile a une ligne d'explication`);
         await sansChevauchement(page, ".tuiles-grandes .lib, .tuiles-grandes .sous", ".t.gt", `${ou} gérer`);
@@ -557,12 +557,13 @@ try {
   /* Premier lancement (questionnaire) : après « C'est parti », retour à l'écran demandé, pas au 1er choix. */
   {
     const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "gestionnaire", vp: { width: 375, height: 812 }, deconnecte: true });
-    await page.goto(BASE + "#/installer");
+    // v5.7 : #/installer est public (sans connexion) ; le lien profond se vérifie avec #/comment-faire.
+    await page.goto(BASE + "#/comment-faire");
     await page.click('[data-action="connexion"]');
     await page.click('[data-action="bienvenue-continuer"]');
     await page.click('.carte-usage[data-usage="equipe"]');
     await page.click('[data-action="usages-valider"]');
-    await page.waitForFunction(() => location.hash === "#/installer", null, { timeout: 5000 });
+    await page.waitForFunction(() => location.hash === "#/comment-faire", null, { timeout: 5000 });
     await page.waitForSelector(".ecran .barre h1");
     assert.equal(await page.$(".carte-usage"), null);
     if (erreurs.length) problemes.push(`lien profond + questionnaire : erreurs console ${erreurs.join(" | ")}`);

@@ -115,10 +115,9 @@ async function nouvellePage(navigateur, opts) {
     if (met !== "GET") etat.appels.push(`${met} ${chemin}${met === "PATCH" || met === "POST" ? " " + (req.postData() || "").slice(0, 300) : ""}`);
     if (/\/photos\//.test(chemin)) return route.fulfill({ status: 200, headers: { ...CORS, "Content-Type": "image/png" }, body: PIXEL });
     if (/EffectiveBasePermissions$/.test(chemin) && /GetFile|GetFolder/.test(chemin)) return ok(p.apparence);
-    if (chemin === FICHIER) {
-      if (met === "PUT") { etat.apparence = JSON.parse(req.postDataBuffer().toString("utf8")); return ok({ id: "app1" }); }
-      return etat.apparence ? ok(etat.apparence) : ok({ error: { code: "itemNotFound", message: "absent" } }, 404);
-    }
+    if (chemin === FICHIER && met === "PUT") { etat.apparence = JSON.parse(req.postDataBuffer().toString("utf8")); return ok({ id: "app1" }); }
+    if (chemin === "/v1.0/drives/drive1/root:/Commun/Suivi informatique:/children") return ok({ value: etat.apparence ? [{ id: "app1", name: "apparence.json", file: {} }] : [] });
+    if (chemin === "/v1.0/drives/drive1/items/app1/content") return ok(etat.apparence);
     if (/\/logo-\d+\.png:\/content$/.test(chemin) && met === "GET") return route.fulfill({ status: 200, headers: { ...CORS, "Content-Type": "image/png" }, body: LOGO });
     if (met === "PUT") return ok({ id: "f" + etat.appels.length });
     if (/servicePrincipals\(appId=/.test(chemin)) return ok({ id: "sp1", appId: "x", displayName: "Espace Breteuil", appRoleAssignmentRequired: etat.requis });
