@@ -138,6 +138,7 @@
         roles: roles.ok ? roles.v.map(function (x) { return x.roleTemplateId; }) : (etat.entrees ? etat.entrees.roles : []),
         proprietaire: !!proprietaire,
         gererDroits: perm.ok ? P.gererDroitsDe(perm.v) : false,
+        editer: perm.ok ? P.editerDe(perm.v) : null, // v5.5 : Lecteur / Éditeur (null = inconnu)
         licences: lic.ok ? lic.v.map(function (x) { return x.skuPartNumber; }) : [],
         siteWeb: groupes.ok ? P.estMembreDe(groupes.v, nomGroupeSite()) : !!(etat.entrees && etat.entrees.siteWeb),
       };

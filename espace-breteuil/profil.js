@@ -43,6 +43,39 @@
     perm = (perm && (perm.EffectiveBasePermissions || perm)) || {};
     return aLeBit(perm.Low, perm.High, BIT_MANAGE_PERMISSIONS);
   }
+  /* v5.5 : « ajouter / modifier des éléments » (AddListItems = 2 → bit 1, EditListItems = 3 → bit 2). */
+  var BIT_AJOUTER = 1, BIT_MODIFIER = 2;
+  function editerDe(perm) {
+    perm = (perm && (perm.EffectiveBasePermissions || perm)) || {};
+    return aLeBit(perm.Low, perm.High, BIT_AJOUTER) && aLeBit(perm.Low, perm.High, BIT_MODIFIER);
+  }
+
+  /**
+   * v5.5 : les 3 niveaux affichés à la personne, TOUJOURS déduits des droits réels (jamais choisis).
+   * gestionnaire : peut choisir qui ouvre chaque dossier (ManagePermissions ou propriétaire du site) ;
+   * editeur : peut ajouter et modifier des documents du site ; lecteur : le reste (ou droit inconnu).
+   */
+  var NIVEAUX = {
+    lecteur: { id: "lecteur", nom: "Lecteur", emoji: "👀", phrase: "Vous pouvez voir.",
+      peut: ["Voir le planning du Château", "Ouvrir les documents de l'équipe", "Ranger vos documents personnels"],
+      nePeut: ["Ajouter ou modifier des documents de l'équipe", "Choisir qui peut ouvrir un dossier"] },
+    editeur: { id: "editeur", nom: "Éditeur", emoji: "✏️", phrase: "Vous pouvez ajouter et modifier des documents.",
+      peut: ["Voir le planning du Château", "Ajouter, ranger et modifier les documents de l'équipe", "Créer des dossiers"],
+      nePeut: ["Choisir qui peut ouvrir un dossier"] },
+    gestionnaire: { id: "gestionnaire", nom: "Gestionnaire", emoji: "🔐", phrase: "Vous pouvez aussi choisir qui a accès.",
+      peut: ["Voir le planning du Château", "Ajouter, ranger et modifier les documents de l'équipe", "Choisir qui peut ouvrir chaque dossier"],
+      nePeut: [] },
+  };
+  function niveauDe(d) {
+    if (!d) return "lecteur";
+    if (d.gererDroits) return "gestionnaire";
+    if (d.editer) return "editeur";
+    return "lecteur";
+  }
+  /** Peut-on montrer les boutons d'ajout (créer, ajouter, renommer, ranger) dans les documents de l'équipe ?
+   * Oui pour Éditeur et Gestionnaire ; aussi si le droit n'a pas pu être lu (Microsoft refusera s'il le faut). */
+  function peutEditer(r) { return !r || r.niveau !== "lecteur" || r.droits.editer == null; }
+
   function cleDeRole(templateId) {
     var t = String(templateId || "").toLowerCase();
     for (var k in ROLES) if (ROLES[k].id === t) return k;
@@ -74,6 +107,8 @@
       proprietaire: !!e.proprietaire,
       gererDroits: !!e.gererDroits || !!e.proprietaire,
       licences: (e.licences || []).slice(),
+      // null = inconnu (lecture des droits en échec) : affiché « Lecteur », boutons d'ajout gardés.
+      editer: e.editer == null ? null : !!e.editer || !!e.gererDroits || !!e.proprietaire,
     };
     d.siteWeb = d.admin || !!e.siteWeb;
     // Sections au-delà de Planning, Dossiers et Moi.
@@ -83,22 +118,28 @@
     if (d.admin) sections.push("deleguer");
     if (d.siteWeb) sections.push("site");
     var profil = d.admin ? "admin" : d.proprietaire ? "proprietaire" : d.facturation ? "facturation" : "collaborateur";
-    return { profil: profil, droits: d, sections: sections, onglets: onglets(sections), roles: cles };
+    return { profil: profil, droits: d, sections: sections, onglets: onglets(sections), roles: cles, niveau: niveauDe(d) };
   }
 
   var LIBELLES = {
     admin: "Administrateur général", proprietaire: "Propriétaire du site", facturation: "Administrateur de facturation", collaborateur: "Collaborateur",
   };
 
-  /** 4 onglets au plus : Planning, Dossiers, [Équipe | Finance | Site | Gérer], Moi. */
+  /** v5.5 : 5 onglets au plus : Accueil, Planning, Documents, [Équipe | Factures | Site | Gérer], Moi. */
+  var BASE_ONGLETS = ["accueil", "planning", "fichiers", "moi"];
   function onglets(sections) {
-    var l = [{ id: "planning", nom: "Planning", icone: "agenda" }, { id: "fichiers", nom: "Fichiers", icone: "dossier" }];
+    var l = [{ id: "accueil", nom: "Accueil", icone: "maison" }, { id: "planning", nom: "Planning", icone: "agenda" }, { id: "fichiers", nom: "Documents", icone: "dossier" }];
     if (sections.length === 1 && sections[0] === "equipe") l.push({ id: "equipe", nom: "Équipe", icone: "personnes" });
-    else if (sections.length === 1 && sections[0] === "finance") l.push({ id: "finance", nom: "Finance", icone: "euro" });
+    else if (sections.length === 1 && sections[0] === "finance") l.push({ id: "finance", nom: "Factures", icone: "euro" });
     else if (sections.length === 1 && sections[0] === "site") l.push({ id: "site", nom: "Site", icone: "globe" });
     else if (sections.length > 1) l.push({ id: "gerer", nom: "Gérer", icone: "etoile" });
     l.push({ id: "moi", nom: "Moi", icone: "personne" });
     return l;
+  }
+  /** Onglet de gestion (Équipe, Factures, Site ou Gérer), ou null. */
+  function ongletGestion(liste) {
+    for (var i = 0; i < liste.length; i++) if (BASE_ONGLETS.indexOf(liste[i].id) < 0) return liste[i];
+    return null;
   }
 
   /* Écrans réservés : route → condition. Les autres routes connectées sont ouvertes à tous. */
@@ -126,11 +167,11 @@
   }
   /** Onglet (id) qui contient une route. */
   function ongletDe(route, r) {
-    var map = { planning: "planning", "": "planning", fichiers: "fichiers", onedrive: "fichiers", dossiers: "fichiers", commun: "fichiers", acces: "fichiers", restreindre: "fichiers", reserver: "fichiers", journal: "fichiers",
+    var map = { accueil: "accueil", "comment-faire": "accueil", bienvenue: "accueil", planning: "planning", "": "accueil", fichiers: "fichiers", onedrive: "fichiers", dossiers: "fichiers", commun: "fichiers", acces: "fichiers", restreindre: "fichiers", reserver: "fichiers", journal: "fichiers",
       moi: "moi", reglages: "moi", details: "moi", verifier: "moi", installer: "moi", demos: "moi", aide: "moi", demandes: "moi" };
     if (map[route] != null) return map[route];
-    var ids = (r ? r.onglets : onglets([])).map(function (o) { return o.id; });
-    return ids.length === 4 && ids[2] !== "moi" ? ids[2] : "moi";
+    var g = ongletGestion(r ? r.onglets : onglets([]));
+    return g ? g.id : "moi";
   }
 
   /* ------------------------------------------------------------------ */
@@ -178,6 +219,7 @@
 
   var api = {
     ROLES: ROLES, ROLES_DELEGABLES: ROLES_DELEGABLES, PERMISSION_ROLES: PERMISSION_ROLES, LIBELLES: LIBELLES,
+    NIVEAUX: NIVEAUX, ongletGestion: ongletGestion, niveauDe: niveauDe, editerDe: editerDe, peutEditer: peutEditer,
     aLeBit: aLeBit, gererDroitsDe: gererDroitsDe, cleDeRole: cleDeRole, estMembreDe: estMembreDe, deduire: deduire, onglets: onglets,
     routePermise: routePermise, ongletDe: ongletDe, refusRetraitRole: refusRetraitRole,
     refusRetraitProprietaire: refusRetraitProprietaire, aLaPermission: aLaPermission, pastille: pastille,
