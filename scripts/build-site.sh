@@ -47,6 +47,7 @@ cp admin/index.html admin/admin.css admin/admin.js "$SORTIE/admin/"
 #    Les _headers / _redirects des sous-dossiers sont ignorés par Cloudflare Pages
 #    (seuls ceux de la racine comptent) : on les retire pour ne pas les publier.
 find "$SORTIE" -depth \( -name tests -o -name test -o -name node_modules \) -type d -exec rm -rf {} +
+rm -rf "$SORTIE/assets/marque"   # visuels pour les profils et l'imprimeur : pas publiés
 find "$SORTIE" -mindepth 2 -type f \( -name '_headers' -o -name '_redirects' \) -delete
 find "$SORTIE" -type f \( -name '*.md' -o -name '*.test.mjs' -o -name '*.test.js' -o -name '*.sh' -o -name '*.py' \
   -o -name 'package.json' -o -name 'package-lock.json' -o -name '.DS_Store' \) -delete
