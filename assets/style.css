@@ -257,8 +257,8 @@ nav.main .btn { margin-left: 6px; min-height: 44px; white-space: nowrap; padding
 .mascotte img { width: 100%; height: auto; }
 /* Paupière dessinée en CSS sur l'œil gauche : le clin d'œil */
 .mascotte .paupiere {
-  position: absolute; left: 15.5%; top: 59%; width: 18.5%; height: 15%;
-  background: #F6D3B0; border-bottom: 2px solid #5A3A2A;
+  position: absolute; left: 15%; top: 58%; width: 21.5%; height: 15.5%;
+  background: #FAD4B8; border-bottom: 2px solid #4A2E22;
   border-radius: 0 0 60% 60% / 0 0 100% 100%;
   transform: scaleY(0); transform-origin: top;
   transition: transform .14s ease-in;
