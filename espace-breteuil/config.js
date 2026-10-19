@@ -60,6 +60,9 @@ self.EB_CONFIG = {
   suivi: { libelle: "Suivi informatique", tuile: "Ce que Damien a fait pour le Château",
     dossier: "Suivi informatique", fichier: "suivi.json", guides: "Guides", ancien: { dossier: "Pilotage", fichier: "pilotage.json" } },
 
+  /* v5.7 : adresse publique de l'appli (liens des invitations par mail et du planning partagé). */
+  adressePublique: "https://espace-breteuil.pages.dev/",
+
   /* v5.7 « Apparence » : fichier partagé dans le dossier du suivi (<Commun>/<suivi.dossier>/apparence.json) et sous-dossier
    * des icônes proposées. icone.version = version de l'icône PUBLIÉE dans espace-breteuil/icones/ : Damien l'augmente
    * quand il publie une nouvelle icône (voir docs, « Publier l'icône ») → bandeau « Le logo a changé » sur iPhone/iPad. */

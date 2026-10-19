@@ -89,7 +89,47 @@
       (e.groupes.length ? ", " + e.groupes.length + " groupe" + (e.groupes.length > 1 ? "s" : "") : "") + ")." + (n ? "" : " Personne n'est coché !");
   }
 
-  var api = { ROLE_DEFAUT: ROLE_DEFAUT, ROLES_ADMIN: ROLES_ADMIN, GA: GA, SCOPES_ECRIRE: SCOPES_ECRIRE, peutGerer: peutGerer, peutGererWids: peutGererWids,
+
+  /* ------------------------------------------------------------------ */
+  /* Invitation par mail (envoyée depuis la boîte de la personne connectée) */
+  /* ------------------------------------------------------------------ */
+  function echapper(t) { return String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+  function prenomDe(nom) { return String(nom || "").trim().split(/\s+/)[0] || ""; }
+  function couleurSure(c, defaut) { return /^#[0-9a-f]{6}$/i.test(String(c || "")) ? c : defaut; }
+  /**
+   * o : { destinataire: { nom, mail }, expediteur: { nom }, adresse (de l'appli), rassurant, couleurs: { entete, primaire, surPrimaire, fond, texte } }.
+   * Renvoie { sujet, html, texte, mailto, corpsGraph }. Tout texte variable est échappé dans le HTML ; liens https seulement.
+   */
+  function invitation(o) {
+    var d = o.destinataire || {}, pd = prenomDe(d.nom), pe = prenomDe(o.expediteur && o.expediteur.nom) || "La direction";
+    var base = /^https:\/\/[^\s"'<>]+$/.test(o.adresse || "") ? o.adresse.replace(/#.*$/, "") : "https://espace-breteuil.pages.dev/";
+    var installer = base + "#/installer";
+    var c = o.couleurs || {}, E = couleurSure(c.entete, "#5B3833"), P = couleurSure(c.primaire, "#8A4C45"), SP = couleurSure(c.surPrimaire, "#FFFFFF"),
+      F = couleurSure(c.fond, "#FBF6EE"), T = couleurSure(c.texte, "#2A1C19");
+    var sujet = pe + " vous a ouvert l'accès à l'Espace Breteuil";
+    var phrase = pe + " vous a ouvert l'accès à l'Espace Breteuil.";
+    var rassurant = String(o.rassurant || "").replace(/^📱\s*/, "");
+    var texte = "Bonjour" + (pd ? " " + pd : "") + ",\n\n" + phrase + "\n\nOuvrir l'application : " + base +
+      "\nL'installer sur mon téléphone ou ordinateur : " + installer + "\n\n" + (rassurant ? rassurant + "\n\n" : "") +
+      "Connectez-vous avec votre adresse du Château.\n\n" + pe;
+    var bouton = function (href, lib, plein) {
+      return '<a href="' + echapper(href) + '" style="display:inline-block;margin:6px 8px 6px 0;padding:12px 20px;border-radius:999px;font-weight:700;text-decoration:none;' +
+        (plein ? "background:" + P + ";color:" + SP + ";" : "background:#FFFFFF;color:" + P + ";border:2px solid " + P + ";") + '">' + echapper(lib) + "</a>";
+    };
+    var html = '<div style="background:' + F + ';padding:24px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:' + T + ';">' +
+      '<div style="max-width:520px;margin:0 auto;background:#FFFFFF;border-radius:16px;overflow:hidden;">' +
+      '<div style="background:' + E + ';color:#FFFFFF;padding:16px 20px;font-size:18px;font-weight:700;">Espace Breteuil</div>' +
+      '<div style="padding:20px;font-size:16px;line-height:1.5;">' +
+      "<p>Bonjour" + (pd ? " " + echapper(pd) : "") + ",</p><p>" + echapper(phrase) + "</p><p>" +
+      bouton(base, "Ouvrir l'application", true) + bouton(installer, "L'installer sur mon téléphone ou ordinateur", false) + "</p>" +
+      (rassurant ? '<p style="font-size:14px;color:#555555;">📱 ' + echapper(rassurant) + "</p>" : "") +
+      "<p><strong>Connectez-vous avec votre adresse du Château.</strong></p><p>" + echapper(pe) + "</p></div></div></div>";
+    var mailto = "mailto:" + encodeURIComponent(d.mail || "") + "?subject=" + encodeURIComponent(sujet) + "&body=" + encodeURIComponent(texte);
+    var corpsGraph = { message: { subject: sujet, body: { contentType: "HTML", content: html }, toRecipients: [{ emailAddress: { address: d.mail, name: d.nom } }] }, saveToSentItems: true };
+    return { sujet: sujet, html: html, texte: texte, mailto: mailto, corpsGraph: corpsGraph, liens: { ouvrir: base, installer: installer } };
+  }
+
+  var api = { invitation: invitation, echapper: echapper, ROLE_DEFAUT: ROLE_DEFAUT, ROLES_ADMIN: ROLES_ADMIN, GA: GA, SCOPES_ECRIRE: SCOPES_ECRIRE, peutGerer: peutGerer, peutGererWids: peutGererWids,
     etat: etat, aAffecterAvantRestriction: aAffecterAvantRestriction, afficheeCochee: afficheeCochee, refusDecocher: refusDecocher, corpsAffectation: corpsAffectation, resume: resume };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.EBAccesAppli = api;

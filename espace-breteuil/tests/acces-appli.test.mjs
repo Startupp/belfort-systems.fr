@@ -58,3 +58,20 @@ test("prestataire aussi administrateur général : toujours affiché comme prest
   const d = e.lignes.find((l) => l.id === "dam");
   assert.deepEqual([d.prestataire, d.verrouille], [true, false]);
 });
+
+test("invitation : mail HTML échappé aux couleurs du Château, texte de secours, repli mailto", () => {
+  const m = X.invitation({ destinataire: { nom: "Zoé <b>Test</b>", mail: "zoe@chateau-exemple.fr" }, expediteur: { nom: "François Exemple" },
+    adresse: "https://espace-breteuil.pages.dev/#/acces-appli", rassurant: "📱 Ne prend quasiment pas de place.", couleurs: { entete: "#1C4829", primaire: "#3F6B4A", surPrimaire: "#FFFFFF", fond: "#FEF6E8", texte: "javascript:alert(1)" } });
+  assert.equal(m.sujet, "François vous a ouvert l'accès à l'Espace Breteuil");
+  assert.match(m.html, /Bonjour Zoé,/); assert.doesNotMatch(m.html, /<b>Test/);
+  assert.match(m.html, /background:#1C4829/); assert.match(m.html, /background:#3F6B4A;color:#FFFFFF/);
+  assert.doesNotMatch(m.html, /javascript:/, "couleur invalide remplacée");
+  assert.match(m.html, /href="https:\/\/espace-breteuil\.pages\.dev\/"/); assert.match(m.html, /href="https:\/\/espace-breteuil\.pages\.dev\/#\/installer"/);
+  assert.match(m.html, /Connectez-vous avec votre adresse du Château/); assert.match(m.html, /Ne prend quasiment pas de place/);
+  assert.match(m.texte, /^Bonjour Zoé,\n\nFrançois vous a ouvert l'accès à l'Espace Breteuil\.\n\nOuvrir l'application : https:\/\/espace-breteuil\.pages\.dev\/\nL'installer sur mon téléphone ou ordinateur : https:\/\/espace-breteuil\.pages\.dev\/#\/installer/);
+  assert.ok(m.mailto.startsWith("mailto:zoe%40chateau-exemple.fr?subject=Fran%C3%A7ois%20vous"));
+  assert.match(decodeURIComponent(m.mailto.split("&body=")[1]), /Connectez-vous avec votre adresse du Château/);
+  assert.deepEqual(m.corpsGraph.message.toRecipients, [{ emailAddress: { address: "zoe@chateau-exemple.fr", name: "Zoé <b>Test</b>" } }]);
+  assert.equal(m.corpsGraph.message.body.contentType, "HTML");
+  assert.equal(X.invitation({ destinataire: { mail: "a@b.fr" }, adresse: "http://evil" }).liens.ouvrir, "https://espace-breteuil.pages.dev/", "adresse non https : celle par défaut");
+});

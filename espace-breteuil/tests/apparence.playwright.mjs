@@ -418,6 +418,20 @@ try {
     await page.check('[data-personne="u4"]');
     await page.waitForFunction(() => document.querySelector('[data-personne="u4"]')?.checked && !document.querySelector('[data-personne="u4"]').disabled);
     assert.ok(etat.affectations.some((a) => a.principalId === "u4"));
+    // Invitation proposée tout de suite : aperçu, puis envoi (Mail.Send demandé à ce moment-là), ou repli messagerie.
+    await page.waitForSelector('[data-feuille="invitation"]');
+    assert.match(await texte(page, '[data-feuille="invitation"]'), /À : fanny@chateau-exemple\.fr.*Bonjour Fanny.*François vous a ouvert l'accès.*Ouvrir l'application.*Connectez-vous avec votre adresse du Château/s);
+    await capturer(page, `invitation-apercu-${taille}`);
+    if (taille === "1280") await page.evaluate(() => { self.EB_MAQUETTE.refuserConsentement = true; });
+    await page.click('[data-action="envoyer-invitation"]');
+    if (taille === "375") {
+      await page.waitForFunction(() => /Invitation envoyée à Fanny Martin/.test(document.getElementById("toast")?.textContent || ""));
+      assert.ok(etat.appels.some((a) => /POST \/v1\.0\/me\/sendMail .*Fran/.test(a)), "mail envoyé par Graph");
+    } else {
+      await page.waitForFunction(() => /Votre messagerie s'ouvre/.test(document.getElementById("toast")?.textContent || ""));
+      assert.ok(!etat.appels.some((a) => /sendMail/.test(a)), "consentement refusé : repli mailto, rien envoyé par Graph");
+    }
+    await page.waitForSelector('[data-action="inviter-u4"]');
     await capturer(page, `acces-restreint-${taille}`);
     await sansDebord(page, `acces ${taille}`);
     await fin(x, "accès " + taille);

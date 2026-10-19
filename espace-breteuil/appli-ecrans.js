@@ -200,7 +200,8 @@
         return;
       }
       liste.appendChild(h("li", { class: "acces-ligne" + (l.verrouille ? " verrouille" : "") }, c,
-        h("label", { for: id }, h("b", null, l.nom), h("small", null, l.verrouille ? (l.raison === "Vous" ? "Vous · toujours autorisé" : "Administrateur général · toujours autorisé") : l.mail))));
+        h("label", { for: id }, h("b", null, l.nom), h("small", null, l.verrouille ? (l.raison === "Vous" ? "Vous · toujours autorisé" : "Administrateur général · toujours autorisé") : l.mail)),
+        l.coche && l.raison !== "Vous" && l.mail ? h("button", { class: "btn secondaire petit acces-inviter", type: "button", "data-action": "inviter-" + l.id, "aria-label": "Envoyer l'invitation à " + l.nom, onclick: function () { inviter(l); } }, "✉️ Envoyer l'invitation") : null));
     });
     e.groupes.forEach(function (g) {
       liste.appendChild(h("li", { class: "acces-ligne groupe" }, emoji("👥"), h("span", null, h("b", null, g.nom), h("small", null, "Groupe : tous ses membres (à changer dans Entra)"))));
@@ -216,7 +217,51 @@
     c.disabled = true;
     var sp = d.sp.id, p = on ? G().graph("POST", "/servicePrincipals/" + sp + "/appRoleAssignedTo", XA.corpsAffectation(sp, l.id))
       : l.affectationId ? G().graph("DELETE", "/servicePrincipals/" + sp + "/appRoleAssignedTo/" + l.affectationId) : Promise.resolve();
-    p.then(function () { EB.toast(on ? l.nom + " peut utiliser l'application." : l.nom + " n'est plus coché."); EB.rendre(); }, function (e) { c.checked = !on; c.disabled = false; echec(e); });
+    p.then(function () {
+      EB.toast(on ? l.nom + " peut utiliser l'application." : l.nom + " n'est plus coché."); EB.rendre();
+      if (on && l.mail) setTimeout(function () { inviter(l); }, 300); // proposer tout de suite l'invitation (aperçu, puis envoi)
+    }, function (e) { c.checked = !on; c.disabled = false; echec(e); });
+  }
+  /* ---------- Invitation par mail : aperçu, confirmation, envoi (Mail.Send demandé ici seulement), repli mailto ---------- */
+  function messageInvitation(l) {
+    var me = window.EBAcces && window.EBAcces.me(), c = (G() && G().compte()) || {};
+    var A = window.EBApparence, AE = window.EBApparenceEcrans;
+    var v = A ? A.apercu(AE ? AE.partage() : null, false) : {};
+    return XA.invitation({ destinataire: { nom: l.nom, mail: l.mail }, expediteur: { nom: (me && me.displayName) || c.name || "" },
+      adresse: CFG.adressePublique || adresse(), rassurant: RASSURANT,
+      couleurs: { entete: v["--entete"], primaire: v["--primaire"], surPrimaire: v["--sur-primaire"], fond: v["--fond"], texte: v["--texte"] } });
+  }
+  function ouvrirMailto(m, l) { EB.fermerDialogue(); location.href = m.mailto; EB.toast("Votre messagerie s'ouvre avec l'invitation prête pour " + l.nom + "."); }
+  function inviter(l) {
+    var m = messageInvitation(l), d = EB.dialogue();
+    var apercu = h("div", { class: "inv-apercu", "data-apercu": "invitation" },
+      h("div", { class: "inv-tete" }, "Espace Breteuil"),
+      h("div", { class: "inv-corps" }, m.texte.split("\n\n").map(function (para, i) {
+        if (/^Ouvrir l'application/.test(para)) return h("p", { class: "inv-boutons" }, h("span", { class: "inv-btn" }, "Ouvrir l'application"), h("span", { class: "inv-btn secondaire" }, "L'installer sur mon téléphone ou ordinateur"));
+        return h("p", { class: i === 0 ? "" : "" }, para);
+      })));
+    var v = window.EBApparence ? window.EBApparence.apercu(window.EBApparenceEcrans ? window.EBApparenceEcrans.partage() : null, false) : {};
+    ["--entete", "--primaire", "--sur-primaire", "--fond"].forEach(function (k) { if (v[k]) apercu.style.setProperty(k, v[k]); });
+    var envoyer = h("button", { class: "btn large", type: "button", "data-action": "envoyer-invitation" }, "✉️ Oui, envoyer à " + l.nom);
+    var etat = h("p", { class: "petit", role: "status" });
+    envoyer.onclick = function () {
+      envoyer.disabled = true; envoyer.classList.add("en-cours");
+      G().aLaPermission("Mail.Send").then(function (ok) {
+        if (ok) return true;
+        etat.textContent = "Microsoft va vous demander l'autorisation d'envoyer ce mail depuis votre boîte.";
+        return Promise.resolve(G().demanderPermission("Mail.Send")).then(function (r) { return r === true; });
+      }).then(function (ok) {
+        if (!ok) { ouvrirMailto(m, l); return; }
+        return G().graph("POST", "/me/sendMail", m.corpsGraph).then(function () { EB.fermerDialogue(); EB.toast("Invitation envoyée à " + l.nom + "."); });
+      }).catch(function () { ouvrirMailto(m, l); });
+    };
+    d.appendChild(h("div", { class: "contenu", "data-feuille": "invitation" },
+      h("h2", { id: "detail-titre" }, "Inviter " + l.nom + " ?"),
+      h("p", { class: "phrase" }, "À : " + l.mail), h("p", { class: "petit" }, "Objet : " + m.sujet),
+      apercu, h("p", { class: "petit" }, "Envoyé depuis votre boîte mail (vous le retrouverez dans « Éléments envoyés »)."), etat, envoyer,
+      h("button", { class: "btn secondaire large", type: "button", "data-action": "invitation-messagerie", onclick: function () { ouvrirMailto(m, l); } }, "Écrire avec ma messagerie"),
+      h("button", { class: "btn secondaire large", type: "button", onclick: EB.fermerDialogue }, "Plus tard")));
+    EB.ouvrirDialogue(d, envoyer);
   }
   /** Prestataire : le retirer demande une confirmation explicite ; le remettre, non. */
   function basculerPresta(l, on, d, c) {

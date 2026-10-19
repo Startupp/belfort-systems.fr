@@ -1984,3 +1984,12 @@ body.premier-lancement .aide-fab { display: none; }
 .maj-boutons { display: flex; gap: 6px; align-items: center; }
 .autres-palettes { margin-top: 8px; }
 .inst-rassurant { margin: 4px 0 14px; padding: 10px 12px; border-radius: var(--rayon-petit); background: var(--surface-2); color: var(--texte-2); font-size: .88rem; line-height: 1.4; }
+.acces-ligne .acces-inviter { margin-left: auto; flex: none; white-space: nowrap; }
+@media (max-width: 520px) { .acces-ligne { flex-wrap: wrap; } .acces-ligne .acces-inviter { margin-left: 38px; } }
+.inv-apercu { border: 1px solid var(--trait); border-radius: 14px; overflow: hidden; background: var(--fond); margin: 8px 0; text-align: left; }
+.inv-tete { background: var(--entete); color: #FFFFFF; padding: 10px 14px; font-weight: 700; }
+.inv-corps { background: #FFFFFF; color: #2A1C19; padding: 12px 14px; font-size: .9rem; }
+.inv-corps p { margin: 0 0 10px; white-space: pre-line; }
+.inv-boutons { display: flex; flex-wrap: wrap; gap: 6px; }
+.inv-btn { display: inline-block; padding: 8px 14px; border-radius: 999px; background: var(--primaire); color: var(--sur-primaire); font-weight: 700; }
+.inv-btn.secondaire { background: #FFFFFF; color: var(--primaire); border: 2px solid var(--primaire); }
