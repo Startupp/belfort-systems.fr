@@ -40,8 +40,8 @@ test("garde-fous : soi-même, propriétaires, groupe des propriétaires", () => 
 });
 
 test("noms de groupes en clair", () => {
-  assert.equal(D.nomGroupe("Propriétaires de Château de Breteuil"), "Propriétaires du site");
-  assert.equal(D.nomGroupe("Château de Breteuil Members"), "Membres du site");
+  assert.equal(D.nomGroupe("Propriétaires de Château de Breteuil"), "Gestionnaires");
+  assert.equal(D.nomGroupe("Château de Breteuil Members"), "Toute l'équipe", "pas de jargon « Membres »");
   assert.equal(D.nomGroupe("SharingLinks.x.AnonymousView.y"), "Lien ouvert à tous");
 });
 
@@ -92,4 +92,59 @@ test("plans de service Microsoft : outils en français, dédoublonnés, triés ;
   assert.equal(r.support[0].licence, "Business Standard");
   assert.deepEqual(D.outilsDesPlans(null), { outils: [], support: [] });
   assert.deepEqual(D.outilsDesPlans([{ skuPartNumber: "X", servicePlans: [actif("constructor")] }]).outils, [], "nom de propriété JS : pas un outil");
+});
+
+/* ---------- « Réserver à certaines personnes » (données FICTIVES) ---------- */
+const CTX_R = { moi: "pdebreteuil@breteuil.fr", moiId: 7, groupeProprietairesId: 3, proprietaires: ["pdebreteuil@breteuil.fr", "fdebreteuil@breteuil.fr", "damien@breteuil02.onmicrosoft.com"] };
+const prot = (m) => D.estProtege(m, CTX_R);
+const pers = (Id, Title, mail) => ({ Id, Title, Email: mail, LoginName: "i:0#.f|membership|" + mail, PrincipalType: 1 });
+const ENTREES = [
+  { principalId: 3, membre: { Id: 3, Title: "Propriétaires de Château de Breteuil", PrincipalType: 8 }, niveau: "modifier", total: true },
+  { principalId: 4, membre: { Id: 4, Title: "Membres de Château de Breteuil", PrincipalType: 8 }, niveau: "modifier" },
+  { principalId: 5, membre: { Id: 5, Title: "SharingLinks.abc.OrganizationView.1", PrincipalType: 8 }, niveau: "voir" },
+  { principalId: 9, membre: pers(9, "Valérie Durand", "vdurand@breteuil.fr"), niveau: "modifier" },
+  { principalId: 10, membre: pers(10, "Fanny Martin", "fmartin@breteuil.fr"), niveau: "voir" },
+  { principalId: 8, membre: pers(8, "François de Breteuil", "fdebreteuil@breteuil.fr"), niveau: "modifier" },
+  { principalId: 13, membre: { Id: 13, Title: "Jean Agence", LoginName: "i:0#.f|membership|jean_agence.fr#ext#@breteuil02.onmicrosoft.com", PrincipalType: 1 }, niveau: "voir" },
+];
+
+test("réserver : tout ce qui n'est ni choisi ni protégé est retiré (groupes, liens, personnes, externes)", () => {
+  const choisis = [{ nom: "Pauline de Breteuil", mail: "pdebreteuil@breteuil.fr" }, { nom: "François de Breteuil", mail: "FDEBRETEUIL@breteuil.fr" }];
+  const p = D.planReserve(ENTREES, choisis, "modifier", prot);
+  assert.deepEqual(p.retirer.map((e) => e.principalId).sort((a, b) => a - b), [4, 5, 9, 10, 13]);
+  assert.deepEqual(p.proteges.map((x) => [x.entree.principalId, x.raison]), [[3, "Groupe des propriétaires du site"], [8, "Propriétaire du site"]]);
+  assert.deepEqual(p.ajouter.map((x) => x.nom), ["Pauline de Breteuil"], "Pauline n'a pas d'accès direct : on l'ajoute");
+  assert.equal(p.changer.length + p.garder.length, 0, "François est protégé : ni changé ni retiré");
+});
+
+test("réserver : une personne choisie déjà présente garde ou change de niveau ; jamais retirée", () => {
+  const choisis = [{ nom: "Fanny Martin", upn: "fmartin@breteuil.fr" }, { nom: "Valérie Durand", mail: "vdurand@breteuil.fr" }];
+  const voir = D.planReserve(ENTREES, choisis, "voir", prot);
+  assert.deepEqual(voir.garder.map((e) => e.principalId), [10]);
+  assert.deepEqual(voir.changer.map((e) => e.principalId), [9]);
+  assert.equal(voir.ajouter.length, 0);
+  assert.ok(!voir.retirer.some((e) => e.principalId === 9 || e.principalId === 10));
+  assert.ok(!voir.retirer.some((e) => e.principalId === 3), "le groupe des propriétaires n'est jamais retiré");
+});
+
+test("réserver : sans garde-fou fourni, rien n'est protégé ; choix vide = tout retirer ; adresse vide ignorée", () => {
+  const p = D.planReserve(ENTREES, [{ nom: "Sans adresse" }], "voir");
+  assert.equal(p.retirer.length, ENTREES.length);
+  assert.equal(p.ajouter.length, 0);
+  assert.deepEqual(D.planReserve([], [], "voir", prot), { retirer: [], changer: [], garder: [], proteges: [], ajouter: [] });
+});
+
+test("réserver : phrase de confirmation en clair, obligatoires sans jargon", () => {
+  const choisis = [{ nom: "Pauline de Breteuil", mail: "pdebreteuil@breteuil.fr" }, { nom: "François de Breteuil", mail: "fdebreteuil@breteuil.fr" }];
+  const p = D.planReserve(ENTREES.concat([{ principalId: 11, membre: pers(11, "Damien Belfort", "damien@breteuil02.onmicrosoft.com"), niveau: "modifier" }]), choisis, "modifier", prot);
+  const obl = D.obligatoiresReserve(p.proteges, (m) => m.Title, choisis);
+  assert.deepEqual(obl, ["l'administrateur du site (obligatoire)", "Damien Belfort (propriétaire du site, obligatoire)"]);
+  assert.equal(D.phraseReserve(["Pauline de Breteuil", "François de Breteuil"], "Contrats.pdf", []),
+    "Seuls Pauline de Breteuil et François de Breteuil pourront ouvrir « Contrats.pdf ». Les autres ne le verront plus.");
+  assert.equal(D.phraseReserve(["A", "B", "C"], "X", ["l'administrateur du site (obligatoire)"]),
+    "Seuls A, B et C pourront ouvrir « X » + l'administrateur du site (obligatoire). Les autres ne le verront plus.");
+  assert.match(D.phraseReserve(["Pauline de Breteuil"], "X"), /^Seul\(e\) Pauline de Breteuil pourra ouvrir « X »/);
+  const moiSeul = D.obligatoiresReserve([{ entree: { membre: pers(7, "Pauline de Breteuil", "pdebreteuil@breteuil.fr") }, raison: "C'est vous" }], null, []);
+  assert.deepEqual(moiSeul, ["vous-même (obligatoire)"]);
+  for (const t of obl.concat([D.phraseReserve(["A"], "X", obl)])) assert.doesNotMatch(t, /h[ée]ritage|membres|SharePoint/i);
 });

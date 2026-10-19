@@ -32,7 +32,7 @@ test("adresses : uniquement celles prévues (aucune inventée)", () => {
 
 test("tuiles externes : nouvel onglet ; pas-à-pas de 3 étapes au plus", () => {
   const t = S.tuiles(CFG);
-  assert.deepEqual(t.map((x) => x.libelle), ["Vérifier les liens", "Remplacer une image", "Liens du bas de page", "Couleurs du site", "Modifier une page", "Vider le cache", "Voir le site", "Pas à pas"]);
+  assert.deepEqual(t.map((x) => x.libelle), ["Vérifier les liens", "Remplacer une image", "Liens du bas de page", "Couleurs du site", "Modifier une page", "Rafraîchir le site", "Voir le site", "Modes d'emploi"]);
   for (const g of S.guides(CFG)) { assert.ok(g.etapes.length >= 2 && g.etapes.length <= 3, g.id); assert.ok(g.lien, g.id); }
   assert.match(S.guide(CFG, "pied").etapes.join(" "), /anglaise.*WPML/);
   assert.match(S.guide(CFG, "cache").etapes.join(" "), /WP Rocket/);

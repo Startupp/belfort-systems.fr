@@ -53,20 +53,23 @@
     var d = EB.dialogue();
     var champ = h("input", { class: "champ", type: "text", readonly: "readonly", value: url, "aria-label": "Lien de partage" });
     var ok = h("button", { class: "btn large", type: "button", onclick: EB.fermerDialogue }, "Fermer");
-    d.appendChild(h("div", { class: "contenu" }, h("h2", { id: "detail-titre" }, "Lien de partage"), h("p", { class: "phrase" }, "Sélectionnez le lien et copiez-le."), champ, ok));
+    d.appendChild(h("div", { class: "contenu" }, h("h2", { id: "detail-titre" }, "Lien du document"), h("p", { class: "phrase" }, "Sélectionnez le lien et copiez-le."), champ, ok));
     EB.ouvrirDialogue(d, champ); champ.select();
   }
 
-  /** Menu d'un fichier : Office, web, lien interne (et épingler un dossier). */
+  /** Menu d'un fichier : Office, web, actions en plus (x.extras), lien interne (et épingler un dossier). */
   function menu(x) {
     var office = !x.dossier && lienOffice(x.nom, x.webUrl);
     var choix = [
-      office ? { valeur: "office", emoji: "🖥️", titre: "Ouvrir dans " + NOM_APPLI[office.split(":")[0]], sous: "Avec l'appli Office de cet appareil" } : null,
-      x.webUrl ? { valeur: "web", emoji: "🌐", titre: "Ouvrir sur le web", sous: "Dans le navigateur (Office en ligne)" } : null,
-      { valeur: "lien", emoji: "🔗", titre: "Copier un lien de partage", sous: "Interne : seules les personnes du Château l'ouvrent" },
-      x.dossier && window.EBEpingles ? { valeur: "epingler", emoji: "📌", titre: "Épingler sur l'accueil", sous: "Un raccourci en haut du Planning" } : null,
-    ].filter(Boolean);
+      office ? { valeur: "office", emoji: "🖥️", titre: "Ouvrir dans " + NOM_APPLI[office.split(":")[0]], sous: "Avec l'application installée" } : null,
+      x.webUrl ? { valeur: "web", emoji: "🌐", titre: "Ouvrir dans le navigateur", sous: "Sans rien installer" } : null,
+    ].concat(x.extras || []).concat([
+      { valeur: "lien", emoji: "🔗", titre: "Copier un lien", sous: "Pour les personnes du Château" },
+      x.dossier && window.EBEpingles ? { valeur: "epingler", emoji: "📌", titre: "Épingler sur l'accueil", sous: "Un raccourci sur l'accueil" } : null,
+    ]).filter(Boolean);
     EB.choisir("« " + x.nom + " »", choix).then(function (v) {
+      var extra = (x.extras || []).filter(function (e) { return e.valeur === v; })[0];
+      if (extra) return extra.action();
       if (v === "office") location.href = office;
       else if (v === "web") window.open(x.webUrl, "_blank", "noopener");
       else if (v === "lien") copierLien(x);
@@ -77,6 +80,7 @@
   function ligne(item, opts) {
     var x = ref(item); opts = opts || {};
     if (opts.hash) x.hash = opts.hash;
+    if (opts.extras) x.extras = opts.extras; // actions en plus (dossier commun : Qui a accès ?, Déplacer vers…)
     return h("button", { class: "fichier", type: "button", "data-fichier": x.nom, onclick: function () { if (x.dossier && opts.hash) location.hash = opts.hash; else menu(x); } },
       emoji(x.dossier ? "📁" : emojiFichier(x.nom)), h("span", null, x.nom, opts.sous ? h("small", null, opts.sous) : null),
       h("span", { class: "fleche", "aria-hidden": "true" }, x.dossier && opts.hash ? "›" : "⋯"));
@@ -91,19 +95,19 @@
       var l = Array.prototype.slice.call(input.files || []);
       input.remove();
       if (!l.length) return;
-      EB.confirmer({ emoji: "⬆️", titre: "Téléverser " + (l.length > 1 ? l.length + " fichiers" : "« " + l[0].name + " »") + " ?", deuxEtapes: false,
-        phrase: "Dans " + ou + ". Un fichier du même nom n'est jamais écrasé : le nouveau est renommé.", bouton: "Oui, téléverser" }).then(function (ok) {
+      EB.confirmer({ emoji: "⬆️", titre: "Ajouter " + (l.length > 1 ? l.length + " documents" : "« " + l[0].name + " »") + " ?", deuxEtapes: false,
+        phrase: "Dans " + ou + ". Un document du même nom n'est jamais écrasé : le nouveau est renommé.", bouton: "Oui, ajouter" }).then(function (ok) {
         if (!ok) return;
         var suite = Promise.resolve(), n = 0;
         l.forEach(function (f) {
           suite = suite.then(function () {
-            return G.televerser(chemin(f.name), f, function (p) { EB.toast("Téléversement : « " + f.name + " » " + Math.round(p * 100) + " %"); }).then(function () { n++; });
+            return G.televerser(chemin(f.name), f, function (p) { EB.toast("Envoi : « " + f.name + " » " + Math.round(p * 100) + " %"); }).then(function () { n++; });
           });
         });
         return suite.then(function () {
-          X().noter("Fichier téléversé", (l.length > 1 ? l.length + " fichiers" : l[0].name) + " → " + ou);
+          X().noter("Document ajouté", (l.length > 1 ? l.length + " fichiers" : l[0].name) + " → " + ou);
           C.oublier("fichiers:*");
-          EB.toast(n > 1 ? n + " fichiers téléversés." : "Fichier téléversé.");
+          EB.toast(n > 1 ? n + " documents ajoutés." : "Document ajouté.");
           if (apres) apres();
         });
       }).catch(X().afficherErreur);
@@ -114,7 +118,7 @@
     X().demanderNom("Nouveau dossier", "Il sera créé dans " + ou + ".", "", "Continuer").then(function (nom) {
       if (!nom) return;
       return EB.confirmer({ emoji: "📁", titre: "Créer « " + nom + " » ?", phrase: "Un nouveau dossier « " + nom + " » sera créé dans " + ou + ".",
-        consequence: "Il aura les mêmes accès que le dossier où il est rangé.", bouton: "Oui, créer le dossier" }).then(function (ok) {
+        consequence: "Les mêmes personnes pourront l'ouvrir que pour le dossier où il est rangé.", bouton: "Oui, créer le dossier" }).then(function (ok) {
         if (!ok) return;
         return G.graph("POST", cheminEnfants, { name: nom, folder: {}, "@microsoft.graph.conflictBehavior": "fail" }).then(function () {
           X().noter("Dossier créé", nom + " → " + ou);
@@ -151,12 +155,10 @@
       s.corps.textContent = ""; s.corps.appendChild(X().blocErreur(e));
     });
   }
-  function petitBouton(texte, ic, action, fn) { return h("button", { class: "btn petit secondaire", type: "button", "data-action": action, onclick: fn }, icone(ic), texte); }
-
-  /* ---------------- #/fichiers ---------------- */
+  /* ---------------- #/fichiers (onglet « Documents ») ---------------- */
   function ecranFichiers(app) {
     var g = ++gen;
-    app.appendChild(EB.barre("Fichiers", null));
+    app.appendChild(EB.barre("Documents", null));
     var A = window.EBAcces;
     var alerte = h("div", { class: "zone-alerte" });
     app.appendChild(alerte);
@@ -164,63 +166,66 @@
       alerte.textContent = "";
       var site = A && A.sonde("site"), commun = A && A.sonde("commun");
       var pb = site && site.etat === "erreur" ? site : commun && commun.etat === "erreur" ? commun : null;
-      if (pb) alerte.appendChild(h("div", { class: "bandeau erreur", role: "alert" }, icone("exemple"), h("div", null, h("strong", null, pb.message),
-        h("span", null, pb === commun ? "Vérifiez qu'il est bien à la racine de la bibliothèque Documents (ou corrigez « dossierCommun » dans config.js)." : "Prévenez Damien : l'adresse du site est peut-être à corriger."))));
+      if (pb) alerte.appendChild(h("div", { class: "bandeau erreur", role: "alert" }, icone("exemple"), h("div", null,
+        h("strong", null, pb === commun ? "Les documents de l'équipe sont introuvables." : pb.message), h("span", null, "Prévenez Damien : il doit vérifier l'emplacement du dossier."))));
     }
     dessinerAlerte();
     if (A) A.surChangement(function () { if (document.body.contains(alerte)) dessinerAlerte(); });
 
-    // 1. Récents
-    var rec = section("Récents", "t-recents");
+    // 1. Documents de l'équipe : une grande tuile évidente, puis les dossiers.
+    var nom = X().nomCommun();
+    var com = section(EB.avecTech("Documents de l'équipe", "SharePoint"), "t-commun");
+    com.el.insertBefore(EB.grandesTuiles([{ href: "#/commun", emoji: "📁", libelle: "Documents de l'équipe", sous: "Ouvrir le dossier partagé du Château", action: "ouvrir-commun" }]), com.corps);
+    app.appendChild(com.el);
+    X().contexte().then(function (c) {
+      if (!c.commun) { com.corps.textContent = ""; return; }
+      remplir(g, com, "enfants:" + nom, function () { return X().chargerEnfants(c, [nom]); }, function (l) {
+        var dossiers = trier(l).filter(function (x) { return x.folder; });
+        if (dossiers.length) com.corps.appendChild(EB.tuiles(dossiers.slice(0, 8).map(function (d) {
+          return { href: X().hashChemin("commun", [nom, d.name]), icone: "dossier", libelle: d.name, aide: "Ouvrir le dossier " + d.name };
+        })));
+      });
+    }).catch(function (e) { if (g === gen) { com.corps.textContent = ""; com.corps.appendChild(X().blocErreur(e)); } });
+
+    // 2. Ouverts récemment
+    var rec = section("Ouverts récemment", "t-recents");
+    rec.el.setAttribute("data-tuto", "recents");
     app.appendChild(rec.el);
     remplir(g, rec, "fichiers:recents", function () { return G.graph("GET", "/me/drive/recent?$top=12").then(function (j) { return ((j && j.value) || []).filter(function (x) { return !(x.folder || (x.remoteItem && x.remoteItem.folder)); }).slice(0, 8); }); }, function (l) {
-      if (!l.length) { rec.corps.appendChild(h("p", { class: "vide-doux" }, "Aucun fichier ouvert récemment.")); return; }
+      if (!l.length) { rec.corps.appendChild(h("p", { class: "vide-doux" }, "Aucun document ouvert récemment.")); return; }
       rec.corps.appendChild(h("div", { class: "liste-fichiers" }, l.map(function (x) { return ligne(x, { sous: quand(x.lastModifiedDateTime || (x.remoteItem && x.remoteItem.lastModifiedDateTime)) }); })));
     });
 
-    // 2. Mes fichiers (OneDrive)
-    var moi = section("Mes fichiers", "t-moi", h("span", { class: "acts-section" },
-      petitBouton("Dossier", "plus", "dossier-moi", function () { nouveauDossier("« Mes fichiers »", "/me/drive/root/children", EB.rendre); }),
-      petitBouton("Téléverser", "installer", "televerser-moi", function () { monDrive().then(function (d) { televerser("« Mes fichiers »", function (n) { return "/drives/" + d.id + "/root:/" + encodeURIComponent(n); }, EB.rendre); }).catch(X().afficherErreur); })));
+    // 3. Mes documents (OneDrive)
+    var moi = section(EB.avecTech("Mes documents", "OneDrive"), "t-moi");
+    moi.el.insertBefore(EB.boutonsCarres([
+      { texte: "Ajouter un document", icone: "installer", action: "televerser-moi", onclick: function () { monDrive().then(function (d) { televerser("« Mes documents »", function (n) { return "/drives/" + d.id + "/root:/" + encodeURIComponent(n); }, EB.rendre); }).catch(X().afficherErreur); } },
+      { texte: "Créer un dossier", icone: "plus", action: "dossier-moi", onclick: function () { nouveauDossier("« Mes documents »", "/me/drive/root/children", EB.rendre); } },
+    ]), moi.corps);
     app.appendChild(moi.el);
     remplir(g, moi, "fichiers:moi:", function () { return enfantsMoi([]); }, function (l) {
-      if (!l.length) { moi.corps.appendChild(h("p", { class: "vide-doux" }, "Votre OneDrive est vide.")); return; }
+      if (!l.length) { moi.corps.appendChild(h("p", { class: "vide-doux" }, "Vous n'avez encore aucun document personnel.")); return; }
       moi.corps.appendChild(h("div", { class: "liste-fichiers" }, l.slice(0, 6).map(function (x) { return ligne(x, x.folder ? { hash: hashMoi([x.name]) } : null); })));
-      moi.corps.appendChild(h("a", { class: "lien-plus", href: "#/onedrive" }, "Tous mes fichiers (" + l.length + ") ›"));
+      moi.corps.appendChild(EB.grandesTuiles([{ href: "#/onedrive", emoji: "👤", libelle: "Voir tous mes documents (" + l.length + ")", sous: "Pour moi seulement", action: "tous-mes-documents" }]));
     }, 60000);
 
-    // 3. Dossier commun (SharePoint)
-    var nom = X().nomCommun();
-    var droits = X().peutGererDroits();
-    var com = section("Dossier commun", "t-commun", h("span", { class: "acts-section" },
-      droits ? h("a", { class: "btn petit secondaire", href: "#/acces/" + encodeURIComponent(nom) }, icone("cadenas"), "Qui a accès") : null));
-    app.appendChild(com.el);
-    X().contexte().then(function (c) {
-      if (!c.commun) { com.corps.textContent = ""; com.corps.appendChild(h("p", { class: "vide-doux" }, "Le dossier commun est introuvable.")); return; }
-      remplir(g, com, "enfants:" + nom, function () { return X().chargerEnfants(c, [nom]); }, function (l) {
-        var dossiers = trier(l).filter(function (x) { return x.folder; });
-        com.corps.appendChild(dossiers.length ? EB.tuiles(dossiers.slice(0, 8).map(function (d) {
-          return { href: X().hashChemin("commun", [nom, d.name]), icone: "dossier", libelle: d.name, aide: "Ouvrir le dossier " + d.name };
-        })) : h("p", { class: "vide-doux" }, "Ce dossier est vide."));
-        com.corps.appendChild(h("a", { class: "lien-plus", href: "#/commun" }, "Ouvrir le dossier commun (créer, téléverser, ranger) ›"));
-      });
-    }).catch(function (e) { if (g === gen) { com.corps.textContent = ""; com.corps.appendChild(X().blocErreur(e)); } });
-    app.appendChild(h("p", { class: "lien-discret" }, h("a", { href: "#/journal" }, "Ce que j'ai fait depuis cet appareil")));
+    app.appendChild(h("div", { class: "actions-liste pied-actions" }, EB.action("#/journal", "🕘", "Mes dernières actions", "Ce que j'ai changé depuis cet appareil")));
   }
 
   /* ---------------- #/onedrive ---------------- */
   function ecranOneDrive(app, chemin) {
     var g = ++gen;
     var segs = chemin.slice(1).filter(Boolean);
-    var titre = segs.length ? segs[segs.length - 1] : "Mes fichiers";
-    app.appendChild(EB.barre(titre, segs.length ? { href: hashMoi(segs.slice(0, -1)), texte: "Retour" } : { href: "#/fichiers", texte: "Fichiers" }));
+    var titre = segs.length ? segs[segs.length - 1] : "Mes documents";
+    app.appendChild(EB.barre(titre, segs.length ? { href: hashMoi(segs.slice(0, -1)), texte: "Retour" } : { href: "#/fichiers", texte: "Documents" }, null, segs.length ? null : "Pour moi seulement (OneDrive)"));
     var ou = "« " + titre + " »";
     var enfants = segs.length ? "/me/drive/root:/" + segs.map(encodeURIComponent).join("/") + ":/children" : "/me/drive/root/children";
-    app.appendChild(h("div", { class: "actions" },
-      h("button", { class: "btn", type: "button", onclick: function () { nouveauDossier(ou, enfants, EB.rendre); } }, icone("plus"), "Nouveau dossier"),
-      h("button", { class: "btn secondaire", type: "button", onclick: function () {
+    app.appendChild(EB.boutonsCarres([
+      { texte: "Ajouter un document", icone: "installer", action: "televerser-moi", onclick: function () {
         monDrive().then(function (d) { televerser(ou, function (n) { return "/drives/" + d.id + "/root:/" + segs.concat([n]).map(encodeURIComponent).join("/"); }, EB.rendre); }).catch(X().afficherErreur);
-      } }, icone("installer"), "Téléverser")));
+      } },
+      { texte: "Créer un dossier", icone: "plus", action: "nouveau-dossier", onclick: function () { nouveauDossier(ou, enfants, EB.rendre); } },
+    ]));
     var s = { corps: h("div", null, EB.squelette(4)) };
     app.appendChild(s.corps);
     remplir(g, s, "fichiers:moi:" + segs.join("/"), function () { return enfantsMoi(segs); }, function (l) {

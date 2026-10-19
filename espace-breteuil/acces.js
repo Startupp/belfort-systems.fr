@@ -127,7 +127,7 @@
       if (lic.ok) sonde("licences", "ok"); else sonde("licences", "erreur", "Vos licences n'ont pas pu être lues.");
       if (c.ok) {
         sonde("site", "ok");
-        if (c.v.commun) sonde("commun", null); else sonde("commun", "erreur", "Le dossier commun est introuvable.");
+        if (c.v.commun) sonde("commun", null); else sonde("commun", "erreur", "Les documents de l'équipe sont introuvables.");
         if (c.v.moiSp) sonde("sp", "ok"); else sonde("sp", "erreur", "SharePoint ne répond pas à l'appli : les droits des dossiers ne sont pas lisibles.");
       } else {
         sonde("site", "erreur", c.e && c.e.statut === 404 ? "Le site SharePoint du Château est introuvable." : ((c.e && c.e.message) || "Le site du Château ne répond pas."));
@@ -138,6 +138,7 @@
         roles: roles.ok ? roles.v.map(function (x) { return x.roleTemplateId; }) : (etat.entrees ? etat.entrees.roles : []),
         proprietaire: !!proprietaire,
         gererDroits: perm.ok ? P.gererDroitsDe(perm.v) : false,
+        editer: perm.ok ? P.editerDe(perm.v) : null, // v5.5 : Lecteur / Éditeur (null = inconnu)
         licences: lic.ok ? lic.v.map(function (x) { return x.skuPartNumber; }) : [],
         siteWeb: groupes.ok ? P.estMembreDe(groupes.v, nomGroupeSite()) : !!(etat.entrees && etat.entrees.siteWeb),
       };

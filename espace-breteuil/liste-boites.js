@@ -27,7 +27,7 @@
 
   /** Pastilles d'initiales (4 au plus, puis « +n »), « Personne », ou « Accès : voir Exchange ». */
   function pastilles(qui) {
-    if (qui == null) return h("span", { class: "qui-boite inconnu", title: "Les accès aux boîtes partagées se règlent dans Exchange ; Microsoft ne les montre pas à l'appli." }, "Accès : voir Exchange");
+    if (qui == null) return h("span", { class: "qui-boite inconnu", title: "Les accès aux boîtes partagées se règlent dans Exchange ; Microsoft ne les montre pas à l'appli." }, "Accès : réglés chez Microsoft");
     if (!qui.length) return h("span", { class: "qui-boite personne" }, "Personne");
     var noms = qui.map(function (p) { return p.nom; });
     var visibles = qui.slice(0, qui.length > MAX_PASTILLES ? MAX_PASTILLES - 1 : MAX_PASTILLES), reste = qui.length - visibles.length;
@@ -39,7 +39,7 @@
   function boutonEpingler(b) {
     var E = window.EBEpingles, url = urlBoite(b.adresse);
     function deja() { return E.lire().some(function (x) { return x.url === url; }); }
-    var bt = h("button", { class: "btn petit secondaire", type: "button", "data-epingler": b.adresse, "aria-label": "Épingler la boîte " + b.nom + " en haut du Planning" });
+    var bt = h("button", { class: "btn petit secondaire", type: "button", "data-epingler": b.adresse, "aria-label": "Épingler la boîte " + b.nom + " sur l'accueil" });
     function etat() {
       var oui = deja();
       bt.textContent = "";
@@ -72,7 +72,7 @@
     var tri = trier((boites || []).filter(function (b) { return b && b.adresse; }));
     var epingler = !!(opts.epingler && window.EBEpingles);
     var zone = h("div", { class: "zone-liste-boites" });
-    if (!tri.length) { zone.appendChild(h("p", { class: "vide" }, "Aucune boîte partagée.")); return zone; }
+    if (!tri.length) { zone.appendChild(h("p", { class: "vide" }, "Aucune adresse partagée.")); return zone; }
     var ul = h("ul", { class: "liste-boites", "aria-label": "Boîtes partagées (" + tri.length + ")" });
     var vide = h("p", { class: "vide", hidden: true }, "Aucune boîte ne correspond.");
     function remplir(q) {

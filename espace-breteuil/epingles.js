@@ -32,7 +32,7 @@
     var l = lire();
     if (l.some(function (x) { return x.url === e.url; })) { EB.toast("« " + e.titre + " » est déjà épinglé."); return; }
     l.push(e); ecrire(l);
-    EB.toast("« " + e.titre + " » est épinglé en haut du Planning.");
+    EB.toast("« " + e.titre + " » est épinglé sur l'accueil.");
     redessiner();
   }
   function retirer(i) {
@@ -69,9 +69,9 @@
     zone.textContent = "";
     var l = lire();
     zone.appendChild(h("div", { class: "entete-section" }, h("h2", { id: "t-epingles" }, "Mes épingles"),
-      h("button", { class: "btn petit secondaire", type: "button", "data-action": "epingler", onclick: proposer }, icone("plus"), "Épingler…")));
+      h("button", { class: "btn petit secondaire", type: "button", "data-action": "epingler", onclick: proposer }, icone("plus"), "Épingler un raccourci")));
     if (!l.length) {
-      zone.appendChild(h("p", { class: "vide-doux" }, "Épinglez une boîte partagée (contact@, finance@…), l'agenda ou un dossier pour l'avoir ici, à portée de main."));
+      zone.appendChild(h("p", { class: "vide-doux" }, "Épinglez une adresse partagée (contact@, finance@…), l'agenda ou un dossier pour l'avoir ici, à portée de main."));
       return;
     }
     var grille = h("div", { class: "epingles", role: "list", "aria-describedby": "aide-epingles" });
@@ -133,10 +133,10 @@
       var deja = lire().map(function (x) { return x.url; });
       var choix = [
         { valeur: { type: "agenda", titre: "Agenda Outlook", url: "https://outlook.office.com/calendar/" }, emoji: "📅", titre: "Agenda Outlook", sous: "Mon agenda, dans Outlook" },
-        { valeur: { type: "dossier", titre: "Dossier commun", url: "#/commun" }, emoji: "🏰", titre: "Dossier commun", sous: "Le dossier de toute l'équipe" },
-        { valeur: { type: "fichiers", titre: "Mes fichiers", url: "#/onedrive" }, emoji: "☁️", titre: "Mes fichiers", sous: "Mon OneDrive" },
+        { valeur: { type: "dossier", titre: "Documents de l'équipe", url: "#/commun" }, emoji: "📁", titre: "Documents de l'équipe", sous: "Le dossier partagé du Château" },
+        { valeur: { type: "fichiers", titre: "Mes documents", url: "#/onedrive" }, emoji: "👤", titre: "Mes documents", sous: "Pour moi seulement (OneDrive)" },
       ].concat(bs.map(function (b) {
-        return { valeur: { type: "boite", titre: b.nom, adresse: b.adresse, url: urlBoite(b.adresse) }, emoji: "📬", titre: "Boîte « " + b.nom + " »", sous: b.adresse };
+        return { valeur: { type: "boite", titre: b.nom, adresse: b.adresse, url: urlBoite(b.adresse) }, emoji: "📬", titre: "Adresse « " + b.nom + " »", sous: b.adresse };
       })).filter(function (c) { return deja.indexOf(c.valeur.url) < 0; });
       if (!choix.length) { EB.toast("Tout est déjà épinglé. Pour un dossier : menu ⋯ du dossier."); return; }
       return EB.choisir("Épingler un raccourci", choix, "Pour un dossier précis : menu ⋯ du dossier → « Épingler sur l'accueil ».").then(function (v) { if (v) ajouter(v); });

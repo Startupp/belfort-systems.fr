@@ -2,7 +2,8 @@
  * Espace Breteuil — v5.2 : écrans « Suivi informatique » (vraies données, lues dans le dossier commun).
  * Libellés, dossier et fichier : config.js → suivi (un seul endroit pour les renommer).
  *
- *   #/suivi        historique daté (frise), ce qui a été mis en place, tous les documents, contacter
+ *   #/suivi        historique daté (frise), projets à venir (v5.3.3, si « projets » est présent),
+ *                  ce qui a été mis en place, tous les documents, contacter
  *                  — depuis l'onglet de gestion (Gérer, Équipe ou Finance) ; #/pilotage y renvoie ;
  *   #/moi/guides   guides PDF « pour: tous » + pas-à-pas selon le profil — pour tout le monde.
  *
@@ -23,11 +24,11 @@
   /** Réglages (config.js → suivi), avec valeurs par défaut. */
   function reglage() {
     var s = (self.EB_CONFIG && self.EB_CONFIG.suivi) || {};
-    return { libelle: s.libelle || "Suivi informatique", tuile: s.tuile || "Suivi informatique — tout ce qui a été fait pour vous",
+    return { libelle: s.libelle || "Suivi informatique", tuile: s.tuile || "Ce que Damien a fait pour le Château",
       dossier: s.dossier || "Suivi informatique", fichier: s.fichier || "suivi.json", guides: s.guides || "Guides",
       ancien: s.ancien && s.ancien.dossier && s.ancien.fichier ? s.ancien : null };
   }
-  function messageAbsent() { return "Le dossier " + reglage().dossier + " n'est pas encore en place — Damien doit le déposer dans le dossier commun."; }
+  function messageAbsent() { return "Le dossier " + reglage().dossier + " n'est pas encore en place — Damien doit le déposer dans les documents de l'équipe."; }
 
   /* ------------------------------------------------------------------ */
   /* Lecture                                                             */
@@ -75,7 +76,7 @@
   function bandeauEtat(r) {
     if (r.etat === "absent") return h("div", { class: "bandeau info", role: "status", "data-etat": "absent" }, icone("info"), h("span", null, messageAbsent()));
     if (r.etat === "illisible") return h("div", { class: "bandeau erreur", role: "alert", "data-etat": "illisible" }, icone("exemple"),
-      h("span", null, h("strong", null, r.raison || "Le fichier de suivi n'est pas lisible."), "Damien doit le corriger dans le dossier commun."));
+      h("span", null, h("strong", null, r.raison || "Le fichier de suivi n'est pas lisible."), "Damien doit le corriger dans les documents de l'équipe."));
     return null;
   }
 
@@ -121,6 +122,25 @@
     }));
   }
 
+  /** Classe CSS d'un statut (couleurs : app.css → --statut-*). */
+  var CLASSE_STATUT = { "À confirmer": "confirmer", "Proposition envoyée": "envoyee", "En cours": "cours", "Terminé": "termine" };
+  /** v5.3.3 « Projets à venir » : une carte par projet (statut, résumé, prochaine étape, documents). */
+  function projets(d, fichiers) {
+    if (!d.projets.length) return h("p", { class: "rien" }, "Aucun projet en vue pour l'instant.");
+    return h("div", { class: "grille-projets" }, d.projets.map(function (p) {
+      var c = CLASSE_STATUT[p.statut] || "confirmer", docs = P.documentsDe(p, d, fichiers);
+      return h("article", { class: "carte-projet " + c, "data-statut": p.statut },
+        h("div", { class: "tete-projet" }, h("h3", null, p.titre), h("span", { class: "pastille-statut " + c }, p.statut)),
+        p.resume ? h("p", null, p.resume) : null,
+        p.prochaineEtape ? h("p", { class: "prochaine-etape" }, h("b", null, "Prochaine étape : "), p.prochaineEtape) : null,
+        docs.length ? h("ul", { class: "docs-projet" }, docs.map(function (x) {
+          return h("li", null, h("span", { class: "nom-doc" }, emoji("📄"), h("span", null, x.titre)),
+            x.url ? h("a", lienPdf(x.url, { class: "btn petit", "aria-label": "Ouvrir « " + x.titre + " » (nouvel onglet)" }), icone("ouvrir"), "Ouvrir")
+              : h("span", { class: "a-venir" }, "document à venir"));
+        })) : null);
+    }));
+  }
+
   function contact(p) {
     if (!p.nom && !p.telephone && !p.mail) return h("p", { class: "rien" }, "Coordonnées à venir.");
     return h("div", { class: "carte-contact" },
@@ -138,7 +158,7 @@
   /* ------------------------------------------------------------------ */
   /* #/suivi (#/pilotage y renvoie)                                     */
   /* ------------------------------------------------------------------ */
-  var SECTIONS = [["p-historique", "Historique"], ["p-place", "Mis en place"], ["p-docs", "Documents"], ["p-contact", "Contacter"]];
+  var SECTIONS = [["p-historique", "Historique"], ["p-projets", "Projets à venir"], ["p-place", "Mis en place"], ["p-docs", "Documents"], ["p-contact", "Contacter"]];
   function ecranSuivi(app) {
     app.appendChild(EB.barre(reglage().libelle, EB.hub(), null, "Tout ce qui a été fait pour vous"));
     var zone = h("div", { class: "zone-suivi" });
@@ -149,13 +169,16 @@
       var d = r.donnees;
       zone.appendChild(h("p", { class: "aide-ecran" }, "Ce qui a été fait et échangé avec votre prestataire, du plus récent au plus ancien.",
         d.misAJour ? h("small", { class: "maj-suivi" }, "Mis à jour le " + P.dateLongue(d.misAJour)) : null));
-      zone.appendChild(h("nav", { class: "sommaire-suivi", "aria-label": "Aller à" }, SECTIONS.map(function (s) {
+      // « Projets à venir » : seulement si le fichier de suivi a une clé « projets ».
+      var ancres = SECTIONS.filter(function (s) { return s[0] !== "p-projets" || d.projets; });
+      zone.appendChild(h("nav", { class: "sommaire-suivi", "aria-label": "Aller à" }, ancres.map(function (s) {
         return h("button", { class: "btn petit secondaire", type: "button", onclick: function () {
           var t = document.getElementById(s[0] + "-t"); if (!t) return;
           t.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); t.focus({ preventScroll: true });
         } }, s[1]);
       })));
       zone.appendChild(section("p-historique", "Historique", frise(d, r.fichiers)));
+      if (d.projets) zone.appendChild(section("p-projets", "Projets à venir", projets(d, r.fichiers)));
       zone.appendChild(section("p-place", "Ce qui a été mis en place", themes(d)));
       zone.appendChild(section("p-docs", "Tous les documents", listeDocuments(P.guidesPour(d, r.fichiers, "gestion"))));
       zone.appendChild(section("p-contact", "Contacter", contact(d.prestataire)));
@@ -173,7 +196,7 @@
     return l;
   }
   function ecranMesGuides(app) {
-    app.appendChild(EB.barre("Guides", { href: "#/moi", texte: "Moi" }));
+    app.appendChild(EB.barre("Modes d'emploi", { href: "#/moi", texte: "Moi" }));
     var zone = h("section", { class: "section section-suivi", "aria-labelledby": "g-docs" }, h("h2", { id: "g-docs" }, "Documents"));
     app.appendChild(zone);
     var corps = h("div");
@@ -190,12 +213,9 @@
       }))));
   }
 
-  /** Grande tuile en tête de l'onglet de gestion. */
+  /** v5.5 : tuile « 🛠️ Suivi informatique » de l'écran Gérer (grande tuile, EB.grandesTuiles). */
   function tuileGestion() {
-    return h("a", { class: "action carte-suivi", href: "#/suivi", "data-action": "suivi" },
-      h("span", { class: "eb-anneau" }, icone("horloge")),
-      h("span", null, h("b", null, reglage().tuile), h("small", null, "Historique daté, guides PDF, ce qui a été réglé, contacter le prestataire")),
-      h("span", { class: "fleche", "aria-hidden": "true" }, "›"));
+    return { href: "#/suivi", emoji: "🛠️", libelle: reglage().libelle, sous: reglage().tuile, action: "suivi" };
   }
 
   EB.ecran("suivi", ecranSuivi);

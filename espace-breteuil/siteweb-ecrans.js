@@ -17,16 +17,16 @@
   function lienExterne(url, attrs) { return Object.assign({ href: url, target: "_blank", rel: "noopener noreferrer" }, attrs || {}); }
   function rappelIdentifiant() {
     return h("div", { class: "bandeau info", role: "note" }, icone("cle"), h("div", null,
-      h("strong", null, "WordPress a son propre identifiant"),
-      h("span", null, "Ce n'est pas votre compte Microsoft : il faut un compte WordPress du site breteuil.fr.")));
+      h("strong", null, "Le site a son propre identifiant"),
+      h("span", null, "Ce n'est pas votre adresse du Château : il faut le compte du site (WordPress).")));
   }
 
   /** Section « Site web » : rappel + tuiles (3 par ligne). */
   function section() {
     return h("section", { class: "section section-site", "aria-labelledby": "t-site" },
-      h("h2", { id: "t-site" }, "Site web"),
+      h("h2", { id: "t-site" }, "Site internet"),
       rappelIdentifiant(),
-      EB.tuiles(S.tuiles(CFG), { class: "tuiles trois" }));
+      EB.grandesTuiles(S.tuiles(CFG)));
   }
 
   /** Fiche dépliable (ou ouverte) : prudence, étapes, bouton vers WordPress, note. */
@@ -50,9 +50,9 @@
 
   /* Onglet « Site » */
   function ecranSite(app) {
-    app.appendChild(EB.barre("Site", null, null, "www.breteuil.fr"));
+    app.appendChild(EB.barre("Site internet", null, null, "www.breteuil.fr"));
     app.appendChild(section());
-    app.appendChild(h("section", { class: "section", "aria-labelledby": "t-pas" }, h("h2", { id: "t-pas" }, "Pas à pas"), fiches()));
+    app.appendChild(h("section", { class: "section", "aria-labelledby": "t-pas" }, h("h2", { id: "t-pas" }, "Modes d'emploi"), fiches()));
   }
 
   /* #/guides/site et #/guides/site/<id> */
@@ -61,12 +61,12 @@
     if (id) {
       var g = S.guide(CFG, id);
       if (!g) { location.hash = "#/guides/site"; return; }
-      app.appendChild(EB.barre(g.titre, { href: "#/guides/site", texte: "Pas à pas" }));
+      app.appendChild(EB.barre(g.titre, { href: "#/guides/site", texte: "Modes d'emploi" }));
       contenuGuide(g).forEach(function (x) { if (x) app.appendChild(x); });
       return;
     }
-    app.appendChild(EB.barre("Site web : pas à pas", EB.hub()));
-    app.appendChild(h("p", { class: "aide-ecran" }, "3 étapes au plus. Après chaque modification, pensez à vider le cache."));
+    app.appendChild(EB.barre("Site internet : modes d'emploi", EB.hub()));
+    app.appendChild(h("p", { class: "aide-ecran" }, "3 étapes au plus. Après chaque modification, pensez à « Rafraîchir le site »."));
     app.appendChild(rappelIdentifiant());
     app.appendChild(fiches());
   }

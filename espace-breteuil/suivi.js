@@ -2,7 +2,7 @@
  * Espace Breteuil — v5.2 : « Suivi informatique » (tout ce qui a été fait et échangé avec le prestataire).
  * Libellés, dossier et fichier : config.js → suivi (renommables en une ligne).
  * Partie SANS écran (testée sous Node, tests/suivi.test.mjs) : validation du fichier
- * de suivi (suivi.json), tri de l'historique, filtrage des guides (tous / gestion), correspondance
+ * de suivi (suivi.json), tri de l'historique et des projets à venir, filtrage des guides (tous / gestion), correspondance
  * « document cité » → fichier PDF déposé : d'abord par le numéro en tête (« 04 - … », le fichier
  * peut donc être renommé), puis par le nom (sans tenir compte des majuscules ni des accents).
  *
@@ -15,9 +15,11 @@
 
   /* Longueurs maximales (au-delà : texte coupé ; entrée invalide : ignorée). */
   var MAX = {
-    historique: 500, miseEnPlace: 60, points: 40, guides: 300, documents: 30,
+    historique: 500, miseEnPlace: 60, points: 40, guides: 300, documents: 30, projets: 50,
     titre: 200, resume: 3000, point: 600, fichier: 200, nom: 160, telephone: 40, mail: 200,
   };
+  /* Statuts des « Projets à venir » (v5.3.3), dans l'ordre d'affichage des pastilles. Inconnu → « À confirmer ». */
+  var STATUTS = ["À confirmer", "Proposition envoyée", "En cours", "Terminé"];
   var MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 
   function estObjet(v) { return v !== null && typeof v === "object" && !Array.isArray(v); }
@@ -96,6 +98,23 @@
       guides.push({ fichier: f, titre: texte(g.titre, MAX.titre), pour: g.pour === "tous" ? "tous" : "gestion" });
     });
 
+    // v5.3.3 « Projets à venir » : clé facultative. Absente → null (section masquée).
+    var projets = null;
+    if (brut.projets != null) {
+      if (!Array.isArray(brut.projets)) ignores++;
+      else {
+        projets = [];
+        tableau(brut.projets, MAX.projets).forEach(function (e, i) {
+          if (!estObjet(e) || !texte(e.titre, MAX.titre)) { ignores++; return; }
+          var docs = [];
+          tableau(e.documents, MAX.documents).forEach(function (d) { var n = nomFichier(d); if (n) docs.push(n); else ignores++; });
+          projets.push({ titre: texte(e.titre, MAX.titre), statut: statut(e.statut), resume: texte(e.resume, MAX.resume),
+            prochaineEtape: texte(e.prochaineEtape, MAX.point), documents: docs, rang: i });
+        });
+        projets = trierProjets(projets);
+      }
+    }
+
     return {
       ok: true, ignores: ignores,
       donnees: {
@@ -105,6 +124,7 @@
         historique: trierHistorique(historique),
         miseEnPlace: miseEnPlace,
         guides: guides,
+        projets: projets,
       },
     };
   }
@@ -113,6 +133,19 @@
   function trierHistorique(l) {
     return (l || []).slice().sort(function (a, b) {
       return a.date < b.date ? 1 : a.date > b.date ? -1 : (b.rang || 0) - (a.rang || 0);
+    });
+  }
+
+  /** Statut reconnu (sans casse ni accents : « en cours », « TERMINE ») ; sinon « À confirmer ». */
+  function statut(v) {
+    var k = cle(typeof v === "string" ? v : "");
+    return STATUTS.filter(function (s) { return cle(s) === k; })[0] || STATUTS[0];
+  }
+  /** Projets : ordre du fichier, les « Terminé » en bas (dans leur ordre d'origine). */
+  function trierProjets(l) {
+    return (l || []).slice().sort(function (a, b) {
+      var ta = a.statut === "Terminé" ? 1 : 0, tb = b.statut === "Terminé" ? 1 : 0;
+      return ta - tb || (a.rang || 0) - (b.rang || 0);
     });
   }
 
@@ -255,7 +288,7 @@
   function lienTel(t) { var c = String(t || "").replace(/[^\d+]/g, ""); if (/^0\d{9}$/.test(c)) c = "+33" + c.slice(1); return c ? "tel:" + c : ""; }
 
   var api = {
-    MAX: MAX, valider: valider, dateValide: dateValide, dateLongue: dateLongue, trierHistorique: trierHistorique,
+    MAX: MAX, STATUTS: STATUTS, statut: statut, trierProjets: trierProjets, valider: valider, dateValide: dateValide, dateLongue: dateLongue, trierHistorique: trierHistorique,
     cle: cle, numero: numero, titreDuNom: titreDuNom, pourDuNumero: pourDuNumero, trouverFichier: trouverFichier, titreDe: titreDe, documentsDe: documentsDe, guidesPour: guidesPour,
     taille: taille, lienTel: lienTel, urlSure: urlSure,
   };

@@ -62,16 +62,16 @@ const AVEC_GERER = { High: "432", Low: String(2 ** 24 + 0xFFFF) }, SANS_GERER = 
 
 const PROFILS = {
   admin: { user: "u2", roles: [{ id: "r1", displayName: "Global Administrator", roleTemplateId: GA }], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "fichiers", "gerer", "moi"], interdits: [], autorises: ["deleguer", "personnes", "licences-reel"] },
+    attendus: ["accueil", "planning", "fichiers", "gerer", "moi"], interdits: [], autorises: ["deleguer", "personnes", "licences-reel"] },
   proprietaire: { user: "u1", roles: [], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "fichiers", "equipe", "moi"], interdits: ["deleguer", "finance", "gerer"], autorises: ["personnes", "acces/Commun"] },
+    attendus: ["accueil", "planning", "fichiers", "equipe", "moi"], interdits: ["deleguer", "finance", "gerer"], autorises: ["personnes", "acces/Commun"] },
   facturation: { user: "u3", roles: [{ id: "r2", displayName: "Billing Administrator", roleTemplateId: BILLING }], lic: ["O365_BUSINESS_PREMIUM"],
-    attendus: ["planning", "fichiers", "finance", "moi"], interdits: ["deleguer", "personnes", "acces/Commun", "gerer"], autorises: ["licences-reel"] },
+    attendus: ["accueil", "planning", "fichiers", "finance", "moi"], interdits: ["deleguer", "personnes", "acces/Commun", "gerer"], autorises: ["licences-reel"] },
   collaborateur: { user: "u4", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"], groupes: [{ id: "g2", displayName: "Accueil" }],
-    attendus: ["planning", "fichiers", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "absences", "site", "liens", "guides/site"], autorises: [] },
+    attendus: ["accueil", "planning", "fichiers", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "absences", "site", "liens", "guides/site"], autorises: [] },
   // Membre du groupe « Site web » (nom en majuscules : comparaison sans casse), aucun autre droit.
   siteweb: { user: "u7", roles: [], lic: ["O365_BUSINESS_ESSENTIALS"], groupes: [{ id: "g2", displayName: "Accueil" }, { id: "g1", displayName: "SITE WEB" }],
-    attendus: ["planning", "fichiers", "site", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "guides/admin"], autorises: ["liens", "guides/site", "guides/site/pied"] },
+    attendus: ["accueil", "planning", "fichiers", "site", "moi"], interdits: ["deleguer", "personnes", "finance", "gerer", "equipe", "acces/Commun", "guides/admin"], autorises: ["liens", "guides/site", "guides/site/pied"] },
 };
 // Réponse maquettée du Worker (GET /breteuil/site/liens) : 1 cassé, 1 redirigé, 4 bons.
 const LIENS = { verifieLe: "2026-10-18T12:05:00.000Z", liens: [
@@ -141,6 +141,8 @@ async function preparer(contexte, nomProfil, opts = {}) {
   if (nomProfil) {
     const { r, moi } = reponses(nomProfil, opts.variante);
     await contexte.addInitScript((m) => { self.EB_MAQUETTE = m; }, { compte: { name: moi.displayName, username: moi.mail, localAccountId: moi.id }, permissions: [] });
+    // v5.5 : questionnaire du premier lancement déjà répondu (testé dans simplification.playwright.mjs).
+    await contexte.addInitScript(() => { for (const id of ["u1", "u2", "u3", "u4", "u6", "u7"]) localStorage.setItem("eb:usages:" + id, JSON.stringify({ choix: ["planning"] })); });
     await contexte.route(/https:\/\/(graph\.microsoft\.com|[a-z0-9-]+\.sharepoint\.com)\/.*/, async (route) => {
       const req = route.request(), url = new URL(req.url()), chemin = decodeURIComponent(url.pathname);
       if (/\/photos\//.test(url.pathname)) return route.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "image/png" }, body: PNG });
@@ -159,8 +161,10 @@ async function preparer(contexte, nomProfil, opts = {}) {
   } else {
     await contexte.addInitScript(() => { self.EB_MAQUETTE = { deconnecte: true }; });
   }
+  const aide = workerAide(opts.aide, journal);
   await contexte.route("https://belfort-api.damien-belfort.workers.dev/**", (r) => {
     const url = r.request().url();
+    if (/\/breteuil\/aide/.test(url)) return aide(r);
     if (/\/breteuil\/site\/liens/.test(url)) {
       journal.push({ methode: "GET", chemin: new URL(url).pathname + new URL(url).search });
       if (opts.liens === "absent") return r.fulfill({ status: 404, headers: CORS, body: JSON.stringify({ ok: false, erreur: "Introuvable." }) });
@@ -169,6 +173,64 @@ async function preparer(contexte, nomProfil, opts = {}) {
     return r.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "text/calendar" }, body: /\/2\.ics/.test(url) ? ICS2 : ICS });
   });
   return journal;
+}
+
+/* ---------- v5.4 Aide et demandes : Worker simulé (en mémoire, par contexte) ---------- */
+// Données FICTIVES. Le vrai Worker vérifie le jeton Microsoft ; ici on contrôle qu'il est bien envoyé.
+const AIDE_EXEMPLE = () => ({
+  demandes: [
+    { id: 11, cree: "2026-10-16T08:10:00.000Z", type: "probleme", statut: "repondue", nom: "Fanny Martin", adresse: "fmartin@breteuil.fr", ecran: "Planning (#/planning)", version: "5.3.1", appareil: "iPhone · Safari", nonLu: true },
+    { id: 9, cree: "2026-10-12T15:00:00.000Z", type: "amelioration", statut: "resolue", nom: "Fanny Martin", adresse: "fmartin@breteuil.fr", ecran: "Moi (#/moi)", version: "5.3.0", appareil: "iPhone · Safari", nonLu: false },
+    { id: 10, cree: "2026-10-14T10:00:00.000Z", type: "question", statut: "nouvelle", nom: "Camille Roux", adresse: "croux@breteuil.fr", ecran: "Dossiers (#/fichiers)", version: "5.3.1", appareil: "Ordinateur Windows · Edge", nonLu: false, autre: true },
+  ],
+  messages: {
+    11: [{ id: 1, cree: "2026-10-16T08:10:00.000Z", auteur: "client", texte: "Le planning de l'accueil ne s'affiche plus depuis ce matin sur mon téléphone.", origine: "appli" },
+      { id: 2, cree: "2026-10-16T09:02:00.000Z", auteur: "prestataire", texte: "Bonjour Fanny,\n\nC'est réglé : le calendrier de l'accueil était déconnecté. Pouvez-vous vérifier ?\n\nDamien", origine: "mail" }],
+    9: [{ id: 3, cree: "2026-10-12T15:00:00.000Z", auteur: "client", texte: "Pourrait-on voir les anniversaires dans le planning ?", origine: "appli" },
+      { id: 4, cree: "2026-10-13T08:00:00.000Z", auteur: "prestataire", texte: "Bonne idée, c'est fait.", origine: "appli" }],
+    10: [{ id: 5, cree: "2026-10-14T10:00:00.000Z", auteur: "client", texte: "Comment partager un dossier avec un prestataire extérieur ?", origine: "appli" }],
+  },
+});
+function workerAide(o, journal) {
+  o = o || {};
+  const s = AIDE_EXEMPLE(), prestataire = !!o.prestataire;
+  let suivant = 12;
+  const CORS_AIDE = { ...CORS, "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS" };
+  const rep = (route, status, corps) => route.fulfill({ status, headers: CORS_AIDE, body: JSON.stringify(corps) });
+  const vue = (d) => ({ ...d, nonLu: !prestataire && !!d.nonLu, dernier: (s.messages[d.id] || []).at(-1)?.cree || d.cree, nbMessages: (s.messages[d.id] || []).length, extrait: (s.messages[d.id] || [])[0]?.texte });
+  return async (route) => {
+    const req = route.request(), url = new URL(req.url()), m = req.method();
+    if (m === "OPTIONS") return route.fulfill({ status: 204, headers: CORS_AIDE });
+    const auth = (await req.allHeaders()).authorization || "";
+    journal.push({ methode: m, chemin: url.pathname + url.search, corps: req.postData(), auth, aide: true });
+    if (o.nonConfiguree) return rep(route, 503, { ok: false, code: "aide_non_configuree" });
+    if (auth !== "Bearer maquette-id-token") return rep(route, 401, { code: "non_connecte" });
+    const seg = url.pathname.split("/").slice(3).filter(Boolean);
+    const visibles = () => s.demandes.filter((d) => prestataire || !d.autre);
+    if (seg[0] === "moi") return rep(route, 200, { prestataire });
+    if (!seg.length && m === "GET") {
+      let l = visibles();
+      for (const k of ["statut", "type"]) if (url.searchParams.get(k)) l = l.filter((d) => d[k] === url.searchParams.get(k));
+      if (url.searchParams.get("personne")) l = l.filter((d) => d.adresse === url.searchParams.get("personne"));
+      return rep(route, 200, { prestataire, demandes: l.map(vue).sort((a, b) => b.dernier.localeCompare(a.dernier)) });
+    }
+    if (!seg.length && m === "POST") {
+      const c = JSON.parse(req.postData());
+      const d = { id: suivant++, cree: new Date().toISOString(), type: c.type, statut: "nouvelle", nom: "Fanny Martin", adresse: "fmartin@breteuil.fr", ecran: c.ecran, version: c.version, appareil: c.appareil };
+      s.demandes.push(d); s.messages[d.id] = [{ id: 99, cree: d.cree, auteur: "client", texte: c.message, origine: "appli" }];
+      return rep(route, 201, { ok: true, id: d.id, statut: "nouvelle", mailEnvoye: true });
+    }
+    const d = visibles().find((x) => x.id === Number(seg[0]));
+    if (!d) return rep(route, 404, { code: "introuvable" });
+    if (seg.length === 1 && m === "GET") { const v = vue(d); d.nonLu = false; return rep(route, 200, { prestataire, demande: { ...v, nonLu: false }, messages: s.messages[d.id] }); }
+    if (seg[1] === "messages" && m === "POST") {
+      s.messages[d.id].push({ id: 100 + s.messages[d.id].length, cree: new Date().toISOString(), auteur: prestataire ? "prestataire" : "client", texte: JSON.parse(req.postData()).texte, origine: "appli" });
+      d.statut = prestataire ? "repondue" : "nouvelle";
+      return rep(route, 201, { ok: true, statut: d.statut });
+    }
+    if (m === "PATCH") { d.statut = JSON.parse(req.postData()).statut; return rep(route, 200, { ok: true, id: d.id, statut: d.statut }); }
+    return rep(route, 405, {});
+  };
 }
 
 const serveur = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1"], { cwd: RACINE, stdio: "ignore" });
@@ -220,7 +282,7 @@ try {
       await page.goto(BASE);
       await page.waitForSelector(".gros-bouton");
       const boutons = await page.$$eval(".gros-bouton", (l) => l.map((b) => b.querySelector("b").textContent));
-      assert.deepEqual(boutons, ["Voir le calendrier", "Se connecter"], "premier écran : 2 boutons");
+      assert.deepEqual(boutons, ["Voir le planning", "Se connecter"], "premier écran : 2 boutons");
       assert.equal(await page.isVisible("#onglets"), false, "premier écran : pas d'onglets");
       assert.equal(await page.$$eval(".tuiles, .pastille-demo, .t", (l) => l.length), 0, "premier écran : ni tuiles ni démo");
       await controlesCommuns(page, `premier ${taille}`);
@@ -246,7 +308,7 @@ try {
       await page.waitForFunction((n) => document.querySelectorAll("#onglets a").length === n, p.attendus.length, { timeout: 8000 });
       await page.waitForFunction((ids) => [...document.querySelectorAll("#onglets a")].map((a) => a.dataset.onglet).join() === ids.join(), p.attendus, { timeout: 8000 });
       assert.deepEqual(await ongletsVisibles(page), p.attendus, `${nom} : onglets attendus`);
-      assert.ok(p.attendus.length <= 4);
+      assert.ok(p.attendus.length <= 5);
       await page.waitForSelector(".pastille-etat.vert", { timeout: 8000 });
       for (const onglet of p.attendus) {
         await page.click(`#onglets a[data-onglet="${onglet}"]`);
@@ -259,7 +321,9 @@ try {
       await page.goto(BASE + "#/fichiers");
       await page.waitForSelector('[data-fichier="Menu de Noël.docx"]');
       await page.waitForSelector('#t-commun ~ div .tuiles, .section-fichiers .tuiles');
-      assert.deepEqual(await page.$$eval(".section-fichiers h2", (l) => l.map((x) => x.textContent)), ["Récents", "Mes fichiers", "Dossier commun"]);
+      assert.deepEqual(await page.$$eval(".section-fichiers h2", (l) => l.map((x) => x.textContent)), ["Documents de l'équipe (SharePoint)", "Ouverts récemment", "Mes documents (OneDrive)"]);
+      await page.goto(BASE + "#/commun/Commun");
+      await page.waitForSelector(".grille.dossiers");
       const quiAcces = !!(await page.$('a[href^="#/acces"]'));
       assert.equal(quiAcces, nom === "proprietaire" || nom === "admin", `${nom} : « Qui a accès » selon le droit réel`);
       for (const route of p.interdits) {
@@ -276,19 +340,19 @@ try {
         await page.goto(BASE + "#/fichiers");
         await page.click('[data-fichier="Menu de Noël.docx"]');
         assert.ok(await page.isVisible('dialog .choix:has-text("Ouvrir dans Word")'), "ouvrir dans Office");
-        await page.click('dialog .choix:has-text("Copier un lien de partage")');
+        await page.click('dialog .choix:has-text("Copier un lien")');
         await page.waitForFunction(() => /Lien copié|Sélectionnez/.test((document.getElementById("toast")?.textContent || "") + (document.querySelector("dialog[open]")?.textContent || "")));
         const lien = journal.find((x) => x.methode === "POST" && /\/createLink$/.test(x.chemin));
         assert.ok(lien, "createLink envoyé"); assert.deepEqual(JSON.parse(lien.corps), { type: "view", scope: "organization" });
         await page.keyboard.press("Escape");
         const [choixFichier] = await Promise.all([page.waitForEvent("filechooser"), page.click('[data-action="televerser-moi"]')]);
         await choixFichier.setFiles({ name: "Compte rendu.txt", mimeType: "text/plain", buffer: Buffer.from("bonjour") });
-        await page.click('dialog button:has-text("Oui, téléverser")');
-        await page.waitForFunction(() => /téléversé/.test(document.getElementById("toast")?.textContent || ""));
+        await page.click('dialog button:has-text("Oui, ajouter")');
+        await page.waitForFunction(() => /ajouté/.test(document.getElementById("toast")?.textContent || ""));
         assert.ok(journal.some((x) => x.methode === "PUT" && x.chemin === "/v1.0/drives/od1/root:/Compte rendu.txt:/content"), "PUT de téléversement");
         await capturer(page, `collaborateur-fichiers-televerse-${taille}`);
         // Épingles : boîte partagée → Outlook web, ordre au clavier, retrait.
-        await page.goto(BASE + "#/planning");
+        await page.goto(BASE + "#/accueil");
         await page.click('[data-action="epingler"]');
         await page.click('dialog .choix:has-text("contact@breteuil.fr")');
         await page.click('[data-action="epingler"]');
@@ -309,7 +373,7 @@ try {
       if (nom === "siteweb") {
         // Onglet Site : rappel de l'identifiant WordPress, 8 tuiles, liens WordPress dans un nouvel onglet.
         await page.goto(BASE + "#/site");
-        await page.waitForSelector(".section-site .tuiles .t");
+        await page.waitForSelector(".section-site .tuiles-grandes .t");
         assert.match(await page.textContent(".section-site .bandeau"), /propre identifiant/);
         const tuilesSite = await page.$$eval(".section-site .t", (l) => l.map((a) => ({ lib: a.querySelector(".lib").textContent, href: a.getAttribute("href"), cible: a.getAttribute("target") })));
         assert.equal(tuilesSite.length, 8);
@@ -432,15 +496,14 @@ try {
       const { contexte, page, erreurs, journal } = await nouvellePage(vp, nom);
       await page.goto(BASE + "#/planning");
       await page.waitForFunction((n) => document.querySelectorAll("#onglets a").length === n, PROFILS[nom].attendus.length, { timeout: 8000 });
-      const gestion = PROFILS[nom].attendus[2];
+      const gestion = PROFILS[nom].attendus[3];
       if (nom !== "collaborateur") {
         // Tuile en tête de l'onglet de gestion (avant toute section).
         await page.goto(BASE + "#/" + gestion);
-        await page.waitForSelector(".carte-suivi");
-        assert.ok(await page.evaluate(() => { const t = document.querySelector(".carte-suivi"), s = document.querySelector(".ecran .section");
-          return !s || !!(t.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING); }), `${nom} : tuile Suivi informatique en tête`);
-        assert.match(await page.textContent(".carte-suivi"), /^Suivi informatique — tout ce qui a été fait pour vous/);
-        await page.click(".carte-suivi");
+        await page.waitForSelector('[data-action="suivi"]');
+        assert.ok(await page.evaluate(() => document.querySelector(".ecran .section [data-action=suivi]") === document.querySelector(".ecran .section .t")), `${nom} : tuile Suivi informatique en tête`);
+        assert.match(await page.textContent('[data-action="suivi"]'), /Suivi informatique\s*Ce que Damien a fait pour le Château/);
+        await page.click('[data-action="suivi"]');
         await page.waitForFunction(() => location.hash === "#/suivi");
         await page.waitForSelector(".frise-suivi .etape-frise");
         assert.equal((await page.textContent(".barre h1")).startsWith("Suivi informatique"), true, "titre « Suivi informatique »");
@@ -463,6 +526,44 @@ try {
         await calme(page);
         await controlesCommuns(page, `${nom} suivi ${taille}`);
         if (nom === "admin") await capturer(page, `suivi-${taille}`);
+        // v5.3.3 Projets à venir : après l'historique, avant « Ce qui a été mis en place » ; « Terminé » en bas.
+        assert.deepEqual(await page.$$eval(".zone-suivi > section", (l) => l.map((x) => x.id)), ["p-historique", "p-projets", "p-place", "p-docs", "p-contact"], `${nom} : ordre des sections`);
+        assert.deepEqual(await page.$$eval(".sommaire-suivi button", (l) => l.map((b) => b.textContent)), ["Historique", "Projets à venir", "Mis en place", "Documents", "Contacter"], "boutons d'ancrage");
+        assert.deepEqual(await page.$$eval(".carte-projet", (l) => l.map((c) => [c.querySelector("h3").textContent, c.querySelector(".pastille-statut").textContent])),
+          [["Renouvellement d'un poste", "Proposition envoyée"], ["Sauvegarde sur place", "À confirmer"], ["Archivage des anciens messages", "Terminé"]], `${nom} : projets, statut inconnu → À confirmer, Terminé en bas`);
+        assert.deepEqual(await page.$$eval(".prochaine-etape", (l) => l.map((x) => x.textContent)), ["Prochaine étape : Choisir le modèle dans la proposition.", "Prochaine étape : Confirmer le besoin, puis devis."]);
+        assert.deepEqual(await page.$$eval(".docs-projet a", (l) => l.map((a) => [a.getAttribute("href"), a.target])), [["https://breteuil02.sharepoint.com/exemple/plan.pdf", "_blank"]], "projet : Ouvrir le document déposé");
+        assert.deepEqual(await page.$$eval(".docs-projet .a-venir", (l) => l.map((x) => x.textContent)), ["document à venir"]);
+        assert.equal(await page.$$eval("#p-projets b", (l) => l.filter((b) => !b.closest(".prochaine-etape")).length), 0, "aucun HTML interprété dans les projets");
+        assert.match(await page.textContent("#p-projets"), /<b>reste du texte<\/b>/);
+        const couleurs = await page.$$eval(".pastille-statut", (l) => l.map((x) => getComputedStyle(x).backgroundColor));
+        assert.equal(new Set(couleurs).size, 3, "une couleur par statut");
+        await page.click('.sommaire-suivi button:has-text("Projets à venir")');
+        await page.waitForFunction(() => document.activeElement && document.activeElement.id === "p-projets-t");
+        if (nom === "admin") {
+          const capturerProjets = async (nomC) => {
+            if (!SORTIE) return;
+            // Pleine page découpée sur la section (sinon les onglets fixes du bas recouvrent la capture).
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.waitForTimeout(300);
+            const b = await page.evaluate(() => { const r = document.getElementById("p-projets").getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; });
+            const vw = page.viewportSize().width, x = Math.max(0, b.x - 12);
+            await page.screenshot({ path: `${SORTIE}/${nomC}.png`, fullPage: true, clip: { x, y: Math.max(0, b.y - 12), width: Math.min(vw - x, b.w + 24), height: b.h + 24 } });
+            captures++;
+          };
+          await capturerProjets(`suivi-projets-creme-${taille}`);
+          // Même section en Bleu Breteuil (clair), puis retour à la palette crème.
+          await page.evaluate(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
+          await page.reload();
+          await page.waitForSelector(".carte-projet");
+          assert.equal(await page.evaluate(() => document.documentElement.getAttribute("data-palette")), "bleu");
+          await calme(page);
+          await controlesCommuns(page, `${nom} suivi projets bleu ${taille}`);
+          await capturerProjets(`suivi-projets-bleu-${taille}`);
+          await page.evaluate(() => localStorage.removeItem("eb:reglages"));
+          await page.reload();
+          await page.waitForSelector(".carte-projet");
+        }
         // Ancienne adresse : #/pilotage → #/suivi.
         await page.goto(BASE + "#/pilotage");
         await page.waitForFunction(() => location.hash === "#/suivi");
@@ -508,7 +609,7 @@ try {
       const { contexte, page, erreurs } = await nouvellePage(vp, "proprietaire", { variante: "suivi-absent" });
       await page.goto(BASE + "#/suivi");
       await page.waitForSelector('[data-etat="absent"]', { timeout: 8000 });
-      assert.equal(await page.textContent('[data-etat="absent"]'), "Le dossier Suivi informatique n'est pas encore en place — Damien doit le déposer dans le dossier commun.");
+      assert.equal(await page.textContent('[data-etat="absent"]'), "Le dossier Suivi informatique n'est pas encore en place — Damien doit le déposer dans les documents de l'équipe.");
       assert.equal(await page.$(".bandeau.erreur"), null, "pas d'erreur technique");
       await capturer(page, `suivi-absent-${taille}`);
       await page.goto(BASE + "#/moi/guides");
@@ -682,7 +783,7 @@ try {
       await page.waitForSelector(".voile-depot:not([hidden])");
       assert.equal(await page.getAttribute(".voile-depot", "role"), "dialog");
       assert.equal(await page.textContent(".voile-titre"), "Déposer ici pour envoyer dans : Finance");
-      assert.equal(await page.textContent(".voile-chemin"), "Dossier commun › Finance");
+      assert.equal(await page.textContent(".voile-chemin"), "Documents de l'équipe › Finance");
       await capturer(page, `depot-voile-${palette}-1280`);
       assert.equal(await page.isVisible(".voile-depot"), true, "le voile reste tant que le fichier survole");
       assert.equal(await lacher(), true, "le navigateur n'ouvre pas le fichier");
@@ -709,7 +810,7 @@ try {
       await page.click('dialog button:has-text("J\'ai compris")');
       // Planning : aucun dossier ouvert → voile explicatif, rien n'est envoyé.
       await page.goto(BASE + "#/planning");
-      await page.waitForSelector('[data-action="epingler"]');
+      await page.waitForSelector('.bloc-planning');
       const avant = puts().length;
       await survoler(["Planning.txt"]);
       await page.waitForSelector(".voile-depot.sans-cible:not([hidden])");
@@ -722,13 +823,13 @@ try {
       await page.goto(BASE + "#/fichiers");
       await page.waitForSelector('[data-fichier="Menu de Noël.docx"]');
       await survoler(["Mémo.txt"]);
-      assert.match(await page.textContent(".voile-chemin"), /Mes fichiers/);
+      assert.match(await page.textContent(".voile-chemin"), /Mes documents/);
       await lacher();
-      await page.click('dialog button:has-text("Oui, envoyer dans Mes fichiers")');
-      await page.waitForFunction(() => /1 fichier envoyé dans Mes fichiers/.test(document.getElementById("toast")?.textContent || ""));
+      await page.click('dialog button:has-text("Oui, envoyer dans Mes documents")');
+      await page.waitForFunction(() => /1 fichier envoyé dans Mes documents/.test(document.getElementById("toast")?.textContent || ""));
       assert.equal(puts().at(-1).chemin, "/v1.0/drives/od1/root:/Mémo.txt:/content");
       // Les épingles se réordonnent toujours en glissant (gestes au pointeur, non touchés par le dépôt).
-      await page.goto(BASE + "#/planning");
+      await page.goto(BASE + "#/accueil");
       for (const b of ["contact@breteuil.fr", "finance@breteuil.fr"]) { await page.click('[data-action="epingler"]'); await page.click(`dialog .choix:has-text("${b}")`); }
       const a = await page.locator('[data-epingle="https://outlook.office.com/mail/contact%40breteuil.fr/"]').boundingBox();
       const z = await page.locator('[data-epingle="https://outlook.office.com/mail/finance%40breteuil.fr/"]').boundingBox();
@@ -749,13 +850,170 @@ try {
       const { contexte, page, erreurs } = await nouvellePage(vp, "collaborateur", { variante: "commun-introuvable" });
       await page.goto(BASE + "#/fichiers");
       await page.waitForSelector(".pastille-etat.orange", { timeout: 8000 });
-      await page.waitForSelector('.zone-alerte .bandeau.erreur:has-text("Le dossier commun est introuvable")');
+      await page.waitForSelector('.zone-alerte .bandeau.erreur:has-text("introuvables")');
       await capturer(page, `probleme-commun-introuvable-${taille}`);
       // Les 404 de la maquette sont voulus ici : seules les autres erreurs comptent.
       const autres = erreurs.filter((e) => !/404/.test(e));
       if (autres.length) problemes.push(`commun introuvable ${taille} : erreurs console ${autres.join(" | ")}`);
       await contexte.close();
     }
+  }
+  /* ---------- v5.4 Aide et demandes (Worker simulé) : 375 et 1280 px, crème et Bleu Breteuil ---------- */
+  for (const [taille, vp] of [["375", { width: 375, height: 812 }], ["1280", { width: 1280, height: 900 }]]) for (const palette of ["creme", "bleu"]) {
+    const suffixe = `${palette}-${taille}`;
+    const avecPalette = async (page) => { if (palette === "bleu") await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" }))); };
+    // Non connecté : le bouton est là, il explique qu'il faut se connecter et propose d'appeler.
+    {
+      const { contexte, page, erreurs } = await nouvellePage(vp, null);
+      await avecPalette(page);
+      await page.goto(BASE);
+      await page.waitForSelector(".gros-bouton");
+      await page.click(".aide-fab");
+      await page.waitForSelector("#aide-panneau[open]");
+      assert.match(await page.textContent("#aide-panneau"), /connectez-vous d'abord/);
+      assert.equal(await page.getAttribute("#aide-panneau a.aide-appel", "href"), "tel:0609897443");
+      assert.equal(await page.$$eval("#aide-panneau textarea", (l) => l.length), 0, "pas de formulaire sans connexion");
+      await capturer(page, `aide-deconnecte-${suffixe}`);
+      if (erreurs.length) problemes.push(`aide déconnecté ${suffixe} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    // Collaborateur : bouton, pastille, envoi, Mes demandes avec une réponse, réponse, « Résolue ».
+    {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, "collaborateur", {});
+      await avecPalette(page);
+      await page.goto(BASE + "#/planning");
+      await page.waitForSelector("#onglets a[data-onglet]");
+      await page.waitForSelector(".aide-fab .aide-pastille:not([hidden])");
+      await calme(page);
+      const fab = await page.evaluate(() => {
+        const b = document.querySelector(".aide-fab").getBoundingClientRect(), o = document.querySelector("#onglets").getBoundingClientRect();
+        return { w: b.width, h: b.height, droite: innerWidth - b.right, bas: b.bottom, ongletsHaut: o.top, ongletsBas: o.bottom, label: document.querySelector(".aide-fab").getAttribute("aria-label"),
+          pastille: document.querySelector(".aide-pastille").textContent, visible: getComputedStyle(document.querySelector(".aide-fab")).visibility };
+      });
+      assert.ok(fab.w >= 48 && fab.h >= 48, `bouton ? ≥ 48 px (${fab.w}×${fab.h})`);
+      assert.ok(fab.droite <= 32, "coin bas droit");
+      if (taille === "375") assert.ok(fab.bas <= fab.ongletsHaut, "au-dessus de la barre d'onglets");
+      assert.equal(fab.pastille, "1"); assert.match(fab.label, /^Aide et demandes — 1 réponse/);
+      await capturer(page, `aide-bouton-${suffixe}`);
+      await page.click(".aide-fab");
+      await page.waitForSelector("#aide-panneau[open] .aide-form");
+      // Contexte joint, visible.
+      assert.equal(await page.textContent('[data-ctx="ecran"]'), "Planning (#/planning)");
+      assert.equal(await page.textContent('[data-ctx="version"]'), "5.5.0");
+      assert.match(await page.textContent('[data-ctx="appareil"]'), /px$/);
+      assert.deepEqual(await page.$$eval(".aide-type", (l) => l.map((b) => b.textContent.trim())), ["❓Question", "💬Avis", "✨Amélioration", "⚠️Problème"]);
+      // Formulaire vide : erreurs claires, rien n'est envoyé.
+      await page.click('[data-action="aide-envoyer"]');
+      assert.equal(await page.textContent("#aide-err-type"), "Choisissez le type de demande.");
+      assert.equal(await page.textContent("#aide-err-msg"), "Écrivez votre message.");
+      assert.equal(journal.filter((j) => j.aide && j.methode === "POST").length, 0);
+      await page.click('.aide-type[data-type="probleme"]');
+      await page.fill("#aide-message", "L'imprimante de l'accueil n'imprime plus les billets.\nMessage d'erreur : « bourrage ».");
+      assert.equal(await page.textContent("#aide-compteur"), "86 / 4000 caractères");
+      await capturer(page, `aide-nouvelle-${suffixe}`);
+      await page.click('[data-action="aide-envoyer"]');
+      await page.waitForSelector(".aide-confirmation");
+      assert.equal(await page.textContent(".aide-confirmation"), "Demande n° 12 envoyée à Damien");
+      const envoi = journal.find((j) => j.aide && j.methode === "POST" && j.chemin === "/breteuil/aide");
+      assert.equal(envoi.auth, "Bearer maquette-id-token", "ID token envoyé au Worker");
+      assert.deepEqual(JSON.parse(envoi.corps).type, "probleme");
+      assert.equal(JSON.parse(envoi.corps).ecran, "Planning (#/planning)"); assert.equal(JSON.parse(envoi.corps).version, "5.5.0");
+      await capturer(page, `aide-envoyee-${suffixe}`);
+      // Mes demandes : la réponse de Damien est signalée, le fil s'ouvre, la pastille disparaît.
+      await page.click("text=Voir mes demandes");
+      await page.waitForSelector('#aide-panneau .aide-carte[data-demande="11"]');
+      assert.deepEqual(await page.$$eval("#aide-panneau .aide-carte", (l) => l.map((c) => c.dataset.demande)), ["12", "11", "9"]);
+      assert.match(await page.textContent('#aide-panneau .aide-carte[data-demande="11"]'), /Nouvelle réponse/);
+      assert.match(await page.textContent('#aide-panneau .aide-carte[data-demande="11"]'), /Répondue/);
+      await capturer(page, `aide-mes-demandes-${suffixe}`);
+      await page.click('#aide-panneau .aide-carte[data-demande="11"]');
+      await page.waitForSelector("#aide-panneau .aide-bulle.damien");
+      assert.match(await page.textContent("#aide-panneau .aide-bulle.damien"), /Damien · .* · par mail/);
+      assert.match(await page.textContent("#aide-panneau .aide-bulle.damien .aide-bulle-texte"), /C'est réglé/);
+      await page.waitForSelector(".aide-fab .aide-pastille[hidden]", { state: "attached" });
+      await capturer(page, `aide-fil-${suffixe}`);
+      await page.fill("#aide-reponse-11", "Oui, ça marche, merci !");
+      await page.click('#aide-panneau [data-action="aide-repondre"]');
+      await page.waitForFunction(() => [...document.querySelectorAll("#aide-panneau .aide-bulle.client")].some((b) => /ça marche/.test(b.textContent)));
+      await page.click('#aide-panneau [data-action="aide-resolue"]');
+      await page.waitForFunction(() => /Résolue/.test(document.querySelector("#aide-panneau .aide-fil-tete")?.textContent || ""));
+      const ecrits = journal.filter((j) => j.aide && j.methode !== "GET").map((j) => j.methode + " " + j.chemin + " " + j.corps);
+      assert.deepEqual(ecrits.slice(1), ['POST /breteuil/aide/11/messages {"texte":"Oui, ça marche, merci !"}', 'PATCH /breteuil/aide/11 {"statut":"resolue"}']);
+      await page.keyboard.press("Escape");
+      // Moi → « Mes demandes » → écran #/aide → demande.
+      await page.goto(BASE + "#/moi");
+      await page.waitForSelector('[data-action="mes-demandes"]');
+      assert.equal(await page.$$eval('[data-action="toutes-demandes"]', (l) => l.length), 0, "pas d'écran Demandes pour un client");
+      await page.click('[data-action="mes-demandes"]');
+      await page.waitForSelector('.ecran a.aide-carte[data-demande="9"]');
+      await calme(page);
+      await controlesCommuns(page, `aide mes demandes ${suffixe}`);
+      if (palette === "creme" || taille === "375") await capturer(page, `aide-ecran-mes-demandes-${suffixe}`);
+      await page.click('.ecran a.aide-carte[data-demande="9"]');
+      await page.waitForSelector(".ecran .aide-bulle.damien");
+      assert.equal(await page.evaluate(() => location.hash), "#/aide/9");
+      assert.equal(await page.$$eval('.ecran [data-action="aide-resolue"]', (l) => l.length), 0, "déjà résolue");
+      // #/demandes refusé à un client.
+      await page.goto(BASE + "#/demandes");
+      await page.waitForFunction(() => /réservé à Damien/.test(document.querySelector(".aide-demandes")?.textContent || ""));
+      if (erreurs.length) problemes.push(`aide collaborateur ${suffixe} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    // Prestataire : écran « Demandes » (toutes, filtres), répondre, changer le statut.
+    {
+      const { contexte, page, erreurs, journal } = await nouvellePage(vp, "admin", { aide: { prestataire: true } });
+      await avecPalette(page);
+      await page.goto(BASE + "#/moi");
+      await page.waitForSelector('[data-action="toutes-demandes"]');
+      await page.click('[data-action="toutes-demandes"]');
+      await page.waitForSelector(".aide-filtres");
+      await page.click('[data-filtre-statut=""]');
+      await page.waitForSelector('.aide-demandes .aide-carte[data-demande="10"]');
+      assert.equal(await page.$$eval(".aide-demandes .aide-carte", (l) => l.length), 3, "toutes les demandes, de toutes les personnes");
+      assert.match(await page.textContent('.aide-carte[data-demande="10"]'), /Camille Roux · croux@breteuil\.fr/);
+      await page.selectOption('[data-filtre="type"]', "question");
+      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 1);
+      await page.selectOption('[data-filtre="type"]', "");
+      await page.selectOption('[data-filtre="personne"]', "fmartin@breteuil.fr");
+      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 2);
+      assert.ok(journal.some((j) => j.aide && j.chemin === "/breteuil/aide?personne=fmartin%40breteuil.fr"), "filtre par personne envoyé au Worker");
+      await page.selectOption('[data-filtre="personne"]', "");
+      await page.click('[data-filtre-statut="nouvelle"]');
+      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 1);
+      await calme(page);
+      await controlesCommuns(page, `aide prestataire ${suffixe}`);
+      await capturer(page, `aide-prestataire-${suffixe}`);
+      await page.click('.aide-demandes .aide-carte[data-demande="10"]');
+      await page.waitForSelector('.ecran [data-statut="resolue"]');
+      assert.match(await page.textContent(".ecran .aide-note"), /Camille Roux · croux@breteuil\.fr/);
+      await page.fill("#aide-reponse-10", "Dossiers → ⋯ → Partager, puis son adresse.");
+      await page.click('.ecran [data-action="aide-repondre"]');
+      await page.waitForFunction(() => document.querySelectorAll(".ecran .aide-bulle.damien").length === 1);
+      assert.equal(await page.getAttribute('.ecran [data-statut="repondue"]', "aria-pressed"), "true", "réponse → Répondue");
+      await page.click('.ecran [data-statut="resolue"]');
+      await page.waitForFunction(() => document.querySelector('.ecran [data-statut="resolue"]')?.getAttribute("aria-pressed") === "true");
+      await capturer(page, `aide-prestataire-fil-${suffixe}`);
+      assert.ok(journal.some((j) => j.aide && j.methode === "PATCH" && j.corps === '{"statut":"resolue"}'));
+      if (erreurs.length) problemes.push(`aide prestataire ${suffixe} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+  }
+  // Aide pas encore installée (Worker : 503 aide_non_configuree) : message clair + téléphone.
+  {
+    const { contexte, page, erreurs } = await nouvellePage({ width: 375, height: 812 }, "collaborateur", { aide: { nonConfiguree: true } });
+    await page.goto(BASE + "#/planning");
+    await page.waitForSelector("#onglets a[data-onglet]");
+    await page.click(".aide-fab");
+    await page.click('.aide-type[data-type="question"]');
+    await page.fill("#aide-message", "Test");
+    await page.click('[data-action="aide-envoyer"]');
+    await page.waitForSelector("#aide-panneau .aide-erreur");
+    assert.equal(await page.textContent("#aide-panneau .aide-erreur p"), "L'aide n'est pas encore installée — appelez Damien au 06 09 89 74 43.");
+    assert.equal(await page.getAttribute("#aide-panneau .aide-erreur a", "href"), "tel:0609897443");
+    await capturer(page, "aide-non-installee-375");
+    const autres = erreurs.filter((e) => !/503/.test(e));
+    if (autres.length) problemes.push(`aide non installée : erreurs console ${autres.join(" | ")}`);
+    await contexte.close();
   }
   /* ---------- Calendrier « ajuster à l'écran » : la semaine tient en entier ---------- */
   for (const w of [320, 375, 414, 768, 1280]) {
@@ -781,4 +1039,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique (dont Projets à venir, crème et Bleu) et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px + Aide et demandes (crème et Bleu, 375 et 1280 px) (${captures} captures).`);

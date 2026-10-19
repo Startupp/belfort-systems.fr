@@ -76,7 +76,7 @@
           "Cliquez sur « Mettre à jour ». Pensez à la version anglaise (sélecteur de langue WPML), puis videz le cache.",
         ],
         lien: { url: u.pages, texte: "Ouvrir la liste des pages" } },
-      { id: "cache", titre: "Vider le cache", icone: "actualiser",
+      { id: "cache", titre: "Rafraîchir le site (vider le cache)", icone: "actualiser",
         etapes: [
           "Ouvrez WordPress avec le bouton ci-dessous et connectez-vous.",
           "Dans la barre noire tout en haut de l'écran, survolez « WP Rocket ».",
@@ -92,14 +92,14 @@
   function tuiles(cfg) {
     var u = adresses(cfg);
     return [
-      { id: "liens", libelle: "Vérifier les liens", icone: "loupe", href: "#/liens", aide: "Vérifier que les liens du bas de page du site marchent" },
-      { id: "image", libelle: "Remplacer une image", icone: "photo", href: u.medias, externe: true, aide: "Médiathèque de WordPress (nouvel onglet)" },
-      { id: "pied", libelle: "Liens du bas de page", icone: "lien", href: u.piedDePage, externe: true, aide: "Modèle « Pied de page » d'Elementor (nouvel onglet)" },
-      { id: "couleurs", libelle: "Couleurs du site", icone: "palette", href: "#/guides/site/couleurs", aide: "Pas à pas : couleurs globales d'Elementor" },
-      { id: "page", libelle: "Modifier une page", icone: "page", href: u.pages, externe: true, aide: "Liste des pages de WordPress (nouvel onglet)" },
-      { id: "cache", libelle: "Vider le cache", icone: "actualiser", href: "#/guides/site/cache", aide: "Pas à pas : vider le cache de WP Rocket après une modification" },
-      { id: "voir", libelle: "Voir le site", icone: "globe", href: u.site, externe: true, aide: "Ouvrir www.breteuil.fr (nouvel onglet)" },
-      { id: "guides", libelle: "Pas à pas", icone: "livre", href: "#/guides/site", aide: "Tous les modes d'emploi, en 3 étapes" },
+      { id: "liens", libelle: "Vérifier les liens", icone: "loupe", href: "#/liens", sous: "Les liens du bas de page marchent-ils ?", aide: "Vérifier que les liens du bas de page du site marchent" },
+      { id: "image", libelle: "Remplacer une image", icone: "photo", href: u.medias, externe: true, sous: "Dans les images du site", aide: "Médiathèque de WordPress (nouvel onglet)" },
+      { id: "pied", libelle: "Liens du bas de page", icone: "lien", href: u.piedDePage, externe: true, sous: "Changer un lien en bas des pages", aide: "Modèle « Pied de page » d'Elementor (nouvel onglet)" },
+      { id: "couleurs", libelle: "Couleurs du site", icone: "palette", href: "#/guides/site/couleurs", sous: "Mode d'emploi en 3 étapes", aide: "Pas à pas : couleurs globales d'Elementor" },
+      { id: "page", libelle: "Modifier une page", icone: "page", href: u.pages, externe: true, sous: "Changer un texte ou une photo", aide: "Liste des pages de WordPress (nouvel onglet)" },
+      { id: "cache", libelle: "Rafraîchir le site", icone: "actualiser", href: "#/guides/site/cache", sous: "Après une modification (vider le cache)", aide: "Pas à pas : vider le cache de WP Rocket après une modification" },
+      { id: "voir", libelle: "Voir le site", icone: "globe", href: u.site, externe: true, sous: "www.breteuil.fr", aide: "Ouvrir www.breteuil.fr (nouvel onglet)" },
+      { id: "guides", libelle: "Modes d'emploi", icone: "livre", href: "#/guides/site", sous: "Tous les gestes, pas à pas", aide: "Tous les modes d'emploi, en 3 étapes" },
     ];
   }
 

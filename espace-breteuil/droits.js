@@ -85,13 +85,85 @@
     return "";
   }
 
+  /* ------------------------------------------------------------------ */
+  /* « Réserver à certaines personnes » : qui retirer, qui ajouter        */
+  /* ------------------------------------------------------------------ */
+  function estGroupe(m) { return !!m && (m.PrincipalType === 4 || m.PrincipalType === 8); }
+  function adresseChoisie(p) { return minuscule((p && (p.mail || p.upn || p.adresse)) || ""); }
+
+  /**
+   * Plan d'une réservation (logique pure).
+   * entrees : [{ principalId, membre, niveau }] (accès actuels) ; choisis : [{ nom, mail|upn }] ;
+   * niveau : "voir" | "modifier" ; protege(membre) → raison (texte) ou "" (garde-fou, voir estProtege).
+   * Retour : {
+   *   retirer : entrées non protégées absentes du choix (groupes, liens de partage, autres personnes) ;
+   *   changer : personnes choisies déjà présentes avec un autre niveau (retirées puis remises au bon niveau) ;
+   *   garder  : personnes choisies déjà présentes au bon niveau (rien à faire) ;
+   *   proteges: [{ entree, raison }] gardées d'office (propriétaires, administrateur, soi-même) ;
+   *   ajouter : personnes choisies sans accès direct (à ajouter au niveau demandé) }.
+   */
+  function planReserve(entrees, choisis, niveau, protege) {
+    var adresses = (choisis || []).map(adresseChoisie), presents = {};
+    var plan = { retirer: [], changer: [], garder: [], proteges: [], ajouter: [] };
+    (entrees || []).forEach(function (e) {
+      var m = e.membre || {}, a = estGroupe(m) ? "" : adresseDe(m);
+      var i = a ? adresses.indexOf(a) : -1;
+      var raison = protege ? protege(m) : "";
+      if (i > -1) presents[i] = true;
+      if (raison) { plan.proteges.push({ entree: e, raison: raison }); return; }
+      if (i === -1) plan.retirer.push(e);
+      else if (e.niveau === niveau) plan.garder.push(e);
+      else plan.changer.push(e);
+    });
+    (choisis || []).forEach(function (p, i) { if (!presents[i] && adresses[i]) plan.ajouter.push(p); });
+    return plan;
+  }
+
+  /** « A », « A et B », « A, B et C ». */
+  function listeNoms(noms) {
+    noms = (noms || []).filter(Boolean);
+    if (noms.length < 2) return noms[0] || "";
+    return noms.slice(0, -1).join(", ") + " et " + noms[noms.length - 1];
+  }
+
+  /**
+   * Phrase de confirmation, en clair :
+   * « Seuls Pauline de Breteuil et François de Breteuil pourront ouvrir « X ». Les autres ne le verront plus. »
+   * obligatoires : libellés gardés d'office (« l'administrateur du site (obligatoire) »…).
+   */
+  function phraseReserve(noms, nomObjet, obligatoires) {
+    var n = (noms || []).filter(Boolean);
+    var debut = n.length > 1 ? "Seuls " + listeNoms(n) + " pourront ouvrir « " + nomObjet + " »"
+      : "Seul(e) " + (n[0] || "vous") + " pourra ouvrir « " + nomObjet + " »";
+    var plus = (obligatoires || []).length ? " + " + obligatoires.join(" + ") : "";
+    return debut + plus + ". Les autres ne le verront plus.";
+  }
+
+  /**
+   * Libellés de ceux qui restent d'office, sans jargon. proteges : plan.proteges ;
+   * nomDe(membre) → nom affiché ; choisis : pour ne pas répéter une personne déjà choisie.
+   */
+  function obligatoiresReserve(proteges, nomDe, choisis) {
+    var adresses = (choisis || []).map(adresseChoisie), vus = {}, out = [];
+    function ajouter(t) { if (!vus[t]) { vus[t] = 1; out.push(t); } }
+    (proteges || []).forEach(function (p) {
+      var m = p.entree.membre || {};
+      if (estGroupe(m)) { ajouter("l'administrateur du site (obligatoire)"); return; }
+      var a = adresseDe(m);
+      if (a && adresses.indexOf(a) > -1) return;
+      if (p.raison === "C'est vous") ajouter("vous-même (obligatoire)");
+      else ajouter((nomDe ? nomDe(m) : m.Title || a) + " (propriétaire du site, obligatoire)");
+    });
+    return out;
+  }
+
   /** Nom simple d'un groupe SharePoint (« Propriétaires de … » → « Propriétaires du site »). */
   function nomGroupe(titre) {
     var t = String(titre || "");
-    if (/propri[ée]taires|owners/i.test(t)) return "Propriétaires du site";
-    if (/visiteurs|visitors/i.test(t)) return "Visiteurs du site";
-    if (/membres|members/i.test(t)) return "Membres du site";
-    if (/^sharinglinks\./i.test(t)) return /anonymous/i.test(t) ? "Lien ouvert à tous" : /organization/i.test(t) ? "Lien pour l'entreprise" : "Lien pour des personnes précises";
+    if (/propri[ée]taires|owners/i.test(t)) return "Gestionnaires";
+    if (/visiteurs|visitors/i.test(t)) return "Lecteurs";
+    if (/membres|members/i.test(t)) return "Toute l'équipe";
+    if (/^sharinglinks\./i.test(t)) return /anonymous/i.test(t) ? "Lien ouvert à tous" : /organization/i.test(t) ? "Lien pour le Château" : "Lien pour des personnes précises";
     if (/^tout le monde|everyone/i.test(t)) return "Tout le personnel du Château";
     return t;
   }
@@ -108,7 +180,7 @@
         ["📧", "Outlook : sa boîte mail et son agenda"],
         ["💬", "Teams : discussions et visios"],
         ["☁️", "OneDrive : 1 To pour ses fichiers"],
-        ["🗂️", "Le dossier commun du Château"],
+        ["🗂️", "Les documents de l'équipe"],
       ],
     },
     basic: {
@@ -119,7 +191,7 @@
         ["📧", "Outlook : sa boîte mail et son agenda"],
         ["💬", "Teams : discussions et visios"],
         ["☁️", "OneDrive : 1 To pour ses fichiers"],
-        ["🗂️", "Le dossier commun du Château"],
+        ["🗂️", "Les documents de l'équipe"],
       ],
     },
     exchange: {
@@ -263,6 +335,7 @@
   var api = {
     NIVEAUX: NIVEAUX, TYPES: TYPES, PROFILS: PROFILS, SKUS: SKUS,
     niveauDeRoles: niveauDeRoles, typeDe: typeDe, adresseDe: adresseDe, estProtege: estProtege, nomGroupe: nomGroupe,
+    planReserve: planReserve, phraseReserve: phraseReserve, obligatoiresReserve: obligatoiresReserve, listeNoms: listeNoms,
     profilDe: profilDe, compteLicences: compteLicences, PLANS: PLANS, outilsDesPlans: outilsDesPlans, logonName: logonName, nomDossierValide: nomDossierValide,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

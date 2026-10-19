@@ -142,6 +142,8 @@
     if (Array.isArray(c)) { c.forEach(function (x) { ajouter(el, x); }); return; }
     el.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
   }
+  /** v5.5 : espace insécable avant « ? ! : ; » et après « « » : un signe ne tombe jamais seul en début de ligne. */
+  function insecable(t) { return typeof t === "string" ? t.replace(/ ([?!:;»])/g, "\u00a0$1").replace(/« /g, "«\u00a0") : t; }
   function lienExterne(url, attrs) { return Object.assign({ href: url, target: "_blank", rel: "noopener noreferrer" }, attrs || {}); }
   function emoji(e, cls) { return h("span", { class: "emoji " + (cls || ""), "aria-hidden": "true" }, e); }
 
@@ -320,7 +322,7 @@
   function barre(titre, retour, droite, sousTitre) {
     return h("header", { class: "barre" },
       retour ? h("a", { class: "btn-retour", href: retour.href, "aria-label": "Retour : " + (retour.texte || "page précédente") }, icone("retour"), h("span", { class: "txt" }, retour.texte || "Retour")) : null,
-      h("h1", null, titre, sousTitre ? h("small", null, sousTitre) : null),
+      h("h1", null, insecable(titre), sousTitre ? h("small", null, sousTitre) : null),
       droite || null,
       window.EBAcces ? window.EBAcces.pastille() : null); // état de la connexion, en direct
   }
@@ -351,7 +353,39 @@
     return h("button", attrs, contenu);
   }
   function tuiles(liste, attrs) { return h("div", Object.assign({ class: "tuiles" }, attrs || {}), liste.filter(Boolean).map(tuile)); }
-  function tuilesTrois(liste) { return tuiles(liste, { class: "tuiles trois" }); } // Gérer : 3 par ligne, plus grandes
+  function tuilesTrois(liste) { return grandesTuiles(liste); }
+  /**
+   * v5.5 : grande tuile, une seule action : pictogramme (icône ou emoji) + titre + une ligne + ›.
+   * Grille droite : 1 colonne sur téléphone, 2 puis 3 sur grand écran. Garde les classes .t et .lib.
+   */
+  function grandeTuile(t) {
+    var teinte = TEINTES[t.icone] || "praline";
+    var ico = t.emoji ? h("span", { class: "ico c-" + (t.teinte || "praline") }, emoji(t.emoji))
+      : h("span", { class: "ico c-" + teinte }, icone(t.icone));
+    var attrs = { class: "t gt" + (t.choisi ? " choisi" : ""), "data-usage": t.usage || null, "data-action": t.action || null, "data-tuto": t.tuto || null };
+    var contenu = [ico, h("span", { class: "textes" }, h("span", { class: "lib" }, insecable(t.libelle)), t.sous ? h("span", { class: "sous" }, insecable(t.sous)) : null),
+      t.externe ? h("span", { class: "sr" }, " (s'ouvre dans un nouvel onglet)") : null,
+      h("span", { class: "chevron", "aria-hidden": "true" }, t.externe ? icone("ouvrir") : icone("droite"))];
+    if (t.href) { attrs.href = t.href; if (t.externe) { attrs.target = "_blank"; attrs.rel = "noopener noreferrer"; } return h("a", attrs, contenu); }
+    attrs.type = "button"; attrs.onclick = t.onclick;
+    return h("button", attrs, contenu);
+  }
+  /**
+   * v5.5 : rangée de boutons d'action de MÊME taille (carrés arrondis, icône au-dessus, libellé court).
+   * liste : [{ texte, icone | emoji, action (data-action), onclick | href }] ; les null sont ignorés.
+   */
+  function boutonsCarres(liste) {
+    var l = liste.filter(Boolean);
+    if (!l.length) return document.createDocumentFragment(); // rien de permis : rien d'affiché (pas de boutons grisés)
+    return h("div", { class: "boutons-carres", style: { "--n": String(Math.max(l.length, 1)) } }, l.map(function (b) {
+      var contenu = [h("span", { class: "bc-ico", "aria-hidden": "true" }, b.emoji ? emoji(b.emoji) : icone(b.icone)), h("span", { class: "bc-lib" }, insecable(b.texte))];
+      if (b.href) return h("a", { class: "bc", href: b.href, "data-action": b.action || null }, contenu);
+      return h("button", { class: "bc", type: "button", "data-action": b.action || null, onclick: b.onclick }, contenu);
+    }));
+  }
+  /** Libellé simple + nom technique en second, en petit : « Mes documents (OneDrive) ». */
+  function avecTech(libelle, tech) { return [libelle, h("small", { class: "tech" }, " (" + tech + ")")]; }
+  function grandesTuiles(liste, attrs) { return h("div", Object.assign({ class: "tuiles-grandes" }, attrs || {}), liste.filter(Boolean).map(grandeTuile)); }
 
   /** Squelette de chargement (appels Microsoft) : n lignes grises animées. */
   function squelette(n, forme) {
@@ -371,9 +405,9 @@
     var m = planning.mode;
     var date = planning.quand ? jourLong(jourDe(planning.quand)) + " à " + heure(planning.quand) : "";
     if (m === "exemple") return h("div", { class: "bandeau exemple", role: "note" }, icone("exemple"),
-      h("div", null, h("strong", null, "Exemple — données fictives"), "Calendriers du Château pas encore branchés."));
+      h("div", null, h("strong", null, "Exemple (pas le vrai planning)"), "Le vrai planning n'est pas encore relié."));
     if (m === "exemple-panne") return h("div", { class: "bandeau exemple", role: "note" }, icone("exemple"),
-      h("div", null, h("strong", null, "EXEMPLE — données fictives"), "Les calendriers ne répondent pas et rien n'est encore enregistré sur ce téléphone."));
+      h("div", null, h("strong", null, "Exemple (pas le vrai planning)"), "Le planning ne répond pas et rien n'est encore gardé sur ce téléphone."));
     if (m === "hors-ligne") return h("div", { class: "bandeau info", role: "note" }, icone("horsligne"),
       h("div", null, h("strong", null, "Pas de connexion"), "Voici la dernière version enregistrée" + (date ? " (" + date + ")." : ".")));
     if (m === "ancien") return h("div", { class: "bandeau info", role: "note" }, icone("info"),
@@ -441,8 +475,10 @@
           opts.deuxEtapes === false ? (opts.bouton || "Confirmer") : "Continuer");
         d.appendChild(h("div", { class: "contenu centre" },
           opts.emoji ? emoji(opts.emoji, "grand") : null,
-          h("h2", { id: "detail-titre" }, opts.titre || "Vérifions ensemble"),
+          h("h2", { id: "detail-titre" }, insecable(opts.titre || "Vérifions ensemble")),
           h("p", { class: "phrase" }, opts.phrase || ""),
+          // Une seule étape : la conséquence s'affiche sous la phrase (rien n'est caché).
+          opts.deuxEtapes === false && opts.consequence ? h("p", { class: "phrase consequence" }, opts.consequence) : null,
           opts.deuxEtapes === false ? null : h("p", { class: "etape" }, "Étape 1 sur 2"),
           suite,
           h("button", { class: "btn secondaire large", type: "button", onclick: function () { terminer(false); } }, "Annuler")));
@@ -473,10 +509,10 @@
       var liste = h("div", { class: "choix-liste" }, elements.map(function (e) {
         return h("button", { class: "choix", type: "button", onclick: function () { terminer(e.valeur); } },
           e.avatar || (e.emoji ? emoji(e.emoji) : null),
-          h("span", null, h("b", null, e.titre), e.sous ? h("small", null, e.sous) : null));
+          h("span", null, h("b", null, insecable(e.titre)), e.sous ? h("small", null, insecable(e.sous)) : null));
       }));
       var annuler = h("button", { class: "btn secondaire large", type: "button", onclick: function () { terminer(null); } }, "Annuler");
-      d.appendChild(h("div", { class: "contenu" }, h("h2", { id: "detail-titre" }, titre), phrase ? h("p", { class: "phrase" }, phrase) : null, liste, annuler));
+      d.appendChild(h("div", { class: "contenu" }, h("h2", { id: "detail-titre" }, insecable(titre)), phrase ? h("p", { class: "phrase" }, phrase) : null, liste, annuler));
       ouvrirDialogue(d, liste.firstChild || annuler);
     });
   }
@@ -507,7 +543,7 @@
   /** Grosse ligne d'action : pictogramme + titre + une phrase. */
   function action(href, pictogramme, titre, phrase) {
     return h("a", { class: "action", href: href },
-      emoji(pictogramme), h("span", null, h("b", null, titre), phrase ? h("small", null, phrase) : null),
+      emoji(pictogramme), h("span", null, h("b", null, insecable(titre)), phrase ? h("small", null, insecable(phrase)) : null),
       h("span", { class: "fleche", "aria-hidden": "true" }, "›"));
   }
 
@@ -543,12 +579,12 @@
       h("div", { class: "premier-boutons" },
         h("button", { class: "gros-bouton", type: "button", "data-action": "calendrier", onclick: function () {
           reglages.mode = "calendrier"; sauverReglages(); rendre();
-        } }, h("span", { class: "eb-anneau" }, icone("agenda")), h("span", null, h("b", null, "Voir le calendrier"), h("small", null, "Sans compte, sur cet appareil")), h("span", { class: "chevron" }, icone("droite"))),
+        } }, h("span", { class: "eb-anneau" }, icone("agenda")), h("span", null, h("b", null, "Voir le planning"), h("small", null, "Sans se connecter")), h("span", { class: "chevron" }, icone("droite"))),
         h("button", { class: "gros-bouton principal", type: "button", "data-action": "connexion", disabled: !configure, onclick: function () {
           this.disabled = true; this.classList.add("en-cours");
           var b = this;
           Promise.resolve(g.connecter()).catch(function () {}).then(function () { b.disabled = false; b.classList.remove("en-cours"); });
-        } }, h("span", { class: "eb-anneau" }, icone("cle")), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre compte Microsoft du Château" : "Connexion pas encore activée")), h("span", { class: "chevron" }, icone("droite")))),
+        } }, h("span", { class: "eb-anneau" }, icone("cle")), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre adresse du Château" : "Connexion pas encore prête")), h("span", { class: "chevron" }, icone("droite")))),
       g && g.erreur() ? h("p", { class: "erreur premier-erreur", role: "alert" }, g.erreur()) : null,
       h("p", { class: "premier-pied" }, "Belfort Systems · 06 09 89 74 43")));
   }
@@ -605,9 +641,9 @@
       // Zoom de la grille (semaine, mois) : 0 = « ajuster à l'écran » (la semaine tient en entier).
       var grilleZoomable = v.vue === "semaine" || v.vue === "mois";
       if (grilleZoomable) bloc.appendChild(h("div", { class: "zoom-planning", role: "group", "aria-label": "Taille de la grille" },
-        h("button", { class: "btn-rond", type: "button", "aria-label": "Réduire la grille", "data-zoom": "moins", disabled: !reglages.zoom, onclick: function () { zoomer(-1); } }, icone("moins")),
-        h("button", { class: "btn secondaire", type: "button", "data-zoom": "ajuster", "aria-pressed": String(!reglages.zoom), onclick: function () { zoomer(-9); } }, "Ajuster à l'écran"),
-        h("button", { class: "btn-rond", type: "button", "aria-label": "Agrandir la grille", "data-zoom": "plus", disabled: reglages.zoom >= ZOOM_MAX, onclick: function () { zoomer(1); } }, icone("plus"))));
+        h("button", { class: "btn-rond", type: "button", "aria-label": "Plus petit", "data-zoom": "moins", disabled: !reglages.zoom, onclick: function () { zoomer(-1); } }, icone("moins")),
+        h("button", { class: "btn secondaire", type: "button", "data-zoom": "ajuster", "aria-pressed": String(!reglages.zoom), onclick: function () { zoomer(-9); } }, "Taille normale"),
+        h("button", { class: "btn-rond", type: "button", "aria-label": "Plus grand", "data-zoom": "plus", disabled: reglages.zoom >= ZOOM_MAX, onclick: function () { zoomer(1); } }, icone("plus"))));
       var zone = h("div", { class: "zone-planning" + (grilleZoomable ? " zoom-" + (reglages.zoom || 0) + (reglages.zoom ? " defile" : " ajuster") : "") });
       if (grilleZoomable) pincement(zone);
       if (!planning) zone.appendChild(squelette(4));
@@ -647,19 +683,19 @@
 
   /** Onglet Planning : épingles (connecté), puis le planning, en lecture seule. */
   function ecranPlanning(app) {
-    var actualiser = h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", title: "Actualiser", onclick: actualiserPlanning }, icone("actualiser"));
+    var actualiser = h("button", { class: "btn-rond", type: "button", "aria-label": "Recharger le planning", title: "Recharger", onclick: actualiserPlanning }, icone("actualiser"));
     app.appendChild(barre("Planning", null, actualiser, maj(jourLong(aujourdhui()))));
-    if (connecte() && window.EBEpingles) app.appendChild(window.EBEpingles.section()); // raccourcis de chacun
+    // v5.5 : les épingles sont sur l'Accueil ; le Planning ne montre que le planning.
     blocPlanning(app, null); // v4 : plus de bandeau d'absences ni de pointage (planning en lecture seule)
   }
 
   /* Mode « calendrier seul » (choisi sur le premier écran, mémorisé sur l'appareil). */
   function ecranCalendrierSeul(app) {
-    app.appendChild(barre("Calendrier du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", onclick: actualiserPlanning }, icone("actualiser")), "Lecture seule · sans compte"));
+    app.appendChild(barre("Planning du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Recharger le planning", onclick: actualiserPlanning }, icone("actualiser")), "Sans connexion"));
     var corps = h("div", { class: "calendrier-seul" });
     app.appendChild(corps);
     corps.appendChild(blocAujourdhui());
-    corps.appendChild(h("h2", { class: "titre-groupe", id: "tout-le-planning", tabindex: "-1" }, "Jour · Semaine · Mois"));
+    corps.appendChild(h("h2", { class: "titre-groupe", id: "tout-le-planning", tabindex: "-1" }, "Tout le planning"));
     blocPlanning(corps, null);
     app.appendChild(h("div", { class: "barre-bas" },
       h("button", { class: "btn-verre", type: "button", "data-action": "accueil", onclick: function () {
@@ -668,7 +704,7 @@
       h("button", { class: "btn-verre large", type: "button", onclick: function () {
         var c = document.getElementById("tout-le-planning");
         if (c) { c.scrollIntoView({ behavior: window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); c.focus({ preventScroll: true }); }
-      } }, icone("agenda"), "Jour · Semaine · Mois")));
+      } }, icone("agenda"), "Voir tout le planning")));
   }
 
   /** « Aujourd'hui » (calendrier seul) : la date, puis les rendez-vous du jour sur une ligne de temps dorée. */
@@ -796,12 +832,31 @@
   /* ------------------------------------------------------------------ */
   /* Onglet Moi : qui je suis, mes droits, ce que je peux utiliser       */
   /* ------------------------------------------------------------------ */
-  var DROITS_TEXTE = {
-    proprietaire: ["🏰", "Propriétaire du site", "Décide qui a accès au dossier commun et à chaque dossier."],
-    collaborateur: ["👤", "Collaborateur", "Planning, dossier commun (selon vos accès) et vos outils Microsoft."],
-  };
-  function puceDroit(emo, titre, phrase) {
-    return h("li", { class: "droit" }, emoji(emo), h("span", null, h("b", null, titre), h("small", null, phrase)));
+  /* v5.5 : carte « Vous êtes : … » — niveau TOUJOURS déduit des droits réels (profil.js). */
+  function puce(e) { return function (t) { return h("li", null, emoji(e), h("span", null, t)); }; }
+  /** Noms des gestionnaires (propriétaires du site), lus chez Microsoft ; [] si inconnus. */
+  function gestionnaires() {
+    var X = window.EBConnecte;
+    if (!X || !connecte()) return Promise.resolve([]);
+    return X.contexte().then(function (c) {
+      var vus = {}, l = [];
+      (c.proprietairesNoms || []).concat((c.proprietairesSp || []).filter(function (u) { return u.PrincipalType === 1; }).map(function (u) { return u.Title; }))
+        .forEach(function (n) { if (n && !vus[n]) { vus[n] = 1; l.push(n); } });
+      return l;
+    }).catch(function () { return []; });
+  }
+  function carteRole(r) {
+    var P = window.EBProfil, n = P.NIVEAUX[(r && r.niveau) || "lecteur"];
+    var qui = h("strong", { class: "qui-demander" }, "…");
+    var carte = h("section", { class: "carte-role", "data-niveau": n.id, "aria-labelledby": "t-role" },
+      h("h2", { id: "t-role" }, emoji(n.emoji), h("span", null, insecable("Vous êtes : "), h("strong", null, n.nom))),
+      h("p", { class: "phrase-role" }, n.phrase),
+      h("div", { class: "role-colonnes" },
+        h("div", null, h("h3", null, "Vous pouvez"), h("ul", { class: "liste-role peut" }, n.peut.map(puce("✅")))),
+        n.nePeut.length ? h("div", null, h("h3", null, "Vous ne pouvez pas"), h("ul", { class: "liste-role nepeut" }, n.nePeut.map(puce("⛔"))),
+          h("p", { class: "demander" }, "Pour cela, demandez à : ", qui)) : null));
+    if (n.nePeut.length) gestionnaires().then(function (noms) { qui.textContent = noms.length ? window.EBDroits.listeNoms(noms) : "Damien"; });
+    return carte;
   }
   function ecranMoi(app, chemin) {
     // v5.2 : Moi → Guides (#/moi/guides), pour tout le monde.
@@ -812,42 +867,53 @@
     var nom = (me && me.displayName) || c.name || "";
     app.appendChild(h("div", { class: "bonjour moi-tete" }, h("span", { class: "eb-anneau rond lent" }, avatar({ prenom: nom || "?", couleur: "#8A4C45" }, "grand")),
       h("div", null, h("h2", null, h("span", { class: "reflet" }, nom || "Mon compte")), h("p", null, (me && (me.mail || me.userPrincipalName)) || c.username || ""))));
+    app.appendChild(r ? carteRole(r) : squelette(2));
 
-    var P = window.EBProfil, D = window.EBDroits;
-    var zone = h("section", { class: "section", "aria-busy": r ? "false" : "true" }, h("h2", null, "Mes droits"));
-    app.appendChild(zone);
-    if (!r) zone.appendChild(squelette(2));
-    else {
-      var l = h("ul", { class: "droits" });
-      r.roles.forEach(function (k) { var x = P.ROLES[k]; l.appendChild(puceDroit(k === "facturation" ? "💶" : "🔑", x.nom, x.phrase)); });
-      if (r.droits.proprietaire) l.appendChild(puceDroit.apply(null, DROITS_TEXTE.proprietaire));
-      if (!r.roles.length && !r.droits.proprietaire) l.appendChild(puceDroit.apply(null, DROITS_TEXTE.collaborateur));
-      zone.appendChild(l);
-      // Ce que je peux utiliser (licence)
-      var profils = r.droits.licences.map(function (sku) { return D.SKUS[sku]; }).filter(Boolean);
-      var ordre = ["standard", "basic", "exchange"], pr = ordre.filter(function (x) { return profils.indexOf(x) > -1; })[0];
-      var PR = D.PROFILS[pr || "aucune"];
-      if (PR) app.appendChild(h("section", { class: "section" }, h("h2", null, "Ce que je peux utiliser"),
-        h("div", { class: "carte-profil " + (pr || "aucune") },
-          h("div", { class: "tete" }, emoji(PR.emoji, "grand"), h("div", null, h("b", null, PR.nom), h("span", null, PR.phrase))),
-          h("ul", { class: "outils" }, (PR.outils || []).map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); })))));
-      // Détail réel de mes licences (plans Microsoft traduits), si connecté.
-      var X = window.EBConnecte;
-      if (pr && g && g.estConnecte() && X && X.outilsInclus) app.appendChild(X.outilsInclus(function () {
-        return g.graph("GET", "/me/licenseDetails?$select=skuPartNumber,servicePlans");
-      }, { titre: "Tous mes outils inclus", silencieux: true }));
-    }
-    var liens = ["mail", "agenda", "onedrive", "teams"].map(function (k) { return donnees.liens[k]; }).filter(Boolean);
-    if (liens.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mes outils Microsoft"),
-      tuiles(liens.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; }))));
     app.appendChild(h("div", { class: "actions-liste" },
-      window.EBSuiviEcrans ? action("#/moi/guides", "📘", "Guides", "Guides PDF et pas-à-pas pour vous") : null,
-      action("#/reglages", "⚙️", "Réglages", "Texte, couleurs, planning, démos, détails techniques"),
+      action("#/bienvenue/choix", "🧭", "Ce que j'utilise", "Choisir les tuiles de l'accueil"),
+      action("#/comment-faire", "❓", "Comment faire ?", "Les gestes de tous les jours, pas à pas"),
+      window.EBSuiviEcrans ? action("#/moi/guides", "📘", "Modes d'emploi", "Documents et pas-à-pas pour vous") : null,
+      window.EBAideEcrans ? window.EBAideEcrans.lignesMoi() : null, // v5.4 : Mes demandes (+ Demandes pour le prestataire)
+      action("#/reglages", "⚙️", "Réglages", "Taille du texte, couleurs, planning"),
       reglages.demos ? action("#/demos", "🧪", "Démos", "Écrans d'essai, données fictives") : null,
       estInstallee() ? null : action("#/installer", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil"),
       h("a", { class: "action", href: "tel:+33609897443" }, emoji("📞"), h("span", null, h("b", null, "Appeler Damien"), h("small", null, "Belfort Systems · 06 09 89 74 43")), h("span", { class: "fleche", "aria-hidden": "true" }, "›")),
-      h("button", { class: "action", type: "button", "data-action": "deconnexion", onclick: deconnecter }, emoji("🚪"), h("span", null, h("b", null, "Se déconnecter"), h("small", null, "Efface la session de cet appareil")), h("span", { class: "fleche", "aria-hidden": "true" }, "›"))));
+      h("button", { class: "action", type: "button", "data-action": "deconnexion", onclick: deconnecter }, emoji("🚪"), h("span", null, h("b", null, "Se déconnecter"), h("small", null, "Quitter sur cet appareil")), h("span", { class: "fleche", "aria-hidden": "true" }, "›"))));
+
+    var P = window.EBProfil, D = window.EBDroits;
+    if (r) {
+      // Mon abonnement Microsoft (licence), nom commercial en second.
+      var pr = profilLicence(r);
+      var PR = D.PROFILS[pr || "aucune"];
+      if (PR) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mon abonnement Microsoft"),
+        h("div", { class: "carte-profil " + (pr || "aucune") },
+          h("div", { class: "tete" }, emoji(PR.emoji, "grand"), h("div", null, h("b", null, PR.court, PR.court !== PR.nom ? h("small", { class: "tech" }, " (" + PR.nom + ")") : null), h("span", null, PR.phrase))),
+          h("ul", { class: "outils" }, (PR.outils || []).map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); })))));
+      var X = window.EBConnecte;
+      if (pr && g && g.estConnecte() && X && X.outilsInclus) app.appendChild(X.outilsInclus(function () {
+        return g.graph("GET", "/me/licenseDetails?$select=skuPartNumber,servicePlans");
+      }, { titre: "Tous mes outils", silencieux: true }));
+      if (r.roles.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mes rôles Microsoft"),
+        h("ul", { class: "droits" }, r.roles.map(function (k) { var x = P.ROLES[k]; return h("li", { class: "droit" }, emoji(k === "facturation" ? "💶" : "🔑"), h("span", null, h("b", null, x.nom), h("small", null, x.phrase))); }))));
+    }
+    var liens = ["mail", "agenda", "onedrive", "teams"].map(function (k) { return donnees.liens[k]; }).filter(Boolean);
+    if (liens.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Ouvrir mes outils"),
+      tuiles(liens.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; }))));
     app.appendChild(h("p", { class: "pied" }, "Espace Breteuil · version " + VERSION + " · Belfort Systems"));
+  }
+  /** Profil de licence (standard, basic, exchange) d'après les licences réelles, ou "". */
+  function profilLicence(r) {
+    var D = window.EBDroits;
+    var profils = ((r && r.droits.licences) || []).map(function (sku) { return D.SKUS[sku]; }).filter(Boolean);
+    return ["standard", "basic", "exchange"].filter(function (x) { return profils.indexOf(x) > -1; })[0] || "";
+  }
+  /** Contexte des choix : documents de l'équipe trouvés, OneDrive inclus, droit d'ajouter. */
+  function ctxUsages(r) {
+    var A = window.EBAcces, commun = A && A.sonde("commun"), site = A && A.sonde("site");
+    var pr = profilLicence(r);
+    return { commun: !(commun && commun.etat === "erreur") && !(site && site.etat === "erreur"),
+      onedrive: !r || !r.droits.licences.length ? true : pr === "standard" || pr === "basic",
+      editer: window.EBProfil.peutEditer(r) };
   }
   function deconnecter() {
     if (window.EBAcces) window.EBAcces.oublier();
@@ -863,38 +929,186 @@
   /* Onglet Équipe / Finance / Gérer : uniquement les sections permises  */
   /* ------------------------------------------------------------------ */
   function ongletGestion() {
-    var r = resultat(), o = r ? r.onglets : [];
-    return o.length === 4 ? o[2] : null;
+    var r = resultat();
+    return r ? window.EBProfil.ongletGestion(r.onglets) : null;
   }
-  /** Retour vers l'onglet de gestion (Équipe, Finance ou Gérer selon le profil). */
+  /** Retour vers l'onglet de gestion (Équipe, Factures, Site ou Gérer selon le profil). */
   function hub() { var o = ongletGestion(); return o ? { href: "#/" + o.id, texte: o.nom } : { href: "#/moi", texte: "Moi" }; }
+  /** v5.5 : Gérer (ou Équipe, Factures) — grandes tuiles en grille droite, un titre clair + une ligne. */
   function ecranGerer(app) {
     var r = resultat(), o = ongletGestion();
     app.appendChild(barre(o ? o.nom : "Gérer", null));
     if (!r) { app.appendChild(squelette(4, "tuiles")); return; }
     var sec = r.sections, fiches = donnees.fiches || {};
-    if (window.EBSuiviEcrans && window.EBProfil.routePermise("suivi", r)) app.appendChild(h("div", { class: "actions-liste tete-suivi" }, window.EBSuiviEcrans.tuile()));
     var lienFin = function (titre) { var t = ((fiches.finance || {}).tuiles || []).filter(function (x) { return x.titre === titre; })[0]; return t && t.url; };
-    if (sec.indexOf("deleguer") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Administration"),
-      tuilesTrois([
-        { href: "#/deleguer", icone: "etoile", libelle: "Déléguer", aide: "Donner ou retirer un rôle : propriétaire du site, facturation, utilisateurs, Exchange" },
-        { href: "#/guides/admin", icone: "livre", libelle: "Guides", aide: "Les gestes d'administration, pas à pas, sur le site de Microsoft" },
-        { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Centre d'admin", aide: "Ouvrir le centre d'administration Microsoft 365" },
-      ])));
-    if (sec.indexOf("equipe") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Équipe"),
-      tuilesTrois([
-        { href: "#/personnes", icone: "personnes", libelle: "Personnes", aide: "L'équipe, les boîtes partagées et les externes (étiquette EXTERNE)" },
-        { href: "#/organisation", icone: "reseau", libelle: "Qui a quoi", aide: "Organisation : qui a quoi, en un schéma à toucher" },
-        sec.indexOf("finance") < 0 ? { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Qui a quelle licence Microsoft, combien il en reste" } : null,
-      ])));
-    if (sec.indexOf("finance") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Finance"),
-      tuilesTrois([
-        { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Licences achetées, utilisées et libres (données réelles)" },
-        { href: lienFin("Les factures") || "https://admin.microsoft.com/Adminportal/Home#/billoverview", externe: true, icone: "facture", libelle: "Factures", aide: "Les factures Microsoft, dans le centre d'administration" },
-        { href: lienFin("Abonnements") || "https://admin.microsoft.com/Adminportal/Home#/subscriptions", externe: true, icone: "carte", libelle: "Abonnements", aide: "Abonnements et moyen de paiement, dans le centre d'administration" },
-        { href: "#/guides/finance", icone: "livre", libelle: "Guides", aide: "Les gestes de facturation, pas à pas" },
-      ])));
+    function bloc(titre, liste) { return h("section", { class: "section" }, h("h2", null, titre), grandesTuiles(liste)); }
+    if (window.EBSuiviEcrans && window.EBProfil.routePermise("suivi", r)) app.appendChild(bloc("Informatique", [window.EBSuiviEcrans.tuile()]));
+    if (sec.indexOf("equipe") > -1) app.appendChild(bloc("Équipe", [
+      { href: "#/personnes", icone: "personnes", libelle: "L'équipe", sous: "Les comptes et adresses partagées" },
+      { href: "#/organisation", icone: "reseau", libelle: "Qui fait quoi", sous: "Le schéma de l'organisation" },
+      sec.indexOf("finance") < 0 ? { href: "#/licences-reel", icone: "badge", libelle: "Abonnements de l'équipe", sous: "Qui a quel abonnement Microsoft" } : null,
+    ]));
+    if (sec.indexOf("finance") > -1) app.appendChild(bloc("Factures", [
+      { href: lienFin("Les factures") || "https://admin.microsoft.com/Adminportal/Home#/billoverview", externe: true, icone: "facture", libelle: "Factures Microsoft", sous: "Les voir chez Microsoft", tuto: "factures" },
+      { href: "#/licences-reel", icone: "badge", libelle: "Abonnements de l'équipe", sous: "Qui a quel abonnement Microsoft" },
+      { href: lienFin("Abonnements") || "https://admin.microsoft.com/Adminportal/Home#/subscriptions", externe: true, icone: "carte", libelle: "Moyen de paiement", sous: "Abonnements et carte, chez Microsoft" },
+      { href: "#/guides/finance", icone: "livre", libelle: "Modes d'emploi", sous: "Les gestes de facturation, pas à pas" },
+    ]));
+    if (sec.indexOf("deleguer") > -1) app.appendChild(bloc("Administration", [
+      { href: "#/deleguer", icone: "etoile", libelle: "Donner un rôle", sous: "Qui peut gérer quoi chez Microsoft" },
+      { href: "#/guides/admin", icone: "livre", libelle: "Modes d'emploi", sous: "Les gestes d'administration, pas à pas" },
+      { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Réglages Microsoft", sous: "Le site d'administration Microsoft 365" },
+    ]));
     if (sec.indexOf("site") > -1 && window.EBSiteEcrans) app.appendChild(window.EBSiteEcrans.section());
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* v5.5 : « Ce que j'utilise » (choix gardés sur l'appareil, par compte) */
+  /* ------------------------------------------------------------------ */
+  var U = window.EBUsages, usagesMemoire = {}, questionnaireReporte = false, etapeBienvenue = 1, selectionUsages = null;
+  function nomCommun() { return (CONFIG.sharepoint && CONFIG.sharepoint.dossierCommun) || "Commun"; }
+  function cleUsages() { return U.cle(G() && G().compte()); }
+  /** Choix de la personne (liste d'ids), ou null si jamais répondu. Stockage en échec : mémoire de la session. */
+  function mesChoix() {
+    var k = cleUsages();
+    if (Object.prototype.hasOwnProperty.call(usagesMemoire, k)) return usagesMemoire[k];
+    return U.lireChoix(lire(k, null));
+  }
+  function sauverChoix(l) { var k = cleUsages(); usagesMemoire[k] = l.slice(); ecrire(k, { choix: l.slice(), quand: new Date().toISOString() }); }
+  function besoinQuestionnaire() { return connecte() && !!resultat() && mesChoix() === null && !questionnaireReporte; }
+  /** Écran ouvert après la connexion : le 1er choix (droits encore inconnus : on fait confiance au choix gardé). */
+  function departApresConnexion() {
+    var r = resultat(), choix = mesChoix() || [];
+    if (r) return U.depart(choix, r, ctxUsages(r), nomCommun());
+    return choix.length ? U.routeDe(choix[0], null, nomCommun()) : "#/accueil";
+  }
+  function aller(route) { if (location.hash === route) rendre(); else location.hash = route; }
+
+  /** Premier lancement : 1) « Vous êtes : … », 2) « Qu'allez-vous faire surtout ici ? ». #/bienvenue/choix = étape 2 seule (depuis Moi). */
+  function ecranBienvenue(app, chemin) {
+    var r = resultat(), depuisMoi = chemin[1] === "choix";
+    if (!r) { app.appendChild(barre("Un instant…", null)); app.appendChild(squelette(3)); return; }
+    var plusTard = depuisMoi ? null : h("button", { class: "btn secondaire large", type: "button", "data-action": "plus-tard", onclick: function () {
+      questionnaireReporte = true; etapeBienvenue = 1; aller(departApresConnexion());
+    } }, "Plus tard");
+    if (!depuisMoi && etapeBienvenue === 1) {
+      var me = window.EBAcces && window.EBAcces.me(), c = (G() && G().compte()) || {};
+      var prenom = String((me && (me.givenName || me.displayName)) || c.name || "").split(" ")[0];
+      app.appendChild(barre(prenom ? "Bienvenue, " + prenom : "Bienvenue", null, null, "Étape 1 sur 2"));
+      app.appendChild(carteRole(r));
+      app.appendChild(h("div", { class: "actions pile" },
+        h("button", { class: "btn large", type: "button", "data-action": "bienvenue-continuer", onclick: function () { etapeBienvenue = 2; rendre(); } }, "Continuer", icone("droite")),
+        plusTard));
+      return;
+    }
+    var liste = U.possibles(r, ctxUsages(r));
+    if (!selectionUsages) selectionUsages = (mesChoix() || []).filter(function (id) { return liste.some(function (u) { return u.id === id; }); });
+    app.appendChild(barre(depuisMoi ? "Ce que j'utilise" : "Bienvenue", depuisMoi ? { href: "#/moi", texte: "Moi" } : null, null, depuisMoi ? null : "Étape 2 sur 2"));
+    app.appendChild(h("h2", { class: "question" }, insecable("Qu'allez-vous faire surtout ici ?")));
+    app.appendChild(h("p", { class: "aide-ecran" }, "Touchez une ou plusieurs réponses. Elles iront en premier sur l'accueil."));
+    var cartes = h("div", { class: "cartes-usages", role: "group", "aria-label": "Ce que vous allez faire" });
+    function majCartes() {
+      Array.prototype.forEach.call(cartes.children, function (b) {
+        var i = selectionUsages.indexOf(b.getAttribute("data-usage"));
+        b.setAttribute("aria-pressed", String(i > -1));
+        b.querySelector(".ordre").textContent = i > -1 ? String(i + 1) : "";
+      });
+    }
+    liste.forEach(function (u) {
+      cartes.appendChild(h("button", { class: "carte-usage", type: "button", "data-usage": u.id, "aria-pressed": "false", onclick: function () {
+        var i = selectionUsages.indexOf(u.id);
+        if (i > -1) selectionUsages.splice(i, 1); else selectionUsages.push(u.id);
+        majCartes();
+      } }, emoji(u.emoji, "pictogramme"), h("span", { class: "textes" }, h("b", null, insecable(u.titre)), h("small", null, insecable(u.sous))), h("span", { class: "ordre", "aria-hidden": "true" })));
+    });
+    app.appendChild(cartes);
+    majCartes();
+    app.appendChild(h("div", { class: "actions pile" },
+      h("button", { class: "btn large", type: "button", "data-action": "usages-valider", onclick: function () {
+        sauverChoix(selectionUsages); selectionUsages = null; etapeBienvenue = 1;
+        toast("C'est noté. Vous pourrez changer dans Moi → Ce que j'utilise.");
+        aller(depuisMoi ? "#/accueil" : departApresConnexion());
+      } }, icone("coche"), "C'est parti"),
+      plusTard));
+  }
+
+  /** Accueil : grandes tuiles (mes choix d'abord), mes épingles, « Comment faire ? ». */
+  function ecranAccueil(app) {
+    var r = resultat();
+    app.appendChild(barre("Accueil", null, null, maj(jourLong(aujourdhui()))));
+    var liste = U.possibles(r, ctxUsages(r)), o = U.ordonner(mesChoix(), liste);
+    function vers(l) { return grandesTuiles(l.map(function (u) { return { href: U.routeDe(u.id, r, nomCommun()), emoji: u.emoji, libelle: u.court, sous: u.sous, usage: u.id }; })); }
+    if (o.choisis.length) {
+      app.appendChild(h("section", { class: "section", "aria-labelledby": "t-mes-usages" }, h("h2", { id: "t-mes-usages" }, "Ce que j'utilise"), vers(o.choisis)));
+      if (o.autres.length) app.appendChild(h("section", { class: "section", "aria-labelledby": "t-autres" }, h("h2", { id: "t-autres" }, "Autres choses possibles"), vers(o.autres)));
+    } else app.appendChild(h("section", { class: "section", "aria-labelledby": "t-que-faire" }, h("h2", { id: "t-que-faire" }, "Que voulez-vous faire ?"), vers(liste)));
+    if (window.EBEpingles) app.appendChild(window.EBEpingles.section());
+    app.appendChild(h("section", { class: "section" }, h("h2", null, "Aide"), h("div", { class: "actions-liste" },
+      action("#/comment-faire", "❓", "Comment faire ?", "Les gestes de tous les jours, pas à pas"),
+      action("#/bienvenue/choix", "🧭", "Changer ce que j'utilise", "Choisir les tuiles du haut"))));
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* v5.5 : « Comment faire ? » + « Montrez-moi » (bouton entouré)       */
+  /* ------------------------------------------------------------------ */
+  function ecranCommentFaire(app) {
+    var r = resultat();
+    app.appendChild(barre("Comment faire ?", { href: "#/accueil", texte: "Accueil" }));
+    app.appendChild(h("p", { class: "aide-ecran" }, "Touchez « Montrez-moi » : l'appli ouvre le bon écran et entoure le bouton à toucher."));
+    app.appendChild(h("div", { class: "liste-taches" }, U.taches(r, ctxUsages(r)).map(function (t) {
+      return h("article", { class: "carte-tache", "data-tache": t.id },
+        h("div", { class: "textes" }, h("h2", null, insecable(t.titre)), h("p", null, insecable(t.phrase))),
+        h("button", { class: "btn", type: "button", "data-action": "montrer", onclick: function () { montrer(t); } }, "Montrez-moi", icone("droite")));
+    })));
+  }
+  var surbrillance = null;
+  function mouvementReduit() { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } }
+  function finSurbrillance() {
+    var s = surbrillance; if (!s) return;
+    surbrillance = null;
+    clearInterval(s.minuteur);
+    if (s.el) s.el.classList.remove("eb-montre");
+    if (s.bulle) s.bulle.remove();
+    if (s.fermer) document.removeEventListener("pointerdown", s.fermer, true);
+    if (s.touche) document.removeEventListener("keydown", s.touche, true);
+    if (s.placer) { window.removeEventListener("scroll", s.placer, true); window.removeEventListener("resize", s.placer); }
+  }
+  function estVisible(el) { var b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0 && getComputedStyle(el).visibility !== "hidden"; }
+  /** Va à l'écran de la tâche, attend le bouton (8 s au plus), l'entoure et affiche « Touchez ici ». */
+  function montrer(t) {
+    finSurbrillance();
+    var s = { tache: t.id }, debut = Date.now(), route = U.routeTache(t, resultat());
+    surbrillance = s;
+    if (route && location.hash !== route) location.hash = route;
+    s.minuteur = setInterval(function () {
+      if (surbrillance !== s) return;
+      var el = Array.prototype.filter.call(document.querySelectorAll(t.cible), estVisible)[0];
+      if (!el) { if (Date.now() - debut > 8000) { finSurbrillance(); toast("Ce bouton n'est pas visible pour le moment."); } return; }
+      clearInterval(s.minuteur);
+      entourer(s, el);
+    }, 150);
+  }
+  function entourer(s, el) {
+    s.el = el;
+    el.classList.add("eb-montre");
+    el.scrollIntoView({ block: "center", behavior: mouvementReduit() ? "auto" : "smooth" });
+    s.bulle = h("div", { class: "bulle-tuto", role: "status", "data-tache": s.tache }, emoji("👆"), h("span", null, "Touchez ici"));
+    document.body.appendChild(s.bulle);
+    s.placer = function () {
+      if (!document.body.contains(el)) { finSurbrillance(); return; }
+      var b = el.getBoundingClientRect(), bb = s.bulle.getBoundingClientRect();
+      var dessous = b.top - bb.height - 12 < 64;
+      s.bulle.style.top = Math.round(dessous ? b.bottom + 12 : b.top - bb.height - 12) + "px";
+      s.bulle.style.left = Math.round(Math.max(8, Math.min(window.innerWidth - bb.width - 8, b.left + b.width / 2 - bb.width / 2))) + "px";
+      s.bulle.classList.toggle("dessous", dessous);
+    };
+    s.placer(); setTimeout(function () { if (surbrillance === s) s.placer(); }, 450);
+    // Toucher n'importe où ferme (le toucher atteint quand même le bouton) ; Échap aussi.
+    s.fermer = function () { setTimeout(finSurbrillance, 0); };
+    s.touche = function (e) { if (e.key === "Escape") finSurbrillance(); };
+    // (le toucher sur « Montrez-moi » est déjà fini : l'écran est affiché quand le bouton est trouvé)
+    document.addEventListener("pointerdown", s.fermer, true); document.addEventListener("keydown", s.touche, true);
+    window.addEventListener("scroll", s.placer, true); window.addEventListener("resize", s.placer);
   }
 
   /* ------------------------------------------------------------------ */
@@ -926,13 +1140,13 @@
     if (idFiche) {
       var f = (pack.fiches || []).filter(function (x) { return x.id === idFiche; })[0];
       if (!f) { location.hash = "#/guides/" + k; return; }
-      app.appendChild(barre(f.titre, { href: "#/guides/" + k, texte: "Guides" }));
+      app.appendChild(barre(f.titre, { href: "#/guides/" + k, texte: "Modes d'emploi" }));
       app.appendChild(h("ol", { class: "etapes" }, f.etapes.map(function (e) { return h("li", null, h("span", null, e)); })));
       if (f.lien) app.appendChild(h("div", { class: "actions" }, h("a", lienExterne(f.lien.url, { class: "btn large" }), icone("ouvrir"), f.lien.texte)));
       if (f.note) app.appendChild(h("div", { class: "note" }, icone("info"), h("span", null, f.note)));
       return;
     }
-    app.appendChild(barre("Guides Microsoft", retourHub));
+    app.appendChild(barre("Modes d'emploi", retourHub));
     app.appendChild(h("p", { class: "aide-ecran" }, "Pour faire ces gestes pour de vrai, sur le site de Microsoft."));
     app.appendChild(h("div", { class: "liste-fiches" }, (pack.fiches || []).map(function (f) {
       return h("a", { href: "#/guides/" + k + "/" + encodeURIComponent(f.id) }, icone(f.icone), h("span", null, f.titre), h("span", { class: "fleche", "aria-hidden": "true" }, "›"));
@@ -954,25 +1168,25 @@
           Array.prototype.forEach.call(seg.children, function (b, i) { b.setAttribute("aria-pressed", String(options[i][0] === o[0])); });
         } }, o[1]));
     });
-    return h("div", { class: "boite reglage" }, h("h2", null, titre), aide ? h("p", null, aide) : null, seg);
+    return h("div", { class: "boite reglage", "data-reglage": cleR }, h("h2", null, titre), aide ? h("p", null, aide) : null, seg);
   }
 
   function ecranReglages(app) {
     app.appendChild(barre("Réglages", { href: "#/moi", texte: "Moi" }, null, "Gardés sur cet appareil uniquement"));
     app.appendChild(h("h2", { class: "titre-groupe" }, "Affichage"));
     app.appendChild(h("div", { class: "grille-reglages" },
-      choix("Taille de l'interface", "Texte, boutons et tuiles, ensemble.", "texte", [["petit", "Petit"], ["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
+      choix("Taille du texte", "Texte, boutons et tuiles, ensemble.", "texte", [["petit", "Petit"], ["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
       choix("Couleurs", "Crème et praline par défaut, ou Bleu Breteuil : bleu nuit et doré.", "palette", [["creme", "Crème et praline"], ["bleu", "Bleu Breteuil"]]),
       choix("Clair ou sombre", "« Auto » suit le réglage du téléphone.", "theme", [["auto", "Auto"], ["clair", "Clair"], ["sombre", "Sombre"]])));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Planning"));
     app.appendChild(h("div", { class: "grille-reglages" },
-      choix("Affichage au départ", null, "vue", VUES),
+      choix("Vue au départ", null, "vue", VUES),
       choix("Rendez-vous passés", null, "passes", [["afficher", "Afficher"], ["masquer", "Masquer"]])));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Démos et version"));
     app.appendChild(h("div", { class: "grille-reglages" },
-      choix("Afficher les démos", "Écrans d'essai avec des données fictives (rien n'est modifié chez Microsoft). Ils apparaissent dans Moi → Démos.",
+      choix("Montrer les écrans d'essai", "Données fictives : rien n'est modifié chez Microsoft. Ils apparaissent dans Moi → Démos.",
         "demos", [[false, "Non"], [true, "Oui"]], null, { structure: true }),
       reglages.demos ? h("div", { class: "boite reglage" },
         h("p", null, "Les essais faits dans la démo restent sur cet appareil."),
@@ -983,7 +1197,7 @@
       h("div", { class: "boite reglage version" },
         h("h2", null, "Version " + VERSION),
         h("p", null, "L'appli se met à jour toute seule."),
-        h("button", { class: "btn secondaire", type: "button", onclick: function () { verifierMiseAJour(true); } }, icone("actualiser"), "Rechercher une mise à jour"))));
+        h("button", { class: "btn secondaire", type: "button", onclick: function () { verifierMiseAJour(true); } }, icone("actualiser"), "Chercher une mise à jour"))));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Pour Damien"));
     app.appendChild(h("div", { class: "actions-liste" },
@@ -1078,11 +1292,11 @@
     else app.appendChild(barre("Détails techniques", { href: "#/reglages", texte: "Réglages" }));
   }
   var ecrans = {
-    planning: ecranPlanning, moi: ecranMoi, equipe: ecranGerer, finance: ecranGerer, gerer: ecranGerer, demos: ecranDemos,
+    accueil: ecranAccueil, "comment-faire": ecranCommentFaire, bienvenue: ecranBienvenue, planning: ecranPlanning, moi: ecranMoi, equipe: ecranGerer, finance: ecranGerer, gerer: ecranGerer, demos: ecranDemos,
     reglages: ecranReglages, installer: ecranInstaller, guides: ecranGuides, details: ecranDetails,
   };
   /* Anciennes adresses (v2, v3) → leur seul endroit en v4. */
-  var ALIAS = { "": "planning", accueil: "planning", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "fichiers", dossiers: "fichiers", plus: "moi", verifier: "details", pilotage: "suivi" }; // v5.2 : #/pilotage → #/suivi
+  var ALIAS = { "": "accueil", aujourdhui: "planning", personne: "planning", gestion: "gerer", monchateau: "fichiers", dossiers: "fichiers", plus: "moi", verifier: "details", pilotage: "suivi" }; // v5.2 : #/pilotage → #/suivi
   function ongletsActuels() { var r = resultat(); return r ? r.onglets : window.EBProfil.onglets([]); }
   function ongletDe(ecran) {
     if (ECRANS_DEMO.indexOf(ecran) > -1) return "moi";
@@ -1094,6 +1308,7 @@
     var e = chemin[0] || "";
     if (ongletsActuels().some(function (o) { return o.id === e; }) && chemin.length < 2) return 0;
     if (e === "onedrive" && chemin.length < 2) return 1;
+    if (e === "comment-faire" || e === "bienvenue") return 1;
     if (e === "demos" || e === "reglages" || e === "installer" || e === "deleguer" || e === "personnes" && chemin.length < 2) return 1;
     if (e === "details") return 2;
     return Math.max(1, chemin.filter(Boolean).length);
@@ -1142,6 +1357,7 @@
       vue = h("div", { class: "ecran " + (cleEcran === dernierEcran ? "sans-anim" : dernierEcran === null ? "ouverture" : "") });
       rendreOnglets("", true);
       app.classList.add("plein-ecran");
+      document.body.classList.remove("premier-lancement");
       if (reglages.mode === "calendrier") ecranCalendrierSeul(vue); else ecranPremier(vue);
       if (chemin.join("/") !== "") history.replaceState(null, "", location.pathname + location.search);
       ecran = "";
@@ -1159,6 +1375,8 @@
         history.replaceState(null, "", "#/planning");
         chemin = ["planning"]; ecran = "planning";
       }
+      // v5.5 : premier lancement (droits connus, jamais répondu) → « Bienvenue », sans changer l'adresse.
+      if (besoinQuestionnaire() && ["bienvenue", "details", "reglages"].indexOf(ecran) < 0) { chemin = ["bienvenue"]; ecran = "bienvenue"; }
       cleEcran = chemin.join("/");
       onglet = ongletDe(ecran); niveau = niveauDe(chemin);
       var memeEcran = cleEcran === dernierEcran;
@@ -1166,7 +1384,10 @@
         : onglet !== dernierOnglet ? "" : niveau > dernierNiveau ? "avant" : niveau < dernierNiveau ? "arriere" : "";
       vue = h("div", { class: "ecran " + anim });
       app.classList.remove("plein-ecran");
-      rendreOnglets(onglet, false);
+      rendreOnglets(onglet, ecran === "bienvenue" && chemin[1] !== "choix");
+      // Premier lancement : pas de bouton « ? » flottant (il couvrirait les cartes à cocher).
+      document.body.classList.toggle("premier-lancement", ecran === "bienvenue" && chemin[1] !== "choix");
+      if (ecran !== "bienvenue") etapeBienvenue = 1;
       if (reserve && !r) { enAttenteDroits = true; ecranAttente(vue); }
       else (ecrans[ecran] || ecranPlanning)(vue, chemin);
     }
@@ -1189,7 +1410,8 @@
   function droitsChanges() {
     if (!connecte()) return;
     var e = cheminActuel()[0] || "";
-    var dependants = ["moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "site", "liens", "suivi"];
+    if (besoinQuestionnaire()) { rendre(); return; }
+    var dependants = ["accueil", "comment-faire", "bienvenue", "moi", "gerer", "equipe", "finance", "fichiers", "commun", "deleguer", "guides", "personnes", "organisation", "licences-reel", "acces", "restreindre", "reserver", "site", "liens", "suivi"];
     if (enAttenteDroits || dependants.indexOf(e) > -1) rendre();
     else rendreOnglets(ongletDe(e), false);
   }
@@ -1199,7 +1421,8 @@
   /* ------------------------------------------------------------------ */
   window.EB = {
     h: h, icone: icone, emoji: emoji, avatar: avatar, initiales: initiales, barre: barre, pied: pied, action: action,
-    tuile: tuile, tuiles: tuiles, squelette: squelette,
+    tuile: tuile, tuiles: tuiles, grandeTuile: grandeTuile, grandesTuiles: grandesTuiles, boutonsCarres: boutonsCarres, avecTech: avecTech, squelette: squelette,
+    depart: function () { return departApresConnexion(); }, montrer: montrer, finSurbrillance: finSurbrillance,
     bandeauDemo: bandeauDemo, bandeauSimulation: bandeauSimulation,
     confirmer: confirmer, choisir: choisir, toast: toast, dialogue: dialogue, ouvrirDialogue: ouvrirDialogue, fermerDialogue: fermerDialogue,
     exiger: exiger, estOuvert: estOuvert, rendre: rendre, lire: lire, ecrire: ecrire,
@@ -1209,7 +1432,7 @@
     ecran: function (nom, fn) { ecrans[nom] = fn; },
     definirReel: function (r) { reel = r; },
     onglet: function () {},
-    jourLong: jourLong, heure: heure, hub: hub, reglages: function () { return reglages; },
+    insecable: insecable, jourLong: jourLong, heure: heure, hub: hub, reglages: function () { return reglages; },
   };
 
   /* ------------------------------------------------------------------ */
@@ -1229,7 +1452,7 @@
     Promise.all([json, graph.catch(function () { return false; })]).then(function (r) {
       var estCo = r[1];
       if (estCo && window.EBAcces) window.EBAcces.charger(); // droits réels, en arrière-plan
-      if (estCo && (!location.hash || location.hash === "#/" || location.hash === "#")) history.replaceState(null, "", "#/planning");
+      if (estCo && (!location.hash || location.hash === "#/" || location.hash === "#")) history.replaceState(null, "", departApresConnexion());
       if (estCo || dernierEcran === null) rendre(); // calendrier seul déjà affiché : rien à refaire
       return planningPromis;
     }).then(planningPret); // seules les parties qui affichent le planning sont redessinées

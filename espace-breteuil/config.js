@@ -57,7 +57,7 @@ self.EB_CONFIG = {
   /* « Suivi informatique » (v5.2) : libellés de l'écran et emplacement des données dans le dossier
    * commun. Renommer ici suffit (interface, dossier SharePoint, fichier). « ancien » = emplacement
    * accepté en repli (anciennement « Pilotage/pilotage.json »). Aucune donnée du client ici. */
-  suivi: { libelle: "Suivi informatique", tuile: "Suivi informatique — tout ce qui a été fait pour vous",
+  suivi: { libelle: "Suivi informatique", tuile: "Ce que Damien a fait pour le Château",
     dossier: "Suivi informatique", fichier: "suivi.json", guides: "Guides", ancien: { dossier: "Pilotage", fichier: "pilotage.json" } },
 
 };
