@@ -211,7 +211,9 @@
     "migration-365": { sujet: "Migration de messagerie", formule: "Migration Microsoft 365 (590 € HT jusqu'à 5 boîtes, puis 70 € par boîte)",
       message: "Bonjour,\nje souhaite migrer ma messagerie vers Microsoft 365 sans coupure.\n\nNombre de boîtes et messagerie actuelle : " },
     "suivi": { sujet: "Formule mensuelle", formule: "Formule Suivi (Essentiel 149 € ou Sérénité 249 € HT / mois)",
-      message: "Bonjour,\nje cherche un suivi informatique mensuel pour ma structure.\n\nNombre de postes et besoins : " }
+      message: "Bonjour,\nje cherche un suivi informatique mensuel pour ma structure.\n\nNombre de postes et besoins : " },
+    "rendez-vous": { sujet: "Dépannage ou assistance", formule: "Premier échange ou intervention à distance (créneau à choisir)", calendrier: true,
+      message: "Bonjour,\nje souhaite réserver un créneau pour un premier échange ou une intervention à distance.\n\nLe sujet : " }
   };
 
   function initLienOffre() {
@@ -223,8 +225,9 @@
     if (formule) formule.value = o.formule;
     if (sujet) sujet.value = o.sujet;
     if (message && !message.value.trim()) message.value = o.message;
-    var contact = $("#contact");
-    if (contact) setTimeout(function () { contact.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150);
+    var cible = (o.calendrier && $("#calendrier")) || $("#contact");
+    if (cible) setTimeout(function () { cible.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150);
+    if (o.calendrier) { var ouvrir = $("#cal-open"); if (ouvrir) setTimeout(function () { ouvrir.click(); }, 400); }
   }
 
   function initSimulateur() {
