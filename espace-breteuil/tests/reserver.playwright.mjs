@@ -73,6 +73,8 @@ async function nouvellePage(navigateur, vp, palette) {
   const contexte = await navigateur.newContext({ viewport: vp, deviceScaleFactor: 1, serviceWorkers: "block", locale: "fr-FR", colorScheme: "light" });
   const journal = [], lectures = [];
   await contexte.addInitScript((m) => { self.EB_MAQUETTE = m; }, { compte: { name: "Pauline de Breteuil", username: "pdebreteuil@breteuil.fr", localAccountId: "u1" }, permissions: [] });
+  // v5.5 : questionnaire du premier lancement déjà répondu (testé dans simplification.playwright.mjs).
+  await contexte.addInitScript(() => { for (const id of ["u1", "u2", "u3", "u4", "u6", "u7"]) localStorage.setItem("eb:usages:" + id, JSON.stringify({ choix: ["planning"] })); });
   if (palette === "bleu") await contexte.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
   await contexte.route(/https:\/\/(graph\.microsoft\.com|[a-z0-9-]+\.sharepoint\.com)\/.*/, async (route) => {
     const req = route.request(), url = new URL(req.url()), chemin = decodeURIComponent(url.pathname);
@@ -134,17 +136,17 @@ try {
       await page.click('.fichier[data-fichier="Planning été.xlsx"]');
       await page.waitForSelector("dialog .choix");
       const menu = await page.$$eval("dialog .choix b", (l) => l.map((b) => b.textContent));
-      assert.ok(menu.includes("Qui a accès ?") && menu.includes("Déplacer vers…"), `${ou} : menu fichier ${menu}`);
-      await choisir(page, "Déplacer vers…");
+      assert.ok(menu.includes("Choisir qui peut l'ouvrir") && menu.includes("Ranger ailleurs"), `${ou} : menu fichier ${menu}`);
+      await choisir(page, "Ranger ailleurs");
       await page.waitForSelector('dialog .choix[data-nom="Finance"]');
-      assert.match(await page.textContent('dialog .choix[data-nom="Finance"]'), /🔒[\s\S]*Accès réservé/, `${ou} : 🔒 dans le choix`);
+      assert.match(await page.textContent('dialog .choix[data-nom="Finance"]'), /🔒[\s\S]*Privé/, `${ou} : 🔒 dans le choix`);
       assert.doesNotMatch(await page.textContent('dialog .choix[data-nom="Accueil"]'), /🔒/);
       await page.click('dialog .choix[data-nom="Finance"]');
       await page.waitForSelector('dialog .phrase:has-text("Commun › Finance")');
       await bouton(page, "Ranger ici");
       await bouton(page, "Continuer");
-      assert.match(await page.textContent("dialog"), /Il ne sera visible que par les personnes qui ont accès à ce dossier\./, `${ou} : avertissement`);
-      await bouton(page, "Oui, déplacer");
+      assert.match(await page.textContent("dialog"), /Seules les personnes qui peuvent ouvrir ce dossier le verront\./, `${ou} : avertissement`);
+      await bouton(page, "Oui, ranger ici");
       await page.waitForFunction(() => /rangé/.test(document.getElementById("toast")?.textContent || ""));
       const deplacement = journal.find((j) => j.methode === "PATCH");
       assert.ok(deplacement && deplacement.chemin === "/v1.0/drives/drive1/items/f1" && JSON.parse(deplacement.corps).parentReference.id === "d2", `${ou} : PATCH déplacement`);
@@ -152,7 +154,7 @@ try {
       /* Qui a accès ? d'un FICHIER, depuis son menu. */
       await page.waitForSelector('.fichier[data-fichier="Planning été.xlsx"]');
       await page.click('.fichier[data-fichier="Planning été.xlsx"]');
-      await choisir(page, "Qui a accès ?");
+      await choisir(page, "Choisir qui peut l'ouvrir");
       await page.waitForSelector('[data-etat="visible"]');
       assert.match(await page.textContent('[data-etat="visible"]'), /Visible par toute l'équipe/);
       assert.equal(await page.getAttribute(".barre .btn-retour", "href"), "#/commun/Commun", `${ou} : retour vers le dossier du fichier`);
@@ -181,10 +183,10 @@ try {
       await page.waitForSelector("dialog .phrase");
       assert.equal(await page.textContent("dialog .phrase"),
         "Seuls Pauline de Breteuil et François de Breteuil pourront ouvrir « Planning été.xlsx » + l'administrateur du site (obligatoire). Les autres ne le verront plus.");
-      assert.match(await page.textContent("dialog .phrase.consequence"), /Ne pourront plus l'ouvrir : Toute l'équipe, Lien pour l'entreprise et Valérie Durand\./);
+      assert.match(await page.textContent("dialog .phrase.consequence"), /Ne pourront plus l'ouvrir : Toute l'équipe, Lien pour le Château et Valérie Durand\./);
       assert.equal(await page.$("dialog .etape"), null, `${ou} : une seule confirmation`);
       await capturer(page, `reserver-confirmation-${taille}-${palette}`);
-      await bouton(page, "Oui, réserver");
+      await bouton(page, "Oui, rendre privé");
       await page.waitForFunction(() => /^#\/acces\//.test(location.hash));
       const ecritures = journal.filter((j) => j.methode === "POST").map((j) => j.chemin.replace(LISTE + "/items(7)", "ITEM") + (j.entetes["x-http-method"] ? " " + j.entetes["x-http-method"] : ""));
       assert.deepEqual(ecritures, [
@@ -195,16 +197,16 @@ try {
       assert.ok(!ecritures.some((e) => /getbyprincipalid\((3|8|1)\)/.test(e)), `${ou} : propriétaires jamais retirés`);
       assert.equal(JSON.parse(journal.find((j) => /ensureuser/.test(j.chemin)).corps).logonName, "i:0#.f|membership|pdebreteuil@breteuil.fr");
       const j = await page.evaluate(() => JSON.parse(localStorage.getItem("eb:journal") || "[]")[0]);
-      assert.match(j.action, /Réservé à certaines personnes/);
+      assert.match(j.action, /Rendu privé/);
 
       /* Dossier réservé : état et « Rendre à nouveau visible par tous ». */
       await page.goto(BASE + "#/acces/Commun/Finance");
       await page.waitForSelector('[data-etat="reserve"]');
-      assert.match(await page.textContent('[data-etat="reserve"]'), /🔒[\s\S]*Accès réservé/);
+      assert.match(await page.textContent('[data-etat="reserve"]'), /🔒[\s\S]*Privé/);
       await page.click('[data-action="rendre-visible"]');
       await page.waitForSelector("dialog .phrase");
-      assert.match(await page.textContent("dialog .phrase"), /« Finance » aura de nouveau les mêmes accès que « Commun »/);
-      await bouton(page, "Oui, rendre visible");
+      assert.match(await page.textContent("dialog .phrase"), /Toute l'équipe qui ouvre « Commun » pourra ouvrir « Finance »/);
+      await bouton(page, "Oui, ouvrir à toute l'équipe");
       await page.waitForFunction(() => /C'est fait/.test(document.getElementById("toast")?.textContent || ""));
       assert.ok(journal.some((x) => x.chemin === LISTE + "/items(6)/resetroleinheritance"), `${ou} : resetroleinheritance`);
 

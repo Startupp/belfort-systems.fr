@@ -141,6 +141,8 @@ async function preparer(contexte, nomProfil, opts = {}) {
   if (nomProfil) {
     const { r, moi } = reponses(nomProfil, opts.variante);
     await contexte.addInitScript((m) => { self.EB_MAQUETTE = m; }, { compte: { name: moi.displayName, username: moi.mail, localAccountId: moi.id }, permissions: [] });
+    // v5.5 : questionnaire du premier lancement déjà répondu (testé dans simplification.playwright.mjs).
+    await contexte.addInitScript(() => { for (const id of ["u1", "u2", "u3", "u4", "u6", "u7"]) localStorage.setItem("eb:usages:" + id, JSON.stringify({ choix: ["planning"] })); });
     await contexte.route(/https:\/\/(graph\.microsoft\.com|[a-z0-9-]+\.sharepoint\.com)\/.*/, async (route) => {
       const req = route.request(), url = new URL(req.url()), chemin = decodeURIComponent(url.pathname);
       if (/\/photos\//.test(url.pathname)) return route.fulfill({ status: 200, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "image/png" }, body: PNG });
