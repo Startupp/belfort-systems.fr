@@ -286,11 +286,13 @@
   /**
    * Noms affichés en double (deux « Valérie ») : renvoie { id: partie avant @ } pour chaque compte
    * dont le nom affiché est partagé avec un autre, afin de les distinguer. liste : [{ id, displayName, mail, userPrincipalName }].
+   * nomDe(x) : le libellé réellement affiché (par défaut displayName ; l'écran « Qui fait quoi » montre le prénom).
    */
-  function distinguerHomonymes(liste) {
+  function distinguerHomonymes(liste, nomDe) {
     var parNom = {}, out = {};
+    nomDe = nomDe || function (x) { return x.displayName; };
     (liste || []).forEach(function (x) {
-      var n = minuscule(x.displayName);
+      var n = minuscule(nomDe(x));
       if (n) (parNom[n] = parNom[n] || []).push(x);
     });
     Object.keys(parNom).forEach(function (n) {

@@ -80,6 +80,10 @@ test("v5.5.1 : boîtes partagées toujours à part, quelle que soit leur licence
     { id: "1", displayName: "Valérie", mail: "vdurand@breteuil.fr" }, { id: "2", displayName: "valérie ", mail: "vmartin@breteuil.fr" },
     { id: "3", displayName: "Fanny", mail: "fmartin@breteuil.fr" }]), { 1: "vdurand", 2: "vmartin" });
   assert.deepEqual(D.distinguerHomonymes([]), {});
+  // Libellé affiché = prénom : « Valérie Durand » et « Valérie Martin » s'affichent tous deux « Valérie ».
+  const deux = [{ id: "a", displayName: "Valérie Durand", prenom: "Valérie", mail: "vdurand@breteuil.fr" }, { id: "b", displayName: "Valérie Martin", prenom: "Valérie", userPrincipalName: "vmartin@breteuil.fr" }];
+  assert.deepEqual(D.distinguerHomonymes(deux), {});
+  assert.deepEqual(D.distinguerHomonymes(deux, (x) => x.prenom), { a: "vdurand", b: "vmartin" });
 });
 
 test("profils de licence et boîtes partagées", () => {
