@@ -1,6 +1,6 @@
 /* Réglages d'affichage appliqués avant le premier rendu (pas de clignotement).
  * Fichier séparé (et non script en ligne) pour respecter la CSP stricte.
- * Palette (« creme » par défaut, « bleu » = Bleu Breteuil) → data-palette ; clair/sombre → data-theme ;
+ * Palette (« creme » par défaut, « bleu » = Bleu élégant) → data-palette ; clair/sombre → data-theme ;
  * la couleur du navigateur (meta theme-color) suit l'en-tête de la palette (valeurs = --entete d'app.css). */
 (function () {
   var ENTETE = { creme: ["#5B3833", "#2E1D19"], bleu: ["#14213D", "#0F1A33"] };

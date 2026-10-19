@@ -44,7 +44,7 @@ toucher n'importe où ou Échap ferme. Pas de fausses captures d'écran.
 une ligne, une seule action par carte ; boutons d'action de même taille (carrés arrondis, icône
 au-dessus) ; fil d'Ariane sur une ligne discrète ; feuilles d'actions dont les lignes grandissent
 avec le texte (et qui défilent) ; aucun lien de navigation en simple texte ; cibles ≥ 48 px ;
-mêmes couleurs (crème/praline et Bleu Breteuil, clair et sombre, contrastes AA). Les épingles
+mêmes couleurs (crème/praline et Bleu élégant, clair et sombre, contrastes AA). Les épingles
 sont sur l'Accueil (le Planning ne montre que le planning). Gérer : tuile **🛠️ Suivi informatique**
 en tête (`#/suivi`).
 

@@ -552,7 +552,7 @@ try {
             captures++;
           };
           await capturerProjets(`suivi-projets-creme-${taille}`);
-          // Même section en Bleu Breteuil (clair), puis retour à la palette crème.
+          // Même section en Bleu élégant (clair), puis retour à la palette crème.
           await page.evaluate(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
           await page.reload();
           await page.waitForSelector(".carte-projet");
@@ -690,7 +690,7 @@ try {
       await contexte.close();
     }
 
-    /* ---------- Palette « Bleu Breteuil » (375 px) : clair et sombre ---------- */
+    /* ---------- Palette « Bleu élégant » (375 px) : clair et sombre ---------- */
     for (const theme of taille === "375" ? ["light", "dark"] : []) {
       const nomT = theme === "light" ? "clair" : "sombre", entete = theme === "light" ? "#14213D" : "#0F1A33";
       const verifier = async (page, ou) => {
@@ -712,9 +712,9 @@ try {
       {
         const { contexte, page, erreurs } = await nouvellePage(vp, "collaborateur", { theme });
         await page.goto(BASE + "#/reglages");
-        await page.waitForSelector('.reglage button:has-text("Bleu Breteuil")');
+        await page.waitForSelector('.reglage button:has-text("Bleu élégant")');
         assert.equal(await page.getAttribute('.reglage button:has-text("Crème et praline")', "aria-pressed"), "true", "crème par défaut");
-        await page.click('.reglage button:has-text("Bleu Breteuil")');
+        await page.click('.reglage button:has-text("Bleu élégant")');
         await verifier(page, "réglage");
         assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("eb:reglages"))).palette, "bleu", "mémorisé sur l'appareil");
         await capturer(page, `bleu-reglages-${nomT}-375`);
@@ -730,7 +730,7 @@ try {
         await controlesCommuns(page, `bleu moi ${nomT}`);
         await capturer(page, `bleu-moi-${nomT}-375`);
         if (theme === "light") {
-          // Suivi informatique et Moi → Guides (v5.2) en Bleu Breteuil (palette déjà mémorisée ci-dessus).
+          // Suivi informatique et Moi → Guides (v5.2) en Bleu élégant (palette déjà mémorisée ci-dessus).
           const adm = await nouvellePage(vp, "admin", { theme });
           await adm.page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
           await adm.page.goto(BASE + "#/suivi");
@@ -757,7 +757,7 @@ try {
       }
     }
 
-    /* ---------- v5.3.1 : glisser-déposer des fichiers dans la fenêtre (1280 px, crème puis Bleu Breteuil) ---------- */
+    /* ---------- v5.3.1 : glisser-déposer des fichiers dans la fenêtre (1280 px, crème puis Bleu élégant) ---------- */
     if (taille === "1280") for (const palette of ["creme", "bleu"]) {
       const { contexte, page, erreurs, journal } = await nouvellePage(vp, "collaborateur");
       if (palette === "bleu") await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" })));
@@ -858,7 +858,7 @@ try {
       await contexte.close();
     }
   }
-  /* ---------- v5.4 Aide et demandes (Worker simulé) : 375 et 1280 px, crème et Bleu Breteuil ---------- */
+  /* ---------- v5.4 Aide et demandes (Worker simulé) : 375 et 1280 px, crème et Bleu élégant ---------- */
   for (const [taille, vp] of [["375", { width: 375, height: 812 }], ["1280", { width: 1280, height: 900 }]]) for (const palette of ["creme", "bleu"]) {
     const suffixe = `${palette}-${taille}`;
     const avecPalette = async (page) => { if (palette === "bleu") await page.addInitScript(() => localStorage.setItem("eb:reglages", JSON.stringify({ palette: "bleu" }))); };
@@ -1045,4 +1045,4 @@ try {
   serveur.kill();
 }
 if (problemes.length) { console.error("PROBLÈMES :\n- " + problemes.join("\n- ")); process.exit(1); }
-console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique (dont Projets à venir, crème et Bleu) et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu Breteuil clair/sombre (375 px) + semaine à 320/375/414/768/1280 px + Aide et demandes (crème et Bleu, 375 et 1280 px) (${captures} captures).`);
+console.log(`OK : premier lancement + 5 profils (dont « Site web ») + Suivi informatique (dont Projets à venir, crème et Bleu) et Moi → Guides + vérificateur de liens + Fichiers + épingles + boîtes partagées + glisser-déposer (crème et Bleu) + problème réel (375 et 1280 px) + Bleu élégant clair/sombre (375 px) + semaine à 320/375/414/768/1280 px + Aide et demandes (crème et Bleu, 375 et 1280 px) (${captures} captures).`);

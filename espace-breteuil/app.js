@@ -1177,7 +1177,7 @@
     app.appendChild(h("h2", { class: "titre-groupe" }, "Affichage"));
     app.appendChild(h("div", { class: "grille-reglages" },
       choix("Taille du texte", "Texte, boutons et tuiles, ensemble.", "texte", [["petit", "Petit"], ["normal", "Normal"], ["grand", "Grand"], ["tres-grand", "Très grand"]]),
-      choix("Couleurs", "Crème et praline par défaut, ou Bleu Breteuil : bleu nuit et doré.", "palette", [["creme", "Crème et praline"], ["bleu", "Bleu Breteuil"]]),
+      choix("Couleurs", "Crème et praline par défaut, ou Bleu élégant : bleu nuit et doré.", "palette", [["creme", "Crème et praline"], ["bleu", "Bleu élégant"]]),
       choix("Clair ou sombre", "« Auto » suit le réglage du téléphone.", "theme", [["auto", "Auto"], ["clair", "Clair"], ["sombre", "Sombre"]])));
 
     app.appendChild(h("h2", { class: "titre-groupe" }, "Planning"));

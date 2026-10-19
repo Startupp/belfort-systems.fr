@@ -1,7 +1,7 @@
 // v5.6 « Pièces jointes » de l'aide — réponses Microsoft et Worker MAQUETTÉES, données FICTIVES.
 // Lancer depuis la racine du dépôt (Chromium déjà installé) :
 //   EB_PORT=8799 PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node espace-breteuil/tests/aide-pj.playwright.mjs [dossier-captures]
-// Contrôles à 375 et 1280 px, palettes crème et Bleu Breteuil :
+// Contrôles à 375 et 1280 px, palettes crème et Bleu élégant :
 //   - « 📎 Joindre un fichier » : grosse image réduite (≤ 2000 px, JPEG), PDF gardé tel quel, type refusé → message clair,
 //     capture COLLÉE (Ctrl+V), fichier GLISSÉ-DÉPOSÉ, puce « retirer », envoi multipart (donnees + fichier × n) ;
 //   - fil : vignettes lues avec le jeton (blob:), visionneuse, fichier PDF en puce, réponse avec pièce jointe ;

@@ -504,7 +504,7 @@ dialog.detail form.contenu label { font-weight: 700; }
   box-shadow: var(--ombre-forte); transition: opacity .2s, transform .2s; }
 .toast.visible { opacity: 1; transform: translate(-50%, 0); }
 
-/* v5.3.1 — Glisser-déposer : voile plein écran (variables seulement : crème ET Bleu Breteuil). */
+/* v5.3.1 — Glisser-déposer : voile plein écran (variables seulement : crème ET Bleu élégant). */
 .voile-depot { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 24px; pointer-events: none;
   background: color-mix(in srgb, var(--fond) 82%, transparent); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
   animation: voile-depot .16s ease-out; }
@@ -927,7 +927,7 @@ button.fichier:hover { border-color: var(--primaire); }
   --reflet-base: #2A1C19; --reflet-or: #B8903E;
   --praline-1: #8A4C45; --praline-2: #6C3832; --praline-texte: #FFFFFF; --praline-doux: #F6E1D6;
   --onglet-actif: linear-gradient(180deg, #F4E3DC, #F0DED3);
-  /* Couleurs propres à la palette (crème) — redéfinies par la palette « Bleu Breteuil » plus bas. */
+  /* Couleurs propres à la palette (crème) — redéfinies par la palette « Bleu élégant » plus bas. */
   --filet-or: #C9A04A; --filet-clair: #F1DFC6;
   --ombre-principal: 0 14px 34px -14px rgba(108,56,50,.65); --lueur: rgba(255,240,215,.22);
   --principal-icone: #FFF4E4; --principal-or: #E2BE6A; --principal-accent: #E7B8A8;
@@ -1354,7 +1354,7 @@ a.doc:hover { border-color: var(--primaire); }
 @media (prefers-reduced-motion: reduce) { .frise-suivi::before, .etape-frise .point, .frise-suivi > .etape-frise { animation: none !important; } }
 
 /* ================================================================ */
-/* Palette « Bleu Breteuil » (bleu nuit profond + doré) — v5.1.3     */
+/* Palette « Bleu élégant » (bleu nuit profond + doré) — v5.1.3     */
 /* Choisie dans Moi → Réglages → Couleurs ; posée sur <html> par     */
 /* data-palette="bleu". Ne redéfinit QUE des variables : tous les    */
 /* écrans (anneaux, halos, filet doré, verre, onglets) suivent.      */
@@ -1387,7 +1387,7 @@ a.doc:hover { border-color: var(--primaire); }
   --commun-1: #14213D; --commun-2: #1F3A68; --commun-doux: #DCE5F5; --ombre-commun: 0 20px 44px -18px rgba(20,33,61,.6);
   --onde: rgba(31,58,104,.45); --voile: rgba(8,12,24,.55); --ombre-onglets-bas: 0 -4px 16px rgba(20,33,61,.08);
 }
-/* Bleu Breteuil sombre — mêmes valeurs dans les deux blocs (auto et choisi). */
+/* Bleu élégant sombre — mêmes valeurs dans les deux blocs (auto et choisi). */
 @media (prefers-color-scheme: dark) {
   :root[data-palette="bleu"]:not([data-theme="clair"]) {
     --entete: #0F1A33; --entete-texte: #FFFFFF; --entete-doux: #E2CF9E;
@@ -1480,7 +1480,7 @@ a.doc:hover { border-color: var(--primaire); }
 /* v5.3.3 : Suivi informatique → « Projets à venir »                 */
 /* Pastille de statut : fond + texte par palette (AA ≥ 4,5:1,         */
 /* vérifié par tests/theme.test.mjs). À confirmer = doré/ambre,       */
-/* Proposition envoyée = praline (crème) / bleu (Bleu Breteuil),      */
+/* Proposition envoyée = praline (crème) / bleu (Bleu élégant),      */
 /* En cours = vert, Terminé = gris-vert discret.                      */
 /* ================================================================ */
 :root {
@@ -1544,7 +1544,7 @@ a.doc:hover { border-color: var(--primaire); }
   border-left: 3px solid var(--or); color: var(--texte); }
 .prochaine-etape b { font-weight: 700; }
 /* v5.4 — Aide et demandes : bouton « ? », panneau, fil, écrans      */
-/* Variables du thème uniquement : crème et Bleu Breteuil, clair et  */
+/* Variables du thème uniquement : crème et Bleu élégant, clair et  */
 /* sombre suivent d'eux-mêmes.                                       */
 /* ================================================================ */
 .aide-fab { position: fixed; z-index: 35; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%;
@@ -1663,7 +1663,7 @@ dialog.aide-visionneuse { width: min(960px, calc(100vw - 24px)); }
 /* ================================================================ */
 /* v5.5 « Simplification » : grille droite, cartes calmes, ≥ 48 px   */
 /* Uniquement des variables de couleur existantes : les deux palettes */
-/* (crème/praline, Bleu Breteuil) et les deux thèmes suivent.        */
+/* (crème/praline, Bleu élégant) et les deux thèmes suivent.        */
 /* ================================================================ */
 /* Pas d'agrandissement automatique du texte par le navigateur (Android) : le texte reste dans ses cases.
  * La taille de police du système et le réglage « Taille du texte » restent appliqués. */

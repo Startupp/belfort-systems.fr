@@ -1,7 +1,7 @@
 // v5.4.1 « Réserver à certaines personnes » (Qui a accès ?) — réponses Microsoft MAQUETTÉES, données FICTIVES.
 // Lancer depuis la racine du dépôt (Chromium déjà installé) :
 //   EB_PORT=8797 PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node espace-breteuil/tests/reserver.playwright.mjs [dossier-captures]
-// Contrôles à 375 et 1280 px, palettes crème et Bleu Breteuil :
+// Contrôles à 375 et 1280 px, palettes crème et Bleu élégant :
 //   - dossier commun : badge « 🔒 Réservé » (une seule requête pour tout le dossier) ;
 //   - menu d'un FICHIER : « Qui a accès ? » et « Déplacer vers… » ;
 //   - Qui a accès ? d'un fichier : « Visible par toute l'équipe », retour vers le dossier, carte « Réserver » en premier ;

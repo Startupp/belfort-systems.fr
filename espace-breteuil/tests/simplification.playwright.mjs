@@ -1,7 +1,7 @@
 // v5.5 « Simplification » — réponses Microsoft MAQUETTÉES, données FICTIVES.
 // Lancer depuis la racine du dépôt (Chromium déjà installé) :
 //   EB_PORT=8798 PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node espace-breteuil/tests/simplification.playwright.mjs [dossier-captures]
-// Contrôles à 375 et 1280 px, palettes crème et Bleu Breteuil :
+// Contrôles à 375 et 1280 px, palettes crème et Bleu élégant :
 //   - premier lancement : carte « Vous êtes : Gestionnaire / Lecteur » (droits RÉELS), questionnaire filtré par les droits,
 //     ordre des choix, écran ouvert = 1er choix, choix gardé par compte, « Plus tard », stockage bloqué ;
 //   - Accueil : tuiles dans l'ordre choisi ; Moi : carte du niveau ; Lecteur : actions d'ajout CACHÉES (pas grisées) ;
