@@ -72,6 +72,8 @@ const SECTIONS = {
     permissions: { camera: "(self)" }, robots: true,
   },
   "/ecorce/": { nom: "TinKnight a déménagé (page de renvoi)" },
+  // Ancienne version du jeu : conservée pour les sauvegardes, mais plus référencée
+  // (robots: noindex, et Disallow dans robots.txt). Le jeu vit sur jeu.belfort-systems.fr.
   "/ecorce/ancienne/concepts/": {
     // Planche de concepts : vignettes hébergées chez Higgsfield (CloudFront), polices Google.
     nom: "TinKnight, planche de concepts",
@@ -83,6 +85,7 @@ const SECTIONS = {
     connect: ["https://jeu-sauvegarde.damien-belfort.workers.dev", "https://0.peerjs.com", "wss://0.peerjs.com", "https://cdn.jsdelivr.net"],
     media: ["blob:", "data:"],
     permissions: { gyroscope: "(self)", accelerometer: "(self)", magnetometer: "(self)" },
+    robots: true,
   },
   "/espace-breteuil/": {
     // Reprend espace-breteuil/_headers (ignoré ici car hors racine), en attendant que l'appli
