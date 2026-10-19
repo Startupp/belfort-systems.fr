@@ -5,12 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Tableau de bord — Belfort Systems</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#2E2760">
+<meta name="theme-color" content="#1E4E7C">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/admin/admin.css">
 <script>
 /* Préférences d'affichage appliquées avant le rendu (jamais le jeton). */
@@ -26,7 +23,8 @@ var s=localStorage.getItem('bs-admin-taille');if(s)document.documentElement.data
 <!-- ============ CONNEXION ============ -->
 <section id="ecran-connexion" class="connexion" hidden>
   <form class="connexion-boite" id="form-connexion" autocomplete="off" novalidate>
-    <a class="brand" href="/"><span class="mark">B</span><b>Belfort <span>Systems</span></b></a>
+    <a class="brand" href="/"><img class="mark" src="/assets/logo-bonnet.svg" alt="" width="40" height="40"><b>Belfort <span>Systems</span></b></a>
+    <img class="mascotte" src="/assets/mascotte/mascotte-sourire.webp" alt="" width="132" height="132">
     <h1>Tableau de bord</h1>
     <p class="hint">Espace privé de Damien Belfort. Le mot de passe n’est jamais mémorisé par cette page.</p>
     <p class="note-demo" id="note-demo" hidden>Mode aperçu : le service est injoignable, <strong>n’importe quel mot de passe</strong> ouvre une version de démonstration en lecture seule.</p>
@@ -43,7 +41,7 @@ var s=localStorage.getItem('bs-admin-taille');if(s)document.documentElement.data
 <!-- ============ APPLICATION ============ -->
 <div id="app" class="app" hidden>
   <header class="entete">
-    <a class="brand" href="#/aujourdhui"><span class="mark">B</span><b>Belfort <span>Systems</span></b></a>
+    <a class="brand" href="#/aujourdhui"><img class="mark" src="/assets/logo-bonnet.svg" alt="" width="40" height="40"><b>Belfort <span>Systems</span></b></a>
     <div class="entete-droite">
       <span class="direct" id="direct"><span class="point"></span><span class="direct-txt">Hors ligne</span></span>
       <button class="btn ghost sm" id="btn-deconnexion" type="button">Se déconnecter</button>
@@ -91,7 +89,7 @@ var s=localStorage.getItem('bs-admin-taille');if(s)document.documentElement.data
         <input id="nSlug" placeholder="nom-du-client" spellcheck="false"></div>
       <div class="row">
         <div class="field"><label for="nColor">Couleur</label>
-          <input id="nColor" type="color" value="#2E2760" style="height:48px;padding:5px"></div>
+          <input id="nColor" type="color" value="#1E4E7C" style="height:48px;padding:5px"></div>
         <div class="field"><label for="nPw">Mot de passe du client</label>
           <input id="nPw" type="text" spellcheck="false" placeholder="au moins 12 caractères"></div>
       </div>

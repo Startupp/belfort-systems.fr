@@ -55,8 +55,9 @@ const SECTIONS = {
     connect: [...API, ...CONTACT], formAction: [...CONTACT],
   },
   "/admin/": {
+    // Polices locales (assets/fonts) : pas de Google Fonts ici.
     nom: "Tableau de bord (panneau admin, données via l'API)",
-    connect: [...API], style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font,
+    connect: [...API],
     robots: true,
   },
   "/portail/": { nom: "Portail client (connexion)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, robots: true },
