@@ -122,21 +122,44 @@
     ]).then(function (r) {
       var skuNoms = {};
       r[1].forEach(function (s) { skuNoms[s.skuId] = s.skuPartNumber; });
-      var boites = boitesConnues();
-      var liste = r[0].map(function (u) {
-        var p = D.profilDe(u, skuNoms, boites);
-        return Object.assign({}, u, { profil: p, type: D.typeDe(u, optsType()), prenom: u.givenName || (u.displayName || "").split(" ")[0] || "?" });
-      }).sort(function (a, b) { return String(a.displayName).localeCompare(String(b.displayName), "fr"); });
-      return { liste: liste, skus: r[1], skuNoms: skuNoms };
+      return usagesBoites(r[0]).then(function (comptes) {
+        var boites = boitesConnues(), opts = { prestataires: CFG.prestataires || [] };
+        var liste = comptes.map(function (u) {
+          var p = D.profilDe(u, skuNoms, boites, opts);
+          return Object.assign({}, u, { profil: p, licence: D.licenceDe(u, skuNoms), type: D.typeDe(u, optsType()), prenom: u.givenName || (u.displayName || "").split(" ")[0] || "?" });
+        }).sort(function (a, b) { return String(a.displayName).localeCompare(String(b.displayName), "fr"); });
+        return { liste: liste, skus: r[1], skuNoms: skuNoms };
+      });
     });
   }
+  /** Boîtes partagées connues : liste de config.js (« boitesPartagees ») + adresses de la démo. */
   function boitesConnues() {
-    var b = [];
+    var b = (CFG.boitesPartagees || []).slice();
     try {
       var d = EB.demo().boites || [];
       d.forEach(function (x) { b.push(x.adresse); });
     } catch (e) {}
     return b;
+  }
+  /**
+   * v5.5.1 : réglage Exchange « userPurpose » (shared = boîte partagée) de chaque compte qui a une
+   * adresse mail — SEULEMENT si la permission MailboxSettings.Read (ou ReadWrite) figure déjà dans le
+   * jeton : l'appli ne la demande pas (voir docs). Au premier refus (403…), on s'arrête : la liste
+   * de config.js et l'ancien indice prennent le relais. Ne rejette jamais.
+   */
+  function usagesBoites(comptes) {
+    return Promise.resolve().then(function () { return G.scopesAccordes ? G.scopesAccordes("graph") : null; }).then(function (scp) {
+      if (!(scp || []).some(function (s) { return /^mailboxsettings\.read(write)?$/i.test(s); })) return comptes;
+      var file = comptes.filter(function (u) { return u.mail && u.userType !== "Guest"; }), arret = false;
+      function suivant() {
+        var u = file.shift();
+        if (!u || arret) return Promise.resolve();
+        return G.graph("GET", "/users/" + encodeURIComponent(u.id) + "/mailboxSettings/userPurpose", undefined, { silencieux: true })
+          .then(function (r) { if (r && r.value) u.userPurpose = r.value; }, function (e) { if (e && (e.statut === 403 || e.statut === 401)) arret = true; })
+          .then(suivant);
+      }
+      return Promise.all([suivant(), suivant(), suivant(), suivant()]).then(function () { return comptes; });
+    }).catch(function () { return comptes; });
   }
   function photo(id) {
     if (cachePhotos[id] !== undefined) return Promise.resolve(cachePhotos[id]);

@@ -49,6 +49,21 @@ self.EB_CONFIG = {
   /* Domaines de l'entreprise : toute personne sans adresse de ces domaines est « Externe ». */
   domainesInternes: ["breteuil.fr", "breteuil02.onmicrosoft.com"],
 
+  /* Boîtes partagées (v5.5.1) : toujours rangées dans « Les adresses partagées » (écran « Qui fait
+   * quoi », « L'équipe »), même si une licence leur est encore attribuée. Adresse complète ou
+   * seulement la partie avant @. Ce sont des adresses de service, pas des adresses personnelles. */
+  boitesPartagees: [
+    "chanteclerc", "chanteclercdeveloppement", "escapegame", "hfb", "intendance", "jardins",
+    "jecharrault", "klefur", "marketing", "newsletter", "travaux",
+    "fetpdebreteuil@breteuil.fr", // « FetP » : adresse partagée de François et Pauline
+  ],
+
+  /* Comptes du prestataire informatique (v5.5.1) : montrés à part, dans « Prestataire informatique »,
+   * au lieu de « Sans licence ». Adresse de connexion complète ou partie avant @.
+   * 👉 À REMPLIR PAR DAMIEN avec l'adresse de son compte d'administration du Château, par exemple :
+   *      prestataires: ["damien@breteuil02.onmicrosoft.com"],  */
+  prestataires: [],
+
   /* Site web du Château (WordPress). La section « Site web » apparaît pour les administrateurs
    * généraux et pour les membres du groupe Microsoft 365 (ou de sécurité) nommé « groupe »
    * (nom affiché, sans tenir compte des majuscules). Aucune adresse personnelle ici. */
