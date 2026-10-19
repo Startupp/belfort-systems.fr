@@ -960,6 +960,7 @@
       { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Réglages Microsoft", sous: "Le site d'administration Microsoft 365" },
     ]));
     if (sec.indexOf("site") > -1 && window.EBSiteEcrans) app.appendChild(window.EBSiteEcrans.section());
+    if (window.EBAideEcrans) app.appendChild(window.EBAideEcrans.blocGerer(grandesTuiles)); // v5.6 : prestataire seulement
   }
 
   /* ------------------------------------------------------------------ */

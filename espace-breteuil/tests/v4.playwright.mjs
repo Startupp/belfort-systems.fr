@@ -922,6 +922,10 @@ try {
       // Mes demandes : la réponse de Damien est signalée, le fil s'ouvre, la pastille disparaît.
       await page.click("text=Voir mes demandes");
       await page.waitForSelector('#aide-panneau .aide-carte[data-demande="11"]');
+      // v5.6 : « En cours » par défaut (la n° 9, résolue, est sous « Résolues » / « Toutes »), compteur sur chaque bouton.
+      assert.deepEqual(await page.$$eval("#aide-panneau .aide-carte", (l) => l.map((c) => c.dataset.demande)), ["12", "11"]);
+      assert.deepEqual(await page.$$eval("#aide-panneau [data-filtre-statut]", (l) => l.map((b) => b.textContent)), ["En cours2", "Résolues1", "Toutes3"]);
+      await page.click('#aide-panneau [data-filtre-statut=""]');
       assert.deepEqual(await page.$$eval("#aide-panneau .aide-carte", (l) => l.map((c) => c.dataset.demande)), ["12", "11", "9"]);
       assert.match(await page.textContent('#aide-panneau .aide-carte[data-demande="11"]'), /Nouvelle réponse/);
       assert.match(await page.textContent('#aide-panneau .aide-carte[data-demande="11"]'), /Répondue/);
@@ -945,6 +949,8 @@ try {
       await page.waitForSelector('[data-action="mes-demandes"]');
       assert.equal(await page.$$eval('[data-action="toutes-demandes"]', (l) => l.length), 0, "pas d'écran Demandes pour un client");
       await page.click('[data-action="mes-demandes"]');
+      await page.waitForSelector('.ecran [data-filtre-statut="resolue"]');
+      await page.click('.ecran [data-filtre-statut="resolue"]');
       await page.waitForSelector('.ecran a.aide-carte[data-demande="9"]');
       await calme(page);
       await controlesCommuns(page, `aide mes demandes ${suffixe}`);
@@ -978,8 +984,8 @@ try {
       await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 2);
       assert.ok(journal.some((j) => j.aide && j.chemin === "/breteuil/aide?personne=fmartin%40breteuil.fr"), "filtre par personne envoyé au Worker");
       await page.selectOption('[data-filtre="personne"]', "");
-      await page.click('[data-filtre-statut="nouvelle"]');
-      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 1);
+      await page.click('[data-filtre-statut="encours"]');
+      await page.waitForFunction(() => document.querySelectorAll(".aide-demandes .aide-carte").length === 2);
       await calme(page);
       await controlesCommuns(page, `aide prestataire ${suffixe}`);
       await capturer(page, `aide-prestataire-${suffixe}`);

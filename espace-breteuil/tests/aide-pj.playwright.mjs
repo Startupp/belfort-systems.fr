@@ -7,6 +7,8 @@
 //   - fil : vignettes lues avec le jeton (blob:), visionneuse, fichier PDF en puce, réponse avec pièce jointe ;
 //   - #/aide/<n°>/pj/<id> : pièce mise en évidence ; vue prestataire : joindre aussi ;
 //   - Worker sans pièces jointes (pj: false) : bouton caché ;
+//   - filtres « En cours / Résolues / Toutes » (compteurs) ; requalification par le prestataire (type, facturable, temps) ;
+//     écran Statistiques (#/demandes/stats : tuiles, par type, par personne, 6 mois, mois précédent, export CSV), entrée dans Gérer ;
 //   - aperçu du MAIL HTML envoyé à Damien (clair, sombre, téléphone) ; aucune erreur console, pas de défilement horizontal.
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
@@ -66,6 +68,8 @@ const calme = (page) => page.evaluate(() => Promise.race([new Promise((ok) => se
   .filter((a) => a.timeline === document.timeline && isFinite(a.effect.getComputedTiming().endTime)).map((a) => a.finished.catch(() => {})))]));
 async function capturer(cible, nom, opts = {}) {
   if (!SORTIE) return;
+  const page = typeof cible.page === "function" ? cible.page() : cible;
+  await page.evaluate(() => { const t = document.getElementById("toast"); if (t) { t.classList.remove("visible"); t.style.visibility = "hidden"; } });
   await cible.screenshot({ path: `${SORTIE}/${nom}.png`, ...opts });
   captures++;
 }
@@ -73,6 +77,10 @@ async function sansDebord(page, ou) {
   const trop = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   if (trop) problemes.push(`${ou} : défilement horizontal`);
 }
+
+// Le vrai Worker (sans « cloudflare:email ») : mail HTML et agrégats des statistiques calculés par SON code.
+const W = await import("data:text/javascript;charset=utf-8," + encodeURIComponent(readFileSync(new URL("../../api-planning/worker.js", import.meta.url), "utf8")
+  .replace(/^import \{ EmailMessage \} from "cloudflare:email";$/m, "class EmailMessage {}")));
 
 /* ---------- Worker « aide » simulé, avec pièces jointes ---------- */
 const PDF = Buffer.from("%PDF-1.7\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n");
@@ -92,7 +100,8 @@ function workerAide(o, journal) {
   const s = {
     demandes: [
       { id: 11, cree: "2026-10-16T08:10:00.000Z", type: "probleme", statut: "repondue", nom: "Fanny Martin", adresse: "fmartin@breteuil.fr", ecran: "Planning (#/planning)", version: "5.5.0", appareil: "iPhone · Safari", nonLu: true },
-      { id: 10, cree: "2026-10-14T10:00:00.000Z", type: "question", statut: "nouvelle", nom: "Camille Roux", adresse: "croux@breteuil.fr", ecran: "Dossiers (#/fichiers)", version: "5.5.0", appareil: "Ordinateur Windows · Edge", autre: true },
+      { id: 10, cree: "2026-10-14T10:00:00.000Z", type: "question", statut: "nouvelle", nom: "Camille Roux", adresse: "croux@breteuil.fr", ecran: "Dossiers (#/fichiers)", version: "5.5.0", appareil: "Ordinateur Windows · Edge", autre: true, facturable: null, minutes: 0 },
+      { id: 9, cree: "2026-10-12T15:00:00.000Z", type: "amelioration", statut: "resolue", nom: "Fanny Martin", adresse: "fmartin@breteuil.fr", ecran: "Moi (#/moi)", version: "5.5.0", appareil: "iPhone · Safari" },
     ],
     messages: {
       11: [{ id: 1, cree: "2026-10-16T08:10:00.000Z", auteur: "client", texte: "Le planning de l'accueil ne s'affiche plus depuis ce matin. Voici une capture.", origine: "appli",
@@ -100,12 +109,13 @@ function workerAide(o, journal) {
         { id: 2, cree: "2026-10-16T09:02:00.000Z", auteur: "prestataire", texte: "Bonjour Fanny,\n\nC'est réglé. Je vous joins la marche à suivre si cela recommence.\n\nDamien", origine: "mail",
           pj: [{ id: 2, nom: "Marche à suivre - planning.pdf", type: "application/pdf", taille: 245760, apercu: false }, { id: 3, nom: "réglage.png", type: "image/png", taille: 20480, apercu: true }] }],
       10: [{ id: 5, cree: "2026-10-14T10:00:00.000Z", auteur: "client", texte: "Comment partager un dossier avec un prestataire extérieur ?", origine: "appli", pj: [] }],
+      9: [{ id: 6, cree: "2026-10-12T15:00:00.000Z", auteur: "client", texte: "Pourrait-on voir les anniversaires dans le planning ?", origine: "appli", pj: [] }],
     },
   };
   let suivant = 12, pjSuivante = 10;
   const H = { ...CORS, "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS" };
   const rep = (route, status, corps) => route.fulfill({ status, headers: H, body: JSON.stringify(corps) });
-  const vue = (d) => ({ ...d, nonLu: !prestataire && !!d.nonLu, dernier: s.messages[d.id].at(-1).cree, nbMessages: s.messages[d.id].length, extrait: s.messages[d.id][0].texte });
+  const vue = (d) => ({ ...d, ...(prestataire ? { facturable: W.estFacturable(d), facturableChoisi: d.facturable != null, minutes: d.minutes || 0 } : { facturable: undefined, minutes: undefined }), nonLu: !prestataire && !!d.nonLu, dernier: s.messages[d.id].at(-1).cree, nbMessages: s.messages[d.id].length, extrait: s.messages[d.id][0].texte });
   const pjs = (parties) => (parties || []).filter((p) => p.nom === "fichier").map((p) => ({ id: pjSuivante++, nom: p.fichier, type: p.type, taille: p.taille, apercu: /^image\/(jpeg|png|webp)$/.test(p.type) }));
   return async (route) => {
     const req = route.request(), url = new URL(req.url()), m = req.method();
@@ -117,6 +127,10 @@ function workerAide(o, journal) {
     const seg = url.pathname.split("/").slice(3).filter(Boolean);
     const visibles = () => s.demandes.filter((d) => prestataire || !d.autre);
     if (seg[0] === "moi") return rep(route, 200, { prestataire, pj: o.pj !== false });
+    if (seg[0] === "stats") {
+      if (!prestataire) return rep(route, 403, { code: "interdit" });
+      return rep(route, 200, W.statsAide(STATS_LIGNES, url.searchParams.get("mois"), Date.parse("2026-10-19T12:00:00Z")));
+    }
     if (!seg.length && m === "GET") return rep(route, 200, { prestataire, pj: o.pj !== false, demandes: visibles().map(vue).sort((a, b) => b.dernier.localeCompare(a.dernier)) });
     if (!seg.length && m === "POST") {
       const c = JSON.parse(parties ? parties.find((p) => p.nom === "donnees").corps : req.postData());
@@ -139,10 +153,25 @@ function workerAide(o, journal) {
       d.statut = prestataire ? "repondue" : "nouvelle";
       return rep(route, 201, { ok: true, statut: d.statut });
     }
-    if (m === "PATCH") { d.statut = JSON.parse(req.postData()).statut; return rep(route, 200, { ok: true, id: d.id, statut: d.statut }); }
+    if (m === "PATCH") { Object.assign(d, JSON.parse(req.postData())); return rep(route, 200, { ok: true, id: d.id, statut: d.statut, demande: vue(d) }); }
     return rep(route, 405, {});
   };
 }
+
+// Statistiques : demandes FICTIVES sur 6 mois (agrégées par le code du Worker).
+const STATS_LIGNES = (() => {
+  const gens = [["Fanny Martin", "fmartin@breteuil.fr"], ["Camille Roux", "croux@breteuil.fr"], ["Marc Petit", "mpetit@breteuil.fr"], ["Inès Laurent", "ilaurent@breteuil.fr"]];
+  const types = ["probleme", "question", "probleme", "amelioration", "avis", "probleme", "question"];
+  const l = []; let id = 1;
+  for (const [mois, n] of [["2026-05", 4], ["2026-06", 7], ["2026-07", 5], ["2026-08", 3], ["2026-09", 9], ["2026-10", 12]]) for (let i = 0; i < n; i++) {
+    const cree = `${mois}-${String(2 + i * 2).padStart(2, "0")}T0${7 + (i % 3)}:15:00.000Z`, type = types[(id + i) % types.length], [nom, adresse] = gens[(id + Math.floor(id / 3)) % gens.length];
+    l.push({ id, cree, nom, adresse, type, statut: i % 4 === 0 && mois === "2026-10" ? "nouvelle" : i % 3 === 0 ? "repondue" : "resolue",
+      facturable: type === "question" && i % 2 ? 1 : null, minutes: [15, 30, 45, 60, 90, 20][i % 6],
+      premiere_reponse: new Date(Date.parse(cree) + (35 + i * 40) * 60000).toISOString(), extrait: "Demande fictive n° " + id + " ; détails ici" });
+    id++;
+  }
+  return l;
+})();
 
 async function nouvellePage(navigateur, opts) {
   const p = PROFILS[opts.profil];
@@ -291,6 +320,100 @@ try {
       await contexte.close();
     }
   }
+  /* ---------- Filtres, requalification, statistiques, Gérer ---------- */
+  for (const [taille, vp] of [["375", { width: 375, height: 812 }], ["1280", { width: 1280, height: 900 }]]) for (const palette of ["creme", "bleu"]) {
+    const suffixe = `${palette}-${taille}`;
+    // Collaboratrice : filtres dans « Mes demandes », pas de requalification.
+    {
+      const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "lecteur", vp, palette });
+      await page.goto(BASE + "#/aide");
+      await page.waitForSelector('.ecran [data-filtre-statut="encours"][aria-pressed="true"]');
+      assert.deepEqual(await page.$$eval(".ecran [data-filtre-statut]", (l) => l.map((b) => b.textContent)), ["En cours1", "Résolues1", "Toutes2"]);
+      assert.deepEqual(await page.$$eval(".ecran .aide-carte", (l) => l.map((c) => c.dataset.demande)), ["11"]);
+      await page.click('.ecran [data-filtre-statut="resolue"]');
+      assert.deepEqual(await page.$$eval(".ecran .aide-carte", (l) => l.map((c) => c.dataset.demande)), ["9"]);
+      await page.click('.ecran [data-filtre-statut=""]');
+      assert.equal(await page.$$eval(".ecran .aide-carte", (l) => l.length), 2);
+      await calme(page); await sansDebord(page, `filtres ${suffixe}`);
+      if (palette === "creme") await capturer(page, `filtres-mes-demandes-${suffixe}`);
+      await page.goto(BASE + "#/aide/11");
+      await page.waitForSelector(".ecran .aide-bulle.damien");
+      assert.equal(await page.$$eval(".aide-requal, [data-requal]", (l) => l.length), 0, "pas de requalification pour le demandeur");
+      assert.doesNotMatch(await page.textContent(".ecran"), /Facturable|Temps passé/);
+      await page.goto(BASE + "#/demandes/stats");
+      await page.waitForFunction(() => /réservé à Damien/.test(document.querySelector(".aide-stats")?.textContent || ""));
+      if (erreurs.filter((e) => !/403/.test(e)).length) problemes.push(`filtres collaboratrice ${suffixe} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+    // Prestataire : Demandes (filtres), requalification, statistiques, Gérer.
+    {
+      const { contexte, page, erreurs, journal } = await nouvellePage(navigateur, { profil: "admin", vp, palette, aide: { prestataire: true } });
+      await page.goto(BASE + "#/demandes");
+      await page.waitForSelector('.aide-demandes [data-filtre-statut="encours"][aria-pressed="true"]');
+      assert.deepEqual(await page.$$eval(".aide-demandes [data-filtre-statut]", (l) => l.map((b) => b.textContent)), ["En cours2", "Résolues1", "Toutes3"]);
+      assert.ok(await page.isVisible('[data-filtre="type"]') && await page.isVisible('[data-filtre="personne"]'), "filtres type et personne gardés");
+      await calme(page); await sansDebord(page, `demandes ${suffixe}`);
+      if (palette === "creme" || taille === "375") await capturer(page, `filtres-prestataire-${suffixe}`);
+      // Requalifier la n° 10 : Question → Problème (facturable coché tout seul), + 30 min + 1 h.
+      await page.click('.aide-demandes .aide-carte[data-demande="10"]');
+      await page.waitForSelector('.ecran .aide-requal [data-requal="type"]');
+      assert.equal(await page.isChecked('[data-requal="facturable"]'), false, "Question : non facturable par défaut");
+      await page.selectOption('[data-requal="type"]', "probleme");
+      assert.equal(await page.isChecked('[data-requal="facturable"]'), true, "Problème : facturable par défaut");
+      await page.click('[data-ajout="30"]'); await page.click('[data-ajout="60"]');
+      assert.equal(await page.inputValue('[data-requal="minutes"]'), "90");
+      assert.match(await page.textContent(".aide-requal .aide-note"), /Soit 1\u00a0h 30/);
+      await page.locator(".aide-requal").scrollIntoViewIfNeeded(); await calme(page);
+      if (palette === "creme" || taille === "375") await capturer(page, `requalifier-${suffixe}`);
+      await page.click('[data-action="aide-requalifier"]');
+      await page.waitForFunction(() => document.querySelector('[data-requal="type"]')?.value === "probleme" && /Problème/.test(document.querySelector(".aide-fil-tete")?.textContent || ""));
+      let patchs = journal.filter((j) => j.methode === "PATCH").map((j) => JSON.parse(j.json));
+      assert.deepEqual(patchs.at(-1), { type: "probleme", minutes: 90 }, "facturable non choisi : pas envoyé (suit le type)");
+      await page.uncheck('[data-requal="facturable"]');
+      await page.fill('[data-requal="minutes"]', "1h45");
+      await page.click('[data-action="aide-requalifier"]');
+      await page.waitForFunction(() => document.querySelector('[data-requal="minutes"]')?.value === "105");
+      patchs = journal.filter((j) => j.methode === "PATCH").map((j) => JSON.parse(j.json));
+      assert.deepEqual(patchs.at(-1), { type: "probleme", minutes: 105, facturable: false });
+      assert.equal(await page.isChecked('[data-requal="facturable"]'), false, "choix gardé");
+      await page.fill('[data-requal="minutes"]', "beaucoup");
+      await page.click('[data-action="aide-requalifier"]');
+      assert.match(await page.textContent(".aide-requal .erreur"), /nombre de minutes/);
+      // Statistiques : depuis Demandes, puis mois précédent, export CSV.
+      await page.goto(BASE + "#/demandes");
+      await page.click('[data-action="aide-stats"]');
+      await page.waitForSelector('.aide-stats [data-mois-affiche="2026-10"]');
+      const tuiles = await page.$$eval(".aide-stat", (l) => Object.fromEntries(l.map((t) => [t.dataset.stat, t.querySelector("b").textContent])));
+      const attendu = W.statsAide(STATS_LIGNES, "2026-10", Date.parse("2026-10-19T12:00:00Z")).tuiles;
+      assert.equal(tuiles.demandes, String(attendu.demandes)); assert.equal(tuiles.problemes, String(attendu.problemes));
+      assert.equal(tuiles.facturables, String(attendu.facturables)); assert.equal(tuiles.encours, String(attendu.enCours));
+      assert.match(tuiles.temps, /h/); assert.notEqual(tuiles.delai, "—");
+      assert.equal(await page.$$eval(".aide-evolution li", (l) => l.length), 6);
+      assert.equal(await page.$$eval(".aide-barres li", (l) => l.length), 4);
+      assert.equal(await page.$$eval('[data-mois="suivant"]', (l) => l.length), 0, "pas de mois futur");
+      await calme(page); await sansDebord(page, `stats ${suffixe}`);
+      await capturer(page, `stats-${suffixe}`, { fullPage: true });
+      await page.evaluate(() => { const c = HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click = function () { window.__telechargement = this.download; return c.call(this); }; });
+      const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-action="aide-export-csv"]')]);
+      assert.equal(await page.evaluate(() => window.__telechargement), "demandes-2026-10.csv");
+      const csv = readFileSync(await dl.path(), "utf8");
+      assert.ok(csv.startsWith("\ufeffN°;Date;Personne;Type;Statut;Facturable;Temps (min);Début du message\r\n"), "CSV : BOM + en-tête");
+      assert.equal(csv.trim().split("\r\n").length, 1 + attendu.demandes);
+      assert.match(csv, /"Demande fictive n° \d+ ; détails ici"/, "« ; » entre guillemets");
+      await page.click('[data-mois="precedent"]');
+      await page.waitForSelector('.aide-stats [data-mois-affiche="2026-09"]');
+      assert.equal(await page.evaluate(() => location.hash), "#/demandes/stats/2026-09");
+      assert.ok(journal.some((j) => j.chemin === "/breteuil/aide/stats" ), "route stats appelée");
+      await page.waitForSelector('[data-mois="suivant"]');
+      // Gérer : section « Demandes d'aide » (prestataire).
+      await page.goto(BASE + "#/gerer");
+      await page.waitForSelector('.aide-gerer:not([hidden]) a[href="#/demandes/stats"]');
+      await calme(page);
+      if (palette === "creme" && taille === "375") await capturer(page, `gerer-demandes-${suffixe}`, { fullPage: true });
+      if (erreurs.length) problemes.push(`prestataire stats ${suffixe} : erreurs console ${erreurs.join(" | ")}`);
+      await contexte.close();
+    }
+  }
   /* ---------- Worker sans pièces jointes : bouton caché, le reste marche ---------- */
   {
     const { contexte, page, erreurs } = await nouvellePage(navigateur, { profil: "lecteur", vp: { width: 375, height: 812 }, aide: { pj: false } });
@@ -307,9 +430,6 @@ try {
   }
   /* ---------- Aperçu du mail HTML envoyé à Damien ---------- */
   {
-    const source = readFileSync(new URL("../../api-planning/worker.js", import.meta.url), "utf8")
-      .replace(/^import \{ EmailMessage \} from "cloudflare:email";$/m, "class EmailMessage {}");
-    const W = await import("data:text/javascript;charset=utf-8," + encodeURIComponent(source));
     const html = W.htmlMail({ id: 12, type: "probleme", nom: "Fanny Martin", adresse: "fmartin@chateau-exemple.fr", ecran: "Planning (#/planning)", version: "5.6.0",
       appareil: "iPhone · Safari · appli installée · 390 px", date: Date.UTC(2026, 9, 19, 8, 42), premier: true, lien: "https://espace-breteuil.pages.dev/#/aide/12",
       texte: "Bonjour Damien,\n\nLe planning de l'accueil ne s'affiche plus depuis ce matin sur mon téléphone : l'écran reste blanc après « Chargement… ».\nJe vous mets deux captures et le devis <reçu> hier.\n\nMerci !",

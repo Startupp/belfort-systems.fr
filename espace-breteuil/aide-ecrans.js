@@ -35,6 +35,7 @@
     fil: null,                // n° ouvert dans le panneau
     envoyee: null,
     derniereLecture: 0,
+    filtre: "encours",        // v5.6 : « En cours » par défaut (Mes demandes et Demandes)
   };
 
   /* ------------------------------------------------------------------ */
@@ -381,16 +382,34 @@
     if (opts.panneau) return h("button", { class: "aide-carte" + (d.nonLu ? " nonlu" : ""), type: "button", "data-demande": String(d.id), onclick: function () { etat.vue = "fil"; etat.fil = d.id; dessiner(); } }, contenu);
     return h("a", { class: "aide-carte" + (d.nonLu ? " nonlu" : ""), href: "#/aide/" + d.id, "data-demande": String(d.id) }, contenu);
   }
+  /** v5.6 : « En cours » (Nouvelle + Répondue) / « Résolues » / « Toutes », avec le nombre sur chaque bouton. */
+  function barreFiltres(liste, changer) {
+    var c = A.comptesStatut(liste);
+    var seg = h("div", { class: "segments aide-filtre-statut", role: "group", "aria-label": "Afficher les demandes", style: { "--n": "3" } });
+    A.FILTRES.forEach(function (f) {
+      seg.appendChild(h("button", { type: "button", "aria-pressed": String(etat.filtre === f.cle), "data-filtre-statut": f.cle,
+        "aria-label": f.libelle + " : " + c[f.cle], onclick: function () { etat.filtre = f.cle; changer(); } },
+        f.libelle, h("span", { class: "aide-filtre-n", "aria-hidden": "true" }, String(c[f.cle]))));
+    });
+    return seg;
+  }
   function vueListe(corps, opts) {
     opts = opts || {};
     var zone = h("div", { class: "aide-liste", "aria-busy": "true" }, EB.squelette(3, "liste"));
     corps.appendChild(zone);
     var charge = opts.filtres ? C.lister(opts.filtres).then(function (j) { etat.prestataire = !!j.prestataire; return j.demandes || []; }) : rafraichir(true);
     charge.then(function (liste) {
-      zone.textContent = ""; zone.removeAttribute("aria-busy");
+      zone.removeAttribute("aria-busy");
       if (opts.surListe) opts.surListe(liste);
-      if (!liste.length) { zone.appendChild(h("p", { class: "vide" }, opts.filtres ? "Aucune demande ne correspond." : "Aucune demande pour le moment. Écrivez à Damien avec « Écrire à Damien ».")); return; }
-      liste.forEach(function (d) { zone.appendChild(carte(d, { panneau: opts.panneau, prestataire: etat.prestataire })); });
+      function dessinerListe() {
+        zone.textContent = "";
+        if (!liste.length) { zone.appendChild(h("p", { class: "vide" }, opts.filtres ? "Aucune demande ne correspond." : "Aucune demande pour le moment. Écrivez à Damien avec « Écrire à Damien ».")); return; }
+        zone.appendChild(barreFiltres(liste, dessinerListe));
+        var visibles = A.filtrerStatut(liste, etat.filtre);
+        if (!visibles.length) zone.appendChild(h("p", { class: "vide" }, etat.filtre === "encours" ? "Aucune demande en cours : tout est résolu." : "Aucune demande résolue pour le moment."));
+        visibles.forEach(function (d) { zone.appendChild(carte(d, { panneau: opts.panneau, prestataire: etat.prestataire })); });
+      }
+      dessinerListe();
     }, function (e) { zone.textContent = ""; zone.removeAttribute("aria-busy"); zone.appendChild(erreurBloc(e)); });
   }
 
@@ -446,6 +465,7 @@
       } }, h("label", { for: champ.id }, presta ? "Répondre" : "Ajouter un message"), champ, placePj, err, envoyer);
       zone.appendChild(formRep);
       pjFil = brancherPj(formRep, placePj);
+      if (presta) zone.appendChild(blocRequalifier(d, function () { zone.textContent = ""; charger(); }));
       // Statut
       if (presta) {
         var seg = h("div", { class: "segments aide-statuts", role: "group", "aria-label": "Statut de la demande", style: { "--n": "3" } });
@@ -462,6 +482,103 @@
       }
     }
     charger();
+  }
+
+  /* ---------- v5.6 : requalification (prestataire seulement) ---------- */
+  function blocRequalifier(d, apres) {
+    var choisi = !!d.facturableChoisi;
+    var selType = h("select", { class: "champ", id: "aide-requal-type-" + d.id, "data-requal": "type", onchange: function () {
+      if (!choisi) caseFact.checked = A.facturableParDefaut(selType.value); // tant que Damien n'a pas choisi : suit le type
+    } }, A.TYPES.map(function (t) { return h("option", { value: t.cle }, t.libelle); }));
+    selType.value = d.type;
+    var caseFact = h("input", { type: "checkbox", id: "aide-requal-fact-" + d.id, "data-requal": "facturable", onchange: function () { choisi = true; } });
+    caseFact.checked = d.facturable != null ? !!d.facturable : A.facturableParDefaut(d.type);
+    var champMin = h("input", { class: "champ aide-minutes", id: "aide-requal-min-" + d.id, type: "text", inputmode: "numeric", autocomplete: "off", "data-requal": "minutes",
+      "aria-describedby": "aide-requal-lisible-" + d.id, oninput: majLisible });
+    champMin.value = String(d.minutes || 0);
+    var lisible = h("small", { class: "aide-note", id: "aide-requal-lisible-" + d.id, "aria-live": "polite" });
+    function majLisible() { var n = A.lireMinutes(champMin.value); lisible.textContent = n == null ? "Écrivez un nombre de minutes, par exemple 45 ou 1h30." : "Soit " + A.duree(n) + "."; }
+    majLisible();
+    var rapides = h("div", { class: "aide-rapides", role: "group", "aria-label": "Ajouter du temps" }, A.RAPIDES.map(function (r) {
+      return h("button", { type: "button", class: "puce", "data-ajout": String(r.min), onclick: function () { var n = A.lireMinutes(champMin.value) || 0; champMin.value = String(n + r.min); majLisible(); } }, r.libelle);
+    }));
+    var err = h("p", { class: "erreur", "aria-live": "polite" });
+    var bouton = h("button", { class: "btn large", type: "submit", "data-action": "aide-requalifier" }, icone("coche"), "Enregistrer");
+    return h("form", { class: "aide-form aide-requal", novalidate: true, "aria-labelledby": "aide-requal-titre-" + d.id, onsubmit: function (e) {
+      e.preventDefault();
+      var n = A.lireMinutes(champMin.value);
+      if (n == null) { err.textContent = "Temps passé : écrivez un nombre de minutes, par exemple 45 ou 1h30."; champMin.focus(); return; }
+      var champs = { type: selType.value, minutes: n };
+      if (choisi) champs.facturable = caseFact.checked;
+      bouton.disabled = true; err.textContent = "";
+      C.requalifier(d.id, champs).then(function () { EB.toast("Demande mise à jour."); apres(); }, function (x) { bouton.disabled = false; err.textContent = A.messageErreur(x); });
+    } },
+      h("h4", { id: "aide-requal-titre-" + d.id }, "Requalifier ", h("small", null, "(visible par vous seul)")),
+      h("div", { class: "aide-champ" }, h("label", { for: selType.id }, "Type"), selType),
+      h("label", { class: "aide-case", for: caseFact.id }, caseFact, h("span", null, h("b", null, "Facturable"), h("small", null, "Par défaut : oui pour un problème, non sinon."))),
+      h("div", { class: "aide-champ" }, h("label", { for: champMin.id }, "Temps passé (minutes)"), h("div", { class: "aide-temps" }, champMin, rapides), lisible),
+      err, bouton);
+  }
+
+  /* ---------- v5.6 : statistiques (#/demandes/stats[/AAAA-MM]) ---------- */
+  function ecranStats(app, mois) {
+    app.appendChild(EB.barre("Statistiques", { href: "#/demandes", texte: "Demandes" }, null, "Demandes d'aide, mois par mois"));
+    var corps = h("div", { class: "aide-stats", "aria-busy": "true" }, EB.squelette(4, "tuiles"));
+    app.appendChild(corps);
+    C.stats(/^\d{4}-\d{2}$/.test(mois || "") ? mois : null).then(function (s) { corps.textContent = ""; corps.removeAttribute("aria-busy"); dessinerStats(corps, s); },
+      function (e) {
+        corps.textContent = ""; corps.removeAttribute("aria-busy");
+        if (e && e.statut === 403) { corps.appendChild(h("p", { class: "vide" }, "Cet écran est réservé à Damien (prestataire).")); corps.appendChild(h("a", { class: "btn large", href: "#/aide" }, "Mes demandes")); }
+        else corps.appendChild(erreurBloc(e));
+      });
+  }
+  function dessinerStats(corps, s) {
+    var t = s.tuiles;
+    corps.appendChild(h("nav", { class: "aide-mois", "aria-label": "Choisir le mois" },
+      h("a", { class: "btn-rond", href: "#/demandes/stats/" + s.precedent, "aria-label": "Mois précédent : " + A.libelleMois(s.precedent), "data-mois": "precedent" }, icone("gauche")),
+      h("h2", { "data-mois-affiche": s.mois }, A.libelleMois(s.mois)),
+      s.suivant ? h("a", { class: "btn-rond", href: "#/demandes/stats/" + s.suivant, "aria-label": "Mois suivant : " + A.libelleMois(s.suivant), "data-mois": "suivant" }, icone("droite"))
+        : h("span", { class: "btn-rond inactif", "aria-hidden": "true" }, icone("droite"))));
+    function tuileStat(cle, valeur, libelle, sous) { return h("div", { class: "aide-stat", "data-stat": cle }, h("b", null, valeur), h("span", null, libelle), sous ? h("small", null, sous) : null); }
+    corps.appendChild(h("div", { class: "aide-stat-grille" },
+      tuileStat("demandes", String(t.demandes), "Demandes du mois"),
+      tuileStat("problemes", String(t.problemes), "Dont problèmes"),
+      tuileStat("facturables", String(t.facturables), "Facturables"),
+      tuileStat("temps", A.duree(t.minutesFacturables), "Temps facturable", "Temps passé sur les demandes facturables"),
+      tuileStat("delai", A.delai(t.delaiMoyenMinutes), "Première réponse", "Délai moyen avant votre 1re réponse"),
+      tuileStat("encours", String(t.enCours), "En cours", "Pas encore résolues")));
+    // Par type : barres horizontales.
+    var maxT = Math.max(1, Math.max.apply(null, s.parType.map(function (x) { return x.demandes; })));
+    corps.appendChild(h("section", { class: "section aide-stat-bloc" }, h("h3", null, "Par type"),
+      h("ul", { class: "aide-barres" }, s.parType.map(function (x) {
+        var ty = A.typeDe(x.type) || { emoji: "💬" };
+        return h("li", { "data-type": x.type }, h("span", { class: "aide-barre-lib" }, emoji(ty.emoji), x.libelle),
+          h("span", { class: "aide-barre-piste", "aria-hidden": "true" }, h("span", { class: "aide-barre t-" + x.type, style: { width: (x.demandes / maxT * 100) + "%" } })),
+          h("b", { class: "aide-barre-n" }, String(x.demandes)));
+      }))));
+    // Par personne : tableau trié.
+    corps.appendChild(h("section", { class: "section aide-stat-bloc" }, h("h3", null, "Par personne"),
+      s.parPersonne.length ? h("div", { class: "aide-table-defile" }, h("table", { class: "aide-table" },
+        h("thead", null, h("tr", null, h("th", { scope: "col" }, "Personne"), h("th", { scope: "col" }, "Demandes"), h("th", { scope: "col" }, "Facturables"), h("th", { scope: "col" }, "Temps"))),
+        h("tbody", null, s.parPersonne.map(function (p) {
+          return h("tr", null, h("th", { scope: "row" }, h("span", null, p.nom), h("small", null, p.adresse)), h("td", null, String(p.demandes)), h("td", null, String(p.facturables)), h("td", null, A.duree(p.minutes)));
+        })))) : h("p", { class: "vide" }, "Aucune demande ce mois-ci.")));
+    // 6 derniers mois : total et problèmes facturables.
+    var maxE = Math.max(1, Math.max.apply(null, s.evolution.map(function (x) { return x.total; })));
+    corps.appendChild(h("section", { class: "section aide-stat-bloc" }, h("h3", null, "Les 6 derniers mois"),
+      h("p", { class: "aide-legende" }, h("span", { class: "pastille-l total" }), "Toutes les demandes", h("span", { class: "pastille-l fact" }), "Problèmes facturables"),
+      h("ol", { class: "aide-evolution" }, s.evolution.map(function (x) {
+        return h("li", { class: x.mois === s.mois ? "courant" : null, "aria-label": A.libelleMois(x.mois) + " : " + x.total + " demande(s), dont " + x.problemesFacturables + " problème(s) facturable(s)" },
+          h("span", { class: "aide-colonnes", "aria-hidden": "true" },
+            h("span", { class: "aide-col total", style: { height: (x.total / maxE * 100) + "%" } }, h("i", null, String(x.total))),
+            h("span", { class: "aide-col fact", style: { height: (x.problemesFacturables / maxE * 100) + "%" } }, h("i", null, String(x.problemesFacturables)))),
+          h("span", { class: "aide-col-mois", "aria-hidden": "true" }, A.libelleMois(x.mois, true)));
+      }))));
+    corps.appendChild(h("button", { class: "btn large secondaire", type: "button", "data-action": "aide-export-csv", disabled: !s.lignes.length, onclick: function () {
+      var url = URL.createObjectURL(new Blob([A.csvMois(s.lignes)], { type: "text/csv;charset=utf-8" }));
+      telecharger(url, "demandes-" + s.mois + ".csv");
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+    } }, emoji("📥"), "Exporter le mois (CSV)"));
   }
 
   /* ------------------------------------------------------------------ */
@@ -482,27 +599,26 @@
     vueListe(app, {});
   }
 
-  function ecranDemandes(app) {
+  function ecranDemandes(app, chemin) {
+    if (chemin && chemin[1] === "stats") return ecranStats(app, chemin[2]);
     app.appendChild(EB.barre("Demandes", { href: "#/moi", texte: "Moi" }, null, "Toutes les demandes des utilisateurs"));
     var corps = h("div", { class: "aide-demandes" });
     app.appendChild(corps);
     var refus = function () { corps.textContent = ""; corps.appendChild(h("p", { class: "vide" }, "Cet écran est réservé à Damien (prestataire). Vos demandes sont dans « Mes demandes ».")); corps.appendChild(h("a", { class: "btn large", href: "#/aide" }, "Mes demandes")); };
-    var f = { statut: EB.lire("eb:aide-filtre-statut", "nouvelle") || "", type: "", personne: "" };
+    var f = { type: "", personne: "" };
     var personnes = [];
     function dessinerFiltres() {
       corps.textContent = "";
-      var segS = h("div", { class: "segments", role: "group", "aria-label": "Filtrer par statut", style: { "--n": "4" } });
-      [["", "Toutes"], ["nouvelle", "Nouvelles"], ["repondue", "Répondues"], ["resolue", "Résolues"]].forEach(function (x) {
-        segS.appendChild(h("button", { type: "button", "aria-pressed": String(f.statut === x[0]), "data-filtre-statut": x[0], onclick: function () { f.statut = x[0]; EB.ecrire("eb:aide-filtre-statut", f.statut); dessinerFiltres(); } }, x[1]));
-      });
       var selType = h("select", { class: "champ", "aria-label": "Filtrer par type", "data-filtre": "type", onchange: function () { f.type = selType.value; dessinerFiltres(); } },
         h("option", { value: "" }, "Tous les types"), A.TYPES.map(function (t) { return h("option", { value: t.cle }, t.libelle); }));
       selType.value = f.type;
       var selPers = h("select", { class: "champ", "aria-label": "Filtrer par personne", "data-filtre": "personne", onchange: function () { f.personne = selPers.value; dessinerFiltres(); } },
         h("option", { value: "" }, "Toutes les personnes"), personnes.map(function (p) { return h("option", { value: p.adresse }, p.nom); }));
       selPers.value = f.personne;
-      corps.appendChild(h("div", { class: "aide-filtres" }, segS, h("div", { class: "aide-filtres-l2" }, selType, selPers)));
-      vueListe(corps, { filtres: { statut: f.statut, type: f.type, personne: f.personne }, surListe: function () {
+      corps.appendChild(h("a", { class: "action aide-lien-stats", href: "#/demandes/stats", "data-action": "aide-stats" }, emoji("📊"),
+        h("span", null, h("b", null, "Statistiques"), h("small", null, "Le mois en chiffres, temps facturable, export CSV")), h("span", { class: "fleche", "aria-hidden": "true" }, "›")));
+      corps.appendChild(h("div", { class: "aide-filtres" }, h("div", { class: "aide-filtres-l2" }, selType, selPers)));
+      vueListe(corps, { filtres: { type: f.type, personne: f.personne }, surListe: function () {
         if (!etat.prestataire) refus();
       } });
     }
@@ -537,7 +653,24 @@
     return bloc;
   }
 
-  window.EBAideEcrans = { ouvrir: ouvrir, fermer: fermer, rafraichir: rafraichir, lignesMoi: lignesMoi, etat: function () { return etat; } };
+  /** v5.6 : section « Demandes d'aide » de Gérer, seulement pour le prestataire (décidé par le Worker). */
+  function blocGerer(grandesTuiles) {
+    var bloc = h("section", { class: "section aide-gerer", hidden: true });
+    function remplir() {
+      if (!etat.prestataire || bloc.childNodes.length) return;
+      bloc.appendChild(h("h2", null, "Demandes d'aide"));
+      bloc.appendChild(grandesTuiles([
+        { href: "#/demandes", emoji: "🗂️", libelle: "Demandes", sous: "Répondre, requalifier, changer le statut", action: "toutes-demandes-gerer" },
+        { href: "#/demandes/stats", emoji: "📊", libelle: "Statistiques", sous: "Le mois en chiffres et l'export CSV", action: "aide-stats-gerer" },
+      ]));
+      bloc.hidden = false;
+    }
+    remplir();
+    if (etat.prestataire === null && connecte()) rafraichir(true).then(remplir, function () {});
+    return bloc;
+  }
+
+  window.EBAideEcrans = { ouvrir: ouvrir, fermer: fermer, rafraichir: rafraichir, lignesMoi: lignesMoi, blocGerer: blocGerer, etat: function () { return etat; } };
 
   /* ------------------------------------------------------------------ */
   /* Démarrage : bouton sur tous les écrans, pastille tenue à jour       */
