@@ -90,6 +90,75 @@
     return { ajouts: ajouts, erreurs: erreurs };
   }
 
+  /* ---------- v5.6 : filtres simples, requalification, statistiques ---------- */
+  var FILTRES = [{ cle: "encours", libelle: "En cours" }, { cle: "resolue", libelle: "Résolues" }, { cle: "", libelle: "Toutes" }];
+  /** « En cours » = Nouvelle + Répondue ; « Résolues » ; « » = toutes. */
+  function filtrerStatut(liste, cle) {
+    return (liste || []).filter(function (d) { return cle === "encours" ? d.statut !== "resolue" : cle === "resolue" ? d.statut === "resolue" : true; });
+  }
+  function comptesStatut(liste) {
+    var l = liste || [];
+    return { encours: filtrerStatut(l, "encours").length, resolue: filtrerStatut(l, "resolue").length, "": l.length };
+  }
+  /** Facturable par défaut : oui pour un Problème, non sinon (tant que Damien n'a pas choisi). */
+  function facturableParDefaut(type) { return type === "probleme"; }
+  var RAPIDES = [{ min: 15, libelle: "+ 15 min" }, { min: 30, libelle: "+ 30 min" }, { min: 60, libelle: "+ 1 h" }, { min: 120, libelle: "+ 2 h" }];
+  /** Minutes saisies (champ libre) → entier ≥ 0 ou null si illisible. Accepte « 90 », « 1h30 », « 1 h », « 45 min ». */
+  function lireMinutes(t) {
+    var x = String(t == null ? "" : t).trim().toLowerCase().replace(/\s+/g, "");
+    if (!x) return 0;
+    var m = /^(\d{1,5})(?:min|mn|m)?$/.exec(x);
+    if (m) return Number(m[1]);
+    m = /^(\d{1,4})h(\d{1,2})?(?:min|mn|m)?$/.exec(x);
+    if (m) return Number(m[1]) * 60 + Number(m[2] || 0);
+    return null;
+  }
+  /** 0 → « 0 min » ; 90 → « 1 h 30 » ; 120 → « 2 h ». */
+  function duree(min) {
+    min = Math.max(0, Math.round(Number(min) || 0));
+    var h = Math.floor(min / 60), m = min % 60;
+    return h ? h + "\u00a0h" + (m ? " " + (m < 10 ? "0" : "") + m : "") : m + "\u00a0min";
+  }
+  /** Délai lisible : « 25 min », « 3 h 10 », « 2 j 4 h » ; null → « — ». */
+  function delai(min) {
+    if (min == null) return "—";
+    if (min < 60 * 24) return duree(min);
+    var j = Math.floor(min / 1440), h = Math.round((min % 1440) / 60);
+    return j + "\u00a0j" + (h ? " " + h + "\u00a0h" : "");
+  }
+  var MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+  var MOIS_COURTS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  function libelleMois(mois, court) {
+    var p = /^(\d{4})-(\d{2})$/.exec(String(mois || ""));
+    if (!p) return "";
+    var n = Number(p[2]) - 1;
+    return court ? MOIS_COURTS[n] : MOIS[n].charAt(0).toUpperCase() + MOIS[n].slice(1) + " " + p[1];
+  }
+  /** Date et heure de Paris « 19/10/2026 10:42 » (CSV). */
+  function dateCsv(iso) {
+    var t = Date.parse(iso);
+    if (!isFinite(t)) return "";
+    try {
+      return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(t)).replace(",", "");
+    } catch (e) { return String(iso).slice(0, 16).replace("T", " "); }
+  }
+  /**
+   * Export CSV du mois pour Excel (France) : BOM UTF-8, séparateur « ; », fins de ligne CRLF, guillemets si besoin.
+   * Une cellule qui commence par = + - @ est précédée d'une apostrophe (pas de formule exécutée par Excel).
+   */
+  function csvMois(lignes) {
+    function cellule(v) {
+      var x = String(v == null ? "" : v).replace(/\r\n?/g, "\n");
+      if (/^[=+\-@\t]/.test(x)) x = "'" + x;
+      return /[;"\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x;
+    }
+    var l = [["N°", "Date", "Personne", "Type", "Statut", "Facturable", "Temps (min)", "Début du message"].join(";")];
+    (lignes || []).forEach(function (d) {
+      l.push([d.id, dateCsv(d.cree), d.nom, libelleType(d.type), libelleStatut(d.statut), d.facturable ? "oui" : "non", Number(d.minutes) || 0, d.extrait].map(cellule).join(";"));
+    });
+    return "\ufeff" + l.join("\r\n") + "\r\n";
+  }
+
   function compteur(t) { var n = String(t || "").length; return { texte: n + " / " + MAX, trop: n > MAX, presque: n > MAX * 0.9 }; }
 
   /** Type d'appareil lisible, d'après le navigateur (aucune donnée personnelle). */
@@ -173,6 +242,9 @@
       /** Pièce jointe (Blob), lue avec le jeton : jamais d'adresse publique. */
       piece: function (id, pjId) { return appel("GET", "/" + encodeURIComponent(id) + "/pj/" + encodeURIComponent(pjId), undefined, null, true); },
       statut: function (id, statut) { return appel("PATCH", "/" + encodeURIComponent(id), { statut: statut }); },
+      /** Prestataire : { type?, facturable?, minutes? }. */
+      requalifier: function (id, champs) { return appel("PATCH", "/" + encodeURIComponent(id), champs); },
+      stats: function (mois) { return appel("GET", "/stats" + (mois ? "?mois=" + encodeURIComponent(mois) : "")); },
     };
   }
 
@@ -182,6 +254,8 @@
     valider: valider, validerReponse: validerReponse, compteur: compteur, appareil: appareil, nomEcran: nomEcran,
     nonLues: nonLues, confirmation: confirmation, messageErreur: messageErreur, client: client,
     PJ_MAX: PJ_MAX, PJ_TAILLE: PJ_TAILLE, PJ_COTE: PJ_COTE, PJ_QUALITE: PJ_QUALITE, PJ_ACCEPT: PJ_ACCEPT,
+    FILTRES: FILTRES, filtrerStatut: filtrerStatut, comptesStatut: comptesStatut, facturableParDefaut: facturableParDefaut, RAPIDES: RAPIDES,
+    lireMinutes: lireMinutes, duree: duree, delai: delai, libelleMois: libelleMois, dateCsv: dateCsv, csvMois: csvMois,
     typePj: typePj, estImage: estImage, tailleLisible: tailleLisible, nomJpeg: nomJpeg, dimensions: dimensions, controlerAjout: controlerAjout,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
