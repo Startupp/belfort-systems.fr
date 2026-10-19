@@ -40,7 +40,7 @@ test("garde-fous : soi-même, propriétaires, groupe des propriétaires", () => 
 });
 
 test("noms de groupes en clair", () => {
-  assert.equal(D.nomGroupe("Propriétaires de Château de Breteuil"), "Propriétaires du site");
+  assert.equal(D.nomGroupe("Propriétaires de Château de Breteuil"), "Gestionnaires");
   assert.equal(D.nomGroupe("Château de Breteuil Members"), "Toute l'équipe", "pas de jargon « Membres »");
   assert.equal(D.nomGroupe("SharingLinks.x.AnonymousView.y"), "Lien ouvert à tous");
 });

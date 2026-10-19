@@ -43,12 +43,12 @@
     var gen = {};
     ecran.gen = gen;
     function la(el) { return ecran.gen === gen && document.body.contains(el); }
-    app.appendChild(EB.barre("Déléguer", EB.hub()));
+    app.appendChild(EB.barre("Donner un rôle", EB.hub()));
     app.appendChild(h("div", { class: "bandeau info", role: "note" }, icone("info"), h("div", null,
       h("strong", null, "Changements réels"), h("span", null, "Ils s'appliquent tout de suite chez Microsoft. Chaque action demande 2 confirmations et est notée dans le journal."))));
 
     /* ---------------- 1. Propriétaires du site ---------------- */
-    var zoneProp = h("section", { class: "section", "aria-labelledby": "t-prop" }, h("h2", { id: "t-prop" }, "Propriétaires du site du Château"), EB.squelette(2));
+    var zoneProp = h("section", { class: "section", "aria-labelledby": "t-prop" }, h("h2", { id: "t-prop" }, "Gestionnaires (propriétaires du site)"), EB.squelette(2));
     app.appendChild(zoneProp);
     function chargerProp(force) {
       return X().contexte().then(function (c) {
@@ -56,13 +56,13 @@
         var cle = "deleguer:proprietaires", charge = function () { return G.sp("GET", "/_api/web/sitegroups/getbyid(" + c.groupeProprietaires.Id + ")/users?$select=Id,Title,Email,LoginName,PrincipalType"); };
         return (force ? C.rafraichir(cle, charge) : C.obtenir(cle, charge, { ttl: 30000, surMaj: function (v) { if (la(zoneProp)) dessinerProp(c, v); } }))
           .then(function (v) { if (la(zoneProp)) dessinerProp(c, v); });
-      }).catch(function (e) { if (!la(zoneProp)) return; vider(zoneProp, "Propriétaires du site du Château"); zoneProp.appendChild(X().blocErreur(e)); });
+      }).catch(function (e) { if (!la(zoneProp)) return; vider(zoneProp, "Gestionnaires (propriétaires du site)"); zoneProp.appendChild(X().blocErreur(e)); });
     }
     function vider(zone, titre) { zone.textContent = ""; zone.appendChild(h("h2", null, titre)); }
     function dessinerProp(c, v) {
       var l = ((v && v.value) || []).filter(function (u) { return (u.PrincipalType == null || u.PrincipalType === 1) && !/sharepoint\\system|^app@sharepoint/i.test(u.LoginName || "") && !/^(compte syst[eè]me|system account)$/i.test(u.Title || ""); });
       var ids = l.map(function (u) { return u.Id; }), moi = c.moiSp && c.moiSp.Id;
-      vider(zoneProp, "Propriétaires du site du Château");
+      vider(zoneProp, "Gestionnaires (propriétaires du site)");
       zoneProp.appendChild(h("p", { class: "aide-ecran" }, "Ils décident qui a accès au dossier commun et à chaque dossier."));
       zoneProp.appendChild(h("div", { class: "liste-acces" }, l.map(function (u) {
         var refus = P.refusRetraitProprietaire(u.Id, moi, ids);
@@ -73,17 +73,17 @@
             onclick: function () { retirerProprietaire(c, u, ids); } }, "Retirer")));
       })));
       if (!l.length) zoneProp.appendChild(h("p", { class: "vide-doux" }, "Aucun propriétaire lisible."));
-      zoneProp.appendChild(h("div", { class: "actions" }, h("button", { class: "btn", type: "button", "data-action": "ajouter-proprietaire", onclick: function () { ajouterProprietaire(c, l); } }, icone("plus"), "Rendre propriétaire…")));
+      zoneProp.appendChild(h("div", { class: "actions" }, h("button", { class: "btn", type: "button", "data-action": "ajouter-proprietaire", onclick: function () { ajouterProprietaire(c, l); } }, icone("plus"), "Rendre gestionnaire…")));
     }
     function ajouterProprietaire(c, actuels) {
       var p;
-      X().choisirPersonne("Rendre propriétaire du site").then(function (x) {
+      X().choisirPersonne("Rendre gestionnaire").then(function (x) {
         if (!x) return null;
-        if (x.type !== "interne") { EB.toast("Seule une personne du Château (@breteuil.fr) peut être propriétaire du site."); return null; }
+        if (x.type !== "interne") { EB.toast("Seule une personne du Château (@breteuil.fr) peut être gestionnaire."); return null; }
         p = x;
-        if (actuels.some(function (u) { return D.adresseDe(u) === String(p.upn || p.mail).toLowerCase(); })) { EB.toast(p.nom + " est déjà propriétaire du site."); return null; }
+        if (actuels.some(function (u) { return D.adresseDe(u) === String(p.upn || p.mail).toLowerCase(); })) { EB.toast(p.nom + " est déjà gestionnaire."); return null; }
         return EB.confirmer({ emoji: "🏰", titre: "Rendre " + p.nom + " propriétaire ?", phrase: p.nom + " pourra décider qui a accès au dossier commun et à chaque dossier du site du Château.",
-          consequence: "Cela vaut pour tout le site, tout de suite.", bouton: "Oui, rendre propriétaire" });
+          consequence: "Cela vaut pour tout le site, tout de suite.", bouton: "Oui, rendre gestionnaire" });
       }).then(function (ok) {
         if (!ok) return;
         EB.toast("Un instant…");
@@ -91,7 +91,7 @@
           return G.sp("POST", "/_api/web/sitegroups/getbyid(" + c.groupeProprietaires.Id + ")/users", { LoginName: u.LoginName || D.logonName(p.upn || p.mail) });
         }).then(function () {
           X().noter("Propriétaire du site ajouté", p.nom);
-          EB.toast(p.nom + " est maintenant propriétaire du site.");
+          EB.toast(p.nom + " est maintenant gestionnaire.");
           return Promise.all([chargerProp(true), apresChangement()]);
         });
       }).catch(X().afficherErreur);
@@ -99,12 +99,12 @@
     function retirerProprietaire(c, u, ids) {
       var refus = P.refusRetraitProprietaire(u.Id, c.moiSp && c.moiSp.Id, ids);
       if (refus) { EB.toast(refus); return; }
-      EB.confirmer({ emoji: "🏰", titre: "Retirer " + u.Title + " des propriétaires ?", phrase: u.Title + " ne pourra plus changer qui a accès aux dossiers.",
+      EB.confirmer({ emoji: "🏰", titre: "Retirer " + u.Title + " des gestionnaires ?", phrase: u.Title + " ne pourra plus changer qui a accès aux dossiers.",
         consequence: "Ses autres accès (voir, modifier) ne changent pas.", bouton: "Oui, retirer" }).then(function (ok) {
         if (!ok) return;
         return G.sp("POST", "/_api/web/sitegroups/getbyid(" + c.groupeProprietaires.Id + ")/users/removebyid(" + u.Id + ")").then(function () {
           X().noter("Propriétaire du site retiré", u.Title);
-          EB.toast(u.Title + " n'est plus propriétaire du site.");
+          EB.toast(u.Title + " n'est plus gestionnaire.");
           return Promise.all([chargerProp(true), apresChangement()]);
         });
       }).catch(X().afficherErreur);

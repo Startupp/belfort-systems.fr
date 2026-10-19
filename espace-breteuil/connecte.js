@@ -96,6 +96,8 @@
     var r = window.EBAcces && window.EBAcces.resultat();
     return !!(r && r.droits.gererDroits);
   }
+  /** v5.5 : boutons d'ajout (créer, ajouter, renommer, ranger) : cachés pour un Lecteur sûr. */
+  function peutEditer() { return window.EBProfil.peutEditer(window.EBAcces && window.EBAcces.resultat()); }
 
   function garde(m) {
     return D.estProtege(m, { moi: ctx.moi, moiId: ctx.moiSp && ctx.moiSp.Id, groupeProprietairesId: ctx.groupeProprietaires && ctx.groupeProprietaires.Id, proprietaires: ctx.proprietaires });
@@ -203,15 +205,15 @@
   /** Écran réservé : connexion Microsoft nécessaire. Renvoie vrai si connecté. */
   function exigerConnexion(app, titre, retour) {
     if (G.estConnecte()) return true;
-    app.appendChild(EB.barre(titre, retour || { href: "#/fichiers", texte: "Fichiers" }));
+    app.appendChild(EB.barre(titre, retour || { href: "#/fichiers", texte: "Documents" }));
     app.appendChild(panneauConnexion());
     return false;
   }
   function panneauConnexion() {
     if (!G.estConfigure()) {
       return h("div", { class: "boite centre" }, emoji("🔌", "grand"),
-        h("h2", null, "Connexion pas encore activée"),
-        h("p", null, "Damien doit d'abord déclarer l'appli chez Microsoft (une seule fois). En attendant, l'exemple « Organisation » est dans l'onglet Équipe."));
+        h("h2", null, "Connexion pas encore prête"),
+        h("p", null, "Damien doit d'abord finir le réglage chez Microsoft (une seule fois)."));
     }
     return h("div", { class: "boite centre microsoft" }, emoji("🔐", "grand"),
       h("h2", null, "Connectez-vous"),
@@ -241,24 +243,26 @@
     return s[0] === RACINE ? [] : s;
   }
 
+  /** v5.5 : fil d'Ariane sur UNE ligne discrète (petit texte, segments cliquables sans aspect bouton). */
   function filAriane(segs, prefixe) {
     var f = h("nav", { class: "ariane", "aria-label": "Où suis-je ?" });
-    f.appendChild(h("a", { href: hashChemin(prefixe, []) }, emoji("📚"), "Documents"));
-    segs.forEach(function (s, i) {
-      f.appendChild(h("span", { class: "sep", "aria-hidden": "true" }, "›"));
-      var dernier = i === segs.length - 1;
-      f.appendChild(dernier ? h("span", { "aria-current": "page" }, s) : h("a", { href: hashChemin(prefixe, segs.slice(0, i + 1)) }, s));
+    var depuisCommun = segs[0] === nomCommun();
+    var parts = depuisCommun ? [{ nom: "Documents de l'équipe", segs: [nomCommun()] }] : [{ nom: "Tout en haut", segs: [] }];
+    segs.forEach(function (x, i) { if (!(depuisCommun && i === 0)) parts.push({ nom: x, segs: segs.slice(0, i + 1) }); });
+    parts.forEach(function (p, i) {
+      if (i) f.appendChild(h("span", { class: "sep", "aria-hidden": "true" }, "›"));
+      f.appendChild(i === parts.length - 1 ? h("span", { "aria-current": "page" }, p.nom) : h("a", { href: hashChemin(prefixe, p.segs) }, p.nom));
     });
     return f;
   }
 
   function ecranCommun(app, chemin) {
-    if (!exigerConnexion(app, "Le dossier commun")) return;
+    if (!exigerConnexion(app, "Documents de l'équipe")) return;
     var segs = lireSegs(chemin);
     if (segs === null) { segs = [nomCommun()]; history.replaceState(null, "", hashChemin("commun", segs)); }
-    var titre = segs.length ? segs[segs.length - 1] : "Documents";
+    var titre = segs.length === 1 && segs[0] === nomCommun() ? "Documents de l'équipe" : segs.length ? segs[segs.length - 1] : "Tout en haut";
     var gen = demarrerEcran();
-    app.appendChild(EB.barre(titre, { href: segs.length > 1 ? hashChemin("commun", segs.slice(0, -1)) : "#/fichiers", texte: segs.length > 1 ? "Retour" : "Fichiers" }));
+    app.appendChild(EB.barre(titre, { href: segs.length > 1 ? hashChemin("commun", segs.slice(0, -1)) : "#/fichiers", texte: segs.length > 1 ? "Retour" : "Documents" }));
     app.appendChild(filAriane(segs, "commun"));
     var zone = h("div", null, chargement(4, "tuiles"));
     app.appendChild(zone);
@@ -271,8 +275,8 @@
       zone.appendChild(blocErreur(e, EB.rendre));
       if (e.statut === 404 && segs.length === 1 && segs[0] === nomCommun()) {
         if (window.EBAcces) window.EBAcces.signaler("commun", "erreur", "Le dossier commun est introuvable.");
-        zone.appendChild(h("p", { class: "aide-ecran" }, "Le dossier « " + nomCommun() + " » n'a pas été trouvé à la racine de la bibliothèque."));
-        zone.appendChild(h("a", { class: "btn", href: hashChemin("commun", []) }, "Voir toute la bibliothèque"));
+        zone.appendChild(h("p", { class: "aide-ecran" }, "Le dossier « " + nomCommun() + " » n'a pas été trouvé. Prévenez Damien."));
+        zone.appendChild(h("a", { class: "btn", href: hashChemin("commun", []) }, "Voir tout en haut"));
       }
     });
     function dessinerCommun(r) {
@@ -280,14 +284,16 @@
       var dossiers = r.enfants.filter(function (x) { return x.folder; }).sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); });
       var fichiers = r.enfants.filter(function (x) { return x.file; }).sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); });
 
-      var actions = h("div", { class: "actions" },
-        h("button", { class: "btn", type: "button", onclick: function () { nouveauDossier(segs); } }, icone("plus"), "Nouveau dossier"),
-        window.EBFichiers ? h("button", { class: "btn secondaire", type: "button", "data-action": "televerser-commun", onclick: function () {
-          window.EBFichiers.televerser("« " + (segs[segs.length - 1] || "Documents") + " »", function (n) { return "/drives/" + r.c.drive.id + "/root:/" + segs.concat([n]).map(encodeURIComponent).join("/"); }, EB.rendre);
-        } }, icone("installer"), "Téléverser") : null,
-        peutGererDroits() ? h("a", { class: "btn secondaire", href: hashChemin("acces", segs) }, emoji("🔐"), "Qui a accès ?") : null);
-      zone.appendChild(actions);
-      if (!segs.length) zone.appendChild(h("p", { class: "aide-ecran" }, "📚 Vous êtes tout en haut de la bibliothèque du site. Le dossier « " + nomCommun() + " » est rangé ici."));
+      // v5.5 : une rangée de boutons de même taille ; ce que l'on n'a pas le droit de faire n'apparaît pas.
+      var edit = peutEditer();
+      zone.appendChild(EB.boutonsCarres([
+        edit && window.EBFichiers ? { texte: "Ajouter un document", icone: "installer", action: "televerser-commun", onclick: function () {
+          window.EBFichiers.televerser("« " + (segs[segs.length - 1] || "Tout en haut") + " »", function (n) { return "/drives/" + r.c.drive.id + "/root:/" + segs.concat([n]).map(encodeURIComponent).join("/"); }, EB.rendre);
+        } } : null,
+        edit ? { texte: "Créer un dossier", icone: "plus", action: "nouveau-dossier", onclick: function () { nouveauDossier(segs); } } : null,
+        peutGererDroits() ? { texte: "Qui peut ouvrir ?", icone: "cadenas", action: "qui-peut-ouvrir", href: hashChemin("acces", segs) } : null,
+      ]));
+      if (!segs.length) zone.appendChild(h("p", { class: "aide-ecran" }, "Vous êtes tout en haut. Les documents de l'équipe sont dans « " + nomCommun() + " »."));
 
       if (!dossiers.length && !fichiers.length) zone.appendChild(h("p", { class: "vide" }, "Ce dossier est vide."));
       if (dossiers.length) zone.appendChild(h("div", { class: "grille dossiers" }, dossiers.map(function (d) {
@@ -298,7 +304,7 @@
           h("span", { class: "sous" }, (d.folder.childCount || 0) + " élément" + ((d.folder.childCount || 0) > 1 ? "s" : "")),
           h("button", { class: "tuile-menu", type: "button", "aria-label": "Plus d'actions pour " + d.name, onclick: function () { menuDossier(d, segs, segsD); } }, "⋯"));
       })));
-      if (fichiers.length) zone.appendChild(h("section", { class: "section" }, h("h2", null, "Fichiers"),
+      if (fichiers.length) zone.appendChild(h("section", { class: "section" }, h("h2", null, "Documents"),
         h("div", { class: "liste-fichiers" }, fichiers.map(function (f) {
           return window.EBFichiers ? window.EBFichiers.ligne(Object.assign({ parentReference: { driveId: r.c.drive.id } }, f), { extras: actionsFichier(f, segs) })
             : h("a", EBlien(f.webUrl), emoji(emojiFichier(f.name)), h("span", null, f.name), icone("ouvrir"));
@@ -329,7 +335,7 @@
       });
     }, { ttl: 60000 });
   }
-  function badgeReserve() { return h("span", { class: "etiquette reserve", title: "Seules certaines personnes peuvent l'ouvrir" }, "🔒 Réservé"); }
+  function badgeReserve() { return h("span", { class: "etiquette reserve", title: "Seules certaines personnes peuvent l'ouvrir" }, "🔒 Privé"); }
   function marquerReserves(c, segs, zone) {
     if (!c.drive || !c.drive.webUrl) return;
     reservesDuDossier(c, segs).then(function (noms) {
@@ -351,8 +357,8 @@
   /** Actions en plus pour un fichier du dossier commun (menu « ⋯ »). */
   function actionsFichier(f, segs) {
     return [
-      peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Qui a accès ?", sous: "Voir et choisir qui peut l'ouvrir", action: function () { location.hash = hashChemin("acces", segs.concat([f.name])); } } : null,
-      { valeur: "deplacer", emoji: "📦", titre: "Déplacer vers…", sous: "Le ranger dans un autre dossier", action: function () { deplacer(f, segs); } },
+      peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Choisir qui peut l'ouvrir", sous: "Toute l'équipe ou certaines personnes", action: function () { location.hash = hashChemin("acces", segs.concat([f.name])); } } : null,
+      peutEditer() ? { valeur: "deplacer", emoji: "📦", titre: "Ranger ailleurs", sous: "Dans un autre dossier", action: function () { deplacer(f, segs); } } : null,
     ].filter(Boolean);
   }
 
@@ -379,20 +385,20 @@
   }
 
   function nouveauDossier(segs) {
-    var ici = segs.length ? "« " + segs[segs.length - 1] + " »" : "tout en haut de la bibliothèque";
+    var ici = segs.length ? "« " + segs[segs.length - 1] + " »" : "tout en haut";
     var choixLieu = segs.length === 1 && segs[0] === nomCommun()
       ? EB.choisir("Où créer le dossier ?", [
         { valeur: "ici", emoji: "🏰", titre: "Dans « " + nomCommun() + " »", sous: "Avec les autres dossiers de l'équipe" },
-        { valeur: "dessus", emoji: "📚", titre: "Juste au-dessus", sous: "À côté de « " + nomCommun() + " », tout en haut de la bibliothèque" },
+        { valeur: "dessus", emoji: "⬆️", titre: "Tout en haut", sous: "À côté de « " + nomCommun() + " »" },
       ]) : Promise.resolve("ici");
     choixLieu.then(function (lieu) {
       if (!lieu) return;
       var cible = lieu === "dessus" ? [] : segs;
-      var ou = lieu === "dessus" ? "tout en haut de la bibliothèque" : ici;
+      var ou = lieu === "dessus" ? "tout en haut" : ici;
       return demanderNom("Nouveau dossier", "Il sera créé " + (lieu === "dessus" ? ou : "dans " + ou) + ".", "", "Continuer").then(function (nom) {
         if (!nom) return;
-        return EB.confirmer({ emoji: "📁", titre: "Créer « " + nom + " » ?", phrase: "Un nouveau dossier « " + nom + " » sera créé " + (lieu === "dessus" ? ou : "dans " + ou) + ". Il aura les mêmes accès que le dossier où il est rangé.",
-          consequence: "Toutes les personnes qui ont accès à " + (lieu === "dessus" ? "la bibliothèque" : ou) + " le verront.", bouton: "Oui, créer le dossier" })
+        return EB.confirmer({ emoji: "📁", titre: "Créer « " + nom + " » ?", phrase: "Un nouveau dossier « " + nom + " » sera créé " + (lieu === "dessus" ? ou : "dans " + ou) + ".",
+          consequence: "Toutes les personnes qui peuvent ouvrir " + (lieu === "dessus" ? "le dossier tout en haut" : ou) + " le verront.", bouton: "Oui, créer le dossier" })
           .then(function (ok) {
             if (!ok) return;
             return contexte().then(function (c) {
@@ -409,13 +415,14 @@
   }
 
   function menuDossier(d, segsParent, segsD) {
+    var edit = peutEditer();
     EB.choisir("« " + d.name + " »", [
       { valeur: "ouvrir", emoji: "📂", titre: "Ouvrir" },
-      peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Qui a accès ?", sous: "Voir et choisir qui peut l'ouvrir" } : null,
-      { valeur: "renommer", emoji: "✏️", titre: "Renommer" },
-      { valeur: "deplacer", emoji: "📦", titre: "Déplacer vers…", sous: "Le ranger dans un autre dossier" },
-      { valeur: "lien", emoji: "🔗", titre: "Copier un lien de partage", sous: "Interne : seules les personnes du Château l'ouvrent" },
-      window.EBEpingles ? { valeur: "epingler", emoji: "📌", titre: "Épingler sur l'accueil", sous: "Un raccourci en haut du Planning" } : null,
+      peutGererDroits() ? { valeur: "acces", emoji: "🔐", titre: "Choisir qui peut l'ouvrir", sous: "Toute l'équipe ou certaines personnes" } : null,
+      edit ? { valeur: "renommer", emoji: "✏️", titre: "Changer le nom" } : null,
+      edit ? { valeur: "deplacer", emoji: "📦", titre: "Ranger ailleurs", sous: "Dans un autre dossier" } : null,
+      { valeur: "lien", emoji: "🔗", titre: "Copier un lien", sous: "Pour les personnes du Château" },
+      window.EBEpingles ? { valeur: "epingler", emoji: "📌", titre: "Épingler sur l'accueil", sous: "Un raccourci sur l'accueil" } : null,
     ].filter(Boolean)).then(function (v) {
       if (v === "ouvrir") location.hash = hashChemin("commun", segsD);
       else if (v === "acces") location.hash = hashChemin("acces", segsD);
@@ -428,10 +435,10 @@
 
   function renommer(d, segsParent) {
     if (segsParent.length === 0 && d.name === nomCommun()) { EB.toast("Le dossier « " + nomCommun() + " » ne se renomme pas depuis l'appli."); return; }
-    demanderNom("Renommer « " + d.name + " »", null, d.name, "Continuer").then(function (nom) {
+    demanderNom("Changer le nom de « " + d.name + " »", null, d.name, "Continuer").then(function (nom) {
       if (!nom || nom === d.name) return;
-      return EB.confirmer({ emoji: "✏️", titre: "Renommer ?", phrase: "« " + d.name + " » s'appellera « " + nom + " ».",
-        consequence: "Les liens déjà envoyés vers ce dossier peuvent ne plus marcher.", bouton: "Oui, renommer" }).then(function (ok) {
+      return EB.confirmer({ emoji: "✏️", titre: "Changer le nom ?", phrase: "« " + d.name + " » s'appellera « " + nom + " ».",
+        consequence: "Les liens déjà envoyés vers ce dossier peuvent ne plus marcher.", bouton: "Oui, changer le nom" }).then(function (ok) {
         if (!ok) return;
         return contexte().then(function (c) { return G.graph("PATCH", "/drives/" + c.drive.id + "/items/" + d.id, { name: nom }); })
           .then(function () { noter("Dossier renommé", d.name + " → " + nom); EB.toast("C'est renommé."); EB.rendre(); });
@@ -450,8 +457,8 @@
         var liste = h("div", { class: "choix-liste" }, chargement());
         d.appendChild(h("div", { class: "contenu" },
           h("h2", { id: "detail-titre" }, "Ranger où ?"),
-          h("p", { class: "phrase" }, "Dossier ouvert : " + (courant.length ? courant.join(" › ") : "Documents (tout en haut)")),
-          courant.length ? h("button", { class: "choix", type: "button", onclick: function () { courant.pop(); afficher(); } }, emoji("⬆️"), h("span", null, h("b", null, "Remonter d'un cran"))) : null,
+          h("p", { class: "phrase" }, "Dossier ouvert : " + (courant.length ? courant.join(" › ") : "Tout en haut")),
+          courant.length ? h("button", { class: "choix", type: "button", onclick: function () { courant.pop(); afficher(); } }, emoji("⬆️"), h("span", null, h("b", null, "Revenir au dossier du dessus"))) : null,
           liste,
           h("button", { class: "btn large", type: "button", onclick: function () { terminer(courant.slice()); } }, icone("coche"), "Ranger ici"),
           h("button", { class: "btn secondaire large", type: "button", onclick: function () { terminer(null); } }, "Annuler")));
@@ -461,7 +468,7 @@
           enf.filter(function (x) { return x.folder && x.id !== exclu; }).sort(function (a, b) { return a.name.localeCompare(b.name, "fr"); }).forEach(function (x) {
             var reserve = reserveConnu(courant, x.name) === true;
             liste.appendChild(h("button", { class: "choix", type: "button", "data-nom": x.name, onclick: function () { courant.push(x.name); afficher(); } }, emoji(reserve ? "🔒" : "📁"),
-              h("span", null, h("b", null, x.name), reserve ? h("small", null, "Accès réservé") : null)));
+              h("span", null, h("b", null, x.name), reserve ? h("small", null, "🔒 Privé") : null)));
           });
           if (!liste.childNodes.length) liste.appendChild(h("p", { class: "vide-doux" }, "Pas de sous-dossier ici."));
         }).catch(function (e) { liste.textContent = ""; liste.appendChild(blocErreur(e)); });
@@ -477,19 +484,19 @@
     choisirDestination(segsParent, d.id).then(function (cible) {
       if (!cible) return;
       if (cible.join("/") === segsParent.join("/")) { EB.toast("Il est déjà rangé ici."); return; }
-      var ou = cible.length ? "« " + cible[cible.length - 1] + " »" : "tout en haut de la bibliothèque";
+      var ou = cible.length ? "« " + cible[cible.length - 1] + " »" : "tout en haut";
       var reserve = cible.length ? reserveConnu(cible.slice(0, -1), cible[cible.length - 1]) === true : false;
-      var csq = reserve ? "Il ne sera visible que par les personnes qui ont accès à ce dossier."
-        : "S'il suivait les accès de son ancien dossier, il suivra désormais ceux de " + ou + ".";
-      return EB.confirmer({ emoji: reserve ? "🔒" : "📦", titre: "Déplacer « " + d.name + " » ?",
-        phrase: (estFichier ? "Le fichier ira dans " : "Le dossier et tout son contenu iront dans ") + ou + "." + (reserve ? " " + ou + " a un accès réservé." : ""),
-        consequence: csq, bouton: "Oui, déplacer" }).then(function (ok) {
+      var csq = reserve ? "Seules les personnes qui peuvent ouvrir ce dossier le verront."
+        : "Il pourra être ouvert par les mêmes personnes que " + ou + " (sauf s'il est privé).";
+      return EB.confirmer({ emoji: reserve ? "🔒" : "📦", titre: "Ranger « " + d.name + " » ailleurs ?",
+        phrase: (estFichier ? "Le document ira dans " : "Le dossier et tout son contenu iront dans ") + ou + "." + (reserve ? " " + ou + " est privé." : ""),
+        consequence: csq, bouton: "Oui, ranger ici" }).then(function (ok) {
         if (!ok) return;
         return contexte().then(function (c) {
           return G.graph("GET", urlItem(c.drive.id, cible) + "?$select=id").then(function (t) {
             return G.graph("PATCH", "/drives/" + c.drive.id + "/items/" + d.id, { parentReference: { id: t.id } });
           });
-        }).then(function () { noter(estFichier ? "Fichier déplacé" : "Dossier déplacé", d.name + " → " + (cible.join(" / ") || "Documents")); EB.toast("C'est rangé."); EB.rendre(); });
+        }).then(function () { noter(estFichier ? "Document rangé ailleurs" : "Dossier rangé ailleurs", d.name + " → " + (cible.join(" / ") || "Tout en haut")); EB.toast("C'est rangé."); EB.rendre(); });
       });
     }).catch(afficherErreur);
   }
@@ -556,8 +563,8 @@
     var segs = lireSegs(chemin); if (segs === null) segs = [nomCommun()];
     if (!exigerConnexion(app, "Qui a accès ?")) return;
     var gen = demarrerEcran();
-    var nom = segs.length ? segs[segs.length - 1] : "Toute la bibliothèque";
-    var barre = EB.barre("Qui a accès ?", { href: hashChemin("commun", segs), texte: "Retour" });
+    var nom = segs.length ? segs[segs.length - 1] : "Tout en haut";
+    var barre = EB.barre("Qui peut l'ouvrir ?", { href: hashChemin("commun", segs), texte: "Retour" });
     app.appendChild(barre);
     app.appendChild(filAriane(segs, "acces"));
     var zone = h("div", null, chargement());
@@ -568,41 +575,41 @@
       // Un fichier ne s'ouvre pas comme un dossier : le retour mène au dossier qui le contient.
       var retour = barre.querySelector(".btn-retour");
       if (fichier && retour) retour.setAttribute("href", hashChemin("commun", segs.slice(0, -1)));
-      var parent = segs.length > 1 ? "« " + segs[segs.length - 2] + " »" : segs.length === 1 ? "la bibliothèque Documents" : "le site du Château";
+      var parent = segs.length > 1 ? "« " + segs[segs.length - 2] + " »" : segs.length === 1 ? "le dossier tout en haut" : "le site du Château";
       zone.appendChild(h("h2", { class: "titre-objet" }, emoji(fichier ? emojiFichier(nom) : segs.length ? "📁" : "📚"), " ", nom));
       zone.appendChild(r.unique
-        ? h("div", { class: "heritage perso", "data-etat": "reserve" }, emoji("🔒"), h("div", null, h("b", null, "Accès réservé"), h("span", null, "Seules les personnes ci-dessous peuvent ouvrir ce " + quoi(r.o) + ".")))
+        ? h("div", { class: "heritage perso", "data-etat": "reserve" }, emoji("🔒"), h("div", null, h("b", null, "Privé"), h("span", null, "Seules les personnes ci-dessous peuvent ouvrir ce " + quoi(r.o) + ".")))
         : h("div", { class: "heritage herite", "data-etat": "visible" }, emoji("👥"), h("div", null, h("b", null, "Visible par toute l'équipe"), h("span", null, "Les mêmes personnes que pour " + parent + " peuvent l'ouvrir."))));
 
       // Les deux actions que l'on cherche le plus : réserver, ou rendre visible à nouveau.
       if (segs.length) {
         zone.appendChild(h("div", { class: "actions-acces" },
           h("a", { class: "carte-action principale", href: hashChemin("reserver", segs), "data-action": "reserver" },
-            emoji("🔒"), h("span", null, h("b", null, "Réserver à certaines personnes"), h("small", null, "Personne d'autre ne pourra l'ouvrir"))),
+            emoji("🔒"), h("span", null, h("b", null, "Choisir les personnes"), h("small", null, "Les autres ne pourront plus l'ouvrir"))),
           r.unique ? h("button", { class: "carte-action", type: "button", "data-action": "rendre-visible", onclick: function () { retablir(segs, r, parent); } },
-            emoji("🔓"), h("span", null, h("b", null, "Rendre à nouveau visible par tous"), h("small", null, "Mêmes accès que " + parent))) : null));
+            emoji("🔓"), h("span", null, h("b", null, "Ouvrir à toute l'équipe"), h("small", null, "Comme " + parent))) : null));
       }
 
       var boutons = h("div", { class: "actions" });
       boutons.appendChild(h("button", { class: "btn secondaire", type: "button", onclick: function () { ajouterPersonne(segs, r); } }, icone("plus"), "Ajouter une personne"));
-      if (!r.unique) boutons.appendChild(h("a", { class: "btn secondaire", href: hashChemin("restreindre", segs) }, emoji("✋"), "Retirer certaines personnes…"));
+      if (!r.unique) boutons.appendChild(h("a", { class: "btn secondaire", href: hashChemin("restreindre", segs) }, emoji("✋"), "Enlever des personnes"));
       zone.appendChild(boutons);
 
-      zone.appendChild(h("h3", { class: "sous-titre-acces" }, "Qui peut l'ouvrir aujourd'hui"));
+      zone.appendChild(h("h3", { class: "sous-titre-acces" }, "Personnes qui peuvent l'ouvrir"));
       zone.appendChild(h("div", { class: "liste-acces" }, r.entrees.map(function (e) {
         var groupe = e.membre.PrincipalType === 8 || e.membre.PrincipalType === 4;
         var acts = h("span", { class: "acts" });
-        if (groupe) acts.appendChild(h("button", { class: "btn petit secondaire", type: "button", onclick: function () { voirGroupe(e.membre); } }, "Qui ?"));
-        if (r.unique && !garde(e.membre)) acts.appendChild(h("button", { class: "btn petit secondaire", type: "button", onclick: function () { changerAcces(segs, r, e); } }, "Modifier"));
+        if (groupe) acts.appendChild(h("button", { class: "btn petit secondaire", type: "button", onclick: function () { voirGroupe(e.membre); } }, "Voir les noms"));
+        if (r.unique && !garde(e.membre)) acts.appendChild(h("button", { class: "btn petit secondaire", type: "button", onclick: function () { changerAcces(segs, r, e); } }, "Changer"));
         return carteAcces(e, acts);
       })));
       zone.appendChild(h("div", { class: "note" }, emoji("🚫"), h("span", null, "Toute personne absente de cette liste ne peut pas l'ouvrir.")));
-      if (!r.unique) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour changer une personne en particulier, touchez d'abord « Réserver à certaines personnes » ou « Retirer certaines personnes… »."));
+      if (!r.unique) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour changer une personne en particulier, touchez d'abord « Choisir les personnes » ou « Enlever des personnes »."));
     }).catch(function (e) {
       if (!toujoursLa(gen, zone)) return;
       zone.textContent = "";
       zone.appendChild(blocErreur(e, EB.rendre));
-      if (e.statut === 403) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour voir et gérer les accès, il faut être « Propriétaire » du site du Château. Demandez à Damien."));
+      if (e.statut === 403) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour choisir qui peut ouvrir un dossier, il faut être Gestionnaire. Demandez à Damien."));
     });
   }
 
@@ -703,7 +710,7 @@
             var interne = (CFG.domainesInternes || []).indexOf(a.split("@")[1]) > -1;
             terminer({ type: interne ? "interne" : "externe", upn: interne ? a : null, mail: a, nom: a, typeAff: interne ? "interne" : "externe" });
           } },
-            h("label", { for: "adresse-ext" }, "Ou une adresse mail (personne extérieure)"), adresse, err,
+            h("label", { for: "adresse-ext" }, "Ou l'adresse mail d'une personne extérieure"), adresse, err,
             h("button", { class: "btn secondaire large", type: "submit" }, "Utiliser cette adresse")),
           h("button", { class: "btn secondaire large", type: "button", onclick: function () { terminer(null); } }, "Annuler")));
         EB.ouvrirDialogue(d, recherche);
@@ -728,7 +735,7 @@
     if (p.type === "interne") {
       return G.sp("POST", "/_api/web/ensureuser", { logonName: D.logonName(p.upn || p.mail) }).then(function (u) { return ajouterPrincipal(o.base, u.Id, niveau); });
     }
-    if (!o.itemId) return Promise.reject(Object.assign(new Error("Une personne extérieure se partage dossier par dossier, pas sur toute la bibliothèque."), { statut: 400 }));
+    if (!o.itemId) return Promise.reject(Object.assign(new Error("Une personne extérieure se partage dossier par dossier, pas tout en haut."), { statut: 400 }));
     return G.graph("POST", "/drives/" + o.c.drive.id + "/items/" + o.itemId + "/invite", {
       recipients: [{ email: p.mail }], roles: [niveau === "modifier" ? "write" : "read"],
       requireSignIn: true, sendInvitation: true, message: "Le Château de Breteuil partage un dossier avec vous.",
@@ -745,7 +752,7 @@
       if (!n) return null;
       niveau = n;
       var nomObj = r.o.nom;
-      var phrase = p.nom + " pourra « " + D.NIVEAUX[niveau].nom.toLowerCase() + " » le " + quoi(r.o) + " « " + nomObj + " »" + (r.unique ? "." : ". Ensuite, ses accès se géreront à part de ceux du dossier au-dessus.");
+      var phrase = p.nom + " pourra « " + D.NIVEAUX[niveau].nom.toLowerCase() + " » le " + quoi(r.o) + " « " + nomObj + " »" + (r.unique ? "." : ". Ce dossier aura alors sa propre liste de personnes.");
       var csq = p.type === "interne" ? (r.o.fichier ? "Cela ne concerne que ce fichier." : "Ce qui est rangé dedans suit ce choix, sauf exception.") :
         p.nom + " recevra un mail d'invitation de Microsoft. Sans adresse @breteuil.fr, cette personne est « Externe ».";
       return EB.confirmer({ emoji: "➕", titre: "Donner l'accès ?", phrase: phrase, consequence: csq, bouton: "Oui, donner l'accès" });
@@ -787,14 +794,14 @@
   }
 
   function retablir(segs, r, parent) {
-    EB.confirmer({ emoji: "🔓", titre: "Rendre « " + r.o.nom + " » visible par tous ?", deuxEtapes: false,
-      phrase: "« " + r.o.nom + " » aura de nouveau les mêmes accès que " + parent + " : toute l'équipe qui ouvre " + parent + " pourra l'ouvrir.",
-      consequence: "La liste de personnes choisie pour ce " + quoi(r.o) + " sera effacée.", bouton: "Oui, rendre visible" }).then(function (ok) {
+    EB.confirmer({ emoji: "🔓", titre: "Ouvrir « " + r.o.nom + " » à toute l'équipe ?", deuxEtapes: false,
+      phrase: "Toute l'équipe qui ouvre " + parent + " pourra ouvrir « " + r.o.nom + " ».",
+      consequence: "La liste de personnes choisie pour ce " + quoi(r.o) + " sera effacée.", bouton: "Oui, ouvrir à toute l'équipe" }).then(function (ok) {
       if (!ok) return;
       EB.toast("Un instant…");
       return G.sp("POST", r.o.base + "/resetroleinheritance").then(function () {
-        noter("Rendu visible par tous", r.o.nom);
-        EB.toast("C'est fait : « " + r.o.nom + " » a les mêmes accès que " + parent + ".");
+        noter("Ouvert à toute l'équipe", r.o.nom);
+        EB.toast("C'est fait : « " + r.o.nom + " » est ouvert à toute l'équipe.");
         EB.rendre();
       });
     }).catch(afficherErreur);
@@ -807,10 +814,10 @@
 
   function ecranRestreindre(app, chemin) {
     var segs = lireSegs(chemin); if (segs === null) segs = [nomCommun()];
-    if (!exigerConnexion(app, "Retirer certaines personnes")) return;
+    if (!exigerConnexion(app, "Enlever des personnes")) return;
     var gen = demarrerEcran(), cleB = segs.join("/");
     if (!brouillon || brouillon.cle !== cleB) brouillon = { cle: cleB, garder: {}, ajouts: [] };
-    app.appendChild(EB.barre("Retirer certaines personnes", { href: hashChemin("acces", segs), texte: "Annuler" }));
+    app.appendChild(EB.barre("Enlever des personnes", { href: hashChemin("acces", segs), texte: "Annuler" }));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     C.obtenir("droits:" + segs.join("/"), function () { return lireDroits(segs); }, { ttl: 30000 }).then(function (r) {
@@ -850,10 +857,10 @@
   function executerRestriction(segs, r, gardes, perdus) {
     var noms = function (l) { return l.map(function (e) { return nomMembre(e.membre); }).join(", ") || "personne"; };
     var ajouts = brouillon.ajouts.slice();
-    var phrase = "« " + r.o.nom + " » sera réservé. Garderont l'accès : " + noms(gardes) + "." +
+    var phrase = "« " + r.o.nom + " » deviendra privé. Garderont l'accès : " + noms(gardes) + "." +
       (perdus.length ? " Perdront l'accès : " + noms(perdus) + "." : "") +
       (ajouts.length ? " Recevront l'accès : " + ajouts.map(function (a) { return a.p.nom + " (" + D.NIVEAUX[a.niveau].nom + ")"; }).join(", ") + "." : "");
-    EB.confirmer({ emoji: "✋", titre: "Récapitulatif", phrase: phrase,
+    EB.confirmer({ emoji: "✋", titre: "Vérifions", phrase: phrase,
       consequence: (r.o.fichier ? "" : "Ce qui est rangé dans « " + r.o.nom + " » suivra ce choix.") + (perdus.length ? " " + noms(perdus) + " ne pourront plus l'ouvrir." : ""),
       bouton: "Oui, appliquer" }).then(function (ok) {
       if (!ok) return;
@@ -864,7 +871,7 @@
       return suite.then(function () {
         noter("Accès retirés à certaines personnes", r.o.nom + " — retirés : " + noms(perdus) + (ajouts.length ? " ; ajoutés : " + ajouts.map(function (a) { return a.p.nom; }).join(", ") : ""));
         brouillon = null;
-        EB.toast("C'est fait : « " + r.o.nom + " » est réservé.");
+        EB.toast("C'est fait : « " + r.o.nom + " » est privé.");
         location.hash = hashChemin("acces", segs);
       });
     }).catch(function (e) { afficherErreur(e); });
@@ -893,9 +900,9 @@
 
   function ecranReserver(app, chemin) {
     var segs = lireSegs(chemin); if (segs === null) segs = [nomCommun()];
-    if (!exigerConnexion(app, "Réserver")) return;
+    if (!exigerConnexion(app, "Choisir les personnes")) return;
     var gen = demarrerEcran(), cle = segs.join("/");
-    app.appendChild(EB.barre("Réserver", { href: hashChemin("acces", segs), texte: "Annuler" }));
+    app.appendChild(EB.barre("Choisir les personnes", { href: hashChemin("acces", segs), texte: "Annuler" }));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     Promise.all([
@@ -934,7 +941,7 @@
         return h("label", { class: "ligne-choix", for: id }, case_, avatarPersonne({ displayName: p.nom }),
           h("span", { class: "qui" }, h("b", null, p.nom + (p.mail === c.moi ? " (vous)" : "")), h("small", null, p.mail), etiquette(p.type)));
       }
-      zone.appendChild(h("section", { class: "section" }, h("h3", null, "Direction et propriétaires du site"),
+      zone.appendChild(h("section", { class: "section" }, h("h3", null, "Direction (gestionnaires)"),
         h("div", { class: "liste-choix", "data-liste": "suggestions" }, suggestions.map(ligneChoix))));
       var recherche = h("input", { class: "champ recherche", type: "search", placeholder: "Chercher un prénom…", "aria-label": "Chercher une personne de l'équipe", oninput: remplir });
       var listeEquipe = h("div", { class: "liste-choix", "data-liste": "equipe" });
@@ -965,7 +972,7 @@
       if (!toujoursLa(gen, zone)) return;
       zone.textContent = "";
       zone.appendChild(blocErreur(e, EB.rendre));
-      if (e.statut === 403) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour choisir qui peut ouvrir un dossier, il faut être « Propriétaire » du site du Château. Demandez à Damien."));
+      if (e.statut === 403) zone.appendChild(h("p", { class: "aide-ecran" }, "Pour choisir qui peut ouvrir un dossier, il faut être Gestionnaire. Demandez à Damien."));
     });
   }
 
@@ -977,12 +984,12 @@
     var obligatoires = D.obligatoiresReserve(plan.proteges, nomMembre, choisis);
     var noms = choisis.map(function (p) { return p.nom; });
     var retires = plan.retirer.map(function (e) { return nomMembre(e.membre); });
-    EB.confirmer({ emoji: "🔒", titre: "Réserver « " + r.o.nom + " » ?", deuxEtapes: false,
+    EB.confirmer({ emoji: "🔒", titre: "Rendre « " + r.o.nom + " » privé ?", deuxEtapes: false,
       phrase: D.phraseReserve(noms, r.o.nom, obligatoires),
       consequence: (niveau === "voir" ? "Elles pourront l'ouvrir et le lire, sans rien changer." : "Elles pourront l'ouvrir et le modifier.") +
         (retires.length ? " Ne pourront plus l'ouvrir : " + D.listeNoms(retires) + "." : "") +
         (r.o.fichier ? "" : " Ce qui est rangé dedans suivra ce choix."),
-      bouton: "Oui, réserver" }).then(function (ok) {
+      bouton: "Oui, rendre privé" }).then(function (ok) {
       if (!ok) return;
       var etapes = [];
       if (!r.unique) etapes.push(function () { return casserHeritage(base); });
@@ -993,9 +1000,9 @@
       EB.toast("Un instant… (0 sur " + etapes.length + ")");
       etapes.forEach(function (f) { suite = suite.then(f).then(function () { fait++; EB.toast("Un instant… (" + fait + " sur " + etapes.length + ")"); }); });
       return suite.then(function () {
-        noter("Réservé à certaines personnes (" + D.NIVEAUX[niveau].nom + ")", r.o.nom + " — " + D.listeNoms(noms) + (retires.length ? " ; retirés : " + retires.join(", ") : ""));
+        noter("Rendu privé (" + D.NIVEAUX[niveau].nom + ")", r.o.nom + " — " + D.listeNoms(noms) + (retires.length ? " ; retirés : " + retires.join(", ") : ""));
         reserve = null;
-        EB.toast("C'est fait : seuls " + D.listeNoms(noms) + " (et les propriétaires) peuvent ouvrir « " + r.o.nom + " ».");
+        EB.toast("C'est fait : seuls " + D.listeNoms(noms) + " (et les gestionnaires) peuvent ouvrir « " + r.o.nom + " ».");
         location.hash = hashChemin("acces", segs);
       });
     }).catch(afficherErreur);
@@ -1007,15 +1014,15 @@
   var filtrePersonnes = "tous";
   function ecranPersonnes(app, chemin) {
     if (chemin[1]) return fichePersonne(app, chemin[1]);
-    if (!exigerConnexion(app, "Personnes", EB.hub())) return;
+    if (!exigerConnexion(app, "L'équipe", EB.hub())) return;
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Personnes", EB.hub()));
+    app.appendChild(EB.barre("L'équipe", EB.hub()));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     utilisateurs().then(function (u) {
       if (!toujoursLa(gen, zone)) return;
       zone.textContent = "";
-      var FILTRES = [["tous", "Tous"], ["equipe", "L'équipe"], ["boite", "Boîtes partagées"], ["externe", "Externes"]];
+      var FILTRES = [["tous", "Tous"], ["equipe", "L'équipe"], ["boite", "Adresses partagées"], ["externe", "Externes"]];
       var seg = h("div", { class: "segments", role: "group", "aria-label": "Afficher", style: { "--n": "4" } });
       // Filtre : seule la liste est redessinée (pas l'écran, pas de nouvel appel Microsoft).
       FILTRES.forEach(function (f) { seg.appendChild(h("button", { type: "button", "aria-pressed": String(filtrePersonnes === f[0]), onclick: function () {
@@ -1069,7 +1076,7 @@
       if (res.outils.length) sect.appendChild(h("ul", { class: "outils liste-inclus" }, res.outils.map(function (o) { return h("li", null, emoji(o.emoji), h("span", null, o.nom)); })));
       else sect.appendChild(h("p", { class: "vide" }, "Aucun outil trouvé dans ces licences."));
       if (res.support.length) sect.appendChild(h("details", { class: "support-codes" },
-        h("summary", null, "Détail pour le support (codes Microsoft)"),
+        h("summary", null, "Pour Damien (codes techniques)"),
         h("p", null, "Codes que l'appli ne traduit pas, et options désactivées. Utile seulement si Damien vous les demande."),
         h("ul", { class: "codes" }, res.support.map(function (s) {
           return h("li", null, h("code", null, s.code), h("span", null, " · " + s.licence + (s.desactive ? " · désactivé" : "")));
@@ -1084,7 +1091,7 @@
   function fichePersonne(app, id) {
     if (!exigerConnexion(app, "Fiche", EB.hub())) return;
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Ce que je peux utiliser", { href: "#/personnes", texte: "Retour" }));
+    app.appendChild(EB.barre("Ce que cette personne peut utiliser", { href: "#/personnes", texte: "Retour" }));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     utilisateurs().then(function (u) {
@@ -1112,9 +1119,9 @@
   /* #/licences-reel                                                     */
   /* ------------------------------------------------------------------ */
   function ecranLicences(app) {
-    if (!exigerConnexion(app, "Licences", EB.hub())) return;
+    if (!exigerConnexion(app, "Abonnements de l'équipe", EB.hub())) return;
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Licences", EB.hub()));
+    app.appendChild(EB.barre("Abonnements de l'équipe", EB.hub()));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     utilisateurs().then(function (u) {
@@ -1136,9 +1143,9 @@
           })) : null));
       });
       zone.appendChild(h("div", { class: "carte-profil boite" },
-        h("div", { class: "tete" }, emoji("📬", "grand"), h("div", null, h("b", null, "Boîte partagée"), h("span", null, D.PROFILS.boite.phrase))),
+        h("div", { class: "tete" }, emoji("📬", "grand"), h("div", null, h("b", null, "Adresse partagée"), h("span", null, D.PROFILS.boite.phrase))),
         h("ul", { class: "outils" }, D.PROFILS.boite.outils.map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); }))));
-      zone.appendChild(h("p", { class: "aide-ecran" }, "Lecture seule : pour acheter ou retirer une licence, passer par le centre d'administration Microsoft (lien dans Finance)."));
+      zone.appendChild(h("p", { class: "aide-ecran" }, "Pour en acheter ou en retirer : tuile « Moyen de paiement », ou demandez à Damien."));
     }).catch(function (e) { if (toujoursLa(gen, zone)) { zone.textContent = ""; zone.appendChild(blocErreur(e, EB.rendre)); } });
   }
 
@@ -1184,7 +1191,7 @@
 
   function ecranOrganisation(app) {
     var gen = demarrerEcran();
-    app.appendChild(EB.barre("Organisation", EB.hub()));
+    app.appendChild(EB.barre("Qui fait quoi", EB.hub()));
     var zone = h("div", null, chargement());
     app.appendChild(zone);
     donneesOrganisation().then(function (o) {
@@ -1201,7 +1208,7 @@
         var P = D.PROFILS[p];
         return h("div", { class: "groupe-schema " + p },
           h("button", { class: "titre-groupe-schema", type: "button", onclick: function () {
-            expliquer(P.emoji, P.nom, [P.phrase, h("ul", { class: "outils" }, P.outils.map(function (x) { return h("li", null, emoji(x[0]), h("span", null, x[1])); }))], G.estConnecte() ? { href: "#/licences-reel", texte: "Voir les licences" } : null);
+            expliquer(P.emoji, P.nom, [P.phrase, h("ul", { class: "outils" }, P.outils.map(function (x) { return h("li", null, emoji(x[0]), h("span", null, x[1])); }))], G.estConnecte() ? { href: "#/licences-reel", texte: "Voir les abonnements" } : null);
           } }, P.emoji + " " + P.nom, h("span", { class: "compte" }, String(l.length))),
           h("div", { class: "visages petits" }, l.map(function (x) {
             return h("button", { class: "visage", type: "button", onclick: function () {
@@ -1213,19 +1220,19 @@
       schema.appendChild(h("section", { class: "zone-schema personnes" }, h("h2", null, emoji("👥"), " Les personnes"), groupes));
 
       // 2. Les boîtes partagées : une ligne par boîte (nom, adresse, qui y a accès, Ouvrir, Épingler).
-      schema.appendChild(h("section", { class: "zone-schema boites", "aria-labelledby": "t-boites" }, h("h2", { id: "t-boites" }, emoji("📬"), " Les boîtes partagées"),
-        h("p", { class: "phrase" }, "Des adresses lues à plusieurs, sans licence. « Ouvrir » l'affiche dans Outlook."),
+      schema.appendChild(h("section", { class: "zone-schema boites", "aria-labelledby": "t-boites" }, h("h2", { id: "t-boites" }, emoji("📬"), " Les adresses partagées"),
+        h("p", { class: "phrase" }, "Des adresses mail lues à plusieurs (boîtes partagées). « Ouvrir » l'affiche dans Outlook."),
         window.EBListeBoites ? window.EBListeBoites.liste(o.boites, { epingler: !o.exemple }) : null));
 
       // 3. Le dossier commun
-      schema.appendChild(h("section", { class: "zone-schema dossier" }, h("h2", null, emoji("🗂️"), " Le dossier commun"),
+      schema.appendChild(h("section", { class: "zone-schema dossier" }, h("h2", null, emoji("🗂️"), " Les documents de l'équipe"),
         h("div", { class: "arbre-schema" },
           h("button", { class: "noeud", type: "button", onclick: function () { expliquer("🏰", "Le site « " + o.site + " »", ["C'est l'espace de partage du Château chez Microsoft (SharePoint). Ses propriétaires décident qui y entre : " + (o.proprietaires.join(", ") || "—") + "."]); } }, emoji("🏰"), "Site « " + o.site + " »"),
           h("span", { class: "lien-noeud", "aria-hidden": "true" }, "↓"),
-          h("button", { class: "noeud", type: "button", onclick: function () { expliquer("📚", "La bibliothèque Documents", ["Le grand classeur du site. Ce qui est rangé dedans suit ses droits, sauf exception."], G.estConnecte() ? { href: "#/commun/" + RACINE, texte: "Ouvrir" } : null); } }, emoji("📚"), "Bibliothèque « Documents »"),
+          h("button", { class: "noeud", type: "button", onclick: function () { expliquer("📚", "Le classeur « Documents »", ["Le grand classeur du site (bibliothèque SharePoint). Ce qui est rangé dedans s'ouvre pour les mêmes personnes, sauf ce qui est privé."], G.estConnecte() ? { href: "#/commun/" + RACINE, texte: "Ouvrir" } : null); } }, emoji("📚"), "Classeur « Documents »"),
           h("span", { class: "lien-noeud", "aria-hidden": "true" }, "↓"),
-          h("button", { class: "noeud principal", type: "button", onclick: function () { expliquer("🏰", "Le dossier « " + nomCommun() + " »", ["Le dossier de toute l'équipe. Ses sous-dossiers suivent ses droits, sauf ceux qu'on a « personnalisés »."], G.estConnecte() ? { href: "#/commun", texte: "Ouvrir le dossier commun" } : null); } }, emoji("📁"), "Dossier « " + nomCommun() + " »"),
-          h("p", { class: "phrase" }, "🔗 Les sous-dossiers suivent les droits du dossier parent, sauf exception (✋)."))));
+          h("button", { class: "noeud principal", type: "button", onclick: function () { expliquer("🏰", "Le dossier « " + nomCommun() + " »", ["Le dossier de toute l'équipe. Les dossiers rangés dedans s'ouvrent pour les mêmes personnes, sauf ceux qui sont 🔒 privés."], G.estConnecte() ? { href: "#/commun", texte: "Ouvrir les documents de l'équipe" } : null); } }, emoji("📁"), "Dossier « " + nomCommun() + " »"),
+          h("p", { class: "phrase" }, "🔗 Un dossier rangé dans un autre s'ouvre pour les mêmes personnes, sauf s'il est 🔒 privé."))));
 
       // 4. Qui gère quoi
       schema.appendChild(h("section", { class: "zone-schema gestion" }, h("h2", null, emoji("🎖️"), " Qui gère quoi"),
@@ -1236,8 +1243,8 @@
               expliquer("🎖️", r.nom, [texte, "Aujourd'hui : " + (r.qui.join(", ") || "personne") + "."]);
             } }, emoji(r.nom === "Facturation" ? "💶" : "🔑"), r.nom + " : " + (r.qui.join(", ") || "—"));
           }),
-          h("button", { class: "puce", type: "button", onclick: function () { expliquer("🏰", "Propriétaires du site", ["Ils décident qui a accès au dossier commun et peuvent changer les droits de chaque dossier.", "Aujourd'hui : " + (o.proprietaires.join(", ") || "—") + "."]); } },
-            emoji("🏰"), "Propriétaires du site : " + (o.proprietaires.join(", ") || "—")))));
+          h("button", { class: "puce", type: "button", onclick: function () { expliquer("🏰", "Gestionnaires", ["Ils choisissent qui peut ouvrir chaque dossier (propriétaires du site SharePoint).", "Aujourd'hui : " + (o.proprietaires.join(", ") || "—") + "."]); } },
+            emoji("🏰"), "Gestionnaires : " + (o.proprietaires.join(", ") || "—")))));
       zone.appendChild(schema);
     }).catch(function (e) { if (toujoursLa(gen, zone)) { zone.textContent = ""; zone.appendChild(blocErreur(e, EB.rendre)); } });
   }
@@ -1246,7 +1253,7 @@
   /* #/journal                                                           */
   /* ------------------------------------------------------------------ */
   function ecranJournal(app) {
-    app.appendChild(EB.barre("Ce que j'ai fait", { href: "#/fichiers", texte: "Fichiers" }));
+    app.appendChild(EB.barre("Mes dernières actions", { href: "#/fichiers", texte: "Documents" }));
     app.appendChild(h("p", { class: "aide-ecran" }, "Les changements faits depuis ce téléphone (gardés sur ce téléphone)."));
     var j = EB.lire("eb:journal", []);
     if (!j.length) { app.appendChild(h("p", { class: "vide" }, "Rien pour l'instant.")); return; }

@@ -160,10 +160,10 @@
   /** Nom simple d'un groupe SharePoint (« Propriétaires de … » → « Propriétaires du site »). */
   function nomGroupe(titre) {
     var t = String(titre || "");
-    if (/propri[ée]taires|owners/i.test(t)) return "Propriétaires du site";
-    if (/visiteurs|visitors/i.test(t)) return "Visiteurs du site";
+    if (/propri[ée]taires|owners/i.test(t)) return "Gestionnaires";
+    if (/visiteurs|visitors/i.test(t)) return "Lecteurs";
     if (/membres|members/i.test(t)) return "Toute l'équipe";
-    if (/^sharinglinks\./i.test(t)) return /anonymous/i.test(t) ? "Lien ouvert à tous" : /organization/i.test(t) ? "Lien pour l'entreprise" : "Lien pour des personnes précises";
+    if (/^sharinglinks\./i.test(t)) return /anonymous/i.test(t) ? "Lien ouvert à tous" : /organization/i.test(t) ? "Lien pour le Château" : "Lien pour des personnes précises";
     if (/^tout le monde|everyone/i.test(t)) return "Tout le personnel du Château";
     return t;
   }
