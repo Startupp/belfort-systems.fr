@@ -32,6 +32,14 @@
     }));
   }
   function adresse() { return location.origin + location.pathname; }
+  /*
+   * Encadré rassurant sous chaque bouton d'installation. Mesuré (v5.7, Chromium) : fichiers de l'appli gardés par le
+   * service worker ≈ 1,4 Mo (58 fichiers, MSAL compris), place comptée par le navigateur ≈ 2,4 Mo ; réglages ≈ 10 Ko.
+   * Données gardées sur l'appareil : le planning (hors connexion), les réglages, les épingles (noms et liens choisis),
+   * le logo réduit. JAMAIS le contenu des documents : les listes de fichiers et photos restent en mémoire (cache.js).
+   */
+  var RASSURANT = "📱 Ne prend quasiment pas de place (moins de 3 Mo) : c'est un raccourci vers l'application en ligne. Vos documents OneDrive et SharePoint ne sont jamais téléchargés sur le téléphone. Seul le planning est gardé, pour s'afficher même sans réseau.";
+  function rassurer() { return h("p", { class: "inst-rassurant", "data-etat": "rassurant" }, RASSURANT); }
   function copier(texte, quoi) {
     function secours() {
       var d = EB.dialogue(), champ = h("input", { class: "champ", type: "text", value: texte, readonly: true, "aria-label": "Adresse à copier" });
@@ -73,7 +81,7 @@
       guide.hidden = false; bouton.hidden = true;
       var t = guide.querySelector("h3"); t.setAttribute("tabindex", "-1"); t.focus();
     } }, icone("installer"), "Installer l'application");
-    app.appendChild(h("div", { class: "actions pile" }, bouton));
+    app.appendChild(h("div", { class: "actions pile" }, bouton, rassurer()));
     app.appendChild(guide);
     if (p.cas === "bureau-firefox" || p.cas === "ios-autre") { guide.hidden = false; bouton.hidden = true; } // rien à toucher : on explique tout de suite
   }
@@ -96,7 +104,8 @@
         });
       } }, icone("actualiser"), "Rechercher une mise à jour"),
       etatMaj,
-      h("button", { class: "btn secondaire large", type: "button", "data-action": "desinstaller", onclick: function () { desinstaller(p); } }, "Désinstaller")));
+      h("button", { class: "btn secondaire large", type: "button", "data-action": "desinstaller", onclick: function () { desinstaller(p); } }, "Désinstaller"),
+      rassurer()));
   }
   function desinstaller(p) {
     var d = EB.dialogue(), ok = h("button", { class: "btn large", type: "button", onclick: EB.fermerDialogue }, "Compris");
@@ -265,7 +274,7 @@
       h("div", { class: "bientot-liste" }, l.map(function (b) {
         return h("button", { type: "button", class: "bientot-carte", "data-bientot": b.titre, onclick: function () { feuilleBientot(b); } },
           h("span", { class: "bientot-emoji", "aria-hidden": "true" }, b.emoji || "✨"),
-          h("span", { class: "bientot-textes" }, h("b", null, EB.insecable(b.titre)), h("small", null, "Bientôt disponible")),
+          h("span", { class: "bientot-textes" }, h("b", null, EB.insecable(b.titre + " — bientôt disponible")), h("small", null, "En préparation")),
           h("span", { class: "etiquette bientot-badge", "aria-hidden": "true" }, "Bientôt"));
       })));
   }
@@ -289,5 +298,5 @@
 
   EB.ecran("installer", ecranInstaller);
   EB.ecran("acces-appli", ecranAcces);
-  window.EBAppliEcrans = { bientot: bientot, partagePlanning: partagePlanning, lienPlanning: lienPlanning, carteRefus: carteRefus, plateforme: plateforme };
+  window.EBAppliEcrans = { rassurer: rassurer, RASSURANT: RASSURANT, bientot: bientot, partagePlanning: partagePlanning, lienPlanning: lienPlanning, carteRefus: carteRefus, plateforme: plateforme };
 })();

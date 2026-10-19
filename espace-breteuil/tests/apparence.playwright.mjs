@@ -306,6 +306,7 @@ try {
       assert.equal(await x.page.evaluate(() => window.__invite), true, "android : invitation native en un geste");
     } else if (nom === "iphone") {
       assert.equal(await x.page.$$eval('[data-action="installer"]', (l) => l.length), 1, "un seul bouton");
+      assert.ok(await x.page.isVisible('[data-etat="rassurant"]'), "encadré rassurant sous le bouton");
       await x.page.click('[data-action="installer"]');
       await x.page.waitForSelector('[data-guide="ios-safari"]:not([hidden])');
       assert.match(await texte(x.page, ".inst-etapes"), /Partager ⬆️.*Sur l'écran d'accueil/s);
@@ -331,6 +332,7 @@ try {
     await x.page.waitForSelector('[data-action="rechercher-maj"]');
     assert.match(await texte(x.page, ".barre h1"), /Gérer l'application/);
     assert.ok(await x.page.$('[data-etat="icone-ancienne"]'));
+    assert.ok(await x.page.isVisible('[data-etat="rassurant"]'), "encadré rassurant (Gérer l'application)");
     await x.page.click('[data-action="desinstaller"]');
     assert.match(await texte(x.page, '[data-feuille="desinstaller"]'), /ne peut pas se supprimer elle-même.*appui long.*Supprimer l'app/s);
     await capturer(x.page, "gerer-appli-iphone");
@@ -348,6 +350,7 @@ try {
     await x.page.waitForSelector(".bloc-planning");
     assert.ok(await x.page.isVisible('[data-action="ajouter-ecran"]'), "gros bouton « Ajouter à l'écran d'accueil »");
     assert.match(await texte(x.page, '[data-action="ajouter-ecran"]'), /Ajouter à l'écran d'accueil/);
+    assert.match(await texte(x.page, '[data-etat="rassurant"]'), /moins de 3 Mo.*jamais téléchargés.*Seul le planning est gardé/s, "encadré rassurant");
     assert.equal(new URL(x.page.url()).hash, "#/planning", "adresse gardée");
     assert.equal(logins.length, 0, "aucune demande de connexion");
     await capturer(x.page, "planning-public-375");

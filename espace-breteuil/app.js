@@ -710,6 +710,7 @@
     // v5.7 : employés sans compte — un gros bouton pour mettre le planning sur l'écran d'accueil.
     if (!estInstallee()) app.appendChild(h("a", { class: "gros-bouton ajouter-ecran", href: "#/installer", "data-action": "ajouter-ecran" },
       h("span", { class: "eb-anneau" }, emoji("📲")), h("span", null, h("b", null, "Ajouter à l'écran d'accueil"), h("small", null, "Le planning en un geste, sans connexion")), h("span", { class: "chevron" }, icone("droite"))));
+    if (!estInstallee() && window.EBAppliEcrans) app.appendChild(window.EBAppliEcrans.rassurer());
     var corps = h("div", { class: "calendrier-seul" });
     app.appendChild(corps);
     corps.appendChild(blocAujourdhui());

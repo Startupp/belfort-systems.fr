@@ -68,7 +68,7 @@ self.EB_CONFIG = {
 
   /* v5.7 « Bientôt » : cartes d'annonce (Accueil pour la direction, et Gérer). Aucune donnée du client ici. */
   bientot: [
-    { titre: "HACCP Restauration — bientôt disponible", emoji: "🍽️", texte: "Les relevés d'hygiène de la restauration (températures, nettoyages, traçabilité) arriveront ici. En préparation avec l'équipe restauration." },
+    { titre: "HACCP Restauration", emoji: "🍽️", texte: "Les relevés d'hygiène de la restauration (températures, nettoyages, traçabilité) arriveront ici. En préparation avec l'équipe restauration." },
   ],
 
 };

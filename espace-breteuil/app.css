@@ -1983,3 +1983,4 @@ body.premier-lancement .aide-fab { display: none; }
 .carte-refus h2 { margin: 0; font-size: 1.25rem; } .carte-refus p { margin: 0; color: var(--texte-2); }
 .maj-boutons { display: flex; gap: 6px; align-items: center; }
 .autres-palettes { margin-top: 8px; }
+.inst-rassurant { margin: 4px 0 14px; padding: 10px 12px; border-radius: var(--rayon-petit); background: var(--surface-2); color: var(--texte-2); font-size: .88rem; line-height: 1.4; }
