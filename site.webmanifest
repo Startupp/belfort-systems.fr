@@ -1,0 +1,14 @@
+{
+  "name": "Belfort Systems",
+  "short_name": "Belfort",
+  "description": "Informaticien indépendant dans les Yvelines : support, Microsoft 365, infogérance pour TPE, PME et cabinets.",
+  "lang": "fr",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#10263D",
+  "theme_color": "#10263D",
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

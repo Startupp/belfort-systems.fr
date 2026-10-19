@@ -239,10 +239,17 @@
     if (t) t.value = String(Date.now());
 
     var vider = function () { while (status.firstChild) status.removeChild(status.firstChild); };
-    var montrer = function (classe, lignes, bouton) {
+    var montrer = function (classe, lignes, bouton, mascotte) {
       vider();
       var box = el("div", { class: "msg " + classe });
-      lignes.forEach(function (l) { box.appendChild(el("p", { text: l })); });
+      if (mascotte) {
+        box.appendChild(el("div", { class: "mascotte", "aria-hidden": "true" }, [
+          el("img", { src: "/assets/mascotte/mascotte-" + mascotte + ".webp", width: "512", height: "512", alt: "", decoding: "async" })
+        ]));
+      }
+      var texte = el("div");
+      lignes.forEach(function (l) { texte.appendChild(el("p", { text: l })); });
+      box.appendChild(texte);
       if (bouton) box.appendChild(bouton);
       status.appendChild(box);
     };
@@ -304,7 +311,7 @@
       }).then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (json) {
           if (r.ok && json && json.ok) {
-            montrer("ok", ["Merci " + d.nom + ", votre demande est bien envoyée. Je vous réponds sous 24 h ouvrées" + (d.creneau ? " et je vous confirme le créneau du " + d.creneau : "") + "."]);
+            montrer("ok", ["Merci " + d.nom + ", votre demande est bien envoyée. Je vous réponds sous 24 h ouvrées" + (d.creneau ? " et je vous confirme le créneau du " + d.creneau : "") + "."], null, "pouce");
             form.reset();
             if (t) t.value = String(Date.now());
             var cc = $("#c-creneau"); if (cc) cc.value = "";

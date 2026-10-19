@@ -24,8 +24,9 @@
 <meta name="twitter:description" content="Support, Microsoft 365 et infogérance pour les petites structures des Yvelines. Tarifs affichés, un seul interlocuteur.">
 <meta name="twitter:image" content="https://belfort-systems.fr/assets/og-cover.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
-<link rel="apple-touch-icon" href="/assets/icon-180.png">
+<link rel="icon" href="/assets/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest">
 <script>document.documentElement.className += " js";</script>
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/archivo-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -44,7 +45,7 @@
       "description": "Informaticien indépendant dans les Yvelines : support et dépannage, migration Microsoft 365 sans coupure, préparation de postes, réseau et Wi-Fi, audit des abonnements, applications sur mesure pour les TPE, PME, cabinets et associations.",
       "slogan": "Votre informatique, sans prise de tête.",
       "image": "https://belfort-systems.fr/assets/og-cover.png",
-      "logo": "https://belfort-systems.fr/assets/icon-512.png",
+      "logo": "https://belfort-systems.fr/assets/icons/icon-512.png",
       "telephone": "+33609897443",
       "email": "damien@belfort-systems.fr",
       "priceRange": "€€",
@@ -141,7 +142,7 @@
 <header class="site" id="top">
   <div class="container">
     <a class="brand" href="/" title="Accueil">
-      <span class="mark" aria-hidden="true">B</span>Belfort <span>Systems</span>
+      <img class="mark" src="/assets/logo-bonnet.svg" width="34" height="34" alt="" decoding="async"><span class="nom">Belfort <span>Systems</span></span>
     </a>
     <button class="nav-toggle" id="navToggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mainNav">
       <span></span>
@@ -186,8 +187,7 @@
         </div>
       </div>
       <div class="mascotte" aria-hidden="true">
-        <img src="/assets/mascotte.webp" width="301" height="291" alt="" loading="eager" decoding="async" fetchpriority="low">
-        <span class="paupiere"></span>
+        <img src="/assets/mascotte/mascotte-sourire.webp" width="512" height="512" alt="" loading="eager" decoding="async" fetchpriority="low">
       </div>
     </div>
   </section>
@@ -414,9 +414,14 @@
   <!-- COMMENT ÇA SE PASSE -->
   <section class="block" id="methode" aria-labelledby="h-methode">
     <div class="container">
-      <div class="section-head reveal">
-        <h2 id="h-methode">Comment ça se passe</h2>
-        <p>Du premier appel à la facture, vous savez toujours où l'on en est et ce que ça coûte.</p>
+      <div class="section-head reveal avec-mascotte">
+        <div>
+          <h2 id="h-methode">Comment ça se passe</h2>
+          <p>Du premier appel à la facture, vous savez toujours où l'on en est et ce que ça coûte.</p>
+        </div>
+        <div class="mascotte" aria-hidden="true">
+          <img src="/assets/mascotte/mascotte-ordinateur.webp" width="512" height="512" alt="" loading="lazy" decoding="async">
+        </div>
       </div>
       <div class="etapes">
         <div class="etape reveal">
@@ -556,8 +561,7 @@
           </div>
           <div class="question">
             <div class="mascotte" aria-hidden="true">
-              <img src="/assets/mascotte.webp" width="301" height="291" alt="" loading="lazy" decoding="async">
-              <span class="paupiere"></span>
+              <img src="/assets/mascotte/mascotte-sourire.webp" width="512" height="512" alt="" loading="lazy" decoding="async">
             </div>
             <p><b>Une question avant de vous lancer ?</b><br>Un message suffit, je réponds sans jargon et sans engagement.</p>
           </div>
@@ -572,7 +576,7 @@
   <div class="container">
     <div class="f-top">
       <div>
-        <a class="brand" href="/"><span class="mark" aria-hidden="true">B</span>Belfort <span>Systems</span></a>
+        <a class="brand" href="/"><img class="mark" src="/assets/logo-bonnet.svg" width="34" height="34" alt="" decoding="async"><span class="nom">Belfort <span>Systems</span></span></a>
         <p class="f-tag">Informaticien indépendant dans les Yvelines. Support, Microsoft 365 et infogérance pour les TPE, PME, cabinets et associations.</p>
       </div>
       <div class="f-col">
