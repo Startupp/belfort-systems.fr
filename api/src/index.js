@@ -756,7 +756,90 @@ route("GET", "/admin/resume", "admin", async ({ env }) => {
     rdv_a_confirmer: rdvs.results[0].n,
     prochain_rdv: prochain.results[0] || null,
     dernier_evenement: dernier.results[0] || null,
+    messages_nouveaux: await compterMessagesNouveaux(env),
   };
+});
+
+// ---------------------------------------------------------------------------
+// Premier contact : messages du formulaire du site (base « belfort_contact »)
+// ---------------------------------------------------------------------------
+
+const STATUTS_MESSAGE = ["nouveau", "lu", "repondu", "classe"];
+const MESSAGES_MAX = 200;
+
+/** Lance 503 si la base du formulaire de contact n'est pas reliée (binding CONTACTS absent). */
+function baseContacts(env) {
+  if (!env.CONTACTS) throw new ErreurHttp(503, "Base des messages non reliée : binding CONTACTS absent (api/wrangler.toml).");
+  return env.CONTACTS;
+}
+
+/** Erreur D1 « table absente » (base pas encore migrée par le Worker belfort-contact). */
+const estTableAbsente = (e) => /no such table/i.test(String(e && e.message || e));
+
+/** Nombre de messages sans suivi ou encore « nouveau » (0 si la base n'est pas reliée). */
+async function compterMessagesNouveaux(env) {
+  if (!env.CONTACTS) return 0;
+  try {
+    const [{ results: ids }, { results: suivis }] = await Promise.all([
+      env.CONTACTS.prepare("SELECT id FROM contacts ORDER BY recu_le DESC LIMIT ?").bind(MESSAGES_MAX).all(),
+      env.DB.prepare("SELECT contact_id FROM contacts_suivi WHERE statut != 'nouveau'").all(),
+    ]);
+    const traites = new Set(suivis.map((s) => s.contact_id));
+    return ids.filter((c) => !traites.has(c.id)).length;
+  } catch (e) {
+    if (estTableAbsente(e)) return 0;
+    throw e;
+  }
+}
+
+/**
+ * GET /admin/premier-contact → {messages:[{id, recu_le, nom, email, tel, sujet, formule, message,
+ * creneau, origine, statut, note, suivi_le}]} — 200 messages au plus, plus récents d'abord.
+ * Les messages sont lus dans la base belfort_contact ; le statut vient de contacts_suivi (DB).
+ */
+route("GET", "/admin/premier-contact", "admin", async ({ env }) => {
+  const base = baseContacts(env);
+  let messages = [];
+  try {
+    ({ results: messages } = await base.prepare(
+      "SELECT id, recu_le, nom, email, tel, sujet, formule, message, creneau, origine FROM contacts ORDER BY recu_le DESC, id DESC LIMIT ?")
+      .bind(MESSAGES_MAX).all());
+  } catch (e) {
+    if (estTableAbsente(e)) throw new ErreurHttp(503, "La base belfort_contact n'a pas encore sa table « contacts » (migrations du Worker belfort-contact).");
+    throw e;
+  }
+  const { results: suivis } = await env.DB.prepare("SELECT contact_id, statut, note, maj FROM contacts_suivi").all();
+  const suivi = new Map(suivis.map((s) => [s.contact_id, s]));
+  return {
+    messages: messages.map((m) => {
+      const s = suivi.get(m.id);
+      return { ...m, statut: s ? s.statut : "nouveau", note: s ? s.note || "" : "", suivi_le: s ? s.maj : null };
+    }),
+  };
+});
+
+/** PATCH /admin/premier-contact/:id {statut, note} — suivi d'un message (table contacts_suivi). */
+route("PATCH", "/admin/premier-contact/:id", "admin", async ({ req, env, params, qui }) => {
+  const id = Number(params.id);
+  if (!Number.isInteger(id) || id <= 0) throw err400("Identifiant de message invalide.");
+  const corps = await lireCorps(req);
+  const statut = champ(corps, "statut", { enum: STATUTS_MESSAGE });
+  const note = champ(corps, "note", { max: 2000 });
+  if (statut === undefined && note === undefined) throw err400("Indiquez un statut ou une note.");
+  const base = baseContacts(env);
+  const existe = await base.prepare("SELECT id FROM contacts WHERE id = ?").bind(id).first();
+  if (!existe) throw err404("Message introuvable.");
+  const quand = maintenant();
+  await env.DB.batch([
+    env.DB.prepare(`INSERT INTO contacts_suivi (contact_id, statut, note, maj) VALUES (?, COALESCE(?, 'nouveau'), ?, ?)
+                    ON CONFLICT(contact_id) DO UPDATE SET
+                      statut = COALESCE(?, contacts_suivi.statut),
+                      note = COALESCE(?, contacts_suivi.note),
+                      maj = ?`).bind(id, statut ?? null, note ?? null, quand, statut ?? null, note ?? null, quand),
+    stmtJournal(env, qui, statut ? "statut:" + statut : "note", "premier-contact", id),
+  ]);
+  const ligne = await env.DB.prepare("SELECT contact_id AS id, statut, note, maj AS suivi_le FROM contacts_suivi WHERE contact_id = ?").bind(id).first();
+  return ligne;
 });
 
 /** GET /admin/contacts?statut= — liste des contacts (200 max, plus récents d'abord). */

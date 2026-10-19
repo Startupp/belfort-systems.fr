@@ -80,6 +80,7 @@
   var TYPES_EVT = { echange: 'Échange', livrable: 'Livrable', site: 'Sur site', decision: 'Décision', facture: 'Facture' };
   var CANAUX = ['Mail', 'WhatsApp', 'SMS', 'Téléphone', 'Sur place'];
   var STATUTS_CONTACT = { nouveau: 'Nouveau', lu: 'Lu', repondu: 'Répondu', archive: 'Archivé' };
+  var STATUTS_MESSAGE = { nouveau: 'Nouveau', lu: 'Lu', repondu: 'Répondu', classe: 'Classé' };
   var STATUTS_FACT = { brouillon: 'Brouillon', envoyee: 'Envoyée', payee: 'Payée', annulee: 'Annulée' };
   var SOLUTIONS = ['Réglage corrigé à distance', 'Expliqué par téléphone', 'Guide envoyé', 'Réglé sur place', 'Transmis au prestataire concerné'];
   var MOI = { nom: 'Damien Belfort', entreprise: 'Belfort Systems', adresse: '7 square des Genêts', cp: '78114', ville: 'Magny-les-Hameaux',
@@ -139,6 +140,7 @@
     if (methode !== 'GET') throw new DemoError();
     var c = chemin.split('?')[0];
     if (c === '/admin/resume') return chargerApercu('resume');
+    if (c === '/admin/premier-contact') return chargerApercu('premier-contact');
     if (c === '/admin/contacts') return chargerApercu('contacts');
     if (c === '/admin/projets') return chargerApercu('projets');
     if (/^\/admin\/projets\/[^/]+$/.test(c)) return chargerApercu('projet-exemple');
@@ -325,16 +327,17 @@
   function route() {
     var h = location.hash.replace(/^#\/?/, '');
     var parts = h.split('/').filter(Boolean).map(decodeURIComponent);
-    return parts.length ? parts : ['aujourdhui'];
+    return parts.length ? parts : ['premier'];
   }
   function naviguer(h) { location.hash = '#/' + h; }
-  var VUES = { aujourdhui: vueAujourdhui, boite: vueBoite, projets: vueProjets, factures: vueFactures, clients: vueClients, reglages: vueReglages, plus: vuePlus, espaces: vueEspaces };
+  var VUES = { premier: vuePremierContact, aujourdhui: vueAujourdhui, boite: vueBoite, projets: vueProjets, factures: vueFactures, clients: vueClients, reglages: vueReglages, plus: vuePlus, espaces: vueEspaces };
+  var SOUS_PLUS = ['factures', 'clients', 'reglages', 'espaces'];
   var rendu = 0;
   async function router(silencieux) {
     if ($('app').hidden) return;
-    var p = route(); var nom = VUES[p[0]] ? p[0] : 'aujourdhui';
+    var p = route(); var nom = VUES[p[0]] ? p[0] : 'premier';
     document.querySelectorAll('.nav a').forEach(function (a) {
-      var n = a.dataset.nav; var actif = n === nom || (n === 'plus' && ['clients', 'reglages', 'espaces'].indexOf(nom) >= 0 && a.classList.contains('nav-petit'));
+      var n = a.dataset.nav; var actif = n === nom || (n === 'plus' && SOUS_PLUS.indexOf(nom) >= 0 && a.classList.contains('nav-petit'));
       a.classList.toggle('actif', actif);
       if (actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
@@ -382,8 +385,87 @@
     try {
       var r = await api('/admin/resume'); var n = r.contacts_nouveaux || 0;
       var b = $('badge-boite'); b.hidden = !n; b.textContent = n;
+      var m = r.messages_nouveaux || 0;
+      var bp = $('badge-premier'); if (bp) { bp.hidden = !m; bp.textContent = m; }
     } catch (e) {}
   }
+
+  /* ============================================================
+     ÉCRAN : PREMIER CONTACT (messages du formulaire du site)
+     Source : base belfort_contact du Worker belfort-contact, lue par
+     GET /admin/premier-contact ; statut et note dans contacts_suivi.
+     ============================================================ */
+  /* Numéro français (06 12 34 56 78, +33 6…, 0033 6…) → 33612345678 ; sinon null. */
+  function telInternational(t) {
+    var d = String(t || '').replace(/[^\d+]/g, '');
+    if (/^\+33[1-9]\d{8}$/.test(d)) return d.slice(1);
+    if (/^0033[1-9]\d{8}$/.test(d)) return d.slice(2);
+    if (/^0[1-9]\d{8}$/.test(d)) return '33' + d.slice(1);
+    return null;
+  }
+  function prenom(nom) { return (nom || '').trim().split(/\s+/)[0] || ''; }
+  function citer(texte) { return String(texte || '').split('\n').map(function (l) { return '> ' + l; }).join('\n'); }
+  function mailtoMessage(m) {
+    var corps = 'Bonjour ' + prenom(m.nom) + ',\n\nMerci pour votre message au sujet de « ' + (m.sujet || 'votre demande') + ' ».\n\n1. \n2. \n3. \n\nBien cordialement,\n' + SIGNATURE +
+      '\n\n' + citer('Le ' + fmtDateHeure(m.recu_le) + ', ' + m.nom + ' a écrit :\n' + (m.message || ''));
+    return 'mailto:' + encodeURIComponent(m.email || '') + '?subject=' + encodeURIComponent('Re : ' + (m.sujet || 'votre demande') + ' — Belfort Systems') + '&body=' + encodeURIComponent(corps);
+  }
+  function whatsappMessage(m) {
+    var n = telInternational(m.tel); if (!n) return '';
+    var texte = 'Bonjour ' + prenom(m.nom) + ', Damien Belfort (Belfort Systems). Merci pour votre message au sujet de « ' + (m.sujet || 'votre demande') + ' » envoyé depuis belfort-systems.fr. Quand puis-je vous appeler ?';
+    return 'https://wa.me/' + n + '?text=' + encodeURIComponent(texte);
+  }
+  async function vuePremierContact() {
+    var r = await api('/admin/premier-contact');
+    var messages = (r.messages || []).slice().sort(function (a, b) { return String(b.recu_le || '').localeCompare(String(a.recu_le || '')); });
+    var filtre = etat.filtrePremier || 'a_traiter';
+    var liste = messages.filter(function (m) {
+      var st = m.statut || 'nouveau';
+      return filtre === 'tous' ? true : filtre === 'a_traiter' ? (st === 'nouveau' || st === 'lu') : st === filtre;
+    });
+    var nb = messages.filter(function (m) { return (m.statut || 'nouveau') === 'nouveau'; }).length;
+    return html`
+      <div class="entete-vue"><div><h1>Premier contact</h1><p class="hint">Messages reçus par le formulaire du site, du plus récent au plus ancien${nb ? ' — ' + nb + ' nouveau' + (nb > 1 ? 'x' : '') : ''}.</p></div></div>
+      <div class="puces" role="group" aria-label="Filtrer">${[['a_traiter', 'À traiter'], ['nouveau', 'Nouveaux'], ['repondu', 'Répondus'], ['classe', 'Classés'], ['tous', 'Tous']].map(function (f) {
+        return html`<button type="button" class="puce" aria-pressed="${filtre === f[0]}" data-act="filtre-premier" data-f="${f[0]}">${f[1]}</button>`;
+      })}</div>
+      <div class="carte">${liste.length ? liste.map(ligneMessage) : html`<p class="vide">Aucun message dans cette liste.</p>`}</div>
+      <p class="aide">« Répondre par e-mail » ouvre votre messagerie avec un brouillon signé « ${SIGNATURE} » et le message cité ; « WhatsApp » ouvre une conversation avec un texte prêt. Pensez ensuite à cliquer « Répondu ».</p>`;
+  }
+  function ligneMessage(m) {
+    var st = m.statut || 'nouveau';
+    var wa = whatsappMessage(m);
+    var tel = String(m.tel || '').trim();
+    return html`<article class="message ${st}" id="msg-${m.id}">
+      <div class="tete"><b>${m.sujet || '(sans objet)'}</b><span class="quand">${fmtDateHeure(m.recu_le)} · ${ecoule(m.recu_le)}</span></div>
+      <div class="coord"><span><b>${m.nom}</b></span>${m.email ? html`<a href="mailto:${m.email}">${m.email}</a>` : ''}${tel ? html`<a href="tel:${tel.replace(/[^\d+]/g, '')}">${tel}</a>` : ''}</div>
+      <div class="infos"><span class="etiquette ${st}">${STATUTS_MESSAGE[st] || st}</span>
+        <span>Formule : <b>${m.formule || '—'}</b></span><span>Créneau : <b>${m.creneau ? fmtDateHeure(m.creneau) : '—'}</b></span>${m.suivi_le ? html`<span>Suivi : ${fmtDateHeure(m.suivi_le)}</span>` : ''}</div>
+      <p class="texte">${m.message}</p>
+      ${m.note ? html`<p class="note-suivi">Note : ${m.note}</p>` : ''}
+      <div class="actions">
+        <a class="btn sm" href="${mailtoMessage(m)}" data-act="msg-repondre" data-id="${m.id}" data-statut="${st}">Répondre par e-mail</a>
+        ${wa ? html`<a class="btn ghost sm" href="${wa}" target="_blank" rel="noopener" data-act="msg-repondre" data-id="${m.id}" data-statut="${st}">WhatsApp</a>` : ''}
+        ${st === 'nouveau' ? html`<button type="button" class="btn ghost sm" data-act="msg-statut" data-id="${m.id}" data-apres="lu">Marquer lu</button>` : ''}
+        ${st !== 'repondu' ? html`<button type="button" class="btn ghost sm" data-act="msg-statut" data-id="${m.id}" data-apres="repondu">Répondu</button>` : ''}
+        ${st !== 'classe' ? html`<button type="button" class="btn ghost sm" data-act="msg-statut" data-id="${m.id}" data-apres="classe">Classer</button>` : html`<button type="button" class="btn ghost sm" data-act="msg-statut" data-id="${m.id}" data-apres="lu">Rouvrir</button>`}
+        <button type="button" class="btn ghost sm" data-act="msg-note" data-id="${m.id}" data-note="${m.note || ''}">Note</button>
+      </div></article>`;
+  }
+  ACTIONS['filtre-premier'] = async function (d) { etat.filtrePremier = d.f; router(true); };
+  ACTIONS['msg-statut'] = async function (d) {
+    await api('/admin/premier-contact/' + d.id, { method: 'PATCH', body: { statut: d.apres } });
+    etat.cache = {}; toast('Message : ' + STATUTS_MESSAGE[d.apres] + '.'); router(true);
+  };
+  ACTIONS['msg-repondre'] = async function (d, el) {
+    var href = el.getAttribute('href');
+    if (el.getAttribute('target') === '_blank') window.open(href, '_blank', 'noopener'); else window.location.href = href;
+    if (d.statut === 'nouveau') { try { await api('/admin/premier-contact/' + d.id, { method: 'PATCH', body: { statut: 'lu' } }); etat.cache = {}; router(true); } catch (e) {} }
+  };
+  ACTIONS['msg-note'] = async function (d) {
+    await action({ titre: 'Note sur ce message', champs: [{ id: 'note', label: 'Note (pour vous seul)', type: 'textarea', valeur: d.note, placeholder: 'Rappelé le 12, devis à envoyer…' }],
+      valider: 'Enregistrer', action: function (v) { return api('/admin/premier-contact/' + d.id, { method: 'PATCH', body: { note: v.note } }); }, succes: 'Note enregistrée.' });
+  };
 
   /* ============================================================
      ÉCRAN : AUJOURD'HUI
@@ -395,7 +477,7 @@
     return html`
       <div class="entete-vue"><div><h1>Aujourd’hui</h1><p class="hint">${fmtDateLong(aujourdhuiISO())} — ${etat.demo ? 'aperçu avec des données d’exemple' : 'données en direct'}</p></div></div>
       <div class="tuiles">
-        <a class="tuile" href="#/boite"><span class="chiffre">${r.contacts_nouveaux || 0}</span><span class="libelle">Messages nouveaux</span><span class="detail">formulaire du site</span></a>
+        <a class="tuile" href="#/premier"><span class="chiffre">${r.messages_nouveaux || 0}</span><span class="libelle">Premiers contacts</span><span class="detail">formulaire du site, à traiter</span></a>
         <a class="tuile" href="#/projets"><span class="chiffre">${r.demandes_a_traiter || 0}</span><span class="libelle">Demandes à traiter</span><span class="detail">tous projets</span></a>
         <a class="tuile" href="#/factures"><span class="chiffre">${r.factures_en_attente || 0}</span><span class="libelle">Factures en attente</span><span class="detail">envoyées, non payées</span></a>
         <a class="tuile" href="#/boite"><span class="chiffre">${rdv ? fmtJour(rdv.debut) : '—'}</span><span class="libelle">Prochain rendez-vous</span><span class="detail">${rdv ? fmtHeure(rdv.debut) + ' · ' + rdv.avec + (rdv.statut === 'propose' ? ' (à confirmer)' : '') : 'aucun'}</span></a>
@@ -1127,6 +1209,7 @@
   ACTIONS.deconnexion = async function () { $('btn-deconnexion').click(); };
   async function vuePlus() {
     return html`<h1>Plus</h1><div class="carte">
+      <a class="ligne-clic" href="#/factures"><b>Factures</b><span class="meta">Brouillons et factures émises depuis le tableau de bord</span></a>
       <a class="ligne-clic" href="#/clients"><b>Clients</b><span class="meta">Jetons d’accès, espaces /clients/</span></a>
       <a class="ligne-clic" href="#/reglages"><b>Réglages</b><span class="meta">Thème, taille du texte, déconnexion</span></a>
       <a class="ligne-clic" href="#/espaces"><b>Espaces chiffrés (ancien outil)</b><span class="meta">Génération et rotation des pages chiffrées</span></a></div>`;

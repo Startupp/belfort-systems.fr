@@ -156,7 +156,7 @@ input[type="checkbox"],input[type="radio"]{width:auto;min-height:0;display:inlin
 .nav a .ico svg{width:22px;height:22px;display:inline-block;vertical-align:middle}
 .nav a:hover{background:var(--bg-2);color:var(--ink)}
 .nav a.actif{background:var(--info-bg);color:var(--bleu)}
-.nav .nav-petit{display:none}
+.nav .nav-petit,.nav .nav-court{display:none}
 .nav .separateur{height:1px;background:var(--line);margin:6px 8px}
 .badge{background:var(--brique);color:#fff;border-radius:var(--pill);font-size:.72em;padding:1px 7px;margin-left:auto;font-weight:700}
 .vue{padding:22px 24px 90px;min-width:0;max-width:1180px;width:100%}
@@ -171,7 +171,7 @@ input[type="checkbox"],input[type="radio"]{width:auto;min-height:0;display:inlin
   .nav a{flex:1 1 0;flex-direction:column;gap:2px;padding:4px 2px;font-size:.68em;min-height:52px;justify-content:center;text-align:center;min-width:0}
   .nav a .ico{font-size:1.35em;width:auto}
   .nav a span:not(.ico){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-  .nav .nav-large,.nav .separateur{display:none} .nav .nav-petit{display:flex}
+  .nav .nav-large,.nav .separateur,.nav .nav-long{display:none} .nav .nav-petit{display:flex} .nav .nav-court{display:block}
   .badge{position:absolute;top:2px;right:14%;margin:0}
   .vue{padding:14px 16px 96px}
   .toast{bottom:92px}

@@ -2,9 +2,12 @@ name: Déployer le Worker belfort-admin
 
 # Déploie le service du tableau de bord (api/) à chaque fusion sur main.
 # Secrets du dépôt : CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, ADMIN_PASSWORD (mot de passe
-# du tableau de bord ; s'il est absent, le secret du Worker n'est pas touché).
+# du tableau de bord) et ADMIN_GITHUB_TOKEN (jeton GitHub de la vue « Publications », facultatif) ;
+# si l'un des deux derniers est absent, le secret correspondant du Worker n'est pas touché.
 # La base D1 « belfort-systems » et le KV du Worker sont créés s'ils n'existent pas ; le schéma
-# (api/schema.sql, idempotent) est appliqué à chaque déploiement.
+# (api/schema.sql, idempotent) est appliqué à chaque déploiement. La base « belfort_contact » du
+# formulaire de contact est reliée en lecture (binding CONTACTS) : son identifiant est résolu par
+# son nom, comme pour belfort-systems.
 # Ce workflow ne touche jamais au Worker « belfort-api » (Espace Breteuil).
 
 on:
@@ -42,23 +45,32 @@ jobs:
       - name: Installer wrangler
         run: npm install --no-save wrangler@4
 
-      - name: Base D1 « belfort-systems » (création si absente)
+      - name: Bases D1 « belfort-systems » et « belfort_contact » (création si absentes)
         id: d1
         run: |
           set -euo pipefail
-          NOM="belfort-systems"
           LISTE=$(npx wrangler d1 list --json 2>/dev/null) || LISTE="[]"
           echo "$LISTE" | jq -e 'type=="array"' >/dev/null 2>&1 || LISTE="[]"
-          ID=$(echo "$LISTE" | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
-          if [ -z "$ID" ]; then
-            echo "Création de la base D1 $NOM"
-            SORTIE=$(npx wrangler d1 create "$NOM" 2>&1) || { echo "$SORTIE"; exit 1; }
-            echo "$SORTIE"
-            ID=$(echo "$SORTIE" | grep -E 'database_id|"uuid"' | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -n1)
-          fi
-          [ -n "$ID" ] || { echo "D1 introuvable"; exit 1; }
-          echo "D1 : $ID"
+          resoudre() {
+            local NOM="$1" ID SORTIE
+            ID=$(echo "$LISTE" | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
+            if [ -z "$ID" ]; then
+              echo "Création de la base D1 $NOM" >&2
+              SORTIE=$(npx wrangler d1 create "$NOM" 2>&1) || { echo "$SORTIE" >&2; return 1; }
+              echo "$SORTIE" >&2
+              ID=$(echo "$SORTIE" | grep -E 'database_id|"uuid"' | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -n1)
+            fi
+            [ -n "$ID" ] || { echo "D1 $NOM introuvable" >&2; return 1; }
+            echo "$ID"
+          }
+          ID=$(resoudre belfort-systems)
+          echo "D1 belfort-systems : $ID"
           echo "id=$ID" >> "$GITHUB_OUTPUT"
+          # Base du formulaire de contact (contact-worker/) : lue par la vue « Premier contact ».
+          # Normalement créée par deploy-contact-worker.yml ; créée ici si elle manque encore.
+          ID_CONTACT=$(resoudre belfort_contact)
+          echo "D1 belfort_contact : $ID_CONTACT"
+          echo "id_contact=$ID_CONTACT" >> "$GITHUB_OUTPUT"
 
       - name: KV du tableau de bord (création si absent)
         id: kv
@@ -88,14 +100,23 @@ jobs:
         env:
           KV_ID: ${{ steps.kv.outputs.id }}
           D1_ID: ${{ steps.d1.outputs.id }}
+          D1_CONTACT_ID: ${{ steps.d1.outputs.id_contact }}
         run: |
           set -euo pipefail
-          [ -n "$KV_ID" ] && [ -n "$D1_ID" ] || { echo "Identifiant manquant"; exit 1; }
-          sed -E -e "s/^(\s*database_id\s*=\s*)\"[^\"]*\"/\1\"$D1_ID\"/" \
-                 -e "s/^(\s*id\s*=\s*)\"[^\"]*\"/\1\"$KV_ID\"/" \
-                 wrangler.toml > wrangler.ci.toml
-          grep -E '^\s*(name|database_id|id)\s*=' wrangler.ci.toml
+          [ -n "$KV_ID" ] && [ -n "$D1_ID" ] && [ -n "$D1_CONTACT_ID" ] || { echo "Identifiant manquant"; exit 1; }
+          # Chaque bloc [[d1_databases]] reçoit l'identifiant de la base qui porte son database_name.
+          awk -v a="$D1_ID" -v b="$D1_CONTACT_ID" -v kv="$KV_ID" '
+            /^[[:space:]]*database_name[[:space:]]*=/ { nom=$0; sub(/.*=[[:space:]]*"/, "", nom); sub(/".*/, "", nom) }
+            /^[[:space:]]*database_id[[:space:]]*=/ {
+              if (nom == "belfort-systems") { print "database_id = \"" a "\""; next }
+              if (nom == "belfort_contact") { print "database_id = \"" b "\""; next }
+            }
+            /^[[:space:]]*id[[:space:]]*=/ { print "id = \"" kv "\""; next }
+            { print }
+          ' wrangler.toml > wrangler.ci.toml
+          grep -E '^\s*(name|database_name|database_id|id)\s*=' wrangler.ci.toml
           grep -q '^name = "belfort-admin"' wrangler.ci.toml || { echo "Nom du Worker inattendu"; exit 1; }
+          grep -q "$D1_ID" wrangler.ci.toml && grep -q "$D1_CONTACT_ID" wrangler.ci.toml || { echo "Remplacement incomplet"; exit 1; }
 
       - name: Appliquer le schéma D1
         run: npx wrangler d1 execute belfort-systems --remote --file=schema.sql --config wrangler.ci.toml --yes

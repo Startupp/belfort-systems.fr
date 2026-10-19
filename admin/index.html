@@ -41,7 +41,7 @@ var s=localStorage.getItem('bs-admin-taille');if(s)document.documentElement.data
 <!-- ============ APPLICATION ============ -->
 <div id="app" class="app" hidden>
   <header class="entete">
-    <a class="brand" href="#/aujourdhui"><img class="mark" src="/assets/logo-bonnet.svg" alt="" width="40" height="40"><b>Belfort <span>Systems</span></b></a>
+    <a class="brand" href="#/premier"><img class="mark" src="/assets/logo-bonnet.svg" alt="" width="40" height="40"><b>Belfort <span>Systems</span></b></a>
     <div class="entete-droite">
       <span class="direct" id="direct"><span class="point"></span><span class="direct-txt">Hors ligne</span></span>
       <button class="btn ghost sm" id="btn-deconnexion" type="button">Se déconnecter</button>
@@ -49,10 +49,11 @@ var s=localStorage.getItem('bs-admin-taille');if(s)document.documentElement.data
   </header>
 
   <nav class="nav" aria-label="Navigation principale">
+    <a href="#/premier" data-nav="premier"><span class="ico">★</span><span class="nav-long">Premier contact</span><span class="nav-court">Contact</span><span class="badge" id="badge-premier" hidden></span></a>
     <a href="#/aujourdhui" data-nav="aujourdhui"><span class="ico">☀</span><span>Aujourd’hui</span></a>
     <a href="#/boite" data-nav="boite"><span class="ico">✉</span><span>Boîte</span><span class="badge" id="badge-boite" hidden></span></a>
     <a href="#/projets" data-nav="projets"><span class="ico">▣</span><span>Projets</span></a>
-    <a href="#/factures" data-nav="factures"><span class="ico">€</span><span>Factures</span></a>
+    <a href="#/factures" data-nav="factures" class="nav-large"><span class="ico">€</span><span>Factures</span></a>
     <a href="#/clients" data-nav="clients" class="nav-large"><span class="ico">⚇</span><span>Clients</span></a>
     <a href="#/reglages" data-nav="reglages" class="nav-large"><span class="ico">⚙</span><span>Réglages</span></a>
     <a href="#/espaces" data-nav="espaces" class="nav-large"><span class="ico">⚿</span><span>Espaces chiffrés (ancien outil)</span></a>
