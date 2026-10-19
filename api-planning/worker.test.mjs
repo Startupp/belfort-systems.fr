@@ -805,3 +805,83 @@ test("signature sans délimiteur : retirée seulement en fin de message, lignes 
   assert.equal(retirerSignature("Ok\nBELFORT Damien,", "BELFORT Damien,\\n06 09 00 00 00"), "Ok", "« \\n » littéral accepté");
   assert.equal(sansCitation("Merci !\n-- \nDamien Belfort", SIG), "Merci !", "« -- » toujours géré");
 });
+
+/* ================================================================== */
+/* v5.6 : requalification (prestataire), migration douce, statistiques  */
+/* ================================================================== */
+test("migration douce : colonnes facturable et minutes ajoutées à une ancienne base, données gardées, une seule fois", async () => {
+  const mod = await charger(), db = d1();
+  db.brut.exec("CREATE TABLE demandes(id INTEGER PRIMARY KEY, cree TEXT, oid TEXT, nom TEXT, adresse TEXT, type TEXT, statut TEXT, ecran TEXT, version TEXT, appareil TEXT, lu_par_demandeur INTEGER)");
+  db.brut.exec("INSERT INTO demandes(cree, nom, type, statut) VALUES ('2026-10-01T08:00:00.000Z', 'Ancienne', 'probleme', 'nouvelle')");
+  assert.equal(await mod.migrer(db), 2);
+  assert.equal(await mod.migrer(db), 0, "déjà faite : rien");
+  const r = db.brut.prepare("SELECT * FROM demandes").get();
+  assert.equal(r.nom, "Ancienne"); assert.equal(r.facturable, null); assert.equal(r.minutes, 0);
+  assert.equal(mod.estFacturable(r), true, "Problème : facturable par défaut");
+  assert.equal(mod.estFacturable({ type: "question", facturable: null }), false);
+  assert.equal(mod.estFacturable({ type: "question", facturable: 1 }), true);
+  assert.equal(mod.estFacturable({ type: "probleme", facturable: 0 }), false);
+});
+
+test("requalification : type, facturable, temps passé — prestataire seulement, jamais montrés au demandeur", async () => {
+  const W = (await prete()).default, env = envAide();
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "question", message: "L'imprimante ne marche plus" } });
+  let v = (await appel(W, env, "/breteuil/aide/1", { qui: DAMIEN })).j.demande;
+  assert.deepEqual([v.type, v.facturable, v.facturableChoisi, v.minutes], ["question", false, false, 0]);
+  const fanny = (await appel(W, env, "/breteuil/aide/1", { qui: FANNY })).j.demande;
+  assert.ok(!("facturable" in fanny) && !("minutes" in fanny), "le demandeur ne voit ni « facturable » ni le temps");
+  assert.ok(!("facturable" in (await appel(W, env, "/breteuil/aide", { qui: FANNY })).j.demandes[0]));
+  // Le demandeur ne peut pas requalifier.
+  for (const corps of [{ type: "probleme" }, { facturable: true }, { minutes: 30 }]) assert.equal((await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: FANNY, corps })).status, 403);
+  // Type → Problème : facturable par défaut (non choisi).
+  let r = await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps: { type: "probleme" } });
+  assert.deepEqual([r.j.demande.type, r.j.demande.facturable, r.j.demande.facturableChoisi], ["probleme", true, false]);
+  r = await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps: { facturable: false, minutes: 45 } });
+  assert.deepEqual([r.j.demande.facturable, r.j.demande.facturableChoisi, r.j.demande.minutes], [false, true, 45]);
+  r = await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps: { facturable: null, statut: "resolue" } });
+  assert.deepEqual([r.j.demande.facturable, r.j.statut], [true, "resolue"], "null : retour au défaut du type");
+  for (const corps of [{ type: "bidon" }, { facturable: "oui" }, { minutes: -5 }, { minutes: 1.5 }, { minutes: "abc" }, {}])
+    assert.equal((await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps })).status, 400, JSON.stringify(corps));
+  // Statut seul : le demandeur peut toujours marquer « Résolue ».
+  assert.equal((await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: FANNY, corps: { statut: "resolue" } })).status, 200);
+});
+
+test("statistiques : agrégats du mois (heure de Paris), par type, par personne, 6 mois, délai de 1re réponse", async () => {
+  const { statsAide, moisParis } = await charger();
+  assert.equal(moisParis(Date.parse("2026-09-30T22:30:00Z")), "2026-10", "minuit passé à Paris : octobre");
+  const L = (id, cree, type, extra = {}) => ({ id, cree, nom: extra.nom || "Fanny Martin", adresse: extra.adresse || "fmartin@exemple.fr", type, statut: extra.statut || "nouvelle",
+    facturable: extra.facturable ?? null, minutes: extra.minutes ?? 0, premiere_reponse: extra.rep || null, extrait: extra.extrait || "Message " + id });
+  const lignes = [
+    L(1, "2026-10-02T08:00:00.000Z", "probleme", { minutes: 30, rep: "2026-10-02T09:00:00.000Z", statut: "resolue" }),
+    L(2, "2026-10-05T08:00:00.000Z", "question", { minutes: 15, rep: "2026-10-05T08:30:00.000Z" }),                // non facturable
+    L(3, "2026-10-06T08:00:00.000Z", "question", { facturable: 1, minutes: 60, nom: "Camille Roux", adresse: "croux@exemple.fr", statut: "repondue", rep: "2026-10-06T10:00:00.000Z" }),
+    L(4, "2026-10-07T08:00:00.000Z", "probleme", { facturable: 0, nom: "Camille Roux", adresse: "croux@exemple.fr" }),
+    L(5, "2026-09-30T22:30:00.000Z", "avis"),                                                                       // 1er octobre à Paris
+    L(6, "2026-09-15T08:00:00.000Z", "probleme"), L(7, "2026-05-10T08:00:00.000Z", "probleme"), L(8, "2026-04-10T08:00:00.000Z", "probleme"),
+  ];
+  const s = statsAide(lignes, "2026-10", Date.parse("2026-10-19T12:00:00Z"));
+  assert.equal(s.mois, "2026-10"); assert.equal(s.precedent, "2026-09"); assert.equal(s.suivant, null, "pas de mois futur");
+  assert.deepEqual(s.tuiles, { demandes: 5, problemes: 2, facturables: 2, minutesFacturables: 90, delaiMoyenMinutes: Math.round((60 + 30 + 120) / 3), enCours: 4 });
+  assert.deepEqual(s.parType.map((t) => [t.libelle, t.demandes]), [["Question", 2], ["Avis", 1], ["Amélioration", 0], ["Problème", 2]]);
+  assert.deepEqual(s.parPersonne.map((p) => [p.nom, p.demandes, p.facturables, p.minutes]), [["Fanny Martin", 3, 1, 30], ["Camille Roux", 2, 1, 60]]);
+  assert.deepEqual(s.evolution.map((e) => [e.mois, e.total, e.problemesFacturables]),
+    [["2026-05", 1, 1], ["2026-06", 0, 0], ["2026-07", 0, 0], ["2026-08", 0, 0], ["2026-09", 1, 1], ["2026-10", 5, 1]], "avril hors fenêtre");
+  assert.deepEqual(s.lignes.map((l) => [l.id, l.facturable, l.minutes]), [[1, true, 30], [2, false, 15], [3, true, 60], [4, false, 0], [5, false, 0]]);
+  const sept = statsAide(lignes, "2026-09", Date.parse("2026-10-19T12:00:00Z"));
+  assert.equal(sept.suivant, "2026-10"); assert.equal(sept.tuiles.demandes, 1); assert.equal(sept.tuiles.delaiMoyenMinutes, null);
+  assert.equal(statsAide(lignes, "2027-01", Date.parse("2026-10-19T12:00:00Z")).mois, "2026-10", "mois futur → mois courant");
+  assert.equal(statsAide(lignes, "n'importe", Date.parse("2026-10-19T12:00:00Z")).mois, "2026-10");
+});
+
+test("statistiques : route réservée au prestataire, calculée depuis D1", async () => {
+  const W = (await prete()).default, env = envAide();
+  await appel(W, env, "/breteuil/aide", { methode: "POST", qui: FANNY, corps: { type: "probleme", message: "Écran noir" } });
+  await appel(W, env, "/breteuil/aide/1/messages", { methode: "POST", qui: DAMIEN, corps: { texte: "Je regarde" } });
+  await appel(W, env, "/breteuil/aide/1", { methode: "PATCH", qui: DAMIEN, corps: { minutes: 20 } });
+  assert.equal((await appel(W, env, "/breteuil/aide/stats", { qui: FANNY })).status, 403);
+  const r = await appel(W, env, "/breteuil/aide/stats", { qui: DAMIEN });
+  assert.equal(r.status, 200);
+  assert.equal(r.j.tuiles.demandes, 1); assert.equal(r.j.tuiles.minutesFacturables, 20); assert.equal(typeof r.j.tuiles.delaiMoyenMinutes, "number");
+  assert.equal(r.j.lignes[0].extrait, "Écran noir");
+  assert.equal((await appel(W, env, "/breteuil/aide/stats?mois=2020-01", { qui: DAMIEN })).j.tuiles.demandes, 0);
+});

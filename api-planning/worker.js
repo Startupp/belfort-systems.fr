@@ -310,8 +310,22 @@ async function tables(db) {
     db.prepare("CREATE INDEX IF NOT EXISTS pj_demande ON pieces_jointes(demande_id, id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS pj_quota ON pieces_jointes(cree_le, auteur)"),
   ]);
+  await migrer(db);
   aideTablesPretes = { db };
 }
+/**
+ * Migration douce (v5.6, requalification) : colonnes ajoutées si absentes, données gardées.
+ *   facturable : NULL = selon le type (Problème → oui), 0/1 = choisi par le prestataire ; minutes : temps passé.
+ */
+export async function migrer(db) {
+  const cols = ((await db.prepare("PRAGMA table_info(demandes)").all()).results || []).map((c) => c.name);
+  const aFaire = [];
+  if (!cols.includes("facturable")) aFaire.push("ALTER TABLE demandes ADD COLUMN facturable INTEGER");
+  if (!cols.includes("minutes")) aFaire.push("ALTER TABLE demandes ADD COLUMN minutes INTEGER DEFAULT 0");
+  for (const sql of aFaire) await db.prepare(sql).run();
+  return aFaire.length;
+}
+export const estFacturable = (d) => d.facturable == null ? d.type === "probleme" : !!d.facturable;
 const iso = (ms) => new Date(ms).toISOString();
 
 /* ---------- Mail sortant : petit constructeur MIME (texte UTF-8, en-têtes RFC 2047) ---------- */
@@ -625,7 +639,9 @@ async function essayerMail(env, d, texte, premier, pj, ignorees) {
 
 /* ---------- Routes HTTP ---------- */
 function vueDemande(r, moi, prestataire) {
-  return { id: r.id, cree: r.cree, type: r.type, statut: r.statut, nom: r.nom, adresse: r.adresse, ecran: r.ecran, version: r.version, appareil: r.appareil,
+  // « facturable » et le temps passé : réservés au prestataire (jamais envoyés au demandeur).
+  const presta = prestataire ? { facturable: estFacturable(r), facturableChoisi: r.facturable != null, minutes: r.minutes || 0 } : {};
+  return { ...presta, id: r.id, cree: r.cree, type: r.type, statut: r.statut, nom: r.nom, adresse: r.adresse, ecran: r.ecran, version: r.version, appareil: r.appareil,
     nonLu: !prestataire && r.oid === moi.oid && r.lu_par_demandeur === 0, dernier: r.dernier || r.cree, nbMessages: r.nb || 0,
     extrait: r.extrait != null ? ligneCourte(r.extrait, 140) : undefined, dernierAuteur: r.dernier_auteur || undefined };
 }
@@ -664,6 +680,60 @@ async function demandeAccessible(db, id, moi, prestataire) {
   return d;
 }
 
+/* ---------- Statistiques (prestataire) ---------- */
+const FMT_PARIS = (() => { try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit" }); } catch { return null; } })();
+/** « AAAA-MM » d'un instant, à l'heure de Paris. */
+export function moisParis(ms) {
+  if (FMT_PARIS) { const p = FMT_PARIS.formatToParts(new Date(ms)); return p.find((x) => x.type === "year").value + "-" + p.find((x) => x.type === "month").value; }
+  return new Date(ms).toISOString().slice(0, 7);
+}
+function decalerMois(mois, n) { const [y, m] = mois.split("-").map(Number), t = new Date(Date.UTC(y, m - 1 + n, 1)); return t.getUTCFullYear() + "-" + String(t.getUTCMonth() + 1).padStart(2, "0"); }
+/**
+ * Agrégats d'un mois (et des 5 précédents pour l'évolution) à partir des lignes de « demandes »
+ * { id, cree, nom, adresse, type, statut, facturable, minutes, premiere_reponse, extrait }.
+ */
+export function statsAide(lignes, mois, maintenant = Date.now()) {
+  const courant = moisParis(maintenant);
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(mois || "")) || mois > courant) mois = courant;
+  const avecMois = lignes.map((l) => ({ ...l, mois: moisParis(Date.parse(l.cree)), fact: estFacturable(l), minutes: Number(l.minutes) || 0 }));
+  const du = avecMois.filter((l) => l.mois === mois);
+  const delais = du.filter((l) => l.premiere_reponse).map((l) => (Date.parse(l.premiere_reponse) - Date.parse(l.cree)) / 60000).filter((x) => x >= 0);
+  const personnes = new Map();
+  for (const l of du) {
+    const k = String(l.adresse || l.nom).toLowerCase();
+    const p = personnes.get(k) || { nom: l.nom, adresse: l.adresse, demandes: 0, facturables: 0, minutes: 0 };
+    p.demandes++; if (l.fact) { p.facturables++; p.minutes += l.minutes; }
+    personnes.set(k, p);
+  }
+  const evolution = [];
+  for (let i = 5; i >= 0; i--) {
+    const mm = decalerMois(mois, -i), x = avecMois.filter((l) => l.mois === mm);
+    evolution.push({ mois: mm, total: x.length, problemesFacturables: x.filter((l) => l.type === "probleme" && l.fact).length });
+  }
+  return {
+    mois, precedent: decalerMois(mois, -1), suivant: mois < courant ? decalerMois(mois, 1) : null,
+    tuiles: {
+      demandes: du.length, problemes: du.filter((l) => l.type === "probleme").length, facturables: du.filter((l) => l.fact).length,
+      minutesFacturables: du.filter((l) => l.fact).reduce((a, l) => a + l.minutes, 0),
+      delaiMoyenMinutes: delais.length ? Math.round(delais.reduce((a, b) => a + b, 0) / delais.length) : null,
+      enCours: du.filter((l) => l.statut !== "resolue").length,
+    },
+    parType: Object.keys(AIDE_TYPES).map((t) => ({ type: t, libelle: AIDE_TYPES[t], demandes: du.filter((l) => l.type === t).length })),
+    parPersonne: [...personnes.values()].sort((a, b) => b.demandes - a.demandes || b.minutes - a.minutes || String(a.nom).localeCompare(String(b.nom), "fr")),
+    evolution,
+    lignes: du.map((l) => ({ id: l.id, cree: l.cree, nom: l.nom, adresse: l.adresse, type: l.type, statut: l.statut, facturable: l.fact, minutes: l.minutes, extrait: ligneCourte(l.extrait || "", 140) })),
+  };
+}
+async function statsDepuisBase(db, mois) {
+  const m = /^\d{4}-(0[1-9]|1[0-2])$/.test(String(mois || "")) ? mois : moisParis(Date.now());
+  const [y, mo] = m.split("-").map(Number);
+  const depuis = iso(Date.UTC(y, mo - 1 - 5, 1) - 2 * 86400000); // 6 mois (+ marge pour l'heure de Paris)
+  const r = await db.prepare("SELECT d.id, d.cree, d.nom, d.adresse, d.type, d.statut, d.facturable, d.minutes, " +
+    "(SELECT MIN(cree) FROM messages WHERE demande_id = d.id AND auteur = 'prestataire') AS premiere_reponse, " +
+    "(SELECT texte FROM messages WHERE demande_id = d.id ORDER BY id LIMIT 1) AS extrait FROM demandes d WHERE d.cree >= ? ORDER BY d.id").bind(depuis).all();
+  return statsAide(r.results || [], m);
+}
+
 /** Fichiers d'un envoi : installés ? contrôlés (nombre, poids, type réel) ? quota ? → { ok: [...] } ou { reponse, statut }. */
 async function preparerPj(env, db, moi, prestataire, fichiers) {
   if (!fichiers.length) return { ok: [] };
@@ -688,6 +758,10 @@ async function routeAide(req, url, env, origine) {
   const m = req.method;
   try {
     await tables(db);
+    if (segments.length === 1 && segments[0] === "stats" && m === "GET") {
+      if (!prestataire) return repondre({ ok: false, code: "interdit", erreur: "Réservé à Damien." }, 403);
+      return repondre(await statsDepuisBase(db, url.searchParams.get("mois")), 200);
+    }
     if (segments.length === 1 && segments[0] === "moi" && m === "GET") return repondre({ prestataire, nom: moi.nom, adresse: moi.adresse, pj: pjOk(env) }, 200);
 
     if (segments.length === 0 && m === "POST") {
@@ -784,11 +858,33 @@ async function routeAide(req, url, env, origine) {
 
     if (segments.length === 1 && m === "PATCH") {
       const c = await lireCorps(req);
-      const statut = String(c.statut || "");
-      if (!AIDE_STATUTS.includes(statut)) return repondre({ ok: false, code: "statut_invalide", erreur: "Statut inconnu." }, 400);
-      if (!prestataire && statut !== "resolue") return repondre({ ok: false, code: "interdit", erreur: "Seul Damien peut changer ce statut." }, 403);
-      await db.prepare("UPDATE demandes SET statut = ? WHERE id = ?").bind(statut, id).run();
-      return repondre({ ok: true, id, statut }, 200);
+      const champs = [], valeurs = [];
+      if (c.statut !== undefined) {
+        const statut = String(c.statut || "");
+        if (!AIDE_STATUTS.includes(statut)) return repondre({ ok: false, code: "statut_invalide", erreur: "Statut inconnu." }, 400);
+        if (!prestataire && statut !== "resolue") return repondre({ ok: false, code: "interdit", erreur: "Seul Damien peut changer ce statut." }, 403);
+        champs.push("statut = ?"); valeurs.push(statut);
+      }
+      // Requalification (prestataire seulement) : type, facturable (oui / non / null = selon le type), temps passé.
+      const requal = ["type", "facturable", "minutes"].filter((k) => c[k] !== undefined);
+      if (requal.length && !prestataire) return repondre({ ok: false, code: "interdit", erreur: "Seul Damien peut requalifier une demande." }, 403);
+      if (c.type !== undefined) {
+        if (!Object.hasOwn(AIDE_TYPES, String(c.type))) return repondre({ ok: false, code: "type_invalide", erreur: "Type de demande inconnu." }, 400);
+        champs.push("type = ?"); valeurs.push(String(c.type));
+      }
+      if (c.facturable !== undefined) {
+        if (c.facturable !== null && typeof c.facturable !== "boolean") return repondre({ ok: false, code: "facturable_invalide", erreur: "Facturable : oui ou non." }, 400);
+        champs.push("facturable = ?"); valeurs.push(c.facturable === null ? null : c.facturable ? 1 : 0);
+      }
+      if (c.minutes !== undefined) {
+        const n = Number(c.minutes);
+        if (!Number.isInteger(n) || n < 0 || n > 100000) return repondre({ ok: false, code: "minutes_invalides", erreur: "Temps passé : un nombre de minutes (0 à 100 000)." }, 400);
+        champs.push("minutes = ?"); valeurs.push(n);
+      }
+      if (!champs.length) return repondre({ ok: false, code: "rien_a_changer", erreur: "Rien à changer." }, 400);
+      await db.prepare("UPDATE demandes SET " + champs.join(", ") + " WHERE id = ?").bind(...valeurs, id).run();
+      const apres = await db.prepare("SELECT * FROM demandes WHERE id = ?").bind(id).first();
+      return repondre({ ok: true, id, statut: apres.statut, demande: vueDemande(apres, moi, prestataire) }, 200);
     }
     return repondre({ ok: false, erreur: "Méthode non permise." }, 405);
   } catch (e) {
