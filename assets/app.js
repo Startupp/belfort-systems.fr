@@ -53,13 +53,8 @@
     foot.insertBefore(egg, foot.firstChild);
   }
 
-  /* Mascotte : clin d'œil quand elle entre à l'écran, petit saut au survol, clin d'œil au clic */
+  /* Mascotte : petit saut quand elle entre à l'écran, au survol et au clic */
   var mascottes = document.querySelectorAll(".mascotte");
-  function clin(m) {
-    if (reduce || m.classList.contains("wink")) return;
-    m.classList.add("wink");
-    setTimeout(function () { m.classList.remove("wink"); }, 260);
-  }
   function hop(m) {
     if (reduce) return;
     m.classList.remove("hop");
@@ -67,11 +62,10 @@
     m.classList.add("hop");
   }
   Array.prototype.forEach.call(mascottes, function (m) {
-    m.addEventListener("click", function () { clin(m); hop(m); });
-    m.addEventListener("mouseenter", function () { setTimeout(function () { clin(m); }, 180); });
+    m.addEventListener("click", function () { hop(m); });
   });
 
-  /* Apparitions au défilement (et clin d'œil de la mascotte quand elle apparaît) */
+  /* Apparitions au défilement (et petit saut de la mascotte quand elle apparaît) */
   var reveals = document.querySelectorAll(".reveal");
   if (reduce || !("IntersectionObserver" in window)) {
     Array.prototype.forEach.call(reveals, function (el) { el.classList.add("in"); });
@@ -90,7 +84,7 @@
     entries.forEach(function (e) {
       if (!e.isIntersecting) return;
       var m = e.target;
-      setTimeout(function () { clin(m); }, 500);
+      setTimeout(function () { hop(m); }, 500);
       ioM.unobserve(m);
     });
   }, { threshold: 0.6 });

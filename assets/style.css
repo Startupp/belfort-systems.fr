@@ -250,20 +250,11 @@ nav.main .btn { margin-left: 6px; min-height: 44px; white-space: nowrap; padding
 
 /* La mascotte : dans le coin du héros, en bas à droite */
 .mascotte {
-  position: relative; width: 120px; aspect-ratio: 301 / 291; flex: none;
+  position: relative; width: 120px; aspect-ratio: 1; flex: none;
   transform-origin: 50% 90%;
   transition: transform .4s var(--ease);
 }
-.mascotte img { width: 100%; height: auto; }
-/* Paupière dessinée en CSS sur l'œil gauche : le clin d'œil */
-.mascotte .paupiere {
-  position: absolute; left: 15%; top: 58%; width: 21.5%; height: 15.5%;
-  background: #FAD4B8; border-bottom: 2px solid #4A2E22;
-  border-radius: 0 0 60% 60% / 0 0 100% 100%;
-  transform: scaleY(0); transform-origin: top;
-  transition: transform .14s ease-in;
-}
-.mascotte.wink .paupiere { transform: scaleY(1); }
+.mascotte img { display: block; width: 100%; height: auto; }
 @media (prefers-reduced-motion: no-preference) {
   .mascotte:hover { transform: rotate(-5deg) translateY(-3px); }
   .mascotte.hop { animation: hop .55s var(--ease); }
@@ -274,7 +265,7 @@ nav.main .btn { margin-left: 6px; min-height: 44px; white-space: nowrap; padding
     100% { transform: rotate(0) translateY(0); }
   }
 }
-.hero .mascotte { position: absolute; right: 0; bottom: -18px; width: clamp(96px, 11vw, 150px); }
+.hero .mascotte { position: absolute; right: 0; bottom: -10px; width: clamp(120px, 14vw, 190px); }
 @media (max-width: 1240px) { .hero .mascotte { right: 16px; } }
 
 /* ---------- Sections ---------- */
@@ -436,7 +427,13 @@ table.tarifs tr.devis td.montant { color: var(--brique-texte); font-size: 1rem; 
 .direct[open] summary::after { content: "–"; }
 .direct summary:focus-visible { outline: 3px solid var(--bleu-2); outline-offset: 2px; }
 .question { display: flex; align-items: flex-end; gap: 14px; }
-.question .mascotte { width: 86px; }
+.question .mascotte { width: 96px; }
+.section-head.avec-mascotte { display: flex; align-items: flex-end; gap: 24px; max-width: 820px; }
+.section-head.avec-mascotte > div { flex: 1; }
+.section-head.avec-mascotte .mascotte { width: 120px; margin-bottom: -8px; }
+#c-status .ok { display: flex; align-items: center; gap: 14px; }
+#c-status .ok .mascotte { width: 72px; }
+#c-status .ok p { margin: 0; }
 .question p { color: var(--muted); font-size: .95rem; margin: 0; }
 .zone { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
 .chip { font-size: .85rem; padding: 5px 11px; border-radius: var(--pill); background: var(--bg-2); color: var(--muted); }
@@ -473,13 +470,13 @@ table.tarifs tr.devis td.montant { color: var(--brique-texte); font-size: 1rem; 
 .bande { position: relative; overflow: hidden; background: var(--bleu-nuit); color: var(--heros-ink); border-radius: var(--radius-lg); padding: clamp(36px, 5vw, 56px); display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: center; }
 .bande h2 { color: #fff; margin-bottom: 12px; }
 .bande p { color: var(--bleu-clair); margin-bottom: 22px; }
-.bande .mascotte { width: 130px; }
+.bande .mascotte { width: 150px; }
 .photo-large { margin-top: 44px; max-width: 880px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); }
 .photo-large img { width: 100%; height: auto; }
 
 /* ---------- 404 ---------- */
 .page-404 { min-height: calc(100svh - 68px); display: grid; place-items: center; text-align: center; padding: 60px 0; }
-.page-404 .mascotte { margin: 0 auto 22px; width: 150px; }
+.page-404 .mascotte { margin: 0 auto 22px; width: 170px; }
 .page-404 p { margin: 14px auto 28px; color: var(--muted); font-size: 1.05rem; }
 .page-404 .cta-row { justify-content: center; }
 
@@ -569,7 +566,8 @@ footer .legal a { color: inherit; }
   .hero .cta-row .btn { flex: 1 1 100%; }
   .reperes { gap: 12px 22px; margin-top: 28px; }
   .reperes .n { font-size: 1.3rem; }
-  .hero .mascotte { position: static; width: 84px; margin: 20px 0 -30px auto; }
+  .hero .mascotte { position: static; width: 110px; margin: 16px 0 -40px auto; }
+  .section-head.avec-mascotte .mascotte { width: 88px; }
 
   .block { padding: 48px 0; }
   .services-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -602,7 +600,7 @@ footer .legal a { color: inherit; }
   .about-hero .portrait { max-width: 240px; }
   .principles { grid-template-columns: 1fr; }
   .bande { grid-template-columns: 1fr; padding: 28px 20px; }
-  .bande .mascotte { width: 96px; margin-left: auto; }
+  .bande .mascotte { width: 110px; margin-left: auto; }
   .f-top { grid-template-columns: 1fr; gap: 22px; }
   footer.site { padding-bottom: 28px; }
 
