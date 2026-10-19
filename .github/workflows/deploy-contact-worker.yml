@@ -1,0 +1,82 @@
+name: Déployer le Worker belfort-contact
+
+# Déploie le Worker du formulaire de contact (contact-worker/) à chaque fusion sur main.
+# Secrets requis dans le dépôt : CLOUDFLARE_API_TOKEN (jeton restreint Workers) et CLOUDFLARE_ACCOUNT_ID.
+# Le KV « RATE » et la base D1 « belfort_contact » sont créés s'ils n'existent pas ; leurs identifiants
+# sont injectés au moment du déploiement, rien n'est commité.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "contact-worker/**"
+      - ".github/workflows/deploy-contact-worker.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-contact-worker
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contact-worker
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Installer wrangler
+        run: npm install --no-save wrangler@4
+
+      - name: KV « RATE » (création si absent)
+        id: kv
+        run: |
+          set -euo pipefail
+          TITRE="belfort-contact-RATE"
+          ID=$(npx wrangler kv namespace list | jq -r --arg t "$TITRE" '.[] | select(.title==$t) | .id' | head -n1)
+          if [ -z "$ID" ]; then
+            echo "Création du KV $TITRE"
+            npx wrangler kv namespace create RATE >/dev/null
+            ID=$(npx wrangler kv namespace list | jq -r --arg t "$TITRE" '.[] | select(.title==$t) | .id' | head -n1)
+          fi
+          [ -n "$ID" ] || { echo "KV introuvable"; exit 1; }
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Base D1 « belfort_contact » (création si absente)
+        id: d1
+        run: |
+          set -euo pipefail
+          NOM="belfort_contact"
+          ID=$(npx wrangler d1 list --json | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
+          if [ -z "$ID" ]; then
+            echo "Création de la base D1 $NOM"
+            npx wrangler d1 create "$NOM" >/dev/null
+            ID=$(npx wrangler d1 list --json | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
+          fi
+          [ -n "$ID" ] || { echo "D1 introuvable"; exit 1; }
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Préparer la configuration de déploiement
+        run: |
+          set -euo pipefail
+          sed -e "s/REMPLACER_PAR_ID_KV/${{ steps.kv.outputs.id }}/" \
+              -e "s/REMPLACER_PAR_ID_D1/${{ steps.d1.outputs.id }}/" \
+              wrangler.toml > wrangler.ci.toml
+          grep -q REMPLACER_ wrangler.ci.toml && { echo "Identifiant manquant"; exit 1; } || true
+
+      - name: Appliquer les migrations D1
+        run: npx wrangler d1 migrations apply belfort_contact --remote --config wrangler.ci.toml
+
+      - name: Déployer
+        run: npx wrangler deploy --config wrangler.ci.toml

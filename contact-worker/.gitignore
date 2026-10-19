@@ -3,3 +3,4 @@ wrangler.local.toml
 .wrangler/
 node_modules/
 .dev.vars
+wrangler.ci.toml
