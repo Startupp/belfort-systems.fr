@@ -351,7 +351,24 @@
     return h("button", attrs, contenu);
   }
   function tuiles(liste, attrs) { return h("div", Object.assign({ class: "tuiles" }, attrs || {}), liste.filter(Boolean).map(tuile)); }
-  function tuilesTrois(liste) { return tuiles(liste, { class: "tuiles trois" }); } // Gérer : 3 par ligne, plus grandes
+  function tuilesTrois(liste) { return grandesTuiles(liste); }
+  /**
+   * v5.5 : grande tuile, une seule action : pictogramme (icône ou emoji) + titre + une ligne + ›.
+   * Grille droite : 1 colonne sur téléphone, 2 puis 3 sur grand écran. Garde les classes .t et .lib.
+   */
+  function grandeTuile(t) {
+    var teinte = TEINTES[t.icone] || "praline";
+    var ico = t.emoji ? h("span", { class: "ico c-" + (t.teinte || "praline") }, emoji(t.emoji))
+      : h("span", { class: "ico c-" + teinte }, icone(t.icone));
+    var attrs = { class: "t gt" + (t.choisi ? " choisi" : ""), "data-usage": t.usage || null, "data-action": t.action || null, "data-tuto": t.tuto || null };
+    var contenu = [ico, h("span", { class: "textes" }, h("span", { class: "lib" }, t.libelle), t.sous ? h("span", { class: "sous" }, t.sous) : null),
+      t.externe ? h("span", { class: "sr" }, " (s'ouvre dans un nouvel onglet)") : null,
+      h("span", { class: "chevron", "aria-hidden": "true" }, t.externe ? icone("ouvrir") : icone("droite"))];
+    if (t.href) { attrs.href = t.href; if (t.externe) { attrs.target = "_blank"; attrs.rel = "noopener noreferrer"; } return h("a", attrs, contenu); }
+    attrs.type = "button"; attrs.onclick = t.onclick;
+    return h("button", attrs, contenu);
+  }
+  function grandesTuiles(liste, attrs) { return h("div", Object.assign({ class: "tuiles-grandes" }, attrs || {}), liste.filter(Boolean).map(grandeTuile)); }
 
   /** Squelette de chargement (appels Microsoft) : n lignes grises animées. */
   function squelette(n, forme) {
@@ -371,9 +388,9 @@
     var m = planning.mode;
     var date = planning.quand ? jourLong(jourDe(planning.quand)) + " à " + heure(planning.quand) : "";
     if (m === "exemple") return h("div", { class: "bandeau exemple", role: "note" }, icone("exemple"),
-      h("div", null, h("strong", null, "Exemple — données fictives"), "Calendriers du Château pas encore branchés."));
+      h("div", null, h("strong", null, "Exemple (pas le vrai planning)"), "Le vrai planning n'est pas encore relié."));
     if (m === "exemple-panne") return h("div", { class: "bandeau exemple", role: "note" }, icone("exemple"),
-      h("div", null, h("strong", null, "EXEMPLE — données fictives"), "Les calendriers ne répondent pas et rien n'est encore enregistré sur ce téléphone."));
+      h("div", null, h("strong", null, "Exemple (pas le vrai planning)"), "Le planning ne répond pas et rien n'est encore gardé sur ce téléphone."));
     if (m === "hors-ligne") return h("div", { class: "bandeau info", role: "note" }, icone("horsligne"),
       h("div", null, h("strong", null, "Pas de connexion"), "Voici la dernière version enregistrée" + (date ? " (" + date + ")." : ".")));
     if (m === "ancien") return h("div", { class: "bandeau info", role: "note" }, icone("info"),
@@ -545,12 +562,12 @@
       h("div", { class: "premier-boutons" },
         h("button", { class: "gros-bouton", type: "button", "data-action": "calendrier", onclick: function () {
           reglages.mode = "calendrier"; sauverReglages(); rendre();
-        } }, h("span", { class: "eb-anneau" }, icone("agenda")), h("span", null, h("b", null, "Voir le calendrier"), h("small", null, "Sans compte, sur cet appareil")), h("span", { class: "chevron" }, icone("droite"))),
+        } }, h("span", { class: "eb-anneau" }, icone("agenda")), h("span", null, h("b", null, "Voir le planning"), h("small", null, "Sans se connecter")), h("span", { class: "chevron" }, icone("droite"))),
         h("button", { class: "gros-bouton principal", type: "button", "data-action": "connexion", disabled: !configure, onclick: function () {
           this.disabled = true; this.classList.add("en-cours");
           var b = this;
           Promise.resolve(g.connecter()).catch(function () {}).then(function () { b.disabled = false; b.classList.remove("en-cours"); });
-        } }, h("span", { class: "eb-anneau" }, icone("cle")), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre compte Microsoft du Château" : "Connexion pas encore activée")), h("span", { class: "chevron" }, icone("droite")))),
+        } }, h("span", { class: "eb-anneau" }, icone("cle")), h("span", null, h("b", null, "Se connecter"), h("small", null, configure ? "Avec votre adresse du Château" : "Connexion pas encore prête")), h("span", { class: "chevron" }, icone("droite")))),
       g && g.erreur() ? h("p", { class: "erreur premier-erreur", role: "alert" }, g.erreur()) : null,
       h("p", { class: "premier-pied" }, "Belfort Systems · 06 09 89 74 43")));
   }
@@ -607,9 +624,9 @@
       // Zoom de la grille (semaine, mois) : 0 = « ajuster à l'écran » (la semaine tient en entier).
       var grilleZoomable = v.vue === "semaine" || v.vue === "mois";
       if (grilleZoomable) bloc.appendChild(h("div", { class: "zoom-planning", role: "group", "aria-label": "Taille de la grille" },
-        h("button", { class: "btn-rond", type: "button", "aria-label": "Réduire la grille", "data-zoom": "moins", disabled: !reglages.zoom, onclick: function () { zoomer(-1); } }, icone("moins")),
-        h("button", { class: "btn secondaire", type: "button", "data-zoom": "ajuster", "aria-pressed": String(!reglages.zoom), onclick: function () { zoomer(-9); } }, "Ajuster à l'écran"),
-        h("button", { class: "btn-rond", type: "button", "aria-label": "Agrandir la grille", "data-zoom": "plus", disabled: reglages.zoom >= ZOOM_MAX, onclick: function () { zoomer(1); } }, icone("plus"))));
+        h("button", { class: "btn-rond", type: "button", "aria-label": "Plus petit", "data-zoom": "moins", disabled: !reglages.zoom, onclick: function () { zoomer(-1); } }, icone("moins")),
+        h("button", { class: "btn secondaire", type: "button", "data-zoom": "ajuster", "aria-pressed": String(!reglages.zoom), onclick: function () { zoomer(-9); } }, "Taille normale"),
+        h("button", { class: "btn-rond", type: "button", "aria-label": "Plus grand", "data-zoom": "plus", disabled: reglages.zoom >= ZOOM_MAX, onclick: function () { zoomer(1); } }, icone("plus"))));
       var zone = h("div", { class: "zone-planning" + (grilleZoomable ? " zoom-" + (reglages.zoom || 0) + (reglages.zoom ? " defile" : " ajuster") : "") });
       if (grilleZoomable) pincement(zone);
       if (!planning) zone.appendChild(squelette(4));
@@ -649,19 +666,19 @@
 
   /** Onglet Planning : épingles (connecté), puis le planning, en lecture seule. */
   function ecranPlanning(app) {
-    var actualiser = h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", title: "Actualiser", onclick: actualiserPlanning }, icone("actualiser"));
+    var actualiser = h("button", { class: "btn-rond", type: "button", "aria-label": "Recharger le planning", title: "Recharger", onclick: actualiserPlanning }, icone("actualiser"));
     app.appendChild(barre("Planning", null, actualiser, maj(jourLong(aujourdhui()))));
-    if (connecte() && window.EBEpingles) app.appendChild(window.EBEpingles.section()); // raccourcis de chacun
+    // v5.5 : les épingles sont sur l'Accueil ; le Planning ne montre que le planning.
     blocPlanning(app, null); // v4 : plus de bandeau d'absences ni de pointage (planning en lecture seule)
   }
 
   /* Mode « calendrier seul » (choisi sur le premier écran, mémorisé sur l'appareil). */
   function ecranCalendrierSeul(app) {
-    app.appendChild(barre("Calendrier du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Actualiser le planning", onclick: actualiserPlanning }, icone("actualiser")), "Lecture seule · sans compte"));
+    app.appendChild(barre("Planning du Château", null, h("button", { class: "btn-rond", type: "button", "aria-label": "Recharger le planning", onclick: actualiserPlanning }, icone("actualiser")), "Sans connexion"));
     var corps = h("div", { class: "calendrier-seul" });
     app.appendChild(corps);
     corps.appendChild(blocAujourdhui());
-    corps.appendChild(h("h2", { class: "titre-groupe", id: "tout-le-planning", tabindex: "-1" }, "Jour · Semaine · Mois"));
+    corps.appendChild(h("h2", { class: "titre-groupe", id: "tout-le-planning", tabindex: "-1" }, "Tout le planning"));
     blocPlanning(corps, null);
     app.appendChild(h("div", { class: "barre-bas" },
       h("button", { class: "btn-verre", type: "button", "data-action": "accueil", onclick: function () {
@@ -670,7 +687,7 @@
       h("button", { class: "btn-verre large", type: "button", onclick: function () {
         var c = document.getElementById("tout-le-planning");
         if (c) { c.scrollIntoView({ behavior: window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); c.focus({ preventScroll: true }); }
-      } }, icone("agenda"), "Jour · Semaine · Mois")));
+      } }, icone("agenda"), "Voir tout le planning")));
   }
 
   /** « Aujourd'hui » (calendrier seul) : la date, puis les rendez-vous du jour sur une ligne de temps dorée. */
@@ -798,12 +815,31 @@
   /* ------------------------------------------------------------------ */
   /* Onglet Moi : qui je suis, mes droits, ce que je peux utiliser       */
   /* ------------------------------------------------------------------ */
-  var DROITS_TEXTE = {
-    proprietaire: ["🏰", "Propriétaire du site", "Décide qui a accès au dossier commun et à chaque dossier."],
-    collaborateur: ["👤", "Collaborateur", "Planning, dossier commun (selon vos accès) et vos outils Microsoft."],
-  };
-  function puceDroit(emo, titre, phrase) {
-    return h("li", { class: "droit" }, emoji(emo), h("span", null, h("b", null, titre), h("small", null, phrase)));
+  /* v5.5 : carte « Vous êtes : … » — niveau TOUJOURS déduit des droits réels (profil.js). */
+  function puce(e) { return function (t) { return h("li", null, emoji(e), h("span", null, t)); }; }
+  /** Noms des gestionnaires (propriétaires du site), lus chez Microsoft ; [] si inconnus. */
+  function gestionnaires() {
+    var X = window.EBConnecte;
+    if (!X || !connecte()) return Promise.resolve([]);
+    return X.contexte().then(function (c) {
+      var vus = {}, l = [];
+      (c.proprietairesNoms || []).concat((c.proprietairesSp || []).filter(function (u) { return u.PrincipalType === 1; }).map(function (u) { return u.Title; }))
+        .forEach(function (n) { if (n && !vus[n]) { vus[n] = 1; l.push(n); } });
+      return l;
+    }).catch(function () { return []; });
+  }
+  function carteRole(r) {
+    var P = window.EBProfil, n = P.NIVEAUX[(r && r.niveau) || "lecteur"];
+    var qui = h("strong", { class: "qui-demander" }, "…");
+    var carte = h("section", { class: "carte-role", "data-niveau": n.id, "aria-labelledby": "t-role" },
+      h("h2", { id: "t-role" }, emoji(n.emoji), h("span", null, "Vous êtes : ", h("strong", null, n.nom))),
+      h("p", { class: "phrase-role" }, n.phrase),
+      h("div", { class: "role-colonnes" },
+        h("div", null, h("h3", null, "Vous pouvez"), h("ul", { class: "liste-role peut" }, n.peut.map(puce("✅")))),
+        n.nePeut.length ? h("div", null, h("h3", null, "Vous ne pouvez pas"), h("ul", { class: "liste-role nepeut" }, n.nePeut.map(puce("⛔"))),
+          h("p", { class: "demander" }, "Pour cela, demandez à : ", qui)) : null));
+    if (n.nePeut.length) gestionnaires().then(function (noms) { qui.textContent = noms.length ? window.EBDroits.listeNoms(noms) : "Damien"; });
+    return carte;
   }
   function ecranMoi(app, chemin) {
     // v5.2 : Moi → Guides (#/moi/guides), pour tout le monde.
@@ -814,43 +850,53 @@
     var nom = (me && me.displayName) || c.name || "";
     app.appendChild(h("div", { class: "bonjour moi-tete" }, h("span", { class: "eb-anneau rond lent" }, avatar({ prenom: nom || "?", couleur: "#8A4C45" }, "grand")),
       h("div", null, h("h2", null, h("span", { class: "reflet" }, nom || "Mon compte")), h("p", null, (me && (me.mail || me.userPrincipalName)) || c.username || ""))));
+    app.appendChild(r ? carteRole(r) : squelette(2));
 
-    var P = window.EBProfil, D = window.EBDroits;
-    var zone = h("section", { class: "section", "aria-busy": r ? "false" : "true" }, h("h2", null, "Mes droits"));
-    app.appendChild(zone);
-    if (!r) zone.appendChild(squelette(2));
-    else {
-      var l = h("ul", { class: "droits" });
-      r.roles.forEach(function (k) { var x = P.ROLES[k]; l.appendChild(puceDroit(k === "facturation" ? "💶" : "🔑", x.nom, x.phrase)); });
-      if (r.droits.proprietaire) l.appendChild(puceDroit.apply(null, DROITS_TEXTE.proprietaire));
-      if (!r.roles.length && !r.droits.proprietaire) l.appendChild(puceDroit.apply(null, DROITS_TEXTE.collaborateur));
-      zone.appendChild(l);
-      // Ce que je peux utiliser (licence)
-      var profils = r.droits.licences.map(function (sku) { return D.SKUS[sku]; }).filter(Boolean);
-      var ordre = ["standard", "basic", "exchange"], pr = ordre.filter(function (x) { return profils.indexOf(x) > -1; })[0];
-      var PR = D.PROFILS[pr || "aucune"];
-      if (PR) app.appendChild(h("section", { class: "section" }, h("h2", null, "Ce que je peux utiliser"),
-        h("div", { class: "carte-profil " + (pr || "aucune") },
-          h("div", { class: "tete" }, emoji(PR.emoji, "grand"), h("div", null, h("b", null, PR.nom), h("span", null, PR.phrase))),
-          h("ul", { class: "outils" }, (PR.outils || []).map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); })))));
-      // Détail réel de mes licences (plans Microsoft traduits), si connecté.
-      var X = window.EBConnecte;
-      if (pr && g && g.estConnecte() && X && X.outilsInclus) app.appendChild(X.outilsInclus(function () {
-        return g.graph("GET", "/me/licenseDetails?$select=skuPartNumber,servicePlans");
-      }, { titre: "Tous mes outils inclus", silencieux: true }));
-    }
-    var liens = ["mail", "agenda", "onedrive", "teams"].map(function (k) { return donnees.liens[k]; }).filter(Boolean);
-    if (liens.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mes outils Microsoft"),
-      tuiles(liens.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; }))));
     app.appendChild(h("div", { class: "actions-liste" },
-      window.EBSuiviEcrans ? action("#/moi/guides", "📘", "Guides", "Guides PDF et pas-à-pas pour vous") : null,
+      action("#/bienvenue/choix", "🧭", "Ce que j'utilise", "Choisir les tuiles de l'accueil"),
+      action("#/comment-faire", "❓", "Comment faire ?", "Les gestes de tous les jours, pas à pas"),
+      window.EBSuiviEcrans ? action("#/moi/guides", "📘", "Modes d'emploi", "Documents et pas-à-pas pour vous") : null,
       window.EBAideEcrans ? window.EBAideEcrans.lignesMoi() : null, // v5.4 : Mes demandes (+ Demandes pour le prestataire)
-      action("#/reglages", "⚙️", "Réglages", "Texte, couleurs, planning, démos, détails techniques"),
+      action("#/reglages", "⚙️", "Réglages", "Taille du texte, couleurs, planning"),
       reglages.demos ? action("#/demos", "🧪", "Démos", "Écrans d'essai, données fictives") : null,
       estInstallee() ? null : action("#/installer", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil"),
       h("a", { class: "action", href: "tel:+33609897443" }, emoji("📞"), h("span", null, h("b", null, "Appeler Damien"), h("small", null, "Belfort Systems · 06 09 89 74 43")), h("span", { class: "fleche", "aria-hidden": "true" }, "›")),
-      h("button", { class: "action", type: "button", "data-action": "deconnexion", onclick: deconnecter }, emoji("🚪"), h("span", null, h("b", null, "Se déconnecter"), h("small", null, "Efface la session de cet appareil")), h("span", { class: "fleche", "aria-hidden": "true" }, "›"))));
+      h("button", { class: "action", type: "button", "data-action": "deconnexion", onclick: deconnecter }, emoji("🚪"), h("span", null, h("b", null, "Se déconnecter"), h("small", null, "Quitter sur cet appareil")), h("span", { class: "fleche", "aria-hidden": "true" }, "›"))));
+
+    var P = window.EBProfil, D = window.EBDroits;
+    if (r) {
+      // Mon abonnement Microsoft (licence), nom commercial en second.
+      var pr = profilLicence(r);
+      var PR = D.PROFILS[pr || "aucune"];
+      if (PR) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mon abonnement Microsoft"),
+        h("div", { class: "carte-profil " + (pr || "aucune") },
+          h("div", { class: "tete" }, emoji(PR.emoji, "grand"), h("div", null, h("b", null, PR.court, PR.court !== PR.nom ? h("small", { class: "tech" }, " (" + PR.nom + ")") : null), h("span", null, PR.phrase))),
+          h("ul", { class: "outils" }, (PR.outils || []).map(function (o) { return h("li", null, emoji(o[0]), h("span", null, o[1])); })))));
+      var X = window.EBConnecte;
+      if (pr && g && g.estConnecte() && X && X.outilsInclus) app.appendChild(X.outilsInclus(function () {
+        return g.graph("GET", "/me/licenseDetails?$select=skuPartNumber,servicePlans");
+      }, { titre: "Tous mes outils", silencieux: true }));
+      if (r.roles.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Mes rôles Microsoft"),
+        h("ul", { class: "droits" }, r.roles.map(function (k) { var x = P.ROLES[k]; return h("li", { class: "droit" }, emoji(k === "facturation" ? "💶" : "🔑"), h("span", null, h("b", null, x.nom), h("small", null, x.phrase))); }))));
+    }
+    var liens = ["mail", "agenda", "onedrive", "teams"].map(function (k) { return donnees.liens[k]; }).filter(Boolean);
+    if (liens.length) app.appendChild(h("section", { class: "section" }, h("h2", null, "Ouvrir mes outils"),
+      tuiles(liens.map(function (l) { return { href: l.url, externe: true, icone: l.icone, libelle: l.titre, aide: l.texte }; }))));
     app.appendChild(h("p", { class: "pied" }, "Espace Breteuil · version " + VERSION + " · Belfort Systems"));
+  }
+  /** Profil de licence (standard, basic, exchange) d'après les licences réelles, ou "". */
+  function profilLicence(r) {
+    var D = window.EBDroits;
+    var profils = ((r && r.droits.licences) || []).map(function (sku) { return D.SKUS[sku]; }).filter(Boolean);
+    return ["standard", "basic", "exchange"].filter(function (x) { return profils.indexOf(x) > -1; })[0] || "";
+  }
+  /** Contexte des choix : documents de l'équipe trouvés, OneDrive inclus, droit d'ajouter. */
+  function ctxUsages(r) {
+    var A = window.EBAcces, commun = A && A.sonde("commun"), site = A && A.sonde("site");
+    var pr = profilLicence(r);
+    return { commun: !(commun && commun.etat === "erreur") && !(site && site.etat === "erreur"),
+      onedrive: !r || !r.droits.licences.length ? true : pr === "standard" || pr === "basic",
+      editer: window.EBProfil.peutEditer(r) };
   }
   function deconnecter() {
     if (window.EBAcces) window.EBAcces.oublier();
@@ -866,37 +912,36 @@
   /* Onglet Équipe / Finance / Gérer : uniquement les sections permises  */
   /* ------------------------------------------------------------------ */
   function ongletGestion() {
-    var r = resultat(), o = r ? r.onglets : [];
-    return o.length === 4 ? o[2] : null;
+    var r = resultat();
+    return r ? window.EBProfil.ongletGestion(r.onglets) : null;
   }
-  /** Retour vers l'onglet de gestion (Équipe, Finance ou Gérer selon le profil). */
+  /** Retour vers l'onglet de gestion (Équipe, Factures, Site ou Gérer selon le profil). */
   function hub() { var o = ongletGestion(); return o ? { href: "#/" + o.id, texte: o.nom } : { href: "#/moi", texte: "Moi" }; }
+  /** v5.5 : Gérer (ou Équipe, Factures) — grandes tuiles en grille droite, un titre clair + une ligne. */
   function ecranGerer(app) {
     var r = resultat(), o = ongletGestion();
     app.appendChild(barre(o ? o.nom : "Gérer", null));
     if (!r) { app.appendChild(squelette(4, "tuiles")); return; }
     var sec = r.sections, fiches = donnees.fiches || {};
-    if (window.EBSuiviEcrans && window.EBProfil.routePermise("suivi", r)) app.appendChild(h("div", { class: "actions-liste tete-suivi" }, window.EBSuiviEcrans.tuile()));
     var lienFin = function (titre) { var t = ((fiches.finance || {}).tuiles || []).filter(function (x) { return x.titre === titre; })[0]; return t && t.url; };
-    if (sec.indexOf("deleguer") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Administration"),
-      tuilesTrois([
-        { href: "#/deleguer", icone: "etoile", libelle: "Déléguer", aide: "Donner ou retirer un rôle : propriétaire du site, facturation, utilisateurs, Exchange" },
-        { href: "#/guides/admin", icone: "livre", libelle: "Guides", aide: "Les gestes d'administration, pas à pas, sur le site de Microsoft" },
-        { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Centre d'admin", aide: "Ouvrir le centre d'administration Microsoft 365" },
-      ])));
-    if (sec.indexOf("equipe") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Équipe"),
-      tuilesTrois([
-        { href: "#/personnes", icone: "personnes", libelle: "Personnes", aide: "L'équipe, les boîtes partagées et les externes (étiquette EXTERNE)" },
-        { href: "#/organisation", icone: "reseau", libelle: "Qui a quoi", aide: "Organisation : qui a quoi, en un schéma à toucher" },
-        sec.indexOf("finance") < 0 ? { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Qui a quelle licence Microsoft, combien il en reste" } : null,
-      ])));
-    if (sec.indexOf("finance") > -1) app.appendChild(h("section", { class: "section" }, h("h2", null, "Finance"),
-      tuilesTrois([
-        { href: "#/licences-reel", icone: "badge", libelle: "Licences", aide: "Licences achetées, utilisées et libres (données réelles)" },
-        { href: lienFin("Les factures") || "https://admin.microsoft.com/Adminportal/Home#/billoverview", externe: true, icone: "facture", libelle: "Factures", aide: "Les factures Microsoft, dans le centre d'administration" },
-        { href: lienFin("Abonnements") || "https://admin.microsoft.com/Adminportal/Home#/subscriptions", externe: true, icone: "carte", libelle: "Abonnements", aide: "Abonnements et moyen de paiement, dans le centre d'administration" },
-        { href: "#/guides/finance", icone: "livre", libelle: "Guides", aide: "Les gestes de facturation, pas à pas" },
-      ])));
+    function bloc(titre, liste) { return h("section", { class: "section" }, h("h2", null, titre), grandesTuiles(liste)); }
+    if (window.EBSuiviEcrans && window.EBProfil.routePermise("suivi", r)) app.appendChild(bloc("Informatique", [window.EBSuiviEcrans.tuile()]));
+    if (sec.indexOf("equipe") > -1) app.appendChild(bloc("Équipe", [
+      { href: "#/personnes", icone: "personnes", libelle: "L'équipe", sous: "Les comptes et adresses partagées" },
+      { href: "#/organisation", icone: "reseau", libelle: "Qui fait quoi", sous: "Le schéma de l'organisation" },
+      sec.indexOf("finance") < 0 ? { href: "#/licences-reel", icone: "badge", libelle: "Abonnements de l'équipe", sous: "Qui a quel abonnement Microsoft" } : null,
+    ]));
+    if (sec.indexOf("finance") > -1) app.appendChild(bloc("Factures", [
+      { href: lienFin("Les factures") || "https://admin.microsoft.com/Adminportal/Home#/billoverview", externe: true, icone: "facture", libelle: "Factures Microsoft", sous: "Les voir chez Microsoft", tuto: "factures" },
+      { href: "#/licences-reel", icone: "badge", libelle: "Abonnements de l'équipe", sous: "Qui a quel abonnement Microsoft" },
+      { href: lienFin("Abonnements") || "https://admin.microsoft.com/Adminportal/Home#/subscriptions", externe: true, icone: "carte", libelle: "Moyen de paiement", sous: "Abonnements et carte, chez Microsoft" },
+      { href: "#/guides/finance", icone: "livre", libelle: "Modes d'emploi", sous: "Les gestes de facturation, pas à pas" },
+    ]));
+    if (sec.indexOf("deleguer") > -1) app.appendChild(bloc("Administration", [
+      { href: "#/deleguer", icone: "etoile", libelle: "Donner un rôle", sous: "Qui peut gérer quoi chez Microsoft" },
+      { href: "#/guides/admin", icone: "livre", libelle: "Modes d'emploi", sous: "Les gestes d'administration, pas à pas" },
+      { href: "https://admin.microsoft.com/", externe: true, icone: "ouvrir", libelle: "Réglages Microsoft", sous: "Le site d'administration Microsoft 365" },
+    ]));
     if (sec.indexOf("site") > -1 && window.EBSiteEcrans) app.appendChild(window.EBSiteEcrans.section());
   }
 

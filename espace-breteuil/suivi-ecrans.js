@@ -24,7 +24,7 @@
   /** Réglages (config.js → suivi), avec valeurs par défaut. */
   function reglage() {
     var s = (self.EB_CONFIG && self.EB_CONFIG.suivi) || {};
-    return { libelle: s.libelle || "Suivi informatique", tuile: s.tuile || "Suivi informatique — tout ce qui a été fait pour vous",
+    return { libelle: s.libelle || "Suivi informatique", tuile: s.tuile || "Ce que Damien a fait pour le Château",
       dossier: s.dossier || "Suivi informatique", fichier: s.fichier || "suivi.json", guides: s.guides || "Guides",
       ancien: s.ancien && s.ancien.dossier && s.ancien.fichier ? s.ancien : null };
   }
@@ -213,12 +213,9 @@
       }))));
   }
 
-  /** Grande tuile en tête de l'onglet de gestion. */
+  /** v5.5 : tuile « 🛠️ Suivi informatique » de l'écran Gérer (grande tuile, EB.grandesTuiles). */
   function tuileGestion() {
-    return h("a", { class: "action carte-suivi", href: "#/suivi", "data-action": "suivi" },
-      h("span", { class: "eb-anneau" }, icone("horloge")),
-      h("span", null, h("b", null, reglage().tuile), h("small", null, "Historique daté, guides PDF, ce qui a été réglé, contacter le prestataire")),
-      h("span", { class: "fleche", "aria-hidden": "true" }, "›"));
+    return { href: "#/suivi", emoji: "🛠️", libelle: reglage().libelle, sous: reglage().tuile, action: "suivi" };
   }
 
   EB.ecran("suivi", ecranSuivi);
