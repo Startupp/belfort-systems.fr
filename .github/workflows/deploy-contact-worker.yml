@@ -43,12 +43,14 @@ jobs:
         id: kv
         run: |
           set -euo pipefail
-          TITRE="belfort-contact-RATE"
-          ID=$(npx wrangler kv namespace list | jq -r --arg t "$TITRE" '.[] | select(.title==$t) | .id' | head -n1)
+          LISTE=$(npx wrangler kv namespace list 2>/dev/null || echo "[]")
+          echo "Espaces KV existants : $LISTE"
+          ID=$(echo "$LISTE" | jq -r '.[] | select(.title | test("RATE$")) | .id' | head -n1)
           if [ -z "$ID" ]; then
-            echo "Création du KV $TITRE"
-            npx wrangler kv namespace create RATE >/dev/null
-            ID=$(npx wrangler kv namespace list | jq -r --arg t "$TITRE" '.[] | select(.title==$t) | .id' | head -n1)
+            echo "Création du KV RATE"
+            SORTIE=$(npx wrangler kv namespace create RATE 2>&1) || { echo "$SORTIE"; exit 1; }
+            echo "$SORTIE"
+            ID=$(echo "$SORTIE" | grep -oE '[0-9a-f]{32}' | head -n1)
           fi
           [ -n "$ID" ] || { echo "KV introuvable"; exit 1; }
           echo "id=$ID" >> "$GITHUB_OUTPUT"
@@ -58,11 +60,14 @@ jobs:
         run: |
           set -euo pipefail
           NOM="belfort_contact"
-          ID=$(npx wrangler d1 list --json | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
+          LISTE=$(npx wrangler d1 list --json 2>/dev/null || echo "[]")
+          echo "Bases D1 existantes : $LISTE"
+          ID=$(echo "$LISTE" | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
           if [ -z "$ID" ]; then
             echo "Création de la base D1 $NOM"
-            npx wrangler d1 create "$NOM" >/dev/null
-            ID=$(npx wrangler d1 list --json | jq -r --arg n "$NOM" '.[] | select(.name==$n) | .uuid' | head -n1)
+            SORTIE=$(npx wrangler d1 create "$NOM" 2>&1) || { echo "$SORTIE"; exit 1; }
+            echo "$SORTIE"
+            ID=$(echo "$SORTIE" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -n1)
           fi
           [ -n "$ID" ] || { echo "D1 introuvable"; exit 1; }
           echo "id=$ID" >> "$GITHUB_OUTPUT"
