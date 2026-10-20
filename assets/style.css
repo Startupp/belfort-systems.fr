@@ -492,6 +492,9 @@ footer.site .brand .mark { background: var(--heros-ink); }
 .f-col a { color: var(--bleu-clair); text-decoration: none; font-size: .95rem; }
 .f-col a:hover { color: #fff; text-decoration: underline; }
 footer address { font-style: normal; font-size: .95rem; line-height: 1.6; }
+footer details.legal summary { cursor: pointer; font-size: .9rem; opacity: .8; }
+footer details.legal summary:hover { opacity: 1; }
+footer details.legal p { margin: .5rem 0 0; }
 footer .legal { font-size: .82rem; line-height: 1.6; margin: 24px 0; max-width: none; opacity: .85; }
 footer .legal a { color: inherit; }
 .f-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: .88rem; }
