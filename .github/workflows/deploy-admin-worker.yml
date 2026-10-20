@@ -2,7 +2,7 @@ name: Déployer le Worker belfort-admin
 
 # Déploie le service du tableau de bord (api/) à chaque fusion sur main.
 # Secrets du dépôt : CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, ADMIN_PASSWORD (mot de passe
-# du tableau de bord) et ADMIN_GITHUB_TOKEN (jeton GitHub de la vue « Publications », facultatif) ;
+# du tableau de bord) et ADMIN_GITHUB_SECRET (jeton GitHub de la vue « Publications », facultatif) ;
 # si l'un des deux derniers est absent, le secret correspondant du Worker n'est pas touché.
 # La base D1 « belfort-systems » et le KV du Worker sont créés s'ils n'existent pas ; le schéma
 # (api/schema.sql, idempotent) est appliqué à chaque déploiement. La base « belfort_contact » du
@@ -37,7 +37,7 @@ jobs:
       ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
       # Jeton GitHub fine-grained limité à ce dépôt (Contents + Pull requests : lecture/écriture),
       # pour la vue « Publications » du tableau de bord. Facultatif.
-      JETON_GITHUB_ADMIN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
+      JETON_GITHUB_ADMIN: ${{ secrets.ADMIN_GITHUB_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
