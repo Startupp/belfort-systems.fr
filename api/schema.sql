@@ -173,3 +173,13 @@ CREATE TABLE IF NOT EXISTS journal (
   cible  TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_journal_quand ON journal(quand);
+
+-- Suivi des messages du formulaire de contact. Les messages eux-mêmes vivent dans la base D1
+-- « belfort_contact » du Worker belfort-contact (binding CONTACTS, lecture seule ici) ; cette table
+-- ne porte que ce que le tableau de bord y ajoute. statut ∈ nouveau|lu|repondu|classe
+CREATE TABLE IF NOT EXISTS contacts_suivi (
+  contact_id INTEGER PRIMARY KEY,   -- contacts.id de la base belfort_contact
+  statut     TEXT NOT NULL DEFAULT 'nouveau',
+  note       TEXT,
+  maj        TEXT NOT NULL
+);

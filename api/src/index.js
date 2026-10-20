@@ -757,7 +757,165 @@ route("GET", "/admin/resume", "admin", async ({ env }) => {
     rdv_a_confirmer: rdvs.results[0].n,
     prochain_rdv: prochain.results[0] || null,
     dernier_evenement: dernier.results[0] || null,
+    messages_nouveaux: await compterMessagesNouveaux(env),
   };
+});
+
+// ---------------------------------------------------------------------------
+// Publications : demandes de fusion (PR) du dépôt GitHub du site
+// ---------------------------------------------------------------------------
+
+const GITHUB_API = "https://api.github.com";
+const GITHUB_DEPOT = "Startupp/belfort-systems.fr";
+const PAGES_PROJET = "belfort-systems-fr";
+
+/** Nom de branche → sous-domaine d'aperçu Cloudflare Pages (minuscules, tout le reste en tirets). */
+function brancheNormalisee(branche) {
+  return String(branche || "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+const urlApercuPages = (branche) => `https://${brancheNormalisee(branche)}.${PAGES_PROJET}.pages.dev`;
+
+/** Appel à l'API GitHub avec le jeton du Worker ; renvoie {statut, corps}. */
+async function appelGitHub(env, methode, chemin, corps) {
+  if (!env.GITHUB_TOKEN) throw new ErreurHttp(503, "Jeton GitHub non configuré.");
+  const rep = await fetch(GITHUB_API + chemin, {
+    method: methode,
+    headers: {
+      "Authorization": "Bearer " + env.GITHUB_TOKEN,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "belfort-admin",
+      ...(corps ? { "Content-Type": "application/json" } : {}),
+    },
+    body: corps ? JSON.stringify(corps) : undefined,
+  });
+  let json = null;
+  try { json = await rep.json(); } catch { json = null; }
+  return { statut: rep.status, corps: json };
+}
+
+/** Forme d'une PR renvoyée au tableau de bord (rien de plus que nécessaire). */
+function formerPr(p) {
+  return {
+    numero: p.number,
+    titre: p.title,
+    branche: p.head?.ref || "",
+    cible: p.base?.ref || "",
+    auteur: p.user?.login || "",
+    brouillon: Boolean(p.draft),
+    cree: p.created_at,
+    maj: p.updated_at,
+    url: p.html_url,
+    apercu: urlApercuPages(p.head?.ref),
+  };
+}
+
+/** GET /admin/publications → {configure, depot, pulls:[…]} ; sans jeton : configure:false, pulls:[]. */
+route("GET", "/admin/publications", "admin", async ({ env }) => {
+  if (!env.GITHUB_TOKEN) return { configure: false, depot: GITHUB_DEPOT, pulls: [] };
+  const { statut, corps } = await appelGitHub(env, "GET", `/repos/${GITHUB_DEPOT}/pulls?state=open&sort=updated&direction=desc&per_page=50`);
+  if (statut === 401 || statut === 403) throw new ErreurHttp(502, "GitHub refuse le jeton (droits insuffisants ou jeton expiré).");
+  if (statut !== 200 || !Array.isArray(corps)) throw new ErreurHttp(502, `GitHub a répondu ${statut}.`);
+  return { configure: true, depot: GITHUB_DEPOT, pulls: corps.map(formerPr) };
+});
+
+/** POST /admin/publications/:numero/fusionner → fusion (méthode merge) de la PR dans sa branche cible. */
+route("POST", "/admin/publications/:numero/fusionner", "admin", async ({ env, params, qui }) => {
+  const numero = Number(params.numero);
+  if (!Number.isInteger(numero) || numero <= 0) throw err400("Numéro de publication invalide.");
+  if (!env.GITHUB_TOKEN) throw new ErreurHttp(503, "Jeton GitHub non configuré.");
+  const pr = await appelGitHub(env, "GET", `/repos/${GITHUB_DEPOT}/pulls/${numero}`);
+  if (pr.statut === 404) throw err404("Publication introuvable.");
+  if (pr.statut !== 200 || !pr.corps) throw new ErreurHttp(502, `GitHub a répondu ${pr.statut}.`);
+  if (pr.corps.state !== "open") throw err409("Cette publication n'est plus ouverte.");
+  if (pr.corps.draft) throw err409("Cette publication est encore un brouillon.");
+  const r = await appelGitHub(env, "PUT", `/repos/${GITHUB_DEPOT}/pulls/${numero}/merge`, { merge_method: "merge" });
+  if (r.statut === 405 || r.statut === 409) throw err409((r.corps && r.corps.message) || "Fusion impossible (conflit ou vérifications en attente).");
+  if (r.statut !== 200) throw new ErreurHttp(502, (r.corps && r.corps.message) || `GitHub a répondu ${r.statut}.`);
+  await journaliser(env, qui, "fusionner:" + pr.corps.head?.ref, "publications", numero);
+  return { numero, fusionne: true, sha: r.corps?.sha || null, titre: pr.corps.title, branche: pr.corps.head?.ref || "" };
+});
+
+// ---------------------------------------------------------------------------
+// Premier contact : messages du formulaire du site (base « belfort_contact »)
+// ---------------------------------------------------------------------------
+
+const STATUTS_MESSAGE = ["nouveau", "lu", "repondu", "classe"];
+const MESSAGES_MAX = 200;
+
+/** Lance 503 si la base du formulaire de contact n'est pas reliée (binding CONTACTS absent). */
+function baseContacts(env) {
+  if (!env.CONTACTS) throw new ErreurHttp(503, "Base des messages non reliée : binding CONTACTS absent (api/wrangler.toml).");
+  return env.CONTACTS;
+}
+
+/** Erreur D1 « table absente » (base pas encore migrée par le Worker belfort-contact). */
+const estTableAbsente = (e) => /no such table/i.test(String(e && e.message || e));
+
+/** Nombre de messages sans suivi ou encore « nouveau » (0 si la base n'est pas reliée). */
+async function compterMessagesNouveaux(env) {
+  if (!env.CONTACTS) return 0;
+  try {
+    const [{ results: ids }, { results: suivis }] = await Promise.all([
+      env.CONTACTS.prepare("SELECT id FROM contacts ORDER BY recu_le DESC LIMIT ?").bind(MESSAGES_MAX).all(),
+      env.DB.prepare("SELECT contact_id FROM contacts_suivi WHERE statut != 'nouveau'").all(),
+    ]);
+    const traites = new Set(suivis.map((s) => s.contact_id));
+    return ids.filter((c) => !traites.has(c.id)).length;
+  } catch (e) {
+    if (estTableAbsente(e)) return 0;
+    throw e;
+  }
+}
+
+/**
+ * GET /admin/premier-contact → {messages:[{id, recu_le, nom, email, tel, sujet, formule, message,
+ * creneau, origine, statut, note, suivi_le}]} — 200 messages au plus, plus récents d'abord.
+ * Les messages sont lus dans la base belfort_contact ; le statut vient de contacts_suivi (DB).
+ */
+route("GET", "/admin/premier-contact", "admin", async ({ env }) => {
+  const base = baseContacts(env);
+  let messages = [];
+  try {
+    ({ results: messages } = await base.prepare(
+      "SELECT id, recu_le, nom, email, tel, sujet, formule, message, creneau, origine FROM contacts ORDER BY recu_le DESC, id DESC LIMIT ?")
+      .bind(MESSAGES_MAX).all());
+  } catch (e) {
+    if (estTableAbsente(e)) throw new ErreurHttp(503, "La base belfort_contact n'a pas encore sa table « contacts » (migrations du Worker belfort-contact).");
+    throw e;
+  }
+  const { results: suivis } = await env.DB.prepare("SELECT contact_id, statut, note, maj FROM contacts_suivi").all();
+  const suivi = new Map(suivis.map((s) => [s.contact_id, s]));
+  return {
+    messages: messages.map((m) => {
+      const s = suivi.get(m.id);
+      return { ...m, statut: s ? s.statut : "nouveau", note: s ? s.note || "" : "", suivi_le: s ? s.maj : null };
+    }),
+  };
+});
+
+/** PATCH /admin/premier-contact/:id {statut, note} — suivi d'un message (table contacts_suivi). */
+route("PATCH", "/admin/premier-contact/:id", "admin", async ({ req, env, params, qui }) => {
+  const id = Number(params.id);
+  if (!Number.isInteger(id) || id <= 0) throw err400("Identifiant de message invalide.");
+  const corps = await lireCorps(req);
+  const statut = champ(corps, "statut", { enum: STATUTS_MESSAGE });
+  const note = champ(corps, "note", { max: 2000 });
+  if (statut === undefined && note === undefined) throw err400("Indiquez un statut ou une note.");
+  const base = baseContacts(env);
+  const existe = await base.prepare("SELECT id FROM contacts WHERE id = ?").bind(id).first();
+  if (!existe) throw err404("Message introuvable.");
+  const quand = maintenant();
+  await env.DB.batch([
+    env.DB.prepare(`INSERT INTO contacts_suivi (contact_id, statut, note, maj) VALUES (?, COALESCE(?, 'nouveau'), ?, ?)
+                    ON CONFLICT(contact_id) DO UPDATE SET
+                      statut = COALESCE(?, contacts_suivi.statut),
+                      note = COALESCE(?, contacts_suivi.note),
+                      maj = ?`).bind(id, statut ?? null, note ?? null, quand, statut ?? null, note ?? null, quand),
+    stmtJournal(env, qui, statut ? "statut:" + statut : "note", "premier-contact", id),
+  ]);
+  const ligne = await env.DB.prepare("SELECT contact_id AS id, statut, note, maj AS suivi_le FROM contacts_suivi WHERE contact_id = ?").bind(id).first();
+  return ligne;
 });
 
 /** GET /admin/contacts?statut= — liste des contacts (200 max, plus récents d'abord). */
@@ -1629,4 +1787,5 @@ export const _interne = {
   champ, validerLignes, resoudre, routes, pbkdf2, egalConstant, sha256, base64url, hex,
   origineAutorisee, enTetesCors, lundiDeSemaine, finDeCreneau, ajouterJours, semaineCourante,
   ErreurHttp, jetonDe, dateParis, urlPlanning, estUnIcs, secretPlanning,
+  brancheNormalisee, urlApercuPages, formerPr,
 };

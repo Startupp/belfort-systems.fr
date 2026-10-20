@@ -1,0 +1,80 @@
+{
+ "ok": true,
+ "messages": [
+  {
+   "id": 7,
+   "recu_le": "2026-10-19T17:48:12.000Z",
+   "nom": "Nadia Benali",
+   "email": "nadia.benali@exemple.fr",
+   "tel": "06 45 67 89 01",
+   "sujet": "Messagerie à migrer vers Microsoft 365",
+   "formule": "Migration Microsoft 365 — 590 € jusqu'à 5 boîtes",
+   "message": "Bonjour,\nNous sommes un cabinet de 4 personnes à Rambouillet, encore sur une messagerie OVH. Nous aimerions passer sur Microsoft 365 avant la fin de l'année, avec les agendas partagés.\nPouvez-vous nous proposer un rendez-vous ?",
+   "creneau": "2026-10-22T10:00",
+   "origine": "https://belfort-systems.fr",
+   "statut": "nouveau",
+   "note": "",
+   "suivi_le": null
+  },
+  {
+   "id": 6,
+   "recu_le": "2026-10-18T09:12:40.000Z",
+   "nom": "Boulangerie du Parc",
+   "email": "contact@boulangerie-exemple.fr",
+   "tel": "+33 1 30 00 00 00",
+   "sujet": "Caisse qui ne s'allume plus",
+   "formule": "Intervention à l'heure — 45 €/h",
+   "message": "Notre poste de caisse ne démarre plus depuis ce matin, écran noir. Nous avons une caisse de secours mais c'est urgent.",
+   "creneau": "",
+   "origine": "https://belfort-systems.fr",
+   "statut": "nouveau",
+   "note": "",
+   "suivi_le": null
+  },
+  {
+   "id": 5,
+   "recu_le": "2026-10-15T14:05:00.000Z",
+   "nom": "Thomas Girard",
+   "email": "t.girard@exemple.fr",
+   "tel": "",
+   "sujet": "Audit des abonnements",
+   "formule": "Audit des abonnements — 290 €",
+   "message": "Je pense payer trop de licences (Adobe, Dropbox, deux antivirus…). J'aimerais un point clair sur ce qu'on peut résilier.",
+   "creneau": "",
+   "origine": "https://belfort-systems.fr",
+   "statut": "lu",
+   "note": "Rappeler jeudi matin.",
+   "suivi_le": "2026-10-16T08:30:00.000Z"
+  },
+  {
+   "id": 4,
+   "recu_le": "2026-10-12T19:30:00.000Z",
+   "nom": "Sophie Garnier",
+   "email": "sophie.garnier@exemple.fr",
+   "tel": "07 00 00 00 00",
+   "sujet": "Suivi mensuel pour une petite équipe",
+   "formule": "Suivi Essentiel — 149 €/mois",
+   "message": "Nous sommes 3 et personne ne s'occupe de l'informatique. Que comprend le suivi mensuel exactement ?",
+   "creneau": "2026-10-16T14:00",
+   "origine": "https://belfort-systems.fr",
+   "statut": "repondu",
+   "note": "Devis envoyé le 13/10.",
+   "suivi_le": "2026-10-13T10:12:00.000Z"
+  },
+  {
+   "id": 3,
+   "recu_le": "2026-10-03T08:00:00.000Z",
+   "nom": "Agence Immo Exemple",
+   "email": "agence@exemple.fr",
+   "tel": "",
+   "sujet": "Site WordPress piraté",
+   "formule": "",
+   "message": "Notre site affiche des publicités bizarres. Pouvez-vous intervenir ?",
+   "creneau": "",
+   "origine": "https://belfort-systems.fr",
+   "statut": "classe",
+   "note": "Pris en charge par leur hébergeur.",
+   "suivi_le": "2026-10-05T16:00:00.000Z"
+  }
+ ]
+}

@@ -1,6 +1,6 @@
 # belfort-api — notes de service
 
-Service Cloudflare du site belfort-systems.fr : un Worker (`src/index.js`, sans dépendance), une base D1 (`belfort-systems`) et un espace KV (sessions, limitation, cache). Contrat de référence : `docs/TABLEAU-DE-BORD.md`.
+Service Cloudflare du site belfort-systems.fr : un Worker (`src/index.js`, sans dépendance), une base D1 (`belfort-systems`), la base D1 `belfort_contact` du Worker belfort-contact reliée en lecture (binding `CONTACTS`, vue « Premier contact ») et un espace KV (sessions, limitation, cache). Contrat de référence : `docs/TABLEAU-DE-BORD.md`.
 
 ## 1. Déployer (GitHub Actions)
 
@@ -19,6 +19,8 @@ Trois secrets GitHub sont obligatoires (*Settings → Secrets and variables → 
 | `CLOUDFLARE_ACCOUNT_ID` | Tableau de bord → *Workers & Pages* → colonne de droite **Account ID** (32 caractères hexadécimaux). |
 | `ADMIN_PASSWORD` | Mot de passe du panneau `/admin/` : long et aléatoire (ex. 24 caractères). Il est poussé au Worker comme secret à chaque déploiement, jamais écrit dans le dépôt. |
 
+Secret facultatif du dépôt : `ADMIN_GITHUB_TOKEN` — jeton GitHub *fine-grained* limité au dépôt `Startupp/belfort-systems.fr`, droits **Contents : lecture/écriture** et **Pull requests : lecture/écriture** (Metadata : lecture, ajouté d'office). Le workflow le pousse au Worker sous le nom `GITHUB_TOKEN` ; il sert à la vue « Publications » (liste des PR ouvertes, bouton « Review & Merge »). Sans lui, la vue affiche « Jeton GitHub non configuré ».
+
 Secret facultatif côté Worker : `SESSION_SALT` (`wrangler secret put SESSION_SALT`), sel du PBKDF2 ; à défaut le sel est dérivé de `ADMIN_PASSWORD`.
 
 Après déploiement, l'API répond sur `https://belfort-api.damien-belfort.workers.dev/` (`{ok:true, service:"belfort-api"}`).
@@ -36,7 +38,7 @@ npm run dev                 # http://localhost:8787
 
 Tests :
 
-- `npm test` — tests unitaires du code pur (validation, routeur, PBKDF2, CORS, dates), sans réseau.
+- `npm test` — tests unitaires du code pur (validation, routeur, PBKDF2, CORS, dates) et des routes « Publications » / « Premier contact » avec un GitHub simulé et des bases D1 factices, sans réseau.
 - `npm run test:local` — test de bout en bout : lance `wrangler dev --local` sur le port 8799 avec un état D1/KV temporaire, applique schéma et seed, puis 72 vérifications (CORS, limitation du login, demandes, factures et numérotation, contact, disponibilités, jetons clients, SSE, et les formes de réponse exactes consommées par `admin/admin.js`). Une ligne par vérification et un bilan.
 
 ## 3. Importer / régénérer le seed

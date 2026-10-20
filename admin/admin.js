@@ -80,6 +80,7 @@
   var TYPES_EVT = { echange: 'Échange', livrable: 'Livrable', site: 'Sur site', decision: 'Décision', facture: 'Facture' };
   var CANAUX = ['Mail', 'WhatsApp', 'SMS', 'Téléphone', 'Sur place'];
   var STATUTS_CONTACT = { nouveau: 'Nouveau', lu: 'Lu', repondu: 'Répondu', archive: 'Archivé' };
+  var STATUTS_MESSAGE = { nouveau: 'Nouveau', lu: 'Lu', repondu: 'Répondu', classe: 'Classé' };
   var STATUTS_FACT = { brouillon: 'Brouillon', envoyee: 'Envoyée', payee: 'Payée', annulee: 'Annulée' };
   var SOLUTIONS = ['Réglage corrigé à distance', 'Expliqué par téléphone', 'Guide envoyé', 'Réglé sur place', 'Transmis au prestataire concerné'];
   var MOI = { nom: 'Damien Belfort', entreprise: 'Belfort Systems', adresse: '7 square des Genêts', cp: '78114', ville: 'Magny-les-Hameaux',
@@ -139,6 +140,8 @@
     if (methode !== 'GET') throw new DemoError();
     var c = chemin.split('?')[0];
     if (c === '/admin/resume') return chargerApercu('resume');
+    if (c === '/admin/premier-contact') return chargerApercu('premier-contact');
+    if (c === '/admin/publications') return chargerApercu('publications');
     if (c === '/admin/contacts') return chargerApercu('contacts');
     if (c === '/admin/projets') return chargerApercu('projets');
     if (/^\/admin\/projets\/[^/]+$/.test(c)) return chargerApercu('projet-exemple');
@@ -325,16 +328,17 @@
   function route() {
     var h = location.hash.replace(/^#\/?/, '');
     var parts = h.split('/').filter(Boolean).map(decodeURIComponent);
-    return parts.length ? parts : ['aujourdhui'];
+    return parts.length ? parts : ['premier'];
   }
   function naviguer(h) { location.hash = '#/' + h; }
-  var VUES = { aujourdhui: vueAujourdhui, boite: vueBoite, projets: vueProjets, factures: vueFactures, clients: vueClients, reglages: vueReglages, plus: vuePlus, espaces: vueEspaces };
+  var VUES = { premier: vuePremierContact, aujourdhui: vueAujourdhui, boite: vueBoite, projets: vueProjets, factures: vueFactures, publications: vuePublications, outils: vueOutils, clients: vueClients, reglages: vueReglages, plus: vuePlus, espaces: vueEspaces };
+  var SOUS_PLUS = ['factures', 'publications', 'outils', 'clients', 'reglages', 'espaces'];
   var rendu = 0;
   async function router(silencieux) {
     if ($('app').hidden) return;
-    var p = route(); var nom = VUES[p[0]] ? p[0] : 'aujourdhui';
+    var p = route(); var nom = VUES[p[0]] ? p[0] : 'premier';
     document.querySelectorAll('.nav a').forEach(function (a) {
-      var n = a.dataset.nav; var actif = n === nom || (n === 'plus' && ['clients', 'reglages', 'espaces'].indexOf(nom) >= 0 && a.classList.contains('nav-petit'));
+      var n = a.dataset.nav; var actif = n === nom || (n === 'plus' && SOUS_PLUS.indexOf(nom) >= 0 && a.classList.contains('nav-petit'));
       a.classList.toggle('actif', actif);
       if (actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
@@ -382,7 +386,151 @@
     try {
       var r = await api('/admin/resume'); var n = r.contacts_nouveaux || 0;
       var b = $('badge-boite'); b.hidden = !n; b.textContent = n;
+      var m = r.messages_nouveaux || 0;
+      var bp = $('badge-premier'); if (bp) { bp.hidden = !m; bp.textContent = m; }
     } catch (e) {}
+  }
+
+  /* ============================================================
+     ÉCRAN : PREMIER CONTACT (messages du formulaire du site)
+     Source : base belfort_contact du Worker belfort-contact, lue par
+     GET /admin/premier-contact ; statut et note dans contacts_suivi.
+     ============================================================ */
+  /* Numéro français (06 12 34 56 78, +33 6…, 0033 6…) → 33612345678 ; sinon null. */
+  function telInternational(t) {
+    var d = String(t || '').replace(/[^\d+]/g, '');
+    if (/^\+33[1-9]\d{8}$/.test(d)) return d.slice(1);
+    if (/^0033[1-9]\d{8}$/.test(d)) return d.slice(2);
+    if (/^0[1-9]\d{8}$/.test(d)) return '33' + d.slice(1);
+    return null;
+  }
+  function prenom(nom) { return (nom || '').trim().split(/\s+/)[0] || ''; }
+  function citer(texte) { return String(texte || '').split('\n').map(function (l) { return '> ' + l; }).join('\n'); }
+  function mailtoMessage(m) {
+    var corps = 'Bonjour ' + prenom(m.nom) + ',\n\nMerci pour votre message au sujet de « ' + (m.sujet || 'votre demande') + ' ».\n\n1. \n2. \n3. \n\nBien cordialement,\n' + SIGNATURE +
+      '\n\n' + citer('Le ' + fmtDateHeure(m.recu_le) + ', ' + m.nom + ' a écrit :\n' + (m.message || ''));
+    return 'mailto:' + encodeURIComponent(m.email || '') + '?subject=' + encodeURIComponent('Re : ' + (m.sujet || 'votre demande') + ' — Belfort Systems') + '&body=' + encodeURIComponent(corps);
+  }
+  function whatsappMessage(m) {
+    var n = telInternational(m.tel); if (!n) return '';
+    var texte = 'Bonjour ' + prenom(m.nom) + ', Damien Belfort (Belfort Systems). Merci pour votre message au sujet de « ' + (m.sujet || 'votre demande') + ' » envoyé depuis belfort-systems.fr. Quand puis-je vous appeler ?';
+    return 'https://wa.me/' + n + '?text=' + encodeURIComponent(texte);
+  }
+  async function vuePremierContact() {
+    var r = await api('/admin/premier-contact');
+    var messages = (r.messages || []).slice().sort(function (a, b) { return String(b.recu_le || '').localeCompare(String(a.recu_le || '')); });
+    var filtre = etat.filtrePremier || 'a_traiter';
+    var liste = messages.filter(function (m) {
+      var st = m.statut || 'nouveau';
+      return filtre === 'tous' ? true : filtre === 'a_traiter' ? (st === 'nouveau' || st === 'lu') : st === filtre;
+    });
+    var nb = messages.filter(function (m) { return (m.statut || 'nouveau') === 'nouveau'; }).length;
+    return html`
+      <div class="entete-vue"><div><h1>Premier contact</h1><p class="hint">Messages reçus par le formulaire du site, du plus récent au plus ancien${nb ? ' — ' + nb + ' nouveau' + (nb > 1 ? 'x' : '') : ''}.</p></div></div>
+      <div class="puces" role="group" aria-label="Filtrer">${[['a_traiter', 'À traiter'], ['nouveau', 'Nouveaux'], ['repondu', 'Répondus'], ['classe', 'Classés'], ['tous', 'Tous']].map(function (f) {
+        return html`<button type="button" class="puce" aria-pressed="${filtre === f[0]}" data-act="filtre-premier" data-f="${f[0]}">${f[1]}</button>`;
+      })}</div>
+      <div class="carte">${liste.length ? liste.map(ligneMessage) : html`<p class="vide">Aucun message dans cette liste.</p>`}</div>
+      <p class="aide">« Répondre par e-mail » ouvre votre messagerie avec un brouillon signé « ${SIGNATURE} » et le message cité ; « WhatsApp » ouvre une conversation avec un texte prêt. Pensez ensuite à cliquer « Répondu ».</p>`;
+  }
+  function ligneMessage(m) {
+    var st = m.statut || 'nouveau';
+    var wa = whatsappMessage(m);
+    var tel = String(m.tel || '').trim();
+    return html`<article class="message ${st}" id="msg-${m.id}">
+      <div class="tete"><b>${m.sujet || '(sans objet)'}</b><span class="quand">${fmtDateHeure(m.recu_le)} · ${ecoule(m.recu_le)}</span></div>
+      <div class="coord"><span><b>${m.nom}</b></span>${m.email ? html`<a href="mailto:${m.email}">${m.email}</a>` : ''}${tel ? html`<a href="tel:${tel.replace(/[^\d+]/g, '')}">${tel}</a>` : ''}</div>
+      <div class="infos"><span class="etiquette ${st}">${STATUTS_MESSAGE[st] || st}</span>
+        <span>Formule : <b>${m.formule || '—'}</b></span><span>Créneau : <b>${m.creneau ? fmtDateHeure(m.creneau) : '—'}</b></span>${m.suivi_le ? html`<span>Suivi : ${fmtDateHeure(m.suivi_le)}</span>` : ''}</div>
+      <p class="texte">${m.message}</p>
+      ${m.note ? html`<p class="note-suivi">Note : ${m.note}</p>` : ''}
+      <div class="actions">
+        <a class="btn sm" href="${mailtoMessage(m)}" data-act="msg-repondre" data-id="${m.id}" data-statut="${st}">Répondre par e-mail</a>
+        ${wa ? html`<a class="btn ghost sm" href="${wa}" target="_blank" rel="noopener" data-act="msg-repondre" data-id="${m.id}" data-statut="${st}">WhatsApp</a>` : ''}
+        ${st === 'nouveau' ? html`<button type="button" class="btn ghost sm" data-act="msg-statut" data-id="${m.id}" data-apres="lu">Marquer lu</button>` : ''}
+        ${st !== 'repondu' ? html`<button type="button" class="btn ghost sm" data-act="msg-statut" data-id="${m.id}" data-apres="repondu">Répondu</button>` : ''}
+        ${st !== 'classe' ? html`<button type="button" class="btn ghost sm" data-act="msg-statut" data-id="${m.id}" data-apres="classe">Classer</button>` : html`<button type="button" class="btn ghost sm" data-act="msg-statut" data-id="${m.id}" data-apres="lu">Rouvrir</button>`}
+        <button type="button" class="btn ghost sm" data-act="msg-note" data-id="${m.id}" data-note="${m.note || ''}">Note</button>
+      </div></article>`;
+  }
+  ACTIONS['filtre-premier'] = async function (d) { etat.filtrePremier = d.f; router(true); };
+  ACTIONS['msg-statut'] = async function (d) {
+    await api('/admin/premier-contact/' + d.id, { method: 'PATCH', body: { statut: d.apres } });
+    etat.cache = {}; toast('Message : ' + STATUTS_MESSAGE[d.apres] + '.'); router(true);
+  };
+  ACTIONS['msg-repondre'] = async function (d, el) {
+    var href = el.getAttribute('href');
+    if (el.getAttribute('target') === '_blank') window.open(href, '_blank', 'noopener'); else window.location.href = href;
+    if (d.statut === 'nouveau') { try { await api('/admin/premier-contact/' + d.id, { method: 'PATCH', body: { statut: 'lu' } }); etat.cache = {}; router(true); } catch (e) {} }
+  };
+  ACTIONS['msg-note'] = async function (d) {
+    await action({ titre: 'Note sur ce message', champs: [{ id: 'note', label: 'Note (pour vous seul)', type: 'textarea', valeur: d.note, placeholder: 'Rappelé le 12, devis à envoyer…' }],
+      valider: 'Enregistrer', action: function (v) { return api('/admin/premier-contact/' + d.id, { method: 'PATCH', body: { note: v.note } }); }, succes: 'Note enregistrée.' });
+  };
+
+  /* ============================================================
+     ÉCRAN : PUBLICATIONS (demandes de fusion GitHub → mise en ligne)
+     GET /admin/publications ; POST /admin/publications/:numero/fusionner.
+     Sans jeton GitHub côté serveur : {configure:false}, bouton désactivé.
+     ============================================================ */
+  async function vuePublications() {
+    var r = await api('/admin/publications');
+    var pulls = r.pulls || [];
+    var ok = !!r.configure;
+    return html`
+      <div class="entete-vue"><div><h1>Publications</h1><p class="hint">Modifications proposées sur le site (dépôt ${r.depot || 'Startupp/belfort-systems.fr'}). « Review & Merge » met en ligne après confirmation.</p></div>
+        <button type="button" class="btn ghost sm" data-act="recharger">Actualiser</button></div>
+      ${ok ? '' : html`<p class="note avert"><strong>Jeton GitHub non configuré.</strong> Ajoutez le secret <code>ADMIN_GITHUB_TOKEN</code> au dépôt GitHub (jeton fine-grained limité au dépôt, droits Contents et Pull requests en lecture/écriture) puis relancez le déploiement du Worker.</p>`}
+      <div class="carte">${pulls.length ? pulls.map(function (p) {
+        return html`<article class="pr" id="pr-${p.numero}">
+          <div class="tete"><b>${p.titre}</b><span class="numero">#${p.numero}</span></div>
+          <div class="meta"><span class="branche">${p.branche}</span><span>→ ${p.cible || 'main'}</span><span>ouverte ${ecoule(p.cree)}</span>${p.maj && p.maj !== p.cree ? html`<span>· mise à jour ${ecoule(p.maj)}</span>` : ''}${p.auteur ? html`<span>· ${p.auteur}</span>` : ''}${p.brouillon ? html`<span class="etiquette brouillon">Brouillon</span>` : ''}</div>
+          <div class="actions">
+            <a class="btn ghost sm" href="${p.apercu}" target="_blank" rel="noopener">Aperçu</a>
+            <a class="btn ghost sm" href="${p.url}" target="_blank" rel="noopener">Voir sur GitHub</a>
+            <button type="button" class="btn sm" data-act="pr-fusionner" data-numero="${p.numero}" data-titre="${p.titre}" data-branche="${p.branche}" data-cible="${p.cible || 'main'}" ${ok && !p.brouillon ? '' : 'disabled'} title="${ok ? (p.brouillon ? 'Brouillon : à finaliser sur GitHub d’abord' : 'Fusionner dans ' + (p.cible || 'main')) : 'Jeton GitHub non configuré'}">Review &amp; Merge</button>
+          </div></article>`;
+      }) : html`<p class="vide">${ok ? 'Aucune modification en attente.' : 'Jeton GitHub non configuré : la liste ne peut pas être lue.'}</p>`}</div>
+      <p class="aide">L’aperçu Cloudflare Pages d’une branche est à <code>https://&lt;branche&gt;.belfort-systems-fr.pages.dev</code> (branche en minuscules, caractères spéciaux remplacés par des tirets). Après fusion, le site se met à jour en une à deux minutes.</p>`;
+  }
+  ACTIONS['pr-fusionner'] = async function (d) {
+    await action({ titre: 'Fusionner « ' + d.titre + ' » dans ' + d.cible + ' ?', danger: false, valider: 'Fusionner et publier',
+      corps: html`<p>La branche <code>${d.branche}</code> sera fusionnée dans <code>${d.cible}</code> (fusion classique) et le site sera mis en ligne par Cloudflare Pages. Cette action ne se défait pas depuis ici.</p>
+        <p class="petit">Vérifiez d’abord l’aperçu sur téléphone puis sur PC.</p>`,
+      action: function () { return api('/admin/publications/' + d.numero + '/fusionner', { method: 'POST' }); }, succes: 'Fusionnée : mise en ligne en cours.' });
+  };
+
+  /* ============================================================
+     ÉCRAN : OUTILS (raccourcis ; liste dans admin/outils.js)
+     ============================================================ */
+  var ICONES = {
+    indy: '<path d="M4 7h16v10H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    cloud: '<path d="M7 18a4 4 0 0 1-.5-8A5.5 5.5 0 0 1 17 9a4.5 4.5 0 0 1 .5 9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+    github: '<path d="M12 3a9 9 0 0 0-2.8 17.5c.4.1.6-.2.6-.4v-1.6c-2.5.5-3-1.1-3-1.1-.4-1-1-1.3-1-1.3-.8-.6.1-.6.1-.6.9.1 1.4.9 1.4.9.8 1.4 2.1 1 2.6.8.1-.6.3-1 .6-1.2-2-.2-4.1-1-4.1-4.4 0-1 .3-1.8.9-2.4-.1-.2-.4-1.2.1-2.4 0 0 .8-.2 2.5.9a8.6 8.6 0 0 1 4.6 0c1.7-1.1 2.5-.9 2.5-.9.5 1.2.2 2.2.1 2.4.6.6.9 1.4.9 2.4 0 3.4-2.1 4.2-4.1 4.4.3.3.6.8.6 1.6v2.4c0 .2.2.5.6.4A9 9 0 0 0 12 3z" fill="currentColor"/>',
+    actions: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 9l5 3-5 3z" fill="currentColor"/>',
+    loupe: '<circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    fiche: '<path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="11" r="2" fill="currentColor"/>',
+    notion: '<path d="M6 4h10l2 2v14H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 9v6M9 9l6 6V9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+    linkedin: '<rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10v6M8 7.5v.2M12 16v-3.5a2 2 0 0 1 4 0V16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    canva: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M14.5 10a3 3 0 1 0 0 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    malt: '<path d="M7 17l10-10M7 7l10 10M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    urssaf: '<path d="M5 20V9l7-5 7 5v11z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 20v-6h6v6" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+    inpi: '<path d="M6 4h12v16H6z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    kit: '<path d="M4 8h16v11H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 8V6h6v2M4 13h16" fill="none" stroke="currentColor" stroke-width="1.8"/>'
+  };
+  function iconeOutil(o) {
+    if (o.ico && ICONES[o.ico]) return html`<span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true">${raw(ICONES[o.ico])}</svg></span>`;
+    return html`<span class="ico">${(o.lettre || o.nom || '?').slice(0, 2)}</span>`;
+  }
+  async function vueOutils() {
+    var outils = Array.isArray(window.BS_OUTILS) ? window.BS_OUTILS : [];
+    return html`
+      <div class="entete-vue"><div><h1>Outils</h1><p class="hint">Raccourcis vers les services utilisés au quotidien. Chaque lien s’ouvre dans un nouvel onglet ; la liste se modifie dans <code>admin/outils.js</code>.</p></div></div>
+      <div class="outils-grille">${outils.map(function (o) {
+        var hote = o.hote; if (hote === undefined) { try { hote = new URL(o.url).host.replace(/^www\./, ''); } catch (e) { hote = ''; } }
+        return html`<a class="outil" href="${o.url}" target="_blank" rel="noopener">${iconeOutil(o)}<span class="corps"><b>${o.nom}</b><small>${o.ligne || ''}</small><span class="lien">${hote}</span></span></a>`;
+      })}</div>
+      ${outils.length ? '' : html`<p class="vide">Aucun raccourci : vérifiez <code>admin/outils.js</code>.</p>`}`;
   }
 
   /* ============================================================
@@ -395,7 +543,7 @@
     return html`
       <div class="entete-vue"><div><h1>Aujourd’hui</h1><p class="hint">${fmtDateLong(aujourdhuiISO())} — ${etat.demo ? 'aperçu avec des données d’exemple' : 'données en direct'}</p></div></div>
       <div class="tuiles">
-        <a class="tuile" href="#/boite"><span class="chiffre">${r.contacts_nouveaux || 0}</span><span class="libelle">Messages nouveaux</span><span class="detail">formulaire du site</span></a>
+        <a class="tuile" href="#/premier"><span class="chiffre">${r.messages_nouveaux || 0}</span><span class="libelle">Premiers contacts</span><span class="detail">formulaire du site, à traiter</span></a>
         <a class="tuile" href="#/projets"><span class="chiffre">${r.demandes_a_traiter || 0}</span><span class="libelle">Demandes à traiter</span><span class="detail">tous projets</span></a>
         <a class="tuile" href="#/factures"><span class="chiffre">${r.factures_en_attente || 0}</span><span class="libelle">Factures en attente</span><span class="detail">envoyées, non payées</span></a>
         <a class="tuile" href="#/boite"><span class="chiffre">${rdv ? fmtJour(rdv.debut) : '—'}</span><span class="libelle">Prochain rendez-vous</span><span class="detail">${rdv ? fmtHeure(rdv.debut) + ' · ' + rdv.avec + (rdv.statut === 'propose' ? ' (à confirmer)' : '') : 'aucun'}</span></a>
@@ -856,7 +1004,7 @@
     var filtre = etat.filtreFact || 'toutes';
     var liste = fs.filter(function (f) { return filtre === 'toutes' || f.statut === filtre; });
     return html`
-      <div class="entete-vue"><div><h1>Factures</h1><p class="hint">Numérotation continue BS-AAAA-NNN attribuée à l’émission. Franchise de TVA.</p></div>
+      <div class="entete-vue"><div><h1>Factures</h1><p class="hint">Numérotation continue BS-AAAA-NNN attribuée à l’émission. Franchise de TVA. La facturation, l’URSSAF et la comptabilité se font sur <a href="https://app.indy.fr" target="_blank" rel="noopener">Indy</a> ; ces brouillons ne servent qu’aux aperçus.</p></div>
         <a class="btn sm" href="#/factures/nouvelle">Nouvelle facture</a></div>
       <div class="puces" role="group" aria-label="Filtrer">${[['toutes', 'Toutes'], ['brouillon', 'Brouillons'], ['envoyee', 'Envoyées'], ['payee', 'Payées']].map(function (f) {
         return html`<button type="button" class="puce" aria-pressed="${filtre === f[0]}" data-act="filtre-fact" data-f="${f[0]}">${f[1]}</button>`;
@@ -1127,6 +1275,9 @@
   ACTIONS.deconnexion = async function () { $('btn-deconnexion').click(); };
   async function vuePlus() {
     return html`<h1>Plus</h1><div class="carte">
+      <a class="ligne-clic" href="#/factures"><b>Factures</b><span class="meta">Brouillons et factures émises depuis le tableau de bord</span></a>
+      <a class="ligne-clic" href="#/publications"><b>Publications</b><span class="meta">Modifications du site en attente, aperçu et mise en ligne</span></a>
+      <a class="ligne-clic" href="#/outils"><b>Outils</b><span class="meta">Raccourcis : Indy, Cloudflare, GitHub, Search Console…</span></a>
       <a class="ligne-clic" href="#/clients"><b>Clients</b><span class="meta">Jetons d’accès, espaces /clients/</span></a>
       <a class="ligne-clic" href="#/reglages"><b>Réglages</b><span class="meta">Thème, taille du texte, déconnexion</span></a>
       <a class="ligne-clic" href="#/espaces"><b>Espaces chiffrés (ancien outil)</b><span class="meta">Génération et rotation des pages chiffrées</span></a></div>`;

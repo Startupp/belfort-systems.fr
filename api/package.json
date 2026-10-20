@@ -11,7 +11,7 @@
     "schema:local": "wrangler d1 execute belfort-systems --local --file=schema.sql",
     "seed:build": "node seed/importer.mjs",
     "seed:local": "wrangler d1 execute belfort-systems --local --file=seed/seed.sql",
-    "test": "node --test test/unitaires.test.mjs",
+    "test": "node --test test/unitaires.test.mjs test/publications.test.mjs",
     "test:local": "node test/local.mjs"
   },
   "license": "UNLICENSED",
