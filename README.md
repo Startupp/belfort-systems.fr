@@ -2,12 +2,16 @@
 
 Site personnel de Damien Belfort — Belfort Systems.
 
-- `/` — CV en ligne
-- `/factures/` — générateur de factures (privé, protégé par mot de passe)
-- `/clients/<nom>/` — espaces clients (privés, protégés par mot de passe)
-- `/espace-breteuil/` — appli publique du Château de Breteuil (planning, raccourcis), voir [docs/ESPACE-BRETEUIL.md](docs/ESPACE-BRETEUIL.md)
+- `/` — site vitrine (offre, tarifs, contact)
+- `/qui-suis-je/` — présentation
+- `/admin/` — tableau de bord (privé, données via l'API)
+- `/haccp/` — mini-app Achille HACCP (prototype)
+- `/ecorce/` — renvoi vers le jeu (jeu.belfort-systems.fr)
 
-Les pages privées sont chiffrées en AES-256-GCM et déchiffrées dans le navigateur.
+Depuis le 27/10/2026, les espaces clients (`/clients/`), les factures (`/factures/`), le portail
+(`/portail/`) et l'Espace Breteuil ne sont plus publiés ici : les documents passent par SharePoint
+ou Indy, l'appli vit sur espace-breteuil.pages.dev. Les dossiers restent dans le dépôt.
+
 Hébergé sur **Cloudflare Pages** (projet `belfort-systems-fr`, branche `main`, commande de build
 `bash scripts/build-site.sh`, dossier de sortie `_site`). L'ancien workflow GitHub Pages est
 désactivé (copie dans `docs/archives/deploy-pages.yml.disabled`).
