@@ -206,7 +206,7 @@
       message: "Bonjour,\nje souhaite un audit informatique de ma structure (parc, accès, licences, sauvegardes).\n\nMa structure et le nombre de postes : " },
     "audit-abonnements": { sujet: "Autre", formule: "Audit des abonnements et contrats (290 € HT)",
       message: "Bonjour,\nje souhaite un audit de mes abonnements informatiques (internet, téléphonie, logiciels, licences) pour repérer les doublons.\n\nMa structure : " },
-    "preparation-poste": { sujet: "Nouveau poste ou matériel", formule: "Préparation d'un poste (149 € HT par poste)",
+    "preparation-poste": { sujet: "Nouveau poste ou matériel", formule: "Préparation d'un poste (175 € HT par poste)",
       message: "Bonjour,\nj'ai un ou plusieurs postes à préparer (installation, comptes, Office, transfert des données).\n\nNombre de postes et date souhaitée : " },
     "migration-365": { sujet: "Migration de messagerie", formule: "Migration Microsoft 365 (590 € HT jusqu'à 5 boîtes, puis 70 € par boîte)",
       message: "Bonjour,\nje souhaite migrer ma messagerie vers Microsoft 365 sans coupure.\n\nNombre de boîtes et messagerie actuelle : " },
