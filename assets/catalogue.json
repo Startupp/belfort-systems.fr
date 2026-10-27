@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-19",
+  "version": "2026-10-27",
   "devise": "EUR",
   "tva": "Franchise en base — TVA non applicable, art. 293 B du CGI",
   "note": "Grille à partir du tarif de référence de 45 € HT l'heure : première heure due, puis facturation par demi-heure. Déplacement inclus à moins de 30 km de Magny-les-Hameaux.",
@@ -76,7 +76,7 @@
       "categorie": "Postes de travail",
       "nom": "Préparation d'un poste",
       "unite": "poste",
-      "prix": 149,
+      "prix": 175,
       "description": "Mise en route, comptes, messagerie, imprimantes, sauvegarde, transfert des données : un ordinateur prêt à l'emploi."
     },
     {
