@@ -1,11 +1,7 @@
 User-agent: *
 Allow: /
-Disallow: /clients/
 Disallow: /admin/
-Disallow: /factures/
-Disallow: /portail/
 Disallow: /haccp/
-Disallow: /espace-breteuil/
 Disallow: /ecorce/ancienne/
 
 Sitemap: https://belfort-systems.fr/sitemap.xml

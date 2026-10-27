@@ -17,7 +17,7 @@
 /ecorce/concepts      /ecorce/ancienne/concepts/  301
 /ecorce/concepts/     /ecorce/ancienne/concepts/  301
 
-# Le jour où l'Espace Breteuil ne sera plus servi que par son propre projet Pages,
-# retirer espace-breteuil de PUBLIC (scripts/build-site.sh) et décommenter :
-# /espace-breteuil      https://espace-breteuil.pages.dev/         302
-# /espace-breteuil/*    https://espace-breteuil.pages.dev/:splat   302
+# L'Espace Breteuil n'est plus servi que par son propre projet Pages (27/10/2026) :
+# les anciens liens vers belfort-systems.fr/espace-breteuil/ y sont renvoyés.
+/espace-breteuil      https://espace-breteuil.pages.dev/         302
+/espace-breteuil/*    https://espace-breteuil.pages.dev/:splat   302
