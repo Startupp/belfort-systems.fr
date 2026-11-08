@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { loadConfig } from '../src/config.ts';
 import type { Config, RugConfig } from '../src/config.ts';
-import { HttpError } from '../src/lib/http.ts';
+import { HttpError, createHttp } from '../src/lib/http.ts';
 import type { Http, RequestOptions } from '../src/lib/http.ts';
 import type { JupiterClient, JupiterOrder, JupiterToken, OrderParams } from '../src/lib/jupiter.ts';
 import { createRugcheckApi, parseRugcheckSummary } from '../src/lib/rugcheckApi.ts';
@@ -28,6 +28,8 @@ import {
 
 const START = Date.UTC(2026, 10, 8, 16, 0, 0);
 const MINT = `MemeToken${'1'.repeat(35)}`;
+/** Second mint valide (base58 : ni 0, ni O, ni I, ni l). */
+const OTHER_MINT = `SecondMint${'1'.repeat(34)}`;
 const TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 const TOKENS_OUT = '123456789000';
 const HEALTHY_BACK = '294000000'; // 0.294 SOL récupérés sur 0.3 : coût 2 %
@@ -473,7 +475,7 @@ describe('createRugChecker', () => {
   });
 
   test('Jupiter : seul le token dont id === mint compte ; absent → simple avertissement', async () => {
-    const other = { ...healthyToken({ isSus: true }), id: `Other${'1'.repeat(39)}` };
+    const other = { ...healthyToken({ isSus: true }), id: OTHER_MINT };
     const { checker } = setup({ search: async () => [other] });
     const v = await checker.check(candidate());
     assert.equal(v.pass, true);
@@ -670,7 +672,7 @@ describe('createRugChecker', () => {
     });
 
     test('le cache est par mint', async () => {
-      const other = `Other${'1'.repeat(39)}`;
+      const other = OTHER_MINT;
       const { checker, rugcheck } = setup();
       await checker.check(candidate());
       await checker.check(candidate(other));
@@ -793,7 +795,7 @@ describe('client RugCheck', () => {
     assert.throws(() => parseRugcheckSummary({ ...LIVE_LIKE, score: undefined }, MINT), /« score » absent ou non numérique/);
     assert.throws(() => parseRugcheckSummary({ ...LIVE_LIKE, score: 'élevé' }, MINT), /« score » absent ou non numérique/);
     assert.throws(() => parseRugcheckSummary({ ...LIVE_LIKE, risks: ['Mutable metadata'] }, MINT), /risque n°1 illisible/);
-    assert.throws(() => parseRugcheckSummary({ ...LIVE_LIKE, mint: `Other${'1'.repeat(39)}` }, MINT), /autre mint/);
+    assert.throws(() => parseRugcheckSummary({ ...LIVE_LIKE, mint: OTHER_MINT }, MINT), /autre mint/);
   });
 
   test('champ error : conservé si la réponse est bien formée, cité dans l\'erreur sinon', () => {
@@ -817,5 +819,24 @@ describe('client RugCheck', () => {
       },
     };
     await assert.rejects(createRugcheckApi({ http, baseUrl: 'https://api.rugcheck.xyz' }).summary(MINT), HttpError);
+  });
+
+  test('de bout en bout avec le vrai client HTTP : en-tête envoyé, erreur 400 de l\'API → API_ERROR qui la cite', async () => {
+    const seen: Array<{ url: string; headers: Record<string, string> }> = [];
+    const fetch = async (url: string, init?: RequestInit): Promise<Response> => {
+      seen.push({ url, headers: { ...(init?.headers as Record<string, string>) } });
+      return new Response(JSON.stringify({ error: 'invalid token mint' }), { status: 400 });
+    };
+    const http = createHttp({ fetch, sleep: async () => {}, now: () => 0, retries: 0 });
+    const rugcheck = createRugcheckApi({ http, baseUrl: 'https://api.rugcheck.xyz', apiKey: 'secret' });
+    const checker = createRugChecker({ rugcheck, jupiter: fakeJupiter(), clock: fixedClock(START), config: makeConfig() });
+
+    const v = await checker.check(candidate());
+    assert.equal(v.pass, false);
+    assert.deepEqual(v.rejectCodes, ['API_ERROR']);
+    assert.match(v.reasons[0] ?? '', /^RugCheck : contrôle impossible, GET .* → HTTP 400 \(invalid token mint\)$/);
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0]?.url, `https://api.rugcheck.xyz/v1/tokens/${MINT}/report/summary`);
+    assert.equal(seen[0]?.headers['Authorization'], 'Bearer secret');
   });
 });

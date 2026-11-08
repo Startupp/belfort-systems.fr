@@ -558,13 +558,16 @@ function floorDiv(a: bigint, b: bigint): bigint {
   return a % b !== 0n && a < 0n ? q - 1n : q;
 }
 
-/** Rejette après `ms` (minuteur libéré dans tous les cas, sans retenir le processus). */
+/**
+ * Rejette après `ms`. Le minuteur n'est volontairement pas « unref » : s'il était la seule chose en
+ * attente, le processus pourrait s'arrêter avant qu'il ne sonne. Il est libéré dès que la course
+ * est jouée, il ne survit donc jamais au contrôle.
+ */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   if (!(ms > 0) || !Number.isFinite(ms)) return promise;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, rejectTimeout) => {
     timer = setTimeout(() => rejectTimeout(new Error(`délai dépassé (${fmt(ms / 1000, 3)} s)`)), ms);
-    timer.unref();
   });
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
