@@ -30,11 +30,6 @@ export interface DexToken {
   symbol: string;
 }
 
-export interface DexTxns {
-  buys: number;
-  sells: number;
-}
-
 /** Référence de token renvoyée par les listes « latest » (profils, boosts). */
 export interface DexTokenRef {
   chainId: string;
@@ -42,8 +37,12 @@ export interface DexTokenRef {
 }
 
 /**
- * Paire normalisée. Chaînes vides quand le texte est absent ; nombres à NaN quand la valeur est
- * absente ou illisible : l'appelant doit traiter NaN comme « inconnu » (et donc refuser).
+ * Paire normalisée et « à plat » (mêmes noms que TokenCandidate). Chaînes vides quand le texte
+ * est absent ; nombres à NaN quand la valeur est absente ou illisible : l'appelant doit traiter
+ * NaN comme « inconnu », donc refuser (Number.isFinite avant tout usage).
+ *
+ * Correspondance avec l'API : liquidity.usd → liquidityUsd, volume.m5 → vol5mUsd,
+ * txns.m5.buys → buys5m, priceChange.m5 → priceChange5mPct, pairCreatedAt → pairCreatedAtMs…
  */
 export interface DexPair {
   chainId: string;
@@ -55,16 +54,32 @@ export interface DexPair {
   quoteToken: DexToken;
   priceNative: number;
   priceUsd: number;
-  txns: { m5: DexTxns; h1: DexTxns; h6: DexTxns; h24: DexTxns };
-  /** Volumes en USD. */
-  volume: { m5: number; h1: number; h6: number; h24: number };
+  liquidityUsd: number;
+  /** Quantités des deux côtés du pool (unités du token, pas des USD). */
+  liquidityBase: number;
+  liquidityQuote: number;
+  vol5mUsd: number;
+  vol1hUsd: number;
+  vol6hUsd: number;
+  vol24hUsd: number;
+  buys5m: number;
+  sells5m: number;
+  buys1h: number;
+  sells1h: number;
+  buys6h: number;
+  sells6h: number;
+  buys24h: number;
+  sells24h: number;
   /** Variations de prix en % (12.5 = +12,5 %). */
-  priceChange: { m5: number; h1: number; h6: number; h24: number };
-  liquidity: { usd: number; base: number; quote: number };
-  fdv: number;
-  marketCap: number;
+  priceChange5mPct: number;
+  priceChange1hPct: number;
+  priceChange6hPct: number;
+  priceChange24hPct: number;
+  /** Valeurs brutes de l'API (le repli marketCap → fdv est fait par le scanner). */
+  marketCapUsd: number;
+  fdvUsd: number;
   /** Création de la paire, en MILLISECONDES depuis l'epoch. */
-  pairCreatedAt: number;
+  pairCreatedAtMs: number;
   /** Nombre de boosts actifs (NaN si absent). */
   boostsActive: number;
 }
@@ -126,6 +141,10 @@ export function normalizePair(raw: unknown): DexPair | null {
   const pairAddress = str(raw['pairAddress']);
   if (baseToken.address === '' || pairAddress === '') return null;
   const txns = rec(raw['txns']);
+  const m5 = rec(txns['m5']);
+  const h1 = rec(txns['h1']);
+  const h6 = rec(txns['h6']);
+  const h24 = rec(txns['h24']);
   const volume = rec(raw['volume']);
   const priceChange = rec(raw['priceChange']);
   const liquidity = rec(raw['liquidity']);
@@ -140,18 +159,28 @@ export function normalizePair(raw: unknown): DexPair | null {
     quoteToken: token(raw['quoteToken']),
     priceNative: num(raw['priceNative']),
     priceUsd: num(raw['priceUsd']),
-    txns: { m5: txn(txns['m5']), h1: txn(txns['h1']), h6: txn(txns['h6']), h24: txn(txns['h24']) },
-    volume: { m5: num(volume['m5']), h1: num(volume['h1']), h6: num(volume['h6']), h24: num(volume['h24']) },
-    priceChange: {
-      m5: num(priceChange['m5']),
-      h1: num(priceChange['h1']),
-      h6: num(priceChange['h6']),
-      h24: num(priceChange['h24']),
-    },
-    liquidity: { usd: num(liquidity['usd']), base: num(liquidity['base']), quote: num(liquidity['quote']) },
-    fdv: num(raw['fdv']),
-    marketCap: num(raw['marketCap']),
-    pairCreatedAt: num(raw['pairCreatedAt']),
+    liquidityUsd: num(liquidity['usd']),
+    liquidityBase: num(liquidity['base']),
+    liquidityQuote: num(liquidity['quote']),
+    vol5mUsd: num(volume['m5']),
+    vol1hUsd: num(volume['h1']),
+    vol6hUsd: num(volume['h6']),
+    vol24hUsd: num(volume['h24']),
+    buys5m: num(m5['buys']),
+    sells5m: num(m5['sells']),
+    buys1h: num(h1['buys']),
+    sells1h: num(h1['sells']),
+    buys6h: num(h6['buys']),
+    sells6h: num(h6['sells']),
+    buys24h: num(h24['buys']),
+    sells24h: num(h24['sells']),
+    priceChange5mPct: num(priceChange['m5']),
+    priceChange1hPct: num(priceChange['h1']),
+    priceChange6hPct: num(priceChange['h6']),
+    priceChange24hPct: num(priceChange['h24']),
+    marketCapUsd: num(raw['marketCap']),
+    fdvUsd: num(raw['fdv']),
+    pairCreatedAtMs: num(raw['pairCreatedAt']),
     boostsActive: num(rec(raw['boosts'])['active']),
   };
 }
@@ -185,11 +214,6 @@ function num(v: unknown): number {
 function token(v: unknown): DexToken {
   const t = rec(v);
   return { address: str(t['address']), name: str(t['name']), symbol: str(t['symbol']) };
-}
-
-function txn(v: unknown): DexTxns {
-  const t = rec(v);
-  return { buys: num(t['buys']), sells: num(t['sells']) };
 }
 
 /** Description courte d'une réponse inattendue (sans recopier son contenu, écrit par des inconnus). */

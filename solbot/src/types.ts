@@ -132,7 +132,7 @@ export interface SizeDecision {
   /** 0 si ok = false. */
   sizeSol: number;
   lamports: number;
-  /** Phrase lisible, ex. « 4 % de 7,12 SOL = 0,285 SOL (plafond liquidité 1 % = 1,9 SOL) ». */
+  /** Phrase lisible, ex. « 4 % de l'equity 7.120 SOL = 0.285 SOL ; plafond liquidité (1 % de 52.0 k$) = 0.741 SOL ». */
   reason: string;
   /** Plafonds qui ont réduit la taille, ex. ['MAX_POSITION', 'POOL_SHARE', 'DRAWDOWN_HALF']. */
   capsApplied: string[];
