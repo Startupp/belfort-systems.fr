@@ -1,0 +1,17 @@
+# Dépendances (uniquement typescript et @types/node, en développement)
+node_modules/
+
+# Journal, état, courbe d'equity : données personnelles (adresse, montants). Jamais dans git.
+data/
+
+# Configuration locale et secrets
+.env
+.env.*
+!.env.example
+
+# Clés privées : le bot les cherche par défaut HORS du dépôt (~/.solbot/), mais au cas où
+*.keypair.json
+keypair*.json
+id.json
+*.key
+*.pem

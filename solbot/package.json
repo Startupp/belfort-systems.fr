@@ -1,0 +1,26 @@
+{
+  "name": "solbot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bot de trading Solana prudent : scanner, filtre anti-rug, taille de position sur l'equity, exécution Jupiter avec suivi du slippage, journal des raisons, courbe d'equity. Mode papier par défaut.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "once": "node src/main.ts --once",
+    "status": "node src/main.ts --status",
+    "doctor": "node scripts/doctor.ts",
+    "keygen": "node scripts/keygen.ts",
+    "report": "node scripts/report.ts",
+    "reclaim": "node scripts/reclaim.ts",
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
+  }
+}
