@@ -13,7 +13,7 @@
  */
 
 import { HUNT, NORMAL, noiseBands, noiseSignal, noiseTrail, orbSignal, vwapSignal } from './strategies.ts';
-import type { DayContext, Thresholds } from './strategies.ts';
+import type { DayContext, StrategyResult, Thresholds } from './strategies.ts';
 import { efficiency, hhmm, paris, regimeOf } from './market.ts';
 import type { AssetClass, Bar, ClosedTrade, DeskConfig, DeskState, OpenTrade, Signal, StrategyId } from './types.ts';
 
@@ -158,6 +158,8 @@ export function createEngine(deps: EngineDeps): Engine {
   let huntLogged = false;
   let sipDone = false;
   let inPlay = new Set<string>();
+  // Actions dont la cassure ORB a été écartée faute de place ORB (comptée une fois par jour).
+  let orbCapped = new Set<string>();
 
   const slip = (cls: AssetClass): number => cfg.costs[cls].slipBps / 1e4;
   const fee = (cls: AssetClass): number => cfg.costs[cls].feeBps / 1e4;
@@ -392,6 +394,7 @@ export function createEngine(deps: EngineDeps): Engine {
       huntLogged = false;
       sipDone = false;
       inPlay = new Set();
+      orbCapped = new Set();
       deps.log({ at, type: 'day_start', msg: `séance du ${day} — equity ${eq.toFixed(2)} $, poids ORB ${st.weights.orb.toFixed(2)} / momentum ${st.weights.noise.toFixed(2)} / VWAP ${st.weights.vwap.toFixed(2)}` });
     },
 
@@ -449,8 +452,19 @@ export function createEngine(deps: EngineDeps): Engine {
         const sym = ctx.inst.symbol;
         if (st.open.some((o) => o.symbol === sym)) continue;
         if ((st.cooldown[sym] ?? 0) > t) continue;
+        const orb: StrategyResult = st.orbDone[sym] || st.lossStreak.orb >= 3 || !inPlay.has(sym) ? {} : orbSignal(ctx, j, th, market);
+        // L'ORB garde sa position jusqu'à 18 h 55 : on lui laisse au plus maxOrbOpen places,
+        // pour que les trades rapides (momentum, VWAP) gardent de quoi entrer l'après-midi.
+        if (orb.signal && st.open.filter((o) => o.strategy === 'orb').length >= cfg.maxOrbOpen) {
+          if (!orbCapped.has(sym)) {
+            orbCapped.add(sym);
+            const k = `ORB : déjà ${cfg.maxOrbOpen} positions ORB ouvertes (places gardées pour les trades rapides)`;
+            analysis.skipped[k] = (analysis.skipped[k] ?? 0) + 1;
+          }
+          orb.signal = undefined;
+        }
         const results = [
-          st.orbDone[sym] || st.lossStreak.orb >= 3 || !inPlay.has(sym) ? {} : orbSignal(ctx, j, th, market),
+          orb,
           st.lossStreak.noise >= 3 ? {} : noiseSignal(ctx, j, th, cfg),
           st.lossStreak.vwap >= 3 ? {} : vwapSignal(ctx, j, th, cfg),
         ];

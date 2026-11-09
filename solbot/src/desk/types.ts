@@ -111,6 +111,8 @@ export interface DeskConfig {
   /** Part maximale de l'equity dans une seule position. */
   maxPositionPct: number;
   maxOpen: number;
+  /** Places au plus pour l'ORB, qui garde ses positions jusqu'à 18 h 55. */
+  maxOrbOpen: number;
   maxTradesPerDay: number;
   /** Objectif d'activité : sous ce nombre à 17 h 30, le desk passe en « mode chasse ». */
   minTradesPerDay: number;
@@ -136,6 +138,7 @@ export const DEFAULT_DESK_CONFIG: DeskConfig = {
   baseRiskPct: 0.5,
   maxPositionPct: 50,
   maxOpen: 3,
+  maxOrbOpen: 3,
   maxTradesPerDay: 10,
   minTradesPerDay: 3,
   dailyLossLimitPct: 1.5,
