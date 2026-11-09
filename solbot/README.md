@@ -1,5 +1,8 @@
 # solbot — bot de trading Solana prudent
 
+> Le dossier contient aussi un **desk de day trading papier multi-marchés** (500 $, sans levier,
+> 15 h – 19 h heure de Paris) : voir la section « Desk papier » en bas de page.
+
 Expérimental. **Mode papier par défaut** (devis Jupiter réels, aucune transaction). Ce n'est pas un
 conseil en investissement : la grande majorité des tokens « memecoin » sont des arnaques ou des
 pump & dump, et la plupart des bots de particuliers perdent de l'argent. Ce bot est conçu pour que
@@ -183,3 +186,33 @@ instructions. Ne donne jamais le fichier de clé, ni `.env`.
   crypto-crypto imposables. Garder une activité petite, personnelle et documentée.
 - Depuis le 1er janvier 2026 (DAC8), les plateformes transmettent les opérations au fisc.
 - Faire tourner ce bot pour l'argent de quelqu'un d'autre est une activité réglementée (MiCA).
+
+## Desk papier (day trading, 500 $ fictifs)
+
+Séance quotidienne de 15 h à 19 h (heure de Paris), donc l'ouverture de Wall Street (15 h 30).
+Aucun levier, achat seulement sur actions (compte cash, l'argent d'une vente n'est réutilisable que
+le lendemain), tout soldé à 18 h 55.
+
+- **Stratégies** (`src/desk/strategies.ts`) :
+  - ORB 5 min sur les actions « en jeu » (Zarattini, Barbon & Aziz, 2024) ;
+  - momentum « zone de bruit » sur les ETF d'indices et les cryptos (Zarattini, Aziz & Barbon, 2024) ;
+  - retour à la VWAP en milieu de séance.
+- **Adaptation en temps réel** (`src/desk/engine.ts`) : le risque de chaque stratégie suit ses
+  résultats (poids 0,25 à 2). Sous 3 trades à 17 h 30, le desk passe en « mode chasse » : seuils
+  assouplis, risque divisé par deux.
+- **Données** : barres d'une minute Yahoo Finance et listes « plus actives » et « plus fortes
+  hausses » du jour, sans clé.
+
+| Commande | Effet |
+|---|---|
+| `npm run desk` | séance du jour en direct, dans `data/desk` (ou `DESK_DATA_DIR`) |
+| `npm run desk:rejeu` | rejeu des 10 dernières séances, mêmes règles, dans `data/desk-rejeu` |
+| `npm run desk:carnet` | régénère `carnet.html` et `carnet.csv` |
+
+Le carnet (`carnet.html`) présente chaque séance :
+
+- les actions prises, avec leur chaîne de raisons ;
+- les analyses faites (actions en jeu, régimes de marché, setups refusés) ;
+- les prévisions pour la séance suivante.
+
+`carnet.csv` s'ouvre dans un tableur.

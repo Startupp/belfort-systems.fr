@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "startEquity": 500,
+  "cash": 500,
+  "day": "2026-11-09",
+  "dayStartEquity": 500,
+  "tradesToday": 0,
+  "stockCashUsedToday": 0,
+  "weights": {
+    "orb": 1,
+    "noise": 1,
+    "vwap": 1
+  },
+  "lossStreak": {
+    "orb": 0,
+    "noise": 0,
+    "vwap": 0
+  },
+  "weekId": "2026-S46",
+  "weekStartEquity": 500,
+  "open": [],
+  "cooldown": {},
+  "orbDone": {},
+  "closedCount": 0
+}

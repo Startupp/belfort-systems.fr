@@ -17,7 +17,10 @@
     "dashboard": "node scripts/dashboard.ts",
     "reclaim": "node scripts/reclaim.ts",
     "test": "node --test \"test/*.test.ts\"",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "desk": "node src/desk/main.ts live",
+    "desk:rejeu": "node src/desk/main.ts replay 10",
+    "desk:carnet": "node src/desk/main.ts carnet"
   },
   "license": "UNLICENSED",
   "devDependencies": {

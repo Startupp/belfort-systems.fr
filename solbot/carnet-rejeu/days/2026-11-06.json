@@ -1,0 +1,3313 @@
+{
+  "day": "2026-11-06",
+  "equityStart": 517.2398,
+  "equityEnd": 514.2054,
+  "pnlUsd": -3.0344,
+  "pnlPct": -0.587,
+  "trades": [
+    {
+      "id": "d-mw9bt4qz-kp0qc",
+      "symbol": "SPY",
+      "cls": "stock",
+      "strategy": "noise",
+      "side": "long",
+      "qty": 0.10638606703990088,
+      "entry": 740.0919561157226,
+      "stop": 739.2195329535372,
+      "initialStop": 737.9556503099564,
+      "openedAt": 1793976300000,
+      "riskUsd": 0.22727317266997832,
+      "notionalUsd": 78.73547245901864,
+      "costsUsd": 0,
+      "best": 742.2103881835938,
+      "regime": "tendance",
+      "reasons": [
+        "momentum « zone de bruit » : 739.87 au-dessus de la borne haute 736.73 (bruit moyen 0.26 % à cette heure sur 14 jours)",
+        "au-dessus de la VWAP 736.30 ; régime tendance (efficacité 0.50)",
+        "stop suiveur sur max(borne, VWAP)",
+        "taille : risque 0.23 $ (0.5 % × poids 0.64), position 78.74 $"
+      ],
+      "closedAt": 1793977380000,
+      "exit": 738.9977670936511,
+      "pnlUsd": -0.1164,
+      "r": -0.51,
+      "exitReason": "stop suiveur",
+      "holdMinutes": 18,
+      "equityAfter": 518.0827
+    },
+    {
+      "id": "d-mw9bt4qz-jz0n4",
+      "symbol": "NVDA",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 0.9287324855719192,
+      "entry": 193.68809388427735,
+      "stop": 190,
+      "initialStop": 190,
+      "openedAt": 1793976000000,
+      "riskUsd": 3.425252600167498,
+      "notionalUsd": 179.88442485883215,
+      "costsUsd": 0,
+      "best": 194.89500427246094,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 193.63 au-dessus du plus haut des 5 premières minutes (193.47 ; bas 190.00)",
+        "volume relatif 2.37× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 190.00 (1.87 % sous l'entrée)",
+        "taille : risque 3.43 $ (0.5 % × poids 1.32), position 179.88 $"
+      ],
+      "closedAt": 1793978940000,
+      "exit": 189.943,
+      "pnlUsd": -3.4782,
+      "r": -1.02,
+      "exitReason": "stop",
+      "holdMinutes": 49,
+      "equityAfter": 516.578
+    },
+    {
+      "id": "d-mw9bt4qz-q6oth",
+      "symbol": "JPM",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 0.7699066034278919,
+      "entry": 335.91074055786135,
+      "stop": 333,
+      "initialStop": 333,
+      "openedAt": 1793975760000,
+      "riskUsd": 2.2409983763628354,
+      "notionalUsd": 258.6198973178508,
+      "costsUsd": 0,
+      "best": 341.7900085449219,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 335.81 au-dessus du plus haut des 5 premières minutes (335.70 ; bas 333.00)",
+        "volume relatif 3.22× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 333.00 (0.84 % sous l'entrée)",
+        "taille : risque 2.24 $ (0.5 % × poids 1.32), position 258.62 $"
+      ],
+      "closedAt": 1793987700000,
+      "exit": 336.6383885772705,
+      "pnlUsd": 0.5602,
+      "r": 0.25,
+      "exitReason": "clôture de fin de fenêtre (18:55)",
+      "holdMinutes": 199,
+      "equityAfter": 514.2054
+    }
+  ],
+  "winRatePct": 33.3,
+  "avgR": -0.43,
+  "byStrategy": {
+    "orb": {
+      "n": 2,
+      "pnlUsd": -2.918
+    },
+    "noise": {
+      "n": 1,
+      "pnlUsd": -0.1164
+    },
+    "vwap": {
+      "n": 0,
+      "pnlUsd": 0
+    }
+  },
+  "weightsStart": {
+    "orb": 1.322389397896549,
+    "noise": 0.6362064758648198,
+    "vwap": 2
+  },
+  "weightsEnd": {
+    "orb": 1.092068143088908,
+    "noise": 0.5597421861563094,
+    "vwap": 2
+  },
+  "analysis": {
+    "stocksInPlay": [
+      {
+        "symbol": "DKNG",
+        "rv": 19.9,
+        "bullish": false
+      },
+      {
+        "symbol": "TSM",
+        "rv": 3.62,
+        "bullish": false
+      },
+      {
+        "symbol": "WULF",
+        "rv": 3.33,
+        "bullish": false
+      },
+      {
+        "symbol": "JPM",
+        "rv": 3.22,
+        "bullish": true
+      },
+      {
+        "symbol": "IREN",
+        "rv": 3.05,
+        "bullish": false
+      },
+      {
+        "symbol": "RBLX",
+        "rv": 2.69,
+        "bullish": false
+      },
+      {
+        "symbol": "MU",
+        "rv": 2.49,
+        "bullish": false
+      },
+      {
+        "symbol": "NVDA",
+        "rv": 2.37,
+        "bullish": true
+      },
+      {
+        "symbol": "AVGO",
+        "rv": 2.31,
+        "bullish": false
+      },
+      {
+        "symbol": "QCOM",
+        "rv": 2.24,
+        "bullish": false
+      },
+      {
+        "symbol": "SMCI",
+        "rv": 2.13,
+        "bullish": false
+      },
+      {
+        "symbol": "ASML",
+        "rv": 2.05,
+        "bullish": false
+      },
+      {
+        "symbol": "QQQ",
+        "rv": 1.88,
+        "bullish": false
+      },
+      {
+        "symbol": "GS",
+        "rv": 1.84,
+        "bullish": false
+      },
+      {
+        "symbol": "QBTS",
+        "rv": 1.83,
+        "bullish": false
+      },
+      {
+        "symbol": "UNH",
+        "rv": 1.75,
+        "bullish": true
+      },
+      {
+        "symbol": "SPY",
+        "rv": 1.74,
+        "bullish": true
+      },
+      {
+        "symbol": "IONQ",
+        "rv": 1.72,
+        "bullish": true
+      },
+      {
+        "symbol": "WMT",
+        "rv": 1.72,
+        "bullish": true
+      },
+      {
+        "symbol": "CRM",
+        "rv": 1.53,
+        "bullish": true
+      },
+      {
+        "symbol": "RGTI",
+        "rv": 1.48,
+        "bullish": false
+      },
+      {
+        "symbol": "ARM",
+        "rv": 1.45,
+        "bullish": false
+      },
+      {
+        "symbol": "INTC",
+        "rv": 1.42,
+        "bullish": true
+      },
+      {
+        "symbol": "AMD",
+        "rv": 1.36,
+        "bullish": false
+      },
+      {
+        "symbol": "SNOW",
+        "rv": 1.35,
+        "bullish": false
+      },
+      {
+        "symbol": "MARA",
+        "rv": 1.34,
+        "bullish": false
+      },
+      {
+        "symbol": "MSTR",
+        "rv": 1.23,
+        "bullish": false
+      },
+      {
+        "symbol": "PYPL",
+        "rv": 1.2,
+        "bullish": true
+      },
+      {
+        "symbol": "CLSK",
+        "rv": 1.17,
+        "bullish": false
+      },
+      {
+        "symbol": "BAC",
+        "rv": 1.16,
+        "bullish": true
+      },
+      {
+        "symbol": "CRWD",
+        "rv": 1.16,
+        "bullish": false
+      },
+      {
+        "symbol": "UBER",
+        "rv": 1.03,
+        "bullish": true
+      },
+      {
+        "symbol": "PANW",
+        "rv": 1.02,
+        "bullish": false
+      },
+      {
+        "symbol": "SNAP",
+        "rv": 1.01,
+        "bullish": false
+      },
+      {
+        "symbol": "IWM",
+        "rv": 1,
+        "bullish": false
+      },
+      {
+        "symbol": "NFLX",
+        "rv": 0.93,
+        "bullish": true
+      },
+      {
+        "symbol": "OXY",
+        "rv": 0.93,
+        "bullish": true
+      },
+      {
+        "symbol": "ADBE",
+        "rv": 0.89,
+        "bullish": true
+      },
+      {
+        "symbol": "LLY",
+        "rv": 0.89,
+        "bullish": true
+      },
+      {
+        "symbol": "AAPL",
+        "rv": 0.87,
+        "bullish": true
+      },
+      {
+        "symbol": "DIS",
+        "rv": 0.86,
+        "bullish": true
+      },
+      {
+        "symbol": "PLTR",
+        "rv": 0.84,
+        "bullish": false
+      },
+      {
+        "symbol": "COIN",
+        "rv": 0.84,
+        "bullish": false
+      },
+      {
+        "symbol": "XOM",
+        "rv": 0.84,
+        "bullish": true
+      },
+      {
+        "symbol": "TSLA",
+        "rv": 0.78,
+        "bullish": false
+      },
+      {
+        "symbol": "AMZN",
+        "rv": 0.78,
+        "bullish": true
+      },
+      {
+        "symbol": "MSFT",
+        "rv": 0.76,
+        "bullish": true
+      },
+      {
+        "symbol": "GOOGL",
+        "rv": 0.76,
+        "bullish": true
+      },
+      {
+        "symbol": "HOOD",
+        "rv": 0.76,
+        "bullish": false
+      },
+      {
+        "symbol": "RIOT",
+        "rv": 0.75,
+        "bullish": false
+      },
+      {
+        "symbol": "AAL",
+        "rv": 0.66,
+        "bullish": false
+      },
+      {
+        "symbol": "ORCL",
+        "rv": 0.65,
+        "bullish": false
+      },
+      {
+        "symbol": "BABA",
+        "rv": 0.62,
+        "bullish": true
+      },
+      {
+        "symbol": "CCL",
+        "rv": 0.58,
+        "bullish": true
+      },
+      {
+        "symbol": "DAL",
+        "rv": 0.58,
+        "bullish": true
+      },
+      {
+        "symbol": "SOFI",
+        "rv": 0.57,
+        "bullish": false
+      },
+      {
+        "symbol": "META",
+        "rv": 0.53,
+        "bullish": true
+      },
+      {
+        "symbol": "RIVN",
+        "rv": 0.53,
+        "bullish": false
+      },
+      {
+        "symbol": "SHOP",
+        "rv": 0.4,
+        "bullish": true
+      },
+      {
+        "symbol": "NU",
+        "rv": 0.29,
+        "bullish": true
+      },
+      {
+        "symbol": "UAL",
+        "rv": 0.28,
+        "bullish": true
+      }
+    ],
+    "regimes": [
+      {
+        "time": "15:00",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.83
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.8
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.43
+          }
+        ]
+      },
+      {
+        "time": "15:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "tendance",
+            "z": 0,
+            "band": 2.28
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.53
+          },
+          {
+            "symbol": "IWM",
+            "regime": "tendance",
+            "z": 0,
+            "band": -2.15
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.61
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.19
+          },
+          {
+            "symbol": "AMD",
+            "regime": "tendance",
+            "z": 0,
+            "band": -3.22
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.84
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "tendance",
+            "z": 0,
+            "band": 3.3
+          },
+          {
+            "symbol": "META",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.9
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.74
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "tendance",
+            "z": 0,
+            "band": 2.26
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "tendance",
+            "z": 0,
+            "band": -6.18
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.5
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.28
+          },
+          {
+            "symbol": "COIN",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.26
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.57
+          },
+          {
+            "symbol": "MU",
+            "regime": "tendance",
+            "z": 0,
+            "band": -4.82
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.63
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 0.36,
+            "band": -1.27
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 1.45,
+            "band": -0.44
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 2.97,
+            "band": 0.08
+          },
+          {
+            "symbol": "INTC",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.27
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.51
+          },
+          {
+            "symbol": "ARM",
+            "regime": "tendance",
+            "z": 0,
+            "band": -2.47
+          },
+          {
+            "symbol": "SOFI",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.17
+          },
+          {
+            "symbol": "RIVN",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.57
+          },
+          {
+            "symbol": "UBER",
+            "regime": "tendance",
+            "z": 0,
+            "band": 2.07
+          },
+          {
+            "symbol": "SHOP",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.7
+          },
+          {
+            "symbol": "DKNG",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.33
+          },
+          {
+            "symbol": "RBLX",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.42
+          },
+          {
+            "symbol": "MARA",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.86
+          },
+          {
+            "symbol": "RIOT",
+            "regime": "tendance",
+            "z": 0,
+            "band": 5.07
+          },
+          {
+            "symbol": "CLSK",
+            "regime": "tendance",
+            "z": 0,
+            "band": -1.85
+          },
+          {
+            "symbol": "IREN",
+            "regime": "tendance",
+            "z": 0,
+            "band": 4.3
+          },
+          {
+            "symbol": "WULF",
+            "regime": "tendance",
+            "z": 0,
+            "band": -1.09
+          },
+          {
+            "symbol": "IONQ",
+            "regime": "tendance",
+            "z": 0,
+            "band": -1.08
+          },
+          {
+            "symbol": "RGTI",
+            "regime": "tendance",
+            "z": 0,
+            "band": -1.92
+          },
+          {
+            "symbol": "QBTS",
+            "regime": "tendance",
+            "z": 0,
+            "band": -3.16
+          },
+          {
+            "symbol": "SOUN",
+            "regime": "tendance",
+            "z": 0,
+            "band": -5.32
+          },
+          {
+            "symbol": "NU",
+            "regime": "tendance",
+            "z": 0,
+            "band": 3.11
+          },
+          {
+            "symbol": "CCL",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.67
+          },
+          {
+            "symbol": "AAL",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.38
+          },
+          {
+            "symbol": "DAL",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.14
+          },
+          {
+            "symbol": "UAL",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.28
+          },
+          {
+            "symbol": "XOM",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.17
+          },
+          {
+            "symbol": "OXY",
+            "regime": "tendance",
+            "z": 0,
+            "band": -1.65
+          },
+          {
+            "symbol": "BAC",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.8
+          },
+          {
+            "symbol": "WMT",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.71
+          },
+          {
+            "symbol": "DIS",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.57
+          },
+          {
+            "symbol": "BABA",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0
+          },
+          {
+            "symbol": "SNAP",
+            "regime": "tendance",
+            "z": 0,
+            "band": -1.85
+          },
+          {
+            "symbol": "PYPL",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.99
+          },
+          {
+            "symbol": "CRWD",
+            "regime": "tendance",
+            "z": 0,
+            "band": -2.61
+          },
+          {
+            "symbol": "PANW",
+            "regime": "tendance",
+            "z": 0,
+            "band": -3.66
+          },
+          {
+            "symbol": "SNOW",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.25
+          },
+          {
+            "symbol": "ORCL",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.67
+          },
+          {
+            "symbol": "CRM",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.53
+          },
+          {
+            "symbol": "ADBE",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.5
+          },
+          {
+            "symbol": "QCOM",
+            "regime": "tendance",
+            "z": 0,
+            "band": -2.81
+          },
+          {
+            "symbol": "TSM",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.72
+          },
+          {
+            "symbol": "ASML",
+            "regime": "tendance",
+            "z": 0,
+            "band": -2
+          },
+          {
+            "symbol": "LLY",
+            "regime": "tendance",
+            "z": 0,
+            "band": -3.59
+          },
+          {
+            "symbol": "UNH",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.25
+          },
+          {
+            "symbol": "JPM",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.54
+          },
+          {
+            "symbol": "GS",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.5
+          }
+        ]
+      },
+      {
+        "time": "16:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "mixte",
+            "z": 1.37,
+            "band": 2.74
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": 1.68,
+            "band": 1.42
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 0.88,
+            "band": 0.21
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": 0.36,
+            "band": 1.41
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "mixte",
+            "z": 2.73,
+            "band": 1.21
+          },
+          {
+            "symbol": "AMD",
+            "regime": "mixte",
+            "z": 1.55,
+            "band": 1.42
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "mixte",
+            "z": 2.14,
+            "band": 1.72
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 0.18,
+            "band": 1.03
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 0.72,
+            "band": 1.35
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": 1.31,
+            "band": 0.9
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": 0.65,
+            "band": 1.05
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": -1.42,
+            "band": -3.55
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": 1.86,
+            "band": 0.9
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 1.3,
+            "band": 1.13
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": 0.38,
+            "band": 0.27
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": -0.92,
+            "band": -0.04
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": 1.49,
+            "band": 0.91
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 0.56,
+            "band": 0.47
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -1.22,
+            "band": -0.93
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": -0.71,
+            "band": -0.52
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 2.01,
+            "band": 0.79
+          },
+          {
+            "symbol": "INTC",
+            "regime": "range",
+            "z": 1.63,
+            "band": 1.24
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": 0.94,
+            "band": 0.51
+          },
+          {
+            "symbol": "ARM",
+            "regime": "range",
+            "z": -0.73,
+            "band": -2.54
+          },
+          {
+            "symbol": "SOFI",
+            "regime": "range",
+            "z": 0.21,
+            "band": 0.48
+          },
+          {
+            "symbol": "RIVN",
+            "regime": "range",
+            "z": -1.85,
+            "band": -0.72
+          },
+          {
+            "symbol": "UBER",
+            "regime": "range",
+            "z": 1.02,
+            "band": 1.56
+          },
+          {
+            "symbol": "SHOP",
+            "regime": "range",
+            "z": 1.57,
+            "band": 1.41
+          },
+          {
+            "symbol": "DKNG",
+            "regime": "range",
+            "z": -0.8,
+            "band": -1.15
+          },
+          {
+            "symbol": "RBLX",
+            "regime": "range",
+            "z": 1.99,
+            "band": 0.43
+          },
+          {
+            "symbol": "MARA",
+            "regime": "mixte",
+            "z": -1.83,
+            "band": -2.14
+          },
+          {
+            "symbol": "RIOT",
+            "regime": "range",
+            "z": 0.98,
+            "band": 0.35
+          },
+          {
+            "symbol": "CLSK",
+            "regime": "range",
+            "z": -0.5,
+            "band": -1.9
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 0.33,
+            "band": 0.61
+          },
+          {
+            "symbol": "WULF",
+            "regime": "mixte",
+            "z": -1.65,
+            "band": -2.24
+          },
+          {
+            "symbol": "IONQ",
+            "regime": "mixte",
+            "z": 2.18,
+            "band": 2.37
+          },
+          {
+            "symbol": "RGTI",
+            "regime": "mixte",
+            "z": 1.97,
+            "band": 1.89
+          },
+          {
+            "symbol": "QBTS",
+            "regime": "range",
+            "z": 1.44,
+            "band": 0.81
+          },
+          {
+            "symbol": "SOUN",
+            "regime": "range",
+            "z": 0.48,
+            "band": -1.47
+          },
+          {
+            "symbol": "NU",
+            "regime": "range",
+            "z": 1.96,
+            "band": 2.17
+          },
+          {
+            "symbol": "CCL",
+            "regime": "range",
+            "z": 0.85,
+            "band": 1
+          },
+          {
+            "symbol": "AAL",
+            "regime": "range",
+            "z": 0.61,
+            "band": 0.39
+          },
+          {
+            "symbol": "DAL",
+            "regime": "range",
+            "z": 0.84,
+            "band": 0.87
+          },
+          {
+            "symbol": "UAL",
+            "regime": "range",
+            "z": 0.29,
+            "band": 0.66
+          },
+          {
+            "symbol": "XOM",
+            "regime": "mixte",
+            "z": 1.71,
+            "band": 1.75
+          },
+          {
+            "symbol": "OXY",
+            "regime": "tendance",
+            "z": 2.1,
+            "band": 1.41
+          },
+          {
+            "symbol": "BAC",
+            "regime": "range",
+            "z": 2.05,
+            "band": 1.5
+          },
+          {
+            "symbol": "WMT",
+            "regime": "range",
+            "z": 1.79,
+            "band": 1.93
+          },
+          {
+            "symbol": "DIS",
+            "regime": "tendance",
+            "z": 5.98,
+            "band": 2.7
+          },
+          {
+            "symbol": "BABA",
+            "regime": "mixte",
+            "z": 1.01,
+            "band": 1.03
+          },
+          {
+            "symbol": "SNAP",
+            "regime": "range",
+            "z": 1.58,
+            "band": 0.18
+          },
+          {
+            "symbol": "PYPL",
+            "regime": "mixte",
+            "z": 2.65,
+            "band": 2.23
+          },
+          {
+            "symbol": "CRWD",
+            "regime": "range",
+            "z": -0.7,
+            "band": -1
+          },
+          {
+            "symbol": "PANW",
+            "regime": "range",
+            "z": -0.26,
+            "band": -0.78
+          },
+          {
+            "symbol": "SNOW",
+            "regime": "mixte",
+            "z": -2.28,
+            "band": -1.75
+          },
+          {
+            "symbol": "ORCL",
+            "regime": "range",
+            "z": -1.62,
+            "band": -0.73
+          },
+          {
+            "symbol": "CRM",
+            "regime": "range",
+            "z": -2.55,
+            "band": -1.03
+          },
+          {
+            "symbol": "ADBE",
+            "regime": "range",
+            "z": -1.02,
+            "band": -0.16
+          },
+          {
+            "symbol": "QCOM",
+            "regime": "range",
+            "z": 0.05,
+            "band": 0.04
+          },
+          {
+            "symbol": "TSM",
+            "regime": "range",
+            "z": 0.48,
+            "band": -0.26
+          },
+          {
+            "symbol": "ASML",
+            "regime": "range",
+            "z": 0.42,
+            "band": -0.7
+          },
+          {
+            "symbol": "LLY",
+            "regime": "tendance",
+            "z": 1.89,
+            "band": 0.98
+          },
+          {
+            "symbol": "UNH",
+            "regime": "range",
+            "z": 2.02,
+            "band": 2.04
+          },
+          {
+            "symbol": "JPM",
+            "regime": "mixte",
+            "z": 2.93,
+            "band": 2.08
+          },
+          {
+            "symbol": "GS",
+            "regime": "range",
+            "z": 1.11,
+            "band": 1.13
+          }
+        ]
+      },
+      {
+        "time": "16:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": -0.77,
+            "band": 1.05
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "mixte",
+            "z": -1.71,
+            "band": -0.29
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 0.31,
+            "band": 0.19
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "tendance",
+            "z": -2.6,
+            "band": -1.01
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 1.66,
+            "band": 1.42
+          },
+          {
+            "symbol": "AMD",
+            "regime": "mixte",
+            "z": -1.27,
+            "band": -0.5
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": 1.07,
+            "band": 1.51
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.98,
+            "band": 1.33
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 1.76,
+            "band": 1.55
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": 0.87,
+            "band": 0.76
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": -0.79,
+            "band": 0.59
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "tendance",
+            "z": -4.92,
+            "band": -5.48
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "mixte",
+            "z": -0.21,
+            "band": 0.11
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": -1.02,
+            "band": 0.38
+          },
+          {
+            "symbol": "COIN",
+            "regime": "mixte",
+            "z": -2.13,
+            "band": -0.49
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": -1.95,
+            "band": -0.48
+          },
+          {
+            "symbol": "MU",
+            "regime": "tendance",
+            "z": -2.17,
+            "band": -2.32
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": -1.26,
+            "band": -0.3
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -1.05,
+            "band": -0.67
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": -2.04,
+            "band": -0.69
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 0.64,
+            "band": -0.07
+          },
+          {
+            "symbol": "INTC",
+            "regime": "mixte",
+            "z": -1.1,
+            "band": -0.16
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": -0.96,
+            "band": -0.51
+          },
+          {
+            "symbol": "ARM",
+            "regime": "range",
+            "z": -1.51,
+            "band": -2.87
+          },
+          {
+            "symbol": "SOFI",
+            "regime": "range",
+            "z": -0.92,
+            "band": 0.08
+          },
+          {
+            "symbol": "RIVN",
+            "regime": "range",
+            "z": 0.6,
+            "band": -0.18
+          },
+          {
+            "symbol": "UBER",
+            "regime": "range",
+            "z": 1.69,
+            "band": 1.81
+          },
+          {
+            "symbol": "SHOP",
+            "regime": "range",
+            "z": 0.12,
+            "band": 1
+          },
+          {
+            "symbol": "DKNG",
+            "regime": "range",
+            "z": -0.81,
+            "band": -1.22
+          },
+          {
+            "symbol": "RBLX",
+            "regime": "range",
+            "z": 0.94,
+            "band": 0.22
+          },
+          {
+            "symbol": "MARA",
+            "regime": "range",
+            "z": -1.95,
+            "band": -1.73
+          },
+          {
+            "symbol": "RIOT",
+            "regime": "mixte",
+            "z": -1.5,
+            "band": -1.22
+          },
+          {
+            "symbol": "CLSK",
+            "regime": "range",
+            "z": -1.45,
+            "band": -1.93
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": -0.95,
+            "band": -0.13
+          },
+          {
+            "symbol": "WULF",
+            "regime": "range",
+            "z": -1.68,
+            "band": -2.13
+          },
+          {
+            "symbol": "IONQ",
+            "regime": "range",
+            "z": 0.25,
+            "band": 1.15
+          },
+          {
+            "symbol": "RGTI",
+            "regime": "range",
+            "z": 1.46,
+            "band": 1.48
+          },
+          {
+            "symbol": "QBTS",
+            "regime": "range",
+            "z": 0.67,
+            "band": 0.51
+          },
+          {
+            "symbol": "SOUN",
+            "regime": "range",
+            "z": -0.09,
+            "band": -1.4
+          },
+          {
+            "symbol": "NU",
+            "regime": "range",
+            "z": 0.05,
+            "band": 1.73
+          },
+          {
+            "symbol": "CCL",
+            "regime": "range",
+            "z": 1.37,
+            "band": 0.99
+          },
+          {
+            "symbol": "AAL",
+            "regime": "range",
+            "z": 1.09,
+            "band": 0.55
+          },
+          {
+            "symbol": "DAL",
+            "regime": "range",
+            "z": 1.72,
+            "band": 1.03
+          },
+          {
+            "symbol": "UAL",
+            "regime": "range",
+            "z": 0.96,
+            "band": 0.71
+          },
+          {
+            "symbol": "XOM",
+            "regime": "range",
+            "z": 0.78,
+            "band": 1.75
+          },
+          {
+            "symbol": "OXY",
+            "regime": "range",
+            "z": 0.85,
+            "band": 1.22
+          },
+          {
+            "symbol": "BAC",
+            "regime": "range",
+            "z": 1.76,
+            "band": 1.47
+          },
+          {
+            "symbol": "WMT",
+            "regime": "mixte",
+            "z": 2.4,
+            "band": 2.48
+          },
+          {
+            "symbol": "DIS",
+            "regime": "range",
+            "z": 3.16,
+            "band": 3.41
+          },
+          {
+            "symbol": "BABA",
+            "regime": "range",
+            "z": 1.43,
+            "band": 1.37
+          },
+          {
+            "symbol": "SNAP",
+            "regime": "mixte",
+            "z": -2.51,
+            "band": -1.35
+          },
+          {
+            "symbol": "PYPL",
+            "regime": "range",
+            "z": 3.2,
+            "band": 2.47
+          },
+          {
+            "symbol": "CRWD",
+            "regime": "tendance",
+            "z": -3.58,
+            "band": -1.93
+          },
+          {
+            "symbol": "PANW",
+            "regime": "tendance",
+            "z": -2.91,
+            "band": -1.74
+          },
+          {
+            "symbol": "SNOW",
+            "regime": "tendance",
+            "z": -3.33,
+            "band": -2.81
+          },
+          {
+            "symbol": "ORCL",
+            "regime": "range",
+            "z": -3.3,
+            "band": -1.44
+          },
+          {
+            "symbol": "CRM",
+            "regime": "mixte",
+            "z": -2.79,
+            "band": -2.18
+          },
+          {
+            "symbol": "ADBE",
+            "regime": "range",
+            "z": -1.16,
+            "band": -0.24
+          },
+          {
+            "symbol": "QCOM",
+            "regime": "range",
+            "z": 1.21,
+            "band": 0.81
+          },
+          {
+            "symbol": "TSM",
+            "regime": "tendance",
+            "z": -3.23,
+            "band": -2.74
+          },
+          {
+            "symbol": "ASML",
+            "regime": "mixte",
+            "z": -2.65,
+            "band": -2.5
+          },
+          {
+            "symbol": "LLY",
+            "regime": "range",
+            "z": 0.63,
+            "band": 0.88
+          },
+          {
+            "symbol": "UNH",
+            "regime": "range",
+            "z": -0.23,
+            "band": 1.54
+          },
+          {
+            "symbol": "JPM",
+            "regime": "range",
+            "z": 3.01,
+            "band": 2.15
+          },
+          {
+            "symbol": "GS",
+            "regime": "range",
+            "z": 0.12,
+            "band": 0.83
+          }
+        ]
+      },
+      {
+        "time": "17:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": 0.11,
+            "band": 1.01
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": -0.26,
+            "band": 0.05
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 0.67,
+            "band": 0.27
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -1.78,
+            "band": -0.88
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 0.78,
+            "band": 1.27
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -0.78,
+            "band": -0.25
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "mixte",
+            "z": 2.25,
+            "band": 1.83
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "mixte",
+            "z": 2.01,
+            "band": 1.47
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 2.01,
+            "band": 1.47
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": 1.42,
+            "band": 0.79
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": 0.09,
+            "band": 0.7
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": -1.49,
+            "band": -3.09
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "mixte",
+            "z": 2.05,
+            "band": 0.72
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 0.3,
+            "band": 0.59
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": -1.38,
+            "band": -0.43
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": -0.72,
+            "band": -0.12
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": -1.22,
+            "band": -1.24
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 0.15,
+            "band": 0.15
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 0.48,
+            "band": -0.23
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": -0.37,
+            "band": -0.31
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 1.32,
+            "band": 0.11
+          },
+          {
+            "symbol": "INTC",
+            "regime": "range",
+            "z": 0.2,
+            "band": 0.47
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": -0.22,
+            "band": -0.16
+          },
+          {
+            "symbol": "ARM",
+            "regime": "range",
+            "z": -1.1,
+            "band": -1.33
+          },
+          {
+            "symbol": "SOFI",
+            "regime": "range",
+            "z": 0.01,
+            "band": 0.3
+          },
+          {
+            "symbol": "RIVN",
+            "regime": "mixte",
+            "z": 1.82,
+            "band": 0.32
+          },
+          {
+            "symbol": "UBER",
+            "regime": "range",
+            "z": 1.7,
+            "band": 1.59
+          },
+          {
+            "symbol": "SHOP",
+            "regime": "range",
+            "z": 2.03,
+            "band": 1.22
+          },
+          {
+            "symbol": "DKNG",
+            "regime": "range",
+            "z": -0.94,
+            "band": -1.24
+          },
+          {
+            "symbol": "RBLX",
+            "regime": "range",
+            "z": 2.42,
+            "band": 0.45
+          },
+          {
+            "symbol": "MARA",
+            "regime": "range",
+            "z": -0.65,
+            "band": -1.28
+          },
+          {
+            "symbol": "RIOT",
+            "regime": "range",
+            "z": -0.32,
+            "band": -0.56
+          },
+          {
+            "symbol": "CLSK",
+            "regime": "range",
+            "z": -0.88,
+            "band": -1.39
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 0.55,
+            "band": 0.43
+          },
+          {
+            "symbol": "WULF",
+            "regime": "range",
+            "z": -1.4,
+            "band": -1.46
+          },
+          {
+            "symbol": "IONQ",
+            "regime": "mixte",
+            "z": 2.16,
+            "band": 1.84
+          },
+          {
+            "symbol": "RGTI",
+            "regime": "mixte",
+            "z": 2.83,
+            "band": 2.13
+          },
+          {
+            "symbol": "QBTS",
+            "regime": "mixte",
+            "z": 2.73,
+            "band": 1.48
+          },
+          {
+            "symbol": "SOUN",
+            "regime": "range",
+            "z": -0.06,
+            "band": -1.38
+          },
+          {
+            "symbol": "NU",
+            "regime": "range",
+            "z": 0.02,
+            "band": 1.49
+          },
+          {
+            "symbol": "CCL",
+            "regime": "range",
+            "z": 0.45,
+            "band": 0.86
+          },
+          {
+            "symbol": "AAL",
+            "regime": "range",
+            "z": -0.38,
+            "band": 0.22
+          },
+          {
+            "symbol": "DAL",
+            "regime": "range",
+            "z": 0.21,
+            "band": 0.72
+          },
+          {
+            "symbol": "UAL",
+            "regime": "range",
+            "z": -1.02,
+            "band": 0.33
+          },
+          {
+            "symbol": "XOM",
+            "regime": "range",
+            "z": 1.04,
+            "band": 1.08
+          },
+          {
+            "symbol": "OXY",
+            "regime": "range",
+            "z": 1.75,
+            "band": 1.22
+          },
+          {
+            "symbol": "BAC",
+            "regime": "range",
+            "z": 2.49,
+            "band": 1.49
+          },
+          {
+            "symbol": "WMT",
+            "regime": "range",
+            "z": 2,
+            "band": 2.91
+          },
+          {
+            "symbol": "DIS",
+            "regime": "range",
+            "z": 3.74,
+            "band": 2.97
+          },
+          {
+            "symbol": "BABA",
+            "regime": "range",
+            "z": 1.84,
+            "band": 1.25
+          },
+          {
+            "symbol": "SNAP",
+            "regime": "range",
+            "z": -1.15,
+            "band": -0.93
+          },
+          {
+            "symbol": "PYPL",
+            "regime": "range",
+            "z": 4.05,
+            "band": 2.33
+          },
+          {
+            "symbol": "CRWD",
+            "regime": "range",
+            "z": -2.88,
+            "band": -1.89
+          },
+          {
+            "symbol": "PANW",
+            "regime": "range",
+            "z": -2.27,
+            "band": -1.72
+          },
+          {
+            "symbol": "SNOW",
+            "regime": "mixte",
+            "z": -0.37,
+            "band": -1.4
+          },
+          {
+            "symbol": "ORCL",
+            "regime": "range",
+            "z": -1.09,
+            "band": -0.79
+          },
+          {
+            "symbol": "CRM",
+            "regime": "tendance",
+            "z": -0.05,
+            "band": -1.4
+          },
+          {
+            "symbol": "ADBE",
+            "regime": "tendance",
+            "z": 2.24,
+            "band": 0.87
+          },
+          {
+            "symbol": "QCOM",
+            "regime": "range",
+            "z": 1.92,
+            "band": 1.67
+          },
+          {
+            "symbol": "TSM",
+            "regime": "range",
+            "z": -0.42,
+            "band": -1.39
+          },
+          {
+            "symbol": "ASML",
+            "regime": "range",
+            "z": -2,
+            "band": -1.78
+          },
+          {
+            "symbol": "LLY",
+            "regime": "range",
+            "z": -0.1,
+            "band": 0.74
+          },
+          {
+            "symbol": "UNH",
+            "regime": "range",
+            "z": -0.19,
+            "band": 0.62
+          },
+          {
+            "symbol": "JPM",
+            "regime": "range",
+            "z": 3.77,
+            "band": 2.15
+          },
+          {
+            "symbol": "GS",
+            "regime": "range",
+            "z": 1.03,
+            "band": 1.17
+          }
+        ]
+      },
+      {
+        "time": "17:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": 0.49,
+            "band": 1.3
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": 0.85,
+            "band": 0.43
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 1.97,
+            "band": 0.55
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -1.79,
+            "band": -1.22
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 1.43,
+            "band": 1.74
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -0.36,
+            "band": -0.03
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": 1.96,
+            "band": 1.9
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 3.59,
+            "band": 2.02
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 1.31,
+            "band": 1.53
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": 1.15,
+            "band": 1.03
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": 0.69,
+            "band": 1.16
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": -1.37,
+            "band": -4.27
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": 1.66,
+            "band": 0.66
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 1.04,
+            "band": 0.98
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": -1.7,
+            "band": -0.73
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": -0.45,
+            "band": -0.07
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": -0.55,
+            "band": -0.99
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 0.54,
+            "band": 0.12
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 0.94,
+            "band": -0.16
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.42,
+            "band": -0.2
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 1.25,
+            "band": 0.11
+          },
+          {
+            "symbol": "INTC",
+            "regime": "range",
+            "z": 0.55,
+            "band": 0.69
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": -1.18,
+            "band": -0.58
+          },
+          {
+            "symbol": "ARM",
+            "regime": "range",
+            "z": -0.71,
+            "band": -1.5
+          },
+          {
+            "symbol": "SOFI",
+            "regime": "range",
+            "z": -0.48,
+            "band": 0.13
+          },
+          {
+            "symbol": "RIVN",
+            "regime": "range",
+            "z": 1.01,
+            "band": 0.09
+          },
+          {
+            "symbol": "UBER",
+            "regime": "range",
+            "z": 0.99,
+            "band": 1.49
+          },
+          {
+            "symbol": "SHOP",
+            "regime": "mixte",
+            "z": 3.74,
+            "band": 1.62
+          },
+          {
+            "symbol": "DKNG",
+            "regime": "range",
+            "z": 0.3,
+            "band": -0.77
+          },
+          {
+            "symbol": "RBLX",
+            "regime": "range",
+            "z": 2.93,
+            "band": 0.51
+          },
+          {
+            "symbol": "MARA",
+            "regime": "range",
+            "z": -0.1,
+            "band": -1.37
+          },
+          {
+            "symbol": "RIOT",
+            "regime": "mixte",
+            "z": 1.02,
+            "band": 0.03
+          },
+          {
+            "symbol": "CLSK",
+            "regime": "range",
+            "z": -0.34,
+            "band": -1.33
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 0.7,
+            "band": 0.57
+          },
+          {
+            "symbol": "WULF",
+            "regime": "range",
+            "z": -0.48,
+            "band": -1.54
+          },
+          {
+            "symbol": "IONQ",
+            "regime": "range",
+            "z": 3.16,
+            "band": 2.35
+          },
+          {
+            "symbol": "RGTI",
+            "regime": "range",
+            "z": 3.89,
+            "band": 3.24
+          },
+          {
+            "symbol": "QBTS",
+            "regime": "range",
+            "z": 3.25,
+            "band": 2.06
+          },
+          {
+            "symbol": "SOUN",
+            "regime": "range",
+            "z": 0.84,
+            "band": -1.06
+          },
+          {
+            "symbol": "NU",
+            "regime": "range",
+            "z": -0.13,
+            "band": 1.32
+          },
+          {
+            "symbol": "CCL",
+            "regime": "mixte",
+            "z": -0.8,
+            "band": 0.42
+          },
+          {
+            "symbol": "AAL",
+            "regime": "range",
+            "z": -0.75,
+            "band": 0.02
+          },
+          {
+            "symbol": "DAL",
+            "regime": "range",
+            "z": -0.24,
+            "band": 0.61
+          },
+          {
+            "symbol": "UAL",
+            "regime": "range",
+            "z": -1.15,
+            "band": 0.23
+          },
+          {
+            "symbol": "XOM",
+            "regime": "range",
+            "z": 1.37,
+            "band": 1.03
+          },
+          {
+            "symbol": "OXY",
+            "regime": "mixte",
+            "z": 2.9,
+            "band": 1.37
+          },
+          {
+            "symbol": "BAC",
+            "regime": "tendance",
+            "z": -0.29,
+            "band": 0.92
+          },
+          {
+            "symbol": "WMT",
+            "regime": "range",
+            "z": 1.92,
+            "band": 2.35
+          },
+          {
+            "symbol": "DIS",
+            "regime": "range",
+            "z": 3.69,
+            "band": 2.64
+          },
+          {
+            "symbol": "BABA",
+            "regime": "range",
+            "z": 2.55,
+            "band": 1.68
+          },
+          {
+            "symbol": "SNAP",
+            "regime": "range",
+            "z": -1.27,
+            "band": -1.2
+          },
+          {
+            "symbol": "PYPL",
+            "regime": "range",
+            "z": 3.46,
+            "band": 2.03
+          },
+          {
+            "symbol": "CRWD",
+            "regime": "mixte",
+            "z": -0.54,
+            "band": -1.49
+          },
+          {
+            "symbol": "PANW",
+            "regime": "mixte",
+            "z": -0.61,
+            "band": -1.22
+          },
+          {
+            "symbol": "SNOW",
+            "regime": "mixte",
+            "z": 1.19,
+            "band": -0.95
+          },
+          {
+            "symbol": "ORCL",
+            "regime": "range",
+            "z": -0.87,
+            "band": -1.06
+          },
+          {
+            "symbol": "CRM",
+            "regime": "mixte",
+            "z": 1.05,
+            "band": -0.32
+          },
+          {
+            "symbol": "ADBE",
+            "regime": "mixte",
+            "z": 2.36,
+            "band": 1.33
+          },
+          {
+            "symbol": "QCOM",
+            "regime": "range",
+            "z": 1.24,
+            "band": 1.7
+          },
+          {
+            "symbol": "TSM",
+            "regime": "mixte",
+            "z": 0.76,
+            "band": -0.93
+          },
+          {
+            "symbol": "ASML",
+            "regime": "range",
+            "z": -0.69,
+            "band": -1.4
+          },
+          {
+            "symbol": "LLY",
+            "regime": "range",
+            "z": -0.26,
+            "band": 0.62
+          },
+          {
+            "symbol": "UNH",
+            "regime": "range",
+            "z": -0.44,
+            "band": 0.45
+          },
+          {
+            "symbol": "JPM",
+            "regime": "tendance",
+            "z": 0.66,
+            "band": 1.5
+          },
+          {
+            "symbol": "GS",
+            "regime": "range",
+            "z": 0.01,
+            "band": 0.86
+          }
+        ]
+      },
+      {
+        "time": "18:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": 0.18,
+            "band": 1.1
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": 0.19,
+            "band": 0.29
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 2.62,
+            "band": 0.86
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -0.87,
+            "band": -1.33
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 0.72,
+            "band": 1.61
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -0.33,
+            "band": 0.01
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": 0.51,
+            "band": 1.45
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "mixte",
+            "z": 2.14,
+            "band": 1.54
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 1.41,
+            "band": 1.68
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": 0.77,
+            "band": 1.01
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": -0.22,
+            "band": 0.78
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": -1.59,
+            "band": -3.56
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": 1.57,
+            "band": 0.62
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 0.57,
+            "band": 0.7
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": -1,
+            "band": -0.52
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": 0.46,
+            "band": 0.17
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": -0.37,
+            "band": -0.76
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 1.16,
+            "band": 0.3
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 1.55,
+            "band": 0.1
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.89,
+            "band": -0.09
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 1.64,
+            "band": 0.19
+          },
+          {
+            "symbol": "INTC",
+            "regime": "range",
+            "z": 0.37,
+            "band": 0.7
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": -0.66,
+            "band": -0.35
+          },
+          {
+            "symbol": "ARM",
+            "regime": "range",
+            "z": -0.6,
+            "band": -1.31
+          },
+          {
+            "symbol": "SOFI",
+            "regime": "range",
+            "z": 0.5,
+            "band": 0.38
+          },
+          {
+            "symbol": "RIVN",
+            "regime": "mixte",
+            "z": 1.92,
+            "band": 0.47
+          },
+          {
+            "symbol": "UBER",
+            "regime": "range",
+            "z": 1.66,
+            "band": 1.79
+          },
+          {
+            "symbol": "SHOP",
+            "regime": "mixte",
+            "z": 3.24,
+            "band": 1.86
+          },
+          {
+            "symbol": "DKNG",
+            "regime": "range",
+            "z": 1.3,
+            "band": 0.06
+          },
+          {
+            "symbol": "RBLX",
+            "regime": "mixte",
+            "z": 4.1,
+            "band": 0.87
+          },
+          {
+            "symbol": "MARA",
+            "regime": "range",
+            "z": 1.16,
+            "band": -0.71
+          },
+          {
+            "symbol": "RIOT",
+            "regime": "tendance",
+            "z": 2.47,
+            "band": 1.14
+          },
+          {
+            "symbol": "CLSK",
+            "regime": "range",
+            "z": 0.68,
+            "band": -1.06
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 0.22,
+            "band": 0.36
+          },
+          {
+            "symbol": "WULF",
+            "regime": "range",
+            "z": 0.67,
+            "band": -1.18
+          },
+          {
+            "symbol": "IONQ",
+            "regime": "range",
+            "z": 3.31,
+            "band": 2.65
+          },
+          {
+            "symbol": "RGTI",
+            "regime": "tendance",
+            "z": 4.06,
+            "band": 3.9
+          },
+          {
+            "symbol": "QBTS",
+            "regime": "mixte",
+            "z": 3.39,
+            "band": 2.9
+          },
+          {
+            "symbol": "SOUN",
+            "regime": "range",
+            "z": 0.82,
+            "band": -1
+          },
+          {
+            "symbol": "NU",
+            "regime": "mixte",
+            "z": 1.59,
+            "band": 1.89
+          },
+          {
+            "symbol": "CCL",
+            "regime": "tendance",
+            "z": 0.86,
+            "band": 0.73
+          },
+          {
+            "symbol": "AAL",
+            "regime": "tendance",
+            "z": 1.11,
+            "band": 0.51
+          },
+          {
+            "symbol": "DAL",
+            "regime": "mixte",
+            "z": 2.31,
+            "band": 1.12
+          },
+          {
+            "symbol": "UAL",
+            "regime": "mixte",
+            "z": 0.32,
+            "band": 0.52
+          },
+          {
+            "symbol": "XOM",
+            "regime": "range",
+            "z": 0.16,
+            "band": 0.89
+          },
+          {
+            "symbol": "OXY",
+            "regime": "range",
+            "z": 1.82,
+            "band": 1.12
+          },
+          {
+            "symbol": "BAC",
+            "regime": "range",
+            "z": 0.27,
+            "band": 1.21
+          },
+          {
+            "symbol": "WMT",
+            "regime": "mixte",
+            "z": 1.21,
+            "band": 1.62
+          },
+          {
+            "symbol": "DIS",
+            "regime": "mixte",
+            "z": 4.7,
+            "band": 2.7
+          },
+          {
+            "symbol": "BABA",
+            "regime": "range",
+            "z": 3.59,
+            "band": 1.98
+          },
+          {
+            "symbol": "SNAP",
+            "regime": "range",
+            "z": -0.61,
+            "band": -0.66
+          },
+          {
+            "symbol": "PYPL",
+            "regime": "tendance",
+            "z": 5.45,
+            "band": 2.48
+          },
+          {
+            "symbol": "CRWD",
+            "regime": "mixte",
+            "z": -2.07,
+            "band": -1.92
+          },
+          {
+            "symbol": "PANW",
+            "regime": "mixte",
+            "z": -1.74,
+            "band": -1.51
+          },
+          {
+            "symbol": "SNOW",
+            "regime": "range",
+            "z": 1.04,
+            "band": -0.81
+          },
+          {
+            "symbol": "ORCL",
+            "regime": "range",
+            "z": -0.6,
+            "band": -0.91
+          },
+          {
+            "symbol": "CRM",
+            "regime": "range",
+            "z": 0.63,
+            "band": -0.41
+          },
+          {
+            "symbol": "ADBE",
+            "regime": "range",
+            "z": 1.39,
+            "band": 0.94
+          },
+          {
+            "symbol": "QCOM",
+            "regime": "range",
+            "z": 1.61,
+            "band": 1.65
+          },
+          {
+            "symbol": "TSM",
+            "regime": "range",
+            "z": 0.19,
+            "band": -0.82
+          },
+          {
+            "symbol": "ASML",
+            "regime": "range",
+            "z": -0.71,
+            "band": -1.21
+          },
+          {
+            "symbol": "LLY",
+            "regime": "mixte",
+            "z": 1.11,
+            "band": 0.98
+          },
+          {
+            "symbol": "UNH",
+            "regime": "tendance",
+            "z": 1.67,
+            "band": 1.12
+          },
+          {
+            "symbol": "JPM",
+            "regime": "range",
+            "z": 0.68,
+            "band": 1.33
+          },
+          {
+            "symbol": "GS",
+            "regime": "range",
+            "z": 0.83,
+            "band": 0.95
+          }
+        ]
+      },
+      {
+        "time": "18:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": -0.24,
+            "band": 1
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": -0.11,
+            "band": 0.19
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 2.5,
+            "band": 0.93
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -1.01,
+            "band": -1.24
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 0.05,
+            "band": 1.35
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -0.47,
+            "band": -0.06
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": 0.63,
+            "band": 1.39
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.28,
+            "band": 1.38
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": -0.02,
+            "band": 1.5
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": -0.96,
+            "band": 0.71
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": 0.02,
+            "band": 0.8
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "mixte",
+            "z": -2.76,
+            "band": -4.28
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "mixte",
+            "z": -0.46,
+            "band": 0.16
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 0.67,
+            "band": 0.72
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": -0.69,
+            "band": -0.47
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": 0.59,
+            "band": 0.23
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": -0.45,
+            "band": -0.74
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 1.21,
+            "band": 0.32
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 0.92,
+            "band": 0.01
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.51,
+            "band": -0.14
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 0.91,
+            "band": -0.03
+          },
+          {
+            "symbol": "INTC",
+            "regime": "range",
+            "z": 0.81,
+            "band": 0.73
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": -0.57,
+            "band": -0.31
+          },
+          {
+            "symbol": "ARM",
+            "regime": "range",
+            "z": -0.31,
+            "band": -1.26
+          },
+          {
+            "symbol": "SOFI",
+            "regime": "range",
+            "z": 0.36,
+            "band": 0.39
+          },
+          {
+            "symbol": "RIVN",
+            "regime": "range",
+            "z": 1.45,
+            "band": 0.34
+          },
+          {
+            "symbol": "UBER",
+            "regime": "range",
+            "z": 0.77,
+            "band": 1.64
+          },
+          {
+            "symbol": "SHOP",
+            "regime": "range",
+            "z": 1.91,
+            "band": 1.55
+          },
+          {
+            "symbol": "DKNG",
+            "regime": "range",
+            "z": 0.33,
+            "band": -0.56
+          },
+          {
+            "symbol": "RBLX",
+            "regime": "range",
+            "z": 2.96,
+            "band": 0.6
+          },
+          {
+            "symbol": "MARA",
+            "regime": "range",
+            "z": 1.73,
+            "band": -0.29
+          },
+          {
+            "symbol": "RIOT",
+            "regime": "range",
+            "z": 2.11,
+            "band": 1.41
+          },
+          {
+            "symbol": "CLSK",
+            "regime": "mixte",
+            "z": 1.99,
+            "band": -0.44
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 0.31,
+            "band": 0.39
+          },
+          {
+            "symbol": "WULF",
+            "regime": "mixte",
+            "z": 1.37,
+            "band": -0.67
+          },
+          {
+            "symbol": "IONQ",
+            "regime": "tendance",
+            "z": 4.18,
+            "band": 3.56
+          },
+          {
+            "symbol": "RGTI",
+            "regime": "tendance",
+            "z": 3.97,
+            "band": 4.39
+          },
+          {
+            "symbol": "QBTS",
+            "regime": "mixte",
+            "z": 3.53,
+            "band": 3.41
+          },
+          {
+            "symbol": "SOUN",
+            "regime": "mixte",
+            "z": -0.12,
+            "band": -1.53
+          },
+          {
+            "symbol": "NU",
+            "regime": "range",
+            "z": 1.23,
+            "band": 1.89
+          },
+          {
+            "symbol": "CCL",
+            "regime": "range",
+            "z": -0.04,
+            "band": 0.59
+          },
+          {
+            "symbol": "AAL",
+            "regime": "range",
+            "z": 0.27,
+            "band": 0.34
+          },
+          {
+            "symbol": "DAL",
+            "regime": "range",
+            "z": 1.5,
+            "band": 0.92
+          },
+          {
+            "symbol": "UAL",
+            "regime": "range",
+            "z": -0.12,
+            "band": 0.42
+          },
+          {
+            "symbol": "XOM",
+            "regime": "range",
+            "z": 0.53,
+            "band": 0.97
+          },
+          {
+            "symbol": "OXY",
+            "regime": "range",
+            "z": 1.32,
+            "band": 1.12
+          },
+          {
+            "symbol": "BAC",
+            "regime": "range",
+            "z": 0.78,
+            "band": 1.27
+          },
+          {
+            "symbol": "WMT",
+            "regime": "mixte",
+            "z": 1.82,
+            "band": 1.6
+          },
+          {
+            "symbol": "DIS",
+            "regime": "range",
+            "z": 4.05,
+            "band": 2.51
+          },
+          {
+            "symbol": "BABA",
+            "regime": "range",
+            "z": 2.2,
+            "band": 1.8
+          },
+          {
+            "symbol": "SNAP",
+            "regime": "range",
+            "z": -1.35,
+            "band": -0.81
+          },
+          {
+            "symbol": "PYPL",
+            "regime": "range",
+            "z": 5.02,
+            "band": 2.29
+          },
+          {
+            "symbol": "CRWD",
+            "regime": "range",
+            "z": -1.36,
+            "band": -1.61
+          },
+          {
+            "symbol": "PANW",
+            "regime": "mixte",
+            "z": -0.57,
+            "band": -1.1
+          },
+          {
+            "symbol": "SNOW",
+            "regime": "mixte",
+            "z": 1.68,
+            "band": -0.29
+          },
+          {
+            "symbol": "ORCL",
+            "regime": "range",
+            "z": -0.69,
+            "band": -0.89
+          },
+          {
+            "symbol": "CRM",
+            "regime": "mixte",
+            "z": 0,
+            "band": -0.79
+          },
+          {
+            "symbol": "ADBE",
+            "regime": "mixte",
+            "z": 0.65,
+            "band": 0.6
+          },
+          {
+            "symbol": "QCOM",
+            "regime": "range",
+            "z": 0.44,
+            "band": 1.28
+          },
+          {
+            "symbol": "TSM",
+            "regime": "range",
+            "z": -0.33,
+            "band": -1.05
+          },
+          {
+            "symbol": "ASML",
+            "regime": "range",
+            "z": -0.72,
+            "band": -1.23
+          },
+          {
+            "symbol": "LLY",
+            "regime": "range",
+            "z": 0.13,
+            "band": 0.73
+          },
+          {
+            "symbol": "UNH",
+            "regime": "range",
+            "z": 1.02,
+            "band": 0.85
+          },
+          {
+            "symbol": "JPM",
+            "regime": "range",
+            "z": 0.56,
+            "band": 1.27
+          },
+          {
+            "symbol": "GS",
+            "regime": "range",
+            "z": 1.3,
+            "band": 0.93
+          }
+        ]
+      }
+    ],
+    "signalsSeen": 95,
+    "signalsTaken": 3,
+    "skipped": {
+      "une seule entrée par minute": 1,
+      "compte cash : liquidités du jour déjà engagées (réglement J+1)": 44
+    },
+    "notes": {
+      "MU ORB : #re bougie baissière, vente à découvert impossible en compte cash": 69,
+      "DKNG ORB : #re bougie baissière, vente à découvert impossible en compte cash": 69,
+      "RBLX ORB : #re bougie baissière, vente à découvert impossible en compte cash": 69,
+      "IREN ORB : #re bougie baissière, vente à découvert impossible en compte cash": 69,
+      "WULF ORB : #re bougie baissière, vente à découvert impossible en compte cash": 69,
+      "TSM ORB : #re bougie baissière, vente à découvert impossible en compte cash": 69,
+      "JPM ORB : cassure mais le S&P # (SPY) sous sa VWAP (pas de vent porteur)": 1,
+      "SOL-USD momentum : bruit habituel (# %) trop faible face aux frais (# %)": 2,
+      "IWM momentum : sortie de zone mais marché en range (efficacité #)": 1,
+      "SPY momentum : sortie de zone mais marché en range (efficacité #)": 13,
+      "AAPL retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 8,
+      "MSFT retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 4,
+      "NFLX retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 9,
+      "IONQ retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 48,
+      "RGTI retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 67,
+      "QBTS retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 69,
+      "ADBE retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 24,
+      "PYPL retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 26,
+      "META retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 2,
+      "RBLX retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 13,
+      "QCOM retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 4,
+      "OXY retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 22,
+      "UBER retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 6,
+      "DIS retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 21,
+      "CRWD retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 13,
+      "COIN retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 13,
+      "WMT retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 4,
+      "NVDA retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 5,
+      "AVGO retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 8,
+      "CLSK retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 15,
+      "ARM retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 1,
+      "ORCL retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 1,
+      "SHOP retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 32,
+      "IWM retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 17,
+      "DKNG retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 3,
+      "RIVN retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 4,
+      "DAL retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 9,
+      "BABA retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 7,
+      "RIOT retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 34,
+      "UNH retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 3,
+      "PANW retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 1
+    }
+  },
+  "forecast": {
+    "watchlist": [
+      {
+        "symbol": "AVGO",
+        "why": "a fini la fenêtre à -4.3 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "RGTI",
+        "why": "a fini la fenêtre à +3.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "QBTS",
+        "why": "a fini la fenêtre à +3.1 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "IONQ",
+        "why": "a fini la fenêtre à +3.0 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "DKNG",
+        "why": "action « en jeu » aujourd'hui (volume relatif 19.9×) : l'intérêt persiste souvent le lendemain"
+      },
+      {
+        "symbol": "TSM",
+        "why": "action « en jeu » aujourd'hui (volume relatif 3.62×) : l'intérêt persiste souvent le lendemain"
+      }
+    ],
+    "outlook": [
+      "poids pour la prochaine séance : ORB 1.09, momentum 0.56, VWAP 2.00 — priorité à « retour VWAP »",
+      "risque par trade prévu : 2.57 $ × poids (entre 0.64 et 5.14 $)",
+      "fin de séance plutôt hésitante (52 en range vs 0 en tendance) : les retours à la VWAP devraient dominer",
+      "semaine terminée à +1.31 % (objectif +1 %)"
+    ],
+    "week": {
+      "pnlPct": 1.314,
+      "targetPct": 1,
+      "tradingDaysLeft": 0,
+      "neededPerDayPct": 0
+    }
+  }
+}
