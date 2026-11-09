@@ -138,7 +138,7 @@ main, quantités différentes, tokens inconnus reçus en « airdrop » — n'y t
 
 ## Limites connues
 
-- La stratégie par défaut (momentum sur des tokens qui ont déjà survécu 30 min à 72 h, sans
+- La stratégie par défaut (momentum sur des tokens qui ont déjà survécu 30 min à 7 jours, sans
   sniping) est une **hypothèse à tester**, pas une méthode gagnante. Le sniping des premières
   secondes est perdu d'avance contre des robots qui achètent dans le même bloc que la création.
 - Le papier reste optimiste malgré ses pénalités (150 bps, frais, loyer) : pas de vrais échecs

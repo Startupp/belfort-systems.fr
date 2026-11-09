@@ -40,6 +40,8 @@ import { buildEntryReasons, createLogger } from './workers/logger.ts';
 import type { Logger } from './workers/logger.ts';
 import { createEquityTracker, sweepAmountSol } from './workers/equity.ts';
 import { sweepToVault } from './maintenance.ts';
+import { RADAR_FILE, writeDashboard } from './dashboard.ts';
+import type { Radar, RadarEntry } from './dashboard.ts';
 import { SOL_MINT } from './types.ts';
 import type { BotState, ClosedTrade, Clock, EquitySnapshot, ExitReason, GuardDecision, Position } from './types.ts';
 
@@ -194,6 +196,7 @@ export function createBot(deps: BotDeps): Bot {
     // La courbe montre l'equity « totale » : wallet + gains déjà mis à l'abri dans le coffre.
     equityTracker.onClose(trade, { ...snap, equitySol: snap.equitySol + state.totalSweptSol });
     save();
+    refreshDashboard();
     await maybeSweep(snap);
   }
 
@@ -316,10 +319,39 @@ export function createBot(deps: BotDeps): Bot {
     }
   }
 
+  /** Régénère le tableau de bord ; une erreur ici ne doit jamais arrêter le bot. */
+  function refreshDashboard(): void {
+    try {
+      writeDashboard(cfg.dataDir, cfg, clock);
+    } catch (e) {
+      logger.error('tableau de bord', e);
+    }
+  }
+
   async function scanAndEnter(): Promise<void> {
+    const radar: Radar = { at: clock.iso(), examined: 0, rejectedCounts: {}, sourcesFailed: [], blockedBy: [], candidates: [] };
+    const writeRadar = (): void => {
+      try {
+        writeJsonAtomic(join(cfg.dataDir, RADAR_FILE), radar);
+      } catch (e) {
+        logger.error('radar', e);
+      }
+    };
+    try {
+      await scanAndEnterInner(radar);
+    } finally {
+      writeRadar();
+      refreshDashboard();
+    }
+  }
+
+  async function scanAndEnterInner(radar: Radar): Promise<void> {
     let snap = await equity();
     let g = guards(snap);
-    if (!g.allowEntries) return;
+    if (!g.allowEntries) {
+      radar.blockedBy = g.reasons;
+      return;
+    }
 
     const now = clock.now();
     for (const [mint, until] of Object.entries(state.cooldowns)) {
@@ -328,6 +360,25 @@ export function createBot(deps: BotDeps): Bot {
     const exclude = new Set([...state.positions.map((p) => p.mint), ...Object.keys(state.cooldowns)]);
     const result = await scanner.scan(exclude);
     logger.scan(result);
+    radar.examined = result.examined;
+    radar.rejectedCounts = result.rejectedCounts;
+    radar.sourcesFailed = result.sourcesFailed;
+    const entries = new Map<string, RadarEntry>();
+    for (const c of result.candidates) {
+      entries.set(c.mint, {
+        mint: c.mint,
+        symbol: c.symbol,
+        score: c.score,
+        signals: c.signals,
+        liquidityUsd: c.liquidityUsd,
+        marketCapUsd: c.marketCapUsd,
+        spikeRatio: c.spikeRatio,
+        ageMinutes: c.ageMinutes,
+        decision: 'non évalué',
+        why: ['une seule entrée par tour : réexaminé au prochain scan'],
+      });
+    }
+    radar.candidates = [...entries.values()];
     if (result.candidates.length === 0) return;
 
     let sol: number;
@@ -335,18 +386,25 @@ export function createBot(deps: BotDeps): Bot {
       sol = await solUsd();
     } catch (e) {
       logger.error('prix du SOL', e);
+      radar.blockedBy = ['prix du SOL indisponible : aucune entrée sans prix de référence'];
       return; // échoue fermé : pas d'entrée sans prix de référence
     }
+    radar.solUsd = sol;
 
     for (const c of result.candidates) {
+      const entry = entries.get(c.mint) as RadarEntry;
       const verdict = await rug.check(c);
       if (!verdict.pass) {
         logger.reject(c, verdict);
+        entry.decision = 'rejet anti-rug';
+        entry.why = verdict.reasons;
         continue;
       }
       const size = sizePosition({ equity: snap, openPositions: state.positions, candidate: c, solUsd: sol, cfg: cfg.sizer });
       if (!size.ok) {
         logger.sizeSkip(c, size);
+        entry.decision = 'taille refusée';
+        entry.why = [size.reason];
         continue;
       }
       const reasons = buildEntryReasons(c, verdict, size);
@@ -356,11 +414,15 @@ export function createBot(deps: BotDeps): Bot {
         state.recentOpens.push(clock.iso());
         save();
         logger.open(res.position, size);
+        entry.decision = 'achat';
+        entry.why = reasons.filter((r) => !c.signals.includes(r));
       } else {
         state.cooldowns[c.mint] = new Date(clock.now() + FAILED_OPEN_COOLDOWN_MS).toISOString();
         save();
         logger.openFailed(c, res.fill);
         stopOnUnknownOutcome(`achat ${c.symbol}`, res.fill.error);
+        entry.decision = 'achat échoué';
+        entry.why = [res.fill.error ?? 'échec sans détail'];
       }
       // Une seule entrée par tour : on laisse le marché et les garde-fous respirer.
       snap = await equity();
@@ -414,6 +476,7 @@ export function createBot(deps: BotDeps): Bot {
       await reconcileLive();
     }
     save();
+    refreshDashboard();
     const snap = await equity();
     logger.event(
       'start',

@@ -1,6 +1,6 @@
 /** Fichiers de données : JSON écrit de façon atomique, journaux JSONL en ajout seul. */
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { appendFileSync, closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { Clock } from '../types.ts';
 
@@ -46,6 +46,32 @@ export function readJsonl<T>(path: string): T[] {
     }
   }
   return out;
+}
+
+/** Lit seulement la fin d'un JSONL (les fichiers grossissent sans fin) ; ignore la 1re ligne coupée. */
+export function readJsonlTail<T>(path: string, maxBytes = 256 * 1024): T[] {
+  if (!existsSync(path)) return [];
+  const fd = openSync(path, 'r');
+  try {
+    const size = fstatSync(fd).size;
+    const start = Math.max(0, size - maxBytes);
+    const buf = Buffer.alloc(size - start);
+    readSync(fd, buf, 0, buf.length, start);
+    const lines = buf.toString('utf8').split('\n');
+    if (start > 0) lines.shift();
+    const out: T[] = [];
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        out.push(JSON.parse(line) as T);
+      } catch {
+        // ligne corrompue : ignorée
+      }
+    }
+    return out;
+  } finally {
+    closeSync(fd);
+  }
 }
 
 export const systemClock: Clock = {

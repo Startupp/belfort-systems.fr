@@ -117,6 +117,11 @@ export interface SweepConfig {
   triggerPct: number;
 }
 
+export interface ToolsConfig {
+  /** Part des bénéfices réalisés réservée aux outils payants (abonnements, VPS…). */
+  budgetPct: number;
+}
+
 export interface Config {
   mode: Mode;
   /** Garde-fou explicite : le live exige LIVE_CONFIRM=je-peux-perdre-ce-budget. */
@@ -136,6 +141,7 @@ export interface Config {
   guards: GuardConfig;
   paper: PaperConfig;
   sweep: SweepConfig;
+  tools: ToolsConfig;
   /** Programmes Solana autorisés dans une transaction de swap (pare-feu avant signature). */
   allowedPrograms: string[];
 }
@@ -242,10 +248,10 @@ export function loadConfig(env: Env = process.env, cwd = process.cwd()): Config 
     scanner: {
       minLiquidityUsd: num(env, 'MIN_LIQUIDITY_USD', 25_000, 1_000, 1e9),
       minAgeMinutes: num(env, 'MIN_AGE_MIN', 30, 0, 1e6),
-      maxAgeHours: num(env, 'MAX_AGE_HOURS', 72, 1, 1e6),
-      minVol5mUsd: num(env, 'MIN_VOL5M_USD', 5_000, 0, 1e9),
-      minSpikeRatio: num(env, 'MIN_SPIKE_RATIO', 3, 1, 1000),
-      minBuys5m: num(env, 'MIN_BUYS_5M', 20, 0, 1e6),
+      maxAgeHours: num(env, 'MAX_AGE_HOURS', 168, 1, 1e6),
+      minVol5mUsd: num(env, 'MIN_VOL5M_USD', 3_000, 0, 1e9),
+      minSpikeRatio: num(env, 'MIN_SPIKE_RATIO', 2.5, 1, 1000),
+      minBuys5m: num(env, 'MIN_BUYS_5M', 15, 0, 1e6),
       minBuySellRatio: num(env, 'MIN_BUY_SELL_RATIO', 1.2, 0, 100),
       maxPriceChange5mPct: num(env, 'MAX_PRICE_CHANGE_5M_PCT', 30, -100, 10_000),
       minPriceChange5mPct: num(env, 'MIN_PRICE_CHANGE_5M_PCT', 0, -100, 10_000),
@@ -311,6 +317,7 @@ export function loadConfig(env: Env = process.env, cwd = process.cwd()): Config 
       vaultAddress: vault || undefined,
       triggerPct: num(env, 'SWEEP_TRIGGER_PCT', 20, 1, 10_000),
     },
+    tools: { budgetPct: num(env, 'TOOL_BUDGET_PCT', 20, 0, 50) },
     allowedPrograms: [...new Set([...DEFAULT_ALLOWED_PROGRAMS, ...extraPrograms])],
   };
 
