@@ -2,6 +2,7 @@
 # Opérateur du desk papier : lance la séance du jour, l'attend, prépare le carnet.
 #
 #   scripts/desk-operateur.sh demarrer          lance la séance en arrière-plan détaché (si pas déjà lancée)
+#                                               et l'aperçu en direct du carnet (http://localhost:8080/)
 #   scripts/desk-operateur.sh attendre [min]    attend la fin de la séance, au plus [min] minutes (110 par défaut)
 #   scripts/desk-operateur.sh etat              séance en cours ou non, dernières lignes du journal
 #   scripts/desk-operateur.sh cloturer          régénère carnet.html et carnet.csv, affiche le résumé du jour, indexe carnet/
@@ -20,9 +21,16 @@ main() {
   mkdir -p "$DESK_DATA_DIR/logs"
 
   en_cours() { pgrep -f "[s]rc/desk/main.ts live" >/dev/null; }
+  apercu() {
+    if ! pgrep -f "[s]rc/desk/apercu.ts" >/dev/null; then
+      setsid nohup node src/desk/apercu.ts 8080 >>"${TMPDIR:-/tmp}/desk-apercu.log" 2>&1 </dev/null &
+      echo "aperçu en direct : http://localhost:8080/"
+    fi
+  }
 
   case "${1:-etat}" in
     demarrer)
+      apercu
       if en_cours; then
         echo "séance déjà en cours (PID $(pgrep -f '[s]rc/desk/main.ts live' | tr '\n' ' '))"
         return 0

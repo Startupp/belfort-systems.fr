@@ -105,9 +105,17 @@ function tradeItem(t: ClosedTrade): string {
 </li>`;
 }
 
-function openItem(o: OpenTrade): string {
+/** Valeur d'une position au prix donné (vente à découvert : mise + gain). */
+const markValue = (o: OpenTrade, px: number): number => (o.side === 'long' ? o.qty * px : o.qty * o.entry + o.qty * (o.entry - px));
+
+function openItem(o: OpenTrade, last?: number): string {
+  let latent = '';
+  if (last !== undefined) {
+    const pnl = markValue(o, last) - o.qty * o.entry;
+    latent = `<span class="num pnl ${pnl >= 0 ? 'good' : 'bad'}">${price(last)} · latent ${sgn(pnl)} $ (${sgn((pnl / o.notionalUsd) * 100)} %)</span>`;
+  }
   return `<li class="trade open">
-<div class="tl"><span class="num">depuis ${time(o.openedAt)}</span><b class="sym">${esc(o.symbol)}</b><span class="chip">${esc(STRATEGY_LABEL[o.strategy])}</span><span>${SIDE[o.side]} ${fr(o.notionalUsd, 0)} $</span><span class="num muted">entrée ${price(o.entry)} · stop ${price(o.stop)}</span></div>
+<div class="tl"><span class="num">depuis ${time(o.openedAt)}</span><b class="sym">${esc(o.symbol)}</b><span class="chip">${esc(STRATEGY_LABEL[o.strategy])}</span><span>${SIDE[o.side]} ${fr(o.notionalUsd, 0)} $</span><span class="num muted">entrée ${price(o.entry)} · stop ${price(o.stop)}</span>${latent}</div>
 <p class="why"><span class="lab">Pourquoi</span>${o.reasons.map(esc).join(' · ')}</p>
 </li>`;
 }
@@ -187,11 +195,26 @@ export function resumeJour(s: DaySummary): string {
   return lines.join('\n');
 }
 
-export function writeCarnet(dir: string, cfg: DeskConfig, opts: { mode: 'direct' | 'rejeu'; title?: string }): string {
+export interface CarnetOptions {
+  mode: 'direct' | 'rejeu';
+  title?: string;
+  /** Aperçu en direct : derniers prix connus des positions ouvertes (gain latent, equity en direct). */
+  prices?: Record<string, number>;
+}
+
+/** Écrit carnet.csv et carnet.html ; renvoie le chemin de la page. */
+export function writeCarnet(dir: string, cfg: DeskConfig, opts: CarnetOptions): string {
+  writeTextAtomic(join(dir, 'carnet.csv'), carnetCsv(readJsonl<ClosedTrade>(join(dir, 'trades.jsonl'))));
+  const path = join(dir, 'carnet.html');
+  writeTextAtomic(path, renderCarnet(dir, cfg, opts));
+  return path;
+}
+
+/** La page du carnet (fragment HTML : la page Claude ou l'aperçu ajoutent le squelette). */
+export function renderCarnet(dir: string, cfg: DeskConfig, opts: CarnetOptions): string {
   const trades = readJsonl<ClosedTrade>(join(dir, 'trades.jsonl'));
   const days = loadDays(dir);
   const state = readJson<DeskState | null>(join(dir, 'state.json'), null);
-  writeTextAtomic(join(dir, 'carnet.csv'), carnetCsv(trades));
   const name = opts.title ?? TITLE[opts.mode];
   const start = state?.startEquity ?? cfg.startEquity;
   const eq = trades.at(-1)?.equityAfter ?? start;
@@ -212,9 +235,12 @@ export function writeCarnet(dir: string, cfg: DeskConfig, opts: { mode: 'direct'
   const closedDays = new Set(days.map((d) => d.day));
   const liveDay = state?.day && !closedDays.has(state.day) ? state.day : '';
   const liveTrades = liveDay ? trades.filter((t) => paris(t.openedAt).date === liveDay) : [];
+  const prices = opts.prices ?? {};
+  const liveEq = state ? state.cash + state.open.reduce((sum, o) => sum + markValue(o, prices[o.symbol] ?? o.entry), 0) : start;
   const liveCard = liveDay
     ? `<section class="card day live"><header class="dayhead"><h2>Séance du ${esc(liveDay)} en cours</h2><span class="pill">en direct</span></header>
-${state?.open.length ? `<h3>Positions ouvertes</h3><ul class="trades">${state.open.map(openItem).join('')}</ul>` : '<p class="muted">Aucune position ouverte.</p>'}
+${opts.prices ? `<p>Equity en direct : <b class="num">${fr(liveEq)} $</b> <span class="num ${liveEq >= (state?.dayStartEquity ?? start) ? 'good' : 'bad'}">(${sgn(liveEq - (state?.dayStartEquity ?? start))} $ depuis 15 h)</span></p>` : ''}
+${state?.open.length ? `<h3>Positions ouvertes</h3><ul class="trades">${state.open.map((o) => openItem(o, prices[o.symbol])).join('')}</ul>` : '<p class="muted">Aucune position ouverte.</p>'}
 ${liveTrades.length ? `<h3>Déjà clôturés aujourd'hui</h3><ul class="trades">${liveTrades.map(tradeItem).join('')}</ul>` : ''}
 <p class="muted">Le résumé complet (analyses et prévisions) arrive à la clôture de 19 h.</p></section>`
     : '';
@@ -318,7 +344,5 @@ ${trades.length ? `<div class="scroll"><table><thead><tr><th>Date</th><th>Heure<
 <footer>Simulation à but d'apprentissage. Rien ici n'est un conseil en investissement, et une semaine de résultats ne prouve rien statistiquement.</footer>
 </main>
 `;
-  const path = join(dir, 'carnet.html');
-  writeTextAtomic(path, html);
-  return path;
+  return html;
 }

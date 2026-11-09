@@ -209,6 +209,7 @@ le lendemain), tout soldé à 18 h 55.
 | `npm run desk:rejeu` | rejeu des 10 dernières séances, mêmes règles, dans `data/desk-rejeu` |
 | `npm run desk:carnet` | régénère `carnet.html` et `carnet.csv` |
 | `node src/desk/main.ts resume [date]` | résumé texte d'une séance (la dernière par défaut) |
+| `node src/desk/apercu.ts [port]` | aperçu en direct du carnet (positions ouvertes, gain latent), port 8080 par défaut |
 | `scripts/desk-operateur.sh demarrer \| attendre \| etat \| cloturer` | routine de l'opérateur cloud (voir `OPERATEUR.md`) |
 
 Le carnet (`carnet.html`) présente chaque séance :

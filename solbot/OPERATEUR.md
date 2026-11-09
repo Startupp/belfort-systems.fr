@@ -25,6 +25,9 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
    En cas d'erreur réseau : nouvel essai après 2 s, 4 s, 8 s, 16 s.
 2. **Lancement** : `solbot/scripts/desk-operateur.sh demarrer`.
    Le script lance la séance en arrière-plan détaché et écrit le journal dans `solbot/carnet/logs/AAAA-MM-JJ.log`.
+   Il lance aussi l'aperçu en direct du carnet (port 8080 : positions ouvertes, dernier prix, gain latent,
+   rafraîchi chaque minute). Appeler une fois `report_preview_port` (port 8080, nom « carnet ») pour que
+   l'utilisateur puisse suivre la séance depuis cette session.
    Lancé après 15 h, le moteur rattrape les sorties mais n'entre jamais « dans le passé ». Après 19 h, il n'y a plus
    de séance ce jour-là : passer directement au message du soir pour le signaler.
 3. **Attente** : lancer `solbot/scripts/desk-operateur.sh attendre 110` **en arrière-plan**
