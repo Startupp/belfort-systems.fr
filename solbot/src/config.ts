@@ -123,6 +123,7 @@ export interface Config {
   liveConfirmed: boolean;
   dataDir: string;
   keypairPath: string;
+  /** apiKey vide = accès sans clé (débit réduit). */
   jupiter: { baseUrl: string; apiKey: string };
   rpcUrl?: string;
   rugcheck: { baseUrl: string; apiKey?: string };
@@ -205,12 +206,9 @@ export function loadConfig(env: Env = process.env, cwd = process.cwd()): Config 
   const dataDir = isAbsolute(dataDirRaw) ? dataDirRaw : resolve(cwd, dataDirRaw);
   const keypairPath = resolve(cwd, expandHome(str(env, 'KEYPAIR_PATH', '~/.solbot/keypair.json')));
 
+  // Facultative : sans clé, Jupiter répond à faible débit (suffisant en papier). Une clé gratuite
+  // du portail https://developers.jup.ag donne plus de marge ; une clé FAUSSE est refusée (HTTP 401).
   const apiKey = str(env, 'JUPITER_API_KEY', '');
-  if (!apiKey) {
-    throw new ConfigError(
-      'JUPITER_API_KEY manquante : crée une clé gratuite sur https://developers.jup.ag (portail) et mets-la dans .env',
-    );
-  }
 
   const rpcUrl = str(env, 'RPC_URL', '') || undefined;
   if (mode === 'live' && !rpcUrl) {

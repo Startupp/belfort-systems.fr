@@ -78,7 +78,8 @@ export function createBot(deps: BotDeps): Bot {
   const cfg = deps.config;
   const clock = deps.clock ?? systemClock;
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
-  const http = deps.http ?? createHttp();
+  // Sans clé, Jupiter limite fortement le débit : une requête par seconde au plus.
+  const http = deps.http ?? createHttp({ minIntervalMsByHost: { 'api.jup.ag': cfg.jupiter.apiKey ? 250 : 1100 } });
   const jupiter = deps.jupiter ?? createJupiterClient({ http, baseUrl: cfg.jupiter.baseUrl, apiKey: cfg.jupiter.apiKey });
   const dex = deps.dex ?? createDexScreener({ http, baseUrl: cfg.dexscreenerBaseUrl });
   const rpc = deps.rpc ?? (cfg.rpcUrl ? createRpc({ http, url: cfg.rpcUrl }) : undefined);

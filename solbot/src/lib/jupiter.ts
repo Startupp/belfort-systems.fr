@@ -1,5 +1,5 @@
 /**
- * Client Jupiter (https://api.jup.ag, clé « x-api-key » du portail https://developers.jup.ag).
+ * Client Jupiter (https://api.jup.ag ; clé « x-api-key » du portail https://developers.jup.ag, facultative).
  *
  *   Swap V2   GET  /swap/v2/order    devis (+ transaction à signer si `taker` est fourni)
  *             POST /swap/v2/execute  Jupiter fait atterrir la transaction signée
@@ -142,7 +142,8 @@ export interface JupiterDeps {
 }
 
 export function createJupiterClient({ http, baseUrl, apiKey }: JupiterDeps): JupiterClient {
-  const headers = { 'x-api-key': apiKey };
+  // Sans clé : accès gratuit à faible débit. Avec une clé : en-tête x-api-key.
+  const headers: Record<string, string> = apiKey ? { 'x-api-key': apiKey } : {};
   const asArray = (v: unknown): JupiterToken[] => (Array.isArray(v) ? (v as JupiterToken[]) : []);
 
   return {

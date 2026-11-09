@@ -202,7 +202,8 @@ test('config : défauts prudents, plafonds en dur, erreurs claires', () => {
   assert.equal(loadConfig({ ...base, MAX_POSITION_SOL: '50' }, '/tmp').sizer.maxPositionSol, HARD_LIMITS.maxPositionSol);
   assert.equal(loadConfig({ ...base, MAX_OPEN_POSITIONS: '40' }, '/tmp').sizer.maxOpenPositions, HARD_LIMITS.maxOpenPositions);
   assert.equal(loadConfig({ ...base, POSITION_PCT: '4,5' }, '/tmp').sizer.positionPct, 4.5);
-  assert.throws(() => loadConfig({}, '/tmp'), ConfigError);
+  assert.equal(loadConfig({}, '/tmp').jupiter.apiKey, ''); // sans clé : accès gratuit limité
+  assert.throws(() => loadConfig({ POSITION_PCT: 'abc' }, '/tmp'), ConfigError);
   assert.throws(() => loadConfig({ ...base, MODE: 'yolo' }, '/tmp'), /MODE/);
   assert.throws(() => loadConfig({ ...base, MODE: 'live' }, '/tmp'), /RPC_URL/);
   assert.throws(() => loadConfig({ ...base, POSITION_PCT: '90' }, '/tmp'), /hors bornes/);

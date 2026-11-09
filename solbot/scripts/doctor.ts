@@ -61,7 +61,7 @@ try {
   process.exit(1);
 }
 
-const http = createHttp();
+const http = createHttp({ minIntervalMsByHost: { 'api.jup.ag': config.jupiter.apiKey ? 250 : 1100 } });
 const jupiter = createJupiterClient({ http, baseUrl: config.jupiter.baseUrl, apiKey: config.jupiter.apiKey });
 const dex = createDexScreener({ http, baseUrl: config.dexscreenerBaseUrl });
 const rugcheck = createRugcheckApi({ http, baseUrl: config.rugcheck.baseUrl, apiKey: config.rugcheck.apiKey });

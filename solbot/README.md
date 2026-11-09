@@ -51,7 +51,7 @@ Prérequis : Node.js 22.18 ou plus récent (24 LTS recommandé), qui exécute le
 ```bash
 cd solbot
 npm install            # typescript + @types/node, rien d'autre
-cp .env.example .env   # puis renseigne JUPITER_API_KEY (gratuite sur https://developers.jup.ag)
+cp .env.example .env   # le papier marche tel quel ; clé Jupiter gratuite recommandée (developers.jup.ag)
 npm run doctor         # vérifie chaque API et le format de ses réponses
 npm test
 npm run once           # un tour complet en papier
