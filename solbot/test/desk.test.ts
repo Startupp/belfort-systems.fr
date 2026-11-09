@@ -141,6 +141,39 @@ test('compte cash : l’argent des actions vendues n’est pas réutilisable le 
   assert.ok((engine.analysis.skipped['compte cash : liquidités du jour déjà engagées (réglement J+1)'] ?? 0) >= 1);
 });
 
+test('places pleines : rien n’est ouvert, le signal manqué est compté une seule fois', () => {
+  // Cassure ORB à la minute 6, prix au-dessus du range ensuite : le signal revient chaque minute.
+  const ctx = stockCtx([
+    [100.7, 101.1, 100.7, 101],
+    [101, 101.3, 100.9, 101.2],
+    [101.2, 101.4, 101.1, 101.3],
+  ]);
+  const cfg = { ...DEFAULT_DESK_CONFIG, maxOpen: 1 };
+  const state = newDeskState(cfg);
+  const events: DeskEvent[] = [];
+  const engine = createEngine({ cfg, state, log: (e) => events.push(e) });
+  engine.startDay(DAY, parisToUtc(DAY, 15 * 60));
+  state.open.push({
+    id: 'deja', symbol: 'AUTRE', cls: 'stock', strategy: 'noise', side: 'long', qty: 1, entry: 50, stop: 49, initialStop: 49,
+    openedAt: OPEN, riskUsd: 1, notionalUsd: 50, costsUsd: 0, best: 50, regime: 'tendance', reasons: [],
+  });
+  state.cash -= 50;
+  for (let t = parisToUtc(DAY, 15 * 60); t < OPEN + 9 * 60_000; t += 60_000) engine.step(t, new Map([['TEST', ctx]]));
+  assert.ok(!events.some((e) => e.type === 'open'));
+  assert.equal(engine.analysis.skipped['places pleines (1 positions ouvertes) : signal non pris'], 1);
+  assert.equal(engine.analysis.signalsSeen, 0);
+  assert.equal(events.filter((e) => e.type === 'guard').length, 1, 'le garde-fou n’est noté qu’une fois tant qu’il ne change pas');
+});
+
+test('refus regroupés : les mesures sont masquées, « 1re bougie » reste lisible', () => {
+  const ctx = stockCtx([[100.7, 101.1, 100.7, 101]]);
+  (ctx.session[4] as Bar).c = 99.8; // 5e minute sous l'ouverture : première bougie de 5 min baissière
+  const { engine } = run(ctx, 8);
+  const keys = Object.keys(engine.analysis.notes);
+  assert.ok(keys.includes('TEST ORB : 1re bougie baissière, vente à découvert impossible en compte cash'), keys.join('\n'));
+  assert.ok(keys.every((k) => !/\d\.\d/.test(k)), 'aucune mesure décimale dans les clés');
+});
+
 test('carnet CSV : en-tête stable, raisons échappées', () => {
   const csv = carnetCsv([
     {

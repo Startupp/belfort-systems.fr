@@ -187,6 +187,7 @@ export function resumeJour(s: DaySummary): string {
     lines.push(`- régimes à ${lastRegime.time} : ${tr} en tendance, ${rg} en range, ${lastRegime.items.length - tr - rg} mixtes`);
   }
   lines.push(`- signaux valides ${a.signalsSeen}, pris ${a.signalsTaken}${a.huntAt ? `, mode chasse à ${a.huntAt}` : ''}${a.dailyStopAt ? `, stop journalier à ${a.dailyStopAt}` : ''}`);
+  for (const [k, v] of Object.entries(a.skipped)) lines.push(`- écarté ${v}× : ${k}`);
   const topNotes = Object.entries(a.notes).sort((x, y) => y[1] - x[1]).slice(0, 3);
   for (const [k, v] of topNotes) lines.push(`- refusé ${v}× : ${k.replace(/#/g, '…')}`);
   lines.push('', 'Prévisions :');

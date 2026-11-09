@@ -160,6 +160,8 @@ export function createEngine(deps: EngineDeps): Engine {
   let inPlay = new Set<string>();
   // Actions dont la cassure ORB a été écartée faute de place ORB (comptée une fois par jour).
   let orbCapped = new Set<string>();
+  // Signaux « instrument · stratégie » manqués parce que toutes les places étaient prises (une fois par jour).
+  let missed = new Set<string>();
 
   const slip = (cls: AssetClass): number => cfg.costs[cls].slipBps / 1e4;
   const fee = (cls: AssetClass): number => cfg.costs[cls].feeBps / 1e4;
@@ -253,7 +255,6 @@ export function createEngine(deps: EngineDeps): Engine {
       st.halted = `semaine arrêtée : ${weekPct.toFixed(2)} % (limite −${cfg.weeklyLossLimitPct} %)`;
       return st.halted;
     }
-    if (st.open.length >= cfg.maxOpen) return `${st.open.length} positions ouvertes (max ${cfg.maxOpen})`;
     if (st.tradesToday >= cfg.maxTradesPerDay) return `${st.tradesToday} trades aujourd'hui (max ${cfg.maxTradesPerDay})`;
     return null;
   }
@@ -395,6 +396,7 @@ export function createEngine(deps: EngineDeps): Engine {
       sipDone = false;
       inPlay = new Set();
       orbCapped = new Set();
+      missed = new Set();
       deps.log({ at, type: 'day_start', msg: `séance du ${day} — equity ${eq.toFixed(2)} $, poids ORB ${st.weights.orb.toFixed(2)} / momentum ${st.weights.noise.toFixed(2)} / VWAP ${st.weights.vwap.toFixed(2)}` });
     },
 
@@ -434,12 +436,13 @@ export function createEngine(deps: EngineDeps): Engine {
       }
       const eq = equity(ctxs, t);
       const blocked = guard(eq, t);
-      if (blocked) {
-        if (blocked !== lastGuard) deps.log({ at: t, type: 'guard', msg: blocked });
-        lastGuard = blocked;
-        return;
-      }
-      lastGuard = '';
+      // Places toutes prises : on regarde quand même les signaux, sans rien ouvrir, pour compter
+      // les occasions manquées (une fois par instrument et par stratégie dans la journée).
+      const full = !blocked && st.open.length >= cfg.maxOpen;
+      const guardMsg = blocked ?? (full ? `${st.open.length} positions ouvertes (max ${cfg.maxOpen})` : '');
+      if (guardMsg !== lastGuard && guardMsg) deps.log({ at: t, type: 'guard', msg: guardMsg });
+      lastGuard = guardMsg;
+      if (blocked) return;
       const signals: Signal[] = [];
       // Vent porteur pour l'ORB : le S&P 500 (SPY) au-dessus de sa VWAP du jour.
       const spy = ctxs.get('SPY');
@@ -455,7 +458,7 @@ export function createEngine(deps: EngineDeps): Engine {
         const orb: StrategyResult = st.orbDone[sym] || st.lossStreak.orb >= 3 || !inPlay.has(sym) ? {} : orbSignal(ctx, j, th, market);
         // L'ORB garde sa position jusqu'à 18 h 55 : on lui laisse au plus maxOrbOpen places,
         // pour que les trades rapides (momentum, VWAP) gardent de quoi entrer l'après-midi.
-        if (orb.signal && st.open.filter((o) => o.strategy === 'orb').length >= cfg.maxOrbOpen) {
+        if (orb.signal && !full && st.open.filter((o) => o.strategy === 'orb').length >= cfg.maxOrbOpen) {
           if (!orbCapped.has(sym)) {
             orbCapped.add(sym);
             const k = `ORB : déjà ${cfg.maxOrbOpen} positions ORB ouvertes (places gardées pour les trades rapides)`;
@@ -469,12 +472,23 @@ export function createEngine(deps: EngineDeps): Engine {
           st.lossStreak.vwap >= 3 ? {} : vwapSignal(ctx, j, th, cfg),
         ];
         for (const r of results) {
-          if (r.note) {
-            const key = r.note.replace(/[-+]?\d+(\.\d+)?/g, '#');
+          if (r.note && !full) {
+            // Les mesures qui changent d'une minute à l'autre (nombres à décimales) sont masquées pour
+            // regrouper les refus identiques ; les constantes (« 1re bougie », « 14 j < 0,50 $ ») restent lisibles.
+            const key = r.note.replace(/[-+]?\d+\.\d+/g, '#');
             analysis.notes[key] = (analysis.notes[key] ?? 0) + 1;
           }
           if (r.signal) signals.push(r.signal);
         }
+      }
+      if (full) {
+        const k = `places pleines (${cfg.maxOpen} positions ouvertes) : signal non pris`;
+        for (const s of signals) {
+          if (missed.has(`${s.symbol}·${s.strategy}`)) continue;
+          missed.add(`${s.symbol}·${s.strategy}`);
+          analysis.skipped[k] = (analysis.skipped[k] ?? 0) + 1;
+        }
+        return;
       }
       analysis.signalsSeen += signals.length;
       if (!signals.length) return;
