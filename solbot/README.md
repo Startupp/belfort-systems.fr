@@ -208,6 +208,8 @@ le lendemain), tout soldé à 18 h 55.
 | `npm run desk` | séance du jour en direct, dans `data/desk` (ou `DESK_DATA_DIR`) |
 | `npm run desk:rejeu` | rejeu des 10 dernières séances, mêmes règles, dans `data/desk-rejeu` |
 | `npm run desk:carnet` | régénère `carnet.html` et `carnet.csv` |
+| `node src/desk/main.ts resume [date]` | résumé texte d'une séance (la dernière par défaut) |
+| `scripts/desk-operateur.sh demarrer \| attendre \| etat \| cloturer` | routine de l'opérateur cloud (voir `OPERATEUR.md`) |
 
 Le carnet (`carnet.html`) présente chaque séance :
 
@@ -216,3 +218,7 @@ Le carnet (`carnet.html`) présente chaque séance :
 - les prévisions pour la séance suivante.
 
 `carnet.csv` s'ouvre dans un tableur.
+
+Pendant la semaine d'essai, une session cloud « opérateur du desk » lance chaque séance à 14 h 50
+(heure de Paris), commite le carnet du jour dans `carnet/` et met à jour la page du carnet.
+Sa procédure est dans [`OPERATEUR.md`](OPERATEUR.md).

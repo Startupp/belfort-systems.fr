@@ -2,11 +2,15 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { appendJsonl, writeJsonAtomic } from '../src/lib/store.ts';
 import { createEngine, isoWeek, newDeskState, tradingDaysLeft } from '../src/desk/engine.ts';
 import type { DeskEvent } from '../src/desk/engine.ts';
 import { paris, vwapSeries, efficiency, inPlayCandidates } from '../src/desk/market.ts';
 import { parisToUtc } from '../src/desk/run.ts';
-import { carnetCsv } from '../src/desk/report.ts';
+import { carnetCsv, resumeJour, writeCarnet } from '../src/desk/report.ts';
 import type { DayContext } from '../src/desk/strategies.ts';
 import { DEFAULT_DESK_CONFIG } from '../src/desk/types.ts';
 import type { Bar, ClosedTrade } from '../src/desk/types.ts';
@@ -149,4 +153,30 @@ test('carnet CSV : en-tête stable, raisons échappées', () => {
   const [head, row] = csv.trim().split('\n');
   assert.match(head ?? '', /^date;heure_entree;heure_sortie;instrument/);
   assert.match(row ?? '', /"cassure ""nette"" \| volume ×2"$/);
+});
+
+test('carnet : page sans squelette HTML, thèmes clair et sombre, raisons visibles, résumé texte du jour', () => {
+  const ctx = stockCtx([
+    [100.7, 101.1, 100.7, 101],
+    [101, 101.2, 100.9, 101.1],
+    [101, 101, 99.5, 99.6],
+  ]);
+  const { engine, ctxs, closed } = run(ctx, 9);
+  const summary = engine.endDay(OPEN + 9 * 60_000, ctxs);
+  assert.equal(summary.trades.length, 1);
+  const txt = resumeJour(summary);
+  assert.match(txt, /^Séance du 2026-11-10 : /);
+  assert.match(txt, /TEST achat .* Pourquoi : .*volume relatif/);
+  assert.match(txt, /Prévisions :\n- poids pour la prochaine séance/);
+  const dir = mkdtempSync(join(tmpdir(), 'desk-carnet-'));
+  writeJsonAtomic(join(dir, 'days', `${summary.day}.json`), summary);
+  for (const t of closed) appendJsonl(join(dir, 'trades.jsonl'), t);
+  const html = readFileSync(writeCarnet(dir, DEFAULT_DESK_CONFIG, { mode: 'direct' }), 'utf8');
+  assert.ok(!/<!doctype|<(html|head|body)[\s>]/i.test(html), 'la page Claude ajoute elle-même le squelette HTML');
+  assert.match(html.slice(0, 400), /<title>Carnet de trades<\/title>/);
+  assert.match(html, /@media \(prefers-color-scheme:dark\)\{:root:not\(\[data-theme="light"\]\)/);
+  assert.match(html, /:root\[data-theme="dark"\]/);
+  assert.match(html, /padding-left:max\(16px,env\(safe-area-inset-left,0px\)\)/);
+  assert.match(html, /Pourquoi<\/span>[^<]*volume relatif/);
+  assert.match(html, /Prévisions pour la séance suivante/);
 });

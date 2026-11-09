@@ -1,0 +1,62 @@
+# Procédure de l'opérateur du desk papier
+
+Ce fichier est la procédure suivie chaque jour par la session cloud « opérateur du desk ».
+Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour changer la routine.
+
+## Le cadre (à ne jamais dépasser)
+
+- **Papier uniquement** : 500 $ fictifs, aucun levier, aucun ordre réel, aucune clé, aucun compte de courtier.
+- **Fenêtre** : 15 h – 19 h, heure de Paris ; le moteur solde tout à 18 h 55. Rien ne reste ouvert le soir.
+- **Semaine d'essai** : du lundi 9 au vendredi 13 novembre 2026. Objectif : finir la semaine au-dessus de +1 %,
+  avec 3 à 5 trades par jour au minimum.
+- **Branche** : `ccr-ee32c815-yp0kdq` uniquement. Pas de pull request. On ne commite que `solbot/carnet/`,
+  sauf correction d'un bug qui empêche la séance (voir « Incidents »).
+- **Stratégie** : elle s'adapte toute seule (poids par stratégie, mode chasse, coupe-circuits). On ne change
+  pas les réglages en cours de semaine sur la foi d'une ou deux séances : on note l'idée dans le message du soir.
+
+## Chaque jour de séance (la tâche planifiée réveille la session à 14 h 50, heure de Paris)
+
+1. **Mise à jour** depuis la racine du dépôt :
+   ```bash
+   git fetch origin ccr-ee32c815-yp0kdq
+   git checkout ccr-ee32c815-yp0kdq
+   git pull --rebase origin ccr-ee32c815-yp0kdq
+   ```
+   En cas d'erreur réseau : nouvel essai après 2 s, 4 s, 8 s, 16 s.
+2. **Lancement** : `solbot/scripts/desk-operateur.sh demarrer`.
+   Le script lance la séance en arrière-plan détaché et écrit le journal dans `solbot/carnet/logs/AAAA-MM-JJ.log`.
+   Lancé après 15 h, le moteur rattrape les sorties mais n'entre jamais « dans le passé ». Après 19 h, il n'y a plus
+   de séance ce jour-là : passer directement au message du soir pour le signaler.
+3. **Attente** : lancer `solbot/scripts/desk-operateur.sh attendre 110` **en arrière-plan**
+   (outil Bash, `run_in_background`, délai 7 200 000 ms), puis terminer le tour. À chaque réveil :
+   « EN COURS » → relancer la même commande ; « TERMINÉE » → étape 4.
+   Ne jamais faire de `sleep` au premier plan ni de vérifications en boucle.
+4. **Clôture** : `solbot/scripts/desk-operateur.sh cloturer` (régénère `carnet.html` et `carnet.csv`,
+   affiche le résumé du jour, indexe `solbot/carnet/`). Puis commit
+   `desk : carnet du AAAA-MM-JJ (résultat du jour)` et `git push -u origin ccr-ee32c815-yp0kdq`
+   (en cas d'erreur réseau : nouvel essai après 2 s, 4 s, 8 s, 16 s).
+5. **Page du carnet** : l'adresse de la page Claude du carnet a été donnée par message.
+   Lire d'abord la page (Artifact, action `read`, avec cette adresse), puis la publier
+   (Artifact, `file_path` = `solbot/carnet/carnet.html`, même `url`). Ne jamais créer une deuxième page.
+   Si l'outil Artifact manque, envoyer `solbot/carnet/carnet.html` avec SendUserFile.
+6. **Message du soir**, en français et court :
+   - résultat du jour, puis semaine contre l'objectif de +1 % ;
+   - les 2 ou 3 faits marquants tirés du résumé (`node src/desk/main.ts resume`, lancé dans `solbot/`
+     avec `DESK_DATA_DIR=carnet`) : meilleur et pire trade avec leur raison, ce que le desk surveille demain ;
+   - le lien de la page.
+   Si un outil de notification (PushNotification) existe, l'utiliser pour une ligne de résultat avec le lien.
+7. **Vendredi 13 novembre** : ajouter au message le bilan de la semaine : total, résultat par stratégie, ce qui a
+   marché, ce que je changerais, et ma recommandation (continuer ou non). La tâche planifiée s'arrête après ce jour.
+
+## Incidents
+
+- **La séance s'arrête en cours de route** (processus mort) : relancer `demarrer` ; le moteur repart de `state.json`.
+  Le dire dans le message du soir.
+- **Machine remplacée en pleine séance** : l'état n'est commité qu'au soir ; les positions du jour peuvent être
+  perdues. Relancer `demarrer` et le dire franchement dans le message.
+- **Yahoo Finance indisponible ou lent** : le moteur continue avec ce qu'il a ; si aucune donnée ne vient pendant
+  plus de 30 minutes, le noter. Ne jamais saisir de trade à la main.
+- **Bug qui empêche la séance** : corriger le minimum, vérifier avec `npm test` dans `solbot/`
+  (et `npm run typecheck` si `node_modules` est présent, sinon `npm ci` d'abord), commit séparé qui explique
+  la correction, puis relancer.
+- **Réseau refusé par le proxy** : ne pas modifier l'environnement ; le signaler dans le message.

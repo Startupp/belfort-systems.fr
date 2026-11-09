@@ -143,7 +143,7 @@ export async function replay(opts: {
     summaries.push(summary);
   }
   files.saveState(state);
-  writeCarnet(opts.dir, cfg, { title: 'Rejeu (backtest) des dernières séances', mode: 'rejeu' });
+  writeCarnet(opts.dir, cfg, { mode: 'rejeu' });
   return summaries;
 }
 
@@ -213,7 +213,7 @@ export async function live(opts: {
     }
     files.saveState(state);
     if (now - lastCarnet > 5 * 60_000) {
-      writeCarnet(opts.dir, cfg, { title: 'Carnet de trades — papier, en direct', mode: 'direct' });
+      writeCarnet(opts.dir, cfg, { mode: 'direct' });
       lastCarnet = now;
     }
     if (lastT >= windowEnd - 60_000) break;
@@ -222,6 +222,6 @@ export async function live(opts: {
   const summary = engine.endDay(lastT, ctxs);
   files.saveDay(summary);
   files.saveState(state);
-  writeCarnet(opts.dir, cfg, { title: 'Carnet de trades — papier, en direct', mode: 'direct' });
+  writeCarnet(opts.dir, cfg, { mode: 'direct' });
   return summary;
 }
