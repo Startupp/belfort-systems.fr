@@ -212,4 +212,8 @@ test('carnet : page sans squelette HTML, thèmes clair et sombre, raisons visibl
   assert.match(html, /padding-left:max\(16px,env\(safe-area-inset-left,0px\)\)/);
   assert.match(html, /Pourquoi<\/span>[^<]*volume relatif/);
   assert.match(html, /Prévisions pour la séance suivante/);
+  assert.ok(!html.includes('Réglages modifiés'), 'pas de section vide sans reglages.json');
+  writeJsonAtomic(join(dir, 'reglages.json'), [{ date: '2026-11-10', avant: '3 places', apres: '4 places, dont 2 <ORB>', pourquoi: 'essai' }]);
+  const html2 = readFileSync(writeCarnet(dir, DEFAULT_DESK_CONFIG, { mode: 'direct' }), 'utf8');
+  assert.match(html2, /Réglages modifiés.*2026-11-10.*3 places → <b>4 places, dont 2 &lt;ORB&gt;<\/b>/s);
 });

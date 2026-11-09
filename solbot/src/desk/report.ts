@@ -21,6 +21,14 @@ const price = (x: number): string => (x >= 100 ? fr(x, 2) : x >= 1 ? fr(x, 4) : 
 const SIDE = { long: 'achat', short: 'vente' } as const;
 const TITLE = { direct: 'Carnet de trades', rejeu: 'Rejeu du desk' } as const;
 
+/** Un changement de réglage, noté dans reglages.json du dossier du carnet (le plus ancien en premier). */
+export interface Reglage {
+  date: string;
+  avant: string;
+  apres: string;
+  pourquoi: string;
+}
+
 export function loadDays(dir: string): DaySummary[] {
   const d = join(dir, 'days');
   if (!existsSync(d)) return [];
@@ -216,6 +224,7 @@ export function renderCarnet(dir: string, cfg: DeskConfig, opts: CarnetOptions):
   const trades = readJsonl<ClosedTrade>(join(dir, 'trades.jsonl'));
   const days = loadDays(dir);
   const state = readJson<DeskState | null>(join(dir, 'state.json'), null);
+  const reglages = readJson<Reglage[]>(join(dir, 'reglages.json'), []);
   const name = opts.title ?? TITLE[opts.mode];
   const start = state?.startEquity ?? cfg.startEquity;
   const eq = trades.at(-1)?.equityAfter ?? start;
@@ -334,11 +343,15 @@ ${trades.length ? `<div class="scroll"><table><thead><tr><th>Date</th><th>Heure<
       )
       .join('')}</tbody></table></div>` : '<p class="muted">Aucun trade pour l’instant.</p>'}
 <p class="muted">Export tableur : carnet.csv, dans le même dossier du dépôt.</p></section>
+${reglages.length ? `<section class="card"><h2>Réglages modifiés</h2><ul class="plain">${[...reglages]
+      .reverse()
+      .map((r) => `<li><b>${esc(r.date)}</b> : ${esc(r.avant)} → <b>${esc(r.apres)}</b>.<br><span class="muted">${esc(r.pourquoi)}</span></li>`)
+      .join('')}</ul></section>` : ''}
 <section class="card"><h2>Méthode</h2><ul class="plain">
 <li><b>ORB 5 min sur actions « en jeu »</b>, d'après Zarattini, Barbon &amp; Aziz (2024) : les ${cfg.inPlayTop} actions au plus fort volume relatif d'ouverture (prix ≥ 5 $, volume moyen ≥ 1 M, ATR ≥ 0,50 $, listes Yahoo « plus actives » et « plus fortes hausses »), cassure du range des 5 premières minutes, stop sous ce range, seulement si le S&amp;P 500 est au-dessus de sa VWAP. Achat seulement (compte cash).</li>
 <li><b>Momentum « zone de bruit »</b>, d'après Zarattini, Aziz &amp; Barbon (2024) : on suit le prix quand il sort de sa zone d'oscillation habituelle à cette heure, au-dessus de la VWAP ; stop suiveur max(borne, VWAP). ETF SPY, QQQ, IWM et cryptos (achat).</li>
 <li><b>Retour à la VWAP</b> en marché sans tendance : écart ≥ 2 écarts-types, objectif la VWAP, seulement si le gain attendu vaut au moins 3 fois les frais.</li>
-<li><b>Risque</b> : ${cfg.baseRiskPct} % de l'equity par trade × poids adaptatif (0,25 à 2), une position ≤ ${cfg.maxPositionPct} % de l'equity, ${cfg.maxOpen} positions max, stop journalier −${cfg.dailyLossLimitPct} %, arrêt de la semaine à −${cfg.weeklyLossLimitPct} %. Moins de ${cfg.minTradesPerDay} trades à 17 h 30 : « mode chasse » (seuils assouplis, risque ÷ 2).</li>
+<li><b>Risque</b> : ${cfg.baseRiskPct} % de l'equity par trade × poids adaptatif (0,25 à 2), une position ≤ ${cfg.maxPositionPct} % de l'equity, ${cfg.maxOpen} positions max dont ${cfg.maxOrbOpen} au plus pour l'ORB, stop journalier −${cfg.dailyLossLimitPct} %, arrêt de la semaine à −${cfg.weeklyLossLimitPct} %. Moins de ${cfg.minTradesPerDay} trades à 17 h 30 : « mode chasse » (seuils assouplis, risque ÷ 2).</li>
 <li><b>Coûts simulés par ordre</b> : actions 0 commission + ${cfg.costs.stock.slipBps} points de base de glissement ; crypto ${cfg.costs.crypto.feeBps} points de base de frais + ${cfg.costs.crypto.slipBps} de glissement. Entrée au prix de clôture de la minute du signal ; si le stop et l'objectif sont touchés dans la même minute, c'est le stop qui compte.</li>
 <li><b>Données</b> : barres d'une minute Yahoo Finance (gratuites ; quelques secondes de retard possibles).</li>
 </ul></section>

@@ -65,7 +65,7 @@ footer{font-size:12px;color:var(--muted)}
 <main>
 <header class="top">
 <h1>Carnet de trades</h1>
-<p class="muted">Mis à jour le 9 novembre 2026 à 19:04 (heure de Paris)</p>
+<p class="muted">Mis à jour le 9 novembre 2026 à 19:08 (heure de Paris)</p>
 <p class="banner"><b>Papier</b> : 500 $ fictifs, aucun levier, fenêtre 15 h – 19 h (Paris), tout est soldé à 18 h 55. Séances en direct, décisions minute par minute.</p>
 </header>
 <section class="kpis" aria-label="Chiffres clés">
@@ -121,11 +121,12 @@ footer{font-size:12px;color:var(--muted)}
 <section class="card"><h2>Carnet complet (3 trades)</h2>
 <div class="scroll"><table><thead><tr><th>Date</th><th>Heure</th><th>Instrument</th><th>Sens</th><th>Stratégie</th><th>Taille</th><th>Prix</th><th>PnL</th><th>R</th><th>Sortie</th></tr></thead><tbody><tr class="win"><td>11-09</td><td>15:37 → 18:55</td><td><b>AVGO</b></td><td>achat</td><td>ORB 5 min</td><td>94 $</td><td>312,56 → 319,61</td><td class="good">+2,13 $</td><td>+0,85</td><td class="wrap">clôture de fin de fenêtre (18:55)</td></tr><tr class="loss"><td>11-09</td><td>15:36 → 18:55</td><td><b>IMVT</b></td><td>achat</td><td>ORB 5 min</td><td>57 $</td><td>34,3203 → 34,1498</td><td class="bad">-0,28 $</td><td>-0,11</td><td class="wrap">clôture de fin de fenêtre (18:55)</td></tr><tr class="loss"><td>11-09</td><td>15:35 → 18:55</td><td><b>VIR</b></td><td>achat</td><td>ORB 5 min</td><td>35 $</td><td>14,1317 → 13,7773</td><td class="bad">-0,87 $</td><td>-0,35</td><td class="wrap">clôture de fin de fenêtre (18:55)</td></tr></tbody></table></div>
 <p class="muted">Export tableur : carnet.csv, dans le même dossier du dépôt.</p></section>
+<section class="card"><h2>Réglages modifiés</h2><ul class="plain"><li><b>2026-11-09 (soir)</b> : 3 places, toutes utilisables par l&#39;ORB → <b>4 places, dont 2 au plus pour l&#39;ORB</b>.<br><span class="muted">Le 9 novembre, 3 cassures ORB ont occupé les 3 places de 15 h 37 à 18 h 55 : plus rien de possible pour les trades rapides, et 3 achats d&#39;actions ouverts à la même minute, donc presque un seul pari en triple. Rejeu des 10 dernières séances (27 octobre – 9 novembre) avec les mêmes données : +14,06 $ au lieu de +5,47 $, pire séance −0,76 % au lieu de −1,47 %, toujours 3 trades par jour ; meilleur sur les deux moitiés de la période. Ce sont les séances qui ont servi à choisir : l&#39;effet reste à confirmer en direct. Seul changement prévu cette semaine.</span></li></ul></section>
 <section class="card"><h2>Méthode</h2><ul class="plain">
 <li><b>ORB 5 min sur actions « en jeu »</b>, d'après Zarattini, Barbon &amp; Aziz (2024) : les 8 actions au plus fort volume relatif d'ouverture (prix ≥ 5 $, volume moyen ≥ 1 M, ATR ≥ 0,50 $, listes Yahoo « plus actives » et « plus fortes hausses »), cassure du range des 5 premières minutes, stop sous ce range, seulement si le S&amp;P 500 est au-dessus de sa VWAP. Achat seulement (compte cash).</li>
 <li><b>Momentum « zone de bruit »</b>, d'après Zarattini, Aziz &amp; Barbon (2024) : on suit le prix quand il sort de sa zone d'oscillation habituelle à cette heure, au-dessus de la VWAP ; stop suiveur max(borne, VWAP). ETF SPY, QQQ, IWM et cryptos (achat).</li>
 <li><b>Retour à la VWAP</b> en marché sans tendance : écart ≥ 2 écarts-types, objectif la VWAP, seulement si le gain attendu vaut au moins 3 fois les frais.</li>
-<li><b>Risque</b> : 0.5 % de l'equity par trade × poids adaptatif (0,25 à 2), une position ≤ 50 % de l'equity, 3 positions max, stop journalier −1.5 %, arrêt de la semaine à −4 %. Moins de 3 trades à 17 h 30 : « mode chasse » (seuils assouplis, risque ÷ 2).</li>
+<li><b>Risque</b> : 0.5 % de l'equity par trade × poids adaptatif (0,25 à 2), une position ≤ 50 % de l'equity, 4 positions max dont 2 au plus pour l'ORB, stop journalier −1.5 %, arrêt de la semaine à −4 %. Moins de 3 trades à 17 h 30 : « mode chasse » (seuils assouplis, risque ÷ 2).</li>
 <li><b>Coûts simulés par ordre</b> : actions 0 commission + 3 points de base de glissement ; crypto 10 points de base de frais + 2 de glissement. Entrée au prix de clôture de la minute du signal ; si le stop et l'objectif sont touchés dans la même minute, c'est le stop qui compte.</li>
 <li><b>Données</b> : barres d'une minute Yahoo Finance (gratuites ; quelques secondes de retard possibles).</li>
 </ul></section>

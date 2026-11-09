@@ -13,6 +13,9 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
   sauf correction d'un bug qui empêche la séance (voir « Incidents »).
 - **Stratégie** : elle s'adapte toute seule (poids par stratégie, mode chasse, coupe-circuits). On ne change
   pas les réglages en cours de semaine sur la foi d'une ou deux séances : on note l'idée dans le message du soir.
+- **Réglage changé le lundi 9 au soir** (seul changement de la semaine) : 4 places au lieu de 3, dont 2 au plus
+  pour l'ORB. La raison est dans `solbot/carnet/reglages.json` et sur la page. Le rappeler en une ligne dans le
+  message du mardi soir, avec ce qu'il a changé ce jour-là (places restées libres pour les trades rapides ou non).
 
 ## Chaque jour de séance (la tâche planifiée réveille la session à 14 h 50, heure de Paris)
 
