@@ -1,11 +1,11 @@
 {
   "version": 1,
   "startEquity": 500,
-  "cash": 500,
+  "cash": 314.1411279837666,
   "day": "2026-11-09",
   "dayStartEquity": 500,
-  "tradesToday": 0,
-  "stockCashUsedToday": 0,
+  "tradesToday": 3,
+  "stockCashUsedToday": 185.85887201623336,
   "weights": {
     "orb": 1,
     "noise": 1,
@@ -18,8 +18,82 @@
   },
   "weekId": "2026-S46",
   "weekStartEquity": 500,
-  "open": [],
+  "open": [
+    {
+      "id": "d-mw9d76st-6xusi",
+      "symbol": "VIR",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 2.4468108020668367,
+      "entry": 14.131737830257416,
+      "stop": 13.109999656677246,
+      "initialStop": 13.109999656677246,
+      "openedAt": 1794234900000,
+      "riskUsd": 2.5,
+      "notionalUsd": 34.577688775050405,
+      "costsUsd": 0,
+      "best": 14.380000114440918,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 14.1275 au-dessus du plus haut des 5 premières minutes (13.9539 ; bas 13.1100)",
+        "volume relatif 24.53× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 13.1100 (7.20 % sous l'entrée)",
+        "taille : risque 2.50 $ (0.5 % × poids 1.00), position 34.58 $"
+      ]
+    },
+    {
+      "id": "d-mw9d7ywd-gteh3",
+      "symbol": "IMVT",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 1.6546660791138672,
+      "entry": 34.320294373703,
+      "stop": 32.810001373291016,
+      "initialStop": 32.810001373291016,
+      "openedAt": 1794234960000,
+      "riskUsd": 2.499030597304816,
+      "notionalUsd": 56.78862692536886,
+      "costsUsd": 0,
+      "best": 35.61000061035156,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 34.3100 au-dessus du plus haut des 5 premières minutes (34.2800 ; bas 32.8100)",
+        "volume relatif 13.05× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 32.8100 (4.37 % sous l'entrée)",
+        "taille : risque 2.50 $ (0.5 % × poids 1.00), position 56.79 $"
+      ]
+    },
+    {
+      "id": "d-mw9d99mn-ej7xt",
+      "symbol": "AVGO",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 0.30231451557481553,
+      "entry": 312.56374222106933,
+      "stop": 304.2919921875,
+      "initialStop": 304.2919921875,
+      "openedAt": 1794235020000,
+      "riskUsd": 2.500670104354477,
+      "notionalUsd": 94.4925563158141,
+      "costsUsd": 0,
+      "best": 318.20001220703125,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 312.47 au-dessus du plus haut des 5 premières minutes (310.94 ; bas 304.29)",
+        "volume relatif 1.98× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 304.29 (2.62 % sous l'entrée)",
+        "taille : risque 2.50 $ (0.5 % × poids 1.00), position 94.49 $"
+      ]
+    }
+  ],
   "cooldown": {},
-  "orbDone": {},
+  "orbDone": {
+    "VIR": 1,
+    "IMVT": 1,
+    "AVGO": 1
+  },
   "closedCount": 0
 }
