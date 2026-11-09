@@ -308,7 +308,7 @@ export function loadConfig(env: Env = process.env, cwd = process.cwd()): Config 
       maxWalletSol: Math.min(num(env, 'MAX_WALLET_SOL', 10, 0.01, 1e6), HARD_LIMITS.maxWalletSol),
     },
     paper: {
-      startSol: num(env, 'PAPER_START_SOL', 7, 0.01, 1e6),
+      startSol: num(env, 'PAPER_START_SOL', 5.8, 0.01, 1e6),
       extraSlippageBps: num(env, 'PAPER_EXTRA_SLIPPAGE_BPS', 150, 0, 5_000),
       feeLamportsPerTx: num(env, 'PAPER_FEE_LAMPORTS', 150_000, 0, 1e9),
       rentLamportsPerBuy: num(env, 'PAPER_RENT_LAMPORTS', 2_039_280, 0, 1e9),

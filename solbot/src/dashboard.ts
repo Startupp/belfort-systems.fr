@@ -428,7 +428,7 @@ function fanChart(p: Projection, initial: number, floor: number): string {
   <line x1="${padL}" x2="${W - 8}" y1="${y(floor).toFixed(1)}" y2="${y(floor).toFixed(1)}" class="halt"/>
   <text x="${padL - 6}" y="${y(hi).toFixed(1)}" class="ax" text-anchor="end" dominant-baseline="hanging">${fr(hi, 2)}</text>
   <text x="${padL - 6}" y="${y(lo).toFixed(1)}" class="ax" text-anchor="end">${fr(lo, 2)}</text>
-  <text x="${padL - 6}" y="${y(initial).toFixed(1)}" class="ax" text-anchor="end" dominant-baseline="middle">départ</text>
+  <text x="${W - 10}" y="${(y(initial) - 4).toFixed(1)}" class="ax" text-anchor="end">capital de départ</text>
   <text x="${W - 10}" y="${(y(floor) - 4).toFixed(1)}" class="ax haltx" text-anchor="end">arrêt automatique</text>
   <text x="${padL}" y="${H - 6}" class="ax">aujourd'hui</text>
   <text x="${W - 8}" y="${H - 6}" class="ax" text-anchor="end">+${p.horizon} trades</text>

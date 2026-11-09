@@ -76,11 +76,25 @@ npm start              # boucle en papier
 | `npm run once` | un tour puis arrêt |
 | `npm run status` | état courant (positions, equity de départ, arrêt éventuel) |
 | `npm run report` | statistiques, analyse des rejets, régénère `equity.html` |
+| `npm run dashboard` | régénère `dashboard.html` (le bot le fait seul à chaque scan) |
 | `npm run doctor` | diagnostic complet + pare-feu à blanc sur une vraie transaction (non signée) |
 | `npm run keygen` | crée la clé du wallet dédié |
 | `npm run reclaim` | liste les comptes de tokens vides ; `-- --yes` les ferme (≈ 0,002 SOL récupéré chacun) |
 | `touch data/live/STOP` | plus de nouvelles entrées (les sorties continuent) |
 | `touch data/live/PANIC` | vend tout et s'arrête |
+
+## Tableau de bord
+
+`DATA_DIR/dashboard.html`, à ouvrir dans un navigateur : il se rafraîchit toutes les 60 s.
+
+- état du bot, equity, rendement, réussite comparée au seuil de rentabilité ;
+- positions ouvertes et leurs prochains déclencheurs (stop, objectif, stop suiveur, vente forcée) ;
+- **actions prises et pourquoi** : chaque achat, vente, rejet et garde-fou, avec sa chaîne de raisons ;
+- **radar** : ce que le dernier scan a retenu, et la décision prise pour chaque token ;
+- **prévision** : 2 000 futurs simulés sur les vrais trades (sur une hypothèse prudente tant qu'il
+  y en a moins de 20), le pourcentage de trades gagnants nécessaire, la chance de finir en gain ;
+- **budget outils** : 20 % des bénéfices réalisés, et la règle qui décide si un outil payant vaut
+  son prix (3 mois d'abonnement dans le budget et un gain attendu d'au moins 2 fois le coût).
 
 ## Fichiers produits (dans `DATA_DIR`, jamais dans git)
 
