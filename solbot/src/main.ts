@@ -13,7 +13,7 @@
  * Mode papier par défaut : aucune transaction, capital virtuel, devis Jupiter réels.
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ConfigError, LIVE_CONFIRM_PHRASE, describeConfig, loadConfig, loadDotEnv } from './config.ts';
 import type { Config } from './config.ts';
@@ -33,7 +33,7 @@ import { createScanner, pickReferencePair } from './workers/scanner.ts';
 import { createRugcheckApi } from './lib/rugcheckApi.ts';
 import { createRugChecker } from './workers/rugcheck.ts';
 import { sizePosition } from './workers/sizer.ts';
-import { createExecutor } from './workers/executor.ts';
+import { UNKNOWN_OUTCOME_ERROR, ZERO_TOKEN_BALANCE_ERROR, createExecutor } from './workers/executor.ts';
 import type { Executor, MarketInfo } from './workers/executor.ts';
 import { decideExit } from './workers/exits.ts';
 import { buildEntryReasons, createLogger } from './workers/logger.ts';
@@ -196,39 +196,69 @@ export function createBot(deps: BotDeps): Bot {
     await maybeSweep(snap);
   }
 
+  /** Trade fermé « à la main » par l'orchestrateur (vente introuvable ou impossible). */
+  function syntheticTrade(p: Position, exitSol: number, reason: ExitReason, detail: string): ClosedTrade {
+    const pnlSol = exitSol - p.entrySol;
+    return {
+      id: p.id,
+      mode: cfg.mode,
+      mint: p.mint,
+      symbol: p.symbol,
+      openedAt: p.openedAt,
+      closedAt: clock.iso(),
+      holdMinutes: Math.round((clock.now() - Date.parse(p.openedAt)) / 60_000),
+      entrySol: p.entrySol,
+      exitSol,
+      pnlSol,
+      pnlPct: p.entrySol > 0 ? (pnlSol / p.entrySol) * 100 : 0,
+      feesSol: p.entryFill.feeLamports / 1e9,
+      entrySlippageBps: p.entryFill.slippageBps,
+      exitSlippageBps: 0,
+      entryReasons: p.entryReasons,
+      exitReason: reason,
+      exitDetail: detail,
+      entrySignature: p.entryFill.signature,
+    };
+  }
+
+  /**
+   * Issue d'une transaction inconnue (pas de réponse de Jupiter, statut introuvable) : on ne devine
+   * pas. Le fichier STOP bloque toute nouvelle entrée jusqu'à ce qu'un humain ait vérifié le wallet.
+   */
+  function stopOnUnknownOutcome(where: string, error: string | undefined): void {
+    if (!error?.startsWith(UNKNOWN_OUTCOME_ERROR)) return;
+    try {
+      writeFileSync(stopPath, `${clock.iso()} ${where} : issue inconnue. Vérifie le wallet sur solscan.io, puis supprime ce fichier.\n`);
+    } catch (e) {
+      logger.error('création du fichier STOP', e);
+    }
+    logger.event('guard', `ATTENTION : issue inconnue d'une transaction (${where}) — fichier STOP créé, vérifie le wallet avant de le supprimer`);
+  }
+
   async function closePosition(p: Position, reason: ExitReason, detail: string): Promise<void> {
     const res = await executor.close(p, reason, detail);
     if (res.fill.ok && res.trade) {
       await recordClose(p, res.trade, res.fill);
       return;
     }
+    if (cfg.mode === 'live' && res.fill.error === ZERO_TOKEN_BALANCE_ERROR) {
+      // Plus aucun token : une vente précédente est passée malgré une réponse perdue, ou vente à la main.
+      // L'equity reste juste (solde réel) ; pour les statistiques on retient la dernière valorisation.
+      await recordClose(
+        p,
+        syntheticTrade(p, p.lastValueSol, reason, `${detail} — plus aucun token dans le wallet : sortie estimée à la dernière valorisation`),
+        res.fill,
+      );
+      return;
+    }
     logger.closeFailed(p, res.fill, reason);
+    stopOnUnknownOutcome(`vente ${p.symbol}`, res.fill.error);
     const n = (closeFailures.get(p.id) ?? 0) + 1;
     closeFailures.set(p.id, n);
     if (n >= MAX_CLOSE_FAILURES) {
       // Plus de route de vente depuis longtemps : on assume la perte (−100 %) au lieu de se mentir.
-      const at = clock.iso();
-      const lost: ClosedTrade = {
-        id: p.id,
-        mode: cfg.mode,
-        mint: p.mint,
-        symbol: p.symbol,
-        openedAt: p.openedAt,
-        closedAt: at,
-        holdMinutes: Math.round((clock.now() - Date.parse(p.openedAt)) / 60_000),
-        entrySol: p.entrySol,
-        exitSol: 0,
-        pnlSol: -p.entrySol,
-        pnlPct: -100,
-        feesSol: p.entryFill.feeLamports / 1e9,
-        entrySlippageBps: p.entryFill.slippageBps,
-        exitSlippageBps: 0,
-        entryReasons: p.entryReasons,
-        exitReason: 'NO_ROUTE',
-        exitDetail: `${n} ventes impossibles d'affilée (${res.fill.error ?? 'raison inconnue'}) : position comptée perdue`,
-        entrySignature: p.entryFill.signature,
-      };
-      await recordClose(p, lost, res.fill);
+      const why = `${n} ventes impossibles d'affilée (${res.fill.error ?? 'raison inconnue'}) : position comptée perdue`;
+      await recordClose(p, syntheticTrade(p, 0, 'NO_ROUTE', why), res.fill);
     }
   }
 
@@ -329,6 +359,7 @@ export function createBot(deps: BotDeps): Bot {
         state.cooldowns[c.mint] = new Date(clock.now() + FAILED_OPEN_COOLDOWN_MS).toISOString();
         save();
         logger.openFailed(c, res.fill);
+        stopOnUnknownOutcome(`achat ${c.symbol}`, res.fill.error);
       }
       // Une seule entrée par tour : on laisse le marché et les garde-fous respirer.
       snap = await equity();
