@@ -38,7 +38,7 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
    affiche le résumé du jour, indexe `solbot/carnet/`). Puis commit
    `desk : carnet du AAAA-MM-JJ (résultat du jour)` et `git push -u origin ccr-ee32c815-yp0kdq`
    (en cas d'erreur réseau : nouvel essai après 2 s, 4 s, 8 s, 16 s).
-5. **Page du carnet** : l'adresse de la page Claude du carnet a été donnée par message.
+5. **Page du carnet** : https://claude.ai/artifact/DLgF8cNJK1M6FcZQmvoRYF (page privée de l'utilisateur).
    Lire d'abord la page (Artifact, action `read`, avec cette adresse), puis la publier
    (Artifact, `file_path` = `solbot/carnet/carnet.html`, même `url`). Ne jamais créer une deuxième page.
    Si l'outil Artifact manque, envoyer `solbot/carnet/carnet.html` avec SendUserFile.
@@ -49,7 +49,9 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
    - le lien de la page.
    Si un outil de notification (PushNotification) existe, l'utiliser pour une ligne de résultat avec le lien.
 7. **Vendredi 13 novembre** : ajouter au message le bilan de la semaine : total, résultat par stratégie, ce qui a
-   marché, ce que je changerais, et ma recommandation (continuer ou non). La tâche planifiée s'arrête après ce jour.
+   marché, ce que je changerais, et ma recommandation (continuer ou non). Puis désactiver la tâche planifiée
+   `trig_01KhBHLWrdc1QqaNUsQGCYm9` (`update_trigger`, `enabled: false`) : son horaire « 50 14 10-13 11 * » reviendrait
+   sinon du 10 au 13 novembre 2027. La laisser active seulement si l'utilisateur a demandé de continuer.
 
 ## Incidents
 
