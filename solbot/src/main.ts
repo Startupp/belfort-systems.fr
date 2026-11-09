@@ -92,12 +92,22 @@ export function createBot(deps: BotDeps): Bot {
 
   let state: BotState = readJson<BotState | null>(statePath, null) ?? initialState(cfg.mode, cfg.paper.startSol, clock.now());
   const fresh = !existsSync(statePath);
+  if (state.mode !== cfg.mode) {
+    throw new ConfigError(`${statePath} contient un état « ${state.mode} » : utilise un autre DATA_DIR pour le mode ${cfg.mode}`);
+  }
   const save = (): void => writeJsonAtomic(statePath, state);
   const patch = (p: Partial<BotState>): void => {
     state = { ...state, ...p };
   };
 
-  const scanner = createScanner({ jupiter, dex, clock, config: cfg });
+  const scanner = createScanner({
+    jupiter,
+    dex,
+    clock,
+    config: cfg,
+    // Une source qui tombe en panne ne bloque pas le scan, mais on veut savoir pourquoi (API qui change…).
+    onSourceError: (source, err) => logger.error(`source ${source}`, err),
+  });
   const rug = createRugChecker({ rugcheck: createRugcheckApi({ http, baseUrl: cfg.rugcheck.baseUrl, apiKey: cfg.rugcheck.apiKey }), jupiter, clock, config: cfg });
   const equityTracker = createEquityTracker({ dataDir: cfg.dataDir, clock, mode: cfg.mode, getState: () => state, patchState: patch });
 
@@ -355,9 +365,6 @@ export function createBot(deps: BotDeps): Bot {
   }
 
   async function init(): Promise<void> {
-    if (state.mode !== cfg.mode) {
-      throw new ConfigError(`${statePath} contient un état « ${state.mode} » : utilise un autre DATA_DIR pour le mode ${cfg.mode}`);
-    }
     if (cfg.mode === 'live') {
       if (!signer) throw new ConfigError('live : clé du wallet non chargée');
       if (fresh) {

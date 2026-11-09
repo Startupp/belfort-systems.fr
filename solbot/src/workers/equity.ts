@@ -185,7 +185,8 @@ export function computeStats(trades: ClosedTrade[], points: EquityPoint[], initi
     const symbol = typeof t.symbol === 'string' ? t.symbol : '';
     if (best === undefined || pnlPct > best.pnlPct) best = { symbol, pnlPct };
     if (worst === undefined || pnlPct < worst.pnlPct) worst = { symbol, pnlPct };
-    const reason = typeof t.exitReason === 'string' && t.exitReason !== '' ? t.exitReason : 'INCONNUE';
+    const rawReason: unknown = t.exitReason;
+    const reason = typeof rawReason === 'string' && rawReason !== '' ? rawReason : 'INCONNUE';
     const agg = byReason.get(reason);
     if (agg) {
       agg.count += 1;
