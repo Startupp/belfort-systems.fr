@@ -132,9 +132,16 @@ export function inUsSession(ms: number): boolean {
 // Yahoo Finance
 // ---------------------------------------------------------------------------
 
+interface YahooPeriod {
+  start?: number;
+  end?: number;
+}
+
 interface YahooChart {
   chart?: {
     result?: Array<{
+      /** `tradingPeriods` : un tableau de séances par jour ; un objet { pre, regular, post } avec les cotations hors séance. */
+      meta?: { regularMarketTime?: number; tradingPeriods?: YahooPeriod[][] | { regular?: YahooPeriod[][] } };
       timestamp?: number[];
       indicators?: { quote?: Array<{ open?: Array<number | null>; high?: Array<number | null>; low?: Array<number | null>; close?: Array<number | null>; volume?: Array<number | null> }> };
     }> | null;
@@ -160,6 +167,19 @@ export function parseYahooChart(raw: unknown): Bar[] {
     out.push({ t: (ts[i] as number) * 1000, o: o as number, h: h as number, l: l as number, c: c as number, v: typeof v === 'number' && v > 0 ? v : 0 });
   }
   return out;
+}
+
+/** Heure de la dernière cotation d'une réponse « chart » (ms), `undefined` si elle manque. */
+export function yahooQuoteTime(raw: unknown): number | undefined {
+  const t = (raw as YahooChart)?.chart?.result?.[0]?.meta?.regularMarketTime;
+  return typeof t === 'number' && Number.isFinite(t) && t > 0 ? t * 1000 : undefined;
+}
+
+/** Fins des séances régulières listées dans une réponse « chart » (ms) ; vide si Yahoo n'en donne pas. */
+export function yahooSessionEnds(raw: unknown): number[] {
+  const tp = (raw as YahooChart)?.chart?.result?.[0]?.meta?.tradingPeriods;
+  const periods: Array<YahooPeriod | undefined> = (Array.isArray(tp) ? tp : (tp?.regular ?? [])).flat();
+  return periods.map((p) => p?.end).filter((e): e is number => typeof e === 'number' && Number.isFinite(e) && e > 0).map((e) => e * 1000);
 }
 
 export interface ScreenerQuote {

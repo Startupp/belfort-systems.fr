@@ -1,4 +1,4 @@
-/** Tests de l'arène : moteur papier (levier, marge, stops, ordres), stratégies, page. */
+/** Tests de l'arène : moteur papier (levier, marge, stops, ordres), stratégies, données (cours Yahoo), page. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,7 +6,9 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { writeJsonAtomic } from '../src/lib/store.ts';
+import type { Http } from '../src/lib/http.ts';
 import type { Bar } from '../src/desk/types.ts';
+import { createArenaData } from '../src/arena/data.ts';
 import { runPortfolio, stats } from '../src/arena/engine.ts';
 import type { Costs, Intent, PortfolioSpec, Strategy } from '../src/arena/engine.ts';
 import { FUNDING, NY, faber, fundingAt, fundingCarry, orbFirstCandle, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
@@ -377,4 +379,116 @@ test('heure locale → UTC : calcul direct identique à la recherche complète (
     }
   }
   assert.ok(n > 30_000);
+});
+
+/** Réponse « chart » de Yahoo : lignes [t (ms), o, h, l, c, v], heure de la dernière cotation et séances [début, fin] (ms). */
+function yahooChart(rows: Array<[number, number, number, number, number, number]>, quote: number, sessions: Array<[number, number]> = []): unknown {
+  const col = (i: number): number[] => rows.map((r) => r[i] as number);
+  const tradingPeriods = sessions.map(([start, end]) => [{ timezone: 'EST', start: start / 1000, end: end / 1000, gmtoffset: -18000 }]);
+  return { chart: { result: [{ meta: { regularMarketTime: quote / 1000, tradingPeriods }, timestamp: col(0).map((t) => t / 1000), indicators: { quote: [{ open: col(1), high: col(2), low: col(3), close: col(4), volume: col(5) }] } }] } };
+}
+
+/** Faux client HTTP : chaque URL demandée est notée ; `reply` donne la réponse (une exception = réseau coupé). */
+function fakeHttp(reply: (url: URL) => unknown): Http & { urls: URL[] } {
+  const urls: URL[] = [];
+  return {
+    urls,
+    getJson: async <T>(url: string): Promise<T> => {
+      const u = new URL(url);
+      urls.push(u);
+      return reply(u) as T;
+    },
+    postJson: async <T>(): Promise<T> => {
+      throw new Error('pas de POST');
+    },
+  };
+}
+
+/** Instant UTC en novembre 2026, ex. nov('10T21:40:00'). */
+const nov = (dayTime: string): number => Date.parse(`2026-11-${dayTime}Z`);
+
+test('cours Yahoo en 5 min : ni le point « fantôme » de la cotation, ni la barre en cours, même finie à l’horloge (or, 10 min de retard)', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'cache-'));
+  // Réponse lue à 22:03:14 (relevée sur GC=F le 10 novembre) : dernière cotation à 21:53:16 ; la barre de 21:50 se
+  // termine à 21:55, après la cotation (pas finie, mais finie à l'horloge) ; le dernier point est à l'heure de la cotation.
+  let reply = yahooChart(
+    [
+      [nov('10T21:40:00'), 4036.7, 4039, 4036.6, 4038.1, 117],
+      [nov('10T21:45:00'), 4038.5, 4039.1, 4037.7, 4039.1, 192],
+      [nov('10T21:50:00'), 4039.2, 4040.1, 4038.8, 4039.8, 229],
+      [nov('10T21:53:16'), 4039.3, 4039.3, 4039.3, 4039.3, 0],
+    ],
+    nov('10T21:53:16'),
+  );
+  const http = fakeHttp(() => reply);
+  const gold = async (now: number): Promise<Bar[]> => (await createArenaData({ dir, maxAgeMs: 0, now, http }).load('gold5m', ['GC=F'])).get('GC=F') ?? [];
+  assert.deepEqual((await gold(nov('10T22:03:14'))).map((b) => b.t), [nov('10T21:40:00'), nov('10T21:45:00')]);
+  const cached = JSON.parse(readFileSync(join(dir, 'gold5m-GC_F.json'), 'utf8')) as { asOf?: number; bars: Bar[] };
+  assert.equal(cached.bars.length, 2, 'rien d’inachevé dans le cache');
+  assert.equal(cached.asOf, nov('10T21:53:16'));
+  // Lecture suivante : la barre de 21:50 est finie, avec ses cours définitifs ; celle de 21:55 attend une cotation à 22:00.
+  reply = yahooChart(
+    [
+      [nov('10T21:45:00'), 4038.5, 4039.1, 4037.7, 4039.1, 192],
+      [nov('10T21:50:00'), 4039.2, 4040.4, 4038.8, 4040.2, 310],
+      [nov('10T21:55:00'), 4040.2, 4040.5, 4039.9, 4040, 150],
+      [nov('10T21:58:40'), 4040, 4040, 4040, 4040, 0],
+    ],
+    nov('10T21:58:40'),
+  );
+  const later = await gold(nov('10T22:08:40'));
+  assert.deepEqual(later.map((b) => b.t), [nov('10T21:40:00'), nov('10T21:45:00'), nov('10T21:50:00')]);
+  assert.deepEqual(later.at(-1), { t: nov('10T21:50:00'), o: 4039.2, h: 4040.4, l: 4038.8, c: 4040.2, v: 310 });
+});
+
+test('cours Yahoo en 1 min : la lecture suivante reprend à la minute inachevée ; le point de clôture (16 h pile) est écarté', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'cache-'));
+  const minute = (dayTime: string, px: number): [number, number, number, number, number, number] => [nov(dayTime), px, px + 0.1, px - 0.1, px, 40_000];
+  // En séance, lu à 20:11:30 : barre de 20:10 en cours, point à l'heure de la cotation (20:10:59).
+  let reply = yahooChart([minute('10T20:08:00', 100), minute('10T20:09:00', 100.2), minute('10T20:10:00', 100.3), [nov('10T20:10:59'), 100.4, 100.4, 100.4, 100.4, 0]], nov('10T20:10:59'));
+  const http = fakeHttp(() => reply);
+  const load = async (now: number): Promise<number[]> => ((await createArenaData({ dir, maxAgeMs: 0, now, http, historyDays: { us1m: 1 } }).load('us1m', ['NVDA'])).get('NVDA') ?? []).map((b) => b.t);
+  assert.deepEqual(await load(nov('10T20:11:30')), [nov('10T20:08:00'), nov('10T20:09:00')]);
+  // Après la clôture : la requête reprend à 20:10. Yahoo ne renvoie que les barres qui commencent à `period1` ou après : en
+  // repartant du point de 20:10:59, la minute de 20:11 manquerait. Le point de cotation est posé à 21:00:00, fin de la
+  // séance (16 h à New York), sur la grille, alors que la cotation date de 21:02:05 (déclarations tardives à la Bourse de
+  // New York, relevé sur XOM le 10 novembre) : c'est la fin de séance qui l'écarte.
+  reply = yahooChart(
+    [minute('10T20:10:00', 100.35), minute('10T20:11:00', 100.5), minute('10T20:59:00', 101), [nov('10T21:00:00'), 101.1, 101.1, 101.1, 101.1, 0]],
+    nov('10T21:02:05'),
+    [[nov('10T14:30:00'), nov('10T21:00:00')]],
+  );
+  assert.deepEqual(await load(nov('10T22:03:14')), [nov('10T20:08:00'), nov('10T20:09:00'), nov('10T20:10:00'), nov('10T20:11:00'), nov('10T20:59:00')]);
+  assert.equal(http.urls.at(-1)?.searchParams.get('period1'), String(nov('10T20:10:00') / 1000));
+});
+
+test('ancien cache Yahoo, sans heure de cotation : points « fantômes » écartés dès la lecture, puis fichier relu en entier', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'cache-'));
+  const bar = (dayTime: string, c: number, v = 1e6): Bar => ({ t: nov(dayTime), o: c, h: c, l: c, c, v });
+  // Écrit par l'ancien code, lu en séance à 20:12:05 le 10 : barre de 20:10 en cours, point de la cotation (20:11:59) ;
+  // lu le 9 après la clôture : point de 21:00:00, aligné sur la grille.
+  writeJsonAtomic(join(dir, 'spy5m-SPY.json'), {
+    fetchedAt: nov('10T20:12:05'),
+    bars: [bar('09T20:50:00', 744.8), bar('09T20:55:00', 745), bar('09T21:00:00', 745.2, 0), bar('10T20:05:00', 749), bar('10T20:10:00', 749.3), bar('10T20:11:59', 749.4, 0)],
+  });
+  const load = async (http: Http): Promise<number[]> => ((await createArenaData({ dir, maxAgeMs: 6 * 3_600_000, now: nov('10T23:00:00'), http }).load('spy5m', ['SPY'])).get('SPY') ?? []).map((b) => b.t);
+  // Réseau coupé : le cache sert, sans le point de 20:11:59 ni la barre de 20:10 (en cours quand il a été écrit).
+  const offline = fakeHttp(() => {
+    throw new Error('réseau coupé');
+  });
+  assert.deepEqual(await load(offline), [nov('09T20:50:00'), nov('09T20:55:00'), nov('09T21:00:00'), nov('10T20:05:00')]);
+  // Réseau rétabli : relu malgré son âge (moins de 6 h) et remplacé sur toute la période de la réponse : le point de
+  // clôture du 9, qu'on ne reconnaît qu'avec l'heure de cotation, disparaît ; la barre d'avant la réponse reste.
+  const fresh = yahooChart(
+    [
+      [nov('09T20:55:00'), 745, 745, 745, 745, 1e6],
+      [nov('10T20:05:00'), 749, 749, 749, 749, 1e6],
+      [nov('10T20:10:00'), 749.3, 749.6, 749.1, 749.5, 1e6],
+      [nov('10T20:55:00'), 749.9, 750.8, 749.6, 749.9, 1e6],
+      [nov('10T21:00:00'), 749.9, 749.9, 749.9, 749.9, 0],
+    ],
+    nov('10T21:00:00'),
+  );
+  assert.deepEqual(await load(fakeHttp(() => fresh)), [nov('09T20:50:00'), nov('09T20:55:00'), nov('10T20:05:00'), nov('10T20:10:00'), nov('10T20:55:00')]);
+  assert.equal((JSON.parse(readFileSync(join(dir, 'spy5m-SPY.json'), 'utf8')) as { asOf?: number }).asOf, nov('10T21:00:00'));
 });
