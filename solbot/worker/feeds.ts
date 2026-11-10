@@ -16,9 +16,16 @@ async function json<T>(url: string): Promise<T> {
   return (await r.json()) as T;
 }
 
-/** Yahoo : barres de 5 min (`range` : 1d, 5d, 1mo). */
-export async function yahoo5m(symbol: string, range: string): Promise<Bar[]> {
-  return parseYahooChart(await json(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=${range}&includePrePost=false`));
+/**
+ * Yahoo : barres de 5 min (`range` : 1d, 5d, 1mo), et l'heure de la dernière cotation (`asOf`, ms) : une barre n'est
+ * finie que si elle se termine avant cette heure (l'or est publié avec 10 min de retard, la barre « en cours » a donc
+ * l'air terminée à l'horloge).
+ */
+export async function yahoo5m(symbol: string, range: string): Promise<{ bars: Bar[]; asOf: number }> {
+  const raw = await json<{ chart?: { result?: Array<{ meta?: { regularMarketTime?: number } }> } }>(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=${range}&includePrePost=false`);
+  const bars = parseYahooChart(raw);
+  const t = raw.chart?.result?.[0]?.meta?.regularMarketTime;
+  return { bars, asOf: typeof t === 'number' && t > 0 ? t * 1000 : Math.max(0, ...bars.map((b) => b.t)) };
 }
 
 /** Yahoo : barres journalières, début normalisé à 9 h 30 (New York) par l'appelant. */

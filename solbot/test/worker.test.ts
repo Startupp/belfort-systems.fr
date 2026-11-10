@@ -79,3 +79,132 @@ test('worker : page protégée par le lien secret, JSON inclus sans pouvoir ferm
   const api = await (await worker.fetch(new Request('https://x.dev/jeton-de-test-assez-long/api'), env)).json();
   assert.equal((api as { mode: string }).mode, 'papier');
 });
+
+// ---------------------------------------------------------------------------- simulation minute par minute
+
+import { runPortfolio } from '../src/arena/engine.ts';
+import { FUNDING } from '../src/arena/strategies.ts';
+import { cycle, resetMemory } from '../worker/index.ts';
+
+/** Cours synthétiques déterministes (au pas du marché), pour chaque symbole et chaque instant. */
+function price(sym: string, t: number): number {
+  const base: Record<string, number> = { QQQ: 600, SPY: 680, 'GC=F': 4000, 'EURUSD=X': 1.15, 'BTC-USD': 90_000, 'ETH-USD': 3000, 'SOL-USD': 150, PF_XBTUSD: 90_000, PF_ETHUSD: 3000 };
+  const b = base[sym] ?? 100;
+  const x = t / 3_600_000;
+  const p = b * (1 + 0.01 * Math.sin(x / 3) + 0.004 * Math.sin(x * 1.7 + sym.length) + 0.002 * Math.sin(x * 11 + sym.charCodeAt(0)));
+  const tick = sym === 'EURUSD=X' ? 1e5 : sym === 'GC=F' || sym.startsWith('PF_') ? 10 : 100;
+  return Math.round(p * tick) / tick;
+}
+function bar(sym: string, t: number, ms: number): { t: number; o: number; h: number; l: number; c: number; v: number } {
+  const o = price(sym, t);
+  const c = price(sym, t + ms - 1);
+  const m1 = price(sym, t + ms / 3);
+  const m2 = price(sym, t + (2 * ms) / 3);
+  return { t, o, h: Math.max(o, c, m1, m2), l: Math.min(o, c, m1, m2), c, v: 1000 + (Math.floor(t / ms) % 7) * 100 };
+}
+const usSession = (t: number): boolean => {
+  const l = localTime(t, NY);
+  const wd = new Date(`${l.date}T12:00:00Z`).getUTCDay();
+  return wd >= 1 && wd <= 5 && l.minutes >= 570 && l.minutes < 960;
+};
+
+/** Faux réseau : Yahoo, Coinbase, Kraken, d'après l'horloge simulée (barre en cours et barre « fantôme » comprises). */
+function fakeFetch(clock: () => number): typeof fetch {
+  const json = (body: unknown): Response => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+  return (async (input: string | URL | Request) => {
+    const url = new URL(String(input instanceof Request ? input.url : input));
+    const now = clock();
+    const M5 = 300_000;
+    const H1 = 3_600_000;
+    if (url.host === 'query1.finance.yahoo.com' && url.pathname.includes('/chart/')) {
+      const sym = decodeURIComponent(url.pathname.split('/').pop() as string);
+      const days = { '1d': 1, '5d': 5, '1mo': 30, '2y': 730 }[url.searchParams.get('range') ?? '1d'] ?? 1;
+      const out: Array<{ t: number; o: number; h: number; l: number; c: number; v: number }> = [];
+      if (url.searchParams.get('interval') === '5m') {
+        const etf = sym === 'SPY' || sym === 'QQQ';
+        for (let t = Math.floor((now - days * 86_400_000) / M5) * M5; t <= now; t += M5) if (!etf || usSession(t)) out.push(bar(sym, t, Math.min(M5, now - t + 1)));
+        if (out.length && (!etf || usSession(now))) out.push({ ...bar(sym, now, 1), t: now - (now % 1000) }); // barre « fantôme » à l'heure de la cotation
+      } else {
+        for (let d = Math.floor((now - days * 86_400_000) / 86_400_000); d * 86_400_000 <= now; d++) {
+          const date = new Date(d * 86_400_000).toISOString().slice(0, 10);
+          const wd = new Date(d * 86_400_000).getUTCDay();
+          const open = zonedToUtc(date, 570, NY);
+          if (wd === 0 || wd === 6 || open > now) continue;
+          out.push(bar(sym, open, Math.min(390 * 60_000, now - open + 1)));
+        }
+      }
+      return json({ chart: { result: [{ meta: { regularMarketTime: Math.floor(now / 1000) }, timestamp: out.map((b) => Math.floor(b.t / 1000)), indicators: { quote: [{ open: out.map((b) => b.o), high: out.map((b) => b.h), low: out.map((b) => b.l), close: out.map((b) => b.c), volume: out.map((b) => b.v) }] } }] } });
+    }
+    if (url.host === 'query1.finance.yahoo.com') {
+      const syms = (url.searchParams.get('symbols') ?? '').split(',').map(decodeURIComponent);
+      return json(Object.fromEntries(syms.map((s) => [s, { close: [price(s, now)] }])));
+    }
+    if (url.host === 'api.exchange.coinbase.com') {
+      const sym = url.pathname.split('/')[2] as string;
+      const g = Number(url.searchParams.get('granularity')) * 1000;
+      const a = Date.parse(url.searchParams.get('start') as string);
+      const b = Date.parse(url.searchParams.get('end') as string);
+      const rows: number[][] = [];
+      for (let t = Math.ceil(a / g) * g; t <= Math.min(b, now); t += g) {
+        const x = bar(sym, t, Math.min(g, now - t + 1));
+        rows.push([t / 1000, x.l, x.h, x.o, x.c, x.v]);
+      }
+      return json(rows.reverse());
+    }
+    if (url.host === 'futures.kraken.com' && url.pathname.includes('/charts/')) {
+      const sym = url.pathname.split('/')[5] as string;
+      const a = Number(url.searchParams.get('from')) * 1000;
+      const b = Number(url.searchParams.get('to')) * 1000;
+      const candles = [];
+      for (let t = Math.ceil(a / H1) * H1; t <= Math.min(b, now); t += H1) {
+        const x = bar(sym, t, Math.min(H1, now - t + 1));
+        candles.push({ time: t, open: String(x.o), high: String(x.h), low: String(x.l), close: String(x.c), volume: String(x.v) });
+      }
+      return json({ candles });
+    }
+    if (url.host === 'futures.kraken.com') {
+      const sym = url.pathname.split('/').pop() as string;
+      return json({ ticker: { symbol: sym, markPrice: price(sym, now), relativeFundingRate: 1e-5 * (1 + Math.sin(now / 7_200_000)) } });
+    }
+    if (url.host === 'api.kraken.com') return json({ result: { XXBTZUSD: { c: [String(price('BTC-USD', now))] }, XETHZUSD: { c: [String(price('ETH-USD', now))] }, SOLUSD: { c: [String(price('SOL-USD', now))] } } });
+    return new Response('inconnu', { status: 404 });
+  }) as typeof fetch;
+}
+
+test('worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes barres, pour les 12 comptes', async () => {
+  const start = Date.parse('2026-11-11T23:00:00Z'); // jeudi 12 novembre, 0 h à Paris
+  let clock = start - 2 * 3_600_000;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = fakeFetch(() => clock);
+  resetMemory();
+  FUNDING.clear();
+  const db = new MemoryD1();
+  const env = { DB: db, TOKEN: 'essai', START_MS: String(start) };
+  try {
+    for (; clock <= start + 30 * 3_600_000; clock += 60_000) {
+      // Le passage part quelques secondes après l'heure prévue ; la mémoire est parfois perdue (nouvelle instance).
+      if (clock % (37 * 60_000) === 0) resetMemory();
+      await cycle(env, { now: clock + 7_000, slot: clock });
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  const summary = JSON.parse(db.rows.get('summary')?.v as string) as { filling: number; accounts: Array<{ id: string; trades: number }> };
+  assert.equal(summary.filling, 0, 'historique complet');
+  // Rejeu unique : mêmes barres (relues en base), même financement, jusqu'à la dernière barre traitée par le Worker.
+  for (const s of ['PF_XBTUSD', 'PF_ETHUSD']) FUNDING.set(s, new Map(JSON.parse(db.rows.get(`funding|${s}`)?.v as string) as Array<[number, number]>));
+  let ranSomewhere = 0;
+  for (const l of roster()) {
+    const book = JSON.parse(db.rows.get(`book|${l.account.id}`)?.v ?? 'null') as { state?: { cash: number; lastT: number; positions: Array<{ symbol: string; qty: number }> }; tradeCount: number } | null;
+    if (!book?.state) continue;
+    ranSomewhere++;
+    const data = new Map([...l.feeds].map(([s, f]) => [s, decodeBars(db.rows.get(`bars|${f.tf}|${f.sym}`)?.v as string)]));
+    const one = runPortfolio(l.variant.spec, data, start, book.state.lastT + 1);
+
+    assert.ok(Math.abs(one.state.cash - book.state.cash) < 1e-6, `${l.account.id} : argent ${book.state.cash} ≠ ${one.state.cash}`);
+    assert.deepEqual(book.state.positions.map((p) => [p.symbol, p.qty]), one.state.positions.map((p) => [p.symbol, p.qty]), l.account.id);
+    assert.equal(book.tradeCount, one.trades.length, `${l.account.id} : trades`);
+  }
+  assert.ok(ranSomewhere >= 8, `comptes repris : ${ranSomewhere}`);
+  assert.ok(summary.accounts.length === 12);
+});

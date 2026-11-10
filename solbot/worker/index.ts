@@ -57,6 +57,8 @@ export interface Feed {
 const MS: Record<Tf, number> = { '5m': 5 * 60_000, '1h': 3_600_000, '1d': 86_400_000 };
 const H = 3_600_000;
 const DAY = 86_400_000;
+/** Attente maximale d'une série en retard avant qu'un compte avance sans elle. */
+const WAIT: Record<Tf, number> = { '5m': 2 * H, '1h': 3 * H, '1d': 4 * DAY };
 /** Requêtes sortantes par passage (limite du plan gratuit : 50). */
 const BUDGET = 30;
 
@@ -391,8 +393,12 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
     let fresh: Bar[] = [];
     try {
       if (f.src === 'yahoo' && f.tf === '5m') {
-        // Yahoo ajoute une barre « en cours » à l'heure de la dernière cotation : seules les barres alignées comptent.
-        if (spend()) fresh = (await feed.yahoo5m(f.sym, filling ? '1mo' : '1d')).filter((b) => b.t % MS['5m'] === 0);
+        // Yahoo ajoute une barre « en cours » à l'heure de la dernière cotation : seules les barres alignées comptent,
+        // et seulement celles terminées avant cette cotation (cours publiés en retard pour l'or).
+        if (spend()) {
+          const r = await feed.yahoo5m(f.sym, filling ? '1mo' : '1d');
+          fresh = r.bars.filter((b) => b.t % MS['5m'] === 0 && b.t + MS['5m'] <= Math.min(r.asOf, now));
+        }
       } else if (f.src === 'yahoo') {
         if (spend()) fresh = normalizeDaily(await feed.yahooDaily(f.sym, filling ? '2y' : '5d'));
       } else {
@@ -404,6 +410,8 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
     } catch (e) {
       notes.push(`${f.sym} (${f.tf}) : ${String(e)}`);
     }
+    // Seulement des barres terminées : une barre gardée « en cours » passerait plus tard pour finie avec de faux cours.
+    fresh = fresh.filter((b) => barEnd(f, b) <= now);
     let bars = old;
     if (fresh.length) {
       bars = merge(old, rounded(fresh, f), f.keep);
@@ -443,9 +451,11 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
     }
     const lasts = [...data.values()].map((b) => b.at(-1)?.t ?? 0);
     if (lasts.some((t) => t === 0)) continue;
-    // Une série en retard (barre pas encore publiée) retient le compte, sauf si elle a plus de deux barres de retard.
+    // Une série en retard (barre pas encore lue ou publiée) retient le compte ; une série muette trop longtemps (panne)
+    // ne le bloque plus : 2 h en 5 min, 3 h en horaire, 4 jours en journalier (week-end prolongé compris).
     const hi = Math.max(...lasts);
-    const upTo = Math.min(...lasts.filter((t) => t >= hi - 2 * l.variant.spec.barMs));
+    const tol = Math.max(...[...l.feeds.values()].map((f) => WAIT[f.tf]));
+    const upTo = Math.min(...lasts.filter((t) => t >= hi - tol));
     if (upTo <= (book.state?.lastT ?? start - 1)) continue;
     try {
       const r = runPortfolio(l.variant.spec, data, start, upTo + 1, undefined, book.state);
