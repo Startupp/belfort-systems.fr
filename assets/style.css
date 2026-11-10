@@ -186,6 +186,8 @@ nav.main .tel svg { width: 18px; height: 18px; }
 nav.main .tel:hover { background: var(--bg-2); }
 nav.main .btn { margin-left: 6px; min-height: 44px; white-space: nowrap; padding-inline: 18px; }
 @media (max-width: 1180px) and (min-width: 901px) { nav.main .tel span { display: none; } nav.main .tel { padding: 10px; } }
+/* Juste au-dessus du menu replié : liens resserrés pour que le menu tienne sur une ligne */
+@media (max-width: 1000px) and (min-width: 901px) { .navlink { padding: 10px 7px; } nav.main .btn { padding-inline: 14px; } }
 .nav-toggle { display: none; }
 
 /* ---------- Barre d'audience : Entreprises · Particuliers · Renfort IT ---------- */
