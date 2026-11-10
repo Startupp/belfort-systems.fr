@@ -101,10 +101,16 @@ function covidSection(c: CovidFile | null): string {
     .map((a) => {
       const acc = byId.get(a.id);
       const multi = (acc?.variants.length ?? 1) > 1;
-      return `<tr class="${a.cumulativePct >= 0 ? 'win' : 'loss'}"><td class="wrap"><b>${esc(acc?.name ?? a.id)}</b> ${acc ? chip(acc) : ''}${multi && a.final ? `<br><span class="muted small">suivi : ${esc(a.final.label)}</span>` : ''}</td>${c.years.map((y) => {
-        const r = a.rows.find((x) => x.year === y);
-        return cell(r?.returnPct, multi ? r?.label : '');
-      }).join('')}<td class="num ${a.cumulativePct >= 0 ? 'good' : 'bad'}"><b>${sgn(a.cumulativePct, 0)} %</b></td><td class="num">${fr(a.worstDrawdownPct, 1)} %</td></tr>`;
+      // Réglages année par année, regroupés : « 2021–2022 compression 1 h ; 2023–2026 tendance 4 h ».
+      const short = (l: string): string => l.split(',')[0] as string;
+      const groups: Array<{ from: number; to: number; label: string }> = [];
+      for (const r of a.rows) {
+        const g = groups.at(-1);
+        if (g && g.label === short(r.label)) g.to = r.year;
+        else groups.push({ from: r.year, to: r.year, label: short(r.label) });
+      }
+      const path = groups.map((g) => `${g.from}${g.to > g.from ? `–${g.to}` : ''} ${g.label}`).join(' ; ');
+      return `<tr class="${a.cumulativePct >= 0 ? 'win' : 'loss'}"><td class="wrap"><b>${esc(acc?.name ?? a.id)}</b> ${acc ? chip(acc) : ''}${multi ? `<br><span class="muted small">${esc(path)}${a.final ? ` · suivi : ${esc(short(a.final.label))}` : ''}</span>` : ''}</td>${c.years.map((y) => cell(a.rows.find((x) => x.year === y)?.returnPct)).join('')}<td class="num ${a.cumulativePct >= 0 ? 'good' : 'bad'}"><b>${sgn(a.cumulativePct, 0)} %</b></td><td class="num">${fr(a.worstDrawdownPct, 1)} %</td></tr>`;
     })
     .join('');
   return `<section class="card"><h2>Depuis le Covid, année par année</h2>

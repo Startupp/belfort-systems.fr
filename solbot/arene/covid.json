@@ -1,0 +1,469 @@
+{
+  "generatedAt": 1794339302844,
+  "years": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "accounts": [
+    {
+      "id": "a1-perps",
+      "rows": [
+        {
+          "year": 2021,
+          "label": "compression 1 h, objectif 3 R, stop 1.5 ATR",
+          "returnPct": 122.8329825158383,
+          "maxDrawdownPct": 38.551283938600946,
+          "trades": 344
+        },
+        {
+          "year": 2022,
+          "label": "compression 1 h, objectif 3 R, stop 1.5 ATR",
+          "returnPct": -51.94533517806783,
+          "maxDrawdownPct": 65.58786624027371,
+          "trades": 324
+        },
+        {
+          "year": 2023,
+          "label": "tendance 4 h, achat et vente",
+          "returnPct": 46.382775813742064,
+          "maxDrawdownPct": 22.150747053354944,
+          "trades": 110
+        },
+        {
+          "year": 2024,
+          "label": "tendance 4 h, achat et vente",
+          "returnPct": 52.590400747622255,
+          "maxDrawdownPct": 16.66455994574654,
+          "trades": 107
+        },
+        {
+          "year": 2025,
+          "label": "tendance 4 h, achat et vente",
+          "returnPct": 7.806090912746823,
+          "maxDrawdownPct": 23.80658285644386,
+          "trades": 112
+        },
+        {
+          "year": 2026,
+          "label": "tendance 4 h, achat et vente",
+          "returnPct": -8.148918260764404,
+          "maxDrawdownPct": 39.85887996844512,
+          "trades": 105
+        }
+      ],
+      "cumulativePct": 136.84258446686556,
+      "worstDrawdownPct": 65.58786624027371,
+      "final": {
+        "index": 0,
+        "label": "tendance 4 h, achat et vente"
+      }
+    },
+    {
+      "id": "b2-crypto-tendance",
+      "rows": [
+        {
+          "year": 2021,
+          "label": "barres de 4 h",
+          "returnPct": 8.659150147368655,
+          "maxDrawdownPct": 10.711458584674844,
+          "trades": 85
+        },
+        {
+          "year": 2022,
+          "label": "barres de 4 h",
+          "returnPct": -11.660701710290923,
+          "maxDrawdownPct": 17.597132246871507,
+          "trades": 82
+        },
+        {
+          "year": 2023,
+          "label": "barres de 1 jour",
+          "returnPct": 14.6399969753016,
+          "maxDrawdownPct": 4.310303088932515,
+          "trades": 29
+        },
+        {
+          "year": 2024,
+          "label": "barres de 1 jour",
+          "returnPct": 8.332663381751226,
+          "maxDrawdownPct": 5.689303853523929,
+          "trades": 32
+        },
+        {
+          "year": 2025,
+          "label": "barres de 4 h",
+          "returnPct": -0.5382124153426594,
+          "maxDrawdownPct": 17.287012173183864,
+          "trades": 95
+        },
+        {
+          "year": 2026,
+          "label": "barres de 4 h",
+          "returnPct": -13.09582808535637,
+          "maxDrawdownPct": 26.49413383246027,
+          "trades": 88
+        }
+      ],
+      "cumulativePct": 3.041630354093461,
+      "worstDrawdownPct": 26.49413383246027,
+      "final": {
+        "index": 2,
+        "label": "barres de 1 jour"
+      }
+    },
+    {
+      "id": "b3-portage",
+      "rows": [
+        {
+          "year": 2021,
+          "label": "moyenne 7 jours, entrée au-dessus de 0.9 %/an, sortie sous -0.9 %/an",
+          "returnPct": 24.640941878346656,
+          "maxDrawdownPct": 0.5863417403808738,
+          "trades": 6
+        },
+        {
+          "year": 2022,
+          "label": "moyenne 7 jours, entrée au-dessus de 0.9 %/an, sortie sous -0.9 %/an",
+          "returnPct": 1.0086731509446327,
+          "maxDrawdownPct": 0.3716401371522209,
+          "trades": 10
+        },
+        {
+          "year": 2023,
+          "label": "moyenne 7 jours, entrée au-dessus de 0.9 %/an, sortie sous -0.9 %/an",
+          "returnPct": 5.885260562721014,
+          "maxDrawdownPct": 0.24836061359204564,
+          "trades": 2
+        },
+        {
+          "year": 2024,
+          "label": "moyenne 7 jours, entrée au-dessus de 2.6 %/an, sortie sous -2.6 %/an",
+          "returnPct": 8.324352776085561,
+          "maxDrawdownPct": 0.24849228919834676,
+          "trades": 2
+        },
+        {
+          "year": 2025,
+          "label": "moyenne 7 jours, entrée au-dessus de 2.6 %/an, sortie sous -2.6 %/an",
+          "returnPct": 2.403718461713561,
+          "maxDrawdownPct": 0.20977677092337738,
+          "trades": 2
+        },
+        {
+          "year": 2026,
+          "label": "moyenne 7 jours, entrée au-dessus de 2.6 %/an, sortie sous -2.6 %/an",
+          "returnPct": 1.2658059470397711,
+          "maxDrawdownPct": 0.5789592439358348,
+          "trades": 6
+        }
+      ],
+      "cumulativePct": 49.74748990405402,
+      "worstDrawdownPct": 0.5863417403808738,
+      "final": {
+        "index": 3,
+        "label": "moyenne 7 jours, entrée au-dessus de 2.6 %/an, sortie sous -2.6 %/an"
+      }
+    },
+    {
+      "id": "b4-swing-etf",
+      "rows": [
+        {
+          "year": 2021,
+          "label": "règles de Connors",
+          "returnPct": 8.145792256281783,
+          "maxDrawdownPct": 2.0689444032472624,
+          "trades": 32
+        },
+        {
+          "year": 2022,
+          "label": "règles de Connors",
+          "returnPct": -3.397371166573303,
+          "maxDrawdownPct": 3.6063802577981168,
+          "trades": 4
+        },
+        {
+          "year": 2023,
+          "label": "règles de Connors",
+          "returnPct": 1.2475662504556748,
+          "maxDrawdownPct": 3.2321383808497175,
+          "trades": 25
+        },
+        {
+          "year": 2024,
+          "label": "règles de Connors",
+          "returnPct": 9.949905680636911,
+          "maxDrawdownPct": 2.0974948755641676,
+          "trades": 35
+        },
+        {
+          "year": 2025,
+          "label": "règles de Connors",
+          "returnPct": 6.821373365533417,
+          "maxDrawdownPct": 2.8244553377796944,
+          "trades": 26
+        },
+        {
+          "year": 2026,
+          "label": "règles de Connors",
+          "returnPct": 9.57889207289114,
+          "maxDrawdownPct": 2.1554103451506395,
+          "trades": 35
+        }
+      ],
+      "cumulativePct": 36.13289727680713,
+      "worstDrawdownPct": 3.6063802577981168,
+      "final": {
+        "index": 0,
+        "label": "règles de Connors"
+      }
+    },
+    {
+      "id": "c1-sp500",
+      "rows": [
+        {
+          "year": 2021,
+          "label": "achat-conservation",
+          "returnPct": 28.77585867329948,
+          "maxDrawdownPct": 5.417151230325933,
+          "trades": 0
+        },
+        {
+          "year": 2022,
+          "label": "achat-conservation",
+          "returnPct": -19.953159795614248,
+          "maxDrawdownPct": 25.368036779358956,
+          "trades": 0
+        },
+        {
+          "year": 2023,
+          "label": "achat-conservation",
+          "returnPct": 24.79976423792208,
+          "maxDrawdownPct": 10.29074793896858,
+          "trades": 0
+        },
+        {
+          "year": 2024,
+          "label": "achat-conservation",
+          "returnPct": 23.986337145006747,
+          "maxDrawdownPct": 8.40561939242323,
+          "trades": 0
+        },
+        {
+          "year": 2025,
+          "label": "achat-conservation",
+          "returnPct": 16.62763078924769,
+          "maxDrawdownPct": 18.998904129504893,
+          "trades": 0
+        },
+        {
+          "year": 2026,
+          "label": "achat-conservation",
+          "returnPct": 10.165077476228324,
+          "maxDrawdownPct": 9.133132097249065,
+          "trades": 0
+        }
+      ],
+      "cumulativePct": 104.93287842488286,
+      "worstDrawdownPct": 25.368036779358956,
+      "final": {
+        "index": 0,
+        "label": "achat-conservation"
+      }
+    },
+    {
+      "id": "c2-faber",
+      "rows": [
+        {
+          "year": 2021,
+          "label": "règles de Faber",
+          "returnPct": 21.50026208737021,
+          "maxDrawdownPct": 4.963273815849405,
+          "trades": 46
+        },
+        {
+          "year": 2022,
+          "label": "règles de Faber",
+          "returnPct": -6.011342934254553,
+          "maxDrawdownPct": 8.052916551670048,
+          "trades": 15
+        },
+        {
+          "year": 2023,
+          "label": "règles de Faber",
+          "returnPct": 1.980966158593019,
+          "maxDrawdownPct": 4.721863383193717,
+          "trades": 28
+        },
+        {
+          "year": 2024,
+          "label": "règles de Faber",
+          "returnPct": 2.487425652452348,
+          "maxDrawdownPct": 4.212388795947021,
+          "trades": 38
+        },
+        {
+          "year": 2025,
+          "label": "règles de Faber",
+          "returnPct": 2.834683380109036,
+          "maxDrawdownPct": 6.496500120112908,
+          "trades": 35
+        },
+        {
+          "year": 2026,
+          "label": "règles de Faber",
+          "returnPct": 7.174320530904897,
+          "maxDrawdownPct": 3.8243363624306794,
+          "trades": 38
+        }
+      ],
+      "cumulativePct": 31.544507604655347,
+      "worstDrawdownPct": 8.052916551670048,
+      "final": {
+        "index": 0,
+        "label": "règles de Faber"
+      }
+    },
+    {
+      "id": "c3-btc-eth-200j",
+      "rows": [
+        {
+          "year": 2021,
+          "label": "moyenne 200 jours",
+          "returnPct": 96.53786200338415,
+          "maxDrawdownPct": 55.26981085753317,
+          "trades": 12
+        },
+        {
+          "year": 2022,
+          "label": "moyenne 200 jours",
+          "returnPct": -6.545315416618978,
+          "maxDrawdownPct": 7.2716743866588205,
+          "trades": 2
+        },
+        {
+          "year": 2023,
+          "label": "moyenne 200 jours",
+          "returnPct": 73.31184207269693,
+          "maxDrawdownPct": 19.699637418920023,
+          "trades": 4
+        },
+        {
+          "year": 2024,
+          "label": "moyenne 200 jours",
+          "returnPct": 58.95049683129735,
+          "maxDrawdownPct": 25.563026450568476,
+          "trades": 8
+        },
+        {
+          "year": 2025,
+          "label": "moyenne 200 jours",
+          "returnPct": -10.187292534232,
+          "maxDrawdownPct": 30.7439761715871,
+          "trades": 16
+        },
+        {
+          "year": 2026,
+          "label": "moyenne 200 jours",
+          "returnPct": 1.334516997853443,
+          "maxDrawdownPct": 18.56201117933472,
+          "trades": 1
+        }
+      ],
+      "cumulativePct": 360.5031676265344,
+      "worstDrawdownPct": 55.26981085753317,
+      "final": {
+        "index": 0,
+        "label": "moyenne 200 jours"
+      }
+    },
+    {
+      "id": "c4-permanent",
+      "rows": [
+        {
+          "year": 2021,
+          "label": "4 × 25 %",
+          "returnPct": 3.653778333721057,
+          "maxDrawdownPct": 5.716908165634033,
+          "trades": 12
+        },
+        {
+          "year": 2022,
+          "label": "4 × 25 %",
+          "returnPct": -13.1991006531295,
+          "maxDrawdownPct": 17.62993453580227,
+          "trades": 12
+        },
+        {
+          "year": 2023,
+          "label": "4 × 25 %",
+          "returnPct": 8.38253639675726,
+          "maxDrawdownPct": 8.28289454817589,
+          "trades": 12
+        },
+        {
+          "year": 2024,
+          "label": "4 × 25 %",
+          "returnPct": 9.257649063108293,
+          "maxDrawdownPct": 3.2690528109970654,
+          "trades": 12
+        },
+        {
+          "year": 2025,
+          "label": "4 × 25 %",
+          "returnPct": 17.751132137628755,
+          "maxDrawdownPct": 4.971602538879235,
+          "trades": 12
+        },
+        {
+          "year": 2026,
+          "label": "4 × 25 %",
+          "returnPct": 0.5059695658810779,
+          "maxDrawdownPct": 7.692965301582974,
+          "trades": 12
+        }
+      ],
+      "cumulativePct": 26.08907912641696,
+      "worstDrawdownPct": 17.62993453580227,
+      "final": {
+        "index": 0,
+        "label": "4 × 25 %"
+      }
+    }
+  ],
+  "context": {
+    "S&P 500 (SPY)": {
+      "2021": 27.03540848726258,
+      "2022": -19.481640652683986,
+      "2023": 24.28679932579316,
+      "2024": 23.30479478660552,
+      "2025": 16.35271004396326,
+      "2026": 10.37805333541224
+    },
+    "Bitcoin": {
+      "2021": 59.40363048325494,
+      "2022": -64.22872444020113,
+      "2023": 155.82071764965656,
+      "2024": 120.75786876957704,
+      "2025": -6.273181865801025,
+      "2026": -13.987369302637298
+    },
+    "Or (GLD)": {
+      "2021": -4.148908875959545,
+      "2022": -0.7721146890383723,
+      "2023": 12.691581500094395,
+      "2024": 26.656906000925716,
+      "2025": 63.67653308824828,
+      "2026": -4.234058914149896
+    }
+  },
+  "skipped": [
+    "a2-orb-qqq",
+    "a3-or",
+    "a4-forex",
+    "b1-momentum-spx"
+  ]
+}
