@@ -16,7 +16,9 @@ import type { Bar } from '../desk/types.ts';
 import { runPortfolio, stats } from './engine.ts';
 import type { RunResult, Stats } from './engine.ts';
 import { createArenaData } from './data.ts';
-import { PORTFOLIOS } from './portfolios.ts';
+import { bootstrapMonths, runComposite } from './composite.ts';
+import type { Composite, Sleeve } from './composite.ts';
+import { COMPOSITES, PORTFOLIOS } from './portfolios.ts';
 import type { ArenaPortfolio, DataKey } from './portfolios.ts';
 import { writeArenaPage } from './report.ts';
 import { PARIS, zonedToUtc } from './strategies.ts';
@@ -38,6 +40,10 @@ export interface RunSummary {
   daily: Array<[string, number]>;
   trades: RunResult['trades'];
   open: RunResult['open'];
+  /** Portefeuille combiné : résultat de chaque poche sur la même période. */
+  parts?: Array<{ id: string; label: string; capital: number; returnPct: number; maxDrawdownPct: number; trades: number }>;
+  /** Portefeuille combiné : fourchette de résultats sur un mois (tirages dans les journées passées). */
+  espoir?: { from: number; days: number; p10: number; p50: number; p90: number; negative: number };
 }
 
 export interface ArenaFile {
@@ -102,6 +108,26 @@ async function main(): Promise<void> {
   };
   const seriesFor = (p: ArenaPortfolio): Promise<Map<string, Bar[]>> => load(p.data, p.symbols);
   const auxFor = (p: ArenaPortfolio): Promise<Map<string, Bar[]> | undefined> => (p.auxData ? load(p.auxData, p.symbols) : Promise.resolve(undefined));
+  /** Portefeuille combiné : données de chaque poche chargées d'abord, puis rejeu synchrone. */
+  const combine = async (c: Composite, from: number, to: number): Promise<{ summary: RunSummary; daily: number[] }> => {
+    const data = new Map<string, { series: Map<string, Bar[]>; aux?: Map<string, Bar[]> }>();
+    for (const s of c.sleeves) data.set(s.spec.id, { series: await seriesFor(s.spec), aux: await auxFor(s.spec) });
+    const { result, parts } = runComposite(c, (s: Sleeve) => data.get(s.spec.id) as { series: Map<string, Bar[]> }, from, to, dayOf);
+    const summary = summarize(result, 30);
+    summary.parts = parts.map((r, i) => {
+      const st = stats(r, dayOf);
+      return { id: r.id, label: (c.sleeves[i] as Sleeve).label, capital: r.capital, returnPct: st.returnPct, maxDrawdownPct: st.maxDrawdownPct, trades: st.trades };
+    });
+    const eq = [c.capital, ...result.curve.map((x) => x[1])];
+    const daily = eq.slice(1).map((e, i) => e / (eq[i] as number) - 1);
+    return { summary, daily };
+  };
+  /** Début de l'historique long d'un portefeuille (null si rien de plus long que la période commune). */
+  const warm: Partial<Record<DataKey, number>> = { crypto1h: 10, crypto15m: 10, us5m: 21, spy5m: 21, gold5m: 21, btc1m: 1 };
+  const longStart = (p: ArenaPortfolio, series: Map<string, Bar[]>): number => {
+    const first = Math.min(...[...series.values()].map((b) => b[0]?.t ?? Infinity));
+    return p.data === 'daily' ? zonedToUtc('2010-01-04', 0, PARIS) : warm[p.data] !== undefined ? zonedToUtc(paris(first + (warm[p.data] as number) * 86_400_000).date, 0, PARIS) : NaN;
+  };
 
   if (cmd === 'rejeu') {
     // Période commune : celle des barres de 1 min (~29 jours), nécessaires à l'ORB ; les autres ont plus d'historique.
@@ -121,15 +147,28 @@ async function main(): Promise<void> {
       const s = runs.at(-1)?.stats as Stats;
       log(`${p.id.padEnd(20)} ${s.returnPct >= 0 ? '+' : ''}${s.returnPct.toFixed(2)} % · ${s.trades} trades · réussite ${s.winRatePct.toFixed(0)} % · baisse max ${s.maxDrawdownPct.toFixed(2)} %${r.liquidatedAt ? ' · LIQUIDÉ' : ''}`);
       // Historique long là où les données le permettent.
-      const first = Math.min(...[...series.values()].map((b) => b[0]?.t ?? Infinity));
-      const warm: Partial<Record<DataKey, number>> = { crypto1h: 10, crypto15m: 10, us5m: 21, spy5m: 21, gold5m: 21, btc1m: 1 };
-      const longFrom = p.data === 'daily' ? zonedToUtc('2010-01-04', 0, PARIS) : warm[p.data] !== undefined ? zonedToUtc(paris(first + (warm[p.data] as number) * 86_400_000).date, 0, PARIS) : NaN;
+      const longFrom = longStart(p, series);
       if (Number.isFinite(longFrom) && longFrom < commonFrom - 3 * 86_400_000) {
         const rl = runPortfolio(p, series, longFrom, end, aux);
         longRuns.push(summarize(rl, 0));
         const sl = longRuns.at(-1)?.stats as Stats;
         log(`  historique depuis ${dayOf(longFrom)} : ${sl.returnPct >= 0 ? '+' : ''}${sl.returnPct.toFixed(1)} % · ${sl.trades} trades · baisse max ${sl.maxDrawdownPct.toFixed(1)} %`);
       }
+    }
+    // Portefeuilles combinés : même période commune, puis la plus longue période où toutes les poches ont des données.
+    for (const c of COMPOSITES) {
+      const common = await combine(c, commonFrom, end);
+      const starts: number[] = [];
+      for (const s of c.sleeves) starts.push(longStart(s.spec, await seriesFor(s.spec)));
+      const from = Math.max(...starts.filter((x) => Number.isFinite(x)));
+      const longer = await combine(c, from, end);
+      const e = bootstrapMonths(longer.daily);
+      common.summary.espoir = { from, days: longer.daily.length, ...e };
+      runs.push(common.summary);
+      longRuns.push({ ...longer.summary, espoir: common.summary.espoir });
+      const s = common.summary.stats;
+      log(`${c.id.padEnd(20)} ${s.returnPct >= 0 ? '+' : ''}${s.returnPct.toFixed(2)} % · ${s.trades} trades · baisse max ${s.maxDrawdownPct.toFixed(2)} % · un mois : ${e.p10.toFixed(1)} / ${e.p50.toFixed(1)} / ${e.p90.toFixed(1)} % (10 / 50 / 90 %), négatif ${e.negative.toFixed(0)} % du temps`);
+      log(`  depuis ${dayOf(from)} : ${longer.summary.stats.returnPct >= 0 ? '+' : ''}${longer.summary.stats.returnPct.toFixed(2)} % · baisse max ${longer.summary.stats.maxDrawdownPct.toFixed(2)} %`);
     }
     const out: ArenaFile = {
       generatedAt: now,
@@ -148,6 +187,11 @@ async function main(): Promise<void> {
       runs.push(summarize(r, 400));
       const s = runs.at(-1)?.stats as Stats;
       log(`${p.id.padEnd(20)} ${r.equity.toFixed(2)} $ (${s.returnPct >= 0 ? '+' : ''}${s.returnPct.toFixed(2)} %) · ${s.trades} trades${r.open.length ? ` · ${r.open.length} ouverte(s)` : ''}`);
+    }
+    for (const c of COMPOSITES) {
+      const { summary } = await combine(c, SUIVI_START, now);
+      runs.push(summary);
+      log(`${c.id.padEnd(20)} ${summary.equity.toFixed(2)} $ (${summary.stats.returnPct >= 0 ? '+' : ''}${summary.stats.returnPct.toFixed(2)} %) · ${summary.stats.trades} trades`);
     }
     const out: ArenaFile = {
       generatedAt: now,

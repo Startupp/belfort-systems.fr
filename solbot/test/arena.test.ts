@@ -11,6 +11,9 @@ import { runPortfolio, stats } from '../src/arena/engine.ts';
 import type { Costs, Intent, PortfolioSpec, Strategy } from '../src/arena/engine.ts';
 import { NY, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
 import { writeArenaPage } from '../src/arena/report.ts';
+import { bootstrapMonths, runComposite } from '../src/arena/composite.ts';
+import type { Composite } from '../src/arena/composite.ts';
+import type { ArenaPortfolio } from '../src/arena/portfolios.ts';
 
 const T0 = Date.UTC(2026, 10, 10, 15, 0); // mardi 10 novembre 2026, 16 h à Paris
 const M = 60_000;
@@ -201,6 +204,32 @@ test('témoin au hasard : même tirage à chaque rejeu (graine fixe)', () => {
   const c = runPortfolio(mk(), new Map([['X', b]]), b[0]?.t ?? 0, (b.at(-1)?.t ?? 0) + 1);
   assert.equal(a.trades.length, 2, 'deux jours de semaine dans les données');
   assert.deepEqual(a.trades.map((t) => [t.openedAt, t.side]), c.trades.map((t) => [t.openedAt, t.side]));
+});
+
+test('portefeuille combiné : les poches s’additionnent jour par jour, chacune avec son capital', () => {
+  const day = 86_400_000;
+  const up = bars(Array.from({ length: 3 }, (_, i) => [100 + i, 100 + i, 100 + i, 100 + i] as [number, number, number, number]), day);
+  const sleeve = (id: string, capital: number, side: 'long' | 'short'): ArenaPortfolio => ({
+    ...spec({ id, capital, barMs: day, strategy: scripted({ 0: () => [{ type: 'enter', symbol: 'X', side, order: 'close', size: { notional: 1 }, reason: 't' }] }) }),
+    data: 'daily', market: 'test', leverageLabel: 'sans', source: 's', rules: 'r', role: 'publiée',
+  });
+  const c: Composite = { id: 'mix', name: 'mix', market: 'm', leverageLabel: 'l', capital: 1500, role: 'combiné', source: 's', rules: 'r', sleeves: [{ label: 'achat', spec: sleeve('a', 1000, 'long') }, { label: 'vente', spec: sleeve('b', 500, 'short') }] };
+  const { result, parts } = runComposite(c, () => ({ series: new Map([['X', up]]) }), T0, T0 + 3 * day, (ms) => new Date(ms).toISOString().slice(0, 10));
+  assert.equal(parts.length, 2);
+  // +2 % sur 1 000 $ (achat) et −2 % sur 500 $ (vente) : +10 $ au total.
+  assert.ok(Math.abs(result.equity - 1510) < 1e-6, String(result.equity));
+  assert.ok(Math.abs((result.curve.at(-1)?.[1] ?? 0) - 1510) < 1e-6);
+  assert.equal(result.trades.length + result.open.length, 2);
+});
+
+test('fourchette d’un mois : médiane proche de la tendance, part de mois négatifs cohérente', () => {
+  const flatUp = Array.from({ length: 60 }, () => 0.001);
+  const e = bootstrapMonths(flatUp);
+  assert.ok(Math.abs(e.p50 - (1.001 ** 21 - 1) * 100) < 1e-9);
+  assert.equal(e.negative, 0);
+  const mixed = Array.from({ length: 60 }, (_, i) => (i % 2 ? 0.01 : -0.01));
+  const m = bootstrapMonths(mixed);
+  assert.ok(m.p10 < 0 && m.p90 > 0 && m.negative > 20 && m.negative < 80);
 });
 
 test('page de l’arène : fragment sans squelette, thèmes clair et sombre, classement trié', () => {

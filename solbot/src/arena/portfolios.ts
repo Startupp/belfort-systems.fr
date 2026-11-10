@@ -3,6 +3,7 @@
  * l'exige, en version réaliste à côté de la version à 500 $), avec ou sans levier. Les coûts suivent les plateformes accessibles à un particulier en France.
  */
 
+import type { Composite } from './composite.ts';
 import type { Costs, PortfolioSpec } from './engine.ts';
 import { bollinger, donchian, goldNyOpen, grid, lastHalfHour, noiseArea, orbStudy, overnight, randomSignals, rsi2, turnOfMonth } from './strategies.ts';
 
@@ -361,5 +362,36 @@ export const PORTFOLIOS: ArenaPortfolio[] = [
     rules: 'Chaque jour : signal tiré au sort entre 8 h et 21 h (Paris), taille telle que +200 pips (+20 $) rapportent 3 fois le compte ; pas d’autre stop que la clôture de marge ; sortie à 22 h.',
     role: 'témoin',
     strategy: () => randomSignals({ symbol: 'GC=F', seed: 'arene-telegram', fromParis: 480, toParis: 1260, exitParis: 1320, stopPct: 0, targetAbs: 20, size: { notional: 1 }, lotteryMove: 20 }),
+  },
+];
+
+const pick = (id: string, over: Partial<ArenaPortfolio>): ArenaPortfolio => ({ ...(PORTFOLIOS.find((p) => p.id === id) as ArenaPortfolio), ...over });
+
+/**
+ * Portefeuille combiné à 5 000 $ : seulement les stratégies positives à la fois dans les études publiées et dans nos
+ * rejeux, avec la taille réelle des ordres à ce montant. Poids fixés avant le suivi, pas optimisés sur le rejeu.
+ */
+export const COMPOSITES: Composite[] = [
+  {
+    id: 'combine-5000',
+    name: 'Portefeuille 5 000 $ (ma sélection)',
+    market: 'S&P 500 et or (CFD), ETF US',
+    leverageLabel: '×2 max (S&P 500), ×20 max (or)',
+    capital: 5000,
+    role: 'combiné',
+    source: 'Sélection a priori : les stratégies positives à la fois dans les études et dans nos rejeux ; poids fixés avant le suivi',
+    rules: '50 % momentum « zone de bruit » S&P 500 (CFD, levier piloté par la volatilité, ×2 au plus, unités entières) ; 30 % or, cassure de l’ouverture de New York (CFD, lot réel de 1 once, risque 1 % de la poche) ; 15 % RSI(2) SPY + QQQ ; 5 % tournant du mois SPY. Sans ORB (négatif dans tous nos rejeux) ni crypto active (frais).',
+    sleeves: [
+      {
+        label: 'Momentum S&P 500, ×2 max (50 %)',
+        spec: pick('bruit-x1', { id: 'c5-bruit', capital: 2500, maxLeverage: 2, costs: { ...COSTS.cfdIndice, qtyStep: 1 }, strategy: () => noiseArea({ symbol: 'SPY', maxLev: 2 }) }),
+      },
+      {
+        label: 'Or, ouverture de New York (30 %)',
+        spec: pick('or-ny-x20', { id: 'c5-or', capital: 1500, costs: { ...COSTS.cfdOr, qtyStep: 1 }, strategy: () => goldNyOpen({ symbol: 'GC=F', risk: 0.01 }) }),
+      },
+      { label: 'RSI(2) SPY + QQQ (15 %)', spec: pick('rsi2', { id: 'c5-rsi2', capital: 750 }) },
+      { label: 'Tournant du mois SPY (5 %)', spec: pick('tournant-mois', { id: 'c5-tdm', capital: 250 }) },
+    ],
   },
 ];

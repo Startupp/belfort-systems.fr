@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { readJson, readJsonl, writeTextAtomic } from '../lib/store.ts';
 import { paris } from '../desk/market.ts';
 import type { ArenaFile, RunSummary } from './main.ts';
-import { PORTFOLIOS } from './portfolios.ts';
+import { COMPOSITES, PORTFOLIOS } from './portfolios.ts';
 import type { ArenaPortfolio } from './portfolios.ts';
 
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -16,8 +16,10 @@ const esc = (v: unknown): string => String(v ?? '').replace(/[&<>"']/g, (c) => E
 const fr = (x: number, d = 2): string => (Number.isFinite(x) ? x.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
 const sgn = (x: number, d = 2): string => `${x > 0 ? '+' : ''}${fr(x, d)}`;
 const dateFr = (ms: number): string => new Date(ms).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'long' });
-const byId = new Map(PORTFOLIOS.map((p) => [p.id, p]));
-const ROLE: Record<ArenaPortfolio['role'], string> = { publiée: 'étude publiée', 'pratique courante': 'pratique courante', témoin: 'témoin', référence: 'référence' };
+type Meta = { name: string; market: string; leverageLabel: string; role: ArenaPortfolio['role'] | 'combiné' };
+const byId = new Map<string, Meta>([...PORTFOLIOS.map((p): [string, Meta] => [p.id, p]), ...COMPOSITES.map((c): [string, Meta] => [c.id, c])]);
+const ROLE: Record<Meta['role'], string> = { publiée: 'étude publiée', 'pratique courante': 'pratique courante', témoin: 'témoin', référence: 'référence', combiné: 'portefeuille combiné' };
+const chipClass = (role: Meta['role']): string => (role === 'témoin' ? 'ctl' : role === 'combiné' ? 'mix' : '');
 
 function spark(daily: Array<[string, number]>, capital: number): string {
   const pts = [capital, ...daily.map((d) => d[1])];
@@ -43,7 +45,7 @@ function board(runs: RunSummary[], opts: { sparkline: boolean }): string {
       const liq = r.liquidatedAt !== undefined;
       return `<tr class="${s.returnPct > 0 ? 'win' : 'loss'}">
 <td class="num">${i + 1}</td>
-<td class="wrap"><b>${esc(p?.name ?? r.id)}</b>${p ? ` <span class="chip ${p.role === 'témoin' ? 'ctl' : ''}">${esc(ROLE[p.role])}</span>` : ''}<br><span class="muted">${esc(p?.market ?? '')} · ${esc(p?.leverageLabel ?? '')} · ${fr(r.capital, 0)} $</span></td>
+<td class="wrap"><b>${esc(p?.name ?? r.id)}</b>${p ? ` <span class="chip ${chipClass(p.role)}">${esc(ROLE[p.role])}</span>` : ''}<br><span class="muted">${esc(p?.market ?? '')} · ${esc(p?.leverageLabel ?? '')} · ${fr(r.capital, 0)} $</span></td>
 <td class="num ${s.returnPct >= 0 ? 'good' : 'bad'}"><b>${sgn(s.returnPct)} %</b><br><span class="muted">${fr(r.equity)} $</span>${liq ? '<br><span class="badge">compte liquidé</span>' : ''}</td>
 <td class="num">${fr(s.maxDrawdownPct)} %</td>
 <td class="num">${s.trades}</td>
@@ -94,12 +96,28 @@ function fiche(p: ArenaPortfolio, run: RunSummary | undefined): string {
     .filter(Boolean)
     .join(' · ');
   const last = (run?.trades ?? []).slice(-4).reverse();
-  return `<details class="fiche"><summary><b>${esc(p.name)}</b> <span class="chip ${p.role === 'témoin' ? 'ctl' : ''}">${esc(ROLE[p.role])}</span> <span class="muted">${esc(p.market)} · ${esc(p.leverageLabel)}</span></summary>
+  return `<details class="fiche"><summary><b>${esc(p.name)}</b> <span class="chip ${chipClass(p.role)}">${esc(ROLE[p.role])}</span> <span class="muted">${esc(p.market)} · ${esc(p.leverageLabel)}</span></summary>
 <p>${esc(p.rules)}</p>
 <p class="muted"><b>Source</b> : ${esc(p.source)}</p>
 <p class="muted"><b>Coûts</b> : ${esc(costs)}</p>
 ${last.length ? `<ul class="plain">${last.map((t) => `<li><span class="num">${esc(paris(t.openedAt).date.slice(5))}</span> ${esc(t.symbol)} ${t.side === 'long' ? 'achat' : 'vente'} ${fr(t.notional, 0)} $ → <span class="num ${t.pnl > 0 ? 'good' : 'bad'}">${sgn(t.pnl)} $</span> <span class="muted">(${esc(t.exitReason)})</span></li>`).join('')}</ul>` : ''}
 </details>`;
+}
+
+
+/** Carte d'un portefeuille combiné : règles, poches, fourchette d'un mois. */
+function comboCard(c: (typeof COMPOSITES)[number], run: RunSummary | undefined, longRun: RunSummary | undefined): string {
+  const e = run?.espoir;
+  const parts = run?.parts ?? [];
+  const pct = (x: number): string => `${sgn(x)} %`;
+  return `<section class="card combo"><h2>${esc(c.name)}</h2>
+<p>${esc(c.rules)}</p>
+<p class="muted">${esc(c.source)}. Les poches sont indépendantes ; ce qu'une poche gagne ou perd reste dans la poche.</p>
+${run ? `<p><b>Rejeu sur la période commune</b> : <span class="num ${run.stats.returnPct >= 0 ? 'good' : 'bad'}">${pct(run.stats.returnPct)}</span> (${fr(run.equity)} $), baisse maximale ${fr(run.stats.maxDrawdownPct)} %, pire jour ${pct(run.stats.worstDayPct)}${longRun ? ` ; depuis le ${esc(dateFr(longRun.from))} : <span class="num ${longRun.stats.returnPct >= 0 ? 'good' : 'bad'}">${pct(longRun.stats.returnPct)}</span>, baisse maximale ${fr(longRun.stats.maxDrawdownPct)} %` : ''}.</p>` : ''}
+${parts.length ? `<div class="scroll"><table><thead><tr><th>Poche</th><th>Capital</th><th>Résultat</th><th>Baisse max</th><th>Trades</th></tr></thead><tbody>${parts.map((p) => `<tr class="${p.returnPct > 0 ? 'win' : 'loss'}"><td>${esc(p.label)}</td><td class="num">${fr(p.capital, 0)} $</td><td class="num ${p.returnPct >= 0 ? 'good' : 'bad'}">${pct(p.returnPct)}</td><td class="num">${fr(p.maxDrawdownPct)} %</td><td class="num">${p.trades}</td></tr>`).join('')}</tbody></table></div>` : ''}
+${e ? `<p><b>Ce qu'on peut espérer sur un mois</b> (tirages de mois fictifs dans les ${e.days} journées depuis le ${esc(dateFr(e.from))} ; fourchette, pas promesse) :</p>
+<div class="range"><div><span class="kl">Mauvais mois (1 sur 10)</span><span class="kv num ${e.p10 >= 0 ? 'good' : 'bad'}">${pct(e.p10)}</span></div><div><span class="kl">Mois médian</span><span class="kv num ${e.p50 >= 0 ? 'good' : 'bad'}">${pct(e.p50)}</span></div><div><span class="kl">Bon mois (1 sur 10)</span><span class="kv num good">${pct(e.p90)}</span></div><div><span class="kl">Mois négatifs</span><span class="kv num">${fr(e.negative, 0)} %</span></div></div>` : ''}
+</section>`;
 }
 
 export function renderArena(dir: string): string {
@@ -124,17 +142,17 @@ export function renderArena(dir: string): string {
 /* Arène : un tableau de classement par fenêtre de test, puis les fiches des règles. Même identité que le carnet du desk. */
 :root{
   --bg:#f2f4f7;--surface:#ffffff;--ink:#121821;--muted:#5b6876;--rule:#dce2e9;
-  --accent:#2c52cf;--accent-soft:rgba(44,82,207,.12);--gain:#0a7a4e;--loss:#b3242f;--goal:#985a00;--ctl:#6b4fa3;--ctl-soft:rgba(107,79,163,.12);
+  --accent:#2c52cf;--accent-soft:rgba(44,82,207,.12);--gain:#0a7a4e;--loss:#b3242f;--goal:#985a00;--ctl:#6b4fa3;--ctl-soft:rgba(107,79,163,.12);--gold-soft:rgba(152,90,0,.12);
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --data:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0d1116;--surface:#151b23;--ink:#e4e9ef;--muted:#93a1b0;--rule:#27303b;
-  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;--ctl:#c4a8ff;--ctl-soft:rgba(196,168,255,.14);color-scheme:dark}}
+  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;--ctl:#c4a8ff;--ctl-soft:rgba(196,168,255,.14);--gold-soft:rgba(240,178,60,.14);color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0d1116;--surface:#151b23;--ink:#e4e9ef;--muted:#93a1b0;--rule:#27303b;
-  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;--ctl:#c4a8ff;--ctl-soft:rgba(196,168,255,.14);color-scheme:dark}
+  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;--ctl:#c4a8ff;--ctl-soft:rgba(196,168,255,.14);--gold-soft:rgba(240,178,60,.14);color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
 main{max-width:1040px;margin:0 auto;padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
@@ -159,7 +177,10 @@ td.num{white-space:nowrap}
 td.wrap{min-width:220px}
 tr.win td:first-child{box-shadow:inset 3px 0 var(--gain)}tr.loss td:first-child{box-shadow:inset 3px 0 var(--loss)}
 .chip{font-size:11px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 6px;white-space:nowrap}
-.chip.ctl{background:var(--ctl-soft);color:var(--ctl)}
+.chip.ctl{background:var(--ctl-soft);color:var(--ctl)}.chip.mix{background:var(--gold-soft);color:var(--goal)}
+.combo{border-left:3px solid var(--goal)}
+.range{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.range div{background:var(--bg);border-radius:8px;padding:8px 10px;display:grid;gap:2px}
 .badge{font-size:11px;border:1px solid var(--loss);color:var(--loss);border-radius:999px;padding:0 7px;white-space:nowrap}
 .spark{width:120px;height:30px;display:block}
 .spark .base{stroke:var(--rule);stroke-width:1}
@@ -182,6 +203,7 @@ ${best ? kpi('Meilleur sur la période commune', `${sgn(best.stats.returnPct)} %
 ${witness ? kpi('Témoin au hasard (SPY)', `${sgn(witness.stats.returnPct)} %`, 'à battre pour prouver quelque chose', witness.stats.returnPct >= 0 ? 'good' : 'bad') : ''}
 ${kpi('Portefeuilles gagnants', `${commun.runs.filter((r) => r.stats.returnPct > 0).length} / ${commun.runs.length}`, esc(commun.label.replace(/^Rejeu sur la même période pour tous \((.*)\)$/, '$1')))}
 </section>` : ''}
+${COMPOSITES.map((c) => comboCard(c, commun?.runs.find((r) => r.id === c.id), long?.runs.find((r) => r.id === c.id))).join('')}
 ${lecture.length ? `<section class="card"><h2>Ma lecture</h2><ul class="plain note">${lecture.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></section>` : ''}
 <section class="card"><h2>Suivi en direct</h2>
 ${liveStarted && live ? `<p class="muted">${esc(live.label)} : tout est rejoué chaque jour depuis le départ avec les mêmes règles ; seules les nouvelles barres changent le résultat.</p>${board(live.runs, { sparkline: true })}` : '<p>Le suivi démarre le <b>mercredi 11 novembre à 0 h</b> (Paris) : à partir de là, chaque portefeuille avance sur les cours réels, sans retouche des règles. D’ici là, seul le rejeu ci-dessous donne une indication.</p>'}
