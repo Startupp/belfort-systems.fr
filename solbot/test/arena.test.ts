@@ -1,0 +1,179 @@
+/** Tests de l'arène : moteur papier (levier, marge, stops, ordres), stratégies, page. */
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { writeJsonAtomic } from '../src/lib/store.ts';
+import type { Bar } from '../src/desk/types.ts';
+import { runPortfolio, stats } from '../src/arena/engine.ts';
+import type { Costs, Intent, PortfolioSpec, Strategy } from '../src/arena/engine.ts';
+import { NY, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
+import { writeArenaPage } from '../src/arena/report.ts';
+
+const T0 = Date.UTC(2026, 10, 10, 15, 0); // mardi 10 novembre 2026, 16 h à Paris
+const M = 60_000;
+const FREE: Costs = { feeBps: 0, slipBps: 0, financingPct: 0, minNotional: 0 };
+
+function bars(rows: Array<[number, number, number, number]>, step = M, t0 = T0): Bar[] {
+  return rows.map(([o, h, l, c], i) => ({ t: t0 + i * step, o, h, l, c, v: 1000 }));
+}
+
+/** Stratégie scriptée : intentions données par indice de barre du symbole X. */
+function scripted(plan: Record<number, (v: Parameters<Strategy['onBar']>[0]) => Intent[]>): () => Strategy {
+  return () => ({ onBar: (v) => (v.fresh.has('X') ? (plan[v.idx.get('X') as number]?.(v) ?? []) : []) });
+}
+
+function spec(over: Partial<PortfolioSpec>): PortfolioSpec {
+  return { id: 't', name: 't', capital: 1000, maxLeverage: 1, allowShort: true, costs: FREE, barMs: M, symbols: ['X'], strategy: scripted({}), ...over };
+}
+
+const flat = (n: number, px = 100): Array<[number, number, number, number]> => Array.from({ length: n }, () => [px, px, px, px]);
+
+test('levier : le montant total ne dépasse jamais capital × levier maximal', () => {
+  const s = spec({ maxLeverage: 2, strategy: scripted({ 0: () => [{ type: 'enter', symbol: 'X', side: 'long', order: 'close', size: { notional: 10 }, reason: 'test' }] }) });
+  const r = runPortfolio(s, new Map([['X', bars(flat(3))]]), T0, T0 + 10 * M);
+  assert.equal(r.open.length, 1);
+  assert.ok(Math.abs((r.open[0]?.qty ?? 0) * 100 - 2000) < 1e-6, 'qty × prix = 2 × 1 000 $');
+});
+
+test('stop : exécuté au prix du stop, ou à l’ouverture si le cours saute par-dessus ; glissement appliqué', () => {
+  const enter: Intent = { type: 'enter', symbol: 'X', side: 'long', order: 'close', stop: 95, size: { risk: 0.01 }, reason: 'test' };
+  const costs = { ...FREE, slipBps: 10 };
+  const a = runPortfolio(spec({ costs, strategy: scripted({ 0: () => [enter] }) }), new Map([['X', bars([[100, 100, 100, 100], [100, 101, 94, 96]])]]), T0, T0 + 10 * M);
+  assert.equal(a.trades[0]?.exitReason, 'stop');
+  assert.ok(Math.abs((a.trades[0]?.exit ?? 0) - 95 * 0.999) < 1e-9, 'vente au stop moins le glissement');
+  const b = runPortfolio(spec({ strategy: scripted({ 0: () => [enter] }) }), new Map([['X', bars([[100, 100, 100, 100], [90, 91, 89, 90]])]]), T0, T0 + 10 * M);
+  assert.equal(b.trades[0]?.exitReason, 'stop (ouverture au-delà)');
+  assert.equal(b.trades[0]?.exit, 90);
+});
+
+test('stop et objectif dans la même barre : le stop compte ; pas d’objectif sur la barre d’entrée', () => {
+  const enter: Intent = { type: 'enter', symbol: 'X', side: 'long', order: 'stop', price: 101, stop: 99, target: 103, size: { risk: 0.01 }, reason: 'test' };
+  // Barre 1 : l'ordre stop est exécuté à 101 et la barre monte jusqu'à 104 : l'objectif n'est pas pris sur cette barre.
+  // Barre 2 : touche 98 et 104 : le stop compte.
+  const r = runPortfolio(spec({ strategy: scripted({ 0: () => [enter] }) }), new Map([['X', bars([[100, 100, 100, 100], [100, 104, 100.5, 103.5], [103, 104, 98, 100]])]]), T0, T0 + 10 * M);
+  assert.equal(r.trades.length, 1);
+  assert.equal(r.trades[0]?.entry, 101);
+  assert.equal(r.trades[0]?.exitReason, 'stop');
+});
+
+test('ordre limite : exécuté seulement si le cours passe au travers ; frais maker', () => {
+  const costs = { ...FREE, feeBps: 9, makerFeeBps: 0 };
+  const enter: Intent = { type: 'enter', symbol: 'X', side: 'long', order: 'limit', price: 99, target: 100, size: { notional: 0.5 }, reason: 'grille' };
+  const touched = runPortfolio(spec({ costs, strategy: scripted({ 0: () => [enter] }) }), new Map([['X', bars([[100, 100, 100, 100], [100, 100, 99, 99.5], [99.5, 99.8, 99.2, 99.6]])]]), T0, T0 + 10 * M);
+  assert.equal(touched.open.length + touched.trades.length, 0, 'un simple contact du prix ne suffit pas');
+  const through = runPortfolio(spec({ costs, strategy: scripted({ 0: () => [enter] }) }), new Map([['X', bars([[100, 100, 100, 100], [100, 100, 98.5, 99.5], [99.5, 100.5, 99.2, 100.2]])]]), T0, T0 + 10 * M);
+  assert.equal(through.trades.length, 1);
+  assert.equal(through.trades[0]?.exitReason, 'objectif');
+  assert.equal(through.fees, 0, 'ordres limites : 0 % de frais');
+});
+
+test('OCO : le premier ordre exécuté annule l’autre', () => {
+  const mk = (side: 'long' | 'short', price: number, stop: number): Intent => ({ type: 'enter', symbol: 'X', side, order: 'stop', price, stop, size: { risk: 0.01 }, oco: 'g', reason: 'test' });
+  const r = runPortfolio(spec({ strategy: scripted({ 0: () => [mk('long', 101, 99), mk('short', 99, 101)] }) }), new Map([['X', bars([[100, 100, 100, 100], [100, 102, 100, 101.5], [101.5, 101.6, 98, 98.5]])]]), T0, T0 + 10 * M);
+  assert.equal(r.trades.length, 1);
+  assert.equal(r.trades[0]?.side, 'long');
+  assert.equal(r.open.length, 0, 'la vente stop a été annulée');
+});
+
+test('marge : clôture sous 50 % de la marge, jamais de solde négatif', () => {
+  const enter: Intent = { type: 'enter', symbol: 'X', side: 'long', order: 'close', size: { notional: 20 }, reason: 'test' };
+  const r = runPortfolio(spec({ maxLeverage: 20, strategy: scripted({ 0: () => [enter] }) }), new Map([['X', bars([[100, 100, 100, 100], [100, 100, 97.4, 97.4], [97.4, 97.4, 97.4, 97.4]])]]), T0, T0 + 10 * M);
+  assert.equal(r.trades[0]?.exitReason, 'clôture de marge (equity < 50 % de la marge)');
+  assert.ok(r.equity > 0 && r.equity < 600);
+  const crash = runPortfolio(spec({ maxLeverage: 20, strategy: scripted({ 0: () => [enter] }) }), new Map([['X', bars([[100, 100, 100, 100], [90, 90, 90, 90]])]]), T0, T0 + 10 * M);
+  assert.equal(crash.equity, 0);
+  assert.ok(crash.liquidatedAt !== undefined);
+});
+
+test('durée : rien ne reste ouvert plus de 3 jours ; sortie à l’ouverture pour la stratégie de nuit', () => {
+  const hold = runPortfolio(spec({ barMs: 3_600_000, strategy: scripted({ 0: () => [{ type: 'enter', symbol: 'X', side: 'long', order: 'close', size: { notional: 1 }, reason: 'test' }] }) }), new Map([['X', bars(flat(100), 3_600_000)]]), T0, T0 + 100 * 3_600_000);
+  assert.equal(hold.trades[0]?.exitReason, 'durée maximale (3 jours)');
+  assert.ok((hold.trades[0]?.closedAt ?? 0) - (hold.trades[0]?.openedAt ?? 0) <= 72 * 3_600_000);
+  const night = runPortfolio(spec({ strategy: scripted({ 0: () => [{ type: 'enter', symbol: 'X', side: 'long', order: 'close', exitAtNextOpen: true, size: { notional: 1 }, reason: 'nuit' }] }) }), new Map([['X', bars([[100, 100, 100, 100], [103, 104, 99, 100]])]]), T0, T0 + 10 * M);
+  assert.equal(night.trades[0]?.exit, 103);
+  assert.equal(night.trades[0]?.exitReason, 'sortie à l’ouverture');
+});
+
+test('compte cash : pas de vente à découvert ; lot minimal de 1 once arrondi vers le bas', () => {
+  const short: Intent = { type: 'enter', symbol: 'X', side: 'short', order: 'close', size: { notional: 1 }, reason: 'test' };
+  assert.equal(runPortfolio(spec({ allowShort: false, strategy: scripted({ 0: () => [short] }) }), new Map([['X', bars(flat(2))]]), T0, T0 + 5 * M).open.length, 0);
+  const gold: Intent = { type: 'enter', symbol: 'X', side: 'long', order: 'close', stop: 3990, size: { risk: 0.01 }, reason: 'or' };
+  const r = runPortfolio(spec({ maxLeverage: 20, costs: { ...FREE, qtyStep: 1 }, strategy: scripted({ 0: () => [gold] }) }), new Map([['X', bars(flat(2, 4000))]]), T0, T0 + 5 * M);
+  assert.equal(r.open[0]?.qty, 1, '10 $ de risque / 10 $ de stop = 1 once');
+});
+
+test('statistiques : rendement, baisse maximale, réussite', () => {
+  const enter: Intent = { type: 'enter', symbol: 'X', side: 'long', order: 'close', size: { notional: 1 }, reason: 'test' };
+  const r = runPortfolio(spec({ strategy: scripted({ 0: () => [enter], 2: (v) => [{ type: 'exit', id: v.positions[0]?.id ?? '', order: 'close', reason: 'fin' }] }) }), new Map([['X', bars([[100, 100, 100, 100], [100, 100, 90, 90], [90, 110, 90, 110]])]]), T0, T0 + 10 * M);
+  const s = stats(r, () => '2026-11-10');
+  assert.ok(Math.abs(s.returnPct - 10) < 1e-9);
+  assert.ok(Math.abs(s.maxDrawdownPct - 10) < 1e-9);
+  assert.equal(s.winRatePct, 100);
+});
+
+test('RSI de Wilder : 100 sur une hausse continue, bas après une forte baisse', () => {
+  const up = rsi([1, 2, 3, 4, 5, 6], 2);
+  assert.equal(up.at(-1), 100);
+  const down = rsi([10, 11, 12, 11, 9, 7], 2);
+  assert.ok((down.at(-1) as number) < 10);
+});
+
+test('ORB de l’étude : achat stop au plus haut de la 1re bougie haussière d’une action en jeu, sortie à la clôture', () => {
+  // 15 séances d'historique (5 min), puis une séance où la 1re bougie a 3 fois le volume habituel.
+  const all: Bar[] = [];
+  const days = ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-09'];
+  for (const [k, d] of days.entries()) {
+    const open = zonedToUtc(d, 570, NY);
+    const last = k === days.length - 1;
+    for (let i = 0; i < 78; i++) {
+      const base = 100;
+      let bar: Bar = { t: open + i * 5 * M, o: base, h: base + 1, l: base - 1, c: base, v: 200_000 };
+      if (last && i === 0) bar = { ...bar, o: 100, h: 101, l: 99.5, c: 100.8, v: 600_000 };
+      if (last && i === 1) bar = { ...bar, o: 100.85, h: 102, l: 100.85, c: 101.8 };
+      if (last && i > 1) bar = { ...bar, o: 102, h: 102.5, l: 101.9, c: 102.2 };
+      all.push(bar);
+    }
+  }
+  const from = zonedToUtc('2026-11-09', 0, NY);
+  const r = runPortfolio(
+    { id: 'orb', name: 'orb', capital: 500, maxLeverage: 4, allowShort: true, costs: FREE, barMs: 5 * M, symbols: ['TEST'], strategy: () => orbStudy({ symbols: ['TEST'] }) },
+    new Map([['TEST', all]]),
+    from,
+    from + 2 * 86_400_000,
+  );
+  assert.equal(r.trades.length, 1, JSON.stringify(r.trades));
+  const t = r.trades[0];
+  assert.equal(t?.side, 'long');
+  assert.equal(t?.entry, 101);
+  assert.equal(t?.exitReason, 'fin de séance');
+  assert.ok((t?.pnl ?? 0) > 0);
+  assert.ok((t?.notional ?? 0) <= 2000 + 1e-6, 'levier 4 au plus');
+});
+
+test('témoin au hasard : même tirage à chaque rejeu (graine fixe)', () => {
+  const b = bars(Array.from({ length: 600 }, () => [100, 100.1, 99.9, 100] as [number, number, number, number]), 5 * M, zonedToUtc('2026-11-10', 8 * 60, 'Europe/Paris'));
+  const mk = (): PortfolioSpec => spec({ barMs: 5 * M, symbols: ['X'], strategy: () => randomSignals({ symbol: 'X', seed: 's', fromParis: 945, toParis: 1080, exitParis: 1140, stopPct: 0.3, targetPct: 0.6, size: { risk: 0.01 } }) });
+  const a = runPortfolio(mk(), new Map([['X', b]]), b[0]?.t ?? 0, (b.at(-1)?.t ?? 0) + 1);
+  const c = runPortfolio(mk(), new Map([['X', b]]), b[0]?.t ?? 0, (b.at(-1)?.t ?? 0) + 1);
+  assert.equal(a.trades.length, 2, 'deux jours de semaine dans les données');
+  assert.deepEqual(a.trades.map((t) => [t.openedAt, t.side]), c.trades.map((t) => [t.openedAt, t.side]));
+});
+
+test('page de l’arène : fragment sans squelette, thèmes clair et sombre, classement trié', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'arene-'));
+  const run = (id: string, ret: number) => ({
+    id, from: T0, to: T0 + 1, capital: 500, equity: 500 * (1 + ret / 100), liquidatedAt: undefined, fees: 0, financing: 0, daily: [['2026-11-10', 500 * (1 + ret / 100)]], trades: [], open: [],
+    stats: { returnPct: ret, maxDrawdownPct: 1, trades: 3, winRatePct: 50, profitFactor: 1, avgTradePct: 0, bestDayPct: 1, worstDayPct: -1, daysUp: 1, days: 2, exposurePct: 10 },
+  });
+  writeJsonAtomic(join(dir, 'rejeu.json'), { generatedAt: T0, commit: 'abc', windows: { commun: { label: 'Rejeu sur la même période pour tous (x)', from: T0, to: T0, runs: [run('rsi2', -1), run('orb-x4', 3)] }, long: { label: 'long', from: T0, to: T0, runs: [] } } });
+  const html = readFileSync(writeArenaPage(dir), 'utf8');
+  assert.ok(!/<!doctype|<(html|head|body)[\s>]/i.test(html));
+  assert.match(html.slice(0, 300), /<title>Arène des stratégies<\/title>/);
+  assert.match(html, /@media \(prefers-color-scheme:dark\)\{:root:not\(\[data-theme="light"\]\)/);
+  assert.match(html, /:root\[data-theme="dark"\]/);
+  assert.ok(html.indexOf('ORB actions en jeu ×4') < html.indexOf('RSI(2) de Connors SPY + QQQ'), 'le meilleur en premier');
+  assert.match(html, /Le suivi démarre le <b>mercredi 11 novembre/);
+});
