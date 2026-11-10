@@ -481,6 +481,11 @@ table.tarifs tr.devis td.montant { color: var(--brique-texte); font-size: 1rem; 
 .prose { max-width: 70ch; }
 .prose h2 { margin-bottom: 18px; }
 .prose p { margin-bottom: 16px; font-size: 1.06rem; }
+/* Page de texte (conditions générales) */
+.prose h3 { margin: 28px 0 10px; }
+.prose ul { margin: 0 0 16px 1.3em; }
+.prose li { margin-bottom: 6px; }
+.prose .panel { margin: 8px 0 16px; }
 .principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .nots { list-style: none; max-width: 760px; display: grid; gap: 12px; }
 .nots li { display: flex; gap: 14px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
