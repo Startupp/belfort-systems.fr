@@ -180,7 +180,7 @@ footer{font-size:12px;color:var(--muted)}
 ${commun ? `<section class="kpis" aria-label="Chiffres clés">
 ${best ? kpi('Meilleur sur la période commune', `${sgn(best.stats.returnPct)} %`, esc(byId.get(best.id)?.name ?? best.id), best.stats.returnPct >= 0 ? 'good' : 'bad') : ''}
 ${witness ? kpi('Témoin au hasard (SPY)', `${sgn(witness.stats.returnPct)} %`, 'à battre pour prouver quelque chose', witness.stats.returnPct >= 0 ? 'good' : 'bad') : ''}
-${kpi('Portefeuilles gagnants', `${commun.runs.filter((r) => r.stats.returnPct > 0).length} / ${commun.runs.length}`, esc(commun.label.replace(/^Rejeu sur la même période pour tous /, '')))}
+${kpi('Portefeuilles gagnants', `${commun.runs.filter((r) => r.stats.returnPct > 0).length} / ${commun.runs.length}`, esc(commun.label.replace(/^Rejeu sur la même période pour tous \((.*)\)$/, '$1')))}
 </section>` : ''}
 ${lecture.length ? `<section class="card"><h2>Ma lecture</h2><ul class="plain note">${lecture.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></section>` : ''}
 <section class="card"><h2>Suivi en direct</h2>

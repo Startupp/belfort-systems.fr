@@ -1,0 +1,10 @@
+[
+  "Sur la période commune (20 séances, du 13 octobre au 9 novembre), 5 portefeuilles sur 16 gagnent. Le témoin tiré au sort sur SPY finit à +0,7 % : une stratégie qui fait moins bien que lui n'a encore rien prouvé.",
+  "Le plus solide pour l'instant est le momentum « zone de bruit » sur le S&P 500 : +6,4 % avec un levier ×4 piloté par la volatilité, +2,6 % sans levier. Il est aussi positif depuis le 7 septembre : +1,4 % sans levier, avec une baisse maximale de 2 %. La stratégie est publiée avec un long historique. C'est le marché que je retiens : l'indice S&P 500, de 16 h à 22 h (heure de Paris).",
+  "L'ORB dans la version de l'étude (×4, jusqu'à 20 actions par jour) a perdu 38 % jusqu'au 4 novembre, puis gagné 62 % en trois séances, pour finir à −0,3 %. Avec 500 $, ce profil n'est pas tenable. C'est pour cela que le desk le limite à 2 positions sans levier.",
+  "Les stratégies crypto actives perdent surtout à cause des frais des ordres au marché (0,09 % par ordre chez Revolut X) : −41 % en 2 ans pour la tendance 1 h, −73 % en 1 an pour le rebond Bollinger. Chez Revolut X, seuls les ordres limites (0 % de frais) laissent une chance. La grille, à 0 %, ne perd que 3 % dans un BTC en baisse.",
+  "Or à levier ×20 : la cassure de l'ouverture de New York gagne 4,1 % sur 20 trades, contre −12 % pour le hasard au même levier. L'écart est intéressant, mais 20 trades ne prouvent rien.",
+  "Le levier ne crée aucun avantage : il multiplie le résultat dans les deux sens. Le témoin « façon Telegram » est à zéro au bout de 9 signaux.",
+  "Sur 16 ans, RSI(2) (+54 %) et le tournant du mois (+40 %) gagnent en restant peu de temps sur le marché. La nuit SPY gagne 33 %, mais avec une baisse de 30 % en route.",
+  "Le suivi en direct commence le 11 novembre, et c'est lui qui comptera, pas le rejeu."
+]

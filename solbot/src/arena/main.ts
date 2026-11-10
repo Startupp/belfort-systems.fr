@@ -47,6 +47,7 @@ export interface ArenaFile {
 }
 
 const dayOf = (ms: number): string => paris(ms).date;
+const dayFr = (ms: number): string => new Date(ms).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'long', year: 'numeric' });
 
 export function summarize(r: RunResult, keepTrades: number): RunSummary {
   const daily = new Map<string, number>();
@@ -61,8 +62,9 @@ export function summarize(r: RunResult, keepTrades: number): RunSummary {
     liquidatedAt: r.liquidatedAt,
     fees: r.fees,
     financing: r.financing,
-    daily: [...daily.entries()],
-    trades: r.trades.slice(-keepTrades),
+    // Au plus ~400 points (un sur n pour les historiques longs), le dernier toujours gardé.
+    daily: [...daily.entries()].filter((_, i, a) => a.length <= 400 || i % Math.ceil(a.length / 400) === 0 || i === a.length - 1),
+    trades: keepTrades > 0 ? r.trades.slice(-keepTrades) : [],
     open: r.open,
   };
 }
@@ -103,12 +105,14 @@ async function main(): Promise<void> {
     const firsts = [...(await seriesFor(orb)).values()].map((b) => b[0]?.t).filter((t): t is number => t !== undefined).sort((a, b) => a - b);
     if (firsts.length < 10) throw new Error('données 1 min indisponibles');
     const commonFrom = zonedToUtc(paris((firsts[Math.floor(firsts.length / 2)] as number) + 86_400_000).date, 0, PARIS);
+    // Le rejeu s'arrête à la fin de la veille : la séance du jour appartient au suivi en direct.
+    const end = zonedToUtc(dayOf(now), 0, PARIS);
     const runs: RunSummary[] = [];
     const longRuns: RunSummary[] = [];
     for (const p of PORTFOLIOS) {
       const series = await seriesFor(p);
       const aux = await auxFor(p);
-      const r = runPortfolio(p, series, commonFrom, now, aux);
+      const r = runPortfolio(p, series, commonFrom, end, aux);
       runs.push(summarize(r, 30));
       const s = runs.at(-1)?.stats as Stats;
       log(`${p.id.padEnd(20)} ${s.returnPct >= 0 ? '+' : ''}${s.returnPct.toFixed(2)} % · ${s.trades} trades · réussite ${s.winRatePct.toFixed(0)} % · baisse max ${s.maxDrawdownPct.toFixed(2)} %${r.liquidatedAt ? ' · LIQUIDÉ' : ''}`);
@@ -117,7 +121,7 @@ async function main(): Promise<void> {
       const warm: Partial<Record<DataKey, number>> = { crypto1h: 10, crypto15m: 10, us5m: 21, spy5m: 21, gold5m: 21, btc1m: 1 };
       const longFrom = p.data === 'daily' ? zonedToUtc('2010-01-04', 0, PARIS) : warm[p.data] !== undefined ? zonedToUtc(paris(first + (warm[p.data] as number) * 86_400_000).date, 0, PARIS) : NaN;
       if (Number.isFinite(longFrom) && longFrom < commonFrom - 3 * 86_400_000) {
-        const rl = runPortfolio(p, series, longFrom, now, aux);
+        const rl = runPortfolio(p, series, longFrom, end, aux);
         longRuns.push(summarize(rl, 0));
         const sl = longRuns.at(-1)?.stats as Stats;
         log(`  historique depuis ${dayOf(longFrom)} : ${sl.returnPct >= 0 ? '+' : ''}${sl.returnPct.toFixed(1)} % · ${sl.trades} trades · baisse max ${sl.maxDrawdownPct.toFixed(1)} %`);
@@ -127,8 +131,8 @@ async function main(): Promise<void> {
       generatedAt: now,
       commit: commit(),
       windows: {
-        commun: { label: `Rejeu sur la même période pour tous (${dayOf(commonFrom)} → ${dayOf(now)})`, from: commonFrom, to: now, runs },
-        long: { label: 'Historique plus long (autant que les données le permettent)', from: Math.min(...longRuns.map((r) => r.from)), to: now, runs: longRuns },
+        commun: { label: `Rejeu sur la même période pour tous (du ${dayFr(commonFrom)} au ${dayFr(end - 1)})`, from: commonFrom, to: end, runs },
+        long: { label: 'Historique plus long (autant que les données le permettent)', from: Math.min(...longRuns.map((r) => r.from)), to: end, runs: longRuns },
       },
     };
     writeJsonAtomic(join(dir, 'rejeu.json'), out);
@@ -144,7 +148,7 @@ async function main(): Promise<void> {
     const out: ArenaFile = {
       generatedAt: now,
       commit: commit(),
-      windows: { suivi: { label: `Suivi en direct depuis le ${dayOf(SUIVI_START)}`, from: SUIVI_START, to: now, runs } },
+      windows: { suivi: { label: `Suivi en direct depuis le ${dayFr(SUIVI_START)}`, from: SUIVI_START, to: now, runs } },
     };
     writeJsonAtomic(join(dir, 'suivi.json'), out);
   } else {
