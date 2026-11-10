@@ -83,6 +83,10 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
   jeudi 12 novembre, 0 h (Paris). Ce code et ces fichiers sont gérés par la session principale : ne jamais les modifier.
 - **Chaque soir, après l'étape 4** : dans `solbot/`, lancer `NODE_USE_ENV_PROXY=1 node src/arena/main.ts avance`
   (5 à 10 minutes la première fois, le cache étant vide). Commiter `solbot/arene/` dans le même commit que le carnet.
+- **Suivi en direct (Cloudflare)** : le Worker `arene-papier` (code dans `solbot/worker/`, compte Cloudflare de
+  l'utilisateur) fait tourner les mêmes 12 comptes chaque minute et affiche leur PnL sur une page à lien secret que
+  l'utilisateur a reçu. Le lien et son jeton ne vont jamais dans le dépôt ni dans un message public. Rien à faire chaque
+  soir : il tourne seul. Le rejeu du soir ci-dessus reste la référence (même code, données complètes).
 - **Page de l'arène** : https://claude.ai/artifact/WGJvJdfBEe53xHzj2Wsx7n. Artifact `read`, puis `publish` avec
   `file_path` = `solbot/arene/arene.html` et cette même `url`. Ne jamais créer une deuxième page.
 - **Message du soir** : une ligne pour l'arène : les 3 premiers comptes et les 3 derniers depuis le 12 novembre, et le

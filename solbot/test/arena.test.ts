@@ -345,3 +345,36 @@ test('page de l’arène : fragment sans squelette, thèmes clair et sombre, cla
   assert.ok(html.indexOf('ORB actions en jeu ×4') < html.indexOf('RSI(2) de Connors SPY + QQQ'), 'le meilleur en premier');
   assert.match(html, /Le suivi démarre le <b>mercredi 11 novembre/);
 });
+
+test('heure locale → UTC : calcul direct identique à la recherche complète (changements d’heure 2019-2027)', () => {
+  // Référence : l'ancienne recherche sur la grille de 15 min.
+  const ref = (date: string, minutes: number, tz: string): number | 'erreur' => {
+    const base = Date.parse(`${date}T00:00:00Z`) + minutes * 60_000;
+    for (let off = -840; off <= 840; off += 15) {
+      const t = base - off * 60_000;
+      const l = localTime(t, tz);
+      if (l.date === date && l.minutes === minutes) return t;
+    }
+    return 'erreur';
+  };
+  let n = 0;
+  for (const tz of ['America/New_York', 'Europe/Paris', 'Europe/London']) {
+    for (let day = Date.UTC(2019, 0, 1); day < Date.UTC(2028, 0, 1); day += 86_400_000) {
+      const date = new Date(day).toISOString().slice(0, 10);
+      // Jours de changement d'heure (mars, octobre, novembre) en détail, les autres à quelques heures clés.
+      const month = date.slice(5, 7);
+      const minutes = month === '03' || month === '10' || month === '11' ? Array.from({ length: 48 }, (_, i) => i * 30) : [0, 570, 960];
+      for (const m of minutes) {
+        let fast: number | 'erreur';
+        try {
+          fast = zonedToUtc(date, m, tz);
+        } catch {
+          fast = 'erreur';
+        }
+        assert.equal(fast, ref(date, m, tz), `${tz} ${date} ${m}`);
+        n++;
+      }
+    }
+  }
+  assert.ok(n > 30_000);
+});
