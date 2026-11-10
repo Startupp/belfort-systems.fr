@@ -1,0 +1,133 @@
+<meta charset="utf-8">
+<title>Carnet crypto (papier)</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Journal de desk : bandeau de chiffres, courbe, puis une fiche par séance (la plus récente en haut), carnet complet, méthode. */
+:root{
+  --bg:#f2f4f7;--surface:#ffffff;--ink:#121821;--muted:#5b6876;--rule:#dce2e9;
+  --accent:#2c52cf;--accent-soft:rgba(44,82,207,.12);--gain:#0a7a4e;--loss:#b3242f;--goal:#985a00;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --data:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1116;--surface:#151b23;--ink:#e4e9ef;--muted:#93a1b0;--rule:#27303b;
+  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1116;--surface:#151b23;--ink:#e4e9ef;--muted:#93a1b0;--rule:#27303b;
+  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
+main{max-width:1040px;margin:0 auto;padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+main>*{min-width:0}
+h1,h2{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:26px;letter-spacing:.2px}h2{font-size:19px}h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
+p{margin:0}.muted{color:var(--muted)}.good{color:var(--gain)}.bad{color:var(--loss)}
+.num{font-family:var(--data);font-variant-numeric:tabular-nums}
+.top{display:grid;gap:6px}
+.banner{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:0 8px 8px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.kpi{background:var(--surface);padding:12px;display:grid;gap:2px;align-content:start}
+.kl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kv{font-family:var(--data);font-variant-numeric:tabular-nums;font-size:21px;font-weight:500}
+.ks{font-size:12px;color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--rule);overflow:hidden;margin-top:6px}.bar>div{height:100%;background:var(--gain)}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px}
+.dayhead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin-bottom:4px}
+.big{font-size:17px;font-weight:500}
+.pill{font-size:12px;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:1px 9px}
+ul.plain{margin:0;padding-left:18px;display:grid;gap:4px}ul.plain ul{margin-top:4px;padding-left:18px}
+.lab2{font-weight:600;margin:10px 0 4px}
+ul.trades{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:8px}
+.trade{border:1px solid var(--rule);border-left:3px solid var(--muted);border-radius:6px;padding:8px 10px;display:grid;gap:4px;min-width:0}
+.trade.win{border-left-color:var(--gain)}.trade.loss{border-left-color:var(--loss)}.trade.open{border-left-color:var(--accent)}
+.tl{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.sym{font-family:var(--data);font-size:15px}
+.chip{font-size:12px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 6px}
+.pnl{margin-left:auto;font-weight:500}
+.why{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);margin-right:8px}
+svg{width:100%;max-width:620px;height:auto;display:block}
+.line{fill:none;stroke:var(--accent);stroke-width:2}.area{fill:var(--accent-soft);stroke:none}.dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.ref{stroke:var(--muted);stroke-dasharray:4 4;fill:none}.goal{stroke:var(--goal);stroke-dasharray:2 4;fill:none}
+.ax{fill:var(--muted);font:10.5px var(--data)}.goalx{fill:var(--goal)}.end{fill:var(--ink)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top;white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td.wrap{white-space:normal;min-width:220px}
+tr.win td:first-child{box-shadow:inset 3px 0 var(--gain)}tr.loss td:first-child{box-shadow:inset 3px 0 var(--loss)}
+footer{font-size:12px;color:var(--muted)}
+</style>
+<main>
+<header class="top">
+<h1>Carnet crypto (papier)</h1>
+<p class="muted">Mis à jour le 10 novembre 2026 à 19:00 (heure de Paris)</p>
+<p class="banner"><b>Papier</b> : 500 $ fictifs, aucun levier, fenêtre 15 h – 19 h (Paris), tout est soldé à 18 h 55. Séances en direct, décisions minute par minute.</p>
+</header>
+<section class="kpis" aria-label="Chiffres clés">
+<div class="kpi"><span class="kl">Equity</span><span class="kv">493,29 $</span><span class="ks">départ 500,00 $</span></div>
+<div class="kpi"><span class="kl">Résultat total</span><span class="kv bad">-6,71 $</span><span class="ks">-1,34 %</span></div>
+<div class="kpi"><span class="kl">Semaine / objectif +1 %</span><span class="kv bad">-1,34 %</span><div class="bar"><div style="width:0%"></div></div></div>
+<div class="kpi"><span class="kl">Trades</span><span class="kv">3</span><span class="ks">3,0 par séance · objectif ≥ 3</span></div>
+<div class="kpi"><span class="kl">Réussite</span><span class="kv">0 %</span><span class="ks">R moyen -1,07</span></div>
+<div class="kpi"><span class="kl">Commissions</span><span class="kv">1,27 $</span><span class="ks">glissement inclus dans les prix · baisse max 1,34 %</span></div>
+</section>
+<section class="card"><h2>Courbe d'equity</h2><svg viewBox="0 0 360 168" role="img" aria-label="Equity après chaque trade : départ 500,00 $, maintenant 493,29 $">
+<line x1="46" x2="352" y1="74.4" y2="74.4" class="ref"/>
+<line x1="46" x2="352" y1="19.5" y2="19.5" class="goal"/>
+<path d="M46.0,74.4 L148.0,107.0 L250.0,139.3 L352.0,148.0 L352.0,148.0 L46.0,148.0 Z" class="area"/>
+<path d="M46.0,74.4 L148.0,107.0 L250.0,139.3 L352.0,148.0" class="line"/>
+<circle cx="352.0" cy="148.0" r="4" class="dot"/>
+<text x="40" y="74.4" class="ax" text-anchor="end" dominant-baseline="middle">500 $</text>
+<text x="40" y="19.5" class="ax goalx" text-anchor="end" dominant-baseline="middle">505 $</text>
+<text x="352" y="13.5" class="ax goalx" text-anchor="end">objectif +1 %</text>
+<text x="346.0" y="139.0" class="ax end" text-anchor="end">493,29 $</text>
+<text x="46" y="163" class="ax">départ</text><text x="352" y="163" class="ax" text-anchor="end">trade 3</text>
+</svg></section>
+
+<section class="card day" id="seance-2026-11-10">
+<header class="dayhead"><h2>Séance du 2026-11-10</h2><span class="num big bad">-6,71 $ (-1,34 %)</span></header>
+<p class="muted">3 trade(s) · réussite 0 % · R moyen -1,07 · equity <span class="num">500,00 → 493,29 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">15:45 → 15:51</span><b class="sym">NEAR-USD</b><span class="chip">momentum zone de bruit</span><span>achat 228 $</span><span class="num muted">3,7232 → 3,6822</span><span class="num pnl bad">-2,97 $ · -1,19 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 3.7225 au-dessus de la borne haute 3.6731 (bruit moyen 1.10 % à cette heure sur 14 jours) · au-dessus de la VWAP 3.6759 ; régime mixte (efficacité 0.29) · stop suiveur sur max(borne, VWAP) · taille : risque 2.50 $ (0.5 % × poids 1.00), position 228.45 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,454 $ · 6 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">15:55 → 16:09</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 163 $</span><span class="num muted">0.0000055711 → 0.0000055069</span><span class="num pnl bad">-2,20 $ · -1,19 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000055700 au-dessus de la borne haute 0.0000053820 (bruit moyen 1.17 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000054426 ; régime tendance (efficacité 0.44) · stop suiveur sur max(borne, VWAP) · taille : risque 1.85 $ (0.5 % × poids 0.74), position 162.90 $</p>
+<p class="why"><span class="lab">Sortie</span>stop · frais 0,324 $ · 14 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:00 → 16:12</span><b class="sym">LINK-USD</b><span class="chip">momentum zone de bruit</span><span>achat 249 $</span><span class="num muted">10,5401 → 10,4959</span><span class="num pnl bad">-1,54 $ · -0,84 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 10.5380 au-dessus de la borne haute 10.4743 (bruit moyen 1.04 % à cette heure sur 14 jours) · au-dessus de la VWAP 10.4081 ; régime mixte (efficacité 0.31) · stop suiveur sur max(borne, VWAP) · taille : risque 1.84 $ (0.5 % × poids 0.74), position 248.56 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,496 $ · 12 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 3 trade(s), <span class="num">-6,71 $</span> — poids 1,00 → 0,45</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 13 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 9 en range, 3 mixtes · 16:00 : 4 en tendance, 2 en range, 10 mixtes · 16:30 : 8 en tendance, 1 en range, 3 mixtes · 17:00 : 0 en tendance, 12 en range, 3 mixtes · 17:30 : 0 en tendance, 14 en range, 1 mixtes · 18:00 : 0 en tendance, 11 en range, 0 mixtes · 18:30 : 0 en tendance, 10 en range, 1 mixtes</li>
+<li>Signaux valides : 3, pris : 3</li>
+<li>Setups refusés les plus fréquents :<ul><li>BTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(4×)</span></li><li>ETH-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(4×)</span></li><li>BNB-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(4×)</span></li><li>SUI20947-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(4×)</span></li><li>LTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(4×)</span></li><li>PEPE24478-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(4×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.45, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.47 $ × poids (entre 0.62 et 4.93 $)</li><li>fin de séance plutôt hésitante (16 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à -1.34 %, il faut en moyenne 0.78 % par séance sur les 3 restantes</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>HYPE32196-USD</b> — a fini la fenêtre à -2.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>DOGE-USD</b> — a fini la fenêtre à -2.1 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>BNB-USD</b> — a fini la fenêtre à -1.8 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>SOL-USD</b> — a fini la fenêtre à -1.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card"><h2>Carnet complet (3 trades)</h2>
+<div class="scroll"><table><thead><tr><th>Date</th><th>Heure</th><th>Instrument</th><th>Sens</th><th>Stratégie</th><th>Taille</th><th>Prix</th><th>PnL</th><th>R</th><th>Sortie</th></tr></thead><tbody><tr class="loss"><td>11-10</td><td>16:00 → 16:12</td><td><b>LINK-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>249 $</td><td>10,5401 → 10,4959</td><td class="bad">-1,54 $</td><td>-0,84</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-10</td><td>15:55 → 16:09</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>163 $</td><td>0.0000055711 → 0.0000055069</td><td class="bad">-2,20 $</td><td>-1,19</td><td class="wrap">stop</td></tr><tr class="loss"><td>11-10</td><td>15:45 → 15:51</td><td><b>NEAR-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>228 $</td><td>3,7232 → 3,6822</td><td class="bad">-2,97 $</td><td>-1,19</td><td class="wrap">stop suiveur</td></tr></tbody></table></div>
+<p class="muted">Export tableur : carnet.csv, dans le même dossier du dépôt.</p></section>
+
+<section class="card"><h2>Méthode</h2><ul class="plain">
+<li><b>Momentum « zone de bruit »</b>, d'après Zarattini, Aziz &amp; Barbon (2024) : on suit le prix quand il sort de sa zone d'oscillation habituelle à cette heure, au-dessus de la VWAP ; stop suiveur max(borne, VWAP). Cryptos seulement, achat seulement. Pas d'ORB (réservé aux actions) ni de retour à la VWAP (trop de frais en crypto).</li>
+<li><b>Risque</b> : 0.5 % de l'equity par trade × poids adaptatif (0,25 à 2), une position ≤ 50 % de l'equity, 4 positions max, stop journalier −1.5 %, arrêt de la semaine à −4 %. Moins de 3 trades à 17 h 30 : « mode chasse » (seuils assouplis, risque ÷ 2).</li>
+<li><b>Coûts simulés par ordre</b> : 10 points de base de frais + 2 de glissement. Entrée au prix de clôture de la minute du signal ; si le stop et l'objectif sont touchés dans la même minute, c'est le stop qui compte.</li>
+<li><b>Avis publics</b> (presse, X, analystes) : notés au prix du moment où on les voit, puis mesurés après 1 h, 4 h et 24 h. Ils ne déclenchent jamais de trade.</li>
+<li><b>Données</b> : barres d'une minute Yahoo Finance (gratuites ; quelques secondes de retard possibles).</li>
+</ul></section>
+<footer>Simulation à but d'apprentissage. Rien ici n'est un conseil en investissement, et une semaine de résultats ne prouve rien statistiquement.</footer>
+</main>

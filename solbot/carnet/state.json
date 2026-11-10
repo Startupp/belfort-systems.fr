@@ -1,15 +1,15 @@
 {
   "version": 1,
   "startEquity": 500,
-  "cash": 500.98038825690094,
-  "day": "2026-11-09",
-  "dayStartEquity": 500,
-  "tradesToday": 3,
-  "stockCashUsedToday": 185.85887201623336,
+  "cash": 501.4447251897188,
+  "day": "2026-11-10",
+  "dayStartEquity": 500.98038825690094,
+  "tradesToday": 4,
+  "stockCashUsedToday": 500.98038825690094,
   "weights": {
-    "orb": 1.1029305835830863,
+    "orb": 1.2567674360237744,
     "noise": 1,
-    "vwap": 1
+    "vwap": 0.7656502914736427
   },
   "lossStreak": {
     "orb": 0,
@@ -22,12 +22,15 @@
   "cooldown": {
     "VIR": 1794247800000,
     "IMVT": 1794247800000,
-    "AVGO": 1794247800000
+    "AVGO": 1794247800000,
+    "BABA": 1794327840000,
+    "EMBJ": 1794334200000,
+    "AAON": 1794334200000,
+    "AAPL": 1794334200000
   },
   "orbDone": {
-    "VIR": 1,
-    "IMVT": 1,
-    "AVGO": 1
+    "EMBJ": 1,
+    "AAON": 1
   },
-  "closedCount": 3
+  "closedCount": 7
 }

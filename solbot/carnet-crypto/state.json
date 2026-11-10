@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "startEquity": 500,
+  "cash": 493.2885951334009,
+  "day": "2026-11-10",
+  "dayStartEquity": 500,
+  "tradesToday": 3,
+  "stockCashUsedToday": 0,
+  "weights": {
+    "orb": 1,
+    "noise": 0.4473611630812977,
+    "vwap": 1
+  },
+  "lossStreak": {
+    "orb": 0,
+    "noise": 3,
+    "vwap": 0
+  },
+  "weekId": "2026-S46",
+  "weekStartEquity": 500,
+  "open": [],
+  "cooldown": {
+    "NEAR-USD": 1794323160000,
+    "PEPE24478-USD": 1794324240000,
+    "LINK-USD": 1794324420000
+  },
+  "orbDone": {},
+  "closedCount": 3
+}

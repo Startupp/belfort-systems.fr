@@ -1,0 +1,1612 @@
+{
+  "day": "2026-11-10",
+  "equityStart": 500.9804,
+  "equityEnd": 501.4447,
+  "pnlUsd": 0.4643,
+  "pnlPct": 0.093,
+  "trades": [
+    {
+      "id": "d-mwavntj3-yhly5",
+      "symbol": "BABA",
+      "cls": "stock",
+      "strategy": "vwap",
+      "side": "long",
+      "qty": 2.427136209483902,
+      "entry": 103.74271473770142,
+      "stop": 103.3697378229596,
+      "initialStop": 103.3697378229596,
+      "target": 104.49724908091731,
+      "openedAt": 1794326400000,
+      "riskUsd": 0.9052657750714433,
+      "notionalUsd": 251.79769941003437,
+      "costsUsd": 0,
+      "best": 103.76000213623047,
+      "regime": "range",
+      "reasons": [
+        "retour à la VWAP : écart de -2.30 écarts-types sous la VWAP 104.50",
+        "marché sans tendance (efficacité 0.20)",
+        "objectif la VWAP (0.76 %), stop à 1 écart-type (0.33 %)",
+        "taille : risque 0.91 $ (0.5 % × poids 1.00), position 251.80 $"
+      ],
+      "closedAt": 1794326940000,
+      "exit": 103.33872690161272,
+      "pnlUsd": -0.9805,
+      "r": -1.08,
+      "exitReason": "stop",
+      "holdMinutes": 9,
+      "equityAfter": 503.0712
+    },
+    {
+      "id": "d-mwasnsuu-ehomv",
+      "symbol": "EMBJ",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 1.3886032075268762,
+      "entry": 81.934576663208,
+      "stop": 79.94499969482422,
+      "initialStop": 79.94499969482422,
+      "openedAt": 1794321360000,
+      "riskUsd": 2.7627329599193247,
+      "notionalUsd": 113.77461596188738,
+      "costsUsd": 0,
+      "best": 83.44000244140625,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 81.9100 au-dessus du plus haut des 5 premières minutes (81.8600 ; bas 79.9450)",
+        "volume relatif 5.32× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 79.9450 (2.40 % sous l'entrée)",
+        "taille : risque 2.76 $ (0.5 % × poids 1.10), position 113.77 $"
+      ],
+      "closedAt": 1794333300000,
+      "exit": 82.44526022033692,
+      "pnlUsd": 0.7091,
+      "r": 0.26,
+      "exitReason": "clôture de fin de fenêtre (18:55)",
+      "holdMinutes": 199,
+      "equityAfter": 501.4856
+    },
+    {
+      "id": "d-mwassxo4-rw14j",
+      "symbol": "AAON",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 0.42829091044345174,
+      "entry": 74.30728916320801,
+      "stop": 67.87000274658203,
+      "initialStop": 67.87000274658203,
+      "openedAt": 1794321600000,
+      "riskUsd": 2.757031260162006,
+      "notionalUsd": 31.825136528295193,
+      "costsUsd": 0,
+      "best": 80.0999984741211,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 74.2850 au-dessus du plus haut des 5 premières minutes (73.9700 ; bas 67.8700)",
+        "volume relatif 8.80× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 67.8700 (8.64 % sous l'entrée)",
+        "taille : risque 2.76 $ (0.5 % × poids 1.10), position 31.83 $"
+      ],
+      "closedAt": 1794333300000,
+      "exit": 76.01708976287843,
+      "pnlUsd": 0.7323,
+      "r": 0.27,
+      "exitReason": "clôture de fin de fenêtre (18:55)",
+      "holdMinutes": 195,
+      "equityAfter": 501.4758
+    },
+    {
+      "id": "d-mwawaz5f-0f2lv",
+      "symbol": "AAPL",
+      "cls": "stock",
+      "strategy": "vwap",
+      "side": "long",
+      "qty": 0.29814542385052134,
+      "entry": 347.424203326416,
+      "stop": 346.65595327658554,
+      "initialStop": 346.65595327658554,
+      "target": 349.3051633726899,
+      "openedAt": 1794327480000,
+      "riskUsd": 0.2290502367298813,
+      "notionalUsd": 103.582936356684,
+      "costsUsd": 0,
+      "best": 348.56988525390625,
+      "regime": "range",
+      "reasons": [
+        "retour à la VWAP : écart de -2.99 écarts-types sous la VWAP 349.31",
+        "marché sans tendance (efficacité 0.16)",
+        "objectif la VWAP (0.57 %), stop à 1 écart-type (0.19 %)",
+        "taille : risque 0.23 $ (0.5 % × poids 0.76), position 103.58 $"
+      ],
+      "closedAt": 1794333300000,
+      "exit": 347.4357465423584,
+      "pnlUsd": 0.0034,
+      "r": 0.02,
+      "exitReason": "clôture de fin de fenêtre (18:55)",
+      "holdMinutes": 97,
+      "equityAfter": 501.4447
+    }
+  ],
+  "winRatePct": 75,
+  "avgR": -0.13,
+  "byStrategy": {
+    "orb": {
+      "n": 2,
+      "pnlUsd": 1.4414
+    },
+    "noise": {
+      "n": 0,
+      "pnlUsd": 0
+    },
+    "vwap": {
+      "n": 2,
+      "pnlUsd": -0.9771
+    }
+  },
+  "weightsStart": {
+    "orb": 1.1029305835830863,
+    "noise": 1,
+    "vwap": 1
+  },
+  "weightsEnd": {
+    "orb": 1.2567674360237744,
+    "noise": 1,
+    "vwap": 0.7656502914736427
+  },
+  "analysis": {
+    "stocksInPlay": [
+      {
+        "symbol": "DBX",
+        "rv": 87.41,
+        "bullish": true
+      },
+      {
+        "symbol": "TTD",
+        "rv": 15.32,
+        "bullish": true
+      },
+      {
+        "symbol": "AAON",
+        "rv": 8.8,
+        "bullish": true
+      },
+      {
+        "symbol": "TTWO",
+        "rv": 8.05,
+        "bullish": true
+      },
+      {
+        "symbol": "EMBJ",
+        "rv": 5.32,
+        "bullish": true
+      },
+      {
+        "symbol": "CSQR",
+        "rv": 4.27,
+        "bullish": true
+      },
+      {
+        "symbol": "NVDA",
+        "rv": 3.61,
+        "bullish": false
+      },
+      {
+        "symbol": "SMCI",
+        "rv": 3.22,
+        "bullish": false
+      },
+      {
+        "symbol": "ACAD",
+        "rv": 3.14,
+        "bullish": true
+      },
+      {
+        "symbol": "IWM",
+        "rv": 1.56,
+        "bullish": true
+      },
+      {
+        "symbol": "SPY",
+        "rv": 1.1,
+        "bullish": true
+      },
+      {
+        "symbol": "BABA",
+        "rv": 1,
+        "bullish": false
+      },
+      {
+        "symbol": "QQQ",
+        "rv": 0.95,
+        "bullish": true
+      },
+      {
+        "symbol": "MSTR",
+        "rv": 0.91,
+        "bullish": true
+      },
+      {
+        "symbol": "TSLA",
+        "rv": 0.89,
+        "bullish": true
+      },
+      {
+        "symbol": "TSM",
+        "rv": 0.87,
+        "bullish": true
+      },
+      {
+        "symbol": "CRWV",
+        "rv": 0.85,
+        "bullish": true
+      },
+      {
+        "symbol": "MU",
+        "rv": 0.84,
+        "bullish": false
+      },
+      {
+        "symbol": "AMD",
+        "rv": 0.79,
+        "bullish": true
+      },
+      {
+        "symbol": "AVGO",
+        "rv": 0.77,
+        "bullish": true
+      },
+      {
+        "symbol": "HOOD",
+        "rv": 0.75,
+        "bullish": true
+      },
+      {
+        "symbol": "COIN",
+        "rv": 0.71,
+        "bullish": true
+      },
+      {
+        "symbol": "AAPL",
+        "rv": 0.59,
+        "bullish": false
+      },
+      {
+        "symbol": "PLTR",
+        "rv": 0.56,
+        "bullish": false
+      },
+      {
+        "symbol": "NFLX",
+        "rv": 0.5,
+        "bullish": false
+      },
+      {
+        "symbol": "AMZN",
+        "rv": 0.46,
+        "bullish": true
+      },
+      {
+        "symbol": "MSFT",
+        "rv": 0.42,
+        "bullish": false
+      },
+      {
+        "symbol": "META",
+        "rv": 0.36,
+        "bullish": true
+      },
+      {
+        "symbol": "GOOGL",
+        "rv": 0.33,
+        "bullish": false
+      }
+    ],
+    "regimes": [
+      {
+        "time": "15:00",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 6.18
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 4.47
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 5.04
+          }
+        ]
+      },
+      {
+        "time": "15:30",
+        "items": [
+          {
+            "symbol": "PLTR",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.94
+          },
+          {
+            "symbol": "COIN",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.58
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "tendance",
+            "z": 0,
+            "band": -1.15
+          },
+          {
+            "symbol": "MU",
+            "regime": "tendance",
+            "z": 0,
+            "band": -2.23
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "tendance",
+            "z": 0,
+            "band": -0.96
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -2.32,
+            "band": -0.72
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": -2.42,
+            "band": -1.48
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "mixte",
+            "z": -2.45,
+            "band": -6.02
+          }
+        ]
+      },
+      {
+        "time": "16:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "mixte",
+            "z": 3.99,
+            "band": 1.15
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "tendance",
+            "z": 4.04,
+            "band": 2.1
+          },
+          {
+            "symbol": "IWM",
+            "regime": "mixte",
+            "z": 3.47,
+            "band": 1.28
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": 1.41,
+            "band": 0.03
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "mixte",
+            "z": 2.58,
+            "band": 0.73
+          },
+          {
+            "symbol": "AMD",
+            "regime": "tendance",
+            "z": 3.52,
+            "band": 2.85
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "tendance",
+            "z": -3.75,
+            "band": -1.31
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.05,
+            "band": 0.15
+          },
+          {
+            "symbol": "META",
+            "regime": "mixte",
+            "z": 3.33,
+            "band": 0.95
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "mixte",
+            "z": 2.67,
+            "band": 1.18
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "mixte",
+            "z": 2.95,
+            "band": 1.06
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "tendance",
+            "z": 3.77,
+            "band": 5.19
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": -1.68,
+            "band": -1.19
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 1.7,
+            "band": 0.18
+          },
+          {
+            "symbol": "COIN",
+            "regime": "mixte",
+            "z": 3.15,
+            "band": 1.15
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "tendance",
+            "z": 3.74,
+            "band": 2.32
+          },
+          {
+            "symbol": "MU",
+            "regime": "tendance",
+            "z": 3.33,
+            "band": 2.3
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "mixte",
+            "z": 3.11,
+            "band": 1.22
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "tendance",
+            "z": 3.28,
+            "band": 2.79
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "mixte",
+            "z": 2.74,
+            "band": 1.91
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "mixte",
+            "z": 2.71,
+            "band": 1.13
+          },
+          {
+            "symbol": "DBX",
+            "regime": "range",
+            "z": 2.04,
+            "band": 0.9
+          },
+          {
+            "symbol": "TTD",
+            "regime": "range",
+            "z": -1.99,
+            "band": -1.08
+          },
+          {
+            "symbol": "TTWO",
+            "regime": "range",
+            "z": -0.51,
+            "band": 1.06
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "mixte",
+            "z": 3.16,
+            "band": 1.63
+          },
+          {
+            "symbol": "EMBJ",
+            "regime": "range",
+            "z": 1.97,
+            "band": 2.1
+          },
+          {
+            "symbol": "AAON",
+            "regime": "mixte",
+            "z": 2.34,
+            "band": 2.63
+          },
+          {
+            "symbol": "ACAD",
+            "regime": "range",
+            "z": 0.37,
+            "band": 7.26
+          },
+          {
+            "symbol": "TSM",
+            "regime": "tendance",
+            "z": 3.78,
+            "band": 2.56
+          },
+          {
+            "symbol": "BABA",
+            "regime": "range",
+            "z": -0.45,
+            "band": -0.33
+          },
+          {
+            "symbol": "CSQR",
+            "regime": "range",
+            "z": 2.06,
+            "band": 3.34
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "mixte",
+            "z": 3.46,
+            "band": 2.04
+          }
+        ]
+      },
+      {
+        "time": "16:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "mixte",
+            "z": 0.45,
+            "band": 0.4
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "mixte",
+            "z": -0.27,
+            "band": 0.75
+          },
+          {
+            "symbol": "IWM",
+            "regime": "mixte",
+            "z": -0.42,
+            "band": -0.04
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -1.06,
+            "band": -1.01
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 1.08,
+            "band": 0.67
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": 0.84,
+            "band": 2.69
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": -2.26,
+            "band": -1.07
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 0.8,
+            "band": -0.1
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 1.18,
+            "band": 0.7
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": 2.24,
+            "band": 1.41
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": -0.01,
+            "band": 0.28
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": 0.73,
+            "band": 2.76
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": 0.26,
+            "band": -0.8
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": -1.14,
+            "band": -0.24
+          },
+          {
+            "symbol": "COIN",
+            "regime": "tendance",
+            "z": -0.72,
+            "band": 0.01
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "tendance",
+            "z": -0.39,
+            "band": 0.13
+          },
+          {
+            "symbol": "MU",
+            "regime": "mixte",
+            "z": 0.09,
+            "band": 0.55
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "tendance",
+            "z": -0.55,
+            "band": 0.16
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "mixte",
+            "z": -0.05,
+            "band": 0.47
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "tendance",
+            "z": -1.7,
+            "band": -0.14
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "mixte",
+            "z": -1.99,
+            "band": -0.6
+          },
+          {
+            "symbol": "DBX",
+            "regime": "range",
+            "z": 3.09,
+            "band": 1.26
+          },
+          {
+            "symbol": "TTD",
+            "regime": "tendance",
+            "z": 1.52,
+            "band": 0.99
+          },
+          {
+            "symbol": "TTWO",
+            "regime": "range",
+            "z": 1.02,
+            "band": 2.19
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": 1.4,
+            "band": 0.67
+          },
+          {
+            "symbol": "EMBJ",
+            "regime": "range",
+            "z": -0.32,
+            "band": 1.19
+          },
+          {
+            "symbol": "AAON",
+            "regime": "range",
+            "z": 2.05,
+            "band": 2.63
+          },
+          {
+            "symbol": "ACAD",
+            "regime": "range",
+            "z": 0.12,
+            "band": 3.98
+          },
+          {
+            "symbol": "TSM",
+            "regime": "range",
+            "z": 1.92,
+            "band": 1.82
+          },
+          {
+            "symbol": "BABA",
+            "regime": "mixte",
+            "z": -1.86,
+            "band": -0.63
+          },
+          {
+            "symbol": "CSQR",
+            "regime": "range",
+            "z": 0.36,
+            "band": 1.19
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "range",
+            "z": 1.36,
+            "band": 1.21
+          }
+        ]
+      },
+      {
+        "time": "17:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": -0.83,
+            "band": 0
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": -0.74,
+            "band": 0.25
+          },
+          {
+            "symbol": "IWM",
+            "regime": "mixte",
+            "z": -1.28,
+            "band": -0.52
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -1.56,
+            "band": -1.71
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 1.94,
+            "band": 0.73
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -0.19,
+            "band": 1.62
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": -1.79,
+            "band": -0.92
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.24,
+            "band": -0.05
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 0.72,
+            "band": 0.53
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "mixte",
+            "z": -0.81,
+            "band": 0.9
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "mixte",
+            "z": -0.98,
+            "band": -0.22
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": -0.43,
+            "band": 1.71
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": -1.11,
+            "band": -1.06
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 0.15,
+            "band": -0.08
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": -0.94,
+            "band": -0.26
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": -0.65,
+            "band": -0.23
+          },
+          {
+            "symbol": "MU",
+            "regime": "mixte",
+            "z": -0.96,
+            "band": -0.25
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": -0.61,
+            "band": 0.01
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "mixte",
+            "z": -0.74,
+            "band": -0.49
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "mixte",
+            "z": -1.35,
+            "band": -1.12
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": -1.09,
+            "band": -1.29
+          },
+          {
+            "symbol": "DBX",
+            "regime": "mixte",
+            "z": 1.04,
+            "band": 0.79
+          },
+          {
+            "symbol": "TTD",
+            "regime": "mixte",
+            "z": 2.57,
+            "band": 1.68
+          },
+          {
+            "symbol": "TTWO",
+            "regime": "range",
+            "z": 0.65,
+            "band": 1.77
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": 0.16,
+            "band": 0.02
+          },
+          {
+            "symbol": "EMBJ",
+            "regime": "tendance",
+            "z": 3.48,
+            "band": 2.18
+          },
+          {
+            "symbol": "AAON",
+            "regime": "range",
+            "z": 1.04,
+            "band": 1.96
+          },
+          {
+            "symbol": "ACAD",
+            "regime": "range",
+            "z": -0.73,
+            "band": 3.72
+          },
+          {
+            "symbol": "TSM",
+            "regime": "range",
+            "z": 0.68,
+            "band": 1.09
+          },
+          {
+            "symbol": "BABA",
+            "regime": "range",
+            "z": -2.3,
+            "band": -0.7
+          },
+          {
+            "symbol": "CSQR",
+            "regime": "range",
+            "z": 0.22,
+            "band": 0.92
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "range",
+            "z": 0.02,
+            "band": 0.66
+          }
+        ]
+      },
+      {
+        "time": "17:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": -0.86,
+            "band": -0.08
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": -0.68,
+            "band": 0.11
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": -0.82,
+            "band": -0.37
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -1.09,
+            "band": -2.35
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": -0.39,
+            "band": 0.6
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -0.89,
+            "band": 1.58
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": -1.95,
+            "band": -0.96
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 0.25,
+            "band": -0.13
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 0.9,
+            "band": 0.61
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "mixte",
+            "z": -1.42,
+            "band": 0.72
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": -1.81,
+            "band": -0.73
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": -0.7,
+            "band": 2.07
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": -1.53,
+            "band": -1.36
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": -0.52,
+            "band": -0.19
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": -0.57,
+            "band": -0.19
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": -0.59,
+            "band": -0.29
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": -0.59,
+            "band": -0.11
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": -0.68,
+            "band": -0.03
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -1.15,
+            "band": -0.86
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": -1.45,
+            "band": -1.69
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": -1.56,
+            "band": -2.2
+          },
+          {
+            "symbol": "DBX",
+            "regime": "range",
+            "z": 1.92,
+            "band": 1.1
+          },
+          {
+            "symbol": "TTD",
+            "regime": "mixte",
+            "z": 2.53,
+            "band": 2.41
+          },
+          {
+            "symbol": "TTWO",
+            "regime": "range",
+            "z": -0.13,
+            "band": 0.98
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": 0.43,
+            "band": 0.14
+          },
+          {
+            "symbol": "EMBJ",
+            "regime": "range",
+            "z": 2.71,
+            "band": 2.84
+          },
+          {
+            "symbol": "AAON",
+            "regime": "range",
+            "z": 0.82,
+            "band": 1.78
+          },
+          {
+            "symbol": "ACAD",
+            "regime": "tendance",
+            "z": 1.51,
+            "band": 6
+          },
+          {
+            "symbol": "TSM",
+            "regime": "range",
+            "z": -0.52,
+            "band": 0.82
+          },
+          {
+            "symbol": "BABA",
+            "regime": "tendance",
+            "z": -3.31,
+            "band": -1.31
+          },
+          {
+            "symbol": "CSQR",
+            "regime": "range",
+            "z": -0.24,
+            "band": 0.81
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "range",
+            "z": -0.6,
+            "band": 0.55
+          }
+        ]
+      },
+      {
+        "time": "18:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": -1.31,
+            "band": -0.22
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": -1.38,
+            "band": -0.3
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": -1.2,
+            "band": -0.46
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "tendance",
+            "z": -2.1,
+            "band": -3.03
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": -0.53,
+            "band": 0.52
+          },
+          {
+            "symbol": "AMD",
+            "regime": "tendance",
+            "z": -1.76,
+            "band": 0.49
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "mixte",
+            "z": -0.6,
+            "band": -0.67
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.86,
+            "band": -0.04
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": -0.59,
+            "band": 0.34
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": -1.33,
+            "band": 0.72
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": -1.13,
+            "band": -0.71
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "mixte",
+            "z": -1.24,
+            "band": 1.31
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": -0.31,
+            "band": -1.01
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "mixte",
+            "z": -1.95,
+            "band": -0.42
+          },
+          {
+            "symbol": "COIN",
+            "regime": "mixte",
+            "z": -1.18,
+            "band": -0.44
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": -1.08,
+            "band": -0.55
+          },
+          {
+            "symbol": "MU",
+            "regime": "mixte",
+            "z": -0.55,
+            "band": -0.74
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": -1.47,
+            "band": -0.36
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -1.36,
+            "band": -1.12
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": -1.43,
+            "band": -1.67
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": -1.33,
+            "band": -2.04
+          },
+          {
+            "symbol": "TTD",
+            "regime": "range",
+            "z": 1.91,
+            "band": 1.87
+          },
+          {
+            "symbol": "TTWO",
+            "regime": "range",
+            "z": 0.57,
+            "band": 1.52
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "mixte",
+            "z": -1.03,
+            "band": -0.59
+          },
+          {
+            "symbol": "EMBJ",
+            "regime": "range",
+            "z": 2.04,
+            "band": 3.03
+          },
+          {
+            "symbol": "AAON",
+            "regime": "range",
+            "z": 0.57,
+            "band": 1.72
+          },
+          {
+            "symbol": "ACAD",
+            "regime": "range",
+            "z": 1.91,
+            "band": 6.89
+          },
+          {
+            "symbol": "TSM",
+            "regime": "mixte",
+            "z": -1.36,
+            "band": 0.15
+          },
+          {
+            "symbol": "BABA",
+            "regime": "range",
+            "z": -2.98,
+            "band": -1.37
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "range",
+            "z": -1.37,
+            "band": 0.04
+          }
+        ]
+      },
+      {
+        "time": "18:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": -0.93,
+            "band": -0.1
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": -1.34,
+            "band": -0.27
+          },
+          {
+            "symbol": "IWM",
+            "regime": "tendance",
+            "z": 0.28,
+            "band": -0.06
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -1.51,
+            "band": -2.34
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 0.11,
+            "band": 0.59
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -1.49,
+            "band": 0.46
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": -0.41,
+            "band": -0.66
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "mixte",
+            "z": -3.11,
+            "band": -0.98
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": -0.41,
+            "band": 0.37
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": -1.09,
+            "band": 0.82
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": -1.4,
+            "band": -0.88
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": -0.4,
+            "band": 1.51
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": -0.81,
+            "band": -1.16
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": -2.01,
+            "band": -0.5
+          },
+          {
+            "symbol": "COIN",
+            "regime": "mixte",
+            "z": -0.5,
+            "band": -0.29
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": -1.15,
+            "band": -0.72
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": -0.23,
+            "band": -0.49
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": -1.01,
+            "band": -0.27
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -0.74,
+            "band": -0.85
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": -1.12,
+            "band": -1.37
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": -0.62,
+            "band": -1.58
+          },
+          {
+            "symbol": "DBX",
+            "regime": "tendance",
+            "z": -2.51,
+            "band": -0.88
+          },
+          {
+            "symbol": "TTD",
+            "regime": "range",
+            "z": 1.79,
+            "band": 1.73
+          },
+          {
+            "symbol": "TTWO",
+            "regime": "range",
+            "z": 0.12,
+            "band": 1.2
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": -0.94,
+            "band": -0.61
+          },
+          {
+            "symbol": "EMBJ",
+            "regime": "range",
+            "z": 2.76,
+            "band": 3.55
+          },
+          {
+            "symbol": "AAON",
+            "regime": "mixte",
+            "z": -0.81,
+            "band": 2.02
+          },
+          {
+            "symbol": "ACAD",
+            "regime": "tendance",
+            "z": 2.68,
+            "band": 11.39
+          },
+          {
+            "symbol": "TSM",
+            "regime": "range",
+            "z": -0.81,
+            "band": 0.31
+          },
+          {
+            "symbol": "CSQR",
+            "regime": "range",
+            "z": -0.84,
+            "band": 0.47
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "range",
+            "z": -1.28,
+            "band": -0.03
+          }
+        ]
+      }
+    ],
+    "signalsSeen": 69,
+    "signalsTaken": 4,
+    "skipped": {
+      "ORB : déjà 2 positions ORB ouvertes (places gardées pour les trades rapides)": 2,
+      "compte cash : liquidités du jour déjà engagées (réglement J+1)": 45
+    },
+    "notes": {
+      "NVDA ORB : 1re bougie baissière, vente à découvert impossible en compte cash": 86,
+      "BTC-USD momentum : sortie de zone mais marché en range (efficacité #)": 6,
+      "ETH-USD momentum : sortie de zone mais marché en range (efficacité #)": 4,
+      "SOL-USD momentum : sortie de zone mais marché en range (efficacité #)": 1,
+      "SMCI ORB : 1re bougie baissière, vente à découvert impossible en compte cash": 86,
+      "BTC-USD momentum : bruit habituel (# %) trop faible face aux frais (# %)": 4,
+      "CSQR ORB : cassure mais le S&P 500 (SPY) sous sa VWAP (pas de vent porteur)": 23,
+      "ETH-USD momentum : bruit habituel (# %) trop faible face aux frais (# %)": 1,
+      "SOL-USD momentum : bruit habituel (# %) trop faible face aux frais (# %)": 1,
+      "DBX ORB : cassure mais le S&P 500 (SPY) sous sa VWAP (pas de vent porteur)": 2,
+      "TTD ORB : cassure mais le S&P 500 (SPY) sous sa VWAP (pas de vent porteur)": 5,
+      "TTD retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 28,
+      "NFLX retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 12,
+      "DBX retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 8,
+      "BABA retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 21,
+      "PLTR retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 15,
+      "NVDA retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 24,
+      "META retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 3,
+      "ACAD retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 22,
+      "MSFT retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 8
+    }
+  },
+  "forecast": {
+    "watchlist": [
+      {
+        "symbol": "ACAD",
+        "why": "a fini la fenêtre à +12.4 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "EMBJ",
+        "why": "a fini la fenêtre à +2.6 fois son bruit habituel (tendance) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "NVDA",
+        "why": "a fini la fenêtre à -2.1 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "TTD",
+        "why": "a fini la fenêtre à +1.8 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "DBX",
+        "why": "action « en jeu » aujourd'hui (volume relatif 87.41×) : l'intérêt persiste souvent le lendemain"
+      }
+    ],
+    "outlook": [
+      "poids pour la prochaine séance : ORB 1.26, momentum 1.00, VWAP 0.77 — priorité à « ORB 5 min »",
+      "risque par trade prévu : 2.51 $ × poids (entre 0.63 et 5.01 $)",
+      "fin de séance plutôt hésitante (30 en range vs 1 en tendance) : les retours à la VWAP devraient dominer",
+      "objectif hebdo +1 % : semaine à +0.29 %, il faut en moyenne 0.24 % par séance sur les 3 restantes"
+    ],
+    "week": {
+      "pnlPct": 0.289,
+      "targetPct": 1,
+      "tradingDaysLeft": 3,
+      "neededPerDayPct": 0.237
+    }
+  }
+}

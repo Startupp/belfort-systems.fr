@@ -1,0 +1,23 @@
+--- lancement 2026-11-10 14:50:39 (Paris)
+2026-11-10 14:59 [PAPIER] DAY_START séance du 2026-11-10 — equity 500.98 $, poids ORB 1.10 / momentum 1.00 / VWAP 1.00
+2026-11-10 15:00 [PAPIER] ANALYSIS  analyse 15:00 : 3 en tendance, 0 en range, 0 mixtes
+2026-11-10 15:30 [PAPIER] ANALYSIS  analyse 15:30 : 5 en tendance, 2 en range, 1 mixtes
+2026-11-10 15:34 [PAPIER] ANALYSIS  actions en jeu à l'ouverture : NVDA 3.61×↓, IWM 1.56×↑, SPY 1.1×↑, QQQ 0.95×↑, MSTR 0.91×↑
+actions « en jeu » ajoutées depuis les listes Yahoo : ROKU, DBX, TTD, TTWO, SMCI, EMBJ, AAON, ACAD, TSM, BABA, CSQR, CRWV
+2026-11-10 15:35 [PAPIER] ANALYSIS  actions en jeu à l'ouverture : DBX 87.41×↑, TTD 15.32×↑, AAON 8.8×↑, TTWO 8.05×↑, EMBJ 5.32×↑
+2026-11-10 15:36 [PAPIER] OPEN      ACHAT EMBJ 113.77 $ — ORB 5 min (stop 79.9450)
+2026-11-10 15:40 [PAPIER] OPEN      ACHAT AAON 31.83 $ — ORB 5 min (stop 67.8700)
+2026-11-10 16:00 [PAPIER] ANALYSIS  analyse 16:00 : 8 en tendance, 11 en range, 13 mixtes
+2026-11-10 16:30 [PAPIER] ANALYSIS  analyse 16:30 : 5 en tendance, 20 en range, 7 mixtes
+2026-11-10 17:00 [PAPIER] ANALYSIS  analyse 17:00 : 1 en tendance, 23 en range, 8 mixtes
+2026-11-10 17:00 [PAPIER] OPEN      ACHAT BABA 251.80 $ — retour VWAP (stop 103.370)
+2026-11-10 17:09 [PAPIER] CLOSE     VENTE BABA -0.98 $ (-1.08 R) — stop
+2026-11-10 17:18 [PAPIER] OPEN      ACHAT AAPL 103.58 $ — retour VWAP (stop 346.656)
+2026-11-10 17:30 [PAPIER] ANALYSIS  analyse 17:30 : 2 en tendance, 28 en range, 2 mixtes
+2026-11-10 18:00 [PAPIER] ANALYSIS  analyse 18:00 : 2 en tendance, 21 en range, 7 mixtes
+2026-11-10 18:30 [PAPIER] ANALYSIS  analyse 18:30 : 3 en tendance, 25 en range, 3 mixtes
+2026-11-10 18:55 [PAPIER] CLOSE     VENTE EMBJ +0.71 $ (+0.26 R) — clôture de fin de fenêtre (18:55)
+2026-11-10 18:55 [PAPIER] CLOSE     VENTE AAON +0.73 $ (+0.27 R) — clôture de fin de fenêtre (18:55)
+2026-11-10 18:55 [PAPIER] CLOSE     VENTE AAPL +0.00 $ (+0.02 R) — clôture de fin de fenêtre (18:55)
+2026-11-10 18:59 [PAPIER] DAY_END   fin de séance : 4 trades, +0.46 $ (0.09 %)
+séance terminée : 4 trades, +0.46 $ — carnet : /home/user/belfort-systems.fr/solbot/carnet/carnet.html
