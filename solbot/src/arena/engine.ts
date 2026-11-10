@@ -206,6 +206,7 @@ export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Ba
   if (resume) from = Math.max(from, resume.lastT + 1);
   const memo: Record<string, unknown> = resume ? structuredClone(resume.memo) : {};
   const maxHold = spec.maxHoldMs ?? THREE_DAYS;
+  const holdWhy = `durée maximale (${maxHold % 86_400_000 === 0 ? `${maxHold / 86_400_000} jour${maxHold > 86_400_000 ? 's' : ''}` : `${Math.round(maxHold / 3_600_000)} h`})`;
   const closeOut = spec.closeOutLevel ?? 0.5;
   const c = spec.costs;
   const slip = c.slipBps / 1e4;
@@ -225,11 +226,31 @@ export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Ba
   let exposureMs = resume?.exposureMs ?? 0;
   let lastT = resume?.lastT ?? from;
 
-  // Calendrier commun : tous les débuts de barre, tous symboles confondus.
-  const times = new Set<number>();
-  for (const s of spec.symbols) for (const b of series.get(s) ?? []) if (b.t < to) times.add(b.t);
-  const timeline = [...times].sort((a, b) => a - b);
+  // Historique (barres avant `from`) : sauté d'un coup, avec l'état qu'aurait laissé son parcours (dernier cours, indice
+  // et curseur de chaque symbole). Sauf compte déjà liquidé : rien n'est alors parcouru.
   const cursor = new Map<string, number>(spec.symbols.map((s) => [s, 0]));
+  const histEnd = Math.min(from, to);
+  if (liquidatedAt === undefined) {
+    for (const s of spec.symbols) {
+      const arr = series.get(s) ?? [];
+      let lo = 0;
+      let hi = arr.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if ((arr[mid] as Bar).t < histEnd) lo = mid + 1;
+        else hi = mid;
+      }
+      if (lo > 0) {
+        idx.set(s, lo - 1);
+        last.set(s, (arr[lo - 1] as Bar).c);
+      }
+      cursor.set(s, lo);
+    }
+  }
+  // Calendrier commun : tous les débuts de barre de la période, tous symboles confondus.
+  const times = new Set<number>();
+  for (const s of spec.symbols) for (const b of series.get(s) ?? []) if (b.t >= from && b.t < to) times.add(b.t);
+  const timeline = [...times].sort((a, b) => a - b);
 
   const unreal = (p: Position, px: number): number => (p.side === 'long' ? 1 : -1) * p.qty * (px - p.entry);
   const equityNow = (): number => cash + positions.reduce((s, p) => s + unreal(p, last.get(p.symbol) ?? p.entry), 0);
@@ -419,7 +440,7 @@ export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Ba
           close(p, b.c, barEnd, 'fin de séance', 'market');
           continue;
         }
-        if (barEnd - p.openedAt >= maxHold) close(p, b.c, barEnd, 'durée maximale (3 jours)', 'market');
+        if (barEnd - p.openedAt >= maxHold) close(p, b.c, barEnd, holdWhy, 'market');
       }
       // Clôture de marge en cours de barre : au pire cours de la barre pour les positions sur cet instrument.
       const mine = positions.filter((x) => x.symbol === s);
@@ -447,7 +468,7 @@ export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Ba
     for (const p of positions.filter((x) => !barOf.has(x.symbol))) {
       const px = last.get(p.symbol) ?? p.entry;
       if (p.exitBy !== undefined && barEnd >= p.exitBy) close(p, px, barEnd, 'fin de séance', 'market');
-      else if (barEnd - p.openedAt >= maxHold) close(p, px, barEnd, 'durée maximale (3 jours)', 'market');
+      else if (barEnd - p.openedAt >= maxHold) close(p, px, barEnd, holdWhy, 'market');
     }
 
     // c) Garde-fous de marge.

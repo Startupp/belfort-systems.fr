@@ -20,7 +20,9 @@
     "typecheck": "tsc --noEmit -p .",
     "desk": "node src/desk/main.ts live",
     "desk:rejeu": "node src/desk/main.ts replay 10",
-    "desk:carnet": "node src/desk/main.ts carnet"
+    "desk:carnet": "node src/desk/main.ts carnet",
+    "worker:build": "npx --yes esbuild@0.24.2 worker/index.ts --bundle --format=esm --platform=neutral --target=es2022 --minify --legal-comments=none --outfile=worker/dist/worker.js",
+    "worker:local": "node worker/local.ts"
   },
   "license": "UNLICENSED",
   "devDependencies": {

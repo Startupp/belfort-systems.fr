@@ -51,26 +51,57 @@ function sunday(year: number, month: number, n: number): number {
  * (du dernier dimanche de mars au dernier dimanche d'octobre, à 1 h UTC). `undefined` pour un autre fuseau.
  */
 function fastOffset(ms: number, tz: string): number | undefined {
-  const y = new Date(ms).getUTCFullYear();
-  if (tz === 'America/New_York') {
-    const start = sunday(y, 2, 2) + 7 * 3_600_000; // 2 h, heure d'hiver (UTC−5)
-    const end = sunday(y, 10, 1) + 6 * 3_600_000; // 2 h, heure d'été (UTC−4)
-    return ms >= start && ms < end ? -240 : -300;
+  const us = tz === 'America/New_York';
+  if (!us && tz !== 'Europe/Paris' && tz !== 'Europe/London') return undefined;
+  const [start, end] = summerTime(new Date(ms).getUTCFullYear(), us);
+  const summer = ms >= start && ms < end;
+  if (us) return summer ? -240 : -300;
+  return (tz === 'Europe/Paris' ? 60 : 0) + (summer ? 60 : 0);
+}
+
+/** Début et fin de l'heure d'été (ms UTC), calculés une fois par année : États-Unis ou Europe. */
+const summerCache = new Map<number, [number, number]>();
+function summerTime(year: number, us: boolean): [number, number] {
+  const key = us ? year : -year;
+  let r = summerCache.get(key);
+  if (!r) {
+    r = us
+      ? [sunday(year, 2, 2) + 7 * 3_600_000, sunday(year, 10, 1) + 6 * 3_600_000] // 2 h locale : UTC−5 puis UTC−4
+      : [sunday(year, 2, -1) + 3_600_000, sunday(year, 9, -1) + 3_600_000]; // 1 h UTC
+    summerCache.set(key, r);
   }
-  if (tz === 'Europe/Paris' || tz === 'Europe/London') {
-    const summer = ms >= sunday(y, 2, -1) + 3_600_000 && ms < sunday(y, 9, -1) + 3_600_000;
-    return (tz === 'Europe/Paris' ? 60 : 0) + (summer ? 60 : 0);
-  }
+  return r;
+}
+
+/** Décalages possibles d'un fuseau rapide (minutes, du plus petit au plus grand), `undefined` pour les autres. */
+export function fastOffsets(tz: string): number[] | undefined {
+  if (tz === 'America/New_York') return [-300, -240];
+  if (tz === 'Europe/Paris') return [60, 120];
+  if (tz === 'Europe/London') return [0, 60];
   return undefined;
+}
+
+/** Dates « AAAA-MM-JJ » par numéro de jour (jours depuis 1970) : une seule chaîne par jour au lieu d'une par appel. */
+const dayNames = new Map<number, string>();
+function dayName(day: number): string {
+  let s = dayNames.get(day);
+  if (s === undefined) {
+    const d = new Date(day * 86_400_000);
+    const m = d.getUTCMonth() + 1;
+    const dd = d.getUTCDate();
+    s = `${d.getUTCFullYear()}-${m < 10 ? '0' : ''}${m}-${dd < 10 ? '0' : ''}${dd}`;
+    if (dayNames.size > 20_000) dayNames.clear();
+    dayNames.set(day, s);
+  }
+  return s;
 }
 
 export function localTime(ms: number, tz: string): LocalTime {
   const off = fastOffset(ms, tz);
   if (off !== undefined) {
-    const d = new Date(ms + off * 60_000);
-    const m = d.getUTCMonth() + 1;
-    const day = d.getUTCDate();
-    return { date: `${d.getUTCFullYear()}-${m < 10 ? '0' : ''}${m}-${day < 10 ? '0' : ''}${day}`, minutes: d.getUTCHours() * 60 + d.getUTCMinutes() };
+    const local = ms + off * 60_000;
+    const day = Math.floor(local / 86_400_000);
+    return { date: dayName(day), minutes: Math.floor((local - day * 86_400_000) / 60_000) };
   }
   const parts = fmt(tz).formatToParts(new Date(ms));
   const get = (t: string): string => parts.find((p) => p.type === t)?.value ?? '00';

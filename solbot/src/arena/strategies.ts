@@ -4,7 +4,7 @@
  * au premier appel, et ne lisent jamais une barre future (indicateur en i = barres 0..i).
  */
 
-import { localTime } from '../desk/market.ts';
+import { fastOffsets, localTime } from '../desk/market.ts';
 import type { Bar } from '../desk/types.ts';
 import type { Intent, Position, Strategy, StrategyView } from './engine.ts';
 
@@ -40,6 +40,17 @@ export const PARIS = 'Europe/Paris';
 /** Instant UTC (ms) d'une heure locale donnée (date AAAA-MM-JJ, minutes depuis minuit). */
 export function zonedToUtc(date: string, minutes: number, tz: string): number {
   const base = Date.parse(`${date}T00:00:00Z`) + minutes * 60_000;
+  // Fuseaux des marchés suivis : seulement leurs deux décalages, dans le même ordre que la recherche complète ci-dessous
+  // (heure ambiguë au changement d'heure : même réponse ; heure inexistante : même erreur).
+  const offs = fastOffsets(tz);
+  if (offs) {
+    for (const off of offs) {
+      const t = base - off * 60_000;
+      const l = localTime(t, tz);
+      if (l.date === date && l.minutes === minutes) return t;
+    }
+    throw new Error(`heure locale introuvable : ${date} ${minutes} (${tz})`);
+  }
   for (let off = -14 * 60; off <= 14 * 60; off += 15) {
     const t = base - off * 60_000;
     const l = localTime(t, tz);
@@ -304,43 +315,61 @@ export function orbStudy(opts: { symbols: string[]; top?: number; risk?: number;
  */
 export function noiseArea(opts: { symbol: string; maxLev: number }): Strategy {
   const s = opts.symbol;
+  // Calculs par séance faits à la demande (le suivi en direct ne lit que la séance du jour) : mêmes valeurs.
   type Pre = { days: UsDay[]; dayOf: Int32Array; sigma: Map<number, number[]>; vwap: number[]; vol: number[] };
   let pre: Pre | undefined;
+  const sigmaOf = (bars: Bar[], p: Pre, k: number): number[] => {
+    let row = p.sigma.get(k);
+    if (row) return row;
+    row = [];
+    if (k >= 14) {
+      // Mouvement |close/open − 1| par minute de séance, puis moyenne des 14 jours précédents.
+      const ck = clocks(bars, NY);
+      const moves: Array<Map<number, number>> = [];
+      for (let j = k - 14; j < k; j++) {
+        const d = p.days[j] as UsDay;
+        const m = new Map<number, number>();
+        for (let i = d.start; i < d.end; i++) m.set((ck[i] as Clock).min, Math.abs((bars[i] as Bar).c / d.open - 1));
+        moves.push(m);
+      }
+      const d = p.days[k] as UsDay;
+      for (let i = d.start; i < d.end; i++) {
+        const min = (ck[i] as Clock).min;
+        let sum = 0;
+        let n = 0;
+        for (const m of moves) {
+          const x = m.get(min);
+          if (x !== undefined) {
+            sum += x;
+            n++;
+          }
+        }
+        row.push(n >= 10 ? sum / n : NaN);
+      }
+    }
+    p.sigma.set(k, row);
+    return row;
+  };
+  const vwapOf = (bars: Bar[], p: Pre, k: number, i: number): number => {
+    if (Number.isNaN(p.vwap[i] as number)) {
+      const d = p.days[k] as UsDay;
+      let pv = 0;
+      let vv = 0;
+      for (let j = d.start; j < d.end; j++) {
+        const b = bars[j] as Bar;
+        pv += ((b.h + b.l + b.c) / 3) * b.v;
+        vv += b.v;
+        p.vwap[j] = vv > 0 ? pv / vv : b.c;
+      }
+    }
+    return p.vwap[i] as number;
+  };
   return {
     onBar(v) {
       const bars = v.series.get(s) ?? [];
       if (!pre) {
         const { days, dayOf } = usDays(bars);
-        // Mouvement |close/open − 1| par minute de séance, puis moyenne des 14 jours précédents.
-        const moves = days.map((d) => {
-          const m = new Map<number, number>();
-          for (let i = d.start; i < d.end; i++) m.set(clocks(bars, NY)[i]?.min as number, Math.abs((bars[i] as Bar).c / d.open - 1));
-          return m;
-        });
-        const sigma = new Map<number, number[]>();
-        for (let k = 0; k < days.length; k++) {
-          const row: number[] = [];
-          if (k >= 14) {
-            const d = days[k] as UsDay;
-            for (let i = d.start; i < d.end; i++) {
-              const min = clocks(bars, NY)[i]?.min as number;
-              const w = moves.slice(k - 14, k).map((m) => m.get(min)).filter((x): x is number => x !== undefined);
-              row.push(w.length >= 10 ? w.reduce((a, b) => a + b, 0) / w.length : NaN);
-            }
-          }
-          sigma.set(k, row);
-        }
         const vwap = new Array<number>(bars.length).fill(NaN);
-        for (const d of days) {
-          let pv = 0;
-          let vv = 0;
-          for (let i = d.start; i < d.end; i++) {
-            const b = bars[i] as Bar;
-            pv += ((b.h + b.l + b.c) / 3) * b.v;
-            vv += b.v;
-            vwap[i] = vv > 0 ? pv / vv : b.c;
-          }
-        }
         const rets = days.map((d, k) => (k === 0 ? NaN : d.close / (days[k - 1] as UsDay).close - 1));
         const vol = days.map((_, k) => {
           const w = rets.slice(Math.max(1, k - 14), k).filter((x) => Number.isFinite(x));
@@ -348,7 +377,7 @@ export function noiseArea(opts: { symbol: string; maxLev: number }): Strategy {
           const m = w.reduce((a, b) => a + b, 0) / w.length;
           return Math.sqrt(w.reduce((a, b) => a + (b - m) ** 2, 0) / w.length);
         });
-        pre = { days, dayOf, sigma, vwap, vol };
+        pre = { days, dayOf, sigma: new Map(), vwap, vol };
       }
       if (!v.fresh.has(s)) return [];
       const i = v.idx.get(s) as number;
@@ -357,14 +386,14 @@ export function noiseArea(opts: { symbol: string; maxLev: number }): Strategy {
       const d = pre.days[k] as UsDay;
       const closeMin = (clocks(bars, NY)[i]?.min as number) + 5;
       if (closeMin < 600 || closeMin > 930 || closeMin % 30 !== 0) return [];
-      const sig = pre.sigma.get(k)?.[i - d.start];
+      const sig = sigmaOf(bars, pre, k)[i - d.start];
       const dv = pre.vol[k] as number;
       if (sig === undefined || !Number.isFinite(sig) || !Number.isFinite(dv) || dv <= 0) return [];
       const prevClose = (pre.days[k - 1] as UsDay).close;
       const upper = Math.max(d.open, prevClose) * (1 + sig);
       const lower = Math.min(d.open, prevClose) * (1 - sig);
       const px = (bars[i] as Bar).c;
-      const vw = pre.vwap[i] as number;
+      const vw = vwapOf(bars, pre, k, i);
       const lev = Math.min(opts.maxLev, 0.02 / dv);
       const out: Intent[] = [];
       const enter = (side: 'long' | 'short'): Intent => ({

@@ -15,3 +15,6 @@ keypair*.json
 id.json
 *.key
 *.pem
+
+# Paquet du Worker (reconstruit par npm run worker:build)
+worker/dist/
