@@ -9,7 +9,7 @@
 
 import type { Costs } from './engine.ts';
 import type { ArenaPortfolio, DataKey } from './portfolios.ts';
-import { COSTS } from './portfolios.ts';
+import { COSTS } from './costs.ts';
 import {
   NY,
   buyHold,

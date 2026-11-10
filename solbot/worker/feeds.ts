@@ -58,6 +58,21 @@ export async function coinbase(product: string, granularity: number, fromMs: num
   return out.sort((x, y) => x.t - y.t);
 }
 
+/**
+ * Kraken (comptant) : bougies d'une heure ou d'un jour (720 au plus, les plus récentes), en secours de Coinbase, qui
+ * refuse souvent les adresses partagées de Cloudflare (erreur 429). Mêmes heures de début de bougie (UTC).
+ */
+export async function krakenOhlc(product: string, granularity: number, fromMs: number): Promise<Bar[]> {
+  const pair = { 'BTC-USD': 'XBTUSD', 'ETH-USD': 'ETHUSD', 'SOL-USD': 'SOLUSD' }[product];
+  if (!pair) throw new Error(`Kraken : paire inconnue ${product}`);
+  const raw = await json<{ error?: string[]; result?: Record<string, unknown> }>(`https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=${granularity / 60}&since=${Math.floor(fromMs / 1000) - 1}`);
+  if (raw.error?.length) throw new Error(`Kraken : ${raw.error.join(', ')}`);
+  const rows = Object.entries(raw.result ?? {}).find(([k]) => k !== 'last')?.[1] as Array<[number, string, string, string, string, string, string, number]> | undefined;
+  return (rows ?? [])
+    .map(([t, o, h, l, c, , v]) => ({ t: t * 1000, o: Number(o), h: Number(h), l: Number(l), c: Number(c), v: Number(v) }))
+    .filter((b) => b.t >= fromMs && [b.o, b.h, b.l, b.c].every((x) => Number.isFinite(x) && x > 0));
+}
+
 /** Kraken Futures : bougies d'une heure d'un perpétuel. */
 export async function krakenFutures1h(symbol: string, fromMs: number, toMs: number): Promise<Bar[]> {
   const raw = await json<{ candles?: Array<{ time: number; open: string; high: string; low: string; close: string; volume: string }> }>(

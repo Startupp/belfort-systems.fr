@@ -404,7 +404,13 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
       } else {
         const from = filling || !lastT ? now - f.keep * MS[f.tf] : lastT - MS[f.tf];
         if (f.src === 'coinbase') {
-          if (spend(Math.ceil((now - from) / (300 * MS[f.tf])))) fresh = await feed.coinbase(f.sym, MS[f.tf] / 1000, from, now);
+          // Coinbase d'abord (la source de l'arène) ; en cas de refus (souvent 429 depuis Cloudflare), Kraken au comptant.
+          try {
+            if (spend(Math.ceil((now - from) / (300 * MS[f.tf])))) fresh = await feed.coinbase(f.sym, MS[f.tf] / 1000, from, now);
+          } catch (e) {
+            if (!spend()) throw e;
+            fresh = await feed.krakenOhlc(f.sym, MS[f.tf] / 1000, from);
+          }
         } else if (spend()) fresh = await feed.krakenFutures1h(f.sym, from, now);
       }
     } catch (e) {

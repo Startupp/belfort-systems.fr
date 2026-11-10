@@ -108,8 +108,11 @@ const usSession = (t: number): boolean => {
   return wd >= 1 && wd <= 5 && l.minutes >= 570 && l.minutes < 960;
 };
 
-/** Faux réseau : Yahoo, Coinbase, Kraken, d'après l'horloge simulée (barre en cours et barre « fantôme » comprises). */
-function fakeFetch(clock: () => number): typeof fetch {
+/**
+ * Faux réseau : Yahoo, Coinbase, Kraken, d'après l'horloge simulée (barre en cours et barre « fantôme » comprises).
+ * `coinbaseDown` : Coinbase refuse tout (429), comme souvent depuis les adresses de Cloudflare.
+ */
+function fakeFetch(clock: () => number, coinbaseDown = false): typeof fetch {
   const json = (body: unknown): Response => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
   return (async (input: string | URL | Request) => {
     const url = new URL(String(input instanceof Request ? input.url : input));
@@ -140,6 +143,7 @@ function fakeFetch(clock: () => number): typeof fetch {
       return json(Object.fromEntries(syms.map((s) => [s, { close: [price(s, now)] }])));
     }
     if (url.host === 'api.exchange.coinbase.com') {
+      if (coinbaseDown) return new Response('trop de requêtes', { status: 429 });
       const sym = url.pathname.split('/')[2] as string;
       const g = Number(url.searchParams.get('granularity')) * 1000;
       const a = Date.parse(url.searchParams.get('start') as string);
@@ -166,16 +170,29 @@ function fakeFetch(clock: () => number): typeof fetch {
       const sym = url.pathname.split('/').pop() as string;
       return json({ ticker: { symbol: sym, markPrice: price(sym, now), relativeFundingRate: 1e-5 * (1 + Math.sin(now / 7_200_000)) } });
     }
+    if (url.host === 'api.kraken.com' && url.pathname.endsWith('/OHLC')) {
+      const pair = url.searchParams.get('pair') as string;
+      const sym = { XBTUSD: 'BTC-USD', ETHUSD: 'ETH-USD', SOLUSD: 'SOL-USD' }[pair] as string;
+      const g = Number(url.searchParams.get('interval')) * 60_000;
+      const since = Number(url.searchParams.get('since')) * 1000;
+      const rows: Array<[number, string, string, string, string, string, string, number]> = [];
+      for (let t = Math.max(Math.ceil(since / g) * g, Math.floor(now / g) * g - 720 * g); t <= now; t += g) {
+        const x = bar(sym, t, Math.min(g, now - t + 1));
+        rows.push([t / 1000, String(x.o), String(x.h), String(x.l), String(x.c), String(x.c), String(x.v), 1]);
+      }
+      return json({ error: [], result: { [{ XBTUSD: 'XXBTZUSD', ETHUSD: 'XETHZUSD', SOLUSD: 'SOLUSD' }[pair] as string]: rows, last: now / 1000 } });
+    }
     if (url.host === 'api.kraken.com') return json({ result: { XXBTZUSD: { c: [String(price('BTC-USD', now))] }, XETHZUSD: { c: [String(price('ETH-USD', now))] }, SOLUSD: { c: [String(price('SOL-USD', now))] } } });
     return new Response('inconnu', { status: 404 });
   }) as typeof fetch;
 }
 
-test('worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes barres, pour les 12 comptes', async () => {
+for (const coinbaseDown of [false, true]) {
+test(`worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes barres, pour les 12 comptes${coinbaseDown ? ' (Coinbase refuse tout : Kraken en secours)' : ''}`, async () => {
   const start = Date.parse('2026-11-11T23:00:00Z'); // jeudi 12 novembre, 0 h à Paris
   let clock = start - 2 * 3_600_000;
   const realFetch = globalThis.fetch;
-  globalThis.fetch = fakeFetch(() => clock);
+  globalThis.fetch = fakeFetch(() => clock, coinbaseDown);
   resetMemory();
   FUNDING.clear();
   const db = new MemoryD1();
@@ -200,11 +217,12 @@ test('worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes bar
     ranSomewhere++;
     const data = new Map([...l.feeds].map(([s, f]) => [s, decodeBars(db.rows.get(`bars|${f.tf}|${f.sym}`)?.v as string)]));
     const one = runPortfolio(l.variant.spec, data, start, book.state.lastT + 1);
-
     assert.ok(Math.abs(one.state.cash - book.state.cash) < 1e-6, `${l.account.id} : argent ${book.state.cash} ≠ ${one.state.cash}`);
     assert.deepEqual(book.state.positions.map((p) => [p.symbol, p.qty]), one.state.positions.map((p) => [p.symbol, p.qty]), l.account.id);
     assert.equal(book.tradeCount, one.trades.length, `${l.account.id} : trades`);
   }
   assert.ok(ranSomewhere >= 8, `comptes repris : ${ranSomewhere}`);
   assert.ok(summary.accounts.length === 12);
+  if (coinbaseDown) assert.ok(['b2-crypto-tendance', 'b3-portage', 'c3-btc-eth-200j'].every((id) => db.rows.has(`book|${id}`)), 'comptes crypto repris malgré Coinbase');
 });
+}
