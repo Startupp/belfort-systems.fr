@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "startEquity": 500,
+  "cash": 485.19524496166616,
+  "day": "2026-11-09",
+  "dayStartEquity": 487.7143725584421,
+  "tradesToday": 6,
+  "stockCashUsedToday": 0,
+  "weights": {
+    "orb": 1,
+    "noise": 0.25,
+    "vwap": 1
+  },
+  "lossStreak": {
+    "orb": 0,
+    "noise": 6,
+    "vwap": 0
+  },
+  "weekId": "2026-S46",
+  "weekStartEquity": 487.7143725584421,
+  "open": [],
+  "cooldown": {
+    "LINK-USD": 1793375160000,
+    "SUI20947-USD": 1793292960000,
+    "NEAR-USD": 1794242280000,
+    "LTC-USD": 1793209440000,
+    "HYPE32196-USD": 1794241380000,
+    "PEPE24478-USD": 1794242400000,
+    "DOT-USD": 1793374020000,
+    "TON11419-USD": 1793729400000,
+    "XRP-USD": 1793983860000,
+    "AVAX-USD": 1794241140000
+  },
+  "orbDone": {},
+  "closedCount": 30
+}

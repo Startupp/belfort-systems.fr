@@ -1,0 +1,395 @@
+<meta charset="utf-8">
+<title>Rejeu crypto (papier)</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Journal de desk : bandeau de chiffres, courbe, puis une fiche par séance (la plus récente en haut), carnet complet, méthode. */
+:root{
+  --bg:#f2f4f7;--surface:#ffffff;--ink:#121821;--muted:#5b6876;--rule:#dce2e9;
+  --accent:#2c52cf;--accent-soft:rgba(44,82,207,.12);--gain:#0a7a4e;--loss:#b3242f;--goal:#985a00;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --data:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1116;--surface:#151b23;--ink:#e4e9ef;--muted:#93a1b0;--rule:#27303b;
+  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1116;--surface:#151b23;--ink:#e4e9ef;--muted:#93a1b0;--rule:#27303b;
+  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
+main{max-width:1040px;margin:0 auto;padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+main>*{min-width:0}
+h1,h2{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:26px;letter-spacing:.2px}h2{font-size:19px}h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
+p{margin:0}.muted{color:var(--muted)}.good{color:var(--gain)}.bad{color:var(--loss)}
+.num{font-family:var(--data);font-variant-numeric:tabular-nums}
+.top{display:grid;gap:6px}
+.banner{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:0 8px 8px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.kpi{background:var(--surface);padding:12px;display:grid;gap:2px;align-content:start}
+.kl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kv{font-family:var(--data);font-variant-numeric:tabular-nums;font-size:21px;font-weight:500}
+.ks{font-size:12px;color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--rule);overflow:hidden;margin-top:6px}.bar>div{height:100%;background:var(--gain)}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px}
+.dayhead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin-bottom:4px}
+.big{font-size:17px;font-weight:500}
+.pill{font-size:12px;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:1px 9px}
+ul.plain{margin:0;padding-left:18px;display:grid;gap:4px}ul.plain ul{margin-top:4px;padding-left:18px}
+.lab2{font-weight:600;margin:10px 0 4px}
+ul.trades{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:8px}
+.trade{border:1px solid var(--rule);border-left:3px solid var(--muted);border-radius:6px;padding:8px 10px;display:grid;gap:4px;min-width:0}
+.trade.win{border-left-color:var(--gain)}.trade.loss{border-left-color:var(--loss)}.trade.open{border-left-color:var(--accent)}
+.tl{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.sym{font-family:var(--data);font-size:15px}
+.chip{font-size:12px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 6px}
+.pnl{margin-left:auto;font-weight:500}
+.why{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);margin-right:8px}
+svg{width:100%;max-width:620px;height:auto;display:block}
+.line{fill:none;stroke:var(--accent);stroke-width:2}.area{fill:var(--accent-soft);stroke:none}.dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.ref{stroke:var(--muted);stroke-dasharray:4 4;fill:none}.goal{stroke:var(--goal);stroke-dasharray:2 4;fill:none}
+.ax{fill:var(--muted);font:10.5px var(--data)}.goalx{fill:var(--goal)}.end{fill:var(--ink)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top;white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td.wrap{white-space:normal;min-width:220px}
+tr.win td:first-child{box-shadow:inset 3px 0 var(--gain)}tr.loss td:first-child{box-shadow:inset 3px 0 var(--loss)}
+footer{font-size:12px;color:var(--muted)}
+</style>
+<main>
+<header class="top">
+<h1>Rejeu crypto (papier)</h1>
+<p class="muted">Mis à jour le 10 novembre 2026 à 14:59 (heure de Paris)</p>
+<p class="banner"><b>Papier</b> : 500 $ fictifs, aucun levier, fenêtre 15 h – 19 h (Paris), tout est soldé à 18 h 55. Rejeu de séances passées avec exactement les mêmes règles qu’en direct.</p>
+</header>
+<section class="kpis" aria-label="Chiffres clés">
+<div class="kpi"><span class="kl">Equity</span><span class="kv">485,20 $</span><span class="ks">départ 500,00 $</span></div>
+<div class="kpi"><span class="kl">Résultat total</span><span class="kv bad">-14,80 $</span><span class="ks">-2,96 %</span></div>
+<div class="kpi"><span class="kl">Semaine / objectif +1 %</span><span class="kv bad">-0,52 %</span><div class="bar"><div style="width:0%"></div></div></div>
+<div class="kpi"><span class="kl">Trades</span><span class="kv">30</span><span class="ks">3,0 par séance · objectif ≥ 3</span></div>
+<div class="kpi"><span class="kl">Réussite</span><span class="kv">13 %</span><span class="ks">R moyen -0,49</span></div>
+<div class="kpi"><span class="kl">Commissions</span><span class="kv">6,56 $</span><span class="ks">glissement inclus dans les prix · baisse max 2,96 %</span></div>
+</section>
+<section class="card"><h2>Courbe d'equity</h2><svg viewBox="0 0 360 168" role="img" aria-label="Equity après chaque trade : départ 500,00 $, maintenant 485,20 $">
+<line x1="46" x2="352" y1="50.3" y2="50.3" class="ref"/>
+<line x1="46" x2="352" y1="17.3" y2="17.3" class="goal"/>
+<path d="M46.0,50.3 L56.2,59.9 L66.4,65.0 L76.6,72.1 L86.8,72.9 L97.0,79.3 L107.2,98.7 L117.4,57.6 L127.6,77.7 L137.8,77.3 L148.0,80.7 L158.2,95.0 L168.4,99.6 L178.6,102.7 L188.8,103.7 L199.0,108.8 L209.2,112.7 L219.4,116.2 L229.6,119.9 L239.8,120.1 L250.0,108.4 L260.2,113.3 L270.4,127.8 L280.6,130.4 L290.8,131.4 L301.0,134.4 L311.2,135.9 L321.4,136.7 L331.6,140.9 L341.8,146.6 L352.0,148.0 L352.0,148.0 L46.0,148.0 Z" class="area"/>
+<path d="M46.0,50.3 L56.2,59.9 L66.4,65.0 L76.6,72.1 L86.8,72.9 L97.0,79.3 L107.2,98.7 L117.4,57.6 L127.6,77.7 L137.8,77.3 L148.0,80.7 L158.2,95.0 L168.4,99.6 L178.6,102.7 L188.8,103.7 L199.0,108.8 L209.2,112.7 L219.4,116.2 L229.6,119.9 L239.8,120.1 L250.0,108.4 L260.2,113.3 L270.4,127.8 L280.6,130.4 L290.8,131.4 L301.0,134.4 L311.2,135.9 L321.4,136.7 L331.6,140.9 L341.8,146.6 L352.0,148.0" class="line"/>
+<circle cx="352.0" cy="148.0" r="4" class="dot"/>
+<text x="40" y="50.3" class="ax" text-anchor="end" dominant-baseline="middle">500 $</text>
+<text x="40" y="17.3" class="ax goalx" text-anchor="end" dominant-baseline="middle">505 $</text>
+<text x="352" y="11.3" class="ax goalx" text-anchor="end">objectif +1 %</text>
+<text x="346.0" y="139.0" class="ax end" text-anchor="end">485,20 $</text>
+<text x="46" y="163" class="ax">départ</text><text x="352" y="163" class="ax" text-anchor="end">trade 30</text>
+</svg></section>
+
+<section class="card day" id="seance-2026-11-09">
+<header class="dayhead"><h2>Séance du 2026-11-09</h2><span class="num big bad">-2,52 $ (-0,52 %)</span></header>
+<p class="muted">6 trade(s) · réussite 0 % · R moyen -0,67 · equity <span class="num">487,71 → 485,20 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">15:55 → 16:01</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 65 $</span><span class="num muted">0.0000052310 → 0.0000051899</span><span class="num pnl bad">-0,64 $ · -0,94 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000052300 au-dessus de la borne haute 0.0000051737 (bruit moyen 1.05 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000051724 ; régime mixte (efficacité 0.29) · stop suiveur sur max(borne, VWAP) · taille : risque 0.68 $ (0.5 % × poids 0.28), position 65.02 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,130 $ · 6 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">15:45 → 16:06</span><b class="sym">NEAR-USD</b><span class="chip">momentum zone de bruit</span><span>achat 92 $</span><span class="num muted">3,5911 → 3,5965</span><span class="num pnl bad">-0,05 $ · -0,07 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 3.5904 au-dessus de la borne haute 3.5802 (bruit moyen 1.07 % à cette heure sur 14 jours) · au-dessus de la VWAP 3.5609 ; régime mixte (efficacité 0.26) · stop suiveur sur max(borne, VWAP) · taille : risque 0.68 $ (0.5 % × poids 0.28), position 91.95 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,184 $ · 21 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:55 → 17:04</span><b class="sym">AVAX-USD</b><span class="chip">momentum zone de bruit</span><span>achat 82 $</span><span class="num muted">8,9708 → 8,9176</span><span class="num pnl bad">-0,65 $ · -1,07 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 8.9690 au-dessus de la borne haute 8.9095 (bruit moyen 1.36 % à cette heure sur 14 jours) · au-dessus de la VWAP 8.8634 ; régime tendance (efficacité 0.40) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 82.45 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,164 $ · 9 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:10 → 17:08</span><b class="sym">HYPE32196-USD</b><span class="chip">momentum zone de bruit</span><span>achat 59 $</span><span class="num muted">76,0652 → 75,5489</span><span class="num pnl bad">-0,52 $ · -0,85 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 76.0500 au-dessus de la borne haute 74.1830 (bruit moyen 1.05 % à cette heure sur 14 jours) · au-dessus de la VWAP 75.1828 ; régime mixte (efficacité 0.36) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 58.75 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,117 $ · 58 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:45 → 17:23</span><b class="sym">NEAR-USD</b><span class="chip">momentum zone de bruit</span><span>achat 54 $</span><span class="num muted">3,6453 → 3,6194</span><span class="num pnl bad">-0,49 $ · -0,81 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 3.6446 au-dessus de la borne haute 3.5975 (bruit moyen 1.56 % à cette heure sur 14 jours) · au-dessus de la VWAP 3.6042 ; régime mixte (efficacité 0.29) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 53.93 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,107 $ · 38 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:20 → 17:25</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 62 $</span><span class="num muted">0.0000052711 → 0.0000052671</span><span class="num pnl bad">-0,17 $ · -0,28 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000052700 au-dessus de la borne haute 0.0000052192 (bruit moyen 1.94 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000051958 ; régime mixte (efficacité 0.29) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 61.98 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,124 $ · 65 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 6 trade(s), <span class="num">-2,52 $</span> — poids 0,28 → 0,25</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 15 en range, 1 mixtes · 16:00 : 1 en tendance, 13 en range, 2 mixtes · 16:30 : 0 en tendance, 14 en range, 2 mixtes · 17:00 : 0 en tendance, 12 en range, 4 mixtes · 17:30 : 7 en tendance, 1 en range, 8 mixtes · 18:00 : 0 en tendance, 14 en range, 2 mixtes · 18:30 : 1 en tendance, 12 en range, 3 mixtes</li>
+<li>Signaux valides : 18, pris : 6 ; écartés : une seule entrée par minute (12), places pleines (4 positions ouvertes) : signal non pris (2)</li>
+<li>Setups refusés les plus fréquents :<ul><li>HYPE32196-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(10×)</span></li><li>AVAX-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(9×)</span></li><li>LINK-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(6×)</span></li><li>SUI20947-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(6×)</span></li><li>NEAR-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(5×)</span></li><li>PEPE24478-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(4×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.25, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.43 $ × poids (entre 0.61 et 4.85 $)</li><li>fin de séance plutôt hésitante (16 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à -0.52 %, il faut en moyenne 0.38 % par séance sur les 4 restantes</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>PEPE24478-USD</b> — a fini la fenêtre à +2.0 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>HYPE32196-USD</b> — a fini la fenêtre à +1.6 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>TON11419-USD</b> — a fini la fenêtre à -1.3 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>DOT-USD</b> — a fini la fenêtre à -1.2 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-11-06">
+<header class="dayhead"><h2>Séance du 2026-11-06</h2><span class="num big bad">-2,74 $ (-0,56 %)</span></header>
+<p class="muted">3 trade(s) · réussite 0 % · R moyen -0,82 · equity <span class="num">490,46 → 487,71 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">15:45 → 15:54</span><b class="sym">NEAR-USD</b><span class="chip">momentum zone de bruit</span><span>achat 124 $</span><span class="num muted">3,8056 → 3,7724</span><span class="num pnl bad">-1,33 $ · -1,05 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 3.8048 au-dessus de la borne haute 3.7515 (bruit moyen 1.02 % à cette heure sur 14 jours) · au-dessus de la VWAP 3.7618 ; régime tendance (efficacité 0.40) · stop suiveur sur max(borne, VWAP) · taille : risque 1.26 $ (0.5 % × poids 0.52), position 124.32 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,248 $ · 9 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">15:50 → 15:57</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 124 $</span><span class="num muted">0.0000051610 → 0.0000051190</span><span class="num pnl bad">-1,26 $ · -1,00 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000051600 au-dessus de la borne haute 0.0000051086 (bruit moyen 1.16 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000051051 ; régime mixte (efficacité 0.32) · stop suiveur sur max(borne, VWAP) · taille : risque 1.26 $ (0.5 % × poids 0.52), position 124.39 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,248 $ · 7 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">17:35 → 17:36</span><b class="sym">XRP-USD</b><span class="chip">momentum zone de bruit</span><span>achat 51 $</span><span class="num muted">1,1972 → 1,1961</span><span class="num pnl bad">-0,15 $ · -0,40 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 1.1970 au-dessus de la borne haute 1.1958 (bruit moyen 1.07 % à cette heure sur 14 jours) · au-dessus de la VWAP 1.1842 ; régime mixte (efficacité 0.27) · stop suiveur sur max(borne, VWAP) · taille : risque 0.38 $ (0.5 % × poids 0.31 × 0.5 mode chasse), position 50.87 $</p>
+<p class="why"><span class="lab">Sortie</span>retour dans la zone de bruit / sous la VWAP · frais 0,102 $ · 1 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 3 trade(s), <span class="num">-2,74 $</span> — poids 0,52 → 0,28</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 16 en range, 0 mixtes · 16:00 : 0 en tendance, 16 en range, 0 mixtes · 16:30 : 0 en tendance, 16 en range, 0 mixtes · 17:00 : 0 en tendance, 15 en range, 1 mixtes · 17:30 : 0 en tendance, 16 en range, 0 mixtes · 18:00 : 0 en tendance, 16 en range, 0 mixtes · 18:30 : 0 en tendance, 15 en range, 1 mixtes</li>
+<li>Signaux valides : 4, pris : 3 ; écartés : une seule entrée par minute (1) ; mode chasse à 17:30</li>
+<li>Setups refusés les plus fréquents :<ul><li>SOL-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(3×)</span></li><li>DOGE-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(3×)</span></li><li>ADA-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(3×)</span></li><li>AVAX-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(3×)</span></li><li>SUI20947-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(3×)</span></li><li>TON11419-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(3×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.28, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.44 $ × poids (entre 0.61 et 4.88 $)</li><li>fin de séance plutôt hésitante (15 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>semaine terminée à -0.58 % (objectif +1 %)</li><li>mode chasse déclenché à 17:30 : peu de setups propres aujourd&#39;hui, à surveiller</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>DOT-USD</b> — a fini la fenêtre à -0.6 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>TON11419-USD</b> — a fini la fenêtre à +0.6 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>SUI20947-USD</b> — a fini la fenêtre à +0.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>DOGE-USD</b> — a fini la fenêtre à +0.4 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-11-05">
+<header class="dayhead"><h2>Séance du 2026-11-05</h2><span class="num big good">0,00 $ (0,00 %)</span></header>
+<p class="muted">0 trade(s) · réussite 0 % · R moyen 0,00 · equity <span class="num">490,46 → 490,46 $</span></p>
+<h3>Actions prises</h3>
+<p>Aucun trade : aucun setup ne passait les filtres, ou un garde-fou a bloqué.</p>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 0 trade(s), <span class="num">0,00 $</span> — poids 0,52 → 0,52</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 14 en range, 2 mixtes · 16:00 : 12 en tendance, 1 en range, 3 mixtes · 16:30 : 0 en tendance, 4 en range, 12 mixtes · 17:00 : 0 en tendance, 8 en range, 8 mixtes · 17:30 : 3 en tendance, 2 en range, 11 mixtes · 18:00 : 1 en tendance, 7 en range, 8 mixtes · 18:30 : 0 en tendance, 15 en range, 1 mixtes</li>
+<li>Signaux valides : 0, pris : 0 ; mode chasse à 17:30</li>
+<li>Setups refusés les plus fréquents :<ul><li>DOT-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(1×)</span></li><li>PEPE24478-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(1×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.52, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.45 $ × poids (entre 0.61 et 4.90 $)</li><li>fin de séance plutôt hésitante (15 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à -0.02 %, il faut en moyenne 1.02 % par séance sur les 1 restantes</li><li>mode chasse déclenché à 17:30 : peu de setups propres aujourd&#39;hui, à surveiller</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>XRP-USD</b> — a fini la fenêtre à -8.6 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>SUI20947-USD</b> — a fini la fenêtre à -7.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>SOL-USD</b> — a fini la fenêtre à -7.2 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>DOGE-USD</b> — a fini la fenêtre à -7.1 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-11-04">
+<header class="dayhead"><h2>Séance du 2026-11-04</h2><span class="num big good">+1,03 $ (+0,21 %)</span></header>
+<p class="muted">2 trade(s) · réussite 50 % · R moyen +0,84 · equity <span class="num">489,43 → 490,46 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">16:05 → 16:22</span><b class="sym">NEAR-USD</b><span class="chip">momentum zone de bruit</span><span>achat 59 $</span><span class="num muted">4,2388 → 4,1942</span><span class="num pnl bad">-0,74 $ · -1,21 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 4.2380 au-dessus de la borne haute 4.0434 (bruit moyen 1.07 % à cette heure sur 14 jours) · au-dessus de la VWAP 4.1322 ; régime tendance (efficacité 0.54) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 59.34 $</p>
+<p class="why"><span class="lab">Sortie</span>stop · frais 0,118 $ · 17 min</p>
+</li><li class="trade win">
+<div class="tl"><span class="num">16:00 → 16:35</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 83 $</span><span class="num muted">0.0000050610 → 0.0000051796</span><span class="num pnl good">+1,77 $ · +2,89 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000050600 au-dessus de la borne haute 0.0000049841 (bruit moyen 1.10 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000050253 ; régime mixte (efficacité 0.37) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 82.69 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,167 $ · 35 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 2 trade(s), <span class="num">+1,03 $</span> — poids 0,25 → 0,52</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 15 en range, 1 mixtes · 16:00 : 13 en tendance, 0 en range, 3 mixtes · 16:30 : 1 en tendance, 13 en range, 2 mixtes · 17:00 : 0 en tendance, 16 en range, 0 mixtes · 17:30 : 0 en tendance, 16 en range, 0 mixtes · 18:00 : 0 en tendance, 15 en range, 1 mixtes · 18:30 : 0 en tendance, 9 en range, 7 mixtes</li>
+<li>Signaux valides : 2, pris : 2 ; mode chasse à 17:30</li>
+<li>Setups refusés les plus fréquents :<ul><li>BTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(23×)</span></li><li>ETH-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(23×)</span></li><li>SUI20947-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(21×)</span></li><li>LTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(20×)</span></li><li>ADA-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(19×)</span></li><li>TON11419-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(19×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.52, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.45 $ × poids (entre 0.61 et 4.90 $)</li><li>fin de séance plutôt hésitante (16 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à -0.02 %, il faut en moyenne 0.51 % par séance sur les 2 restantes</li><li>mode chasse déclenché à 17:30 : peu de setups propres aujourd&#39;hui, à surveiller</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>ETH-USD</b> — a fini la fenêtre à +6.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>BTC-USD</b> — a fini la fenêtre à +5.7 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>XRP-USD</b> — a fini la fenêtre à +4.8 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>ADA-USD</b> — a fini la fenêtre à +4.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-11-03">
+<header class="dayhead"><h2>Séance du 2026-11-03</h2><span class="num big bad">-1,12 $ (-0,23 %)</span></header>
+<p class="muted">3 trade(s) · réussite 0 % · R moyen -0,62 · equity <span class="num">490,55 → 489,43 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">16:45 → 16:51</span><b class="sym">HYPE32196-USD</b><span class="chip">momentum zone de bruit</span><span>achat 83 $</span><span class="num muted">87,4075 → 87,0094</span><span class="num pnl bad">-0,54 $ · -0,89 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 87.3900 au-dessus de la borne haute 86.9893 (bruit moyen 0.97 % à cette heure sur 14 jours) · au-dessus de la VWAP 86.3999 ; régime mixte (efficacité 0.25) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 82.88 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,165 $ · 6 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">17:20 → 17:43</span><b class="sym">TON11419-USD</b><span class="chip">momentum zone de bruit</span><span>achat 83 $</span><span class="num muted">1,1708 → 1,1653</span><span class="num pnl bad">-0,56 $ · -0,91 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 1.1706 au-dessus de la borne haute 1.1654 (bruit moyen 1.11 % à cette heure sur 14 jours) · au-dessus de la VWAP 1.1657 ; régime mixte (efficacité 0.26) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 82.79 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,165 $ · 23 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">18:15 → 18:55</span><b class="sym">TON11419-USD</b><span class="chip">momentum zone de bruit</span><span>achat 41 $</span><span class="num muted">1,1702 → 1,1721</span><span class="num pnl bad">-0,02 $ · -0,06 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 1.1700 au-dessus de la borne haute 1.1619 (bruit moyen 1.00 % à cette heure sur 14 jours) · au-dessus de la VWAP 1.1662 ; régime mixte (efficacité 0.28) · stop suiveur sur max(borne, VWAP) · taille : risque 0.31 $ (0.5 % × poids 0.25 × 0.5 mode chasse), position 41.35 $</p>
+<p class="why"><span class="lab">Sortie</span>clôture de fin de fenêtre (18:55) · frais 0,083 $ · 40 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 3 trade(s), <span class="num">-1,12 $</span> — poids 0,25 → 0,25</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 16 en range, 0 mixtes · 16:00 : 1 en tendance, 15 en range, 0 mixtes · 16:30 : 0 en tendance, 15 en range, 1 mixtes · 17:00 : 0 en tendance, 16 en range, 0 mixtes · 17:30 : 1 en tendance, 11 en range, 4 mixtes · 18:00 : 0 en tendance, 14 en range, 2 mixtes · 18:30 : 0 en tendance, 14 en range, 2 mixtes</li>
+<li>Signaux valides : 3, pris : 3 ; mode chasse à 17:30</li>
+<li>Setups refusés les plus fréquents :<ul><li>TON11419-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(14×)</span></li><li>TON11419-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(9×)</span></li><li>HYPE32196-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(3×)</span></li><li>BTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(3×)</span></li><li>HYPE32196-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(2×)</span></li><li>SUI20947-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(1×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.25, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.45 $ × poids (entre 0.61 et 4.89 $)</li><li>fin de séance plutôt hésitante (16 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à -0.23 %, il faut en moyenne 0.41 % par séance sur les 3 restantes</li><li>mode chasse déclenché à 17:30 : peu de setups propres aujourd&#39;hui, à surveiller</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>TON11419-USD</b> — a fini la fenêtre à +1.7 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>LTC-USD</b> — a fini la fenêtre à -1.1 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>LINK-USD</b> — a fini la fenêtre à -1.0 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>AVAX-USD</b> — a fini la fenêtre à -1.0 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-11-02">
+<header class="dayhead"><h2>Séance du 2026-11-02</h2><span class="num big good">0,00 $ (0,00 %)</span></header>
+<p class="muted">0 trade(s) · réussite 0 % · R moyen 0,00 · equity <span class="num">490,55 → 490,55 $</span></p>
+<h3>Actions prises</h3>
+<p>Aucun trade : aucun setup ne passait les filtres, ou un garde-fou a bloqué.</p>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 0 trade(s), <span class="num">0,00 $</span> — poids 0,25 → 0,25</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 16 en range, 0 mixtes · 16:00 : 0 en tendance, 16 en range, 0 mixtes · 16:30 : 0 en tendance, 16 en range, 0 mixtes · 17:00 : 1 en tendance, 10 en range, 5 mixtes · 17:30 : 0 en tendance, 15 en range, 1 mixtes · 18:00 : 0 en tendance, 13 en range, 3 mixtes · 18:30 : 4 en tendance, 2 en range, 10 mixtes</li>
+<li>Signaux valides : 0, pris : 0 ; mode chasse à 17:30</li>
+<li>Setups refusés les plus fréquents :<ul><li>ETH-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(1×)</span></li><li>LINK-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(1×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.25, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.45 $ × poids (entre 0.61 et 4.91 $)</li><li>fin de séance plutôt hésitante (16 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à +0.00 %, il faut en moyenne 0.25 % par séance sur les 4 restantes</li><li>mode chasse déclenché à 17:30 : peu de setups propres aujourd&#39;hui, à surveiller</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>SOL-USD</b> — a fini la fenêtre à -3.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>AVAX-USD</b> — a fini la fenêtre à -2.8 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>DOGE-USD</b> — a fini la fenêtre à -2.6 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>BTC-USD</b> — a fini la fenêtre à -2.4 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-10-30">
+<header class="dayhead"><h2>Séance du 2026-10-30</h2><span class="num big bad">-1,98 $ (-0,40 %)</span></header>
+<p class="muted">4 trade(s) · réussite 0 % · R moyen -0,77 · equity <span class="num">492,53 → 490,55 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">16:05 → 16:11</span><b class="sym">NEAR-USD</b><span class="chip">momentum zone de bruit</span><span>achat 98 $</span><span class="num muted">4,3501 → 4,3535</span><span class="num pnl bad">-0,12 $ · -0,17 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 4.3492 au-dessus de la borne haute 4.3373 (bruit moyen 1.18 % à cette heure sur 14 jours) · au-dessus de la VWAP 4.2728 ; régime mixte (efficacité 0.25) · stop suiveur sur max(borne, VWAP) · taille : risque 0.73 $ (0.5 % × poids 0.30), position 98.28 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,197 $ · 6 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:10 → 16:12</span><b class="sym">DOT-USD</b><span class="chip">momentum zone de bruit</span><span>achat 98 $</span><span class="num muted">0.95549 → 0.95251</span><span class="num pnl bad">-0,50 $ · -0,69 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.95530 au-dessus de la borne haute 0.95263 (bruit moyen 1.30 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.94376 ; régime mixte (efficacité 0.29) · stop suiveur sur max(borne, VWAP) · taille : risque 0.73 $ (0.5 % × poids 0.30), position 98.32 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,196 $ · 2 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:15 → 16:21</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 49 $</span><span class="num muted">0.0000052611 → 0.0000052060</span><span class="num pnl bad">-0,62 $ · -1,00 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000052600 au-dessus de la borne haute 0.0000051956 (bruit moyen 1.87 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000051388 ; régime mixte (efficacité 0.38) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 49.43 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,098 $ · 6 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:20 → 16:31</span><b class="sym">LINK-USD</b><span class="chip">momentum zone de bruit</span><span>achat 72 $</span><span class="num muted">11,2042 → 11,1104</span><span class="num pnl bad">-0,74 $ · -1,21 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 11.2020 au-dessus de la borne haute 11.1081 (bruit moyen 1.14 % à cette heure sur 14 jours) · au-dessus de la VWAP 11.0820 ; régime mixte (efficacité 0.28) · stop suiveur sur max(borne, VWAP) · taille : risque 0.61 $ (0.5 % × poids 0.25), position 71.66 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,143 $ · 11 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 4 trade(s), <span class="num">-1,98 $</span> — poids 0,30 → 0,25</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 15 en range, 1 mixtes · 16:00 : 0 en tendance, 7 en range, 9 mixtes · 16:30 : 0 en tendance, 16 en range, 0 mixtes · 17:00 : 0 en tendance, 15 en range, 1 mixtes · 17:30 : 1 en tendance, 9 en range, 6 mixtes · 18:00 : 0 en tendance, 16 en range, 0 mixtes · 18:30 : 0 en tendance, 15 en range, 1 mixtes</li>
+<li>Signaux valides : 11, pris : 4 ; écartés : une seule entrée par minute (7)</li>
+<li>Setups refusés les plus fréquents :<ul><li>LINK-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(7×)</span></li><li>AVAX-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(6×)</span></li><li>ETH-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(6×)</span></li><li>HYPE32196-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(6×)</span></li><li>HYPE32196-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(4×)</span></li><li>SUI20947-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(4×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.25, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.45 $ × poids (entre 0.61 et 4.91 $)</li><li>fin de séance plutôt hésitante (13 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>semaine terminée à -1.89 % (objectif +1 %)</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>AVAX-USD</b> — a fini la fenêtre à +2.0 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>LINK-USD</b> — a fini la fenêtre à +1.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>TON11419-USD</b> — a fini la fenêtre à -1.3 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>DOT-USD</b> — a fini la fenêtre à +1.0 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-10-29">
+<header class="dayhead"><h2>Séance du 2026-10-29</h2><span class="num big bad">-4,04 $ (-0,81 %)</span></header>
+<p class="muted">8 trade(s) · réussite 38 % · R moyen -0,38 · equity <span class="num">496,57 → 492,53 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">16:10 → 16:19</span><b class="sym">HYPE32196-USD</b><span class="chip">momentum zone de bruit</span><span>achat 146 $</span><span class="num muted">94,0488 → 93,0230</span><span class="num pnl bad">-1,88 $ · -1,20 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 94.0300 au-dessus de la borne haute 92.1684 (bruit moyen 1.08 % à cette heure sur 14 jours) · au-dessus de la VWAP 91.0795 ; régime tendance (efficacité 0.50) · stop suiveur sur max(borne, VWAP) · taille : risque 1.56 $ (0.5 % × poids 0.63), position 145.82 $</p>
+<p class="why"><span class="lab">Sortie</span>stop · frais 0,290 $ · 9 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:00 → 16:29</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 192 $</span><span class="num muted">0.0000050410 → 0.0000050238</span><span class="num pnl bad">-1,04 $ · -0,67 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000050400 au-dessus de la borne haute 0.0000049089 (bruit moyen 1.01 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000050002 ; régime mixte (efficacité 0.28) · stop suiveur sur max(borne, VWAP) · taille : risque 1.56 $ (0.5 % × poids 0.63), position 192.22 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,384 $ · 29 min</p>
+</li><li class="trade win">
+<div class="tl"><span class="num">16:45 → 17:27</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 53 $</span><span class="num muted">0.0000053211 → 0.0000053734</span><span class="num pnl good">+0,42 $ · +0,43 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000053200 au-dessus de la borne haute 0.0000049565 (bruit moyen 1.98 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000051202 ; régime tendance (efficacité 0.43) · stop suiveur sur max(borne, VWAP) · taille : risque 0.97 $ (0.5 % × poids 0.39), position 53.11 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,107 $ · 42 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:20 → 17:33</span><b class="sym">LINK-USD</b><span class="chip">momentum zone de bruit</span><span>achat 155 $</span><span class="num muted">11,8724 → 11,8466</span><span class="num pnl bad">-0,65 $ · -0,56 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 11.8700 au-dessus de la borne haute 11.7605 (bruit moyen 1.06 % à cette heure sur 14 jours) · au-dessus de la VWAP 11.7951 ; régime mixte (efficacité 0.25) · stop suiveur sur max(borne, VWAP) · taille : risque 1.15 $ (0.5 % × poids 0.46), position 155.26 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,310 $ · 73 min</p>
+</li><li class="trade win">
+<div class="tl"><span class="num">16:25 → 17:33</span><b class="sym">NEAR-USD</b><span class="chip">momentum zone de bruit</span><span>achat 147 $</span><span class="num muted">4,5641 → 4,5886</span><span class="num pnl good">+0,49 $ · +0,45 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 4.5632 au-dessus de la borne haute 4.5294 (bruit moyen 1.84 % à cette heure sur 14 jours) · au-dessus de la VWAP 4.5369 ; régime mixte (efficacité 0.26) · stop suiveur sur max(borne, VWAP) · taille : risque 1.09 $ (0.5 % × poids 0.46), position 146.87 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,295 $ · 68 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">17:40 → 17:41</span><b class="sym">SUI20947-USD</b><span class="chip">momentum zone de bruit</span><span>achat 143 $</span><span class="num muted">0.94799 → 0.94541</span><span class="num pnl bad">-0,67 $ · -0,64 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.94780 au-dessus de la borne haute 0.94013 (bruit moyen 1.04 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.94769 ; régime mixte (efficacité 0.26) · stop suiveur sur max(borne, VWAP) · taille : risque 1.05 $ (0.5 % × poids 0.43), position 142.55 $</p>
+<p class="why"><span class="lab">Sortie</span>retour dans la zone de bruit / sous la VWAP · frais 0,285 $ · 1 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">18:15 → 18:24</span><b class="sym">PEPE24478-USD</b><span class="chip">momentum zone de bruit</span><span>achat 70 $</span><span class="num muted">0.0000054411 → 0.0000053721</span><span class="num pnl bad">-1,03 $ · -1,15 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.0000054400 au-dessus de la borne haute 0.0000049850 (bruit moyen 2.57 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.0000053718 ; régime tendance (efficacité 0.44) · stop suiveur sur max(borne, VWAP) · taille : risque 0.90 $ (0.5 % × poids 0.36), position 70.48 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,140 $ · 9 min</p>
+</li><li class="trade win">
+<div class="tl"><span class="num">16:35 → 18:47</span><b class="sym">HYPE32196-USD</b><span class="chip">momentum zone de bruit</span><span>achat 92 $</span><span class="num muted">93,4987 → 94,0126</span><span class="num pnl good">+0,32 $ · +0,33 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 93.4800 au-dessus de la borne haute 92.1675 (bruit moyen 1.08 % à cette heure sur 14 jours) · au-dessus de la VWAP 92.5117 ; régime mixte (efficacité 0.32) · stop suiveur sur max(borne, VWAP) · taille : risque 0.97 $ (0.5 % × poids 0.39), position 92.18 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,185 $ · 132 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 8 trade(s), <span class="num">-4,04 $</span> — poids 0,63 → 0,30</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 16 en range, 0 mixtes · 16:00 : 0 en tendance, 10 en range, 6 mixtes · 16:30 : 1 en tendance, 13 en range, 2 mixtes · 17:00 : 2 en tendance, 7 en range, 7 mixtes · 17:30 : 0 en tendance, 13 en range, 3 mixtes · 18:00 : 0 en tendance, 16 en range, 0 mixtes · 18:30 : 1 en tendance, 14 en range, 1 mixtes</li>
+<li>Signaux valides : 16, pris : 8 ; écartés : une seule entrée par minute (8), places pleines (4 positions ouvertes) : signal non pris (6)</li>
+<li>Setups refusés les plus fréquents :<ul><li>ETH-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(15×)</span></li><li>SOL-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(10×)</span></li><li>BTC-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(10×)</span></li><li>BTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(9×)</span></li><li>XRP-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(9×)</span></li><li>SUI20947-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(8×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.30, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.46 $ × poids (entre 0.62 et 4.93 $)</li><li>fin de séance plutôt hésitante (10 en range vs 0 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à -1.49 %, il faut en moyenne 2.49 % par séance sur les 1 restantes</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>PEPE24478-USD</b> — a fini la fenêtre à +4.3 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>HYPE32196-USD</b> — a fini la fenêtre à +2.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>BTC-USD</b> — a fini la fenêtre à +1.0 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>LINK-USD</b> — a fini la fenêtre à +0.6 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-10-28">
+<header class="dayhead"><h2>Séance du 2026-10-28</h2><span class="num big bad">-0,13 $ (-0,03 %)</span></header>
+<p class="muted">1 trade(s) · réussite 0 % · R moyen -0,08 · equity <span class="num">496,70 → 496,57 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">16:25 → 18:29</span><b class="sym">LTC-USD</b><span class="chip">momentum zone de bruit</span><span>achat 159 $</span><span class="num muted">58,4377 → 58,5064</span><span class="num pnl bad">-0,13 $ · -0,08 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 58.4260 au-dessus de la borne haute 57.8518 (bruit moyen 1.11 % à cette heure sur 14 jours) · au-dessus de la VWAP 57.8184 ; régime mixte (efficacité 0.38) · stop suiveur sur max(borne, VWAP) · taille : risque 1.59 $ (0.5 % × poids 0.64), position 158.50 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,317 $ · 124 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 1 trade(s), <span class="num">-0,13 $</span> — poids 0,64 → 0,63</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 16 en range, 0 mixtes · 16:00 : 0 en tendance, 12 en range, 4 mixtes · 16:30 : 0 en tendance, 15 en range, 1 mixtes · 17:00 : 0 en tendance, 16 en range, 0 mixtes · 17:30 : 1 en tendance, 15 en range, 0 mixtes · 18:00 : 0 en tendance, 16 en range, 0 mixtes · 18:30 : 0 en tendance, 12 en range, 4 mixtes</li>
+<li>Signaux valides : 1, pris : 1 ; mode chasse à 17:30</li>
+<li>Setups refusés les plus fréquents :<ul><li>LTC-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(6×)</span></li><li>LTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(3×)</span></li><li>TON11419-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(3×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.63, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.48 $ × poids (entre 0.62 et 4.97 $)</li><li>fin de séance plutôt hésitante (8 en range vs 2 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à -0.69 %, il faut en moyenne 0.84 % par séance sur les 2 restantes</li><li>mode chasse déclenché à 17:30 : peu de setups propres aujourd&#39;hui, à surveiller</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>LTC-USD</b> — a fini la fenêtre à +2.1 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>TON11419-USD</b> — a fini la fenêtre à +1.6 fois son bruit habituel (tendance) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>SOL-USD</b> — a fini la fenêtre à +0.6 fois son bruit habituel (tendance) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>PEPE24478-USD</b> — a fini la fenêtre à +0.4 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card day" id="seance-2026-10-27">
+<header class="dayhead"><h2>Séance du 2026-10-27</h2><span class="num big bad">-3,30 $ (-0,66 %)</span></header>
+<p class="muted">3 trade(s) · réussite 0 % · R moyen -0,59 · equity <span class="num">500,00 → 496,70 $</span></p>
+<h3>Actions prises</h3>
+<ul class="trades"><li class="trade loss">
+<div class="tl"><span class="num">16:25 → 16:31</span><b class="sym">LINK-USD</b><span class="chip">momentum zone de bruit</span><span>achat 250 $</span><span class="num muted">11,4713 → 11,4277</span><span class="num pnl bad">-1,45 $ · -0,78 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 11.4690 au-dessus de la borne haute 11.4230 (bruit moyen 1.09 % à cette heure sur 14 jours) · au-dessus de la VWAP 11.3414 ; régime mixte (efficacité 0.30) · stop suiveur sur max(borne, VWAP) · taille : risque 1.85 $ (0.5 % × poids 1.00), position 250.00 $</p>
+<p class="why"><span class="lab">Sortie</span>retour dans la zone de bruit / sous la VWAP · frais 0,499 $ · 6 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">16:45 → 16:52</span><b class="sym">SUI20947-USD</b><span class="chip">momentum zone de bruit</span><span>achat 249 $</span><span class="num muted">0.92579 → 0.92476</span><span class="num pnl bad">-0,78 $ · -0,42 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 0.92560 au-dessus de la borne haute 0.92443 (bruit moyen 1.31 % à cette heure sur 14 jours) · au-dessus de la VWAP 0.92143 ; régime tendance (efficacité 0.43) · stop suiveur sur max(borne, VWAP) · taille : risque 1.84 $ (0.5 % × poids 0.82), position 249.28 $</p>
+<p class="why"><span class="lab">Sortie</span>stop suiveur · frais 0,498 $ · 7 min</p>
+</li><li class="trade loss">
+<div class="tl"><span class="num">17:05 → 17:06</span><b class="sym">NEAR-USD</b><span class="chip">momentum zone de bruit</span><span>achat 249 $</span><span class="num muted">4,6116 → 4,6010</span><span class="num pnl bad">-1,07 $ · -0,58 R</span></div>
+<p class="why"><span class="lab">Pourquoi</span>momentum « zone de bruit » : 4.6107 au-dessus de la borne haute 4.6050 (bruit moyen 2.21 % à cette heure sur 14 jours) · au-dessus de la VWAP 4.5602 ; régime mixte (efficacité 0.32) · stop suiveur sur max(borne, VWAP) · taille : risque 1.84 $ (0.5 % × poids 0.74), position 248.89 $</p>
+<p class="why"><span class="lab">Sortie</span>retour dans la zone de bruit / sous la VWAP · frais 0,497 $ · 1 min</p>
+</li></ul>
+<ul class="plain"><li>ORB 5 min : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li><li>momentum zone de bruit : 3 trade(s), <span class="num">-3,30 $</span> — poids 1,00 → 0,64</li><li>retour VWAP : 0 trade(s), <span class="num">0,00 $</span> — poids 1,00 → 1,00</li></ul>
+<h3>Analyses effectuées</h3>
+<ul class="plain">
+<li>Actions « en jeu » à l'ouverture (volume relatif des 5 premières minutes) : —</li>
+<li>Régimes de marché : 15:00 : 16 en tendance, 0 en range, 0 mixtes · 15:30 : 0 en tendance, 6 en range, 10 mixtes · 16:00 : 0 en tendance, 13 en range, 3 mixtes · 16:30 : 0 en tendance, 15 en range, 1 mixtes · 17:00 : 0 en tendance, 16 en range, 0 mixtes · 17:30 : 0 en tendance, 13 en range, 3 mixtes · 18:00 : 1 en tendance, 15 en range, 0 mixtes · 18:30 : 0 en tendance, 14 en range, 2 mixtes</li>
+<li>Signaux valides : 7, pris : 3 ; écartés : une seule entrée par minute (4)</li>
+<li>Setups refusés les plus fréquents :<ul><li>ETH-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(12×)</span></li><li>LINK-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(10×)</span></li><li>BTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(8×)</span></li><li>BTC-USD momentum : bruit habituel (… %) trop faible face aux frais (… %) <span class="muted">(7×)</span></li><li>DOGE-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(7×)</span></li><li>LTC-USD momentum : sortie de zone mais marché en range (efficacité …) <span class="muted">(7×)</span></li></ul></li>
+</ul>
+<h3>Prévisions pour la séance suivante</h3>
+<ul class="plain"><li>poids pour la prochaine séance : ORB 1.00, momentum 0.64, VWAP 1.00 — priorité à « ORB 5 min »</li><li>risque par trade prévu : 2.48 $ × poids (entre 0.62 et 4.97 $)</li><li>fin de séance plutôt hésitante (7 en range vs 2 en tendance) : les retours à la VWAP devraient dominer</li><li>objectif hebdo +1 % : semaine à -0.66 %, il faut en moyenne 0.55 % par séance sur les 3 restantes</li></ul>
+<p class="lab2">À surveiller</p><ul class="plain"><li><b>HYPE32196-USD</b> — a fini la fenêtre à +2.1 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>BNB-USD</b> — a fini la fenêtre à +1.4 fois son bruit habituel (mixte) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>PEPE24478-USD</b> — a fini la fenêtre à +1.3 fois son bruit habituel (range) : suite ou retournement à surveiller dès l&#39;ouverture</li><li><b>LINK-USD</b> — a fini la fenêtre à +0.9 fois son bruit habituel (mixte) : suite ou retournement à surveiller dès l&#39;ouverture</li></ul>
+</section>
+<section class="card"><h2>Carnet complet (30 trades)</h2>
+<div class="scroll"><table><thead><tr><th>Date</th><th>Heure</th><th>Instrument</th><th>Sens</th><th>Stratégie</th><th>Taille</th><th>Prix</th><th>PnL</th><th>R</th><th>Sortie</th></tr></thead><tbody><tr class="loss"><td>11-09</td><td>16:20 → 17:25</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>62 $</td><td>0.0000052711 → 0.0000052671</td><td class="bad">-0,17 $</td><td>-0,28</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-09</td><td>16:45 → 17:23</td><td><b>NEAR-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>54 $</td><td>3,6453 → 3,6194</td><td class="bad">-0,49 $</td><td>-0,81</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-09</td><td>16:10 → 17:08</td><td><b>HYPE32196-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>59 $</td><td>76,0652 → 75,5489</td><td class="bad">-0,52 $</td><td>-0,85</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-09</td><td>16:55 → 17:04</td><td><b>AVAX-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>82 $</td><td>8,9708 → 8,9176</td><td class="bad">-0,65 $</td><td>-1,07</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-09</td><td>15:45 → 16:06</td><td><b>NEAR-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>92 $</td><td>3,5911 → 3,5965</td><td class="bad">-0,05 $</td><td>-0,07</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-09</td><td>15:55 → 16:01</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>65 $</td><td>0.0000052310 → 0.0000051899</td><td class="bad">-0,64 $</td><td>-0,94</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-06</td><td>17:35 → 17:36</td><td><b>XRP-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>51 $</td><td>1,1972 → 1,1961</td><td class="bad">-0,15 $</td><td>-0,40</td><td class="wrap">retour dans la zone de bruit / sous la VWAP</td></tr><tr class="loss"><td>11-06</td><td>15:50 → 15:57</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>124 $</td><td>0.0000051610 → 0.0000051190</td><td class="bad">-1,26 $</td><td>-1,00</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-06</td><td>15:45 → 15:54</td><td><b>NEAR-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>124 $</td><td>3,8056 → 3,7724</td><td class="bad">-1,33 $</td><td>-1,05</td><td class="wrap">stop suiveur</td></tr><tr class="win"><td>11-04</td><td>16:00 → 16:35</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>83 $</td><td>0.0000050610 → 0.0000051796</td><td class="good">+1,77 $</td><td>+2,89</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-04</td><td>16:05 → 16:22</td><td><b>NEAR-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>59 $</td><td>4,2388 → 4,1942</td><td class="bad">-0,74 $</td><td>-1,21</td><td class="wrap">stop</td></tr><tr class="loss"><td>11-03</td><td>18:15 → 18:55</td><td><b>TON11419-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>41 $</td><td>1,1702 → 1,1721</td><td class="bad">-0,02 $</td><td>-0,06</td><td class="wrap">clôture de fin de fenêtre (18:55)</td></tr><tr class="loss"><td>11-03</td><td>17:20 → 17:43</td><td><b>TON11419-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>83 $</td><td>1,1708 → 1,1653</td><td class="bad">-0,56 $</td><td>-0,91</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>11-03</td><td>16:45 → 16:51</td><td><b>HYPE32196-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>83 $</td><td>87,4075 → 87,0094</td><td class="bad">-0,54 $</td><td>-0,89</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-30</td><td>16:20 → 16:31</td><td><b>LINK-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>72 $</td><td>11,2042 → 11,1104</td><td class="bad">-0,74 $</td><td>-1,21</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-30</td><td>16:15 → 16:21</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>49 $</td><td>0.0000052611 → 0.0000052060</td><td class="bad">-0,62 $</td><td>-1,00</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-30</td><td>16:10 → 16:12</td><td><b>DOT-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>98 $</td><td>0.95549 → 0.95251</td><td class="bad">-0,50 $</td><td>-0,69</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-30</td><td>16:05 → 16:11</td><td><b>NEAR-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>98 $</td><td>4,3501 → 4,3535</td><td class="bad">-0,12 $</td><td>-0,17</td><td class="wrap">stop suiveur</td></tr><tr class="win"><td>10-29</td><td>16:35 → 18:47</td><td><b>HYPE32196-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>92 $</td><td>93,4987 → 94,0126</td><td class="good">+0,32 $</td><td>+0,33</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-29</td><td>18:15 → 18:24</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>70 $</td><td>0.0000054411 → 0.0000053721</td><td class="bad">-1,03 $</td><td>-1,15</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-29</td><td>17:40 → 17:41</td><td><b>SUI20947-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>143 $</td><td>0.94799 → 0.94541</td><td class="bad">-0,67 $</td><td>-0,64</td><td class="wrap">retour dans la zone de bruit / sous la VWAP</td></tr><tr class="win"><td>10-29</td><td>16:25 → 17:33</td><td><b>NEAR-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>147 $</td><td>4,5641 → 4,5886</td><td class="good">+0,49 $</td><td>+0,45</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-29</td><td>16:20 → 17:33</td><td><b>LINK-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>155 $</td><td>11,8724 → 11,8466</td><td class="bad">-0,65 $</td><td>-0,56</td><td class="wrap">stop suiveur</td></tr><tr class="win"><td>10-29</td><td>16:45 → 17:27</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>53 $</td><td>0.0000053211 → 0.0000053734</td><td class="good">+0,42 $</td><td>+0,43</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-29</td><td>16:00 → 16:29</td><td><b>PEPE24478-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>192 $</td><td>0.0000050410 → 0.0000050238</td><td class="bad">-1,04 $</td><td>-0,67</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-29</td><td>16:10 → 16:19</td><td><b>HYPE32196-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>146 $</td><td>94,0488 → 93,0230</td><td class="bad">-1,88 $</td><td>-1,20</td><td class="wrap">stop</td></tr><tr class="loss"><td>10-28</td><td>16:25 → 18:29</td><td><b>LTC-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>159 $</td><td>58,4377 → 58,5064</td><td class="bad">-0,13 $</td><td>-0,08</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-27</td><td>17:05 → 17:06</td><td><b>NEAR-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>249 $</td><td>4,6116 → 4,6010</td><td class="bad">-1,07 $</td><td>-0,58</td><td class="wrap">retour dans la zone de bruit / sous la VWAP</td></tr><tr class="loss"><td>10-27</td><td>16:45 → 16:52</td><td><b>SUI20947-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>249 $</td><td>0.92579 → 0.92476</td><td class="bad">-0,78 $</td><td>-0,42</td><td class="wrap">stop suiveur</td></tr><tr class="loss"><td>10-27</td><td>16:25 → 16:31</td><td><b>LINK-USD</b></td><td>achat</td><td>momentum zone de bruit</td><td>250 $</td><td>11,4713 → 11,4277</td><td class="bad">-1,45 $</td><td>-0,78</td><td class="wrap">retour dans la zone de bruit / sous la VWAP</td></tr></tbody></table></div>
+<p class="muted">Export tableur : carnet.csv, dans le même dossier du dépôt.</p></section>
+
+<section class="card"><h2>Méthode</h2><ul class="plain">
+<li><b>ORB 5 min sur actions « en jeu »</b>, d'après Zarattini, Barbon &amp; Aziz (2024) : les 8 actions au plus fort volume relatif d'ouverture (prix ≥ 5 $, volume moyen ≥ 1 M, ATR ≥ 0,50 $, listes Yahoo « plus actives » et « plus fortes hausses »), cassure du range des 5 premières minutes, stop sous ce range, seulement si le S&amp;P 500 est au-dessus de sa VWAP. Achat seulement (compte cash).</li>
+<li><b>Momentum « zone de bruit »</b>, d'après Zarattini, Aziz &amp; Barbon (2024) : on suit le prix quand il sort de sa zone d'oscillation habituelle à cette heure, au-dessus de la VWAP ; stop suiveur max(borne, VWAP). ETF SPY, QQQ, IWM et cryptos (achat).</li>
+<li><b>Retour à la VWAP</b> en marché sans tendance : écart ≥ 2 écarts-types, objectif la VWAP, seulement si le gain attendu vaut au moins 3 fois les frais.</li>
+<li><b>Risque</b> : 0.5 % de l'equity par trade × poids adaptatif (0,25 à 2), une position ≤ 50 % de l'equity, 4 positions max dont 0 au plus pour l'ORB, stop journalier −1.5 %, arrêt de la semaine à −4 %. Moins de 3 trades à 17 h 30 : « mode chasse » (seuils assouplis, risque ÷ 2).</li>
+<li><b>Coûts simulés par ordre</b> : actions 0 commission + 3 points de base de glissement ; crypto 10 points de base de frais + 2 de glissement. Entrée au prix de clôture de la minute du signal ; si le stop et l'objectif sont touchés dans la même minute, c'est le stop qui compte.</li>
+<li><b>Données</b> : barres d'une minute Yahoo Finance (gratuites ; quelques secondes de retard possibles).</li>
+</ul></section>
+<footer>Simulation à but d'apprentissage. Rien ici n'est un conseil en investissement, et une semaine de résultats ne prouve rien statistiquement.</footer>
+</main>
