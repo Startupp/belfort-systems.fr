@@ -60,13 +60,6 @@ const SECTIONS = {
     connect: [...API],
     robots: true,
   },
-  "/portail/": { nom: "Portail client (connexion)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, robots: true },
-  // Coffres chiffrés : après le mot de passe, la page déchiffre un document HTML et l'injecte
-  // (document.write / DOMParser) avec SES PROPRES scripts, dont on ne peut pas connaître les
-  // empreintes au build (contenu chiffré). Exception assumée : 'unsafe-inline' pour les scripts,
-  // images https. Raison de plus pour retirer ces pages du site (docs/INVENTAIRE-PUBLIC.md).
-  "/factures/": { nom: "Factures (coffre chiffré)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, inlineLibre: true, img: ["https:"], robots: true },
-  "/clients/": { nom: "Espaces clients (coffres chiffrés)", style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, connect: [...API], inlineLibre: true, img: ["https:"], robots: true },
   "/haccp/": {
     nom: "Achille HACCP (PWA hors ligne, scan de codes-barres)",
     style: GOOGLE_FONTS.style, font: GOOGLE_FONTS.font, media: ["blob:"],
@@ -87,15 +80,6 @@ const SECTIONS = {
     media: ["blob:", "data:"],
     permissions: { gyroscope: "(self)", accelerometer: "(self)", magnetometer: "(self)" },
     robots: true,
-  },
-  "/espace-breteuil/": {
-    // Reprend espace-breteuil/_headers (ignoré ici car hors racine), en attendant que l'appli
-    // ne soit plus servie que par son propre projet Pages.
-    nom: "Espace Breteuil (appli Microsoft 365 du client)",
-    // L'appli appelle son propre Worker belfort-api (planning ICS), distinct de BS_API (belfort-admin).
-    connect: [...API, "https://belfort-api.damien-belfort.workers.dev", "https://graph.microsoft.com", "https://login.microsoftonline.com", "https://*.sharepoint.com"],
-    frame: ["https://login.microsoftonline.com"],
-    coop: "same-origin-allow-popups", robots: true,
   },
 };
 

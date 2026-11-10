@@ -33,7 +33,9 @@ for f in $RACINE_FICHIERS; do
 done
 
 # 2. Dossiers publics (copiés sans les fichiers de développement)
-PUBLIC="assets qui-suis-je portail clients factures haccp ecorce espace-breteuil"
+# Retirés du site le 27/10/2026 (données du client) : portail, clients, factures, espace-breteuil.
+# Ils restent dans le dépôt ; le garde-fou ci-dessous refuse de les republier.
+PUBLIC="assets qui-suis-je haccp ecorce"
 for d in $PUBLIC; do
   if [ ! -d "$d" ]; then avertir "Dossier $d absent"; continue; fi
   cp -a "$d" "$SORTIE/$d"
@@ -59,11 +61,12 @@ cp scripts/site/_redirects "$SORTIE/_redirects"
 
 # 6. Garde-fou : échoue si un chemin interdit s'est glissé dans l'artefact
 interdit=$(cd "$SORTIE" && find . \( -path './api*' -o -path './docs*' -o -path './admin/apercu*' -o -path './.github*' \
-  -o -path './scripts*' -o -path './ASSETS*' -o -name '*.md' -o -name '*.sql' -o -name '.env*' -o -name 'wrangler.toml' \
+  -o -path './scripts*' -o -path './ASSETS*' \
+  -o -path './clients*' -o -path './factures*' -o -path './portail*' -o -path './espace-breteuil*' -o -name '*.md' -o -name '*.sql' -o -name '.env*' -o -name 'wrangler.toml' \
   -o -path '*/tests/*' \) -print | head -20)
 if [ -n "$interdit" ]; then erreur "Fichiers interdits dans $SORTIE/ :"; echo "$interdit"; exit 1; fi
-if grep -rIl --include='*.json' --include='*.html' --include='*.js' '@breteuil\.fr' "$SORTIE/" | grep -v "^$SORTIE/espace-breteuil/"; then
-  avertir "Adresse @breteuil.fr trouvée dans un fichier publié (hors espace-breteuil) : vérifier."
+if grep -rIl --include='*.json' --include='*.html' --include='*.js' '@breteuil\.fr' "$SORTIE/"; then
+  erreur "Adresse @breteuil.fr trouvée dans un fichier publié : aucune donnée client sur ce site."; exit 1
 fi
 
 # 7. Limites du plan gratuit Cloudflare Pages : 20 000 fichiers, 25 Mio par fichier.
