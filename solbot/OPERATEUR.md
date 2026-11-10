@@ -71,6 +71,19 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
 - **Message du soir** : une ligne pour le résultat crypto (jour et semaine), une pour les calls (suivis, ils auraient
   gagné ou perdu combien).
 
+## Arène des stratégies (ajoutée le mardi 10 novembre, à partir du mercredi 11)
+
+- **16 portefeuilles papier parallèles**, une stratégie chacun (500 $, avec ou sans levier). Code : `src/arena/`,
+  résultats : `solbot/arene/`. Le suivi en direct part du mercredi 11 novembre à 0 h (Paris). Ce code et ces fichiers
+  sont gérés par la session principale : ne jamais les modifier, ne jamais retoucher une règle.
+- **Chaque soir, après l'étape 4** : dans `solbot/`, lancer `NODE_USE_ENV_PROXY=1 node src/arena/main.ts avance`
+  (2 à 5 minutes : cours du jour sur Yahoo et Coinbase, puis tout est rejoué depuis le 11 novembre). Commiter
+  `solbot/arene/` dans le même commit que le carnet.
+- **Page de l'arène** : https://claude.ai/artifact/WGJvJdfBEe53xHzj2Wsx7n. Artifact `read`, puis `publish` avec
+  `file_path` = `solbot/arene/arene.html` et cette même `url`. Ne jamais créer une deuxième page.
+- **Message du soir** : une ligne pour l'arène : les 3 premiers depuis le 11 novembre, et le témoin au hasard sur SPY.
+- **Si `avance` échoue** (données indisponibles, erreur) : ne rien corriger, le dire dans le message, et passer à la suite.
+
 ## Incidents
 
 - **La séance s'arrête en cours de route** (processus mort) : relancer `demarrer` ; le moteur repart de `state.json`.
