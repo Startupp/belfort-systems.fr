@@ -1,4 +1,4 @@
-/* Belfort Systems — interactions de l'interface (léger, sans dépendance, un seul fichier).
+/* Damien Belfort — interactions de l'interface (léger, sans dépendance, un seul fichier).
    En-tête, menu mobile, apparitions au défilement, mascotte. Les prix, le simulateur, le formulaire
    et le calendrier sont dans site.js. */
 (function () {

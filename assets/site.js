@@ -1,4 +1,4 @@
-/* Belfort Systems — site public : prix depuis le catalogue, simulateur, contact, calendrier.
+/* Damien Belfort — site public : prix depuis le catalogue, simulateur, contact, calendrier.
    Sans dépendance. Lit window.BS_API et window.BS_CONTACT_API (assets/config.js). Jamais d'innerHTML avec une donnée externe. */
 (function () {
   "use strict";
