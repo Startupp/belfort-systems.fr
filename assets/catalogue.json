@@ -1,49 +1,93 @@
 {
-  "version": "2026-10-27",
+  "version": "2026-11-10",
   "devise": "EUR",
   "tva": "Franchise en base — TVA non applicable, art. 293 B du CGI",
-  "note": "Grille à partir du tarif de référence de 45 € HT l'heure : première heure due, puis facturation par demi-heure. Déplacement inclus à moins de 30 km de Magny-les-Hameaux.",
-  "taux_horaire": 45,
-  "zone": "Yvelines (78) et alentours ; déplacement inclus dans un rayon de 30 km autour de Magny-les-Hameaux",
+  "note": "Règle commune à tous : à distance, 25 € la demi-heure (30 minutes minimum) ; sur place, 60 € la première heure, déplacement compris jusqu'à 30 km de Magny-les-Hameaux, puis 25 € la demi-heure. Les prestations courantes ont un prix fixe annoncé avant de commencer.",
+  "taux_horaire": 50,
+  "taux_horaire_note": "Équivalent horaire de 25 € la demi-heure. Sur place, la première heure est à 60 €, déplacement compris.",
+  "zone": "Yvelines (78) et alentours ; sur place dans un rayon de 30 km autour de Magny-les-Hameaux, à distance partout",
+  "regle_commune": {
+    "distance_demi_heure": 25,
+    "distance_minimum_minutes": 30,
+    "sur_place_premiere_heure": 60,
+    "sur_place_demi_heure": 25,
+    "deplacement_inclus_km": 30
+  },
   "prestations": [
+    {
+      "id": "bilan",
+      "categorie": "Pour commencer",
+      "entree": "projet",
+      "nom": "Bilan express",
+      "unite": "forfait",
+      "prix": 0,
+      "duree": "30 minutes",
+      "description": "30 minutes sur place ou en visio, sans engagement, et un compte rendu d'une page : postes encore sous Windows 10, sauvegarde, double authentification, licences. Un bilan par structure ; sur place dans un rayon de 30 km."
+    },
+    {
+      "id": "distance",
+      "categorie": "Support et dépannage",
+      "entree": "maintenant",
+      "nom": "Dépannage à distance",
+      "unite": "demi-heure",
+      "prix": 25,
+      "min": 1,
+      "description": "Prise en main à distance sécurisée, avec votre accord. 30 minutes minimum, puis par demi-heure."
+    },
     {
       "id": "heure",
       "categorie": "Support et dépannage",
-      "nom": "Intervention",
+      "entree": "maintenant",
+      "nom": "Intervention sur place (première heure)",
       "unite": "heure",
-      "prix": 45,
+      "prix": 60,
       "min": 1,
-      "description": "Dépannage, installation, configuration, formation : sur site comme à distance. Première heure due, puis par demi-heure (22,50 €). Déplacement inclus à moins de 30 km.",
-      "tranche": 22.5
+      "description": "Dépannage, installation, configuration, formation dans vos locaux. Première heure à 60 €, déplacement compris jusqu'à 30 km, puis 25 € la demi-heure.",
+      "tranche": 25
     },
     {
       "id": "tranche",
       "categorie": "Support et dépannage",
+      "entree": "maintenant",
       "nom": "Demi-heure supplémentaire",
       "unite": "demi-heure",
-      "prix": 22.5,
+      "prix": 25,
       "min": 1,
-      "description": "Après la première heure, sur site comme à distance."
+      "description": "Après la première heure sur place, ou au-delà de la première demi-heure à distance."
+    },
+    {
+      "id": "poste",
+      "categorie": "Postes de travail",
+      "entree": "projet",
+      "nom": "Préparation d'un poste",
+      "unite": "poste",
+      "prix": 175,
+      "description": "Mise en route, comptes, messagerie, imprimantes, sauvegarde, transfert des données : un ordinateur prêt à l'emploi."
     },
     {
       "id": "audit",
       "categorie": "Audit",
+      "entree": "projet",
       "nom": "Audit informatique",
       "unite": "forfait",
       "prix": 390,
-      "description": "État des lieux du parc, des accès, des sauvegardes et du réseau, rapport écrit avec priorités. Déduit du prix si une migration Microsoft 365 suit."
+      "deduit_si": "migration ou suivi signé dans les 3 mois",
+      "description": "État des lieux du parc, des accès, des sauvegardes et du réseau, rapport écrit avec priorités. Déduit du prix si une migration Microsoft 365 ou un suivi mensuel est signé dans les 3 mois."
     },
     {
       "id": "audit_abonnements",
       "categorie": "Audit",
+      "entree": "projet",
       "nom": "Audit des abonnements et contrats",
       "unite": "forfait",
       "prix": 290,
-      "description": "Inventaire de vos licences, abonnements et contrats (Microsoft 365, logiciels, hébergement, domaines, opérateurs), doublons et économies possibles, rapport écrit."
+      "garantie": "Remboursé si je trouve moins de 290 € d'économies par an.",
+      "description": "Inventaire de vos licences, abonnements et contrats (Microsoft 365, logiciels, hébergement, domaines, opérateurs), doublons et économies possibles, rapport écrit. Remboursé si je trouve moins de 290 € d'économies par an."
     },
     {
       "id": "migration",
       "categorie": "Messagerie et Microsoft 365",
+      "entree": "projet",
       "nom": "Migration Microsoft 365",
       "unite": "forfait",
       "prix": 590,
@@ -52,12 +96,15 @@
         "nom": "boîte supplémentaire",
         "prix": 70
       },
-      "description": "Inventaire, plan de bascule, migration des boîtes et agendas sans coupure, installation d'Office, vérification avec chaque personne."
+      "options": ["guides", "accompagnement"],
+      "description": "Inventaire, plan de bascule, migration des boîtes et agendas sans coupure, installation d'Office, vérification avec chaque personne. En option : pack guides et accompagnement après bascule."
     },
     {
       "id": "guides",
       "categorie": "Messagerie et Microsoft 365",
-      "nom": "Pack guides",
+      "entree": "projet",
+      "option_de": "migration",
+      "nom": "Pack guides (option de la migration)",
       "unite": "forfait",
       "prix": 250,
       "description": "Des guides d'une page par usage (messagerie, agenda, partage, téléphone), pour que l'équipe soit autonome."
@@ -65,23 +112,18 @@
     {
       "id": "accompagnement",
       "categorie": "Messagerie et Microsoft 365",
-      "nom": "Accompagnement après bascule",
+      "entree": "projet",
+      "option_de": "migration",
+      "nom": "Accompagnement après bascule (option de la migration)",
       "unite": "forfait",
       "prix": 300,
       "inclus": "8 heures",
       "description": "8 heures de présence et d'assistance dans les jours qui suivent la migration."
     },
     {
-      "id": "poste",
-      "categorie": "Postes de travail",
-      "nom": "Préparation d'un poste",
-      "unite": "poste",
-      "prix": 175,
-      "description": "Mise en route, comptes, messagerie, imprimantes, sauvegarde, transfert des données : un ordinateur prêt à l'emploi."
-    },
-    {
       "id": "app",
       "categorie": "Application sur mesure",
+      "entree": "projet",
       "nom": "Application Espace Client",
       "unite": "forfait",
       "prix": 790,
@@ -91,6 +133,7 @@
     {
       "id": "devis",
       "categorie": "Sur devis",
+      "entree": "projet",
       "nom": "Sur devis",
       "unite": "devis",
       "prix": null,
@@ -100,8 +143,11 @@
   "forfaits_mensuels": [
     {
       "id": "essentiel",
+      "entree": "mois",
       "nom": "Suivi Essentiel",
       "prix": 149,
+      "utilisateurs_inclus": 5,
+      "par_utilisateur": 15,
       "heures": 2,
       "assistance": "2 h d'assistance par mois",
       "delai": "réponse le jour ouvré suivant",
@@ -110,12 +156,16 @@
         "2 h d'assistance incluses",
         "Contrôle mensuel (sécurité, sauvegarde, licences) avec compte rendu"
       ],
-      "pour": "Une petite structure qui veut un Microsoft 365 propre et suivi, sans y penser."
+      "pour": "Une petite structure qui veut un Microsoft 365 propre et suivi, sans y penser.",
+      "exemple": "15 utilisateurs : 299 € par mois"
     },
     {
       "id": "serenite",
+      "entree": "mois",
       "nom": "Suivi Sérénité",
       "prix": 249,
+      "utilisateurs_inclus": 5,
+      "par_utilisateur": 25,
       "heures": 5,
       "assistance": "5 h d'assistance par mois",
       "delai": "réponse dans la journée",
@@ -126,7 +176,8 @@
         "Application Espace Client incluse",
         "Revue des licences tous les 6 mois"
       ],
-      "pour": "Une équipe qui veut un technicien régulièrement présent et réactif."
+      "pour": "Une équipe qui veut un technicien régulièrement présent et réactif.",
+      "exemple": "15 utilisateurs : 499 € par mois"
     }
   ],
   "site_web": {
@@ -140,14 +191,114 @@
       "Petites modifications"
     ]
   },
-  "heure_supplementaire": 40,
+  "heure_supplementaire": 45,
   "conditions": {
     "paiement": "Paiement à 30 jours par virement. Devis gratuit sous 48 h.",
-    "retard": "Pénalités de retard au taux légal et indemnité forfaitaire de 40 € pour frais de recouvrement.",
-    "engagement": "Sans engagement, résiliable avec un mois de préavis.",
-    "heures": "Heures au-delà du forfait : 40 € HT de l'heure. Heures non utilisées non reportées."
+    "retard": "Pénalités de retard égales à trois fois le taux d'intérêt légal et indemnité forfaitaire de 40 € pour frais de recouvrement (art. L441-10 du Code de commerce).",
+    "engagement": "Suivis sans engagement, résiliables avec un mois de préavis.",
+    "heures": "Heures au-delà d'un suivi : 45 € HT de l'heure. Heures non utilisées non reportées.",
+    "cgv": "https://belfort-systems.fr/conditions/"
   },
   "tranche_minutes": 30,
-  "tranche_prix": 22.5,
-  "deplacement_inclus_km": 30
+  "tranche_prix": 25,
+  "deplacement_inclus_km": 30,
+  "particuliers": {
+    "tva": "Prix nets — TVA non applicable, art. 293 B du CGI, rien à ajouter",
+    "paiement": "À la fin de l'intervention, par virement. La carte 5 aides se règle à l'achat.",
+    "prestations": [
+      {
+        "id": "aide_distance",
+        "nom": "Aide à distance",
+        "unite": "demi-heure",
+        "prix": 25,
+        "garantie": "Résolu ou gratuit : si je ne règle pas le problème, vous ne payez rien.",
+        "description": "Prise en main à distance sécurisée, avec votre accord. 30 minutes minimum."
+      },
+      {
+        "id": "domicile",
+        "nom": "Intervention à domicile",
+        "unite": "première heure",
+        "prix": 60,
+        "puis_demi_heure": 25,
+        "description": "Déplacement compris jusqu'à 30 km de Magny-les-Hameaux, puis 25 € la demi-heure."
+      },
+      {
+        "id": "ordinateur",
+        "nom": "Nouvel ordinateur prêt à l'emploi",
+        "unite": "forfait",
+        "prix": 119,
+        "description": "Mise en route, comptes, transfert des données, imprimante, sauvegarde."
+      },
+      {
+        "id": "wifi_box_imprimante",
+        "nom": "Wi-Fi, box et imprimante",
+        "unite": "forfait",
+        "prix": 89,
+        "description": "Tout le foyer connecté, l'imprimante qui répond ; un conseil avant d'acheter du matériel."
+      },
+      {
+        "id": "bilan_securite",
+        "nom": "Bilan sécurité du foyer",
+        "unite": "forfait",
+        "prix": 89,
+        "duree": "1 h 30",
+        "description": "Mots de passe, double authentification, sauvegarde des photos, repérer les arnaques."
+      },
+      {
+        "id": "carte_5_aides",
+        "nom": "Carte 5 aides à distance",
+        "unite": "carte",
+        "prix": 99,
+        "au_lieu_de": 125,
+        "validite_mois": 12,
+        "description": "5 aides à distance d'une demi-heure, valables 12 mois. À offrir à vos parents ou grands-parents."
+      }
+    ],
+    "exclus": [
+      "Réparation de matériel (écran, carte mère, alimentation)",
+      "Téléphones et tablettes cassés"
+    ]
+  },
+  "renfort_it": {
+    "tva": "Hors taxes, TVA non applicable, art. 293 B du CGI",
+    "nature": "Prestation de service (volume, plages horaires, objectifs, compte rendu), pas une mise à disposition de personnel.",
+    "prestations": [
+      {
+        "id": "renfort_journee",
+        "nom": "Renfort à distance N1/N2, la journée",
+        "unite": "journée de 7 h",
+        "prix": 300,
+        "description": "Tickets N1/N2 dans votre outil, Microsoft 365, Entra ID, Intune, Teams. Sans durée minimale."
+      },
+      {
+        "id": "renfort_demi_journee",
+        "nom": "Renfort à distance N1/N2, la demi-journée",
+        "unite": "demi-journée",
+        "prix": 160,
+        "description": "Même prestation, par demi-journée."
+      },
+      {
+        "id": "mission",
+        "nom": "Mission à livrable",
+        "unite": "forfait",
+        "prix": 600,
+        "a_partir_de": true,
+        "description": "Une tâche précise à prix fixe, annoncé avant de commencer, après un cadrage gratuit de 30 minutes. À partir de 600 €."
+      },
+      {
+        "id": "dossier_fournisseur",
+        "nom": "Dossier fournisseur",
+        "unite": "dossier",
+        "prix": 0,
+        "description": "Gratuit, envoyé sous 24 h : avis de situation SIRENE, attestation de vigilance URSSAF et attestation d'assurance responsabilité civile professionnelle (fournies sur demande), RIB, conditions générales, accord de confidentialité, annexe RGPD."
+      }
+    ],
+    "conditions": {
+      "duree": "Pas de durée minimale.",
+      "arret": "Arrêt par simple e-mail, avec 2 jours ouvrés de prévenance.",
+      "facturation": "Relevé mensuel, paiement à 30 jours par virement.",
+      "demarrage": "Démarrage sous 5 jours ouvrés après réception des accès.",
+      "retard": "Pénalités de retard égales à trois fois le taux d'intérêt légal et indemnité forfaitaire de 40 € pour frais de recouvrement."
+    }
+  }
 }
