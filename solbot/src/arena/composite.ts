@@ -78,6 +78,8 @@ export function runComposite(
     fees: parts.reduce((s, r) => s + r.fees, 0),
     financing: parts.reduce((s, r) => s + r.financing, 0),
     exposureMs: Math.max(0, ...parts.map((r) => r.exposureMs)),
+    // Un portefeuille combiné n'a pas d'état propre : chaque poche garde le sien.
+    state: { cash: 0, seq: 0, positions: [], pending: [], last: [], fees: 0, financing: 0, exposureMs: 0, lastT: to, memo: {} },
   };
   return { result, parts };
 }

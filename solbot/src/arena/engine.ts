@@ -130,6 +130,24 @@ export interface StrategyView {
   positions: readonly Position[];
   pending: readonly PendingOrder[];
   equity: number;
+  /** Mémoire de la stratégie, conservée d'une reprise à l'autre (valeurs JSON seulement). */
+  memo: Record<string, unknown>;
+}
+
+/** État complet d'un portefeuille, pour reprendre plus tard là où on s'est arrêté (suivi en direct, pas à pas). */
+export interface EngineState {
+  cash: number;
+  seq: number;
+  positions: Position[];
+  pending: PendingOrder[];
+  last: Array<[string, number]>;
+  liquidatedAt?: number;
+  fees: number;
+  financing: number;
+  exposureMs: number;
+  /** Début de la dernière barre traitée : la reprise commence après. */
+  lastT: number;
+  memo: Record<string, unknown>;
 }
 
 export interface Strategy {
@@ -174,33 +192,38 @@ export interface RunResult {
   financing: number;
   /** Temps passé avec au moins une position, en ms. */
   exposureMs: number;
+  /** État en fin de rejeu, pour une reprise. */
+  state: EngineState;
 }
 
 const DAY = 86_400_000;
 export const THREE_DAYS = 3 * DAY;
 
 /** Fait tourner un portefeuille de `from` à `to` (les barres antérieures servent d'historique aux indicateurs). */
-export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Bar[]>, from: number, to: number, aux?: ReadonlyMap<string, Bar[]>): RunResult {
+export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Bar[]>, from: number, to: number, aux?: ReadonlyMap<string, Bar[]>, resume?: EngineState): RunResult {
   const strategy = spec.strategy(aux);
+  // Reprise : on repart de l'état sauvegardé, après la dernière barre déjà traitée.
+  if (resume) from = Math.max(from, resume.lastT + 1);
+  const memo: Record<string, unknown> = resume ? structuredClone(resume.memo) : {};
   const maxHold = spec.maxHoldMs ?? THREE_DAYS;
   const closeOut = spec.closeOutLevel ?? 0.5;
   const c = spec.costs;
   const slip = c.slipBps / 1e4;
   const fee = (notional: number, limit: boolean): number => (notional * (limit ? (c.makerFeeBps ?? c.feeBps) : c.feeBps)) / 1e4;
 
-  let cash = spec.capital;
-  let seq = 0;
-  const positions: Position[] = [];
-  let pending: PendingOrder[] = [];
+  let cash = resume?.cash ?? spec.capital;
+  let seq = resume?.seq ?? 0;
+  const positions: Position[] = resume ? structuredClone(resume.positions) : [];
+  let pending: PendingOrder[] = resume ? structuredClone(resume.pending) : [];
   const trades: Trade[] = [];
   const curve: Array<[number, number]> = [];
-  const last = new Map<string, number>();
+  const last = new Map<string, number>(resume?.last ?? []);
   const idx = new Map<string, number>(spec.symbols.map((s) => [s, -1]));
-  let liquidatedAt: number | undefined;
-  let fees = 0;
-  let financing = 0;
-  let exposureMs = 0;
-  let lastT = from;
+  let liquidatedAt: number | undefined = resume?.liquidatedAt;
+  let fees = resume?.fees ?? 0;
+  let financing = resume?.financing ?? 0;
+  let exposureMs = resume?.exposureMs ?? 0;
+  let lastT = resume?.lastT ?? from;
 
   // Calendrier commun : tous les débuts de barre, tous symboles confondus.
   const times = new Set<number>();
@@ -443,7 +466,7 @@ export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Ba
     }
 
     // d) La stratégie décide sur les barres closes.
-    const view: StrategyView = { t, series, idx, fresh, positions, pending, equity: equityNow() };
+    const view: StrategyView = { t, series, idx, fresh, positions, pending, equity: equityNow(), memo };
     for (const it of strategy.onBar(view)) {
       if (it.type === 'enter') {
         if (it.order === 'close') {
@@ -480,6 +503,7 @@ export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Ba
     fees,
     financing,
     exposureMs,
+    state: { cash, seq, positions: structuredClone(positions), pending: structuredClone(pending), last: [...last.entries()], liquidatedAt, fees, financing, exposureMs, lastT, memo },
   };
 }
 

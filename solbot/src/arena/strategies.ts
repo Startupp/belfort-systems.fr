@@ -802,11 +802,12 @@ export function sessionBreakout(opts: {
   const s = opts.symbol;
   const targetR = opts.targetR ?? 2;
   const risk = opts.risk ?? 0.01;
-  const widths: number[] = [];
   const done = new Set<string>();
   return {
     onBar(v) {
       if (!v.fresh.has(s)) return [];
+      // Largeurs des ranges des séances passées : en mémoire, pour survivre aux reprises du suivi en direct.
+      const widths = (v.memo.widths ??= []) as number[];
       const bars = v.series.get(s) as Bar[];
       const i = v.idx.get(s) as number;
       const ck = clocks(bars, opts.tz);
@@ -1017,7 +1018,6 @@ export function buyHold(opts: { symbol: string }): Strategy {
  * poids du jour (calculés sur les cours connus). Poids nul = part laissée en liquidités.
  */
 export function allocator(opts: { symbols: string[]; period: 'month' | 'quarter'; weights: (closes: Map<string, number[]>, idx: Map<string, number>) => Record<string, number>; label: string }): Strategy {
-  let last = '';
   let closes: Map<string, number[]> | undefined;
   return {
     onBar(v) {
@@ -1028,8 +1028,9 @@ export function allocator(opts: { symbols: string[]; period: 'month' | 'quarter'
       const i = v.idx.get(ref) as number;
       const date = (clocks(bars, NY)[i] as Clock).date;
       const key = opts.period === 'month' ? date.slice(0, 7) : `${date.slice(0, 4)}-T${Math.floor((Number(date.slice(5, 7)) - 1) / 3)}`;
-      if (key === last) return [];
-      last = key;
+      // Dernière période rééquilibrée : en mémoire, pour survivre aux reprises du suivi en direct.
+      if (v.memo.lastPeriod === key) return [];
+      v.memo.lastPeriod = key;
       const idx = new Map(opts.symbols.map((s) => [s, v.idx.get(s) ?? -1]));
       const w = opts.weights(closes, idx);
       const out: Intent[] = v.positions.map((p) => ({ type: 'exit' as const, id: p.id, order: 'close' as const, reason: `${opts.label} : rééquilibrage` }));

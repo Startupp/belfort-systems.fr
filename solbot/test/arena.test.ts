@@ -9,7 +9,8 @@ import { writeJsonAtomic } from '../src/lib/store.ts';
 import type { Bar } from '../src/desk/types.ts';
 import { runPortfolio, stats } from '../src/arena/engine.ts';
 import type { Costs, Intent, PortfolioSpec, Strategy } from '../src/arena/engine.ts';
-import { FUNDING, NY, fundingAt, fundingCarry, orbFirstCandle, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
+import { FUNDING, NY, faber, fundingAt, fundingCarry, orbFirstCandle, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
+import { localTime, localTimeIntl } from '../src/desk/market.ts';
 import { renderComptes } from '../src/arena/comptes-page.ts';
 import { writeArenaPage } from '../src/arena/report.ts';
 import { bootstrapMonths, runComposite } from '../src/arena/composite.ts';
@@ -278,6 +279,43 @@ test('portage : seule la jambe perpétuel reçoit le financement, la jambe au co
   // +0,82 $ sur la seule jambe perpétuel, rien sur la jambe au comptant.
   assert.ok(Math.abs(r.equity - 1000.82) < 1e-6, String(r.equity));
   assert.equal(r.open.find((p) => p.symbol === 'TEST-SPOT')?.financing, 0);
+});
+
+test('reprise : rejouer par morceaux avec l’état sauvegardé donne exactement le même compte', () => {
+  // Allocation de Faber sur 3 actifs journaliers synthétiques (mémoire de la stratégie : dernier mois rééquilibré).
+  const day = 86_400_000;
+  const mk = (drift: number, seed: number): Bar[] => {
+    const out: Bar[] = [];
+    let px = 100;
+    for (let i = 0; i < 700; i++) {
+      px *= 1 + drift + 0.012 * Math.sin(i * 0.37 + seed);
+      out.push({ t: Date.UTC(2024, 0, 1) + i * day + 14.5 * 3_600_000, o: px, h: px * 1.004, l: px * 0.996, c: px, v: 1 });
+    }
+    return out;
+  };
+  const series = new Map([['A', mk(0.0006, 1)], ['B', mk(-0.0002, 2)], ['C', mk(0.0003, 3)]]);
+  const sp = spec({ barMs: 6.5 * 3_600_000, symbols: ['A', 'B', 'C'], maxHoldMs: Infinity, costs: { ...FREE, slipBps: 1 }, strategy: () => faber({ symbols: ['A', 'B', 'C'] }) });
+  const from = Date.UTC(2024, 9, 1);
+  const to = Date.UTC(2025, 11, 1);
+  const whole = runPortfolio(sp, series, from, to);
+  let state = runPortfolio(sp, series, from, from + 40 * day).state;
+  let closed = 0;
+  for (let cut = from + 40 * day; cut < to; cut += 37 * day) {
+    const part = runPortfolio(sp, series, from, Math.min(to, cut + 37 * day), undefined, state);
+    closed += part.trades.length;
+    state = part.state;
+  }
+  const first = runPortfolio(sp, series, from, from + 40 * day).trades.length;
+  assert.ok(whole.trades.length > 10, 'des rééquilibrages ont eu lieu');
+  assert.equal(first + closed, whole.trades.length);
+  assert.ok(Math.abs(state.cash - whole.state.cash) < 1e-9, `${state.cash} ≠ ${whole.state.cash}`);
+  assert.deepEqual(state.positions.map((p) => [p.symbol, p.qty]), whole.state.positions.map((p) => [p.symbol, p.qty]));
+});
+
+test('heures locales sans Intl : identiques à Intl pour New York, Paris et Londres (2019 → 2027)', () => {
+  for (const tz of ['America/New_York', 'Europe/Paris', 'Europe/London']) {
+    for (let t = Date.UTC(2019, 0, 1); t < Date.UTC(2027, 11, 31); t += 47 * 60_000 * 7) assert.deepEqual(localTime(t, tz), localTimeIntl(t, tz), `${tz} ${new Date(t).toISOString()}`);
+  }
 });
 
 test('page des 12 comptes : sans squelette, classement par rendement mensuel, départ du suivi annoncé', () => {

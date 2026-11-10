@@ -34,7 +34,51 @@ export interface LocalTime {
   minutes: number;
 }
 
+/** Dimanche numéro `n` (1 = premier, −1 = dernier) d'un mois, à minuit UTC (ms). */
+function sunday(year: number, month: number, n: number): number {
+  if (n > 0) {
+    const first = Date.UTC(year, month, 1);
+    const dow = new Date(first).getUTCDay();
+    return first + (((7 - dow) % 7) + (n - 1) * 7) * 86_400_000;
+  }
+  const last = Date.UTC(year, month + 1, 0);
+  return last - new Date(last).getUTCDay() * 86_400_000;
+}
+
+/**
+ * Décalage UTC en minutes, calculé sans Intl pour les trois fuseaux des marchés suivis (beaucoup plus rapide, utile dans
+ * un Worker) : New York (heure d'été du 2e dimanche de mars à 2 h au 1er dimanche de novembre à 2 h), Paris et Londres
+ * (du dernier dimanche de mars au dernier dimanche d'octobre, à 1 h UTC). `undefined` pour un autre fuseau.
+ */
+function fastOffset(ms: number, tz: string): number | undefined {
+  const y = new Date(ms).getUTCFullYear();
+  if (tz === 'America/New_York') {
+    const start = sunday(y, 2, 2) + 7 * 3_600_000; // 2 h, heure d'hiver (UTC−5)
+    const end = sunday(y, 10, 1) + 6 * 3_600_000; // 2 h, heure d'été (UTC−4)
+    return ms >= start && ms < end ? -240 : -300;
+  }
+  if (tz === 'Europe/Paris' || tz === 'Europe/London') {
+    const summer = ms >= sunday(y, 2, -1) + 3_600_000 && ms < sunday(y, 9, -1) + 3_600_000;
+    return (tz === 'Europe/Paris' ? 60 : 0) + (summer ? 60 : 0);
+  }
+  return undefined;
+}
+
 export function localTime(ms: number, tz: string): LocalTime {
+  const off = fastOffset(ms, tz);
+  if (off !== undefined) {
+    const d = new Date(ms + off * 60_000);
+    const m = d.getUTCMonth() + 1;
+    const day = d.getUTCDate();
+    return { date: `${d.getUTCFullYear()}-${m < 10 ? '0' : ''}${m}-${day < 10 ? '0' : ''}${day}`, minutes: d.getUTCHours() * 60 + d.getUTCMinutes() };
+  }
+  const parts = fmt(tz).formatToParts(new Date(ms));
+  const get = (t: string): string => parts.find((p) => p.type === t)?.value ?? '00';
+  return { date: `${get('year')}-${get('month')}-${get('day')}`, minutes: Number(get('hour')) * 60 + Number(get('minute')) };
+}
+
+/** Version Intl (référence), pour vérifier le calcul rapide. */
+export function localTimeIntl(ms: number, tz: string): LocalTime {
   const parts = fmt(tz).formatToParts(new Date(ms));
   const get = (t: string): string => parts.find((p) => p.type === t)?.value ?? '00';
   return { date: `${get('year')}-${get('month')}-${get('day')}`, minutes: Number(get('hour')) * 60 + Number(get('minute')) };
