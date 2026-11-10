@@ -1,6 +1,6 @@
 {
-  "generatedAt": 1794321379552,
-  "commit": "013b47f (2026-11-10)",
+  "generatedAt": 1794334564330,
+  "commit": "3e0fc17 (2026-11-10)",
   "windows": {
     "commun": {
       "label": "Rejeu sur la même période pour tous (du 13 octobre 2026 au 9 novembre 2026)",
@@ -6531,6 +6531,1008 @@
               "pnl": -5.380986856247423,
               "pnlPct": -1.023270630646709,
               "r": -1.0232706306467088,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du haut du range 9 h 30 – 9 h 45 (4139.4, largeur 17.3 $)",
+              "exitReason": "stop"
+            }
+          ],
+          "open": []
+        },
+        {
+          "id": "bruit-1500",
+          "from": 1791842400000,
+          "to": 1794265200000,
+          "capital": 1500,
+          "equity": 1520.8788245758035,
+          "stats": {
+            "returnPct": 1.3919216383868993,
+            "maxDrawdownPct": 0.9627376624180922,
+            "trades": 26,
+            "winRatePct": 34.61538461538461,
+            "profitFactor": 1.8671906171596464,
+            "avgTradePct": 0.053727795779920054,
+            "bestDayPct": 1.3973331408101934,
+            "worstDayPct": -0.47401833183838055,
+            "daysUp": 6,
+            "days": 20,
+            "exposurePct": 8.172362555720653
+          },
+          "fees": 0,
+          "financing": 0,
+          "daily": [
+            [
+              "2026-10-13",
+              1500
+            ],
+            [
+              "2026-10-14",
+              1503.62
+            ],
+            [
+              "2026-10-15",
+              1503.18
+            ],
+            [
+              "2026-10-16",
+              1508.53
+            ],
+            [
+              "2026-10-19",
+              1508.01
+            ],
+            [
+              "2026-10-20",
+              1507.87
+            ],
+            [
+              "2026-10-21",
+              1505.58
+            ],
+            [
+              "2026-10-22",
+              1503.76
+            ],
+            [
+              "2026-10-23",
+              1503.76
+            ],
+            [
+              "2026-10-26",
+              1503.25
+            ],
+            [
+              "2026-10-27",
+              1501.92
+            ],
+            [
+              "2026-10-28",
+              1501.92
+            ],
+            [
+              "2026-10-29",
+              1501.92
+            ],
+            [
+              "2026-10-30",
+              1502.83
+            ],
+            [
+              "2026-11-02",
+              1503.29
+            ],
+            [
+              "2026-11-03",
+              1502.63
+            ],
+            [
+              "2026-11-04",
+              1497.54
+            ],
+            [
+              "2026-11-05",
+              1518.47
+            ],
+            [
+              "2026-11-06",
+              1511.27
+            ],
+            [
+              "2026-11-09",
+              1520.88
+            ]
+          ],
+          "trades": [
+            {
+              "id": "bruit-1500-1",
+              "symbol": "SPY",
+              "side": "short",
+              "qty": 1,
+              "entry": 773.2713320587159,
+              "exit": 769.6484658508301,
+              "openedAt": 1791986400000,
+              "closedAt": 1792008000000,
+              "notional": 773.2713320587159,
+              "pnl": 3.6228662078857496,
+              "pnlPct": 0.24152441385904996,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 773.31 sous 774.00 (bruit 0.12 %), levier 1.00",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "bruit-1500-2",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 772.1186210906983,
+              "exit": 771.6714364715576,
+              "openedAt": 1792092600000,
+              "closedAt": 1792094400000,
+              "notional": 772.1186210906983,
+              "pnl": -0.4471846191406712,
+              "pnlPct": -0.029740477428922326,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 772.08 au-dessus de 771.71 (bruit 0.27 %), levier 1.00",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "bruit-1500-3",
+              "symbol": "SPY",
+              "side": "short",
+              "qty": 1,
+              "entry": 768.7065578674317,
+              "exit": 763.3481630584718,
+              "openedAt": 1792164600000,
+              "closedAt": 1792180800000,
+              "notional": 768.7065578674317,
+              "pnl": 5.358394808959929,
+              "pnlPct": 0.3564716270087941,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 768.74 sous 769.35 (bruit 0.31 %), levier 1.00",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "bruit-1500-4",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 769.9385194152833,
+              "exit": 769.4115397064209,
+              "openedAt": 1792423800000,
+              "closedAt": 1792425600000,
+              "notional": 769.9385194152833,
+              "pnl": -0.5269797088624273,
+              "pnlPct": -0.03493323201029872,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 769.90 au-dessus de 769.66 (bruit 0.32 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-5",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 767.9934148406983,
+              "exit": 769.2215467651367,
+              "openedAt": 1792504800000,
+              "closedAt": 1792510200000,
+              "notional": 767.9934148406983,
+              "pnl": 1.2281319244384576,
+              "pnlPct": 0.0814407257853818,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 767.96 au-dessus de 767.49 (bruit 0.12 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-6",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 769.9584789093018,
+              "exit": 769.1615522064209,
+              "openedAt": 1792512000000,
+              "closedAt": 1792513800000,
+              "notional": 769.9584789093018,
+              "pnl": -0.7969267028809099,
+              "pnlPct": -0.052803346209533156,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 769.92 au-dessus de 768.87 (bruit 0.30 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-7",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 769.608485824585,
+              "exit": 769.5614955871582,
+              "openedAt": 1792517400000,
+              "closedAt": 1792519200000,
+              "notional": 769.608485824585,
+              "pnl": -0.04699023742682584,
+              "pnlPct": -0.0031151580656175243,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 769.57 au-dessus de 769.24 (bruit 0.35 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-8",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 769.2784522338868,
+              "exit": 768.7535525878907,
+              "openedAt": 1792521000000,
+              "closedAt": 1792522800000,
+              "notional": 769.2784522338868,
+              "pnl": -0.524899645996129,
+              "pnlPct": -0.034798638916446495,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 769.24 au-dessus de 769.23 (bruit 0.35 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-9",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 774.3286925262452,
+              "exit": 772.0414130889893,
+              "openedAt": 1792607400000,
+              "closedAt": 1792609200000,
+              "notional": 774.3286925262452,
+              "pnl": -2.2872794372558474,
+              "pnlPct": -0.151689792876355,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 774.29 au-dessus de 774.10 (bruit 0.38 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-10",
+              "symbol": "SPY",
+              "side": "short",
+              "qty": 1,
+              "entry": 763.301859854126,
+              "exit": 764.8082580322266,
+              "openedAt": 1792679400000,
+              "closedAt": 1792684800000,
+              "notional": 763.301859854126,
+              "pnl": -1.5063981781006532,
+              "pnlPct": -0.10005440069493546,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 763.34 sous 764.71 (bruit 0.22 %), levier 1.00",
+              "exitReason": "retour au-dessus de min(borne basse, VWAP)"
+            },
+            {
+              "id": "bruit-1500-11",
+              "symbol": "SPY",
+              "side": "short",
+              "qty": 1,
+              "entry": 763.7118125,
+              "exit": 764.0281897338868,
+              "openedAt": 1792688400000,
+              "closedAt": 1792699200000,
+              "notional": 763.7118125,
+              "pnl": -0.31637723388689665,
+              "pnlPct": -0.021034703086394324,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 763.75 sous 764.00 (bruit 0.31 %), levier 1.00",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "bruit-1500-12",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 764.8192449096681,
+              "exit": 765.1817097045898,
+              "openedAt": 1793025000000,
+              "closedAt": 1793030400000,
+              "notional": 764.8192449096681,
+              "pnl": 0.36246479492172057,
+              "pnlPct": 0.024103957611989645,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 764.78 au-dessus de 763.84 (bruit 0.21 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-13",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 765.6283063568115,
+              "exit": 765.0117352935791,
+              "openedAt": 1793032200000,
+              "closedAt": 1793041200000,
+              "notional": 765.6283063568115,
+              "pnl": -0.6165710632324135,
+              "pnlPct": -0.040992177893484444,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 765.59 au-dessus de 764.27 (bruit 0.27 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-14",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 765.4382944152833,
+              "exit": 765.1867143371582,
+              "openedAt": 1793043000000,
+              "closedAt": 1793044800000,
+              "notional": 765.4382944152833,
+              "pnl": -0.25158007812513006,
+              "pnlPct": -0.016732936580105343,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 765.40 au-dessus de 765.10 (bruit 0.37 %), levier 1.00",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "bruit-1500-15",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 770.6885569152832,
+              "exit": 769.3615544128418,
+              "openedAt": 1793116800000,
+              "closedAt": 1793120400000,
+              "notional": 770.6885569152832,
+              "pnl": -1.3270025024414736,
+              "pnlPct": -0.08827553036830782,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 770.65 au-dessus de 769.64 (bruit 0.30 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-16",
+              "symbol": "SPY",
+              "side": "short",
+              "qty": 1,
+              "entry": 758.0220945587158,
+              "exit": 759.8379777923585,
+              "openedAt": 1793370600000,
+              "closedAt": 1793372400000,
+              "notional": 758.0220945587158,
+              "pnl": -1.815883233642694,
+              "pnlPct": -0.1209038296642046,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 758.06 sous 759.77 (bruit 0.21 %), levier 1.00",
+              "exitReason": "retour au-dessus de min(borne basse, VWAP)"
+            },
+            {
+              "id": "bruit-1500-17",
+              "symbol": "SPY",
+              "side": "short",
+              "qty": 1,
+              "entry": 758.4720842651367,
+              "exit": 755.747807473755,
+              "openedAt": 1793374200000,
+              "closedAt": 1793390400000,
+              "notional": 758.4720842651367,
+              "pnl": 2.724276791381726,
+              "pnlPct": 0.1816054031883324,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 758.51 sous 758.89 (bruit 0.33 %), levier 1.00",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "bruit-1500-18",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 760.4880347076416,
+              "exit": 760.9419314697266,
+              "openedAt": 1793631600000,
+              "closedAt": 1793635200000,
+              "notional": 760.4880347076416,
+              "pnl": 0.45389676208492347,
+              "pnlPct": 0.03020276008186301,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 760.45 au-dessus de 760.36 (bruit 0.12 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-19",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 753.8526931915284,
+              "exit": 754.5222695587158,
+              "openedAt": 1793718000000,
+              "closedAt": 1793719800000,
+              "notional": 753.8526931915284,
+              "pnl": 0.6695763671874602,
+              "pnlPct": 0.044540851548254295,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 753.82 au-dessus de 753.65 (bruit 0.12 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-20",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 756.2378222076417,
+              "exit": 755.322217352295,
+              "openedAt": 1793721600000,
+              "closedAt": 1793725200000,
+              "notional": 756.2378222076417,
+              "pnl": -0.9156048553467144,
+              "pnlPct": -0.060879782282729125,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 756.20 au-dessus de 754.92 (bruit 0.29 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-21",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 755.7277869415284,
+              "exit": 755.322217352295,
+              "openedAt": 1793727000000,
+              "closedAt": 1793734200000,
+              "notional": 755.7277869415284,
+              "pnl": -0.405569589233437,
+              "pnlPct": -0.026983287742071038,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 755.69 au-dessus de 755.09 (bruit 0.31 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-22",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 767.2683419677735,
+              "exit": 764.1217651458741,
+              "openedAt": 1793804400000,
+              "closedAt": 1793809800000,
+              "notional": 767.2683419677735,
+              "pnl": -3.14657682189943,
+              "pnlPct": -0.209404024323198,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 767.23 au-dessus de 763.89 (bruit 0.12 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-23",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1,
+              "entry": 768.6384055847169,
+              "exit": 766.6916439697266,
+              "openedAt": 1793811600000,
+              "closedAt": 1793826000000,
+              "notional": 768.6384055847169,
+              "pnl": -1.9467616149903506,
+              "pnlPct": -0.12982844115759173,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 768.60 au-dessus de 765.61 (bruit 0.34 %), levier 1.00",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "bruit-1500-24",
+              "symbol": "SPY",
+              "side": "short",
+              "qty": 1,
+              "entry": 754.0922983825684,
+              "exit": 733.1666613830567,
+              "openedAt": 1793890800000,
+              "closedAt": 1793912400000,
+              "notional": 754.0922983825684,
+              "pnl": 20.925636999511653,
+              "pnlPct": 1.3973331408101934,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 754.13 sous 764.32 (bruit 0.15 %), levier 1.00",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "bruit-1500-25",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 2,
+              "entry": 740.6070358245851,
+              "exit": 737.0081306610108,
+              "openedAt": 1793977200000,
+              "closedAt": 1793988000000,
+              "notional": 1481.2140716491701,
+              "pnl": -7.197810327148545,
+              "pnlPct": -0.47401833183838055,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 740.57 au-dessus de 736.58 (bruit 0.24 %), levier 1.00",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            },
+            {
+              "id": "bruit-1500-26",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 2,
+              "entry": 747.7673669677736,
+              "exit": 752.5723548522949,
+              "openedAt": 1794236400000,
+              "closedAt": 1794258000000,
+              "notional": 1495.5347339355471,
+              "pnl": 9.609975769042649,
+              "pnlPct": 0.6358879015226385,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 747.73 au-dessus de 744.09 (bruit 0.29 %), levier 1.00",
+              "exitReason": "fin de séance"
+            }
+          ],
+          "open": []
+        },
+        {
+          "id": "or-ny-2500",
+          "from": 1791842400000,
+          "to": 1794265200000,
+          "capital": 2500,
+          "equity": 2610.9245857421906,
+          "stats": {
+            "returnPct": 4.436983429687625,
+            "maxDrawdownPct": 3.2872194751060664,
+            "trades": 19,
+            "winRatePct": 52.63157894736842,
+            "profitFactor": 1.666854141424631,
+            "avgTradePct": 0.23395870707798092,
+            "bestDayPct": 1.8636578463423623,
+            "worstDayPct": -1.242221112464118,
+            "daysUp": 10,
+            "days": 21,
+            "exposurePct": 5.312035661218425
+          },
+          "fees": 0,
+          "financing": 0,
+          "daily": [
+            [
+              "2026-10-13",
+              2522.96
+            ],
+            [
+              "2026-10-14",
+              2528.84
+            ],
+            [
+              "2026-10-15",
+              2514.61
+            ],
+            [
+              "2026-10-16",
+              2483.37
+            ],
+            [
+              "2026-10-19",
+              2491.54
+            ],
+            [
+              "2026-10-20",
+              2480.71
+            ],
+            [
+              "2026-10-21",
+              2458.71
+            ],
+            [
+              "2026-10-22",
+              2479.2
+            ],
+            [
+              "2026-10-23",
+              2511.59
+            ],
+            [
+              "2026-10-25",
+              2511.59
+            ],
+            [
+              "2026-10-26",
+              2489.19
+            ],
+            [
+              "2026-10-27",
+              2535.58
+            ],
+            [
+              "2026-10-28",
+              2548.44
+            ],
+            [
+              "2026-10-29",
+              2529.94
+            ],
+            [
+              "2026-10-30",
+              2569.45
+            ],
+            [
+              "2026-11-02",
+              2560.96
+            ],
+            [
+              "2026-11-03",
+              2602.37
+            ],
+            [
+              "2026-11-04",
+              2581.86
+            ],
+            [
+              "2026-11-05",
+              2581.86
+            ],
+            [
+              "2026-11-06",
+              2629.05
+            ],
+            [
+              "2026-11-09",
+              2610.92
+            ]
+          ],
+          "trades": [
+            {
+              "id": "or-ny-2500-3",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 1,
+              "entry": 4199.180137646485,
+              "exit": 4176.217384667969,
+              "openedAt": 1791899100000,
+              "closedAt": 1791910800000,
+              "notional": 4199.180137646485,
+              "pnl": 22.96275297851571,
+              "pnlPct": 0.9185101191406284,
+              "r": 1.6035596161214865,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4199.6, largeur 13.9 $)",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "or-ny-2500-6",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 1,
+              "entry": 4111.5888,
+              "exit": 4105.710334667969,
+              "openedAt": 1791986100000,
+              "closedAt": 1791997200000,
+              "notional": 4111.5888,
+              "pnl": 5.8784653320317375,
+              "pnlPct": 0.23299849849514587,
+              "r": 0.32637655788182646,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4112.0, largeur 17.6 $)",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "or-ny-2500-9",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 1,
+              "entry": 4171.182937646485,
+              "exit": 4185.4185,
+              "openedAt": 1792073100000,
+              "closedAt": 1792075200000,
+              "notional": 4171.182937646485,
+              "pnl": -14.235562353514979,
+              "pnlPct": -0.562928279183356,
+              "r": -1.030288638010908,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4171.6, largeur 13.4 $)",
+              "exitReason": "stop"
+            },
+            {
+              "id": "or-ny-2500-12",
+              "symbol": "GC=F",
+              "side": "long",
+              "qty": 1,
+              "entry": 4200.92005,
+              "exit": 4169.683087646485,
+              "openedAt": 1792158600000,
+              "closedAt": 1792160400000,
+              "notional": 4200.92005,
+              "pnl": -31.236962353515082,
+              "pnlPct": -1.242221112464118,
+              "r": -1.3569401386977893,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du haut du range 9 h 30 – 9 h 45 (4200.5, largeur 22.6 $)",
+              "exitReason": "stop (ouverture au-delà)"
+            },
+            {
+              "id": "or-ny-2500-15",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 1,
+              "entry": 4168.783275292969,
+              "exit": 4160.616215332031,
+              "openedAt": 1792417500000,
+              "closedAt": 1792429200000,
+              "notional": 4168.783275292969,
+              "pnl": 8.167059960937877,
+              "pnlPct": 0.3288702149613951,
+              "r": 0.4533092796116991,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4169.2, largeur 17.6 $)",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "or-ny-2500-18",
+              "symbol": "GC=F",
+              "side": "long",
+              "qty": 1,
+              "entry": 4150.214784667969,
+              "exit": 4139.385824707031,
+              "openedAt": 1792503900000,
+              "closedAt": 1792515600000,
+              "notional": 4150.214784667969,
+              "pnl": -10.828959960937937,
+              "pnlPct": -0.43462992435271086,
+              "r": -0.6979856000584769,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du haut du range 9 h 30 – 9 h 45 (4149.8, largeur 15.1 $)",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "or-ny-2500-21",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 3,
+              "entry": 4150.1850376464845,
+              "exit": 4157.5158076660155,
+              "openedAt": 1792590900000,
+              "closedAt": 1792596600000,
+              "notional": 12450.555112939453,
+              "pnl": -21.99231005859292,
+              "pnlPct": -0.8865340359973181,
+              "r": -1.0601166163675213,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4150.6, largeur 6.5 $)",
+              "exitReason": "stop"
+            },
+            {
+              "id": "or-ny-2500-24",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 1,
+              "entry": 4074.09255,
+              "exit": 4053.605271166992,
+              "openedAt": 1792676700000,
+              "closedAt": 1792688400000,
+              "notional": 4074.09255,
+              "pnl": 20.487278833007622,
+              "pnlPct": 0.8332516430890943,
+              "r": 0.9143065736175906,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4074.8, largeur 21.7 $)",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "or-ny-2500-27",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 2,
+              "entry": 4035.2963811767577,
+              "exit": 4019.099853515625,
+              "openedAt": 1792763100000,
+              "closedAt": 1792765200000,
+              "notional": 8070.592762353515,
+              "pnl": 32.393055322265354,
+              "pnlPct": 1.306592138398429,
+              "r": 1.860895794043868,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4035.7, largeur 8.3 $)",
+              "exitReason": "objectif"
+            },
+            {
+              "id": "or-ny-2500-30",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 2,
+              "entry": 4013.09865,
+              "exit": 4024.3022923339845,
+              "openedAt": 1793022300000,
+              "closedAt": 1793024400000,
+              "notional": 8026.1973,
+              "pnl": -22.40728466796918,
+              "pnlPct": -0.8921536431774832,
+              "r": -1.037254012537475,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4013.5, largeur 10.4 $)",
+              "exitReason": "stop"
+            },
+            {
+              "id": "or-ny-2500-33",
+              "symbol": "GC=F",
+              "side": "long",
+              "qty": 2,
+              "entry": 4046.8045423339845,
+              "exit": 4069.99951171875,
+              "openedAt": 1793109600000,
+              "closedAt": 1793113500000,
+              "notional": 8093.609084667969,
+              "pnl": 46.389938769531,
+              "pnlPct": 1.8636578463423623,
+              "r": 1.90053460007745,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du haut du range 9 h 30 – 9 h 45 (4046.4, largeur 11.8 $)",
+              "exitReason": "objectif"
+            },
+            {
+              "id": "or-ny-2500-36",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 3,
+              "entry": 4058.4940123535157,
+              "exit": 4054.2054288330078,
+              "openedAt": 1793196300000,
+              "closedAt": 1793210400000,
+              "notional": 12175.482037060547,
+              "pnl": 12.865750561523782,
+              "pnlPct": 0.5074090894324556,
+              "r": 0.5790774000374058,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4058.9, largeur 7.0 $)",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "or-ny-2500-39",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 1,
+              "entry": 4031.1969376464845,
+              "exit": 4049.7049788330078,
+              "openedAt": 1793281800000,
+              "closedAt": 1793285400000,
+              "notional": 4031.1969376464845,
+              "pnl": -18.508041186523315,
+              "pnlPct": -0.7262489124383944,
+              "r": -1.0223679786761424,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4031.6, largeur 17.7 $)",
+              "exitReason": "stop"
+            },
+            {
+              "id": "or-ny-2500-42",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 1,
+              "entry": 3933.0065623535156,
+              "exit": 3893.4894076660157,
+              "openedAt": 1793367900000,
+              "closedAt": 1793383200000,
+              "notional": 3933.0065623535156,
+              "pnl": 39.5171546874999,
+              "pnlPct": 1.561982891163208,
+              "r": 1.7186275186451703,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (3933.4, largeur 22.6 $)",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "or-ny-2500-45",
+              "symbol": "GC=F",
+              "side": "long",
+              "qty": 1,
+              "entry": 3976.3976,
+              "exit": 3967.9032188232422,
+              "openedAt": 1793631000000,
+              "closedAt": 1793642400000,
+              "notional": 3976.3976,
+              "pnl": -8.494381176757543,
+              "pnlPct": -0.3305911169549046,
+              "r": -0.4334409489359141,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du haut du range 9 h 30 – 9 h 45 (3976.0, largeur 19.2 $)",
+              "exitReason": "fin de séance"
+            },
+            {
+              "id": "or-ny-2500-48",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 3,
+              "entry": 3951.7048876464846,
+              "exit": 3937.900390625,
+              "openedAt": 1793718000000,
+              "closedAt": 1793719500000,
+              "notional": 11855.114662939453,
+              "pnl": 41.413491064453865,
+              "pnlPct": 1.6171093706810702,
+              "r": 1.8418118772069538,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (3952.1, largeur 7.1 $)",
+              "exitReason": "objectif"
+            },
+            {
+              "id": "or-ny-2500-51",
+              "symbol": "GC=F",
+              "side": "short",
+              "qty": 1,
+              "entry": 4041.995662353516,
+              "exit": 4062.506307666016,
+              "openedAt": 1793804700000,
+              "closedAt": 1793810400000,
+              "notional": 4041.995662353516,
+              "pnl": -20.510645312499946,
+              "pnlPct": -0.7881521043424063,
+              "r": -1.0202049947511114,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du bas du range 9 h 30 – 9 h 45 (4042.4, largeur 19.7 $)",
+              "exitReason": "stop"
+            },
+            {
+              "id": "or-ny-2500-56",
+              "symbol": "GC=F",
+              "side": "long",
+              "qty": 2,
+              "entry": 4051.7051788330077,
+              "exit": 4075.300048828125,
+              "openedAt": 1793976300000,
+              "closedAt": 1793982000000,
+              "notional": 8103.410357666015,
+              "pnl": 47.18973999023456,
+              "pnlPct": 1.82774144842365,
+              "r": 1.9020252093956467,
+              "fees": 0,
+              "financing": 0,
+              "reason": "cassure du haut du range 9 h 30 – 9 h 45 (4051.3, largeur 12.0 $)",
+              "exitReason": "objectif"
+            },
+            {
+              "id": "or-ny-2500-59",
+              "symbol": "GC=F",
+              "side": "long",
+              "qty": 1,
+              "entry": 4139.813842333984,
+              "exit": 4121.687887646484,
+              "openedAt": 1794240600000,
+              "closedAt": 1794241800000,
+              "notional": 4139.813842333984,
+              "pnl": -18.12595468749987,
+              "pnlPct": -0.6894486967351101,
+              "r": -1.023270630646709,
               "fees": 0,
               "financing": 0,
               "reason": "cassure du haut du range 9 h 30 – 9 h 45 (4139.4, largeur 17.3 $)",
@@ -17924,6 +18926,382 @@
             [
               "2026-11-09",
               509.06
+            ]
+          ],
+          "trades": [],
+          "open": []
+        },
+        {
+          "id": "bruit-1500",
+          "from": 1788732000000,
+          "to": 1794265200000,
+          "capital": 1500,
+          "equity": 1511.688390225215,
+          "stats": {
+            "returnPct": 0.7792260150143344,
+            "maxDrawdownPct": 1.00194851237689,
+            "trades": 53,
+            "winRatePct": 26.41509433962264,
+            "profitFactor": 1.273848545917253,
+            "avgTradePct": 0.014956921853059598,
+            "bestDayPct": 1.4059615504079885,
+            "worstDayPct": -0.47690477123774333,
+            "daysUp": 9,
+            "days": 45,
+            "exposurePct": 6.60377358490566
+          },
+          "fees": 0,
+          "financing": 0,
+          "daily": [
+            [
+              "2026-09-08",
+              1499.89
+            ],
+            [
+              "2026-09-09",
+              1498.44
+            ],
+            [
+              "2026-09-10",
+              1496.43
+            ],
+            [
+              "2026-09-11",
+              1495.77
+            ],
+            [
+              "2026-09-14",
+              1495.77
+            ],
+            [
+              "2026-09-15",
+              1495.76
+            ],
+            [
+              "2026-09-16",
+              1495.5
+            ],
+            [
+              "2026-09-17",
+              1495.5
+            ],
+            [
+              "2026-09-18",
+              1494.73
+            ],
+            [
+              "2026-09-21",
+              1500.48
+            ],
+            [
+              "2026-09-22",
+              1500.48
+            ],
+            [
+              "2026-09-23",
+              1501.19
+            ],
+            [
+              "2026-09-24",
+              1501.19
+            ],
+            [
+              "2026-09-25",
+              1499.35
+            ],
+            [
+              "2026-09-28",
+              1494.71
+            ],
+            [
+              "2026-09-29",
+              1493.61
+            ],
+            [
+              "2026-09-30",
+              1492.89
+            ],
+            [
+              "2026-10-01",
+              1492.65
+            ],
+            [
+              "2026-10-02",
+              1492.65
+            ],
+            [
+              "2026-10-05",
+              1494.84
+            ],
+            [
+              "2026-10-06",
+              1493.62
+            ],
+            [
+              "2026-10-07",
+              1493.62
+            ],
+            [
+              "2026-10-08",
+              1491.29
+            ],
+            [
+              "2026-10-09",
+              1490.81
+            ],
+            [
+              "2026-10-12",
+              1490.81
+            ],
+            [
+              "2026-10-13",
+              1490.81
+            ],
+            [
+              "2026-10-14",
+              1494.43
+            ],
+            [
+              "2026-10-15",
+              1493.99
+            ],
+            [
+              "2026-10-16",
+              1499.34
+            ],
+            [
+              "2026-10-19",
+              1498.82
+            ],
+            [
+              "2026-10-20",
+              1498.68
+            ],
+            [
+              "2026-10-21",
+              1496.39
+            ],
+            [
+              "2026-10-22",
+              1494.57
+            ],
+            [
+              "2026-10-23",
+              1494.57
+            ],
+            [
+              "2026-10-26",
+              1494.06
+            ],
+            [
+              "2026-10-27",
+              1492.73
+            ],
+            [
+              "2026-10-28",
+              1492.73
+            ],
+            [
+              "2026-10-29",
+              1492.73
+            ],
+            [
+              "2026-10-30",
+              1493.64
+            ],
+            [
+              "2026-11-02",
+              1494.1
+            ],
+            [
+              "2026-11-03",
+              1493.44
+            ],
+            [
+              "2026-11-04",
+              1488.35
+            ],
+            [
+              "2026-11-05",
+              1509.28
+            ],
+            [
+              "2026-11-06",
+              1502.08
+            ],
+            [
+              "2026-11-09",
+              1511.69
+            ]
+          ],
+          "trades": [],
+          "open": []
+        },
+        {
+          "id": "or-ny-2500",
+          "from": 1790028000000,
+          "to": 1794265200000,
+          "capital": 2500,
+          "equity": 2533.279502099617,
+          "stats": {
+            "returnPct": 1.3311800839846728,
+            "maxDrawdownPct": 6.015442454060388,
+            "trades": 33,
+            "winRatePct": 45.45454545454545,
+            "profitFactor": 1.0959812693879896,
+            "avgTradePct": 0.044886598814139866,
+            "bestDayPct": 1.884411940780984,
+            "worstDayPct": -1.2697149356637742,
+            "daysUp": 15,
+            "days": 36,
+            "exposurePct": 4.679977343528745
+          },
+          "fees": 0,
+          "financing": 0,
+          "daily": [
+            [
+              "2026-09-22",
+              2483.73
+            ],
+            [
+              "2026-09-23",
+              2483.73
+            ],
+            [
+              "2026-09-24",
+              2524.46
+            ],
+            [
+              "2026-09-25",
+              2500.34
+            ],
+            [
+              "2026-09-28",
+              2483.9
+            ],
+            [
+              "2026-09-29",
+              2460.03
+            ],
+            [
+              "2026-09-30",
+              2487.41
+            ],
+            [
+              "2026-10-01",
+              2472.97
+            ],
+            [
+              "2026-10-02",
+              2510.75
+            ],
+            [
+              "2026-10-05",
+              2516.61
+            ],
+            [
+              "2026-10-06",
+              2495.54
+            ],
+            [
+              "2026-10-07",
+              2509.71
+            ],
+            [
+              "2026-10-08",
+              2488.45
+            ],
+            [
+              "2026-10-09",
+              2465.77
+            ],
+            [
+              "2026-10-12",
+              2445.55
+            ],
+            [
+              "2026-10-13",
+              2468.51
+            ],
+            [
+              "2026-10-14",
+              2474.39
+            ],
+            [
+              "2026-10-15",
+              2460.16
+            ],
+            [
+              "2026-10-16",
+              2428.92
+            ],
+            [
+              "2026-10-19",
+              2437.09
+            ],
+            [
+              "2026-10-20",
+              2426.26
+            ],
+            [
+              "2026-10-21",
+              2404.26
+            ],
+            [
+              "2026-10-22",
+              2424.75
+            ],
+            [
+              "2026-10-23",
+              2457.14
+            ],
+            [
+              "2026-10-25",
+              2457.14
+            ],
+            [
+              "2026-10-26",
+              2434.74
+            ],
+            [
+              "2026-10-27",
+              2457.93
+            ],
+            [
+              "2026-10-28",
+              2470.8
+            ],
+            [
+              "2026-10-29",
+              2452.29
+            ],
+            [
+              "2026-10-30",
+              2491.81
+            ],
+            [
+              "2026-11-02",
+              2483.31
+            ],
+            [
+              "2026-11-03",
+              2524.73
+            ],
+            [
+              "2026-11-04",
+              2504.22
+            ],
+            [
+              "2026-11-05",
+              2504.22
+            ],
+            [
+              "2026-11-06",
+              2551.41
+            ],
+            [
+              "2026-11-09",
+              2533.28
             ]
           ],
           "trades": [],

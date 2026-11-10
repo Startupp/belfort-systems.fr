@@ -1,16 +1,16 @@
 {
-  "generatedAt": 1794321466457,
-  "commit": "175ffe5 (2026-11-10)",
+  "generatedAt": 1794334597430,
+  "commit": "3e0fc17 (2026-11-10)",
   "windows": {
     "suivi": {
       "label": "Suivi en direct depuis le 11 novembre 2026",
       "from": 1794351600000,
-      "to": 1794321466457,
+      "to": 1794334597430,
       "runs": [
         {
           "id": "orb-x4",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -35,7 +35,7 @@
         {
           "id": "orb-x1",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -60,7 +60,7 @@
         {
           "id": "bruit-x4",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -85,7 +85,7 @@
         {
           "id": "bruit-x1",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -110,7 +110,7 @@
         {
           "id": "demi-heure",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -135,7 +135,7 @@
         {
           "id": "rsi2",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -160,7 +160,7 @@
         {
           "id": "nuit",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -185,7 +185,7 @@
         {
           "id": "tournant-mois",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -210,7 +210,7 @@
         {
           "id": "crypto-tendance",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -235,7 +235,7 @@
         {
           "id": "crypto-tendance-x2",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -260,7 +260,7 @@
         {
           "id": "crypto-bollinger",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -285,7 +285,7 @@
         {
           "id": "grille-btc",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -310,7 +310,7 @@
         {
           "id": "or-ny-x20",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -333,9 +333,59 @@
           "open": []
         },
         {
+          "id": "bruit-1500",
+          "from": 1794351600000,
+          "to": 1794334597430,
+          "capital": 1500,
+          "equity": 1500,
+          "stats": {
+            "returnPct": 0,
+            "maxDrawdownPct": 0,
+            "trades": 0,
+            "winRatePct": 0,
+            "profitFactor": 0,
+            "avgTradePct": 0,
+            "bestDayPct": 0,
+            "worstDayPct": 0,
+            "daysUp": 0,
+            "days": 0,
+            "exposurePct": 0
+          },
+          "fees": 0,
+          "financing": 0,
+          "daily": [],
+          "trades": [],
+          "open": []
+        },
+        {
+          "id": "or-ny-2500",
+          "from": 1794351600000,
+          "to": 1794334597430,
+          "capital": 2500,
+          "equity": 2500,
+          "stats": {
+            "returnPct": 0,
+            "maxDrawdownPct": 0,
+            "trades": 0,
+            "winRatePct": 0,
+            "profitFactor": 0,
+            "avgTradePct": 0,
+            "bestDayPct": 0,
+            "worstDayPct": 0,
+            "daysUp": 0,
+            "days": 0,
+            "exposurePct": 0
+          },
+          "fees": 0,
+          "financing": 0,
+          "daily": [],
+          "trades": [],
+          "open": []
+        },
+        {
           "id": "hasard-spy",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -360,7 +410,7 @@
         {
           "id": "hasard-or-x20",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {
@@ -385,7 +435,7 @@
         {
           "id": "telegram-or",
           "from": 1794351600000,
-          "to": 1794321466457,
+          "to": 1794334597430,
           "capital": 500,
           "equity": 500,
           "stats": {

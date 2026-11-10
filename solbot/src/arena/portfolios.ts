@@ -1,5 +1,6 @@
 /**
- * Les portefeuilles parallèles de l'arène : une stratégie chacun, 500 $ fictifs chacun, avec ou sans levier. Les coûts suivent les plateformes accessibles à un particulier en France.
+ * Les portefeuilles parallèles de l'arène : une stratégie chacun, 500 $ fictifs (plus quand le plus petit ordre possible
+ * l'exige, en version réaliste à côté de la version à 500 $), avec ou sans levier. Les coûts suivent les plateformes accessibles à un particulier en France.
  */
 
 import type { Costs, PortfolioSpec } from './engine.ts';
@@ -272,6 +273,40 @@ export const PORTFOLIOS: ArenaPortfolio[] = [
     symbols: ['GC=F'],
     source: 'Cassure de range d’ouverture appliquée à l’or (pratique courante chez les traders de XAUUSD)',
     rules: 'Range de 15 h 30 à 15 h 45 (Paris) ; achat stop au-dessus, vente stop en dessous jusqu’à 17 h 30 ; stop de l’autre côté, objectif 2 fois le range, sortie à 19 h. Risque 1 %. Taille non arrondie au lot de 0,01 (1 once) : avec ce lot, il faudrait ~2 500 $ pour garder 1 % de risque.',
+    role: 'pratique courante',
+    strategy: () => goldNyOpen({ symbol: 'GC=F' }),
+  },
+  {
+    id: 'bruit-1500',
+    name: 'Momentum « zone de bruit » SPY, 1 500 $ en unités entières',
+    data: 'spy5m',
+    market: 'S&P 500 (CFD indice)',
+    leverageLabel: 'sans levier',
+    capital: 1500,
+    maxLeverage: 1,
+    allowShort: true,
+    costs: { ...COSTS.cfdIndice, qtyStep: 1 },
+    barMs: MIN5,
+    symbols: ['SPY'],
+    source: 'Même étude ; version réaliste pour un petit compte',
+    rules: 'Mêmes règles que la version sans levier, mais par unités entières d’une part de SPY (~680 $, l’ordre de grandeur du plus petit CFD S&P 500) : impossible à 500 $, d’où 1 500 $.',
+    role: 'publiée',
+    strategy: () => noiseArea({ symbol: 'SPY', maxLev: 1 }),
+  },
+  {
+    id: 'or-ny-2500',
+    name: 'Or : cassure de l’ouverture de New York, 2 500 $ au lot réel',
+    data: 'gold5m',
+    market: 'Or (CFD XAUUSD)',
+    leverageLabel: '×20 max',
+    capital: 2500,
+    maxLeverage: 20,
+    allowShort: true,
+    costs: { ...COSTS.cfdOr, qtyStep: 1 },
+    barMs: MIN5,
+    symbols: ['GC=F'],
+    source: 'Même stratégie ; version réaliste avec le lot minimal de 0,01 (1 once)',
+    rules: 'Mêmes règles, taille arrondie à l’once : le range d’ouverture fait ~15 $ en médiane, il faut donc ~1 500 $ pour 1 once à 1 % de risque ; à 2 500 $, presque tous les jours sont jouables.',
     role: 'pratique courante',
     strategy: () => goldNyOpen({ symbol: 'GC=F' }),
   },

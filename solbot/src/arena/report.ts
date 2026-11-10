@@ -175,7 +175,7 @@ footer{font-size:12px;color:var(--muted)}
 <header class="top">
 <h1>Arène des stratégies</h1>
 <p class="muted">Mis à jour le ${esc(new Date(updated).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', dateStyle: 'long', timeStyle: 'short' }))} (heure de Paris) · code des stratégies : ${esc(suivi?.commit ?? rejeu?.commit ?? '?')}</p>
-<p class="banner"><b>Papier</b> : ${PORTFOLIOS.length} portefeuilles fictifs en parallèle, une stratégie chacun, 500 $ de départ chacun. Avec ou sans levier selon le portefeuille, aux plafonds autorisés aux particuliers en Europe, sauf le témoin « façon Telegram ». Aucun ordre réel, aucune clé.</p>
+<p class="banner"><b>Papier</b> : ${PORTFOLIOS.length} portefeuilles fictifs en parallèle, une stratégie chacun, 500 $ de départ (1 500 $ ou 2 500 $ pour deux versions réalistes, quand le plus petit ordre possible l’exige). Avec ou sans levier selon le portefeuille, aux plafonds autorisés aux particuliers en Europe, sauf le témoin « façon Telegram ». Aucun ordre réel, aucune clé.</p>
 </header>
 ${commun ? `<section class="kpis" aria-label="Chiffres clés">
 ${best ? kpi('Meilleur sur la période commune', `${sgn(best.stats.returnPct)} %`, esc(byId.get(best.id)?.name ?? best.id), best.stats.returnPct >= 0 ? 'good' : 'bad') : ''}

@@ -6,5 +6,7 @@
   "Or à levier ×20 : la cassure de l'ouverture de New York gagne 4,1 % sur 20 trades, contre −12 % pour le hasard au même levier. L'écart est intéressant, mais 20 trades ne prouvent rien.",
   "Le levier ne crée aucun avantage : il multiplie le résultat dans les deux sens. Le témoin « façon Telegram » est à zéro au bout de 9 signaux.",
   "Sur 16 ans, RSI(2) (+54 %) et le tournant du mois (+40 %) gagnent en restant peu de temps sur le marché. La nuit SPY gagne 33 %, mais avec une baisse de 30 % en route.",
+  "Le capital : en papier, le résultat en % ne dépend pas du montant, sauf quand le plus petit ordre possible est trop gros. C'est le cas de l'or (lot de 1 once, environ 4 000 $ d'exposition) : impossible à 500 $, jouable un jour sur deux à 1 500 $, presque tous les jours à 2 500 $. C'est aussi le cas du S&P 500 en CFD (plus petite unité autour de 680 $) : impossible sans levier à 500 $. Leurs versions réalistes, à 1 500 $ et à 2 500 $, sont dans l'arène.",
+  "Plus que le capital, ce sont les frais fixes qui comptent. Un minimum de 1 € par ordre ruine le day trading d'un petit compte : environ 170 ordres par mois pour le desk, soit 34 % de 500 $ par mois. Il faut un courtier sans commission ni minimum, ou des CFD.",
   "Le suivi en direct commence le 11 novembre, et c'est lui qui comptera, pas le rejeu."
 ]
