@@ -1,4 +1,4 @@
-/* Belfort Systems — logique de la console d'administration.
+/* Damien Belfort — logique de la console d'administration.
    Aucun secret n'est stocké : le registre local ne contient que noms, slugs et couleurs. */
 (function () {
   'use strict';
@@ -98,7 +98,7 @@
 '<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">\n' +
 '<link rel="stylesheet" href="/assets/portal.css">\n</head>\n<body>\n' +
 '<div class="shell">\n  <main class="panel">\n' +
-'    <a class="brand" href="/"><span class="mark" style="background:linear-gradient(160deg,' + color + ',#7C6BD6)">B</span><b>Belfort <span>Systems</span></b></a>\n' +
+'    <a class="brand" href="/"><span class="mark" style="background:linear-gradient(160deg,' + color + ',#7C6BD6)">B</span><b>Damien <span>Belfort</span></b></a>\n' +
 '    <h1>' + esc(title) + '</h1>\n' +
 '    <p class="hint">Espace privé — saisissez le mot de passe qui vous a été communiqué.</p>\n' +
 '    <form id="gate" hidden>\n' +
@@ -106,7 +106,7 @@
 '        <input id="pw" type="password" autocomplete="current-password" required></div>\n' +
 '      <button class="btn" type="submit">Ouvrir</button>\n' +
 '      <p class="err" id="err" role="alert"></p>\n    </form>\n' +
-'    <p class="foot"><a href="mailto:damien@belfort-systems.fr">Contacter Belfort Systems</a></p>\n' +
+'    <p class="foot"><a href="mailto:damien@belfort-systems.fr">Contacter Damien Belfort</a></p>\n' +
 '  </main>\n</div>\n' +
 '<script type="text/plain" id="payload">' + payload + '<\/script>\n' +
 '<script src="/assets/bsv.js"><\/script>\n' +
@@ -117,7 +117,7 @@
 
   function manifestTpl(slug, name, color) {
     return JSON.stringify({
-      name: name + ' — Belfort Systems', short_name: name, lang: 'fr', dir: 'ltr',
+      name: name + ' — Damien Belfort', short_name: name, lang: 'fr', dir: 'ltr',
       start_url: './', scope: './', display: 'standalone', orientation: 'portrait',
       background_color: '#F6F5FC', theme_color: color,
       description: 'Espace client ' + name + '. Documents chiffrés, accessibles avec votre mot de passe.',
@@ -163,12 +163,12 @@
 '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
 '<title>' + esc(name) + ' — Espace client</title>\n' +
 '<link rel="stylesheet" href="/assets/portal.css"></head>\n<body>\n<div class="shell">\n<main class="panel">\n' +
-'  <a class="brand" href="/"><span class="mark">B</span><b>Belfort <span>Systems</span></b></a>\n' +
+'  <a class="brand" href="/"><span class="mark">B</span><b>Damien <span>Belfort</span></b></a>\n' +
 '  <h1>' + esc(name) + '</h1>\n' +
 '  <p class="hint">Vos documents et outils.</p>\n' +
 '  <div class="card"><div class="ic" style="background:linear-gradient(160deg,#2E2760,#7C6BD6)">◆</div>\n' +
 '    <div class="meta"><b>Aucun document pour le moment</b><small>Les documents publiés apparaîtront ici.</small></div></div>\n' +
-'  <p class="foot">Belfort Systems · <a href="tel:+33609897443">06 09 89 74 43</a></p>\n' +
+'  <p class="foot">Damien Belfort · <a href="tel:+33609897443">06 09 89 74 43</a></p>\n' +
 '</main></div>\n</body></html>\n';
   }
 
@@ -266,7 +266,7 @@
   $('dGo').onclick = async function () {
     var err = $('dErr'), out = $('dOut'); err.textContent = ''; out.innerHTML = '';
     var slug = slugify($('dSlug').value), file = $('dFile').value.trim() || 'document.html';
-    var title = $('dTitle').value.trim() || 'Document — Belfort Systems';
+    var title = $('dTitle').value.trim() || 'Document — Damien Belfort';
     var pw = $('dPw').value, src = $('dSrc').value;
     if (!slug) { err.textContent = 'Espace requis.'; return; }
     if (!pw) { err.textContent = 'Mot de passe requis.'; return; }

@@ -1,5 +1,5 @@
 /* ============================================================
-   Belfort Systems — tableau de bord auto-entrepreneur (/admin/)
+   Damien Belfort — tableau de bord auto-entrepreneur (/admin/)
    Écrit contre le contrat docs/TABLEAU-DE-BORD.md.
    - Une seule couche api() : fetch + Bearer (sessionStorage), 401 → connexion, 429 → attente.
    - Service injoignable → mode aperçu : données d'exemple admin/apercu/*.json, lecture seule.
@@ -83,9 +83,9 @@
   var STATUTS_MESSAGE = { nouveau: 'Nouveau', lu: 'Lu', repondu: 'Répondu', classe: 'Classé' };
   var STATUTS_FACT = { brouillon: 'Brouillon', envoyee: 'Envoyée', payee: 'Payée', annulee: 'Annulée' };
   var SOLUTIONS = ['Réglage corrigé à distance', 'Expliqué par téléphone', 'Guide envoyé', 'Réglé sur place', 'Transmis au prestataire concerné'];
-  var MOI = { nom: 'Damien Belfort', entreprise: 'Belfort Systems', adresse: '7 square des Genêts', cp: '78114', ville: 'Magny-les-Hameaux',
+  var MOI = { nom: 'Damien Belfort', entreprise: 'Damien Belfort', adresse: '7 square des Genêts', cp: '78114', ville: 'Magny-les-Hameaux',
     siret: '894 449 032 00024', tel: '06 09 89 74 43', email: 'contact@belfort-systems.fr', site: 'belfort-systems.fr' };
-  var SIGNATURE = 'Damien Belfort — Belfort Systems — 06 09 89 74 43';
+  var SIGNATURE = 'Damien Belfort\n06 09 89 74 43 · belfort-systems.fr';
 
   /* ---------- état ---------- */
   var BS_API = (typeof window.BS_API === 'string' && window.BS_API) ? window.BS_API.replace(/\/$/, '') : '';
@@ -409,11 +409,11 @@
   function mailtoMessage(m) {
     var corps = 'Bonjour ' + prenom(m.nom) + ',\n\nMerci pour votre message au sujet de « ' + (m.sujet || 'votre demande') + ' ».\n\n1. \n2. \n3. \n\nBien cordialement,\n' + SIGNATURE +
       '\n\n' + citer('Le ' + fmtDateHeure(m.recu_le) + ', ' + m.nom + ' a écrit :\n' + (m.message || ''));
-    return 'mailto:' + encodeURIComponent(m.email || '') + '?subject=' + encodeURIComponent('Re : ' + (m.sujet || 'votre demande') + ' — Belfort Systems') + '&body=' + encodeURIComponent(corps);
+    return 'mailto:' + encodeURIComponent(m.email || '') + '?subject=' + encodeURIComponent('Re : ' + (m.sujet || 'votre demande') + ' — Damien Belfort') + '&body=' + encodeURIComponent(corps);
   }
   function whatsappMessage(m) {
     var n = telInternational(m.tel); if (!n) return '';
-    var texte = 'Bonjour ' + prenom(m.nom) + ', Damien Belfort (Belfort Systems). Merci pour votre message au sujet de « ' + (m.sujet || 'votre demande') + ' » envoyé depuis belfort-systems.fr. Quand puis-je vous appeler ?';
+    var texte = 'Bonjour ' + prenom(m.nom) + ', ici Damien Belfort. Merci pour votre message au sujet de « ' + (m.sujet || 'votre demande') + ' » envoyé depuis belfort-systems.fr. Quand puis-je vous appeler ?';
     return 'https://wa.me/' + n + '?text=' + encodeURIComponent(texte);
   }
   async function vuePremierContact() {
@@ -586,7 +586,7 @@
 
   function vueContact(c) {
     var corpsMail = 'Bonjour ' + (c.nom || '').split(' ')[0] + ',\n\nMerci pour votre message au sujet de « ' + (c.sujet || '') + ' ».\n\n1. \n2. \n3. \n\nBien cordialement,\n' + SIGNATURE;
-    var mailto = 'mailto:' + encodeURIComponent(c.email || '') + '?subject=' + encodeURIComponent('Re : ' + (c.sujet || 'votre demande') + ' — Belfort Systems') + '&body=' + encodeURIComponent(corpsMail);
+    var mailto = 'mailto:' + encodeURIComponent(c.email || '') + '?subject=' + encodeURIComponent('Re : ' + (c.sujet || 'votre demande') + ' — Damien Belfort') + '&body=' + encodeURIComponent(corpsMail);
     var rdv = c.rdv;
     var autreCreneau = rdv ? 'mailto:' + encodeURIComponent(c.email || '') + '?subject=' + encodeURIComponent('Rendez-vous — autre créneau proposé') + '&body=' + encodeURIComponent('Bonjour ' + (c.nom || '').split(' ')[0] + ',\n\nLe créneau du ' + fmtDateHeure(rdv.debut) + ' ne m’est pas possible. Je vous propose :\n\n1. \n2. \n3. \n\nDites-moi ce qui vous convient.\n\n' + SIGNATURE) : '';
     return html`
@@ -1038,7 +1038,7 @@
     if (!f) throw new ApiError(404, 'Facture introuvable.');
     if (f.statut === 'brouillon' && sous === 'modifier') return editeurFacture(f);
     etat.factureCourante = f;
-    var sujet = 'Facture ' + (f.numero || '') + ' — Belfort Systems';
+    var sujet = 'Facture ' + (f.numero || '') + ' — Damien Belfort';
     var corps = 'Bonjour,\n\nVeuillez trouver ci-joint la facture ' + (f.numero || '') + ' :\n\n1. Montant : ' + euros(totalFacture(f)) + ' (TVA non applicable, art. 293 B du CGI)\n2. Échéance : ' + fmtDateLong(f.echeance) + ', par virement\n3. Détail : ' + (f.lignes || []).map(function (l) { return l.designation; }).join(' ; ') + '\n\nMerci de votre confiance.\n\n' + SIGNATURE + '\n\n(Pensez à joindre le PDF téléchargé avant d’envoyer.)';
     var mailto = 'mailto:' + encodeURIComponent(f.client_email || '') + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
     return html`
@@ -1067,7 +1067,7 @@
     var numero = f.numero || 'Brouillon — numéro attribué à l’émission';
     return html`<article class="a4" aria-label="Facture">
       ${f.statut === 'brouillon' ? html`<div class="filigrane">BROUILLON</div>` : f.statut === 'annulee' ? html`<div class="filigrane">ANNULÉE</div>` : ''}
-      <div class="ent"><div class="qui"><b>${MOI.entreprise}</b>${MOI.nom}<br>Micro-entrepreneur<br>${MOI.adresse}<br>${MOI.cp} ${MOI.ville}<br>${MOI.tel} · ${MOI.email}<br>SIRET ${MOI.siret}</div>
+      <div class="ent"><div class="qui"><b>${MOI.entreprise}</b>Entrepreneur individuel (micro-entreprise)<br>${MOI.adresse}<br>${MOI.cp} ${MOI.ville}<br>${MOI.tel} · ${MOI.email}<br>SIRET ${MOI.siret}</div>
         <div style="text-align:right"><div class="titre">${f.type === 'avoir' ? 'Avoir' : 'Facture'}</div><div class="meta">N° <b>${numero}</b><br>Date : ${fmtDateLong(f.date)}<br>Échéance : ${fmtDateLong(f.echeance)}</div></div></div>
       <div class="adr"><div class="bloc"><small>Facturé à</small><br><b>${f.client_nom || f.client_id}</b>${f.client_contact ? html`<br>${f.client_contact}` : ''}${f.client_adresse ? html`<br>${f.client_adresse}` : ''}${f.client_email ? html`<br>${f.client_email}` : ''}</div>
         ${f.objet ? html`<div><small>Objet</small><br>${f.objet}</div>` : ''}</div>
@@ -1078,10 +1078,10 @@
       <div class="mentions">
         <p><b>TVA non applicable, art. 293 B du CGI.</b></p>
         <p>Paiement à réception, au plus tard le ${fmtDateLong(f.echeance)}, par virement bancaire${iban ? ' sur le compte ' + iban : ''}. Pas d’escompte pour paiement anticipé.</p>
-        <p>En cas de retard de paiement : pénalités au taux légal en vigueur et indemnité forfaitaire pour frais de recouvrement de 40 € (art. L441-10 du Code de commerce).</p>
+        <p>En cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et indemnité forfaitaire pour frais de recouvrement de 40 € (art. L441-10 du Code de commerce).</p>
         ${f.note ? html`<p>${f.note}</p>` : ''}
       </div>
-      <div class="pied">${MOI.nom} — ${MOI.entreprise} — SIRET ${MOI.siret} — ${MOI.adresse}, ${MOI.cp} ${MOI.ville} — ${MOI.tel} — ${MOI.site}</div>
+      <div class="pied">${MOI.entreprise}, entrepreneur individuel — SIRET ${MOI.siret} — ${MOI.adresse}, ${MOI.cp} ${MOI.ville} — ${MOI.tel} — ${MOI.site}</div>
     </article>`;
   }
   ACTIONS['facture-pdf'] = async function () {
@@ -1265,7 +1265,7 @@
         <div class="field"><label for="r-taille">Taille du texte</label><select id="r-taille" data-reglage="taille"><option value="normal" ${taille === 'normal' ? 'selected' : ''}>Normale</option><option value="grand" ${taille === 'grand' ? 'selected' : ''}>Grande</option><option value="tres-grand" ${taille === 'tres-grand' ? 'selected' : ''}>Très grande</option></select></div>
         <p class="aide">Ces préférences restent sur cet appareil.</p></div>
       <div class="carte"><h2>Mentions de facturation</h2>
-        <dl class="def"><dt>Nom</dt><dd>${MOI.nom} — ${MOI.entreprise}</dd><dt>Adresse</dt><dd>${MOI.adresse}, ${MOI.cp} ${MOI.ville}</dd><dt>SIRET</dt><dd>${MOI.siret}</dd><dt>TVA</dt><dd>Non applicable, art. 293 B du CGI</dd><dt>Tarif</dt><dd>${etat.catalogue ? etat.catalogue.taux_horaire + ' € HT l’heure (catalogue du ' + etat.catalogue.version + ')' : 'voir assets/catalogue.json'}</dd></dl></div>`;
+        <dl class="def"><dt>Nom</dt><dd>${MOI.entreprise}, entrepreneur individuel</dd><dt>Adresse</dt><dd>${MOI.adresse}, ${MOI.cp} ${MOI.ville}</dd><dt>SIRET</dt><dd>${MOI.siret}</dd><dt>TVA</dt><dd>Non applicable, art. 293 B du CGI</dd><dt>Tarif</dt><dd>${etat.catalogue ? etat.catalogue.taux_horaire + ' € HT l’heure (catalogue du ' + etat.catalogue.version + ')' : 'voir assets/catalogue.json'}</dd></dl></div>`;
   }
   document.addEventListener('change', function (ev) {
     var r = ev.target.dataset && ev.target.dataset.reglage; if (!r) return;

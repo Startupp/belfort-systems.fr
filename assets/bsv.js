@@ -1,4 +1,4 @@
-/* Belfort Systems — coffre client (bsv)
+/* Damien Belfort — coffre client (bsv)
    Format de charge utile : base64( salt[16] || iv[12] || chiffré )
    Dérivation PBKDF2-SHA256, 310 000 itérations — chiffrement AES-GCM 256.
    Compatible avec les pages client déjà publiées. */
