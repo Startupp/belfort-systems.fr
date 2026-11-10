@@ -30,6 +30,8 @@ export interface DataOptions {
   now?: number;
   http?: Http;
   log?: (msg: string) => void;
+  /** Profondeur d'historique demandée, en jours, par jeu de données (défaut : le maximum utile au rejeu). */
+  historyDays?: Partial<Record<DataKey, number>>;
 }
 
 /** Spécification des séries par jeu de données. */
@@ -66,6 +68,7 @@ export function createArenaData(opts: DataOptions) {
     createHttp({ minIntervalMsByHost: { 'query1.finance.yahoo.com': 800, 'api.exchange.coinbase.com': 260 }, timeoutMs: 20_000, retries: 3 });
   const now = opts.now ?? Date.now();
   const log = opts.log ?? (() => {});
+  const days = (key: DataKey): number => opts.historyDays?.[key] ?? SPEC[key].days;
   const file = (key: DataKey, sym: string): string => join(opts.dir, `${key}-${sym.replace(/[^A-Za-z0-9-]/g, '_')}.json`);
 
   async function yahoo(key: DataKey, sym: string, old: Bar[]): Promise<Bar[]> {
@@ -79,7 +82,7 @@ export function createArenaData(opts: DataOptions) {
 
   /** Yahoo 1 min : 30 jours d'historique au plus, par tranches de 7 jours ; seules les barres manquantes sont demandées. */
   async function yahoo1m(key: DataKey, sym: string, old: Bar[]): Promise<Bar[]> {
-    const from = Math.max(old.length ? (old.at(-1) as Bar).t + 60_000 : 0, now - SPEC[key].days * 86_400_000);
+    const from = Math.max(old.length ? (old.at(-1) as Bar).t + 60_000 : 0, now - days(key) * 86_400_000);
     return merge(old, await createYahoo(http).bars(sym, from, now));
   }
 
@@ -87,8 +90,8 @@ export function createArenaData(opts: DataOptions) {
     const s = SPEC[key];
     const g = Number(s.interval);
     const step = 300 * g * 1000;
-    let from = old.length ? (old.at(-1) as Bar).t + g * 1000 : now - s.days * 86_400_000;
-    from = Math.max(from, now - s.days * 86_400_000);
+    let from = old.length ? (old.at(-1) as Bar).t + g * 1000 : now - days(key) * 86_400_000;
+    from = Math.max(from, now - days(key) * 86_400_000);
     const out: Bar[] = [];
     for (let a = from; a < now; a += step) {
       const b = Math.min(now, a + step);

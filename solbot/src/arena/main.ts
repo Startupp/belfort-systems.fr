@@ -5,7 +5,7 @@
  *   node src/arena/main.ts avance      suivi en direct : tout est rejoué depuis le départ du suivi avec le code figé
  *   node src/arena/main.ts page        régénère arene/arene.html à partir des derniers résultats
  *
- * ARENA_DIR : dossier des résultats (défaut arene). Cache des cours : data/arena-cache (hors git).
+ * ARENA_DIR : dossier des résultats (défaut arene). ARENA_CACHE : cache des cours (défaut data/arena-cache, hors git).
  */
 
 import { join, resolve } from 'node:path';
@@ -87,7 +87,11 @@ async function main(): Promise<void> {
     log(`page : ${writeArenaPage(dir)}`);
     return;
   }
-  const data = createArenaData({ dir: resolve('data/arena-cache'), maxAgeMs: cmd === 'avance' ? 30 * 60_000 : 6 * 3_600_000, now, log });
+  // Suivi : seulement l'historique utile depuis le départ (plus le temps de chauffe des indicateurs).
+  const since = Math.max(0, Math.ceil((now - SUIVI_START) / 86_400_000));
+  const historyDays: Partial<Record<DataKey, number>> | undefined =
+    cmd === 'avance' ? { us1m: Math.min(29, since + 2), crypto1h: since + 30, crypto15m: since + 10, btc1m: since + 2 } : undefined;
+  const data = createArenaData({ dir: resolve(process.env.ARENA_CACHE?.trim() || 'data/arena-cache'), maxAgeMs: cmd === 'avance' ? 30 * 60_000 : 6 * 3_600_000, now, log, historyDays });
   const cache = new Map<DataKey, Map<string, Bar[]>>();
   const load = async (key: DataKey, symbols: string[]): Promise<Map<string, Bar[]>> => {
     let m = cache.get(key);

@@ -77,7 +77,7 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
   résultats : `solbot/arene/`. Le suivi en direct part du mercredi 11 novembre à 0 h (Paris). Ce code et ces fichiers
   sont gérés par la session principale : ne jamais les modifier, ne jamais retoucher une règle.
 - **Chaque soir, après l'étape 4** : dans `solbot/`, lancer `NODE_USE_ENV_PROXY=1 node src/arena/main.ts avance`
-  (2 à 5 minutes : cours du jour sur Yahoo et Coinbase, puis tout est rejoué depuis le 11 novembre). Commiter
+  (5 à 10 minutes la première fois, le cache étant vide ; cours sur Yahoo et Coinbase, puis tout est rejoué depuis le 11 novembre). Commiter
   `solbot/arene/` dans le même commit que le carnet.
 - **Page de l'arène** : https://claude.ai/artifact/WGJvJdfBEe53xHzj2Wsx7n. Artifact `read`, puis `publish` avec
   `file_path` = `solbot/arene/arene.html` et cette même `url`. Ne jamais créer une deuxième page.
