@@ -77,7 +77,7 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
 
 ## Arène des stratégies (ajoutée le mardi 10 novembre, à partir du mercredi 11)
 
-- **16 portefeuilles papier parallèles**, une stratégie chacun (500 $, avec ou sans levier). Code : `src/arena/`,
+- **18 portefeuilles papier parallèles**, une stratégie chacun (500 $, 1 500 $ ou 2 500 $ pour deux versions réalistes ; avec ou sans levier). Code : `src/arena/`,
   résultats : `solbot/arene/`. Le suivi en direct part du mercredi 11 novembre à 0 h (Paris). Ce code et ces fichiers
   sont gérés par la session principale : ne jamais les modifier, ne jamais retoucher une règle.
 - **Chaque soir, après l'étape 4** : dans `solbot/`, lancer `NODE_USE_ENV_PROXY=1 node src/arena/main.ts avance`
