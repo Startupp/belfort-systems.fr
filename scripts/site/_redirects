@@ -4,7 +4,9 @@
 # (Pages ne redirige que des chemins) : voir docs/MIGRATION-CLOUDFLARE-PAGES.md, étape C.
 
 # Liens courts vers une offre (fiche Google, carte de visite, mails) : le formulaire de
-# contact est pré-rempli (assets/site.js, table OFFRES).
+# contact est pré-rempli (assets/site.js, table OFFRES). Chaque lien mène à la page de son parcours.
+# Entreprises
+/offre/bilan                /?offre=bilan#contact                302
 /offre/audit-informatique   /?offre=audit-informatique#contact   302
 /offre/audit-abonnements    /?offre=audit-abonnements#contact    302
 /offre/preparation-poste    /?offre=preparation-poste#contact    302
@@ -12,6 +14,12 @@
 /offre/suivi                /?offre=suivi#contact                302
 /rendez-vous                /?offre=rendez-vous#calendrier       302
 /rdv                        /?offre=rendez-vous#calendrier       302
+# Particuliers
+/offre/distance             /particuliers/?offre=distance#contact   302
+/offre/domicile             /particuliers/?offre=domicile#contact   302
+# Renfort IT
+/offre/renfort              /renfort-it/?offre=renfort#contact      302
+/offre/mission              /renfort-it/?offre=mission#contact      302
 
 # Ancienne adresse de la page « concepts » du jeu (déplacée dans ecorce/ancienne/).
 /ecorce/concepts      /ecorce/ancienne/concepts/  301

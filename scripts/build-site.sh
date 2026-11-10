@@ -35,7 +35,7 @@ done
 # 2. Dossiers publics (copiés sans les fichiers de développement)
 # Retirés du site le 27/10/2026 (données du client) : portail, clients, factures, espace-breteuil.
 # Ils restent dans le dépôt ; le garde-fou ci-dessous refuse de les republier.
-PUBLIC="assets qui-suis-je haccp ecorce"
+PUBLIC="assets qui-suis-je particuliers renfort-it conditions haccp ecorce"
 for d in $PUBLIC; do
   if [ ! -d "$d" ]; then avertir "Dossier $d absent"; continue; fi
   cp -a "$d" "$SORTIE/$d"

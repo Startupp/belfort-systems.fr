@@ -33,7 +33,8 @@ function lireConfig() {
 const CFG = lireConfig();
 const API = CFG.origineApi ? [CFG.origineApi] : [];
 // Worker du formulaire de contact (contact-worker/), distinct de l'API : seule la section « / »
-// l'appelle (fetch) et lui soumet le formulaire (form-action, repli sans JavaScript).
+// l'appelle (fetch) et lui soumet le formulaire (form-action, repli sans JavaScript). Les pages
+// /particuliers/, /renfort-it/ et /conditions/ relèvent de cette section (préfixe « / »).
 const CONTACT = CFG.origineContact ? [CFG.origineContact] : [];
 const GOOGLE_FONTS = { style: ["https://fonts.googleapis.com"], font: ["https://fonts.gstatic.com"] };
 const TURNSTILE = CFG.turnstile ? { script: ["https://challenges.cloudflare.com"], frame: ["https://challenges.cloudflare.com"] } : {};
@@ -50,7 +51,7 @@ const PERMISSIONS_FERMEES = {
 // dans form-action.
 const SECTIONS = {
   "/": {
-    nom: "Site vitrine (accueil, qui-suis-je, 404)",
+    nom: "Site vitrine (accueil Entreprises, particuliers, renfort-it, conditions, qui-suis-je, 404)",
     script: [...(TURNSTILE.script || [])], frame: [...(TURNSTILE.frame || [])],
     connect: [...API, ...CONTACT], formAction: [...CONTACT],
   },
