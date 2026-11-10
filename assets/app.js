@@ -53,6 +53,20 @@
     foot.insertBefore(egg, foot.firstChild);
   }
 
+  /* Un lien vers un bloc replié (ex. #mentions-legales) l'ouvre */
+  function ouvrir(id) {
+    var cible = id && document.getElementById(id);
+    if (cible && cible.tagName === "DETAILS") cible.open = true;
+  }
+  var depuisAncre = function () { try { ouvrir(decodeURIComponent(window.location.hash.slice(1))); } catch (e) { /* ancre illisible */ } };
+  depuisAncre();
+  window.addEventListener("hashchange", depuisAncre);
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest ? e.target.closest("a[href*='#']") : null;
+    if (!a || a.pathname !== window.location.pathname) return;
+    try { ouvrir(decodeURIComponent(a.hash.slice(1))); } catch (err) { /* ancre illisible */ }
+  });
+
   /* Mascotte : petit saut quand elle entre à l'écran, au survol et au clic */
   var mascottes = document.querySelectorAll(".mascotte");
   function hop(m) {

@@ -11,8 +11,17 @@
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="stylesheet" href="/assets/style.css">
+<link rel="stylesheet" href="/assets/fab.css">
 </head>
 <body>
+<nav class="audience" aria-label="Vous êtes">
+  <div class="container">
+    <a href="/">Entreprises</a>
+    <a href="/particuliers/">Particuliers</a>
+    <a href="/renfort-it/">Renfort IT</a>
+  </div>
+</nav>
+
 <header class="site">
   <div class="container">
     <a class="brand" href="/" title="Accueil"><img class="mark" src="/assets/logo-bonnet.svg" width="34" height="34" alt="" decoding="async"><span class="nom">Damien <span>Belfort</span></span></a>
@@ -27,14 +36,54 @@
       </div>
       <span class="kicker">Erreur 404</span>
       <h1>Cette page n'existe pas</h1>
-      <p>Elle a peut-être été déplacée. Vous cherchiez sans doute les services, les tarifs ou le formulaire de contact.</p>
+      <p>Elle a peut-être été déplacée. Choisissez votre cas : vous y trouverez les services, les tarifs et le formulaire de contact.</p>
       <div class="cta-row">
-        <a class="btn primary" href="/">Retour à l'accueil</a>
-        <a class="btn ghost" href="/#contact">Me contacter</a>
+        <a class="btn primary" href="/">Entreprises</a>
+        <a class="btn ghost" href="/particuliers/">Particuliers</a>
+        <a class="btn ghost" href="/renfort-it/">Renfort IT</a>
       </div>
     </div>
   </section>
 </main>
+
+<footer class="site">
+  <div class="container">
+    <div class="f-top">
+      <div>
+        <a class="brand" href="/"><img class="mark" src="/assets/logo-bonnet.svg" width="34" height="34" alt="" decoding="async"><span class="nom">Damien <span>Belfort</span></span></a>
+        <p class="f-tag">Informaticien indépendant à Magny-les-Hameaux, dans les Yvelines. Pour les entreprises, les particuliers et les équipes informatiques.</p>
+      </div>
+      <div class="f-col">
+        <p class="f-h">Pour qui</p>
+        <a href="/">Entreprises</a>
+        <a href="/particuliers/">Particuliers</a>
+        <a href="/renfort-it/">Renfort IT</a>
+      </div>
+      <div class="f-col">
+        <p class="f-h">Le site</p>
+        <a href="/qui-suis-je/">Qui suis-je</a>
+        <a href="/conditions/">Conditions générales de vente</a>
+        <a href="#mentions-legales">Mentions légales</a>
+      </div>
+      <div class="f-col">
+        <p class="f-h">Contact</p>
+        <a href="tel:+33609897443">06 09 89 74 43</a>
+        <a href="mailto:damien@belfort-systems.fr">damien@belfort-systems.fr</a>
+        <a href="https://wa.me/33609897443?text=Bonjour%20Damien%2C%20je%20vous%20contacte%20depuis%20votre%20site%20pour%20un%20besoin%20informatique." rel="noopener">WhatsApp</a>
+        <address>Du lundi au vendredi<br>9 h – 12 h et 14 h – 18 h<br>Magny-les-Hameaux (78)</address>
+      </div>
+    </div>
+    <details class="legal" id="mentions-legales">
+      <summary>Mentions légales</summary>
+      <p>Damien Belfort, entrepreneur individuel — 7 square des Genêts, 78114 Magny-les-Hameaux — SIRET 894 449 032 00024 — code APE 62.02A (conseil en systèmes et logiciels informatiques) — TVA non applicable, art. 293 B du CGI — assurance responsabilité civile professionnelle souscrite, attestation sur demande — Directeur de la publication : Damien Belfort, <a href="tel:+33609897443">06 09 89 74 43</a>, <a href="mailto:damien@belfort-systems.fr">damien@belfort-systems.fr</a>. Hébergement : Cloudflare Pages (Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, États-Unis). Médiateur de la consommation pour les particuliers : CM2C, voir les <a href="/conditions/#mediation">conditions générales de vente</a>. Ce site ne dépose aucun cookie de suivi ; les données du formulaire de contact servent uniquement à vous répondre.</p>
+    </details>
+    <div class="f-bottom">
+      <span>© 2026 Damien Belfort</span>
+      <span>belfort-systems.fr</span>
+    </div>
+  </div>
+</footer>
+
 <script src="/assets/app.js" defer></script>
 </body>
 </html>
