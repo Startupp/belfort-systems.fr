@@ -28,21 +28,48 @@
      ------------------------------------------------------------------ */
   var catalogue = null; // rempli depuis assets/catalogue.json
 
+  function forfait(id) { return ((catalogue && catalogue.forfaits_mensuels) || []).filter(function (f) { return f.id === id; })[0]; }
+  // Toutes les prestations, toutes sections confondues : entreprises, particuliers, renfort IT.
+  function toutesPrestations() {
+    if (!catalogue) return [];
+    return (catalogue.prestations || [])
+      .concat((catalogue.particuliers && catalogue.particuliers.prestations) || [])
+      .concat((catalogue.renfort_it && catalogue.renfort_it.prestations) || []);
+  }
+  function prestation(id) { return toutesPrestations().filter(function (p) { return p.id === id; })[0]; }
+
+  /* Clés data-prix : <id> (prix d'une prestation, quelle que soit la section), <id>.supplement,
+     <id>.mensuel | .au_lieu_de | .puis_demi_heure, forfait.<id>, forfait.<id>.par_utilisateur,
+     forfait.<id>.utilisateurs_inclus, heure_supplementaire, site. */
   function prixDepuisCatalogue(cle) {
     if (!catalogue) return null;
     var m;
     if (cle === "heure_supplementaire") return catalogue.heure_supplementaire;
     if (cle === "site") return catalogue.site_web && catalogue.site_web.prix;
-    if ((m = /^forfait\.(.+)$/.exec(cle))) {
-      var f = (catalogue.forfaits_mensuels || []).filter(function (x) { return x.id === m[1]; })[0];
-      return f ? f.prix : null;
+    if ((m = /^forfait\.([^.]+)(?:\.([a-z_]+))?$/.exec(cle))) {
+      var f = forfait(m[1]);
+      return f ? (m[2] ? f[m[2]] : f.prix) : null;
     }
     if ((m = /^(.+)\.supplement$/.exec(cle))) {
-      var p = (catalogue.prestations || []).filter(function (x) { return x.id === m[1]; })[0];
+      var p = prestation(m[1]);
       return p && p.supplement ? p.supplement.prix : null;
     }
-    var q = (catalogue.prestations || []).filter(function (x) { return x.id === cle; })[0];
+    if ((m = /^(.+)\.(mensuel|au_lieu_de|puis_demi_heure)$/.exec(cle))) {
+      var r = prestation(m[1]);
+      return r ? r[m[2]] : null;
+    }
+    var q = prestation(cle);
     return q ? q.prix : null;
+  }
+
+  // Prix d'un suivi mensuel pour n utilisateurs : prix de base jusqu'à utilisateurs_inclus, puis par utilisateur.
+  function prixSuivi(f, n) {
+    var inclus = f.utilisateurs_inclus || 0, par = f.par_utilisateur || 0;
+    return f.prix + (inclus && par ? Math.max(0, n - inclus) * par : 0);
+  }
+  function libelleSuivi(f) {
+    return f.nom + " (" + f.prix + " € HT / mois" +
+      (f.utilisateurs_inclus && f.par_utilisateur ? " jusqu'à " + f.utilisateurs_inclus + " utilisateurs, puis " + f.par_utilisateur + " € par utilisateur" : "") + ")";
   }
 
   function appliquerPrix() {
@@ -50,33 +77,38 @@
       var v = prixDepuisCatalogue(node.getAttribute("data-prix"));
       if (typeof v === "number") node.textContent = nombre(v);
     });
-    // Libellés des boutons « Choisir » : on reflète le prix du catalogue
+    // Boutons « Choisir » des suivis : le libellé envoyé reprend le prix du catalogue
     $$("[data-choisir]").forEach(function (a) {
       var plan = a.closest("[data-forfait]");
       if (!plan) return;
       var id = plan.getAttribute("data-forfait");
-      var prix = id === "site" ? prixDepuisCatalogue("site") : prixDepuisCatalogue("forfait." + id);
-      var nom = $("h3", plan) ? $("h3", plan).textContent.trim() : id;
-      if (typeof prix === "number") a.setAttribute("data-choisir", (id === "site" ? "Option site WordPress (+" : nom + " (") + prix + " € HT / mois)");
+      if (id === "site") {
+        var ps = prixDepuisCatalogue("site");
+        if (typeof ps === "number") a.setAttribute("data-choisir", "Option site WordPress (+" + ps + " € HT / mois)");
+        return;
+      }
+      var f = forfait(id);
+      if (f) a.setAttribute("data-choisir", libelleSuivi(f));
     });
   }
 
   function catalogueDeSecours() {
     // Si le JSON ne se charge pas, on reconstruit le minimum depuis les valeurs déjà présentes dans la page.
-    var lire = function (cle, defaut) { var n = $('[data-prix="' + cle + '"]'); var v = n ? parseFloat(n.textContent) : NaN; return isNaN(v) ? defaut : v; };
+    var lire = function (cle, defaut) { var n = $('[data-prix="' + cle + '"]'); var v = n ? parseFloat(n.textContent.replace(",", ".")) : NaN; return isNaN(v) ? defaut : v; };
     return {
-      taux_horaire: lire("heure", 45),
-      heure_supplementaire: lire("heure_supplementaire", 40),
+      taux_horaire: 50,
+      heure_supplementaire: lire("heure_supplementaire", 45),
       prestations: [
-        { id: "heure", nom: "Intervention", unite: "heure", prix: lire("heure", 45) },
-        { id: "tranche", nom: "Demi-heure supplémentaire", unite: "demi-heure", prix: 22.5 },
+        { id: "distance", nom: "Dépannage à distance", unite: "demi-heure", prix: lire("distance", 25) },
+        { id: "heure", nom: "Intervention sur place (première heure)", unite: "heure", prix: lire("heure", 60) },
+        { id: "tranche", nom: "Demi-heure supplémentaire", unite: "demi-heure", prix: lire("tranche", 25) },
         { id: "migration", nom: "Migration Microsoft 365", unite: "forfait", prix: lire("migration", 590), inclus: "jusqu'à 5 boîtes", supplement: { nom: "boîte supplémentaire", prix: lire("migration.supplement", 70) } },
         { id: "audit", nom: "Audit informatique", unite: "forfait", prix: lire("audit", 390) },
         { id: "audit_abonnements", nom: "Audit des abonnements et contrats", unite: "forfait", prix: lire("audit_abonnements", 290) }
       ],
       forfaits_mensuels: [
-        { id: "essentiel", nom: "Suivi Essentiel", prix: lire("forfait.essentiel", 149), heures: 2, assistance: "2 h d'assistance par mois", delai: "réponse le jour ouvré suivant" },
-        { id: "serenite", nom: "Suivi Sérénité", prix: lire("forfait.serenite", 249), heures: 5, assistance: "5 h d'assistance par mois", delai: "réponse dans la journée" }
+        { id: "essentiel", nom: "Suivi Essentiel", prix: lire("forfait.essentiel", 149), utilisateurs_inclus: 5, par_utilisateur: lire("forfait.essentiel.par_utilisateur", 15), heures: 2, assistance: "2 h d'assistance par mois", delai: "réponse le jour ouvré suivant" },
+        { id: "serenite", nom: "Suivi Sérénité", prix: lire("forfait.serenite", 249), utilisateurs_inclus: 5, par_utilisateur: lire("forfait.serenite.par_utilisateur", 25), heures: 5, assistance: "5 h d'assistance par mois", delai: "réponse dans la journée" }
       ],
       site_web: { id: "site", nom: "Option site WordPress", prix: lire("site", 120), unite: "mois" }
     };
@@ -90,16 +122,17 @@
   }
 
   /* ------------------------------------------------------------------
-     2. Simulateur de formule
+     2. Simulateur de formule (page Entreprises)
      ------------------------------------------------------------------ */
-  function forfait(id) { return (catalogue.forfaits_mensuels || []).filter(function (f) { return f.id === id; })[0]; }
-  function prestation(id) { return (catalogue.prestations || []).filter(function (p) { return p.id === id; })[0]; }
+  var POSTES = { "1-3": [1, 3], "4-10": [4, 10], "11-30": [11, 30] }; // nombre de postes ≈ nombre d'utilisateurs
 
   function recommander(r) {
     // r = {postes, messagerie, site, frequence}
-    var reco = { type: "forfait", forfait: null, mensuel: 0, ponctuel: 0, lignes: [], texte: "", titre: "", formule: "" };
+    var reco = { type: "forfait", forfait: null, mensuelMin: 0, mensuelMax: 0, ponctuel: 0, parUtilisateur: null, lignes: [], texte: "", titre: "", formule: "" };
     var ess = forfait("essentiel"), seren = forfait("serenite");
-    var heure = prestation("heure"), migration = prestation("migration"), siteWeb = catalogue.site_web;
+    var distance = prestation("distance"), heure = prestation("heure"), tranche = prestation("tranche");
+    var migration = prestation("migration"), siteWeb = catalogue.site_web;
+    var bornes = POSTES[r.postes] || POSTES["1-3"];
 
     // Deux formules : Essentiel (gestion Microsoft 365, assistance à distance) ou Sérénité (suivi des postes, présence sur site)
     if (r.frequence === "rarement") {
@@ -112,25 +145,31 @@
 
     if (reco.type === "ponctuel") {
       reco.titre = "Des interventions à la demande";
-      reco.lignes.push("Intervention : " + nombre(heure.prix) + " € HT de l'heure, première heure due puis par demi-heure (" + nombre(prestation("tranche").prix) + " €), déplacement inclus à moins de 30 km");
+      reco.lignes.push("À distance : " + nombre(distance.prix) + " € HT la demi-heure, 30 minutes minimum");
+      reco.lignes.push("Sur place : " + nombre(heure.prix) + " € HT la première heure, déplacement compris jusqu'à 30 km, puis " + nombre(tranche.prix) + " € HT la demi-heure");
       reco.texte = "Vous avez rarement besoin d'aide : pas de formule mensuelle, vous m'appelez quand il le faut et vous payez l'intervention. ";
-      reco.formule = "Interventions à la demande (" + nombre(heure.prix) + " € HT / heure)";
+      reco.formule = "Interventions à la demande (" + nombre(distance.prix) + " € HT la demi-heure à distance, " + nombre(heure.prix) + " € HT la première heure sur place)";
       if (r.site === "vivre") {
-        reco.mensuel += siteWeb.prix;
+        reco.mensuelMin += siteWeb.prix; reco.mensuelMax += siteWeb.prix;
         reco.lignes.push("Option site WordPress : " + siteWeb.prix + " € HT par mois");
         reco.texte += "Votre site, lui, a besoin d'un suivi régulier (mises à jour, sauvegardes) : je propose l'option site WordPress. ";
         reco.formule += " + option site WordPress (" + siteWeb.prix + " € HT / mois)";
       }
     } else {
       var f = reco.forfait;
+      var min = prixSuivi(f, bornes[0]), max = prixSuivi(f, bornes[1]);
       reco.titre = f.nom;
-      reco.mensuel = f.prix;
+      reco.mensuelMin = min; reco.mensuelMax = max;
+      reco.lignes.push(f.prix + " € HT par mois jusqu'à " + f.utilisateurs_inclus + " utilisateurs, puis " + f.par_utilisateur + " € HT par utilisateur");
+      if (max > min) reco.lignes.push("De " + bornes[0] + " à " + bornes[1] + " utilisateurs : " + euro(min).replace(" €", "") + " à " + euro(max) + " HT par mois");
+      if (r.postes === "11-30") reco.parUtilisateur = [Math.round(max / bornes[1]), Math.round(min / bornes[0])];
       reco.lignes.push((f.assistance || (f.heures + " h d'assistance par mois")) + ", " + f.delai);
-      reco.formule = f.nom + " (" + f.prix + " € HT / mois)";
+      reco.formule = libelleSuivi(f) + ", " + bornes[0] + " à " + bornes[1] + " postes";
       if (f.id === "essentiel") reco.texte = "Le Suivi Essentiel prend en charge votre Microsoft 365 (arrivées et départs, licences, droits, boîtes partagées) et vérifie chaque mois la sécurité, la sauvegarde et les licences, avec un compte rendu. ";
       if (f.id === "serenite") reco.texte = "Avec cette taille d'équipe et ce rythme, le Suivi Sérénité ajoute le suivi des postes, l'application Espace Client, une revue des licences tous les 6 mois et une réponse dans la journée. ";
+      reco.texte += "Le prix suit le nombre d'utilisateurs. ";
       if (r.site === "vivre") {
-        reco.mensuel += siteWeb.prix;
+        reco.mensuelMin += siteWeb.prix; reco.mensuelMax += siteWeb.prix;
         reco.lignes.push("Option site WordPress : " + siteWeb.prix + " € HT par mois");
         reco.texte += "J'ajoute l'option site WordPress (mises à jour, sauvegardes, petites modifications). ";
         reco.formule += " + option site WordPress (" + siteWeb.prix + " € HT / mois)";
@@ -148,12 +187,13 @@
       reco.lignes.push("Migration Microsoft 365, une fois : " + (boites > inclusBoites ? "à partir de " : "") + euro(prixMig) + " HT (" + migration.inclus + (boites > inclusBoites ? ", puis " + sup + " € HT la boîte" : "") + ")");
       reco.texte += "Pour commencer, je migre votre messagerie vers Microsoft 365 sans coupure : inventaire, plan de bascule, vérification avec chaque personne. ";
       reco.formule += " + migration Microsoft 365 (" + euro(prixMig) + " HT, une fois)";
-      if (reco.type === "ponctuel") reco.texte += "Après la migration, le Suivi Essentiel (" + ess.prix + " € HT par mois) est une bonne suite si vous voulez rester accompagné. ";
+      if (reco.type === "ponctuel") reco.texte += "Après la migration, le Suivi Essentiel (" + ess.prix + " € HT par mois jusqu'à " + ess.utilisateurs_inclus + " utilisateurs) est une bonne suite si vous voulez rester accompagné. ";
     } else if (r.messagerie === "m365") {
       reco.texte += "Votre messagerie est déjà sur Microsoft 365 : je peux en reprendre la gestion (comptes, licences, partages) dans la formule. ";
     } else {
       reco.texte += "Votre messagerie actuelle vous convient : je la garde telle quelle. ";
     }
+    reco.lignes.push("Pour commencer : un Bilan express gratuit de 30 minutes, sur place ou en visio");
     return reco;
   }
 
@@ -164,19 +204,24 @@
     box.appendChild(el("span", { class: "kicker", text: "Ma recommandation" }));
     box.appendChild(el("h3", { text: reco.titre }));
     var amount = el("div", { class: "amount" });
-    if (reco.mensuel > 0) {
-      amount.appendChild(document.createTextNode(euro(reco.mensuel) + " HT "));
+    if (reco.mensuelMax > 0) {
+      var txt = reco.mensuelMin === reco.mensuelMax ? euro(reco.mensuelMin) : euro(reco.mensuelMin).replace(" €", "") + " à " + euro(reco.mensuelMax);
+      amount.appendChild(document.createTextNode(txt + " HT "));
       amount.appendChild(el("small", { text: "/ mois" }));
+      if (reco.parUtilisateur) {
+        amount.appendChild(el("br"));
+        amount.appendChild(el("small", { text: "soit environ " + reco.parUtilisateur[0] + " à " + reco.parUtilisateur[1] + " € HT par utilisateur et par mois" }));
+      }
       if (reco.ponctuel > 0) {
         amount.appendChild(el("br"));
         amount.appendChild(el("small", { text: "+ " + euro(reco.ponctuel) + " HT une fois (migration)" }));
       }
     } else if (reco.ponctuel > 0) {
       amount.appendChild(document.createTextNode("à partir de " + euro(reco.ponctuel) + " HT "));
-      amount.appendChild(el("small", { text: "une fois, puis à l'heure" }));
+      amount.appendChild(el("small", { text: "une fois, puis à la demande" }));
     } else {
-      amount.appendChild(document.createTextNode(nombre(prestation("heure").prix) + " € HT "));
-      amount.appendChild(el("small", { text: "/ heure d'intervention" }));
+      amount.appendChild(document.createTextNode(nombre(prestation("distance").prix) + " € HT "));
+      amount.appendChild(el("small", { text: "la demi-heure à distance" }));
     }
     box.appendChild(amount);
     box.appendChild(el("p", { text: reco.texte.trim() }));
@@ -187,11 +232,19 @@
     box.appendChild(el("p", { class: "legal", text: "Estimation, hors taxes, prix à confirmer sur devis." }));
   }
 
+  // Ne choisit le sujet que s'il existe dans la liste de la page (chaque parcours a ses propres sujets).
+  function choisirSujet(valeur) {
+    var select = $("#c-sujet");
+    if (!select || !valeur) return;
+    var existe = Array.prototype.some.call(select.options, function (o) { return o.value === valeur; });
+    if (existe) select.value = valeur;
+  }
+
   function preRemplirContact(reco) {
-    var formule = $("#c-formule"), sujet = $("#c-sujet"), message = $("#c-message");
+    var formule = $("#c-formule"), message = $("#c-message");
     if (formule) formule.value = reco.formule;
-    if (sujet) sujet.value = reco.type === "ponctuel" ? "Dépannage ou assistance" : "Formule mensuelle";
-    if (message && !message.value.trim()) {
+    choisirSujet(reco.type === "ponctuel" ? "Entreprise — dépannage ou assistance" : "Entreprise — suivi mensuel");
+    if (message && (!message.value.trim() || estUnModele(message.value))) {
       message.value = "Bonjour,\nle simulateur me propose : " + reco.formule + ".\nPouvez-vous me confirmer cette estimation ?\n\nMa structure : ";
     }
     var contact = $("#contact");
@@ -199,35 +252,85 @@
     setTimeout(function () { var n = $("#c-nom"); if (n) n.focus({ preventScroll: true }); }, 500);
   }
 
-  /* Liens directs vers une offre (fiche Google, carte de visite, mails) :
-     /?offre=<id>#contact pré-remplit le formulaire. Ids = assets/offres.json sans réseau : table ci-dessous. */
+  /* Liens directs vers une offre (fiche Google, carte de visite, mails) : /offre/<id> (scripts/site/_redirects)
+     mène à <page>?offre=<id>#contact, qui pré-remplit le formulaire. Les boutons [data-offre] font de même
+     sans recharger la page. page = parcours où vit l'offre ; sujet = une valeur de la liste de cette page
+     (le profil y figure : Entreprise, Particulier, Équipe IT). */
   var OFFRES = {
-    "audit-informatique": { sujet: "Autre", formule: "Audit informatique (390 € HT, déduit si une migration suit)",
+    // Entreprises
+    "bilan": { page: "/", sujet: "Entreprise — Bilan express gratuit", formule: "Bilan express (gratuit, 30 minutes, compte rendu d'une page)", calendrier: true,
+      message: "Bonjour,\nje souhaite un Bilan express gratuit de 30 minutes, sur place ou en visio.\n\nMa structure, le nombre de postes et la commune : " },
+    "audit-informatique": { page: "/", sujet: "Entreprise — audit", formule: "Audit informatique (390 € HT, déduit si une migration ou un suivi est signé dans les 3 mois)",
       message: "Bonjour,\nje souhaite un audit informatique de ma structure (parc, accès, licences, sauvegardes).\n\nMa structure et le nombre de postes : " },
-    "audit-abonnements": { sujet: "Autre", formule: "Audit des abonnements et contrats (290 € HT)",
+    "audit-abonnements": { page: "/", sujet: "Entreprise — audit", formule: "Audit des abonnements et contrats (290 € HT, remboursé si moins de 290 € d'économies par an)",
       message: "Bonjour,\nje souhaite un audit de mes abonnements informatiques (internet, téléphonie, logiciels, licences) pour repérer les doublons.\n\nMa structure : " },
-    "preparation-poste": { sujet: "Nouveau poste ou matériel", formule: "Préparation d'un poste (175 € HT par poste)",
+    "preparation-poste": { page: "/", sujet: "Entreprise — nouveau poste ou matériel", formule: "Préparation d'un poste (175 € HT par poste)",
       message: "Bonjour,\nj'ai un ou plusieurs postes à préparer (installation, comptes, Office, transfert des données).\n\nNombre de postes et date souhaitée : " },
-    "migration-365": { sujet: "Migration de messagerie", formule: "Migration Microsoft 365 (590 € HT jusqu'à 5 boîtes, puis 70 € par boîte)",
+    "migration-365": { page: "/", sujet: "Entreprise — migration Microsoft 365", formule: "Migration Microsoft 365 (590 € HT jusqu'à 5 boîtes, puis 70 € par boîte)",
       message: "Bonjour,\nje souhaite migrer ma messagerie vers Microsoft 365 sans coupure.\n\nNombre de boîtes et messagerie actuelle : " },
-    "suivi": { sujet: "Formule mensuelle", formule: "Formule Suivi (Essentiel 149 € ou Sérénité 249 € HT / mois)",
-      message: "Bonjour,\nje cherche un suivi informatique mensuel pour ma structure.\n\nNombre de postes et besoins : " },
-    "rendez-vous": { sujet: "Dépannage ou assistance", formule: "Premier échange ou intervention à distance (créneau à choisir)", calendrier: true,
-      message: "Bonjour,\nje souhaite réserver un créneau pour un premier échange ou une intervention à distance.\n\nLe sujet : " }
+    "suivi": { page: "/", sujet: "Entreprise — suivi mensuel", formule: "Suivi mensuel (Essentiel 149 € ou Sérénité 249 € HT / mois jusqu'à 5 utilisateurs, puis 15 € ou 25 € par utilisateur)",
+      message: "Bonjour,\nje cherche un suivi informatique mensuel pour ma structure.\n\nNombre d'utilisateurs et besoins : " },
+    "rendez-vous": { page: "/", sujet: "Entreprise — dépannage ou assistance", formule: "Premier échange ou intervention à distance (créneau à choisir)", calendrier: true,
+      message: "Bonjour,\nje souhaite réserver un créneau pour un premier échange ou une intervention à distance.\n\nLe sujet : " },
+    // Particuliers
+    "distance": { page: "/particuliers/", sujet: "Particulier — aide à distance", formule: "Aide à distance (25 € la demi-heure, résolu ou gratuit)",
+      message: "Bonjour,\nj'ai besoin d'une aide à distance.\n\nCe qui ne marche pas, et depuis quand : " },
+    "domicile": { page: "/particuliers/", sujet: "Particulier — intervention à domicile", formule: "Intervention à domicile (60 € la première heure, déplacement compris, puis 25 € la demi-heure)",
+      message: "Bonjour,\nj'aimerais que vous passiez chez moi.\n\nCe qui ne marche pas, et ma commune : " },
+    "ordinateur": { page: "/particuliers/", sujet: "Particulier — nouvel ordinateur", formule: "Nouvel ordinateur prêt à l'emploi (119 €)",
+      message: "Bonjour,\nj'ai un nouvel ordinateur à mettre en route.\n\nL'ancien ordinateur (s'il y en a un) et ma commune : " },
+    "wifi": { page: "/particuliers/", sujet: "Particulier — Wi-Fi, box ou imprimante", formule: "Wi-Fi, box et imprimante (89 €)",
+      message: "Bonjour,\nj'ai un souci de Wi-Fi, de box ou d'imprimante.\n\nCe qui ne marche pas, et ma commune : " },
+    "securite": { page: "/particuliers/", sujet: "Particulier — bilan sécurité du foyer", formule: "Bilan sécurité du foyer (89 €, 1 h 30)",
+      message: "Bonjour,\nje souhaite un bilan sécurité pour mon foyer (mots de passe, sauvegarde des photos, arnaques).\n\nMa commune : " },
+    "carte": { page: "/particuliers/", sujet: "Particulier — carte 5 aides", formule: "Carte 5 aides à distance (99 €, valable 12 mois)",
+      message: "Bonjour,\nje souhaite une carte 5 aides à distance.\n\nPour moi ou à offrir (à qui) : " },
+    // Renfort IT
+    "renfort": { page: "/renfort-it/", sujet: "Équipe IT — renfort à distance", formule: "Renfort à distance N1/N2 (300 € HT la journée, 160 € HT la demi-journée)",
+      message: "Bonjour,\nnous cherchons un renfort N1/N2 à distance.\n\nSociété :\nBesoin :\nVolume (tickets par jour ou jours par mois) :\nDate de début :\nOutil de tickets : " },
+    "mission": { page: "/renfort-it/", sujet: "Équipe IT — mission à livrable", formule: "Mission à livrable (prix fixe, à partir de 600 € HT, cadrage gratuit de 30 minutes)",
+      message: "Bonjour,\nnous avons une tâche précise à confier.\n\nSociété :\nLa tâche :\nÉchéance souhaitée :\nOutils concernés : " },
+    "dossier": { page: "/renfort-it/", sujet: "Équipe IT — dossier fournisseur", formule: "Dossier fournisseur (gratuit, sous 24 h)",
+      message: "Bonjour,\npouvez-vous m'envoyer votre dossier fournisseur ?\n\nSociété et service acheteur : " }
   };
+
+  // Un message pré-rempli par une offre (ou par le simulateur) peut être remplacé ; un message tapé, jamais.
+  function estUnModele(texte) {
+    var t = String(texte || "").trim();
+    if (/^Bonjour,\nle simulateur me propose : /.test(t)) return true;
+    return Object.keys(OFFRES).some(function (k) { return OFFRES[k].message.trim() === t; });
+  }
+
+  function appliquerOffre(id) {
+    var o = id && OFFRES[id];
+    if (!o) return null;
+    var formule = $("#c-formule"), message = $("#c-message");
+    if (formule) formule.value = o.formule;
+    choisirSujet(o.sujet);
+    if (message && (!message.value.trim() || estUnModele(message.value))) message.value = o.message;
+    if (o.calendrier) { var ouvrir = $("#cal-open"); if (ouvrir) setTimeout(function () { ouvrir.click(); }, 400); }
+    return o;
+  }
 
   function initLienOffre() {
     var id;
     try { id = new URLSearchParams(window.location.search).get("offre"); } catch (e) { return; }
     var o = id && OFFRES[id];
     if (!o) return;
-    var formule = $("#c-formule"), sujet = $("#c-sujet"), message = $("#c-message");
-    if (formule) formule.value = o.formule;
-    if (sujet) sujet.value = o.sujet;
-    if (message && !message.value.trim()) message.value = o.message;
+    // Offre d'un autre parcours (ex. /?offre=domicile) : on va sur la bonne page.
+    var ici = window.location.pathname.replace(/index\.html$/, "");
+    if (o.page && ici !== o.page) { window.location.replace(o.page + window.location.search + (window.location.hash || "#contact")); return; }
+    appliquerOffre(id);
     var cible = (o.calendrier && $("#calendrier")) || $("#contact");
     if (cible) setTimeout(function () { cible.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150);
-    if (o.calendrier) { var ouvrir = $("#cal-open"); if (ouvrir) setTimeout(function () { ouvrir.click(); }, 400); }
+  }
+
+  /* Boutons [data-offre] (« Bilan gratuit », « Demander une disponibilité »…) : pré-remplissent le formulaire,
+     puis le lien mène au formulaire comme d'habitude. */
+  function initBoutonsOffre() {
+    $$("[data-offre]").forEach(function (a) {
+      a.addEventListener("click", function () { appliquerOffre(a.getAttribute("data-offre")); });
+    });
   }
 
   function initSimulateur() {
@@ -253,9 +356,9 @@
   function initChoisir() {
     $$("[data-choisir]").forEach(function (a) {
       a.addEventListener("click", function () {
-        var formule = $("#c-formule"), sujet = $("#c-sujet");
+        var formule = $("#c-formule");
         if (formule) formule.value = a.getAttribute("data-choisir");
-        if (sujet) sujet.value = /site WordPress/i.test(a.getAttribute("data-choisir")) ? "Site web" : "Formule mensuelle";
+        choisirSujet(/site WordPress/i.test(a.getAttribute("data-choisir")) ? "Entreprise — site web" : "Entreprise — suivi mensuel");
       });
     });
   }
@@ -502,6 +605,7 @@
   function demarrer() {
     chargerCatalogue().then(function () { initSimulateur(); });
     initChoisir();
+    initBoutonsOffre();
     initContact();
     initCalendrier();
     initLienOffre();
