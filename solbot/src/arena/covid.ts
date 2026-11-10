@@ -78,7 +78,8 @@ async function main(): Promise<void> {
   const series = async (v: Variant): Promise<Map<string, Bar[]>> => {
     const out = new Map<string, Bar[]>();
     for (const s of v.spec.symbols) {
-      const real = s === 'BTC-PERP' ? 'BTC-USD' : s;
+      // Alias : la jambe au comptant (BTC-SPOT, sans financement) et le perpétuel approché (BTC-PERP) lisent les cours Coinbase.
+      const real = s === 'BTC-PERP' || s === 'BTC-SPOT' ? 'BTC-USD' : s;
       const key: DataKey = v.dataBySymbol?.[s] ?? v.spec.data;
       const k = `${key}|${real}`;
       if (!cache.has(k)) cache.set(k, (await data.load(key, [real])).get(real) ?? []);
@@ -91,7 +92,7 @@ async function main(): Promise<void> {
   const plan: Array<{ id: string; variants: Variant[] }> = [
     { id: 'a1-perps', variants: a1Variants(['BTC-USD', 'ETH-USD'], 'crypto1h') },
     { id: 'b2-crypto-tendance', variants: byId.get('b2-crypto-tendance')?.variants ?? [] },
-    { id: 'b3-portage', variants: b3Variants('BTC-USD', 'BTC-PERP', { 'BTC-USD': 'crypto1h', 'BTC-PERP': 'crypto1h' }) },
+    { id: 'b3-portage', variants: b3Variants('BTC-SPOT', 'BTC-PERP', { 'BTC-SPOT': 'crypto1h', 'BTC-PERP': 'crypto1h' }) },
     ...['b4-swing-etf', 'c1-sp500', 'c2-faber', 'c3-btc-eth-200j', 'c4-permanent'].map((id) => ({ id, variants: byId.get(id)?.variants ?? [] })),
   ];
   const end = zonedToUtc(dayOf(now), 0, PARIS);

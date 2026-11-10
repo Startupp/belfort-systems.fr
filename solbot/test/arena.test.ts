@@ -9,7 +9,7 @@ import { writeJsonAtomic } from '../src/lib/store.ts';
 import type { Bar } from '../src/desk/types.ts';
 import { runPortfolio, stats } from '../src/arena/engine.ts';
 import type { Costs, Intent, PortfolioSpec, Strategy } from '../src/arena/engine.ts';
-import { NY, orbFirstCandle, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
+import { FUNDING, NY, fundingAt, fundingCarry, orbFirstCandle, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
 import { renderComptes } from '../src/arena/comptes-page.ts';
 import { writeArenaPage } from '../src/arena/report.ts';
 import { bootstrapMonths, runComposite } from '../src/arena/composite.ts';
@@ -258,6 +258,26 @@ test('ORB QQQ (Zarattini & Aziz) : entrée à l’ouverture de la 2e bougie, sto
   assert.equal(r.trades[0]?.side, 'long');
   assert.equal(r.trades[0]?.exitReason, 'fin de séance');
   assert.ok(Math.abs((r.trades[0]?.qty ?? 0) - 10 / 0.75) < 1e-6, '1 % de 1 000 $ / (100,55 − 99,80)');
+});
+
+test('portage : seule la jambe perpétuel reçoit le financement, la jambe au comptant n’en paie pas', () => {
+  const H = 3_600_000;
+  const t0 = Date.UTC(2026, 10, 1, 0, 0);
+  const flatH = Array.from({ length: 200 }, (_, i) => ({ t: t0 + i * H, o: 100, h: 100, l: 100, c: 100, v: 1 }));
+  FUNDING.set('TEST-PERP', new Map(flatH.map((b) => [b.t, 1e-5])));
+  const r = runPortfolio(
+    spec({ barMs: H, maxLeverage: 1, symbols: ['TEST-SPOT', 'TEST-PERP'], maxHoldMs: Infinity, fundingPerHour: fundingAt, strategy: () => fundingCarry({ spot: 'TEST-SPOT', perp: 'TEST-PERP', enterAbove: 1e-6, exitBelow: 0, hours: 72 }) }),
+    new Map([['TEST-SPOT', flatH], ['TEST-PERP', flatH]]),
+    t0,
+    t0 + 200 * H,
+  );
+  FUNDING.delete('TEST-PERP');
+  const legs = r.open.map((p) => p.symbol).sort();
+  assert.deepEqual(legs, ['TEST-PERP', 'TEST-SPOT']);
+  // Entrée dès que la moyenne couvre 36 h (moitié de la fenêtre), puis 164 h de financement sur 500 $ à 0,001 %/h :
+  // +0,82 $ sur la seule jambe perpétuel, rien sur la jambe au comptant.
+  assert.ok(Math.abs(r.equity - 1000.82) < 1e-6, String(r.equity));
+  assert.equal(r.open.find((p) => p.symbol === 'TEST-SPOT')?.financing, 0);
 });
 
 test('page des 12 comptes : sans squelette, classement par rendement mensuel, départ du suivi annoncé', () => {
