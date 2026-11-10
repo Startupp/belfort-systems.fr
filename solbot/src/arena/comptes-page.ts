@@ -101,7 +101,7 @@ function covidSection(c: CovidFile | null): string {
     .map((a) => {
       const acc = byId.get(a.id);
       const multi = (acc?.variants.length ?? 1) > 1;
-      return `<tr class="${a.cumulativePct >= 0 ? 'win' : 'loss'}"><td class="wrap"><b>${esc(acc?.name ?? a.id)}</b> ${acc ? chip(acc) : ''}</td>${c.years.map((y) => {
+      return `<tr class="${a.cumulativePct >= 0 ? 'win' : 'loss'}"><td class="wrap"><b>${esc(acc?.name ?? a.id)}</b> ${acc ? chip(acc) : ''}${multi && a.final ? `<br><span class="muted small">suivi : ${esc(a.final.label)}</span>` : ''}</td>${c.years.map((y) => {
         const r = a.rows.find((x) => x.year === y);
         return cell(r?.returnPct, multi ? r?.label : '');
       }).join('')}<td class="num ${a.cumulativePct >= 0 ? 'good' : 'bad'}"><b>${sgn(a.cumulativePct, 0)} %</b></td><td class="num">${fr(a.worstDrawdownPct, 1)} %</td></tr>`;

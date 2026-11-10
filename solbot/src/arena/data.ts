@@ -188,7 +188,9 @@ export function createArenaData(opts: DataOptions) {
         const f = file(key, sym);
         const cached: Cached | null = existsSync(f) ? (JSON.parse(readFileSync(f, 'utf8')) as Cached) : null;
         let bars = cached?.bars ?? [];
-        if (!cached || now - cached.fetchedAt > opts.maxAgeMs) {
+        // Cache trop court vers le passé (on demande plus d'historique qu'il n'en contient) : on le complète.
+        const tooShort = s.source !== 'yahoo' && bars.length > 0 && (bars[0] as Bar).t > now - days(key) * 86_400_000 + 2 * 86_400_000;
+        if (!cached || tooShort || now - cached.fetchedAt > opts.maxAgeMs) {
           try {
             bars =
               s.source === 'yahoo' ? await yahoo(key, sym, bars) : s.source === 'yahoo1m' ? await yahoo1m(key, sym, bars) : s.source === 'kraken' ? await kraken(key, sym, bars) : await coinbase(key, sym, bars);

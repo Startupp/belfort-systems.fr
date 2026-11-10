@@ -38,6 +38,8 @@ export interface CovidAccount {
   cumulativePct: number;
   /** Pire baisse d'une année. */
   worstDrawdownPct: number;
+  /** Réglage retenu pour le suivi de 12 mois : le meilleur sur tout l'historique jusqu'à la veille du départ. */
+  final: { index: number; label: string };
 }
 export interface CovidFile {
   generatedAt: number;
@@ -121,7 +123,20 @@ async function main(): Promise<void> {
       chain *= 1 + st.returnPct / 100;
       console.log(`${p.id.padEnd(20)} ${y} ${v.label.padEnd(44)} ${st.returnPct >= 0 ? '+' : ''}${st.returnPct.toFixed(1).padStart(6)} %  baisse ${st.maxDrawdownPct.toFixed(1).padStart(5)} %  ${st.trades} trades`);
     }
-    accounts.push({ id: p.id, rows, cumulativePct: (chain - 1) * 100, worstDrawdownPct: Math.max(...rows.map((r) => r.maxDrawdownPct)) });
+    // Réglage final : le meilleur sur tout l'historique disponible (janvier 2020 → hier).
+    let final = 0;
+    if (p.variants.length > 1) {
+      let bestScore = -Infinity;
+      for (const [i, v] of p.variants.entries()) {
+        const st = stats(runPortfolio(v.spec, await series(v), yearStart(2020), end), dayOf);
+        if (score(st) > bestScore) {
+          bestScore = score(st);
+          final = i;
+        }
+      }
+    }
+    accounts.push({ id: p.id, rows, cumulativePct: (chain - 1) * 100, worstDrawdownPct: Math.max(...rows.map((r) => r.maxDrawdownPct)), final: { index: final, label: (p.variants[final] as Variant).label } });
+    console.log(`${p.id.padEnd(20)} réglage pour le suivi : ${(p.variants[final] as Variant).label}`);
     console.log(`${p.id.padEnd(20)} cumul 2021 → aujourd'hui : ${((chain - 1) * 100).toFixed(1)} %`);
   }
 

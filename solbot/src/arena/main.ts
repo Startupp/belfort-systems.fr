@@ -24,6 +24,7 @@ import type { Variant } from './roster.ts';
 import { FUNDING } from './strategies.ts';
 import { readJson } from '../lib/store.ts';
 import type { ComptesFile } from './valide.ts';
+import type { CovidFile } from './covid.ts';
 import type { ArenaPortfolio, DataKey } from './portfolios.ts';
 import { writeArenaPage } from './report.ts';
 import { PARIS, zonedToUtc } from './strategies.ts';
@@ -188,6 +189,7 @@ async function main(): Promise<void> {
   } else if (cmd === 'avance') {
     // Les 12 comptes de 5 000 $, chacun avec la variante choisie sur l'apprentissage (arene/comptes.json).
     const comptes = readJson<ComptesFile | null>(join(dir, 'comptes.json'), null);
+    const covid = readJson<CovidFile | null>(join(dir, 'covid.json'), null);
     for (const sym of ['PF_XBTUSD', 'PF_ETHUSD']) FUNDING.set(sym, new Map((await data.funding(sym)).map((r) => [r.t, r.rate])));
     const loadVariant = async (v: Variant): Promise<Map<string, Bar[]>> => {
       const out = new Map<string, Bar[]>();
@@ -196,7 +198,8 @@ async function main(): Promise<void> {
     };
     const runs: RunSummary[] = [];
     for (const a of ACCOUNTS) {
-      const chosen = comptes?.results.find((r) => r.id === a.id)?.chosen ?? 0;
+      // Réglage du suivi : celui choisi sur tout l'historique depuis 2020 quand il existe, sinon celui de la validation.
+      const chosen = covid?.accounts.find((x) => x.id === a.id)?.final?.index ?? comptes?.results.find((r) => r.id === a.id)?.chosen ?? 0;
       const v = a.variants[chosen] ?? (a.variants[0] as Variant);
       const r = runPortfolio(v.spec, await loadVariant(v), SUIVI_START, now);
       runs.push(summarize(r, 400));
