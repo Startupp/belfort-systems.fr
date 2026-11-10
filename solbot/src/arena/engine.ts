@@ -149,6 +149,11 @@ export interface PortfolioSpec {
   maxHoldMs?: number;
   /** Clôture de marge (part de la marge utilisée) ; 0,5 = règle européenne. */
   closeOutLevel?: number;
+  /**
+   * Perpétuels : taux de financement de l'heure qui commence à `hourStart` (part du montant ; positif = les acheteurs
+   * paient les vendeurs). Payé ou reçu à chaque heure pleine sur les positions de ce symbole.
+   */
+  fundingPerHour?: (symbol: string, hourStart: number) => number | undefined;
   /** Fabrique de la stratégie ; `aux` : séries d'appoint (ex. historique 5 min pour une stratégie en 1 min). */
   strategy: (aux?: ReadonlyMap<string, Bar[]>) => Strategy;
 }
@@ -313,6 +318,20 @@ export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Ba
           p.financing += cost;
           cash -= cost;
           financing += cost;
+        }
+      }
+    }
+    // Financement horaire des perpétuels.
+    if (spec.fundingPerHour && positions.length) {
+      const H = 3_600_000;
+      for (let h = Math.floor(lastT / H) + 1; h <= Math.floor(t / H); h++) {
+        for (const p of positions) {
+          const rate = spec.fundingPerHour(p.symbol, h * H);
+          if (rate === undefined || !Number.isFinite(rate)) continue;
+          const pay = (p.side === 'long' ? 1 : -1) * p.qty * (last.get(p.symbol) ?? p.entry) * rate;
+          p.financing += pay;
+          cash -= pay;
+          financing += pay;
         }
       }
     }

@@ -9,6 +9,7 @@ import { readJson, readJsonl, writeTextAtomic } from '../lib/store.ts';
 import { paris } from '../desk/market.ts';
 import type { ArenaFile, RunSummary } from './main.ts';
 import { COMPOSITES, PORTFOLIOS } from './portfolios.ts';
+import { renderComptes } from './comptes-page.ts';
 import type { ArenaPortfolio } from './portfolios.ts';
 
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -226,6 +227,7 @@ ${long && long.runs.length ? `<section class="card"><h2>${esc(long.label)}</h2><
 
 export function writeArenaPage(dir: string): string {
   const path = join(dir, 'arene.html');
-  writeTextAtomic(path, renderArena(dir));
+  // Les 12 comptes de 5 000 $ remplacent l'ancienne arène dès que leur validation existe.
+  writeTextAtomic(path, existsSync(join(dir, 'comptes.json')) ? renderComptes(dir) : renderArena(dir));
   return path;
 }

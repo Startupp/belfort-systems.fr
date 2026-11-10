@@ -9,7 +9,8 @@ import { writeJsonAtomic } from '../src/lib/store.ts';
 import type { Bar } from '../src/desk/types.ts';
 import { runPortfolio, stats } from '../src/arena/engine.ts';
 import type { Costs, Intent, PortfolioSpec, Strategy } from '../src/arena/engine.ts';
-import { NY, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
+import { NY, orbFirstCandle, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
+import { renderComptes } from '../src/arena/comptes-page.ts';
 import { writeArenaPage } from '../src/arena/report.ts';
 import { bootstrapMonths, runComposite } from '../src/arena/composite.ts';
 import type { Composite } from '../src/arena/composite.ts';
@@ -230,6 +231,45 @@ test('fourchette d’un mois : médiane proche de la tendance, part de mois nég
   const mixed = Array.from({ length: 60 }, (_, i) => (i % 2 ? 0.01 : -0.01));
   const m = bootstrapMonths(mixed);
   assert.ok(m.p10 < 0 && m.p90 > 0 && m.negative > 20 && m.negative < 80);
+});
+
+test('perpétuels : le vendeur encaisse le financement horaire, l’acheteur le paie', () => {
+  const hourly = bars(Array.from({ length: 5 }, () => [100, 100, 100, 100] as [number, number, number, number]), 3_600_000, Date.UTC(2026, 10, 10, 0, 0));
+  const mk = (side: 'long' | 'short') =>
+    runPortfolio(
+      spec({ barMs: 3_600_000, maxLeverage: 5, fundingPerHour: () => 1e-4, strategy: scripted({ 0: () => [{ type: 'enter', symbol: 'X', side, order: 'close', size: { notional: 1 }, reason: 't' }] }) }),
+      new Map([['X', hourly]]),
+      hourly[0]?.t ?? 0,
+      (hourly.at(-1)?.t ?? 0) + 3_600_000,
+    );
+  // 1 000 $ de position, 4 heures pleines à 0,01 % : 0,40 $.
+  assert.ok(Math.abs(mk('short').equity - 1000.4) < 1e-6, String(mk('short').equity));
+  assert.ok(Math.abs(mk('long').equity - 999.6) < 1e-6, String(mk('long').equity));
+});
+
+test('ORB QQQ (Zarattini & Aziz) : entrée à l’ouverture de la 2e bougie, stop au plus bas de la 1re', () => {
+  const open = zonedToUtc('2026-11-09', 570, NY);
+  const b: Bar[] = Array.from({ length: 78 }, (_, i) => ({ t: open + i * 5 * M, o: 101, h: 101.4, l: 100.9, c: 101.2, v: 1000 }));
+  b[0] = { t: open, o: 100, h: 100.6, l: 99.8, c: 100.5, v: 1000 };
+  b[1] = { t: open + 5 * M, o: 100.55, h: 101, l: 100.4, c: 100.9, v: 1000 };
+  const r = runPortfolio(spec({ barMs: 5 * M, maxLeverage: 4, symbols: ['QQQ'], strategy: () => orbFirstCandle({ symbol: 'QQQ', risk: 0.01 }) }), new Map([['QQQ', b]]), open - M, open + 400 * M);
+  assert.equal(r.trades.length, 1);
+  assert.equal(r.trades[0]?.entry, 100.55);
+  assert.equal(r.trades[0]?.side, 'long');
+  assert.equal(r.trades[0]?.exitReason, 'fin de séance');
+  assert.ok(Math.abs((r.trades[0]?.qty ?? 0) - 10 / 0.75) < 1e-6, '1 % de 1 000 $ / (100,55 − 99,80)');
+});
+
+test('page des 12 comptes : sans squelette, classement par rendement mensuel, départ du suivi annoncé', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'comptes-'));
+  const st = (ret: number) => ({ returnPct: ret, maxDrawdownPct: 1, trades: 3, winRatePct: 50, profitFactor: 1, avgTradePct: 0, bestDayPct: 1, worstDayPct: -1, daysUp: 1, days: 2, exposurePct: 10 });
+  const res = (id: string, m: number) => ({ id, window: 'daily', train: [T0, T0 + 1], test: [T0, T0 + 86_400_000], chosen: 0, monthlyPct: m, variants: [{ label: 'v', train: st(1), test: st(m), testDaily: [['2026-11-10', 5000 * (1 + m / 100)]] }] });
+  writeJsonAtomic(join(dir, 'comptes.json'), { generatedAt: T0, results: [res('c1-sp500', 0.1), res('a2-orb-qqq', 9)] });
+  const html = renderComptes(dir);
+  assert.ok(!/<!doctype|<(html|head|body)[\s>]/i.test(html));
+  assert.match(html, /:root\[data-theme="dark"\]/);
+  assert.ok(html.indexOf('Sniper ORB Nasdaq (QQQ)') < html.indexOf('Achat-conservation S&amp;P 500'), 'le meilleur en premier');
+  assert.match(html, /jeudi 12 novembre/);
 });
 
 test('page de l’arène : fragment sans squelette, thèmes clair et sombre, classement trié', () => {

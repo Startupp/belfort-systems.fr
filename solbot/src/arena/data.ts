@@ -35,8 +35,11 @@ export interface DataOptions {
 }
 
 /** Spécification des séries par jeu de données. */
-const SPEC: Record<DataKey, { source: 'yahoo' | 'yahoo1m' | 'coinbase'; interval: string; barMs: number; days: number }> = {
+const SPEC: Record<DataKey, { source: 'yahoo' | 'yahoo1m' | 'coinbase' | 'kraken'; interval: string; barMs: number; days: number }> = {
   us1m: { source: 'yahoo1m', interval: '1m', barMs: 60_000, days: 29 },
+  y5m: { source: 'yahoo', interval: '5m', barMs: 5 * 60_000, days: 60 },
+  crypto1d: { source: 'coinbase', interval: '86400', barMs: 86_400_000, days: 365 * 8 },
+  kfut1h: { source: 'kraken', interval: '1h', barMs: 3_600_000, days: 400 },
   us5m: { source: 'yahoo', interval: '5m', barMs: 5 * 60_000, days: 60 },
   spy5m: { source: 'yahoo', interval: '5m', barMs: 5 * 60_000, days: 60 },
   gold5m: { source: 'yahoo', interval: '5m', barMs: 5 * 60_000, days: 60 },
@@ -65,7 +68,7 @@ export function normalizeDaily(bars: Bar[]): Bar[] {
 export function createArenaData(opts: DataOptions) {
   const http =
     opts.http ??
-    createHttp({ minIntervalMsByHost: { 'query1.finance.yahoo.com': 800, 'api.exchange.coinbase.com': 260 }, timeoutMs: 20_000, retries: 3 });
+    createHttp({ minIntervalMsByHost: { 'query1.finance.yahoo.com': 800, 'api.exchange.coinbase.com': 260, 'futures.kraken.com': 400 }, timeoutMs: 20_000, retries: 3 });
   const now = opts.now ?? Date.now();
   const log = opts.log ?? (() => {});
   const days = (key: DataKey): number => opts.historyDays?.[key] ?? SPEC[key].days;
@@ -106,7 +109,40 @@ export function createArenaData(opts: DataOptions) {
     return merge(old, out);
   }
 
+  /** Kraken Futures (perpétuels) : bougies d'une heure, par tranches de 1 000 h. */
+  async function kraken(key: DataKey, sym: string, old: Bar[]): Promise<Bar[]> {
+    const step = 1000 * 3_600_000;
+    const from = Math.max(old.length ? (old.at(-1) as Bar).t + 3_600_000 : 0, now - days(key) * 86_400_000);
+    const out: Bar[] = [];
+    for (let a = from; a < now; a += step) {
+      const b = Math.min(now, a + step);
+      const url = `https://futures.kraken.com/api/charts/v1/trade/${sym}/1h?from=${Math.floor(a / 1000)}&to=${Math.floor(b / 1000)}`;
+      const raw = await http.getJson<{ candles?: Array<{ time: number; open: string; high: string; low: string; close: string; volume: string }> }>(url, { headers: UA });
+      for (const c of raw?.candles ?? []) {
+        const bar = { t: c.time, o: Number(c.open), h: Number(c.high), l: Number(c.low), c: Number(c.close), v: Number(c.volume) };
+        if ([bar.o, bar.h, bar.l, bar.c].every((x) => Number.isFinite(x) && x > 0)) out.push(bar);
+      }
+    }
+    return merge(old, out);
+  }
+
   return {
+    /** Taux de financement horaire d'un perpétuel Kraken (part du montant par heure ; positif = les acheteurs paient). */
+    async funding(sym: string): Promise<Array<{ t: number; rate: number }>> {
+      const f = join(opts.dir, `funding-${sym}.json`);
+      const cached = existsSync(f) ? (JSON.parse(readFileSync(f, 'utf8')) as { fetchedAt: number; rates: Array<{ t: number; rate: number }> }) : null;
+      if (cached && now - cached.fetchedAt <= opts.maxAgeMs) return cached.rates;
+      try {
+        const raw = await http.getJson<{ rates?: Array<{ timestamp: string; relativeFundingRate: number }> }>(`https://futures.kraken.com/derivatives/api/v4/historicalfundingrates?symbol=${sym}`, { headers: UA });
+        const rates = (raw?.rates ?? []).map((r) => ({ t: Date.parse(r.timestamp), rate: r.relativeFundingRate })).filter((r) => Number.isFinite(r.t) && Number.isFinite(r.rate));
+        writeJsonAtomic(f, { fetchedAt: now, rates });
+        log(`financement ${sym} : ${rates.length} heures`);
+        return rates;
+      } catch (e) {
+        log(`financement ${sym} : indisponible (${e instanceof Error ? e.message : String(e)})`);
+        return cached?.rates ?? [];
+      }
+    },
     async load(key: DataKey, symbols: string[]): Promise<Map<string, Bar[]>> {
       const s = SPEC[key];
       const res = new Map<string, Bar[]>();
@@ -116,7 +152,8 @@ export function createArenaData(opts: DataOptions) {
         let bars = cached?.bars ?? [];
         if (!cached || now - cached.fetchedAt > opts.maxAgeMs) {
           try {
-            bars = s.source === 'yahoo' ? await yahoo(key, sym, bars) : s.source === 'yahoo1m' ? await yahoo1m(key, sym, bars) : await coinbase(key, sym, bars);
+            bars =
+              s.source === 'yahoo' ? await yahoo(key, sym, bars) : s.source === 'yahoo1m' ? await yahoo1m(key, sym, bars) : s.source === 'kraken' ? await kraken(key, sym, bars) : await coinbase(key, sym, bars);
             writeJsonAtomic(f, { fetchedAt: now, bars } satisfies Cached);
             log(`${key} ${sym} : ${bars.length} barres`);
           } catch (e) {

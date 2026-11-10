@@ -19,12 +19,17 @@ import { createArenaData } from './data.ts';
 import { bootstrapMonths, runComposite } from './composite.ts';
 import type { Composite, Sleeve } from './composite.ts';
 import { COMPOSITES, PORTFOLIOS } from './portfolios.ts';
+import { ACCOUNTS } from './roster.ts';
+import type { Variant } from './roster.ts';
+import { FUNDING } from './strategies.ts';
+import { readJson } from '../lib/store.ts';
+import type { ComptesFile } from './valide.ts';
 import type { ArenaPortfolio, DataKey } from './portfolios.ts';
 import { writeArenaPage } from './report.ts';
 import { PARIS, zonedToUtc } from './strategies.ts';
 
-/** Départ du suivi en direct : mercredi 11 novembre 2026, 0 h (Paris). */
-export const SUIVI_START = zonedToUtc('2026-11-11', 0, PARIS);
+/** Départ du suivi en direct des 12 comptes de 5 000 $ : jeudi 12 novembre 2026, 0 h (Paris). */
+export const SUIVI_START = zonedToUtc('2026-11-12', 0, PARIS);
 
 export interface RunSummary {
   id: string;
@@ -96,7 +101,7 @@ async function main(): Promise<void> {
   // Suivi : seulement l'historique utile depuis le départ (plus le temps de chauffe des indicateurs).
   const since = Math.max(0, Math.ceil((now - SUIVI_START) / 86_400_000));
   const historyDays: Partial<Record<DataKey, number>> | undefined =
-    cmd === 'avance' ? { us1m: Math.min(29, since + 2), crypto1h: since + 30, crypto15m: since + 10, btc1m: since + 2 } : undefined;
+    cmd === 'avance' ? { us1m: Math.min(29, since + 2), crypto1h: since + 30, crypto15m: since + 10, btc1m: since + 2, kfut1h: since + 120, crypto1d: since + 400 } : undefined;
   const data = createArenaData({ dir: resolve(process.env.ARENA_CACHE?.trim() || 'data/arena-cache'), maxAgeMs: cmd === 'avance' ? 30 * 60_000 : 6 * 3_600_000, now, log, historyDays });
   const cache = new Map<DataKey, Map<string, Bar[]>>();
   const load = async (key: DataKey, symbols: string[]): Promise<Map<string, Bar[]>> => {
@@ -181,18 +186,25 @@ async function main(): Promise<void> {
     writeJsonAtomic(join(dir, 'rejeu.json'), out);
     log(`rejeu : ${join(dir, 'rejeu.json')}`);
   } else if (cmd === 'avance') {
+    // Les 12 comptes de 5 000 $, chacun avec la variante choisie sur l'apprentissage (arene/comptes.json).
+    const comptes = readJson<ComptesFile | null>(join(dir, 'comptes.json'), null);
+    for (const sym of ['PF_XBTUSD', 'PF_ETHUSD']) FUNDING.set(sym, new Map((await data.funding(sym)).map((r) => [r.t, r.rate])));
+    const loadVariant = async (v: Variant): Promise<Map<string, Bar[]>> => {
+      const out = new Map<string, Bar[]>();
+      for (const s of v.spec.symbols) out.set(s, (await load(v.dataBySymbol?.[s] ?? v.spec.data, [s])).get(s) ?? []);
+      return out;
+    };
     const runs: RunSummary[] = [];
-    for (const p of PORTFOLIOS) {
-      const r = runPortfolio(p, await seriesFor(p), SUIVI_START, now, await auxFor(p));
+    for (const a of ACCOUNTS) {
+      const chosen = comptes?.results.find((r) => r.id === a.id)?.chosen ?? 0;
+      const v = a.variants[chosen] ?? (a.variants[0] as Variant);
+      const r = runPortfolio(v.spec, await loadVariant(v), SUIVI_START, now);
       runs.push(summarize(r, 400));
       const s = runs.at(-1)?.stats as Stats;
-      log(`${p.id.padEnd(20)} ${r.equity.toFixed(2)} $ (${s.returnPct >= 0 ? '+' : ''}${s.returnPct.toFixed(2)} %) · ${s.trades} trades${r.open.length ? ` · ${r.open.length} ouverte(s)` : ''}`);
+      log(`${a.id.padEnd(20)} ${r.equity.toFixed(2)} $ (${s.returnPct >= 0 ? '+' : ''}${s.returnPct.toFixed(2)} %) · ${s.trades} trades${r.open.length ? ` · ${r.open.length} ouverte(s)` : ''}`);
     }
-    for (const c of COMPOSITES) {
-      const { summary } = await combine(c, SUIVI_START, now);
-      runs.push(summary);
-      log(`${c.id.padEnd(20)} ${summary.equity.toFixed(2)} $ (${summary.stats.returnPct >= 0 ? '+' : ''}${summary.stats.returnPct.toFixed(2)} %) · ${summary.stats.trades} trades`);
-    }
+    void PORTFOLIOS;
+    void COMPOSITES;
     const out: ArenaFile = {
       generatedAt: now,
       commit: commit(),

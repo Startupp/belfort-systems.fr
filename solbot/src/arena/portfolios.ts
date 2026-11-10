@@ -7,7 +7,7 @@ import type { Composite } from './composite.ts';
 import type { Costs, PortfolioSpec } from './engine.ts';
 import { bollinger, donchian, goldNyOpen, grid, lastHalfHour, noiseArea, orbStudy, overnight, randomSignals, rsi2, turnOfMonth } from './strategies.ts';
 
-export type DataKey = 'us1m' | 'us5m' | 'spy5m' | 'gold5m' | 'daily' | 'crypto1h' | 'crypto15m' | 'btc1m';
+export type DataKey = 'us1m' | 'y5m' | 'crypto1d' | 'kfut1h' | 'us5m' | 'spy5m' | 'gold5m' | 'daily' | 'crypto1h' | 'crypto15m' | 'btc1m';
 
 export interface ArenaPortfolio extends PortfolioSpec {
   /** Données utilisées. */

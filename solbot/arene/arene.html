@@ -5,26 +5,29 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <style>
-/* Arène : un tableau de classement par fenêtre de test, puis les fiches des règles. Même identité que le carnet du desk. */
+/* Arène : 12 comptes rangés du plus agressif au plus long terme ; classement sur une période de test jamais vue au réglage. */
 :root{
   --bg:#f2f4f7;--surface:#ffffff;--ink:#121821;--muted:#5b6876;--rule:#dce2e9;
-  --accent:#2c52cf;--accent-soft:rgba(44,82,207,.12);--gain:#0a7a4e;--loss:#b3242f;--goal:#985a00;--ctl:#6b4fa3;--ctl-soft:rgba(107,79,163,.12);--gold-soft:rgba(152,90,0,.12);
+  --accent:#2c52cf;--accent-soft:rgba(44,82,207,.12);--gain:#0a7a4e;--loss:#b3242f;
+  --ta:#b3242f;--ta-soft:rgba(179,36,47,.10);--tb:#985a00;--tb-soft:rgba(152,90,0,.12);--tc:#0a7a4e;--tc-soft:rgba(10,122,78,.12);
   --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --data:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0d1116;--surface:#151b23;--ink:#e4e9ef;--muted:#93a1b0;--rule:#27303b;
-  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;--ctl:#c4a8ff;--ctl-soft:rgba(196,168,255,.14);--gold-soft:rgba(240,178,60,.14);color-scheme:dark}}
+  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;
+  --ta:#ff7b80;--ta-soft:rgba(255,123,128,.14);--tb:#f0b23c;--tb-soft:rgba(240,178,60,.14);--tc:#3fcf8e;--tc-soft:rgba(63,207,142,.14);color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0d1116;--surface:#151b23;--ink:#e4e9ef;--muted:#93a1b0;--rule:#27303b;
-  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;--goal:#f0b23c;--ctl:#c4a8ff;--ctl-soft:rgba(196,168,255,.14);--gold-soft:rgba(240,178,60,.14);color-scheme:dark}
+  --accent:#8aa2ff;--accent-soft:rgba(138,162,255,.16);--gain:#3fcf8e;--loss:#ff7b80;
+  --ta:#ff7b80;--ta-soft:rgba(255,123,128,.14);--tb:#f0b23c;--tb-soft:rgba(240,178,60,.14);--tc:#3fcf8e;--tc-soft:rgba(63,207,142,.14);color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
 main{max-width:1040px;margin:0 auto;padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
 main>*{min-width:0}
-h1,h2{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0}
-h1{font-size:26px;letter-spacing:.2px}h2{font-size:19px;margin-bottom:6px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:26px}h2{font-size:19px;margin-bottom:6px}h3{font-size:16px;margin:8px 0 2px}
 p{margin:0}.muted{color:var(--muted)}.good{color:var(--gain)}.bad{color:var(--loss)}
 .num{font-family:var(--data);font-variant-numeric:tabular-nums}
 .top{display:grid;gap:6px}
@@ -39,472 +42,103 @@ p{margin:0}.muted{color:var(--muted)}.good{color:var(--gain)}.bad{color:var(--lo
 table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
 th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
 th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;white-space:nowrap}
-td.num{white-space:nowrap}
-td.wrap{min-width:220px}
+td.num{white-space:nowrap}td.wrap{min-width:220px}
 tr.win td:first-child{box-shadow:inset 3px 0 var(--gain)}tr.loss td:first-child{box-shadow:inset 3px 0 var(--loss)}
-.chip{font-size:11px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 6px;white-space:nowrap}
-.chip.ctl{background:var(--ctl-soft);color:var(--ctl)}.chip.mix{background:var(--gold-soft);color:var(--goal)}
-.combo{border-left:3px solid var(--goal)}
-.range{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
-.range div{background:var(--bg);border-radius:8px;padding:8px 10px;display:grid;gap:2px}
-.badge{font-size:11px;border:1px solid var(--loss);color:var(--loss);border-radius:999px;padding:0 7px;white-space:nowrap}
+tr.chosen td{font-weight:600}
+.chip{font-size:11px;border-radius:4px;padding:0 6px;white-space:nowrap}
+.t-a{background:var(--ta-soft);color:var(--ta)}.t-b{background:var(--tb-soft);color:var(--tb)}.t-c{background:var(--tc-soft);color:var(--tc)}
 .spark{width:120px;height:30px;display:block}
 .spark .base{stroke:var(--rule);stroke-width:1}
 .spark polyline{fill:none;stroke-width:1.6}.spark .up{stroke:var(--gain)}.spark .down{stroke:var(--loss)}
 ul.plain{margin:0;padding-left:18px;display:grid;gap:4px}
 details.fiche{border-top:1px solid var(--rule);padding:10px 0;display:grid;gap:6px}
-details.fiche summary{cursor:pointer;list-style-position:outside}
+details.fiche summary{cursor:pointer}
 details.fiche p{margin-top:6px;font-size:14px}
 .note{font-size:14px}
 footer{font-size:12px;color:var(--muted)}
 </style>
 <main>
 <header class="top">
-<h1>Arène des stratégies</h1>
-<p class="muted">Mis à jour le 10 novembre 2026 à 19:44 (heure de Paris) · code des stratégies : c97fc59 (2026-11-10)</p>
-<p class="banner"><b>Papier</b> : 18 portefeuilles fictifs en parallèle, une stratégie chacun, 500 $ de départ (1 500 $ ou 2 500 $ pour deux versions réalistes, quand le plus petit ordre possible l’exige). Avec ou sans levier selon le portefeuille, aux plafonds autorisés aux particuliers en Europe, sauf le témoin « façon Telegram ». Aucun ordre réel, aucune clé.</p>
+<h1>Arène : 12 comptes de 5 000 $</h1>
+<p class="muted">Mis à jour le 10 novembre 2026 à 20:12 (heure de Paris)</p>
+<p class="banner"><b>Papier</b> : 12 comptes fictifs de 5 000 $, une stratégie chacun, du plus agressif au plus long terme : <span class="chip t-a">sniper</span> 1 à 4, <span class="chip t-b">modéré</span> 5 à 8, <span class="chip t-c">long terme</span> 9 à 12. Perpétuels crypto, Nasdaq, or, forex, S&amp;P 500, crypto au comptant, ETF. Aucun ordre réel, aucune clé.</p>
 </header>
 <section class="kpis" aria-label="Chiffres clés">
-<div class="kpi"><span class="kl">Meilleur sur la période commune</span><span class="kv good">+10,51 %</span><span class="ks">ORB actions en jeu ×4 (version de l’étude)</span></div>
-<div class="kpi"><span class="kl">Témoin au hasard (SPY)</span><span class="kv good">+0,71 %</span><span class="ks">à battre pour prouver quelque chose</span></div>
-<div class="kpi"><span class="kl">Portefeuilles gagnants</span><span class="kv ">9 / 19</span><span class="ks">du 13 octobre 2026 au 9 novembre 2026</span></div>
+<div class="kpi"><span class="kl">Meilleur en test (par mois)</span><span class="kv good">+10,76 %</span><span class="ks">Sniper or (ouverture de New York)</span></div>
+<div class="kpi"><span class="kl">Comptes gagnants en test</span><span class="kv ">11 / 12</span><span class="ks">période jamais vue pendant le réglage</span></div>
+<div class="kpi"><span class="kl">Objectif</span><span class="kv ">12 mois</span><span class="ks">classement final des 12 comptes</span></div>
 </section>
-<section class="card combo"><h2>Portefeuille 5 000 $ (ma sélection)</h2>
-<p>50 % momentum « zone de bruit » S&amp;P 500 (CFD, levier piloté par la volatilité, ×2 au plus, unités entières) ; 30 % or, cassure de l’ouverture de New York (CFD, lot réel de 1 once, risque 1 % de la poche) ; 15 % RSI(2) SPY + QQQ ; 5 % tournant du mois SPY. Sans ORB (négatif dans tous nos rejeux) ni crypto active (frais).</p>
-<p class="muted">Sélection a priori : les stratégies positives à la fois dans les études et dans nos rejeux ; poids fixés avant le suivi. Les poches sont indépendantes ; ce qu'une poche gagne ou perd reste dans la poche.</p>
-<p><b>Rejeu sur la période commune</b> : <span class="num good">+3,32 %</span> (5 166,20 $), baisse maximale 0,88 %, pire jour -0,56 % ; depuis le 22 septembre : <span class="num good">+2,08 %</span>, baisse maximale 2,04 %.</p>
-<div class="scroll"><table><thead><tr><th>Poche</th><th>Capital</th><th>Résultat</th><th>Baisse max</th><th>Trades</th></tr></thead><tbody><tr class="win"><td>Momentum S&amp;P 500, ×2 max (50 %)</td><td class="num">2 500 $</td><td class="num good">+4,41 %</td><td class="num">3,47 %</td><td class="num">24</td></tr><tr class="win"><td>Or, ouverture de New York (30 %)</td><td class="num">1 500 $</td><td class="num good">+5,51 %</td><td class="num">2,33 %</td><td class="num">9</td></tr><tr class="loss"><td>RSI(2) SPY + QQQ (15 %)</td><td class="num">750 $</td><td class="num bad">-3,39 %</td><td class="num">3,46 %</td><td class="num">6</td></tr><tr class="loss"><td>Tournant du mois SPY (5 %)</td><td class="num">250 $</td><td class="num bad">-0,50 %</td><td class="num">0,50 %</td><td class="num">1</td></tr></tbody></table></div>
-<p><b>Ce qu'on peut espérer sur un mois</b> (tirages de mois fictifs dans les 36 journées depuis le 22 septembre ; fourchette, pas promesse) :</p>
-<div class="range"><div><span class="kl">Mauvais mois (1 sur 10)</span><span class="kv num bad">-1,72 %</span></div><div><span class="kl">Mois médian</span><span class="kv num good">+0,15 %</span></div><div><span class="kl">Bon mois (1 sur 10)</span><span class="kv num good">+2,83 %</span></div><div><span class="kl">Mois négatifs</span><span class="kv num">47 %</span></div></div>
-</section>
-<section class="card"><h2>Ma lecture</h2><ul class="plain note"><li>Sur la période commune (20 séances, du 13 octobre au 9 novembre), 5 portefeuilles sur 16 gagnent. Le témoin tiré au sort sur SPY finit à +0,7 % : une stratégie qui fait moins bien que lui n&#39;a encore rien prouvé.</li><li>Portefeuille 5 000 $ (ma sélection) : momentum S&amp;P 500 ×2 (50 %), or à l&#39;ouverture de New York (30 %), RSI(2) (15 %), tournant du mois (5 %). Rejeu : +3,3 % sur la période commune et +2,1 % depuis le 22 septembre, avec une baisse maximale de 2 %. C&#39;est environ +1,2 % par mois en moyenne, mais un mois sur deux peut finir négatif : une fois sur dix, un mois fait −1,7 % ou moins, et une fois sur dix +2,8 % ou plus.</li><li>Le plus solide pour l&#39;instant est le momentum « zone de bruit » sur le S&amp;P 500 : +6,4 % avec un levier ×4 piloté par la volatilité, +2,6 % sans levier. Il est aussi positif depuis le 7 septembre : +1,4 % sans levier, avec une baisse maximale de 2 %. La stratégie est publiée avec un long historique. C&#39;est le marché que je retiens : l&#39;indice S&amp;P 500, de 16 h à 22 h (heure de Paris).</li><li>L&#39;ORB dans la version de l&#39;étude (×4, jusqu&#39;à 20 actions par jour) a perdu 38 % jusqu&#39;au 4 novembre, puis gagné 62 % en trois séances, pour finir à −0,3 %. Avec 500 $, ce profil n&#39;est pas tenable. C&#39;est pour cela que le desk le limite à 2 positions sans levier.</li><li>Les stratégies crypto actives perdent surtout à cause des frais des ordres au marché (0,09 % par ordre chez Revolut X) : −41 % en 2 ans pour la tendance 1 h, −73 % en 1 an pour le rebond Bollinger. Chez Revolut X, seuls les ordres limites (0 % de frais) laissent une chance. La grille, à 0 %, ne perd que 3 % dans un BTC en baisse.</li><li>Or à levier ×20 : la cassure de l&#39;ouverture de New York gagne 4,1 % sur 20 trades, contre −12 % pour le hasard au même levier. L&#39;écart est intéressant, mais 20 trades ne prouvent rien.</li><li>Le levier ne crée aucun avantage : il multiplie le résultat dans les deux sens. Le témoin « façon Telegram » est à zéro au bout de 9 signaux.</li><li>Sur 16 ans, RSI(2) (+54 %) et le tournant du mois (+40 %) gagnent en restant peu de temps sur le marché. La nuit SPY gagne 33 %, mais avec une baisse de 30 % en route.</li><li>Le capital : en papier, le résultat en % ne dépend pas du montant, sauf quand le plus petit ordre possible est trop gros. C&#39;est le cas de l&#39;or (lot de 1 once, environ 4 000 $ d&#39;exposition) : impossible à 500 $, jouable un jour sur deux à 1 500 $, presque tous les jours à 2 500 $. C&#39;est aussi le cas du S&amp;P 500 en CFD (plus petite unité autour de 680 $) : impossible sans levier à 500 $. Leurs versions réalistes, à 1 500 $ et à 2 500 $, sont dans l&#39;arène.</li><li>Plus que le capital, ce sont les frais fixes qui comptent. Un minimum de 1 € par ordre ruine le day trading d&#39;un petit compte : environ 170 ordres par mois pour le desk, soit 34 % de 500 $ par mois. Il faut un courtier sans commission ni minimum, ou des CFD.</li><li>Le suivi en direct commence le 11 novembre, et c&#39;est lui qui comptera, pas le rejeu.</li></ul></section>
-<section class="card"><h2>Suivi en direct</h2>
-<p>Le suivi démarre le <b>mercredi 11 novembre à 0 h</b> (Paris) : à partir de là, chaque portefeuille avance sur les cours réels, sans retouche des règles. D’ici là, seul le rejeu ci-dessous donne une indication.</p>
-</section>
-<section class="card"><h2>Portefeuilles du desk, en direct</h2><p class="muted">Ils tournent minute par minute pendant la fenêtre ; leur carnet détaillé est sur la page « Carnet de trades ».</p><div class="scroll"><table class="board"><thead><tr><th>Portefeuille</th><th>Résultat</th><th>Trades</th><th>Réussite</th><th>Ouvertes</th></tr></thead><tbody><tr class="win"><td class="wrap"><b>Desk ORB + momentum + VWAP (15 h – 19 h), ma stratégie de la semaine</b><br><span class="muted">sans levier · 500 $ · depuis le 9 novembre</span></td><td class="num good"><b>+0,29 %</b><br><span class="muted">501,44 $</span></td><td class="num">7</td><td class="num">57 %</td><td class="num">0</td></tr><tr class="loss"><td class="wrap"><b>Portefeuille crypto du desk (15 h – 19 h)</b><br><span class="muted">sans levier · 500 $ · depuis le 10 novembre</span></td><td class="num bad"><b>-1,34 %</b><br><span class="muted">493,29 $</span></td><td class="num">3</td><td class="num">0 %</td><td class="num">0</td></tr></tbody></table></div></section>
-<section class="card"><h2>Rejeu sur la même période pour tous (du 13 octobre 2026 au 9 novembre 2026)</h2><p class="muted">Mêmes données, mêmes coûts, mêmes règles d’exécution prudentes pour tous. Quelques semaines ne prouvent rien : c’est une première indication.</p><div class="scroll"><table class="board"><thead><tr><th>#</th><th>Portefeuille</th><th>Résultat</th><th>Baisse max</th><th>Trades</th><th>Réussite</th><th>Pire jour</th><th>Courbe</th></tr></thead><tbody><tr class="win">
-<td class="num">1</td>
-<td class="wrap"><b>ORB actions en jeu ×4 (version de l’étude)</b> <span class="chip ">étude publiée</span><br><span class="muted">Actions US (CFD) · ×4 max · 500 $</span></td>
-<td class="num good"><b>+10,51 %</b><br><span class="muted">552,54 $</span></td>
-<td class="num">37,78 %</td>
-<td class="num">192</td>
-<td class="num">15 %</td>
-<td class="num">-8,55 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="8.1" y2="8.1"/><polyline class="up" points="0.0,8.1 6.0,11.0 12.0,10.1 18.0,14.6 24.0,13.0 30.0,14.5 36.0,15.2 42.0,14.0 48.0,13.7 54.0,11.6 60.0,15.5 66.0,16.7 72.0,19.6 78.0,21.7 84.0,25.5 90.0,25.9 96.0,26.2 102.0,28.0 108.0,17.0 114.0,11.6 120.0,2.0"/></svg></td>
-</tr><tr class="win">
-<td class="num">2</td>
-<td class="wrap"><b>Momentum « zone de bruit » SPY ×4</b> <span class="chip ">étude publiée</span><br><span class="muted">S&amp;P 500 (CFD indice) · ×4 max · 500 $</span></td>
-<td class="num good"><b>+6,28 %</b><br><span class="muted">531,39 $</span></td>
-<td class="num">5,93 %</td>
-<td class="num">24</td>
-<td class="num">42 %</td>
-<td class="num">-1,76 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="26.9" y2="26.9"/><polyline class="up" points="0.0,26.9 6.0,26.9 12.0,19.5 18.0,20.3 24.0,9.6 30.0,10.6 36.0,11.1 42.0,15.3 48.0,19.8 54.0,19.8 60.0,19.9 66.0,22.1 72.0,22.1 78.0,22.1 84.0,20.6 90.0,20.0 96.0,20.9 102.0,28.0 108.0,2.9 114.0,5.8 120.0,2.0"/></svg></td>
-</tr><tr class="win">
-<td class="num">3</td>
-<td class="wrap"><b>Or : cassure de l’ouverture de New York, 2 500 $ au lot réel</b> <span class="chip ">pratique courante</span><br><span class="muted">Or (CFD XAUUSD) · ×20 max · 2 500 $</span></td>
-<td class="num good"><b>+4,48 %</b><br><span class="muted">2 612,12 $</span></td>
-<td class="num">3,28 %</td>
-<td class="num">19</td>
-<td class="num">53 %</td>
-<td class="num">-1,24 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="21.7" y2="21.7"/><polyline class="up" points="0.0,21.7 5.7,18.3 11.4,17.4 17.1,19.5 22.9,24.3 28.6,23.0 34.3,24.7 40.0,28.0 45.7,24.8 51.4,19.9 57.1,19.9 62.9,23.3 68.6,16.3 74.3,14.2 80.0,17.0 85.7,11.0 91.4,12.3 97.1,6.0 102.9,9.2 108.6,9.2 114.3,2.0 120.0,4.7"/></svg></td>
-</tr><tr class="win">
-<td class="num">4</td>
-<td class="wrap"><b>Or : cassure de l’ouverture de New York ×20</b> <span class="chip ">pratique courante</span><br><span class="muted">Or (CFD XAUUSD) · ×20 max · 500 $</span></td>
-<td class="num good"><b>+4,16 %</b><br><span class="muted">520,82 $</span></td>
-<td class="num">4,31 %</td>
-<td class="num">20</td>
-<td class="num">50 %</td>
-<td class="num">-1,36 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="21.4" y2="21.4"/><polyline class="up" points="0.0,21.4 5.7,15.5 11.4,14.2 17.1,18.1 22.9,23.2 28.6,21.5 34.3,24.1 40.0,28.0 45.7,24.6 51.4,17.7 57.1,17.7 62.9,21.6 68.6,14.6 74.3,12.3 80.0,16.1 85.7,9.7 91.4,11.3 97.1,4.3 102.9,8.3 108.6,9.3 114.3,2.0 120.0,6.0"/></svg></td>
-</tr><tr class="win">
-<td class="num">5</td>
-<td class="wrap"><b>Portefeuille 5 000 $ (ma sélection)</b> <span class="chip mix">portefeuille combiné</span><br><span class="muted">S&amp;P 500 et or (CFD), ETF US · ×2 max (S&amp;P 500), ×20 max (or) · 5 000 $</span></td>
-<td class="num good"><b>+3,32 %</b><br><span class="muted">5 166,20 $</span></td>
-<td class="num">0,88 %</td>
-<td class="num">40</td>
-<td class="num">43 %</td>
-<td class="num">-0,56 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="28.0" y2="28.0"/><polyline class="up" points="0.0,28.0 5.7,24.4 11.4,21.0 17.1,23.6 22.9,20.7 28.6,20.2 34.3,20.5 40.0,24.9 45.7,27.2 51.4,24.7 57.1,24.7 62.9,26.5 68.6,24.1 74.3,22.7 80.0,22.7 85.7,21.8 91.4,22.7 97.1,18.5 102.9,21.7 108.6,5.9 114.3,5.0 120.0,2.0"/></svg></td>
-</tr><tr class="win">
-<td class="num">6</td>
-<td class="wrap"><b>Momentum « zone de bruit » SPY sans levier</b> <span class="chip ">étude publiée</span><br><span class="muted">S&amp;P 500 (CFD indice) · sans levier · 500 $</span></td>
-<td class="num good"><b>+2,56 %</b><br><span class="muted">512,78 $</span></td>
-<td class="num">1,92 %</td>
-<td class="num">24</td>
-<td class="num">42 %</td>
-<td class="num">-0,66 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="24.7" y2="24.7"/><polyline class="up" points="0.0,24.7 6.0,24.7 12.0,20.6 18.0,21.1 24.0,14.9 30.0,15.5 36.0,15.8 42.0,18.4 48.0,21.3 54.0,21.3 60.0,21.4 66.0,22.9 72.0,22.9 78.0,22.9 84.0,21.9 90.0,21.3 96.0,22.1 102.0,28.0 108.0,3.4 114.0,7.8 120.0,2.0"/></svg></td>
-</tr><tr class="win">
-<td class="num">7</td>
-<td class="wrap"><b>Momentum « zone de bruit » SPY, 1 500 $ en unités entières</b> <span class="chip ">étude publiée</span><br><span class="muted">S&amp;P 500 (CFD indice) · sans levier · 1 500 $</span></td>
-<td class="num good"><b>+1,37 %</b><br><span class="muted">1 520,58 $</span></td>
-<td class="num">0,98 %</td>
-<td class="num">24</td>
-<td class="num">42 %</td>
-<td class="num">-0,47 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="24.9" y2="24.9"/><polyline class="up" points="0.0,24.9 6.0,24.9 12.0,20.9 18.0,21.4 24.0,15.4 30.0,16.0 36.0,16.3 42.0,18.8 48.0,21.6 54.0,21.6 60.0,21.6 66.0,23.1 72.0,23.1 78.0,23.1 84.0,22.1 90.0,21.6 96.0,22.3 102.0,28.0 108.0,4.7 114.0,12.7 120.0,2.0"/></svg></td>
-</tr><tr class="win">
-<td class="num">8</td>
-<td class="wrap"><b>Témoin : hasard sur SPY</b> <span class="chip ctl">témoin</span><br><span class="muted">S&amp;P 500 (CFD indice) · sans levier · 500 $</span></td>
-<td class="num good"><b>+0,71 %</b><br><span class="muted">503,57 $</span></td>
-<td class="num">0,96 %</td>
-<td class="num">20</td>
-<td class="num">50 %</td>
-<td class="num">-0,31 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="16.9" y2="16.9"/><polyline class="up" points="0.0,16.9 6.0,19.0 12.0,23.5 18.0,28.0 24.0,19.4 30.0,18.4 36.0,16.3 42.0,20.8 48.0,25.3 54.0,26.0 60.0,24.0 66.0,23.7 72.0,24.4 78.0,20.8 84.0,25.3 90.0,16.7 96.0,14.8 102.0,19.2 108.0,10.6 114.0,2.0 120.0,6.5"/></svg></td>
-</tr><tr class="win">
-<td class="num">9</td>
-<td class="wrap"><b>Nuit SPY (achat le soir, vente le matin)</b> <span class="chip ">étude publiée</span><br><span class="muted">ETF US (comptant) · sans levier · 500 $</span></td>
-<td class="num good"><b>+0,25 %</b><br><span class="muted">501,24 $</span></td>
-<td class="num">2,29 %</td>
-<td class="num">19</td>
-<td class="num">58 %</td>
-<td class="num">-1,06 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="4.5" y2="4.5"/><polyline class="up" points="0.0,4.5 6.0,4.6 12.0,8.9 18.0,13.5 24.0,11.8 30.0,6.7 36.0,7.8 42.0,5.2 48.0,14.3 54.0,19.8 60.0,17.0 66.0,14.6 72.0,12.5 78.0,17.3 84.0,28.0 90.0,23.3 96.0,22.6 102.0,11.3 108.0,13.3 114.0,11.0 120.0,2.0"/></svg></td>
-</tr><tr class="loss">
-<td class="num">10</td>
-<td class="wrap"><b>Tournant du mois SPY</b> <span class="chip ">étude publiée</span><br><span class="muted">ETF US (comptant) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-0,50 %</b><br><span class="muted">497,51 $</span></td>
-<td class="num">0,50 %</td>
-<td class="num">1</td>
-<td class="num">0 %</td>
-<td class="num">-0,49 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="2.0" y2="2.0"/><polyline class="down" points="0.0,2.0 6.0,2.0 12.0,2.0 18.0,2.0 24.0,2.0 30.0,2.0 36.0,2.0 42.0,2.0 48.0,2.0 54.0,2.0 60.0,2.0 66.0,2.0 72.0,2.0 78.0,2.0 84.0,2.5 90.0,28.0 96.0,28.0 102.0,28.0 108.0,28.0 114.0,28.0 120.0,28.0"/></svg></td>
-</tr><tr class="loss">
-<td class="num">11</td>
-<td class="wrap"><b>Dernière demi-heure SPY</b> <span class="chip ">étude publiée</span><br><span class="muted">S&amp;P 500 (CFD indice) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-1,71 %</b><br><span class="muted">491,46 $</span></td>
-<td class="num">1,74 %</td>
-<td class="num">20</td>
-<td class="num">25 %</td>
-<td class="num">-0,39 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="2.0" y2="2.0"/><polyline class="down" points="0.0,2.0 6.0,2.7 12.0,4.2 18.0,3.6 24.0,4.0 30.0,7.3 36.0,5.7 42.0,6.0 48.0,7.9 54.0,6.9 60.0,7.4 66.0,8.4 72.0,5.5 78.0,8.2 84.0,14.1 90.0,18.5 96.0,18.8 102.0,21.3 108.0,17.2 114.0,22.7 120.0,28.0"/></svg></td>
-</tr><tr class="loss">
-<td class="num">12</td>
-<td class="wrap"><b>Bot grille BTC (ordres limites, Revolut X)</b> <span class="chip ">pratique courante</span><br><span class="muted">BTC (comptant) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-2,86 %</b><br><span class="muted">485,70 $</span></td>
-<td class="num">5,63 %</td>
-<td class="num">131</td>
-<td class="num">73 %</td>
-<td class="num">-3,96 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="6.4" y2="6.4"/><polyline class="down" points="0.0,6.4 4.1,6.1 8.3,6.9 12.4,4.5 16.6,3.1 20.7,3.2 24.8,2.8 29.0,2.6 33.1,2.0 37.2,2.0 41.4,6.9 45.5,8.2 49.7,6.8 53.8,5.9 57.9,5.0 62.1,4.3 66.2,3.7 70.3,5.3 74.5,9.1 78.6,8.6 82.8,8.6 86.9,9.4 91.0,9.6 95.2,8.1 99.3,28.0 103.4,23.0 107.6,23.0 111.7,23.5 115.9,20.9 120.0,20.9"/></svg></td>
-</tr><tr class="loss">
-<td class="num">13</td>
-<td class="wrap"><b>RSI(2) de Connors SPY + QQQ</b> <span class="chip ">étude publiée</span><br><span class="muted">ETF US (comptant) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-3,39 %</b><br><span class="muted">483,04 $</span></td>
-<td class="num">3,46 %</td>
-<td class="num">6</td>
-<td class="num">17 %</td>
-<td class="num">-3,24 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="2.5" y2="2.5"/><polyline class="down" points="0.0,2.5 6.0,2.5 12.0,2.6 18.0,2.0 24.0,15.6 30.0,9.6 36.0,9.6 42.0,9.6 48.0,9.6 54.0,9.6 60.0,9.6 66.0,9.6 72.0,9.6 78.0,9.6 84.0,9.7 90.0,16.7 96.0,13.3 102.0,3.7 108.0,28.0 114.0,28.0 120.0,28.0"/></svg></td>
-</tr><tr class="loss">
-<td class="num">14</td>
-<td class="wrap"><b>Tendance crypto 1 h (Revolut X, comptant)</b> <span class="chip ">pratique courante</span><br><span class="muted">BTC, ETH (comptant) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-4,15 %</b><br><span class="muted">479,26 $</span></td>
-<td class="num">6,22 %</td>
-<td class="num">14</td>
-<td class="num">21 %</td>
-<td class="num">-1,37 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="2.0" y2="2.0"/><polyline class="down" points="0.0,2.0 4.1,3.6 8.3,6.2 12.4,6.2 16.6,11.9 20.7,11.9 24.8,16.3 29.0,18.1 33.1,24.9 37.2,20.4 41.4,24.9 45.5,24.9 49.7,24.9 53.8,24.9 57.9,24.9 62.1,24.8 66.2,25.9 70.3,25.9 74.5,25.9 78.6,25.9 82.8,25.9 86.9,28.0 91.0,26.3 95.2,18.7 99.3,23.1 103.4,23.1 107.6,23.1 111.7,23.1 115.9,23.1 120.0,23.1"/></svg></td>
-</tr><tr class="loss">
-<td class="num">15</td>
-<td class="wrap"><b>ORB actions en jeu sans levier</b> <span class="chip ">étude publiée</span><br><span class="muted">Actions US (CFD) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-4,89 %</b><br><span class="muted">475,54 $</span></td>
-<td class="num">16,63 %</td>
-<td class="num">109</td>
-<td class="num">16 %</td>
-<td class="num">-3,40 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="2.0" y2="2.0"/><polyline class="down" points="0.0,2.0 6.0,6.0 12.0,9.6 18.0,14.5 24.0,9.4 30.0,9.7 36.0,14.8 42.0,12.9 48.0,10.3 54.0,10.1 60.0,13.8 66.0,16.3 72.0,19.2 78.0,20.9 84.0,24.4 90.0,26.2 96.0,26.7 102.0,28.0 108.0,19.9 114.0,19.2 120.0,9.7"/></svg></td>
-</tr><tr class="loss">
-<td class="num">16</td>
-<td class="wrap"><b>Tendance crypto 1 h ×2 (CFD, achat et vente)</b> <span class="chip ">pratique courante</span><br><span class="muted">BTC, ETH (CFD) · ×2 max · 500 $</span></td>
-<td class="num bad"><b>-6,18 %</b><br><span class="muted">469,08 $</span></td>
-<td class="num">13,00 %</td>
-<td class="num">38</td>
-<td class="num">34 %</td>
-<td class="num">-2,71 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="8.4" y2="8.4"/><polyline class="down" points="0.0,8.4 4.1,9.9 8.3,4.5 12.4,2.0 16.6,6.3 20.7,6.7 24.8,11.2 29.0,16.1 33.1,23.2 37.2,19.2 41.4,17.8 45.5,21.0 49.7,17.4 53.8,17.4 57.9,19.6 62.1,19.5 66.2,22.5 70.3,28.0 74.5,25.9 78.6,25.9 82.8,25.9 86.9,24.5 91.0,25.6 95.2,20.9 99.3,17.4 103.4,18.4 107.6,17.8 111.7,19.7 115.9,25.1 120.0,25.1"/></svg></td>
-</tr><tr class="loss">
-<td class="num">17</td>
-<td class="wrap"><b>Témoin : hasard sur l’or ×20</b> <span class="chip ctl">témoin</span><br><span class="muted">Or (CFD XAUUSD) · ×20 max · 500 $</span></td>
-<td class="num bad"><b>-11,95 %</b><br><span class="muted">440,26 $</span></td>
-<td class="num">12,37 %</td>
-<td class="num">20</td>
-<td class="num">25 %</td>
-<td class="num">-3,46 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="2.0" y2="2.0"/><polyline class="down" points="0.0,2.0 5.7,4.3 11.4,6.5 17.1,8.8 22.9,16.1 28.6,17.2 34.3,19.4 40.0,21.5 45.7,23.5 51.4,22.5 57.1,22.5 62.9,22.3 68.6,24.3 74.3,26.4 80.0,23.4 85.7,19.8 91.4,21.9 97.1,22.5 102.9,24.6 108.6,26.6 114.3,26.0 120.0,28.0"/></svg></td>
-</tr><tr class="loss">
-<td class="num">18</td>
-<td class="wrap"><b>Rebond Bollinger crypto 15 min (Revolut X)</b> <span class="chip ">pratique courante</span><br><span class="muted">BTC, ETH (comptant) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-15,50 %</b><br><span class="muted">422,52 $</span></td>
-<td class="num">17,70 %</td>
-<td class="num">66</td>
-<td class="num">35 %</td>
-<td class="num">-4,70 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="2.0" y2="2.0"/><polyline class="down" points="0.0,2.0 4.1,7.7 8.3,10.4 12.4,10.4 16.6,9.5 20.7,12.2 24.8,13.2 29.0,14.3 33.1,14.3 37.2,14.3 41.4,18.2 45.5,18.2 49.7,19.5 53.8,20.3 57.9,19.9 62.1,19.9 66.2,19.9 70.3,21.5 74.5,20.9 78.6,20.9 82.8,20.9 86.9,21.4 91.0,21.1 95.2,21.5 99.3,27.7 103.4,28.0 107.6,27.7 111.7,27.5 115.9,25.6 120.0,25.6"/></svg></td>
-</tr><tr class="loss">
-<td class="num">19</td>
-<td class="wrap"><b>Témoin « façon Telegram » : or à levier extrême</b> <span class="chip ctl">témoin</span><br><span class="muted">Or (CFD XAUUSD, courtier étranger) · ×1 000 max · 500 $</span></td>
-<td class="num bad"><b>-100,00 %</b><br><span class="muted">0,00 $</span></td>
-<td class="num">100,00 %</td>
-<td class="num">9</td>
-<td class="num">0 %</td>
-<td class="num">-78,81 %</td>
-<td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe d'equity"><line class="base" x1="0" x2="120" y1="2.0" y2="2.0"/><polyline class="down" points="0.0,2.0 5.7,22.3 11.4,26.7 17.1,27.7 22.9,27.9 28.6,28.0 34.3,28.0 40.0,28.0 45.7,28.0 51.4,28.0 57.1,28.0 62.9,28.0 68.6,28.0 74.3,28.0 80.0,28.0 85.7,28.0 91.4,28.0 97.1,28.0 102.9,28.0 108.6,28.0 114.3,28.0 120.0,28.0"/></svg></td>
-</tr></tbody></table></div></section>
-<section class="card"><h2>Historique plus long (autant que les données le permettent)</h2><p class="muted">Chaque portefeuille sur toute la durée de ses données : stratégies journalières depuis 2010, crypto sur 1 à 2 ans, stratégies de 5 min sur ~7 semaines. Périodes différentes : à comparer avec prudence.</p><div class="scroll"><table class="board"><thead><tr><th>#</th><th>Portefeuille</th><th>Résultat</th><th>Baisse max</th><th>Trades</th><th>Réussite</th><th>Pire jour</th></tr></thead><tbody><tr class="win">
-<td class="num">1</td>
-<td class="wrap"><b>RSI(2) de Connors SPY + QQQ</b> <span class="chip ">étude publiée</span><br><span class="muted">ETF US (comptant) · sans levier · 500 $</span></td>
-<td class="num good"><b>+53,95 %</b><br><span class="muted">769,73 $</span></td>
-<td class="num">14,93 %</td>
-<td class="num">381</td>
-<td class="num">64 %</td>
-<td class="num">-4,76 %</td>
-
-</tr><tr class="win">
-<td class="num">2</td>
-<td class="wrap"><b>Tournant du mois SPY</b> <span class="chip ">étude publiée</span><br><span class="muted">ETF US (comptant) · sans levier · 500 $</span></td>
-<td class="num good"><b>+39,45 %</b><br><span class="muted">697,26 $</span></td>
-<td class="num">11,54 %</td>
-<td class="num">202</td>
-<td class="num">59 %</td>
-<td class="num">-4,50 %</td>
-
-</tr><tr class="win">
-<td class="num">3</td>
-<td class="wrap"><b>Nuit SPY (achat le soir, vente le matin)</b> <span class="chip ">étude publiée</span><br><span class="muted">ETF US (comptant) · sans levier · 500 $</span></td>
-<td class="num good"><b>+32,96 %</b><br><span class="muted">664,80 $</span></td>
-<td class="num">29,85 %</td>
-<td class="num">4238</td>
-<td class="num">53 %</td>
-<td class="num">-10,47 %</td>
-
-</tr><tr class="win">
-<td class="num">4</td>
-<td class="wrap"><b>Momentum « zone de bruit » SPY ×4</b> <span class="chip ">étude publiée</span><br><span class="muted">S&amp;P 500 (CFD indice) · ×4 max · 500 $</span></td>
-<td class="num good"><b>+2,90 %</b><br><span class="muted">514,48 $</span></td>
-<td class="num">5,93 %</td>
-<td class="num">48</td>
-<td class="num">29 %</td>
-<td class="num">-1,76 %</td>
-
-</tr><tr class="win">
-<td class="num">5</td>
-<td class="wrap"><b>Portefeuille 5 000 $ (ma sélection)</b> <span class="chip mix">portefeuille combiné</span><br><span class="muted">S&amp;P 500 et or (CFD), ETF US · ×2 max (S&amp;P 500), ×20 max (or) · 5 000 $</span></td>
-<td class="num good"><b>+2,08 %</b><br><span class="muted">5 104,17 $</span></td>
-<td class="num">2,04 %</td>
-<td class="num">64</td>
-<td class="num">36 %</td>
-<td class="num">-0,57 %</td>
-
-</tr><tr class="win">
-<td class="num">6</td>
-<td class="wrap"><b>Or : cassure de l’ouverture de New York ×20</b> <span class="chip ">pratique courante</span><br><span class="muted">Or (CFD XAUUSD) · ×20 max · 500 $</span></td>
-<td class="num good"><b>+1,88 %</b><br><span class="muted">509,39 $</span></td>
-<td class="num">6,12 %</td>
-<td class="num">35</td>
-<td class="num">46 %</td>
-<td class="num">-1,36 %</td>
-
-</tr><tr class="win">
-<td class="num">7</td>
-<td class="wrap"><b>Momentum « zone de bruit » SPY sans levier</b> <span class="chip ">étude publiée</span><br><span class="muted">S&amp;P 500 (CFD indice) · sans levier · 500 $</span></td>
-<td class="num good"><b>+1,59 %</b><br><span class="muted">507,96 $</span></td>
-<td class="num">1,92 %</td>
-<td class="num">48</td>
-<td class="num">29 %</td>
-<td class="num">-0,66 %</td>
-
-</tr><tr class="win">
-<td class="num">8</td>
-<td class="wrap"><b>Or : cassure de l’ouverture de New York, 2 500 $ au lot réel</b> <span class="chip ">pratique courante</span><br><span class="muted">Or (CFD XAUUSD) · ×20 max · 2 500 $</span></td>
-<td class="num good"><b>+1,38 %</b><br><span class="muted">2 534,48 $</span></td>
-<td class="num">6,01 %</td>
-<td class="num">33</td>
-<td class="num">45 %</td>
-<td class="num">-1,27 %</td>
-
-</tr><tr class="win">
-<td class="num">9</td>
-<td class="wrap"><b>Momentum « zone de bruit » SPY, 1 500 $ en unités entières</b> <span class="chip ">étude publiée</span><br><span class="muted">S&amp;P 500 (CFD indice) · sans levier · 1 500 $</span></td>
-<td class="num good"><b>+0,90 %</b><br><span class="muted">1 513,46 $</span></td>
-<td class="num">0,99 %</td>
-<td class="num">48</td>
-<td class="num">29 %</td>
-<td class="num">-0,48 %</td>
-
-</tr><tr class="loss">
-<td class="num">10</td>
-<td class="wrap"><b>Témoin : hasard sur SPY</b> <span class="chip ctl">témoin</span><br><span class="muted">S&amp;P 500 (CFD indice) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-0,06 %</b><br><span class="muted">499,72 $</span></td>
-<td class="num">2,60 %</td>
-<td class="num">45</td>
-<td class="num">47 %</td>
-<td class="num">-0,31 %</td>
-
-</tr><tr class="loss">
-<td class="num">11</td>
-<td class="wrap"><b>Bot grille BTC (ordres limites, Revolut X)</b> <span class="chip ">pratique courante</span><br><span class="muted">BTC (comptant) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-1,53 %</b><br><span class="muted">492,34 $</span></td>
-<td class="num">5,63 %</td>
-<td class="num">240</td>
-<td class="num">74 %</td>
-<td class="num">-3,96 %</td>
-
-</tr><tr class="loss">
-<td class="num">12</td>
-<td class="wrap"><b>Dernière demi-heure SPY</b> <span class="chip ">étude publiée</span><br><span class="muted">S&amp;P 500 (CFD indice) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-2,25 %</b><br><span class="muted">488,73 $</span></td>
-<td class="num">2,75 %</td>
-<td class="num">45</td>
-<td class="num">33 %</td>
-<td class="num">-0,52 %</td>
-
-</tr><tr class="loss">
-<td class="num">13</td>
-<td class="wrap"><b>Témoin : hasard sur l’or ×20</b> <span class="chip ctl">témoin</span><br><span class="muted">Or (CFD XAUUSD) · ×20 max · 500 $</span></td>
-<td class="num bad"><b>-17,25 %</b><br><span class="muted">413,77 $</span></td>
-<td class="num">17,67 %</td>
-<td class="num">35</td>
-<td class="num">23 %</td>
-<td class="num">-3,46 %</td>
-
-</tr><tr class="loss">
-<td class="num">14</td>
-<td class="wrap"><b>Tendance crypto 1 h ×2 (CFD, achat et vente)</b> <span class="chip ">pratique courante</span><br><span class="muted">BTC, ETH (CFD) · ×2 max · 500 $</span></td>
-<td class="num bad"><b>-18,43 %</b><br><span class="muted">407,87 $</span></td>
-<td class="num">45,05 %</td>
-<td class="num">1058</td>
-<td class="num">32 %</td>
-<td class="num">-4,78 %</td>
-
-</tr><tr class="loss">
-<td class="num">15</td>
-<td class="wrap"><b>Tendance crypto 1 h (Revolut X, comptant)</b> <span class="chip ">pratique courante</span><br><span class="muted">BTC, ETH (comptant) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-40,82 %</b><br><span class="muted">295,92 $</span></td>
-<td class="num">50,51 %</td>
-<td class="num">519</td>
-<td class="num">29 %</td>
-<td class="num">-2,99 %</td>
-
-</tr><tr class="loss">
-<td class="num">16</td>
-<td class="wrap"><b>Rebond Bollinger crypto 15 min (Revolut X)</b> <span class="chip ">pratique courante</span><br><span class="muted">BTC, ETH (comptant) · sans levier · 500 $</span></td>
-<td class="num bad"><b>-73,09 %</b><br><span class="muted">134,53 $</span></td>
-<td class="num">73,98 %</td>
-<td class="num">634</td>
-<td class="num">37 %</td>
-<td class="num">-6,84 %</td>
-
-</tr><tr class="loss">
-<td class="num">17</td>
-<td class="wrap"><b>Témoin « façon Telegram » : or à levier extrême</b> <span class="chip ctl">témoin</span><br><span class="muted">Or (CFD XAUUSD, courtier étranger) · ×1 000 max · 500 $</span></td>
-<td class="num bad"><b>-100,00 %</b><br><span class="muted">0,00 $</span></td>
-<td class="num">100,00 %</td>
-<td class="num">17</td>
-<td class="num">24 %</td>
-<td class="num">-78,22 %</td>
-
-</tr></tbody></table></div></section>
-<section class="card"><h2>Fiches des stratégies</h2><details class="fiche"><summary><b>ORB actions en jeu ×4 (version de l’étude)</b> <span class="chip ">étude publiée</span> <span class="muted">Actions US (CFD) · ×4 max</span></summary>
-<p>À 9 h 35 (New York) : les 20 actions au plus fort volume relatif d’ouverture (≥ 100 %, prix ≥ 5 $, volume ≥ 1 M, ATR ≥ 0,50 $). Achat stop au plus haut de la 1re bougie de 5 min si elle monte, vente stop au plus bas si elle baisse ; stop à 10 % de l’ATR ; sortie à la clôture (22 h Paris). Risque 1 % par trade.</p>
-<p class="muted"><b>Source</b> : Zarattini, Barbon &amp; Aziz (2024), « A Profitable Day Trading Strategy For The U.S. Equity Market », SSRN 4729284</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 3,0 pb par côté · financement de nuit 6,5 %/an</p>
-<ul class="plain"><li><span class="num">11-09</span> QBTS achat 587 $ → <span class="num good">+32,62 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-09</span> RGTI achat 585 $ → <span class="num good">+45,32 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-09</span> AVGO achat 647 $ → <span class="num good">+17,47 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-09</span> DAL achat 472 $ → <span class="num bad">-2,10 $</span> <span class="muted">(stop)</span></li></ul>
-</details><details class="fiche"><summary><b>ORB actions en jeu sans levier</b> <span class="chip ">étude publiée</span> <span class="muted">Actions US (CFD) · sans levier</span></summary>
-<p>Mêmes règles que la version ×4, mais la somme des positions ne dépasse jamais le capital.</p>
-<p class="muted"><b>Source</b> : Même étude, montant total plafonné au capital</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 3,0 pb par côté · financement de nuit 6,5 %/an</p>
-<ul class="plain"><li><span class="num">11-09</span> QBTS achat 4 $ → <span class="num good">+0,22 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-09</span> RGTI achat 441 $ → <span class="num good">+34,18 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-09</span> DAL achat 33 $ → <span class="num bad">-0,15 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-09</span> AMZN achat 443 $ → <span class="num bad">-1,84 $</span> <span class="muted">(stop)</span></li></ul>
-</details><details class="fiche"><summary><b>Momentum « zone de bruit » SPY ×4</b> <span class="chip ">étude publiée</span> <span class="muted">S&amp;P 500 (CFD indice) · ×4 max</span></summary>
-<p>Zone de bruit = mouvement moyen depuis l’ouverture à la même heure sur 14 jours. Toutes les 30 min de 10 h à 15 h 30 (New York) : achat au-dessus, vente en dessous ; stop suiveur = borne ou VWAP ; sortie à la clôture. Levier = 2 % / volatilité quotidienne, au plus 4.</p>
-<p class="muted"><b>Source</b> : Zarattini, Aziz &amp; Barbon (2024), « Beat the Market: An Effective Intraday Momentum Strategy for S&amp;P500 ETF (SPY) », SSRN 4824172</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 0,5 pb par côté · financement de nuit 6,5 %/an</p>
-<ul class="plain"><li><span class="num">11-09</span> SPY achat 751 $ → <span class="num good">+4,83 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-06</span> SPY achat 754 $ → <span class="num bad">-3,67 $</span> <span class="muted">(retour sous max(borne haute, VWAP))</span></li><li><span class="num">11-05</span> SPY vente 1 140 $ → <span class="num good">+31,64 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-04</span> SPY achat 1 339 $ → <span class="num bad">-3,39 $</span> <span class="muted">(fin de séance)</span></li></ul>
-</details><details class="fiche"><summary><b>Momentum « zone de bruit » SPY sans levier</b> <span class="chip ">étude publiée</span> <span class="muted">S&amp;P 500 (CFD indice) · sans levier</span></summary>
-<p>Mêmes règles, position au plus égale au capital.</p>
-<p class="muted"><b>Source</b> : Même étude, levier plafonné à 1</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 0,5 pb par côté · financement de nuit 6,5 %/an</p>
-<ul class="plain"><li><span class="num">11-09</span> SPY achat 510 $ → <span class="num good">+3,27 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-06</span> SPY achat 512 $ → <span class="num bad">-2,49 $</span> <span class="muted">(retour sous max(borne haute, VWAP))</span></li><li><span class="num">11-05</span> SPY vente 498 $ → <span class="num good">+13,82 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-04</span> SPY achat 499 $ → <span class="num bad">-1,26 $</span> <span class="muted">(fin de séance)</span></li></ul>
-</details><details class="fiche"><summary><b>Dernière demi-heure SPY</b> <span class="chip ">étude publiée</span> <span class="muted">S&amp;P 500 (CFD indice) · sans levier</span></summary>
-<p>Rendement de la veille 16 h à 10 h (New York) ; position dans le même sens de 15 h 30 à 16 h (21 h 30 – 22 h à Paris).</p>
-<p class="muted"><b>Source</b> : Gao, Han, Li &amp; Zhou (2018), « Market intraday momentum », Journal of Financial Economics 129</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 0,5 pb par côté · financement de nuit 6,5 %/an</p>
-<ul class="plain"><li><span class="num">11-09</span> SPY achat 493 $ → <span class="num bad">-1,73 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-06</span> SPY achat 495 $ → <span class="num bad">-1,81 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-05</span> SPY vente 494 $ → <span class="num good">+1,34 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-04</span> SPY achat 494 $ → <span class="num bad">-0,80 $</span> <span class="muted">(fin de séance)</span></li></ul>
-</details><details class="fiche"><summary><b>RSI(2) de Connors SPY + QQQ</b> <span class="chip ">étude publiée</span> <span class="muted">ETF US (comptant) · sans levier</span></summary>
-<p>Achat à la clôture si le cours est au-dessus de sa moyenne 200 jours et RSI(2) &lt; 10 ; vente à la clôture au-dessus de la moyenne 5 jours ; 3 jours au plus. 50 % du capital par ETF.</p>
+<section class="card"><h2>Suivi en direct</h2><p>Le suivi des 12 comptes démarre le <b>jeudi 12 novembre à 0 h</b> (Paris) : chaque compte part de 5 000 $ et avance sur les cours réels avec le réglage figé ci-dessous.</p></section>
+<section class="card"><h2>Ma lecture</h2><ul class="plain note"><li>Classement en test, sur des mois jamais vus pendant le réglage : 1. or « range comprimé » (+10,2 % en 4 semaines, mais 5 trades seulement) ; 2. ORB Nasdaq (+10,0 % en 4 semaines, 21 trades) ; 3. momentum S&amp;P 500 ×2 (+5,0 % en 4 semaines) ; 4. tendance crypto au comptant (+5,9 % en 4 mois) ; 5. perpétuels BTC/ETH en tendance (+4,3 % en 4 mois). Le forex EUR/USD est dernier (−6,9 % en 4 semaines).</li><li>Le sniper le plus solide est l&#39;ORB Nasdaq : il gagne en apprentissage (+8,8 %) et en test (+10,0 %), comme dans l&#39;étude de Zarattini et Aziz. L&#39;or « comprimé » gagne en test, mais toutes ses variantes perdaient en apprentissage : c&#39;est de la chance jusqu&#39;à preuve du contraire.</li><li>Le piège du réglage, en direct : la meilleure variante forex en apprentissage (Londres, +15,3 %) perd 6,9 % en test. C&#39;est pour cela que le choix se fait sur l&#39;apprentissage et que seul le test compte.</li><li>Mes corrections de professeur : les perpétuels perdaient avec la compression de volatilité en 1 h (de −22 % à −44 % en apprentissage). En tendance quotidienne, à l&#39;achat comme à la vente, ils gagnent en apprentissage (+9 %) et en test (+4,3 %). Le portage du financement, avec une moyenne sur 7 jours au lieu de 72 h, cesse d&#39;entrer et sortir pour rien : +1,35 % en 4 mois (environ 4 % par an), avec une baisse de 0,2 %.</li><li>En crypto, l&#39;unité de temps décide de tout : en barres de 1 h, la tendance perd 55 % en apprentissage (frais et bruit) ; en barres de 1 jour, elle tient (+5,9 % en test).</li><li>Long terme : les 4 derniers mois ont été calmes (S&amp;P 500 +0,5 %, Faber +1,0 %, portefeuille permanent +0,4 %). Sur 16 ans, l&#39;achat-conservation reste la référence (+566 %) ; Faber (+45 %) et le portefeuille permanent (+140 %) servent surtout à réduire les baisses.</li><li>Les tests en barres de 5 min ne couvrent que 4 semaines (Yahoo ne garde que 60 jours) : ce classement bougera. Le vrai juge est le suivi de 12 mois, qui part le jeudi 12 novembre avec ces réglages figés.</li></ul></section>
+<section class="card"><h2>Classement sur la période de test</h2><p class="muted">Réglage choisi sur l’apprentissage seulement, puis jugé sur les derniers mois (4 semaines pour les stratégies en 5 min, faute de données plus anciennes ; 4 mois pour les autres). Classés par rendement ramené à un mois.</p><div class="scroll"><table class="board"><thead><tr><th>#</th><th>Compte</th><th>Test</th><th>Par mois</th><th>Baisse max</th><th>Trades</th><th>Courbe</th></tr></thead><tbody><tr class="win"><td class="num">1</td><td class="wrap"><b>Sniper or (ouverture de New York)</b> <span class="chip t-a">sniper</span><br><span class="muted">Or (CFD XAUUSD), 15 h 30 – 19 h · ×20 max · réglage : range comprimé seulement, objectif 2 R</span></td><td class="num good"><b>+10,23 %</b><br><span class="muted">12 oct. 2026 → 9 nov. 2026</span></td><td class="num good">+10,76 %</td><td class="num">3,45 %</td><td class="num">5</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="23.6" y2="23.6"/><polyline class="up" points="0.0,23.6 5.5,23.6 10.9,23.6 16.4,23.6 21.8,23.6 27.3,23.6 32.7,23.6 38.2,23.6 43.6,23.6 49.1,23.6 54.5,23.6 60.0,23.6 65.5,28.0 70.9,20.1 76.4,18.5 81.8,18.5 87.3,18.5 92.7,18.5 98.2,10.5 103.6,10.5 109.1,10.5 114.5,2.0 120.0,2.0"/></svg></td></tr><tr class="win"><td class="num">2</td><td class="wrap"><b>Sniper ORB Nasdaq (QQQ)</b> <span class="chip t-a">sniper</span><br><span class="muted">Nasdaq 100 (CFD), 15 h 30 – 22 h · ×4 max · réglage : objectif 10 R</span></td><td class="num good"><b>+9,97 %</b><br><span class="muted">12 oct. 2026 → 9 nov. 2026</span></td><td class="num good">+10,49 %</td><td class="num">7,09 %</td><td class="num">21</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="28.0" y2="28.0"/><polyline class="up" points="0.0,28.0 5.7,26.5 11.4,21.7 17.1,23.4 22.9,25.9 28.6,5.3 34.3,6.6 40.0,9.5 45.7,10.1 51.4,12.9 57.1,14.6 62.9,8.0 68.6,10.8 74.3,12.5 80.0,15.2 85.7,18.0 91.4,19.1 97.1,19.5 102.9,22.2 108.6,9.1 114.3,11.9 120.0,2.0"/></svg></td></tr><tr class="win"><td class="num">3</td><td class="wrap"><b>Momentum S&amp;P 500 ×2</b> <span class="chip t-b">modéré</span><br><span class="muted">S&amp;P 500 (CFD), 16 h – 22 h · ×2 max · réglage : règles de l’étude, levier ×2 au plus</span></td><td class="num good"><b>+4,99 %</b><br><span class="muted">12 oct. 2026 → 9 nov. 2026</span></td><td class="num good">+5,25 %</td><td class="num">3,80 %</td><td class="num">24</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="24.6" y2="24.6"/><polyline class="up" points="0.0,24.6 5.7,24.6 11.4,24.6 17.1,20.4 22.9,20.9 28.6,14.5 34.3,15.2 40.0,15.5 45.7,18.2 51.4,21.2 57.1,21.2 62.9,21.2 68.6,22.8 74.3,22.8 80.0,22.8 85.7,21.7 91.4,21.2 97.1,22.0 102.9,28.0 108.6,3.0 114.3,6.3 120.0,2.0"/></svg></td></tr><tr class="win"><td class="num">4</td><td class="wrap"><b>Tendance crypto au comptant (Revolut X)</b> <span class="chip t-b">modéré</span><br><span class="muted">BTC, ETH, SOL au comptant, 24 h/24 · sans levier · réglage : barres de 1 jour</span></td><td class="num good"><b>+5,85 %</b><br><span class="muted">13 juil. 2026 → 9 nov. 2026</span></td><td class="num good">+1,45 %</td><td class="num">4,04 %</td><td class="num">6</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="27.8" y2="27.8"/><polyline class="up" points="0.0,27.8 1.0,27.8 2.0,27.8 3.0,27.8 4.0,27.8 5.0,27.8 6.0,27.8 7.0,27.8 8.0,27.8 9.0,27.8 10.0,27.8 11.0,27.8 12.0,27.8 13.0,27.8 14.0,27.8 15.0,27.8 16.0,27.8 17.0,27.8 18.0,27.8 19.0,27.8 20.0,27.8 21.0,27.8 22.0,27.8 23.0,27.8 24.0,27.8 25.0,27.8 26.0,27.8 27.0,27.8 28.0,27.8 29.0,27.8 30.0,27.8 31.0,27.8 32.0,27.8 33.0,27.8 34.0,27.8 35.0,27.8 36.0,27.8 37.0,27.8 38.0,28.0 39.0,22.3 40.0,11.3 41.0,14.1 42.0,11.9 43.0,8.8 44.0,11.1 45.0,6.7 46.0,2.0 47.0,7.8 48.0,6.5 49.0,9.7 50.0,7.3 51.0,11.3 52.0,12.0 53.0,12.0 54.0,12.0 55.0,12.0 56.0,12.0 57.0,12.0 58.0,12.0 59.0,12.0 60.0,12.0 61.0,12.0 62.0,12.0 63.0,12.0 64.0,12.0 65.0,12.0 66.0,12.0 67.0,12.0 68.0,12.0 69.0,12.5 70.0,12.4 71.0,10.4 72.0,11.0 73.0,14.0 74.0,13.4 75.0,12.1 76.0,12.1 77.0,12.0 78.0,13.4 79.0,13.4 80.0,13.6 81.0,12.5 82.0,13.2 83.0,12.8 84.0,11.2 85.0,12.0 86.0,12.0 87.0,12.0 88.0,12.0 89.0,12.0 90.0,12.0 91.0,12.0 92.0,12.0 93.0,12.0 94.0,12.0 95.0,12.0 96.0,12.0 97.0,12.0 98.0,12.0 99.0,12.0 100.0,12.0 101.0,12.0 102.0,12.0 103.0,12.0 104.0,12.0 105.0,12.0 106.0,12.0 107.0,12.0 108.0,12.0 109.0,12.0 110.0,12.0 111.0,12.0 112.0,12.0 113.0,12.0 114.0,12.0 115.0,12.0 116.0,12.0 117.0,12.0 118.0,12.0 119.0,12.0 120.0,12.0"/></svg></td></tr><tr class="win"><td class="num">5</td><td class="wrap"><b>Sniper perpétuels BTC et ETH</b> <span class="chip t-a">sniper</span><br><span class="muted">Crypto perpétuels (Kraken Futures), 24 h/24 · ×5 max · réglage : tendance 1 jour, achat et vente</span></td><td class="num good"><b>+4,31 %</b><br><span class="muted">13 juil. 2026 → 9 nov. 2026</span></td><td class="num good">+1,08 %</td><td class="num">5,12 %</td><td class="num">6</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="23.3" y2="23.3"/><polyline class="up" points="0.0,23.3 1.0,23.3 2.0,23.3 3.0,22.4 4.0,24.0 5.0,24.9 6.0,24.5 6.9,24.2 7.9,23.0 8.9,22.5 9.9,23.3 10.9,25.6 11.9,27.7 12.9,27.2 13.9,25.5 14.9,24.1 15.9,26.4 16.9,26.9 17.9,25.2 18.8,27.6 19.8,28.0 20.8,26.9 21.8,26.5 22.8,25.8 23.8,26.2 24.8,26.2 25.8,26.2 26.8,26.2 27.8,26.2 28.8,26.2 29.8,26.2 30.7,26.2 31.7,26.2 32.7,26.2 33.7,26.2 34.7,26.2 35.7,26.2 36.7,26.2 37.7,26.2 38.7,19.1 39.7,7.8 40.7,8.5 41.7,7.8 42.6,4.8 43.6,7.2 44.6,5.6 45.6,2.0 46.6,8.7 47.6,6.8 48.6,5.0 49.6,5.2 50.6,9.2 51.6,10.2 52.6,10.5 53.6,10.5 54.5,10.5 55.5,10.5 56.5,10.5 57.5,10.5 58.5,10.5 59.5,10.5 60.5,10.5 61.5,10.5 62.5,10.5 63.5,10.5 64.5,10.5 65.5,10.5 66.4,10.5 67.4,10.5 68.4,10.5 69.4,10.5 70.4,10.5 71.4,11.5 72.4,15.6 73.4,15.1 74.4,15.7 75.4,15.8 76.4,15.0 77.4,16.2 78.3,16.0 79.3,16.1 80.3,14.8 81.3,15.9 82.3,14.9 83.3,13.4 84.3,13.3 85.3,13.4 86.3,13.4 87.3,13.4 88.3,13.4 89.3,13.4 90.2,13.4 91.2,13.4 92.2,13.4 93.2,13.4 94.2,13.4 95.2,13.4 96.2,13.4 97.2,13.4 98.2,13.4 99.2,13.4 100.2,13.4 101.2,13.4 102.1,13.4 103.1,13.4 104.1,13.4 105.1,13.4 106.1,13.4 107.1,13.4 108.1,13.4 109.1,11.6 110.1,13.3 111.1,13.7 112.1,12.2 113.1,14.5 114.0,21.0 115.0,9.9 116.0,10.4 117.0,9.9 118.0,4.8 119.0,6.0 120.0,6.5"/></svg></td></tr><tr class="win"><td class="num">6</td><td class="wrap"><b>Swing ETF : RSI(2) sur SPY, QQQ, IWM</b> <span class="chip t-b">modéré</span><br><span class="muted">ETF US au comptant · sans levier · réglage : règles de Connors</span></td><td class="num good"><b>+1,48 %</b><br><span class="muted">13 juil. 2026 → 9 nov. 2026</span></td><td class="num good">+0,37 %</td><td class="num">2,16 %</td><td class="num">16</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="28.0" y2="28.0"/><polyline class="up" points="0.0,28.0 1.4,28.0 2.8,28.0 4.2,28.0 5.6,28.0 7.1,28.0 8.5,27.8 9.9,16.9 11.3,16.9 12.7,16.9 14.1,16.9 15.5,17.7 16.9,20.3 18.4,25.8 19.8,12.8 21.2,12.8 22.6,12.8 24.0,12.8 25.4,12.8 26.8,12.8 28.2,12.8 29.6,12.8 31.1,12.8 32.5,12.8 33.9,12.8 35.3,12.8 36.7,12.8 38.1,12.8 39.5,13.4 40.9,15.3 42.4,14.3 43.8,17.0 45.2,15.4 46.6,15.4 48.0,15.4 49.4,15.4 50.8,15.4 52.2,18.5 53.6,14.2 55.1,10.3 56.5,10.3 57.9,10.3 59.3,10.3 60.7,10.4 62.1,4.6 63.5,7.7 64.9,12.1 66.4,13.2 67.8,7.2 69.2,7.2 70.6,7.2 72.0,7.2 73.4,7.2 74.8,7.2 76.2,7.2 77.6,7.2 79.1,7.2 80.5,8.3 81.9,7.2 83.3,4.8 84.7,4.8 86.1,4.8 87.5,4.8 88.9,4.8 90.4,4.8 91.8,4.8 93.2,4.8 94.6,4.8 96.0,4.4 97.4,14.3 98.8,9.9 100.2,9.3 101.6,6.5 103.1,6.5 104.5,6.5 105.9,6.5 107.3,6.5 108.7,6.5 110.1,6.5 111.5,6.5 112.9,11.6 114.4,9.1 115.8,2.0 117.2,19.7 118.6,16.2 120.0,16.2"/></svg></td></tr><tr class="win"><td class="num">7</td><td class="wrap"><b>Portage du financement BTC (delta neutre)</b> <span class="chip t-b">modéré</span><br><span class="muted">BTC au comptant + perpétuel vendu (Kraken Futures) · sans levier (2 jambes de 50 %) · réglage : moyenne 7 jours, entrée au-dessus de 2.6 %/an, sortie sous -2.6 %/an</span></td><td class="num good"><b>+1,35 %</b><br><span class="muted">13 juil. 2026 → 9 nov. 2026</span></td><td class="num good">+0,34 %</td><td class="num">0,23 %</td><td class="num">0</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="26.6" y2="26.6"/><polyline class="up" points="0.0,26.6 1.0,28.0 2.0,28.0 3.0,27.8 4.0,27.9 5.0,27.5 6.0,27.3 6.9,27.3 7.9,27.1 8.9,27.3 9.9,27.1 10.9,27.0 11.9,26.9 12.9,26.6 13.9,26.6 14.9,26.3 15.9,26.5 16.9,26.0 17.9,25.9 18.8,25.7 19.8,25.7 20.8,25.7 21.8,25.3 22.8,25.3 23.8,25.4 24.8,25.3 25.8,25.2 26.8,25.3 27.8,25.3 28.8,25.3 29.8,25.0 30.7,25.0 31.7,24.7 32.7,24.6 33.7,24.5 34.7,24.6 35.7,24.4 36.7,24.5 37.7,24.7 38.7,24.2 39.7,24.0 40.7,23.2 41.7,22.7 42.6,22.0 43.6,22.2 44.6,21.8 45.6,21.5 46.6,21.6 47.6,21.6 48.6,21.3 49.6,20.8 50.6,20.7 51.6,20.4 52.6,20.1 53.6,20.3 54.5,20.5 55.5,20.1 56.5,19.9 57.5,19.4 58.5,19.3 59.5,19.0 60.5,18.9 61.5,18.9 62.5,18.5 63.5,18.4 64.5,18.4 65.5,17.8 66.4,17.5 67.4,17.2 68.4,17.1 69.4,16.8 70.4,16.8 71.4,16.2 72.4,16.1 73.4,16.0 74.4,15.9 75.4,16.0 76.4,15.9 77.4,15.8 78.3,15.6 79.3,15.4 80.3,14.9 81.3,15.0 82.3,14.9 83.3,14.8 84.3,14.6 85.3,14.7 86.3,14.5 87.3,14.4 88.3,13.5 89.3,13.1 90.2,13.1 91.2,12.8 92.2,12.2 93.2,12.1 94.2,11.7 95.2,11.3 96.2,10.8 97.2,10.6 98.2,10.3 99.2,9.7 100.2,9.2 101.2,9.0 102.1,8.4 103.1,7.9 104.1,7.8 105.1,7.2 106.1,6.9 107.1,6.6 108.1,6.7 109.1,6.3 110.1,5.6 111.1,4.9 112.1,4.7 113.1,4.2 114.0,3.7 115.0,3.5 116.0,3.1 117.0,2.7 118.0,2.0 119.0,2.3 120.0,2.2"/></svg></td></tr><tr class="win"><td class="num">8</td><td class="wrap"><b>BTC et ETH au-dessus de la moyenne 200 jours</b> <span class="chip t-c">long terme</span><br><span class="muted">BTC, ETH au comptant (Revolut X), 24 h/24 · sans levier · réglage : moyenne 200 jours</span></td><td class="num good"><b>+1,33 %</b><br><span class="muted">13 juil. 2026 → 9 nov. 2026</span></td><td class="num good">+0,34 %</td><td class="num">18,56 %</td><td class="num">1</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="27.9" y2="27.9"/><polyline class="up" points="0.0,27.9 1.0,27.9 2.0,27.9 3.0,27.9 4.0,27.9 5.0,27.9 6.0,27.9 7.0,27.9 8.0,27.9 9.0,27.9 10.0,27.9 11.0,27.9 12.0,27.9 13.0,27.9 14.0,27.9 15.0,27.9 16.0,27.9 17.0,27.9 18.0,27.9 19.0,27.9 20.0,27.9 21.0,27.9 22.0,27.9 23.0,27.9 24.0,27.9 25.0,27.9 26.0,27.9 27.0,27.9 28.0,27.9 29.0,27.9 30.0,27.9 31.0,27.9 32.0,27.9 33.0,27.9 34.0,27.9 35.0,27.9 36.0,27.9 37.0,27.9 38.0,28.0 39.0,23.3 40.0,14.7 41.0,17.9 42.0,16.4 43.0,14.9 44.0,16.3 45.0,14.3 46.0,13.2 47.0,16.8 48.0,16.1 49.0,17.5 50.0,15.6 51.0,17.7 52.0,18.4 53.0,12.6 54.0,15.0 55.0,14.3 56.0,13.1 57.0,14.7 58.0,15.3 59.0,15.8 60.0,17.9 61.0,15.5 62.0,15.3 63.0,16.8 64.0,14.8 65.0,19.7 66.0,18.7 67.0,17.9 68.0,10.4 69.0,9.6 70.0,9.4 71.0,2.0 72.0,2.8 73.0,5.9 74.0,5.8 75.0,6.0 76.0,5.6 77.0,5.8 78.0,6.6 79.0,6.7 80.0,6.6 81.0,5.0 82.0,6.2 83.0,5.6 84.0,3.2 85.0,4.2 86.0,4.7 87.0,9.4 88.0,13.1 89.0,12.1 90.0,11.4 91.0,10.0 92.0,13.7 93.0,11.4 94.0,14.5 95.0,13.5 96.0,14.5 97.0,15.1 98.0,14.4 99.0,14.6 100.0,12.7 101.0,11.3 102.0,15.4 103.0,15.7 104.0,16.6 105.0,17.8 106.0,18.0 107.0,16.8 108.0,16.2 109.0,21.5 110.0,22.1 111.0,21.7 112.0,20.6 113.0,22.3 114.0,21.3 115.0,15.3 116.0,23.2 117.0,23.4 118.0,23.3 119.0,26.8 120.0,26.4"/></svg></td></tr><tr class="win"><td class="num">9</td><td class="wrap"><b>Allocation tactique de Faber</b> <span class="chip t-c">long terme</span><br><span class="muted">ETF : actions US et monde, obligations, immobilier, matières premières · sans levier · réglage : règles de Faber</span></td><td class="num good"><b>+0,96 %</b><br><span class="muted">13 juil. 2026 → 9 nov. 2026</span></td><td class="num good">+0,24 %</td><td class="num">3,82 %</td><td class="num">15</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="27.4" y2="27.4"/><polyline class="up" points="0.0,27.4 1.4,27.4 2.8,25.0 4.2,22.5 5.6,22.8 7.1,22.4 8.5,23.6 9.9,18.6 11.3,17.8 12.7,19.5 14.1,16.8 15.5,21.6 16.9,22.6 18.4,21.9 19.8,18.1 21.2,18.2 22.6,18.3 24.0,17.1 25.4,16.5 26.8,16.2 28.2,13.2 29.6,11.0 31.1,12.1 32.5,9.3 33.9,8.0 35.3,7.0 36.7,6.4 38.1,9.6 39.5,6.3 40.9,6.2 42.4,4.0 43.8,5.3 45.2,6.0 46.6,7.2 48.0,6.3 49.4,7.8 50.8,7.3 52.2,6.8 53.6,6.2 55.1,2.0 56.5,3.5 57.9,3.0 59.3,4.6 60.7,4.5 62.1,3.0 63.5,5.4 64.9,4.7 66.4,8.8 67.8,6.0 69.2,9.3 70.6,6.0 72.0,6.4 73.4,10.7 74.8,10.3 76.2,10.8 77.6,13.6 79.1,16.7 80.5,17.7 81.9,17.7 83.3,16.1 84.7,15.7 86.1,13.5 87.5,16.0 88.9,15.5 90.4,13.6 91.8,12.6 93.2,11.5 94.6,14.6 96.0,13.0 97.4,12.9 98.8,13.4 100.2,12.4 101.6,11.5 103.1,14.0 104.5,13.2 105.9,13.2 107.3,12.3 108.7,10.9 110.1,10.9 111.5,15.0 112.9,19.9 114.4,20.5 115.8,15.4 117.2,27.0 118.6,28.0 120.0,21.1"/></svg></td></tr><tr class="win"><td class="num">10</td><td class="wrap"><b>Achat-conservation S&amp;P 500</b> <span class="chip t-c">long terme</span><br><span class="muted">ETF SPY · sans levier · réglage : achat-conservation</span></td><td class="num good"><b>+0,46 %</b><br><span class="muted">13 juil. 2026 → 9 nov. 2026</span></td><td class="num good">+0,12 %</td><td class="num">5,92 %</td><td class="num">0</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="17.6" y2="17.6"/><polyline class="up" points="0.0,17.6 1.4,17.7 2.8,16.3 4.2,14.7 5.6,16.9 7.1,20.8 8.5,21.4 9.9,18.1 11.3,18.6 12.7,23.4 14.1,23.0 15.5,23.0 16.9,22.0 18.4,28.0 19.8,21.6 21.2,18.8 22.6,13.2 24.0,6.1 25.4,6.9 26.8,7.5 28.2,5.1 29.6,5.2 31.1,6.5 32.5,5.5 33.9,2.6 35.3,3.4 36.7,5.4 38.1,8.1 39.5,7.3 40.9,10.6 42.4,9.0 43.8,10.2 45.2,8.9 46.6,8.8 48.0,6.2 49.4,7.1 50.8,8.3 52.2,11.1 53.6,9.3 55.1,5.1 56.5,6.7 57.9,8.9 59.3,10.7 60.7,13.1 62.1,9.8 63.5,11.5 64.9,13.4 66.4,15.1 67.8,10.6 69.2,11.1 70.6,4.9 72.0,5.0 73.4,7.9 74.8,8.2 76.2,6.1 77.6,9.1 79.1,9.8 80.5,10.6 81.9,9.9 83.3,7.0 84.7,4.2 86.1,2.0 87.5,3.0 88.9,4.7 90.4,2.3 91.8,2.5 93.2,2.6 94.6,7.0 96.0,5.8 97.4,10.3 98.8,8.6 100.2,7.3 101.6,5.1 103.1,9.9 104.5,12.0 105.9,9.2 107.3,6.9 108.7,5.6 110.1,7.1 111.5,14.2 112.9,16.1 114.4,15.0 115.8,8.4 117.2,26.1 118.6,24.9 120.0,15.8"/></svg></td></tr><tr class="win"><td class="num">11</td><td class="wrap"><b>Portefeuille permanent</b> <span class="chip t-c">long terme</span><br><span class="muted">ETF : actions, obligations longues, or, monétaire · sans levier · réglage : 4 × 25 %</span></td><td class="num good"><b>+0,44 %</b><br><span class="muted">13 juil. 2026 → 9 nov. 2026</span></td><td class="num good">+0,11 %</td><td class="num">5,44 %</td><td class="num">4</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="22.9" y2="22.9"/><polyline class="up" points="0.0,22.9 1.4,23.0 2.8,20.8 4.2,20.1 5.6,23.0 7.1,22.7 8.5,23.9 9.9,21.1 11.3,20.1 12.7,24.3 14.1,23.9 15.5,22.3 16.9,23.0 18.4,26.1 19.8,22.4 21.2,24.0 22.6,22.8 24.0,19.1 25.4,14.2 26.8,15.0 28.2,11.2 29.6,10.9 31.1,11.6 32.5,10.2 33.9,10.6 35.3,10.7 36.7,11.0 38.1,13.5 39.5,6.6 40.9,8.1 42.4,5.4 43.8,4.1 45.2,2.0 46.6,4.3 48.0,3.4 49.4,8.2 50.8,9.2 52.2,14.8 53.6,12.3 55.1,8.6 56.5,9.9 57.9,12.7 59.3,12.8 60.7,16.9 62.1,15.0 63.5,17.3 64.9,17.7 66.4,18.8 67.8,14.2 69.2,14.1 70.6,12.4 72.0,12.0 73.4,16.8 74.8,18.7 76.2,17.6 77.6,24.2 79.1,23.4 80.5,24.9 81.9,24.6 83.3,24.8 84.7,24.8 86.1,23.0 87.5,25.4 88.9,24.0 90.4,21.3 91.8,22.0 93.2,21.7 94.6,23.9 96.0,20.0 97.4,21.3 98.8,22.3 100.2,21.6 101.6,20.4 103.1,22.5 104.5,24.4 105.9,22.7 107.3,20.8 108.7,21.0 110.1,22.1 111.5,27.4 112.9,26.7 114.4,28.0 115.8,21.3 117.2,25.1 118.6,25.7 120.0,20.9"/></svg></td></tr><tr class="loss"><td class="num">12</td><td class="wrap"><b>Sniper forex EUR/USD</b> <span class="chip t-a">sniper</span><br><span class="muted">Forex EUR/USD (CFD), sessions de Londres ou de New York · ×30 max · réglage : Londres</span></td><td class="num bad"><b>-6,94 %</b><br><span class="muted">12 oct. 2026 → 9 nov. 2026</span></td><td class="num bad">-7,27 %</td><td class="num">12,52 %</td><td class="num">21</td><td><svg class="spark" viewBox="0 0 120 30" role="img" aria-label="courbe"><line class="base" x1="0" x2="120" y1="7.9" y2="7.9"/><polyline class="down" points="0.0,7.9 5.5,2.0 10.9,5.4 16.4,8.9 21.8,12.2 27.3,15.4 32.7,18.6 38.2,13.1 43.6,16.4 49.1,11.1 54.5,12.6 60.0,15.9 65.5,18.6 70.9,21.8 76.4,24.9 81.8,28.0 87.3,24.5 92.7,23.8 98.2,18.5 103.6,21.7 109.1,24.8 114.5,22.6 120.0,22.6"/></svg></td></tr></tbody></table></div></section>
+<section class="card"><h2>Comptes sniper</h2><details class="fiche"><summary><b>1. Sniper perpétuels BTC et ETH</b> <span class="chip t-a">sniper</span> <span class="muted">Crypto perpétuels (Kraken Futures), 24 h/24 · ×5 max</span></summary>
+<p>Achat et vente, risque 2 % par trade, levier ×5 au plus, financement horaire payé ou reçu. Compression : cassure des 20 dernières heures quand les bandes de Bollinger sont au plus serré, stop en ATR, objectif en multiple du risque, 3 jours au plus. Tendance : cassure des 20 dernières barres dans le sens de la moyenne 50, stop suiveur à 3 ATR, 14 jours au plus.</p>
+<p class="muted"><b>Source</b> : Deux familles essayées : cassure après compression de volatilité en 1 h (« squeeze ») et suivi de tendance Donchian en 4 h ou en 1 jour ; financement horaire réel de Kraken Futures</p>
+<p class="muted">Apprentissage du 10 nov. 2025 au 13 juil. 2026 ; test du 13 juil. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class=""><td>tendance 4 h, achat et vente</td><td class="num">-12,9 % <span class="muted">(37,5 %)</span></td><td class="num bad">-7,00 % <span class="muted">(31,0 %)</span></td><td class="num">40</td></tr><tr class="chosen"><td>→ tendance 1 jour, achat et vente</td><td class="num">+9,0 % <span class="muted">(6,9 %)</span></td><td class="num good">+4,31 % <span class="muted">(5,1 %)</span></td><td class="num">6</td></tr><tr class=""><td>compression 1 h, objectif 2 R, stop 1.5 ATR</td><td class="num">-31,4 % <span class="muted">(39,6 %)</span></td><td class="num bad">-1,06 % <span class="muted">(36,2 %)</span></td><td class="num">95</td></tr><tr class=""><td>compression 1 h, objectif 3 R, stop 1.5 ATR</td><td class="num">-43,6 % <span class="muted">(49,2 %)</span></td><td class="num bad">-22,88 % <span class="muted">(48,2 %)</span></td><td class="num">88</td></tr><tr class=""><td>compression 1 h, objectif 3 R, stop 2.5 ATR</td><td class="num">-24,4 % <span class="muted">(36,4 %)</span></td><td class="num bad">-10,36 % <span class="muted">(36,6 %)</span></td><td class="num">66</td></tr><tr class=""><td>compression 1 h, objectif 5 R, stop 2.5 ATR</td><td class="num">-22,3 % <span class="muted">(38,9 %)</span></td><td class="num bad">-14,86 % <span class="muted">(35,0 %)</span></td><td class="num">59</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>2. Sniper ORB Nasdaq (QQQ)</b> <span class="chip t-a">sniper</span> <span class="muted">Nasdaq 100 (CFD), 15 h 30 – 22 h · ×4 max</span></summary>
+<p>1re bougie de 5 min en hausse : achat à l’ouverture de la 2e, stop au plus bas de la 1re ; en baisse : vente, stop au plus haut. Objectif en multiple du risque, sinon sortie à la clôture. Risque 1 % par trade, levier ×4 au plus (règles de l’étude).</p>
+<p class="muted"><b>Source</b> : Zarattini &amp; Aziz (2023), « Can Day Trading Really Be Profitable? », SSRN 4416622</p>
+<p class="muted">Apprentissage du 8 sept. 2026 au 12 oct. 2026 ; test du 12 oct. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class="chosen"><td>→ objectif 10 R</td><td class="num">+8,8 % <span class="muted">(5,3 %)</span></td><td class="num good">+9,97 % <span class="muted">(7,1 %)</span></td><td class="num">21</td></tr><tr class=""><td>objectif 5 R</td><td class="num">+5,0 % <span class="muted">(5,3 %)</span></td><td class="num good">+8,37 % <span class="muted">(6,4 %)</span></td><td class="num">21</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>3. Sniper or (ouverture de New York)</b> <span class="chip t-a">sniper</span> <span class="muted">Or (CFD XAUUSD), 15 h 30 – 19 h · ×20 max</span></summary>
+<p>Range de 9 h 30 à 9 h 45 (New York) ; ordres stop des deux côtés jusqu’à 11 h 30 ; stop de l’autre côté ; sortie à 13 h (19 h à Paris). Variante « comprimé » : seulement si le range du jour est plus étroit que la médiane des 20 séances. Risque 2 % par trade.</p>
+<p class="muted"><b>Source</b> : Cassure de range d’ouverture sur l’or, avec ou sans filtre de compression (pratique courante)</p>
+<p class="muted">Apprentissage du 8 sept. 2026 au 12 oct. 2026 ; test du 12 oct. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class=""><td>tous les jours, objectif 2 R</td><td class="num">-15,9 % <span class="muted">(18,1 %)</span></td><td class="num good">+4,24 % <span class="muted">(8,5 %)</span></td><td class="num">21</td></tr><tr class=""><td>tous les jours, objectif 3 R</td><td class="num">-19,6 % <span class="muted">(22,7 %)</span></td><td class="num good">+4,07 % <span class="muted">(8,5 %)</span></td><td class="num">21</td></tr><tr class="chosen"><td>→ range comprimé seulement, objectif 2 R</td><td class="num">-6,8 % <span class="muted">(10,6 %)</span></td><td class="num good">+10,23 % <span class="muted">(3,5 %)</span></td><td class="num">5</td></tr><tr class=""><td>range comprimé seulement, objectif 3 R</td><td class="num">-12,5 % <span class="muted">(13,9 %)</span></td><td class="num good">+8,05 % <span class="muted">(3,5 %)</span></td><td class="num">5</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>4. Sniper forex EUR/USD</b> <span class="chip t-a">sniper</span> <span class="muted">Forex EUR/USD (CFD), sessions de Londres ou de New York · ×30 max</span></summary>
+<p>Londres : range de 8 h à 8 h 30 (heure de Londres), entrées jusqu’à midi, sortie à 17 h. New York : range de 8 h 30 à 8 h 45 (heure des statistiques américaines), entrées jusqu’à 11 h, sortie à 16 h. Stop de l’autre côté, objectif 2 R, risque 1,5 % par trade.</p>
+<p class="muted"><b>Source</b> : Cassure du range d’ouverture de Londres ou de l’annonce de 8 h 30 à New York (pratiques courantes du forex)</p>
+<p class="muted">Apprentissage du 8 sept. 2026 au 12 oct. 2026 ; test du 12 oct. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class="chosen"><td>→ Londres</td><td class="num">+15,3 % <span class="muted">(6,7 %)</span></td><td class="num bad">-6,94 % <span class="muted">(12,5 %)</span></td><td class="num">21</td></tr><tr class=""><td>Londres, range comprimé seulement</td><td class="num">+1,2 % <span class="muted">(1,8 %)</span></td><td class="num bad">-3,45 % <span class="muted">(6,1 %)</span></td><td class="num">5</td></tr><tr class=""><td>New York</td><td class="num">+3,7 % <span class="muted">(8,1 %)</span></td><td class="num bad">-4,15 % <span class="muted">(9,1 %)</span></td><td class="num">21</td></tr><tr class=""><td>New York, range comprimé seulement</td><td class="num">-2,2 % <span class="muted">(4,7 %)</span></td><td class="num bad">-3,95 % <span class="muted">(5,7 %)</span></td><td class="num">5</td></tr></tbody></table></div>
+</details></section><section class="card"><h2>Comptes modéré</h2><details class="fiche"><summary><b>5. Momentum S&amp;P 500 ×2</b> <span class="chip t-b">modéré</span> <span class="muted">S&amp;P 500 (CFD), 16 h – 22 h · ×2 max</span></summary>
+<p>Toutes les 30 min de 10 h à 15 h 30 (New York) : achat au-dessus de la zone de bruit, vente en dessous, stop suiveur borne ou VWAP, sortie à la clôture. Levier piloté par la volatilité, ×2 au plus.</p>
+<p class="muted"><b>Source</b> : Zarattini, Aziz &amp; Barbon (2024), « Beat the Market », SSRN 4824172 (zone de bruit)</p>
+<p class="muted">Apprentissage du 8 sept. 2026 au 12 oct. 2026 ; test du 12 oct. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class="chosen"><td>→ règles de l’étude, levier ×2 au plus</td><td class="num">-1,9 % <span class="muted">(3,0 %)</span></td><td class="num good">+4,99 % <span class="muted">(3,8 %)</span></td><td class="num">24</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>6. Tendance crypto au comptant (Revolut X)</b> <span class="chip t-b">modéré</span> <span class="muted">BTC, ETH, SOL au comptant, 24 h/24 · sans levier</span></summary>
+<p>Achat sur cassure du plus haut de 20 barres au-dessus de la moyenne ; stop suiveur en ATR ; jamais de vente à découvert ; 14 jours au plus. Risque 1 % par trade, frais Revolut X. Unité de temps choisie sur la période d’apprentissage : 1 h, 4 h ou 1 jour.</p>
+<p class="muted"><b>Source</b> : Suivi de tendance Donchian ; momentum des cryptos documenté sur des horizons de jours à semaines (Liu &amp; Tsyvinski, 2021)</p>
+<p class="muted">Apprentissage du 6 janv. 2025 au 13 juil. 2026 ; test du 13 juil. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class=""><td>barres de 1 h</td><td class="num">-55,5 % <span class="muted">(56,1 %)</span></td><td class="num good">+20,29 % <span class="muted">(11,5 %)</span></td><td class="num">112</td></tr><tr class=""><td>barres de 4 h</td><td class="num">-19,5 % <span class="muted">(32,0 %)</span></td><td class="num good">+4,64 % <span class="muted">(15,7 %)</span></td><td class="num">32</td></tr><tr class="chosen"><td>→ barres de 1 jour</td><td class="num">-2,2 % <span class="muted">(8,8 %)</span></td><td class="num good">+5,85 % <span class="muted">(4,0 %)</span></td><td class="num">6</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>7. Portage du financement BTC (delta neutre)</b> <span class="chip t-b">modéré</span> <span class="muted">BTC au comptant + perpétuel vendu (Kraken Futures) · sans levier (2 jambes de 50 %)</span></summary>
+<p>Achat de BTC au comptant et vente du perpétuel pour le même montant (50 % du compte chacun) : le prix s’annule et l’on encaisse le financement. Entrée quand le financement moyen (72 h ou 7 jours) dépasse un seuil, sortie quand il passe sous un autre : la fenêtre longue évite d’entrer et sortir trop souvent.</p>
+<p class="muted"><b>Source</b> : Portage « cash and carry » : on encaisse le financement payé par les acheteurs de perpétuels (pratique courante des fonds crypto)</p>
+<p class="muted">Apprentissage du 10 nov. 2025 au 13 juil. 2026 ; test du 13 juil. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class=""><td>moyenne 72 h, entrée au-dessus de 0.9 %/an, sortie sous 0.0 %/an</td><td class="num">-1,1 % <span class="muted">(1,9 %)</span></td><td class="num good">+0,57 % <span class="muted">(0,4 %)</span></td><td class="num">6</td></tr><tr class=""><td>moyenne 72 h, entrée au-dessus de 2.6 %/an, sortie sous 0.0 %/an</td><td class="num">-0,3 % <span class="muted">(1,1 %)</span></td><td class="num good">+0,53 % <span class="muted">(0,3 %)</span></td><td class="num">6</td></tr><tr class=""><td>moyenne 7 jours, entrée au-dessus de 0.9 %/an, sortie sous -0.9 %/an</td><td class="num">-0,2 % <span class="muted">(0,9 %)</span></td><td class="num good">+1,35 % <span class="muted">(0,2 %)</span></td><td class="num">0</td></tr><tr class="chosen"><td>→ moyenne 7 jours, entrée au-dessus de 2.6 %/an, sortie sous -2.6 %/an</td><td class="num">+0,1 % <span class="muted">(0,6 %)</span></td><td class="num good">+1,35 % <span class="muted">(0,2 %)</span></td><td class="num">0</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>8. Swing ETF : RSI(2) sur SPY, QQQ, IWM</b> <span class="chip t-b">modéré</span> <span class="muted">ETF US au comptant · sans levier</span></summary>
+<p>Achat à la clôture si le cours est au-dessus de sa moyenne 200 jours et RSI(2) &lt; 10 ; vente au-dessus de la moyenne 5 jours ; 7 jours au plus. Un tiers du compte par ETF.</p>
 <p class="muted"><b>Source</b> : Connors &amp; Alvarez (2008), « Short Term Trading Strategies That Work »</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 1,0 pb par côté</p>
-<ul class="plain"><li><span class="num">11-02</span> QQQ achat 245 $ → <span class="num bad">-12,31 $</span> <span class="muted">(durée maximale (3 jours))</span></li><li><span class="num">11-02</span> SPY achat 245 $ → <span class="num good">+4,75 $</span> <span class="muted">(clôture 766.81 au-dessus de la MM5)</span></li><li><span class="num">10-30</span> QQQ achat 248 $ → <span class="num bad">-3,42 $</span> <span class="muted">(durée maximale (3 jours))</span></li><li><span class="num">10-30</span> SPY achat 248 $ → <span class="num bad">-1,24 $</span> <span class="muted">(durée maximale (3 jours))</span></li></ul>
-</details><details class="fiche"><summary><b>Nuit SPY (achat le soir, vente le matin)</b> <span class="chip ">étude publiée</span> <span class="muted">ETF US (comptant) · sans levier</span></summary>
-<p>Chaque jour : achat de SPY à la clôture (22 h Paris), vente à l’ouverture suivante (15 h 30 Paris).</p>
-<p class="muted"><b>Source</b> : Cliff, Cooper &amp; Gulen (2008) ; Lou, Polk &amp; Skouras (2019), « A tug of war: Overnight versus intraday expected returns », JFE</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 1,0 pb par côté</p>
-<ul class="plain"><li><span class="num">11-06</span> SPY achat 497 $ → <span class="num good">+4,40 $</span> <span class="muted">(sortie à l’ouverture)</span></li><li><span class="num">11-05</span> SPY achat 496 $ → <span class="num good">+1,13 $</span> <span class="muted">(sortie à l’ouverture)</span></li><li><span class="num">11-04</span> SPY achat 497 $ → <span class="num bad">-0,97 $</span> <span class="muted">(sortie à l’ouverture)</span></li><li><span class="num">11-03</span> SPY achat 491 $ → <span class="num good">+5,53 $</span> <span class="muted">(sortie à l’ouverture)</span></li></ul>
-</details><details class="fiche"><summary><b>Tournant du mois SPY</b> <span class="chip ">étude publiée</span> <span class="muted">ETF US (comptant) · sans levier</span></summary>
-<p>Achat à la clôture du dernier jour de bourse du mois, vente à la clôture du 2e jour du mois suivant.</p>
-<p class="muted"><b>Source</b> : Lakonishok &amp; Smidt (1988) ; McConnell &amp; Xu (2008), « Equity Returns at the Turn of the Month »</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 1,0 pb par côté</p>
-<ul class="plain"><li><span class="num">10-30</span> SPY achat 500 $ → <span class="num bad">-2,49 $</span> <span class="muted">(durée maximale (3 jours))</span></li></ul>
-</details><details class="fiche"><summary><b>Tendance crypto 1 h (Revolut X, comptant)</b> <span class="chip ">pratique courante</span> <span class="muted">BTC, ETH (comptant) · sans levier</span></summary>
-<p>Achat à la clôture d’une bougie 1 h au-dessus du plus haut des 20 h précédentes et de la moyenne exponentielle 100 h ; stop suiveur à 2 ATR ; 3 jours au plus ; risque 1 %. Frais Revolut X : 0,09 % par ordre au marché.</p>
-<p class="muted"><b>Source</b> : Cassure de canal (règles « Turtle » de Donchian), suivi de tendance documenté sur les cryptos (Liu &amp; Tsyvinski, 2021)</p>
-<p class="muted"><b>Coûts</b> : commission 0,09 % par ordre au marché · 0,00 % en ordre limite · glissement 2,0 pb par côté</p>
-<ul class="plain"><li><span class="num">11-04</span> ETH-USD achat 126 $ → <span class="num good">+3,49 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-04</span> BTC-USD achat 345 $ → <span class="num good">+4,60 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-03</span> ETH-USD achat 380 $ → <span class="num bad">-3,30 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-02</span> ETH-USD achat 477 $ → <span class="num bad">-2,04 $</span> <span class="muted">(stop)</span></li></ul>
-</details><details class="fiche"><summary><b>Tendance crypto 1 h ×2 (CFD, achat et vente)</b> <span class="chip ">pratique courante</span> <span class="muted">BTC, ETH (CFD) · ×2 max</span></summary>
-<p>Mêmes règles, vente aussi sous le plus bas des 20 h et sous la moyenne 100 h ; financement de nuit ~20 % par an.</p>
-<p class="muted"><b>Source</b> : Même stratégie, plafond européen de 2:1 sur les cryptos pour un particulier</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 5,0 pb par côté · financement de nuit 20,0 %/an</p>
-<ul class="plain"><li><span class="num">11-08</span> ETH-USD vente 296 $ → <span class="num bad">-5,11 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-08</span> BTC-USD vente 512 $ → <span class="num bad">-5,33 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-05</span> ETH-USD vente 199 $ → <span class="num good">+0,42 $</span> <span class="muted">(durée maximale (3 jours))</span></li><li><span class="num">11-05</span> BTC-USD vente 332 $ → <span class="num good">+8,35 $</span> <span class="muted">(stop)</span></li></ul>
-</details><details class="fiche"><summary><b>Rebond Bollinger crypto 15 min (Revolut X)</b> <span class="chip ">pratique courante</span> <span class="muted">BTC, ETH (comptant) · sans levier</span></summary>
-<p>Achat sous la bande basse (20, 2 écarts-types) avec RSI(14) &lt; 30 ; sortie au retour à la moyenne 20 ou après 24 h ; stop à 1,5 ATR ; risque 1 %.</p>
-<p class="muted"><b>Source</b> : Bandes de Bollinger (J. Bollinger) : stratégie d’exemple très répandue (TradingView, Freqtrade)</p>
-<p class="muted"><b>Coûts</b> : commission 0,09 % par ordre au marché · 0,00 % en ordre limite · glissement 2,0 pb par côté</p>
-<ul class="plain"><li><span class="num">11-09</span> ETH-USD achat 416 $ → <span class="num good">+6,18 $</span> <span class="muted">(retour à la moyenne 20)</span></li><li><span class="num">11-09</span> ETH-USD achat 420 $ → <span class="num bad">-4,08 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-08</span> ETH-USD achat 2 $ → <span class="num good">+0,01 $</span> <span class="muted">(retour à la moyenne 20)</span></li><li><span class="num">11-08</span> BTC-USD achat 415 $ → <span class="num good">+5,26 $</span> <span class="muted">(retour à la moyenne 20)</span></li></ul>
-</details><details class="fiche"><summary><b>Bot grille BTC (ordres limites, Revolut X)</b> <span class="chip ">pratique courante</span> <span class="muted">BTC (comptant) · sans levier</span></summary>
-<p>Chaque jour à 1 h (Paris) : 8 achats limites tous les 0,5 % sous le cours, chacun revendu 0,5 % plus haut et réarmé ; frais maker 0 % ; tout est soldé le lendemain à 1 h.</p>
-<p class="muted"><b>Source</b> : Bots « grille » des plateformes crypto (dont la grille du CLI officiel Revolut X)</p>
-<p class="muted"><b>Coûts</b> : commission 0,09 % par ordre au marché · 0,00 % en ordre limite · glissement 2,0 pb par côté</p>
-<ul class="plain"><li><span class="num">11-09</span> BTC-USD achat 61 $ → <span class="num good">+0,30 $</span> <span class="muted">(objectif)</span></li><li><span class="num">11-09</span> BTC-USD achat 61 $ → <span class="num good">+0,30 $</span> <span class="muted">(objectif)</span></li><li><span class="num">11-09</span> BTC-USD achat 61 $ → <span class="num good">+0,30 $</span> <span class="muted">(objectif)</span></li><li><span class="num">11-09</span> BTC-USD achat 61 $ → <span class="num good">+0,30 $</span> <span class="muted">(objectif)</span></li></ul>
-</details><details class="fiche"><summary><b>Or : cassure de l’ouverture de New York ×20</b> <span class="chip ">pratique courante</span> <span class="muted">Or (CFD XAUUSD) · ×20 max</span></summary>
-<p>Range de 15 h 30 à 15 h 45 (Paris) ; achat stop au-dessus, vente stop en dessous jusqu’à 17 h 30 ; stop de l’autre côté, objectif 2 fois le range, sortie à 19 h. Risque 1 %. Taille non arrondie au lot de 0,01 (1 once) : avec ce lot, il faudrait ~2 500 $ pour garder 1 % de risque.</p>
-<p class="muted"><b>Source</b> : Cassure de range d’ouverture appliquée à l’or (pratique courante chez les traders de XAUUSD)</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 1,0 pb par côté · financement de nuit 6,5 %/an</p>
-<ul class="plain"><li><span class="num">11-09</span> GC=F achat 1 230 $ → <span class="num bad">-5,38 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-06</span> GC=F achat 1 687 $ → <span class="num good">+9,82 $</span> <span class="muted">(objectif)</span></li><li><span class="num">11-05</span> GC=F vente 519 $ → <span class="num bad">-1,32 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-04</span> GC=F vente 1 052 $ → <span class="num bad">-5,34 $</span> <span class="muted">(stop)</span></li></ul>
-</details><details class="fiche"><summary><b>Momentum « zone de bruit » SPY, 1 500 $ en unités entières</b> <span class="chip ">étude publiée</span> <span class="muted">S&amp;P 500 (CFD indice) · sans levier</span></summary>
-<p>Mêmes règles que la version sans levier, mais par unités entières d’une part de SPY (~680 $, l’ordre de grandeur du plus petit CFD S&amp;P 500) : impossible à 500 $, d’où 1 500 $.</p>
-<p class="muted"><b>Source</b> : Même étude ; version réaliste pour un petit compte</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 0,5 pb par côté · financement de nuit 6,5 %/an · lot minimal 1 once</p>
-<ul class="plain"><li><span class="num">11-09</span> SPY achat 1 496 $ → <span class="num good">+9,61 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-06</span> SPY achat 1 481 $ → <span class="num bad">-7,20 $</span> <span class="muted">(retour sous max(borne haute, VWAP))</span></li><li><span class="num">11-05</span> SPY vente 754 $ → <span class="num good">+20,93 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-04</span> SPY achat 769 $ → <span class="num bad">-1,95 $</span> <span class="muted">(fin de séance)</span></li></ul>
-</details><details class="fiche"><summary><b>Or : cassure de l’ouverture de New York, 2 500 $ au lot réel</b> <span class="chip ">pratique courante</span> <span class="muted">Or (CFD XAUUSD) · ×20 max</span></summary>
-<p>Mêmes règles, taille arrondie à l’once : le range d’ouverture fait ~15 $ en médiane, il faut donc ~1 500 $ pour 1 once à 1 % de risque ; à 2 500 $, presque tous les jours sont jouables.</p>
-<p class="muted"><b>Source</b> : Même stratégie ; version réaliste avec le lot minimal de 0,01 (1 once)</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 1,0 pb par côté · financement de nuit 6,5 %/an · lot minimal 1 once</p>
-<ul class="plain"><li><span class="num">11-09</span> GC=F achat 4 140 $ → <span class="num bad">-18,13 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-06</span> GC=F achat 8 103 $ → <span class="num good">+47,19 $</span> <span class="muted">(objectif)</span></li><li><span class="num">11-04</span> GC=F vente 4 042 $ → <span class="num bad">-20,51 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-03</span> GC=F vente 11 855 $ → <span class="num good">+41,41 $</span> <span class="muted">(objectif)</span></li></ul>
-</details><details class="fiche"><summary><b>Témoin : hasard sur SPY</b> <span class="chip ctl">témoin</span> <span class="muted">S&amp;P 500 (CFD indice) · sans levier</span></summary>
-<p>Chaque séance : heure tirée au sort entre 15 h 45 et 18 h (Paris), sens tiré au sort ; stop 0,3 %, objectif 0,6 %, sortie à 19 h.</p>
-<p class="muted"><b>Source</b> : Témoin scientifique : ce que donne un tirage au sort avec la même gestion du risque</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 0,5 pb par côté · financement de nuit 6,5 %/an</p>
-<ul class="plain"><li><span class="num">11-09</span> SPY vente 505 $ → <span class="num bad">-1,57 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-06</span> SPY vente 502 $ → <span class="num good">+2,99 $</span> <span class="muted">(objectif)</span></li><li><span class="num">11-05</span> SPY vente 499 $ → <span class="num good">+2,97 $</span> <span class="muted">(objectif)</span></li><li><span class="num">11-04</span> SPY achat 501 $ → <span class="num bad">-1,55 $</span> <span class="muted">(stop)</span></li></ul>
-</details><details class="fiche"><summary><b>Témoin : hasard sur l’or ×20</b> <span class="chip ctl">témoin</span> <span class="muted">Or (CFD XAUUSD) · ×20 max</span></summary>
-<p>Chaque jour : heure tirée au sort entre 15 h 45 et 18 h (Paris), sens tiré au sort ; stop 0,2 %, objectif 0,4 %, sortie à 19 h ; risque 1 %.</p>
-<p class="muted"><b>Source</b> : Témoin : même tirage au sort sur l’or, avec un vrai stop et 1 % de risque</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 1,0 pb par côté · financement de nuit 6,5 %/an</p>
-<ul class="plain"><li><span class="num">11-09</span> GC=F achat 2 119 $ → <span class="num bad">-4,66 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-06</span> GC=F vente 2 112 $ → <span class="num good">+1,44 $</span> <span class="muted">(fin de séance)</span></li><li><span class="num">11-05</span> GC=F vente 2 134 $ → <span class="num bad">-4,70 $</span> <span class="muted">(stop)</span></li><li><span class="num">11-04</span> GC=F vente 2 157 $ → <span class="num bad">-4,75 $</span> <span class="muted">(stop)</span></li></ul>
-</details><details class="fiche"><summary><b>Témoin « façon Telegram » : or à levier extrême</b> <span class="chip ctl">témoin</span> <span class="muted">Or (CFD XAUUSD, courtier étranger) · ×1 000 max</span></summary>
-<p>Chaque jour : signal tiré au sort entre 8 h et 21 h (Paris), taille telle que +200 pips (+20 $) rapportent 3 fois le compte ; pas d’autre stop que la clôture de marge ; sortie à 22 h.</p>
-<p class="muted"><b>Source</b> : Ce que promettent les groupes de signaux : +200 pips = compte ×4 (levier ~600:1), signaux tirés au sort</p>
-<p class="muted"><b>Coûts</b> : sans commission · glissement 1,5 pb par côté · financement de nuit 8,0 %/an</p>
-<ul class="plain"><li><span class="num">10-23</span> GC=F vente 2 $ → <span class="num bad">-0,00 $</span> <span class="muted">(clôture de marge (equity &lt; 50 % de la marge))</span></li><li><span class="num">10-22</span> GC=F achat 7 $ → <span class="num bad">-0,01 $</span> <span class="muted">(clôture de marge (equity &lt; 50 % de la marge))</span></li><li><span class="num">10-21</span> GC=F vente 35 $ → <span class="num bad">-0,04 $</span> <span class="muted">(clôture de marge (equity &lt; 50 % de la marge))</span></li><li><span class="num">10-20</span> GC=F vente 159 $ → <span class="num bad">-0,20 $</span> <span class="muted">(clôture de marge (equity &lt; 50 % de la marge))</span></li></ul>
+<p class="muted">Apprentissage du 4 janv. 2010 au 13 juil. 2026 ; test du 13 juil. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class="chosen"><td>→ règles de Connors</td><td class="num">+48,2 % <span class="muted">(16,7 %)</span></td><td class="num good">+1,48 % <span class="muted">(2,2 %)</span></td><td class="num">16</td></tr></tbody></table></div>
+</details></section><section class="card"><h2>Comptes long terme</h2><details class="fiche"><summary><b>9. Achat-conservation S&amp;P 500</b> <span class="chip t-c">long terme</span> <span class="muted">ETF SPY · sans levier</span></summary>
+<p>Tout le compte en SPY dès le premier jour, jamais revendu.</p>
+<p class="muted"><b>Source</b> : Référence de tout investisseur : le marché lui-même</p>
+<p class="muted">Apprentissage du 4 janv. 2010 au 13 juil. 2026 ; test du 13 juil. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class="chosen"><td>→ achat-conservation</td><td class="num">+566,1 % <span class="muted">(34,1 %)</span></td><td class="num good">+0,46 % <span class="muted">(5,9 %)</span></td><td class="num">0</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>10. Allocation tactique de Faber</b> <span class="chip t-c">long terme</span> <span class="muted">ETF : actions US et monde, obligations, immobilier, matières premières · sans levier</span></summary>
+<p>Chaque mois : SPY, EFA, IEF, VNQ et DBC pèsent 20 % chacun s’ils sont au-dessus de leur moyenne de 10 mois, sinon leur part reste en liquidités.</p>
+<p class="muted"><b>Source</b> : Faber (2007), « A Quantitative Approach to Tactical Asset Allocation », Journal of Wealth Management</p>
+<p class="muted">Apprentissage du 4 janv. 2010 au 13 juil. 2026 ; test du 13 juil. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class="chosen"><td>→ règles de Faber</td><td class="num">+44,9 % <span class="muted">(13,6 %)</span></td><td class="num good">+0,96 % <span class="muted">(3,8 %)</span></td><td class="num">15</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>11. BTC et ETH au-dessus de la moyenne 200 jours</b> <span class="chip t-c">long terme</span> <span class="muted">BTC, ETH au comptant (Revolut X), 24 h/24 · sans levier</span></summary>
+<p>Moitié du compte par crypto, détenue tant que la clôture quotidienne est au-dessus de sa moyenne 200 jours, sinon en liquidités. Frais Revolut X.</p>
+<p class="muted"><b>Source</b> : Filtre de tendance de 200 jours appliqué aux cryptos (pratique courante, peu de transactions)</p>
+<p class="muted">Apprentissage du 6 janv. 2025 au 13 juil. 2026 ; test du 13 juil. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class="chosen"><td>→ moyenne 200 jours</td><td class="num">-17,7 % <span class="muted">(30,7 %)</span></td><td class="num good">+1,33 % <span class="muted">(18,6 %)</span></td><td class="num">1</td></tr></tbody></table></div>
+</details><details class="fiche"><summary><b>12. Portefeuille permanent</b> <span class="chip t-c">long terme</span> <span class="muted">ETF : actions, obligations longues, or, monétaire · sans levier</span></summary>
+<p>25 % SPY, 25 % TLT, 25 % GLD, 25 % BIL (monétaire), rééquilibrés chaque trimestre.</p>
+<p class="muted"><b>Source</b> : Harry Browne (1981), « portefeuille permanent »</p>
+<p class="muted">Apprentissage du 4 janv. 2010 au 13 juil. 2026 ; test du 13 juil. 2026 au 9 nov. 2026. La flèche marque la variante choisie sur l’apprentissage (rendement par point de baisse).</p>
+<div class="scroll"><table><thead><tr><th>Variante</th><th>Apprentissage (baisse)</th><th>Test (baisse)</th><th>Trades test</th></tr></thead><tbody><tr class="chosen"><td>→ 4 × 25 %</td><td class="num">+139,5 % <span class="muted">(18,4 %)</span></td><td class="num good">+0,44 % <span class="muted">(5,4 %)</span></td><td class="num">4</td></tr></tbody></table></div>
 </details></section>
+<section class="card"><h2>Hors concours : les portefeuilles du desk</h2><div class="scroll"><table class="board"><thead><tr><th>Portefeuille</th><th>Résultat</th><th>Trades</th></tr></thead><tbody><tr class="win"><td class="wrap"><b>Desk ORB + momentum + VWAP (15 h – 19 h)</b><br><span class="muted">500 $, sans levier, semaine d’essai</span></td><td class="num good">+0,29 %<br><span class="muted">501,44 $</span></td><td class="num">7</td></tr><tr class="loss"><td class="wrap"><b>Portefeuille crypto du desk (15 h – 19 h)</b><br><span class="muted">500 $, sans levier, semaine d’essai</span></td><td class="num bad">-1,34 %<br><span class="muted">493,29 $</span></td><td class="num">3</td></tr></tbody></table></div></section>
 <section class="card"><h2>Méthode et limites</h2><ul class="plain note">
-<li><b>Exécution prudente</b> : ordres au marché à la clôture de la barre du signal (ou à l’ouverture suivante), stops au prix du stop ou à l’ouverture si le cours a sauté par-dessus, ordres limites seulement si le cours passe au travers ; stop et objectif dans la même barre : le stop compte.</li>
-<li><b>Levier</b> : la somme des positions ne dépasse jamais capital × levier ; clôture de toutes les positions sous 50 % de la marge (règle européenne) ; jamais de solde négatif. Plafonds pour un particulier en Europe : 5:1 sur actions, 20:1 sur indices et or, 2:1 sur cryptos.</li>
-<li><b>Durée</b> : rien ne reste ouvert plus de 3 jours.</li>
-<li><b>Données</b> : Yahoo Finance (5 min sur 60 jours, journalier sur 20 ans) ; Coinbase pour BTC et ETH. Les cours de Revolut X demandent une clé signée : les frais simulés sont ceux de Revolut X (0 % en ordre limite, 0,09 % au marché).</li>
-<li><b>Limites</b> : l’ORB est testé en barres de 1 min sur 59 actions liquides, pas sur tout le marché US comme dans l’étude ; les autres stratégies intraday en barres de 5 min ; quelques semaines de rejeu ne suffisent pas à conclure. Sur l’or, la taille n’est pas arrondie au lot de 0,01 (1 once) : en réel, il faudrait ~2 500 $ pour garder 1 % de risque par trade.</li>
+<li><b>Sans biais</b> : chaque variante est d’abord jugée sur une période d’apprentissage ; la meilleure (rendement par point de baisse maximale) est figée, puis jugée sur la période de test, jamais utilisée pour choisir. Toutes les variantes sont montrées en test, pour vérifier qu’on n’a pas choisi après coup.</li>
+<li><b>Périodes</b> : apprentissage depuis 2010 pour les ETF, depuis janvier 2025 pour la crypto au comptant, depuis novembre 2025 pour les perpétuels ; test du 13 juillet à aujourd’hui. Les barres de 5 min (Nasdaq, S&amp;P 500, or, forex) n’existent que sur 60 jours : apprentissage de mi-septembre au 11 octobre, test depuis le 12 octobre.</li>
+<li><b>Exécution prudente</b> : stops au prix du stop ou à l’ouverture si le cours a sauté, stop prioritaire sur l’objectif, ordres limites seulement si le cours passe au travers, clôture de marge sous 50 %, jamais de solde négatif.</li>
+<li><b>Coûts</b> : perpétuels Kraken Futures (0,05 % par ordre, financement horaire réel), Revolut X au comptant (0,09 % au marché), CFD sans commission avec écart et financement de nuit, ETF au comptant.</li>
+<li><b>Données</b> : Kraken Futures (perpétuels et financement), Coinbase (crypto au comptant), Yahoo Finance (actions, ETF, or, forex).</li>
 </ul></section>
 <footer>Simulation à but d’apprentissage. Rien ici n’est un conseil en investissement.</footer>
 </main>

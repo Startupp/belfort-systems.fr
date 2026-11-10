@@ -727,3 +727,365 @@ export function randomSignals(opts: {
     },
   };
 }
+
+// ---------------------------------------------------------------------------
+// Comptes de 5 000 $ : stratégies supplémentaires
+// ---------------------------------------------------------------------------
+
+/** Taux de financement horaire des perpétuels, chargés par le programme principal (symbole → heure → taux). */
+export const FUNDING = new Map<string, Map<number, number>>();
+export function fundingAt(symbol: string, hourStart: number): number | undefined {
+  return FUNDING.get(symbol)?.get(hourStart);
+}
+
+/**
+ * ORB 5 min sur QQQ (Zarattini & Aziz, 2023, « Can Day Trading Really Be Profitable? ») : 1re bougie de 5 min en
+ * hausse → achat à l'ouverture de la 2e, stop au plus bas de la 1re ; en baisse → vente, stop au plus haut ; objectif
+ * 10 R, sinon sortie à la clôture. Risque 1 % par trade.
+ */
+export function orbFirstCandle(opts: { symbol: string; risk?: number; targetR?: number }): Strategy {
+  const s = opts.symbol;
+  const risk = opts.risk ?? 0.01;
+  const targetR = opts.targetR ?? 10;
+  let pre: { days: UsDay[]; dayOf: Int32Array } | undefined;
+  return {
+    onBar(v) {
+      const bars = v.series.get(s) ?? [];
+      pre ??= usDays(bars);
+      if (!v.fresh.has(s)) return [];
+      const i = v.idx.get(s) as number;
+      const k = pre.dayOf[i] as number;
+      if (k < 0) return [];
+      const d = pre.days[k] as UsDay;
+      if (i !== d.start || clocks(bars, NY)[i]?.min !== 570) return [];
+      const b = bars[i] as Bar;
+      if (b.c === b.o) return [];
+      const long = b.c > b.o;
+      const stop = long ? b.l : b.h;
+      const dist = Math.abs(b.c - stop);
+      if (!(dist > 0)) return [];
+      return [
+        {
+          type: 'enter',
+          symbol: s,
+          side: long ? 'long' : 'short',
+          order: 'open',
+          stop,
+          target: long ? b.c + targetR * dist : b.c - targetR * dist,
+          exitBy: d.closeT,
+          size: { risk },
+          reason: `ORB QQQ : 1re bougie ${long ? 'haussière' : 'baissière'} (${b.o.toFixed(2)} → ${b.c.toFixed(2)}), stop ${stop.toFixed(2)}, objectif ${targetR} R`,
+        },
+      ];
+    },
+  };
+}
+
+/**
+ * Cassure d'un range de séance pour n'importe quel marché : range entre `rangeStart` et `rangeEnd` (heure locale de
+ * `tz`), ordres stop des deux côtés jusqu'à `entryUntil` (le premier exécuté annule l'autre), stop de l'autre côté du
+ * range, objectif `targetR` fois le risque, sortie à `exitAt`. `compression` : seulement si le range du jour est plus
+ * étroit que la médiane des 20 séances précédentes (marché comprimé, cassure plus franche).
+ */
+export function sessionBreakout(opts: {
+  symbol: string;
+  tz: string;
+  rangeStart: number;
+  rangeEnd: number;
+  entryUntil: number;
+  exitAt: number;
+  targetR?: number;
+  risk?: number;
+  compression?: boolean;
+  label: string;
+}): Strategy {
+  const s = opts.symbol;
+  const targetR = opts.targetR ?? 2;
+  const risk = opts.risk ?? 0.01;
+  const widths: number[] = [];
+  const done = new Set<string>();
+  return {
+    onBar(v) {
+      if (!v.fresh.has(s)) return [];
+      const bars = v.series.get(s) as Bar[];
+      const i = v.idx.get(s) as number;
+      const ck = clocks(bars, opts.tz);
+      const c = ck[i] as Clock;
+      const barMin = i > 0 ? Math.round(((bars[i] as Bar).t - (bars[i - 1] as Bar).t) / 60_000) : 5;
+      if (c.min + Math.min(barMin, 5) !== opts.rangeEnd || done.has(c.date)) return [];
+      done.add(c.date);
+      const range: Bar[] = [];
+      for (let j = i; j >= 0 && ck[j]?.date === c.date && (ck[j] as Clock).min >= opts.rangeStart; j--) range.push(bars[j] as Bar);
+      if (range.length < Math.max(1, Math.floor((opts.rangeEnd - opts.rangeStart) / 5) - 1)) return [];
+      const hi = Math.max(...range.map((b) => b.h));
+      const lo = Math.min(...range.map((b) => b.l));
+      const w = hi - lo;
+      if (!(w > 0)) return [];
+      const prior = widths.slice(-20);
+      widths.push(w);
+      if (opts.compression) {
+        if (prior.length < 10) return [];
+        const med = [...prior].sort((a, b) => a - b)[Math.floor(prior.length / 2)] as number;
+        if (w > med) return [];
+      }
+      const exitBy = zonedToUtc(c.date, opts.exitAt, opts.tz);
+      const expires = zonedToUtc(c.date, opts.entryUntil, opts.tz);
+      const oco = `${s}-${c.date}`;
+      return [
+        { type: 'enter', symbol: s, side: 'long', order: 'stop', price: hi, expires, stop: lo, target: hi + targetR * w, exitBy, size: { risk }, oco, reason: `${opts.label} : cassure du haut du range (${hi}, largeur ${w.toFixed(5)})` },
+        { type: 'enter', symbol: s, side: 'short', order: 'stop', price: lo, expires, stop: hi, target: lo - targetR * w, exitBy, size: { risk }, oco, reason: `${opts.label} : cassure du bas du range (${lo}, largeur ${w.toFixed(5)})` },
+      ];
+    },
+  };
+}
+
+/**
+ * Cassure après compression (« squeeze ») en 1 h : la largeur des bandes de Bollinger est dans les 20 % les plus
+ * étroites des 120 dernières heures, puis le cours casse le plus haut (ou le plus bas) des 20 heures. Stop à
+ * `atrStop` ATR, objectif `targetR` R. Le marché très calme précède souvent les grands mouvements.
+ */
+export function squeezeBreakout(opts: { symbols: string[]; risk?: number; atrStop?: number; targetR?: number; shorts?: boolean }): Strategy {
+  const risk = opts.risk ?? 0.02;
+  const atrStop = opts.atrStop ?? 1.5;
+  const targetR = opts.targetR ?? 3;
+  let pre: Map<string, { width: number[]; hi20: number[]; lo20: number[]; a14: number[]; squeeze: boolean[] }> | undefined;
+  return {
+    onBar(v) {
+      pre ??= new Map(
+        opts.symbols.map((s) => {
+          const bars = v.series.get(s) ?? [];
+          const c = bars.map((b) => b.c);
+          const m = sma(c, 20);
+          const sd = stdev(c, 20);
+          const width = c.map((_, i) => (4 * (sd[i] as number)) / (m[i] as number));
+          const squeeze = width.map((w, i) => {
+            if (i < 140 || !Number.isFinite(w)) return false;
+            const win = width.slice(i - 120, i).filter((x) => Number.isFinite(x)).sort((a, b) => a - b);
+            return win.length > 60 && w <= (win[Math.floor(win.length * 0.2)] as number);
+          });
+          return [s, { width, hi20: priorMax(bars, 20), lo20: priorMin(bars, 20), a14: atr(bars, 14), squeeze }];
+        }),
+      );
+      const out: Intent[] = [];
+      for (const s of v.fresh) {
+        const p = pre.get(s);
+        if (!p || posOn(v, s)) continue;
+        const i = v.idx.get(s) as number;
+        const b = (v.series.get(s) as Bar[])[i] as Bar;
+        const a = p.a14[i] as number;
+        const recent = p.squeeze.slice(Math.max(0, i - 5), i + 1).some(Boolean);
+        if (!recent || !Number.isFinite(a) || a <= 0) continue;
+        if (b.c > (p.hi20[i] as number)) {
+          const stop = b.c - atrStop * a;
+          out.push({ type: 'enter', symbol: s, side: 'long', order: 'close', stop, target: b.c + targetR * (b.c - stop), size: { risk }, reason: `sortie de compression par le haut (largeur ${((p.width[i] as number) * 100).toFixed(2)} %)` });
+        } else if (opts.shorts && b.c < (p.lo20[i] as number)) {
+          const stop = b.c + atrStop * a;
+          out.push({ type: 'enter', symbol: s, side: 'short', order: 'close', stop, target: b.c - targetR * (stop - b.c), size: { risk }, reason: `sortie de compression par le bas (largeur ${((p.width[i] as number) * 100).toFixed(2)} %)` });
+        }
+      }
+      return out;
+    },
+  };
+}
+
+/** Barres de `hours` heures (alignées sur l'heure UTC) à partir de barres d'une heure ; `end[k]` = indice de la dernière barre horaire. */
+export function aggregateHours(bars: Bar[], hours: number): { bars: Bar[]; end: number[] } {
+  const out: Bar[] = [];
+  const end: number[] = [];
+  const H = hours * 3_600_000;
+  for (let i = 0; i < bars.length; i++) {
+    const b = bars[i] as Bar;
+    const slot = Math.floor(b.t / H) * H;
+    const last = out.at(-1);
+    if (!last || last.t !== slot) {
+      out.push({ t: slot, o: b.o, h: b.h, l: b.l, c: b.c, v: b.v });
+      end.push(i);
+    } else {
+      last.h = Math.max(last.h, b.h);
+      last.l = Math.min(last.l, b.l);
+      last.c = b.c;
+      last.v += b.v;
+      end[end.length - 1] = i;
+    }
+  }
+  return { bars: out, end };
+}
+
+/** Suivi de tendance Donchian sur des barres de `hours` heures reconstituées, décidé à la clôture de chaque barre. */
+export function donchianTf(opts: { symbols: string[]; hours: number; risk?: number; atrMult?: number; channel?: number; shorts?: boolean }): Strategy {
+  const risk = opts.risk ?? 0.01;
+  const k = opts.atrMult ?? 3;
+  const n = opts.channel ?? 20;
+  let pre: Map<string, { agg: Bar[]; at: Map<number, number>; e50: number[]; a14: number[]; hi: number[]; lo: number[] }> | undefined;
+  return {
+    onBar(v) {
+      pre ??= new Map(
+        opts.symbols.map((s) => {
+          const { bars: agg, end } = aggregateHours(v.series.get(s) ?? [], opts.hours);
+          // Une barre agrégée n'est connue qu'à la clôture de sa dernière heure.
+          const at = new Map<number, number>();
+          end.forEach((e, j) => {
+            const full = (agg[j] as Bar).t + opts.hours * 3_600_000 - 3_600_000;
+            if (((v.series.get(s) ?? [])[e] as Bar).t === full) at.set(e, j);
+          });
+          return [s, { agg, at, e50: ema(agg.map((b) => b.c), 50), a14: atr(agg, 14), hi: priorMax(agg, n), lo: priorMin(agg, n) }];
+        }),
+      );
+      const out: Intent[] = [];
+      for (const s of v.fresh) {
+        const p = pre.get(s);
+        if (!p) continue;
+        const j = p.at.get(v.idx.get(s) as number);
+        if (j === undefined) continue;
+        const b = p.agg[j] as Bar;
+        const a = p.a14[j] as number;
+        if (!Number.isFinite(a)) continue;
+        const pos = posOn(v, s);
+        if (pos?.side === 'long') {
+          const ns = b.c - k * a;
+          if (pos.stop === undefined || ns > pos.stop) out.push({ type: 'stop', id: pos.id, stop: ns });
+        } else if (pos?.side === 'short') {
+          const ns = b.c + k * a;
+          if (pos.stop === undefined || ns < pos.stop) out.push({ type: 'stop', id: pos.id, stop: ns });
+        } else if (b.c > (p.hi[j] as number) && b.c > (p.e50[j] as number)) {
+          out.push({ type: 'enter', symbol: s, side: 'long', order: 'close', stop: b.c - k * a, size: { risk }, reason: `tendance ${opts.hours} h : cassure du plus haut de ${n} barres, au-dessus de la MME 50` });
+        } else if (opts.shorts && b.c < (p.lo[j] as number) && b.c < (p.e50[j] as number)) {
+          out.push({ type: 'enter', symbol: s, side: 'short', order: 'close', stop: b.c + k * a, size: { risk }, reason: `tendance ${opts.hours} h : cassure du plus bas de ${n} barres, sous la MME 50` });
+        }
+      }
+      return out;
+    },
+  };
+}
+
+/**
+ * Portage du financement (« cash and carry ») : achat au comptant et vente du perpétuel pour le même montant ; le
+ * prix s'annule, on encaisse le financement payé par les acheteurs du perpétuel. Entrée quand la moyenne des 72 h
+ * précédentes dépasse `enterAbove` par heure, sortie quand elle passe sous `exitBelow`.
+ */
+export function fundingCarry(opts: { spot: string; perp: string; enterAbove?: number; exitBelow?: number; hours?: number; leg?: number }): Strategy {
+  const enter = opts.enterAbove ?? 2e-6;
+  const exit = opts.exitBelow ?? 0;
+  const hours = opts.hours ?? 72;
+  const leg = opts.leg ?? 0.5;
+  const avg = (t: number): number | undefined => {
+    const H = 3_600_000;
+    const h0 = Math.floor(t / H) * H;
+    let sum = 0;
+    let n = 0;
+    for (let h = h0 - hours * H; h < h0; h += H) {
+      const r = fundingAt(opts.perp, h);
+      if (r !== undefined) {
+        sum += r;
+        n++;
+      }
+    }
+    return n >= hours / 2 ? sum / n : undefined;
+  };
+  return {
+    onBar(v) {
+      if (!v.fresh.has(opts.spot) || !v.fresh.has(opts.perp)) return [];
+      const a = avg((bar(v, opts.perp) as Bar).t + 3_600_000);
+      if (a === undefined) return [];
+      const held = v.positions.filter((p) => p.symbol === opts.spot || p.symbol === opts.perp);
+      const yearly = (a * 24 * 365 * 100).toFixed(1);
+      if (held.length) {
+        if (a < exit) return held.map((p) => ({ type: 'exit' as const, id: p.id, order: 'close' as const, reason: `financement moyen 72 h à ${yearly} %/an : on sort` }));
+        return [];
+      }
+      if (a <= enter) return [];
+      return [
+        { type: 'enter', symbol: opts.spot, side: 'long', order: 'close', size: { notional: leg }, reason: `portage : financement moyen 72 h à ${yearly} %/an (jambe au comptant)`, tag: 'carry' },
+        { type: 'enter', symbol: opts.perp, side: 'short', order: 'close', size: { notional: leg }, reason: `portage : financement moyen 72 h à ${yearly} %/an (jambe perpétuel vendue)`, tag: 'carry' },
+      ];
+    },
+  };
+}
+
+/** Achat-conservation : achat à la première séance, jamais revendu. */
+export function buyHold(opts: { symbol: string }): Strategy {
+  return {
+    onBar(v) {
+      if (!v.fresh.has(opts.symbol) || posOn(v, opts.symbol)) return [];
+      return [{ type: 'enter', symbol: opts.symbol, side: 'long', order: 'close', size: { notional: 1 }, reason: 'achat-conservation' }];
+    },
+  };
+}
+
+/**
+ * Allocation périodique : à la première séance de chaque mois (ou trimestre), tout est revendu puis racheté selon les
+ * poids du jour (calculés sur les cours connus). Poids nul = part laissée en liquidités.
+ */
+export function allocator(opts: { symbols: string[]; period: 'month' | 'quarter'; weights: (closes: Map<string, number[]>, idx: Map<string, number>) => Record<string, number>; label: string }): Strategy {
+  let last = '';
+  let closes: Map<string, number[]> | undefined;
+  return {
+    onBar(v) {
+      const ref = opts.symbols[0] as string;
+      if (!v.fresh.has(ref)) return [];
+      closes ??= new Map(opts.symbols.map((s) => [s, (v.series.get(s) ?? []).map((b) => b.c)]));
+      const bars = v.series.get(ref) as Bar[];
+      const i = v.idx.get(ref) as number;
+      const date = (clocks(bars, NY)[i] as Clock).date;
+      const key = opts.period === 'month' ? date.slice(0, 7) : `${date.slice(0, 4)}-T${Math.floor((Number(date.slice(5, 7)) - 1) / 3)}`;
+      if (key === last) return [];
+      last = key;
+      const idx = new Map(opts.symbols.map((s) => [s, v.idx.get(s) ?? -1]));
+      const w = opts.weights(closes, idx);
+      const out: Intent[] = v.positions.map((p) => ({ type: 'exit' as const, id: p.id, order: 'close' as const, reason: `${opts.label} : rééquilibrage` }));
+      for (const s of opts.symbols) {
+        const x = w[s] ?? 0;
+        if (x > 0 && v.fresh.has(s)) out.push({ type: 'enter', symbol: s, side: 'long', order: 'close', size: { notional: x }, reason: `${opts.label} : ${(x * 100).toFixed(0)} % du compte` });
+      }
+      return out;
+    },
+  };
+}
+
+/** Allocation tactique de Faber (2007) : chaque actif pèse 1/N s'il est au-dessus de sa moyenne de 10 mois, sinon liquidités. */
+export function faber(opts: { symbols: string[] }): Strategy {
+  return allocator({
+    symbols: opts.symbols,
+    period: 'month',
+    label: 'allocation de Faber',
+    weights: (closes, idx) => {
+      const w: Record<string, number> = {};
+      for (const s of opts.symbols) {
+        const c = closes.get(s) ?? [];
+        const i = idx.get(s) ?? -1;
+        if (i < 210) continue;
+        const m = c.slice(i - 209, i + 1).reduce((a, b) => a + b, 0) / 210;
+        if ((c[i] as number) > m) w[s] = 1 / opts.symbols.length;
+      }
+      return w;
+    },
+  });
+}
+
+/** Portefeuille permanent (Browne) : 25 % actions, obligations longues, or, monétaire ; rééquilibré chaque trimestre. */
+export function permanent(opts: { symbols: [string, string, string, string] }): Strategy {
+  return allocator({ symbols: opts.symbols, period: 'quarter', label: 'portefeuille permanent', weights: () => Object.fromEntries(opts.symbols.map((s) => [s, 0.25])) });
+}
+
+/** Tendance longue : on détient l'actif tant que sa clôture est au-dessus de sa moyenne de 200 jours. */
+export function trend200(opts: { symbols: string[]; perSymbol: number }): Strategy {
+  let pre: Map<string, number[]> | undefined;
+  return {
+    onBar(v) {
+      pre ??= new Map(opts.symbols.map((s) => [s, sma((v.series.get(s) ?? []).map((b) => b.c), 200)]));
+      const out: Intent[] = [];
+      for (const s of v.fresh) {
+        const m = pre.get(s);
+        if (!m) continue;
+        const i = v.idx.get(s) as number;
+        const c = ((v.series.get(s) as Bar[])[i] as Bar).c;
+        const ma = m[i] as number;
+        if (!Number.isFinite(ma)) continue;
+        const pos = posOn(v, s);
+        if (pos && c < ma) out.push({ type: 'exit', id: pos.id, order: 'close', reason: `clôture ${c.toFixed(0)} sous la moyenne 200 jours (${ma.toFixed(0)})` });
+        else if (!pos && c > ma) out.push({ type: 'enter', symbol: s, side: 'long', order: 'close', size: { notional: opts.perSymbol }, reason: `clôture ${c.toFixed(0)} au-dessus de la moyenne 200 jours (${ma.toFixed(0)})` });
+      }
+      return out;
+    },
+  };
+}
