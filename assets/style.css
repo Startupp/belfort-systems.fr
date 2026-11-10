@@ -306,6 +306,8 @@ nav.main .btn { margin-left: 6px; min-height: 44px; white-space: nowrap; padding
 .promesse:last-child { border-right: 0; }
 .promesse h2 { font-size: clamp(1.5rem, 2.2vw, 1.9rem); margin-bottom: 12px; }
 .promesse p { color: var(--muted); font-size: 1rem; }
+.promesse p + p { margin-top: 10px; }
+.promesse p b { color: var(--ink); }
 
 /* ---------- Cartes de service ---------- */
 .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
