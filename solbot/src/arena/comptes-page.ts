@@ -10,6 +10,7 @@ import type { ArenaFile, RunSummary } from './main.ts';
 import { ACCOUNTS } from './roster.ts';
 import type { Account, Tier } from './roster.ts';
 import type { AccountResult, ComptesFile } from './valide.ts';
+import type { CovidFile } from './covid.ts';
 
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const esc = (v: unknown): string => String(v ?? '').replace(/[&<>"']/g, (c) => ESC[c] ?? c);
@@ -79,6 +80,41 @@ ${r ? `<p class="muted">Apprentissage du ${esc(dateFr(r.train[0]))} au ${esc(dat
 </details>`;
 }
 
+/** Événements marquants de chaque année, pour lire le tableau « depuis le Covid ». */
+const EVENTS: Record<number, string> = {
+  2021: 'euphorie : cryptos et actions « mèmes » ; financement des perpétuels BTC jusqu’à ~170 %/an en janvier',
+  2022: 'hausse brutale des taux ; krach crypto (Terra-Luna en mai, FTX en novembre)',
+  2023: 'faillite de Silicon Valley Bank en mars, puis reprise portée par l’IA',
+  2024: 'ETF bitcoin au comptant en janvier ; krach éclair du 5 août (yen)',
+  2025: 'chute des marchés en avril sur les droits de douane américains',
+};
+
+function covidSection(c: CovidFile | null): string {
+  if (!c || !c.accounts.length) return '';
+  const cell = (x: number | undefined, sub = ''): string => (x === undefined || !Number.isFinite(x) ? '<td class="num muted">—</td>' : `<td class="num ${x >= 0 ? 'good' : 'bad'}">${sgn(x, 1)} %${sub ? `<br><span class="muted small">${esc(sub)}</span>` : ''}</td>`);
+  const head = `<tr><th>Compte</th>${c.years.map((y) => `<th>${y}${y === c.years.at(-1) ? '*' : ''}</th>`).join('')}<th>Cumul</th><th>Pire baisse</th></tr>`;
+  const ctx = Object.entries(c.context)
+    .map(([label, byYear]) => `<tr class="ctx"><td class="wrap"><b>${esc(label)}</b> <span class="muted">achat-conservation</span></td>${c.years.map((y) => cell(byYear[y])).join('')}<td class="num muted">${sgn((c.years.reduce((g, y) => g * (1 + (byYear[y] ?? 0) / 100), 1) - 1) * 100, 0)} %</td><td></td></tr>`)
+    .join('');
+  const rows = [...c.accounts]
+    .sort((x, y) => y.cumulativePct - x.cumulativePct)
+    .map((a) => {
+      const acc = byId.get(a.id);
+      const multi = (acc?.variants.length ?? 1) > 1;
+      return `<tr class="${a.cumulativePct >= 0 ? 'win' : 'loss'}"><td class="wrap"><b>${esc(acc?.name ?? a.id)}</b> ${acc ? chip(acc) : ''}</td>${c.years.map((y) => {
+        const r = a.rows.find((x) => x.year === y);
+        return cell(r?.returnPct, multi ? r?.label : '');
+      }).join('')}<td class="num ${a.cumulativePct >= 0 ? 'good' : 'bad'}"><b>${sgn(a.cumulativePct, 0)} %</b></td><td class="num">${fr(a.worstDrawdownPct, 1)} %</td></tr>`;
+    })
+    .join('');
+  return `<section class="card"><h2>Depuis le Covid, année par année</h2>
+<p class="muted">Chaque année est jugée avec le réglage choisi sur les années précédentes seulement (depuis janvier 2020) : c’est ce qu’un élève aurait réellement fait. Chaque année repart de 5 000 $ ; le cumul les enchaîne. * année en cours.</p>
+<div class="scroll"><table><thead>${head}</thead><tbody>${ctx}${rows}</tbody></table></div>
+<ul class="plain note">${c.years.filter((y) => EVENTS[y]).map((y) => `<li><b>${y}</b> : ${esc(EVENTS[y] as string)}</li>`).join('')}</ul>
+<p class="muted">Pas dans ce tableau : ${c.skipped.map((id) => esc(byId.get(id)?.name ?? id)).join(', ')}. Leurs barres de 5 min n’existent que sur 60 jours ; ils seront jugés sur les 12 mois de suivi. Perpétuels et portage : prix au comptant en approximation du perpétuel, financement réel de Binance puis de Kraken.</p>
+</section>`;
+}
+
 function deskRows(root: string): string {
   const desks = [
     { label: 'Desk ORB + momentum + VWAP (15 h – 19 h)', dir: join(root, 'carnet') },
@@ -101,6 +137,7 @@ export function renderComptes(dir: string): string {
   const comptes = readJson<ComptesFile | null>(join(dir, 'comptes.json'), null);
   const suivi = readJson<ArenaFile | null>(join(dir, 'suivi.json'), null);
   const lecture = readJson<string[]>(join(dir, 'lecture.json'), []);
+  const covid = readJson<CovidFile | null>(join(dir, 'covid.json'), null);
   const results = comptes?.results ?? [];
   const best = [...results].sort((x, y) => y.monthlyPct - x.monthlyPct)[0];
   const winners = results.filter((r) => (r.variants[r.chosen]?.test.returnPct ?? 0) > 0).length;
@@ -164,6 +201,8 @@ details.fiche{border-top:1px solid var(--rule);padding:10px 0;display:grid;gap:6
 details.fiche summary{cursor:pointer}
 details.fiche p{margin-top:6px;font-size:14px}
 .note{font-size:14px}
+.small{font-size:11px}
+tr.ctx td{background:var(--bg)}
 footer{font-size:12px;color:var(--muted)}
 </style>
 <main>
@@ -180,6 +219,7 @@ ${kpi('Objectif', '12 mois', 'classement final des 12 comptes')}
 <section class="card"><h2>Suivi en direct</h2>${live(suivi)}</section>
 ${lecture.length ? `<section class="card"><h2>Ma lecture</h2><ul class="plain note">${lecture.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></section>` : ''}
 ${results.length ? `<section class="card"><h2>Classement sur la période de test</h2><p class="muted">Réglage choisi sur l’apprentissage seulement, puis jugé sur les derniers mois (4 semaines pour les stratégies en 5 min, faute de données plus anciennes ; 4 mois pour les autres). Classés par rendement ramené à un mois.</p>${ranking(results)}</section>` : ''}
+${covidSection(covid)}
 ${tiers.map((t) => `<section class="card"><h2>Comptes ${esc(TIER[t].label)}</h2>${ACCOUNTS.filter((a) => a.tier === t).map((a) => fiche(a, results.find((r) => r.id === a.id))).join('')}</section>`).join('')}
 ${deskRows(join(dir, '..'))}
 <section class="card"><h2>Méthode et limites</h2><ul class="plain note">

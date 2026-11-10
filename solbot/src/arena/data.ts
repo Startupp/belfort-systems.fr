@@ -7,6 +7,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
+import { inflateRawSync } from 'node:zlib';
 import { join } from 'node:path';
 import { createHttp } from '../lib/http.ts';
 import type { Http } from '../lib/http.ts';
@@ -93,11 +94,16 @@ export function createArenaData(opts: DataOptions) {
     const s = SPEC[key];
     const g = Number(s.interval);
     const step = 300 * g * 1000;
-    let from = old.length ? (old.at(-1) as Bar).t + g * 1000 : now - days(key) * 86_400_000;
-    from = Math.max(from, now - days(key) * 86_400_000);
+    const start = now - days(key) * 86_400_000;
+    let from = old.length ? (old.at(-1) as Bar).t + g * 1000 : start;
+    from = Math.max(from, start);
+    // Plages à demander : l'historique manquant au début (quand on demande plus loin que le cache), puis la suite.
+    const ranges: Array<[number, number]> = [];
+    if (old.length && (old[0] as Bar).t - g * 1000 > start) ranges.push([start, (old[0] as Bar).t]);
+    ranges.push([from, now]);
     const out: Bar[] = [];
-    for (let a = from; a < now; a += step) {
-      const b = Math.min(now, a + step);
+    for (const [ra, rb] of ranges) for (let a = ra; a < rb; a += step) {
+      const b = Math.min(rb, a + step);
       const url = `https://api.exchange.coinbase.com/products/${sym}/candles?granularity=${g}&start=${new Date(a).toISOString()}&end=${new Date(b).toISOString()}`;
       const raw = (await http.getJson<number[][]>(url, { headers: UA })) ?? [];
       for (const r of raw) {
@@ -126,7 +132,39 @@ export function createArenaData(opts: DataOptions) {
     return merge(old, out);
   }
 
+  /**
+   * Historique public des taux de financement de Binance (fichiers mensuels, un taux toutes les 8 h) ramené à l'heure :
+   * un taux payé à T pour la période de `h` heures vaut taux / h pour chacune de ces heures.
+   */
+  async function binanceFunding(pair: string, fromMonth: string, toMonth: string): Promise<Array<{ t: number; rate: number }>> {
+    const f = join(opts.dir, `binance-funding-${pair}-${fromMonth}-${toMonth}.json`);
+    if (existsSync(f)) return (JSON.parse(readFileSync(f, 'utf8')) as { rates: Array<{ t: number; rate: number }> }).rates;
+    const out: Array<{ t: number; rate: number }> = [];
+    const H = 3_600_000;
+    for (let d = new Date(`${fromMonth}-01T00:00:00Z`); d.toISOString().slice(0, 7) <= toMonth; d.setUTCMonth(d.getUTCMonth() + 1)) {
+      const ym = d.toISOString().slice(0, 7);
+      const url = `https://data.binance.vision/data/futures/um/monthly/fundingRate/${pair}/${pair}-fundingRate-${ym}.zip`;
+      const res = await fetch(url, { headers: UA });
+      if (!res.ok) {
+        log(`financement Binance ${pair} ${ym} : ${res.status}`);
+        continue;
+      }
+      const csv = unzipFirst(new Uint8Array(await res.arrayBuffer()));
+      for (const line of csv.split('\n').slice(1)) {
+        const [time, hours, rate] = line.split(',').map(Number) as [number, number, number];
+        if (!Number.isFinite(time) || !Number.isFinite(rate) || !(hours > 0)) continue;
+        const end = Math.round(time / H) * H;
+        for (let k = 1; k <= hours; k++) out.push({ t: end - k * H, rate: rate / hours });
+      }
+    }
+    out.sort((a, b) => a.t - b.t);
+    writeJsonAtomic(f, { rates: out });
+    log(`financement Binance ${pair} : ${out.length} heures (${fromMonth} → ${toMonth})`);
+    return out;
+  }
+
   return {
+    binanceFunding,
     /** Taux de financement horaire d'un perpétuel Kraken (part du montant par heure ; positif = les acheteurs paient). */
     async funding(sym: string): Promise<Array<{ t: number; rate: number }>> {
       const f = join(opts.dir, `funding-${sym}.json`);
@@ -166,4 +204,26 @@ export function createArenaData(opts: DataOptions) {
       return res;
     },
   };
+}
+
+/** Premier fichier d'une archive zip (méthode « deflate » ou sans compression), via le répertoire central. */
+export function unzipFirst(buf: Uint8Array): string {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65_557); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0) throw new Error('zip : fin de répertoire introuvable');
+  const cd = dv.getUint32(eocd + 16, true);
+  if (dv.getUint32(cd, true) !== 0x02014b50) throw new Error('zip : répertoire central illisible');
+  const method = dv.getUint16(cd + 10, true);
+  const size = dv.getUint32(cd + 20, true);
+  const local = dv.getUint32(cd + 42, true);
+  const start = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
+  const data = buf.subarray(start, start + size);
+  const raw = method === 8 ? inflateRawSync(data) : data;
+  return new TextDecoder().decode(raw);
 }

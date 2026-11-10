@@ -68,6 +68,42 @@ function spec(id: string, over: Partial<ArenaPortfolio> & Pick<ArenaPortfolio, '
   return { id, name: id, capital: CAPITAL, market: '', leverageLabel: '', source: '', rules: '', role: 'publiée', ...over };
 }
 
+/** Comptes perpétuels (A1) : tendance 4 h ou 1 jour, ou cassure après compression en 1 h ; symboles et données au choix. */
+export function a1Variants(symbols: string[], data: DataKey): Variant[] {
+  const base = { data, symbols, barMs: H, costs: PERPS, maxLeverage: 5, allowShort: true, fundingPerHour: fundingAt };
+  return [
+    ...[4, 24].map((hours) => ({
+      label: `tendance ${hours === 24 ? '1 jour' : '4 h'}, achat et vente`,
+      spec: spec('a1-perps', { ...base, maxHoldMs: 14 * DAY, strategy: () => donchianTf({ symbols, hours, risk: 0.02, atrMult: 3, shorts: true }) }),
+    })),
+    ...[
+      [2, 1.5],
+      [3, 1.5],
+      [3, 2.5],
+      [5, 2.5],
+    ].map(([tR, a]) => ({
+      label: `compression 1 h, objectif ${tR} R, stop ${a} ATR`,
+      spec: spec('a1-perps', { ...base, strategy: () => squeezeBreakout({ symbols, risk: 0.02, atrStop: a as number, targetR: tR as number, shorts: true }) }),
+    })),
+  ];
+}
+
+/** Portage du financement (B3) : jambe au comptant et jambe perpétuel, fenêtre de 72 h ou de 7 jours. */
+export function b3Variants(spot: string, perp: string, dataBySymbol: Record<string, DataKey>): Variant[] {
+  return (
+    [
+      [72, 1e-6, 0],
+      [72, 3e-6, 0],
+      [168, 1e-6, -1e-6],
+      [168, 3e-6, -3e-6],
+    ] as Array<[number, number, number]>
+  ).map(([hours, th, out]) => ({
+    label: `moyenne ${hours === 168 ? '7 jours' : '72 h'}, entrée au-dessus de ${(th * 24 * 365 * 100).toFixed(1)} %/an, sortie sous ${(out * 24 * 365 * 100).toFixed(1)} %/an`,
+    dataBySymbol,
+    spec: spec('b3-portage', { data: dataBySymbol[perp] ?? 'kfut1h', symbols: [spot, perp], barMs: H, costs: CARRY, maxLeverage: 1, allowShort: true, maxHoldMs: Infinity, fundingPerHour: fundingAt, strategy: () => fundingCarry({ spot, perp, enterAbove: th, exitBelow: out, hours }) }),
+  }));
+}
+
 export const ACCOUNTS: Account[] = [
   // ------------------------------------------------------------------ sniper
   {
@@ -80,40 +116,7 @@ export const ACCOUNTS: Account[] = [
     window: 'perps',
     source: 'Deux familles essayées : cassure après compression de volatilité en 1 h (« squeeze ») et suivi de tendance Donchian en 4 h ou en 1 jour ; financement horaire réel de Kraken Futures',
     rules: 'Achat et vente, risque 2 % par trade, levier ×5 au plus, financement horaire payé ou reçu. Compression : cassure des 20 dernières heures quand les bandes de Bollinger sont au plus serré, stop en ATR, objectif en multiple du risque, 3 jours au plus. Tendance : cassure des 20 dernières barres dans le sens de la moyenne 50, stop suiveur à 3 ATR, 14 jours au plus.',
-    variants: [
-      ...[4, 24].map((hours) => ({
-        label: `tendance ${hours === 24 ? '1 jour' : '4 h'}, achat et vente`,
-        spec: spec('a1-perps', {
-          data: 'kfut1h',
-          symbols: ['PF_XBTUSD', 'PF_ETHUSD'],
-          barMs: H,
-          costs: PERPS,
-          maxLeverage: 5,
-          allowShort: true,
-          maxHoldMs: 14 * DAY,
-          fundingPerHour: fundingAt,
-          strategy: () => donchianTf({ symbols: ['PF_XBTUSD', 'PF_ETHUSD'], hours, risk: 0.02, atrMult: 3, shorts: true }),
-        }),
-      })),
-      ...[
-        [2, 1.5],
-        [3, 1.5],
-        [3, 2.5],
-        [5, 2.5],
-      ].map(([tR, a]) => ({
-      label: `compression 1 h, objectif ${tR} R, stop ${a} ATR`,
-      spec: spec('a1-perps', {
-        data: 'kfut1h',
-        symbols: ['PF_XBTUSD', 'PF_ETHUSD'],
-        barMs: H,
-        costs: PERPS,
-        maxLeverage: 5,
-        allowShort: true,
-        fundingPerHour: fundingAt,
-        strategy: () => squeezeBreakout({ symbols: ['PF_XBTUSD', 'PF_ETHUSD'], risk: 0.02, atrStop: a as number, targetR: tR as number, shorts: true }),
-      }),
-    })),
-    ],
+    variants: a1Variants(['PF_XBTUSD', 'PF_ETHUSD'], 'kfut1h'),
   },
   {
     id: 'a2-orb-qqq',
@@ -225,18 +228,7 @@ export const ACCOUNTS: Account[] = [
     window: 'perps',
     source: 'Portage « cash and carry » : on encaisse le financement payé par les acheteurs de perpétuels (pratique courante des fonds crypto)',
     rules: 'Achat de BTC au comptant et vente du perpétuel pour le même montant (50 % du compte chacun) : le prix s’annule et l’on encaisse le financement. Entrée quand le financement moyen (72 h ou 7 jours) dépasse un seuil, sortie quand il passe sous un autre : la fenêtre longue évite d’entrer et sortir trop souvent.',
-    variants: (
-      [
-        [72, 1e-6, 0],
-        [72, 3e-6, 0],
-        [168, 1e-6, -1e-6],
-        [168, 3e-6, -3e-6],
-      ] as Array<[number, number, number]>
-    ).map(([hours, th, out]) => ({
-      label: `moyenne ${hours === 168 ? '7 jours' : '72 h'}, entrée au-dessus de ${(th * 24 * 365 * 100).toFixed(1)} %/an, sortie sous ${(out * 24 * 365 * 100).toFixed(1)} %/an`,
-      dataBySymbol: { 'BTC-USD': 'crypto1h', PF_XBTUSD: 'kfut1h' } as Record<string, DataKey>,
-      spec: spec('b3-portage', { data: 'kfut1h', symbols: ['BTC-USD', 'PF_XBTUSD'], barMs: H, costs: CARRY, maxLeverage: 1, allowShort: true, maxHoldMs: Infinity, fundingPerHour: fundingAt, strategy: () => fundingCarry({ spot: 'BTC-USD', perp: 'PF_XBTUSD', enterAbove: th, exitBelow: out, hours }) }),
-    })),
+    variants: b3Variants('BTC-USD', 'PF_XBTUSD', { 'BTC-USD': 'crypto1h', PF_XBTUSD: 'kfut1h' }),
   },
   {
     id: 'b4-swing-etf',
