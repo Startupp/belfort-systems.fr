@@ -1,4 +1,4 @@
-/** Tests de l'arène : moteur papier (levier, marge, stops, ordres), stratégies, page. */
+/** Tests de l'arène : moteur papier (levier, marge, stops, ordres), stratégies, données (cours Coinbase et Kraken Futures), page. */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,7 +6,9 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { writeJsonAtomic } from '../src/lib/store.ts';
+import type { Http } from '../src/lib/http.ts';
 import type { Bar } from '../src/desk/types.ts';
+import { createArenaData } from '../src/arena/data.ts';
 import { runPortfolio, stats } from '../src/arena/engine.ts';
 import type { Costs, Intent, PortfolioSpec, Strategy } from '../src/arena/engine.ts';
 import { FUNDING, NY, faber, fundingAt, fundingCarry, orbFirstCandle, orbStudy, randomSignals, rsi, zonedToUtc } from '../src/arena/strategies.ts';
@@ -377,4 +379,118 @@ test('heure locale → UTC : calcul direct identique à la recherche complète (
     }
   }
   assert.ok(n > 30_000);
+});
+
+/** Bougie de la bourse factice commençant à `t` (durée `ms`), vue à l'heure `at` : finie, ou avec la seule part déjà échangée. */
+function quote(t: number, ms: number, at: number): Bar {
+  const part = Math.min(1, (at - t) / ms);
+  const o = 100 + ((t / ms) % 10);
+  return { t, o, h: o + 4 * part, l: o - part, c: o + 2 * part, v: 1000 * part };
+}
+
+/** Faux client HTTP : chaque URL demandée est notée ; `reply` donne la réponse (une exception = réseau coupé). */
+function fakeHttp(reply: (url: URL) => unknown): Http & { urls: URL[] } {
+  const urls: URL[] = [];
+  return {
+    urls,
+    getJson: async <T>(url: string): Promise<T> => {
+      const u = new URL(url);
+      urls.push(u);
+      return reply(u) as T;
+    },
+    postJson: async <T>(): Promise<T> => {
+      throw new Error('pas de POST');
+    },
+  };
+}
+
+/**
+ * Coinbase (`/candles`) et Kraken Futures (`/charts`) factices, bornes incluses comme les vrais. Comme eux, ils renvoient
+ * aussi la bougie en cours, avec les seuls échanges faits avant `clock.now`.
+ */
+function exchange(clock: { now: number }): (u: URL) => unknown {
+  const candles = (a: number, b: number, ms: number): Bar[] => {
+    const out: Bar[] = [];
+    for (let t = Math.ceil(a / ms) * ms; t <= b && t < clock.now; t += ms) out.push(quote(t, ms, clock.now));
+    return out;
+  };
+  return (u) => {
+    const p = (k: string): string => u.searchParams.get(k) ?? '';
+    if (u.host === 'api.exchange.coinbase.com') {
+      // [temps (s), bas, haut, ouverture, clôture, volume], la plus récente d'abord.
+      const bars = candles(Date.parse(p('start')), Date.parse(p('end')), Number(p('granularity')) * 1000);
+      return bars.reverse().map((b) => [b.t / 1000, b.l, b.h, b.o, b.c, b.v]);
+    }
+    if (u.host === 'futures.kraken.com') {
+      const bars = candles(Number(p('from')) * 1000, Number(p('to')) * 1000, 60 * M);
+      return { candles: bars.map((b) => ({ time: b.t, open: String(b.o), high: String(b.h), low: String(b.l), close: String(b.c), volume: String(b.v) })), more_candles: false };
+    }
+    throw new Error(`hôte inattendu : ${u}`);
+  };
+}
+
+type CacheFile = { fetchedAt: number; asOf?: number; bars: Bar[] };
+const readCache = (dir: string, name: string): CacheFile => JSON.parse(readFileSync(join(dir, name), 'utf8')) as CacheFile;
+const noGap = (bars: Bar[], ms: number): boolean => bars.every((b, i) => i === 0 || b.t - (bars[i - 1] as Bar).t === ms);
+
+test('cache crypto : la bougie en cours n’entre pas dans le cache, elle est relue finie au passage suivant, sans trou', async () => {
+  for (const [key, sym, ms] of [['crypto15m', 'BTC-USD', 15 * M], ['kfut1h', 'PF_XBTUSD', 60 * M]] as const) {
+    const dir = mkdtempSync(join(tmpdir(), 'arena-cache-'));
+    // 22 h 22 (UTC) : la bougie en cours a déjà des cours et un volume partiels (relevé Coinbase du 10 novembre 2026).
+    const clock = { now: Date.UTC(2026, 10, 10, 22, 22) };
+    const http = fakeHttp(exchange(clock));
+    const load = async (): Promise<Bar[]> => (await createArenaData({ dir, maxAgeMs: 60_000, now: clock.now, http, historyDays: { [key]: 2 } }).load(key, [sym])).get(sym) ?? [];
+    const live = Math.floor(clock.now / ms) * ms;
+    assert.equal((await load()).at(-1)?.t, live - ms, `${key} : la bougie en cours n’est pas rendue`);
+    assert.equal(readCache(dir, `${key}-${sym}.json`).bars.at(-1)?.t, live - ms, `${key} : ni gardée dans le cache`);
+    // Plus tard : la bougie s'est terminée, la suivante aussi. Toutes deux entrent avec leurs cours définitifs.
+    clock.now = live + 2 * ms + 7 * M;
+    const bars = await load();
+    const cached = readCache(dir, `${key}-${sym}.json`);
+    assert.deepEqual(cached.bars.find((b) => b.t === live), quote(live, ms, Infinity), `${key} : cours et volume définitifs`);
+    assert.equal(cached.bars.at(-1)?.t, live + ms, `${key} : jusqu’à la dernière bougie finie`);
+    assert.ok(noGap(cached.bars, ms), `${key} : une barre toutes les ${ms / M} min`);
+    assert.equal(cached.asOf, clock.now);
+    assert.deepEqual(bars, cached.bars);
+  }
+});
+
+test('cache crypto écrit avant ce contrôle : relu une fois sur la période demandée, bougies lues en cours corrigées, historique plus ancien gardé', async () => {
+  const ms = 15 * M;
+  const day = 86_400_000;
+  const dir = mkdtempSync(join(tmpdir(), 'arena-cache-'));
+  const name = 'crypto15m-BTC-USD.json';
+  const now = Date.UTC(2026, 10, 10, 22, 22);
+  // Ancien fichier sur 3 jours, complété à 9 h 07, 15 h 41 et 21 h 58 (UTC) : chaque lecture y a laissé la bougie alors en cours.
+  const reads = [Date.UTC(2026, 10, 10, 9, 7), Date.UTC(2026, 10, 10, 15, 41), Date.UTC(2026, 10, 10, 21, 58)];
+  const first = Math.floor((now - 3 * day) / ms) * ms;
+  const old: Bar[] = [];
+  for (let t = first; t < (reads.at(-1) as number); t += ms) old.push(quote(t, ms, reads.find((r) => r > t) as number));
+  old[0] = { ...(old[0] as Bar), v: 4242 }; // avant la période demandée (2 jours) : gardée telle quelle
+  const partial = reads.map((r) => Math.floor(r / ms) * ms);
+  assert.ok(partial.every((t) => (old.find((b) => b.t === t)?.v ?? 1000) < 1000), 'l’ancien fichier garde les bougies lues en cours');
+  writeJsonAtomic(join(dir, name), { fetchedAt: reads.at(-1), bars: old });
+
+  const load = async (http: Http): Promise<Bar[]> => (await createArenaData({ dir, maxAgeMs: 6 * 3_600_000, now, http, historyDays: { crypto15m: 2 } }).load('crypto15m', ['BTC-USD'])).get('BTC-USD') ?? [];
+  // Réseau coupé : relecture tentée bien que le cache ait moins de 6 h ; l'ancien fichier reste tel quel (non marqué).
+  const offline = fakeHttp(() => {
+    throw new Error('réseau coupé');
+  });
+  await load(offline);
+  assert.ok(offline.urls.length > 0, 'relecture tentée alors que le cache a moins de 6 h');
+  assert.deepEqual(readCache(dir, name), { fetchedAt: reads.at(-1), bars: old });
+  // Réseau rétabli : relu sur les 2 jours demandés.
+  const http = fakeHttp(exchange({ now }));
+  const bars = await load(http);
+  const cached = readCache(dir, name);
+  for (const t of partial) assert.deepEqual(cached.bars.find((b) => b.t === t), quote(t, ms, Infinity), `bougie de ${new Date(t).toISOString()} corrigée`);
+  assert.deepEqual(cached.bars[0], old[0], 'historique d’avant la période demandée gardé');
+  assert.equal(cached.bars.at(-1)?.t, Math.floor(now / ms) * ms - ms, 'pas de bougie en cours');
+  assert.ok(noGap(cached.bars, ms));
+  assert.equal(cached.asOf, now);
+  assert.deepEqual(bars, cached.bars);
+  // Relu une seule fois : le fichier marqué et récent ne déclenche plus de requête.
+  const n = http.urls.length;
+  assert.deepEqual(await load(http), bars);
+  assert.equal(http.urls.length, n);
 });

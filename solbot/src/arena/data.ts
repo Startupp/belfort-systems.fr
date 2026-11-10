@@ -3,7 +3,7 @@
  * - Yahoo Finance : barres de 5 min (60 derniers jours) pour les actions, SPY et l'or (GC=F), barres journalières (20 ans) ;
  * - Coinbase Exchange (API publique, sans clé) : BTC et ETH en 1 min, 15 min et 1 h. Les cours de Revolut X ne sont
  *   accessibles qu'avec une clé signée : Coinbase sert de référence de prix, les frais restent ceux de Revolut X.
- * Les barres pas encore terminées sont écartées.
+ * Les barres pas encore terminées sont écartées (Coinbase et Kraken Futures : dès la requête, voir `finishedBars`).
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -19,6 +19,11 @@ import { NY, zonedToUtc } from './strategies.ts';
 
 interface Cached {
   fetchedAt: number;
+  /**
+   * Coinbase et Kraken Futures : les barres gardées sont toutes terminées à cette heure (celle de la requête). Absente des
+   * fichiers écrits avant ce contrôle, qui gardaient à chaque lecture la bougie alors en cours.
+   */
+  asOf?: number;
   bars: Bar[];
 }
 
@@ -52,6 +57,14 @@ const SPEC: Record<DataKey, { source: 'yahoo' | 'yahoo1m' | 'coinbase' | 'kraken
 
 export function barMsOf(key: DataKey): number {
   return SPEC[key].barMs;
+}
+
+/**
+ * Barres terminées à `asOf`. Coinbase et Kraken Futures renvoient aussi la bougie en cours, avec les seuls échanges déjà
+ * faits : gardée dans le cache, elle passerait pour finie dès son heure de fin, avec de faux cours. Même règle que le Worker.
+ */
+function finishedBars(bars: Bar[], barMs: number, asOf: number): Bar[] {
+  return bars.filter((b) => b.t + barMs <= asOf);
 }
 
 function merge(a: Bar[], b: Bar[]): Bar[] {
@@ -90,12 +103,17 @@ export function createArenaData(opts: DataOptions) {
     return merge(old, await createYahoo(http).bars(sym, from, now));
   }
 
+  /**
+   * Coinbase : bougies par tranches de 300, bornes incluses. Comme le Worker, la suite repart de l'avant-dernière bougie du
+   * cache : les deux dernières sont relues, au cas où Coinbase les aurait complétées depuis (publication en retard, horloge
+   * locale en avance).
+   */
   async function coinbase(key: DataKey, sym: string, old: Bar[]): Promise<Bar[]> {
     const s = SPEC[key];
     const g = Number(s.interval);
     const step = 300 * g * 1000;
     const start = now - days(key) * 86_400_000;
-    let from = old.length ? (old.at(-1) as Bar).t + g * 1000 : start;
+    let from = old.length ? (old.at(-1) as Bar).t - g * 1000 : start;
     from = Math.max(from, start);
     // Plages à demander : l'historique manquant au début (quand on demande plus loin que le cache), puis la suite.
     const ranges: Array<[number, number]> = [];
@@ -112,13 +130,13 @@ export function createArenaData(opts: DataOptions) {
         out.push({ t: time * 1000, o: open, h: high, l: low, c: close, v: vol });
       }
     }
-    return merge(old, out);
+    return merge(old, finishedBars(out, g * 1000, now));
   }
 
-  /** Kraken Futures (perpétuels) : bougies d'une heure, par tranches de 1 000 h. */
+  /** Kraken Futures (perpétuels) : bougies d'une heure, par tranches de 1 000 h, bornes incluses ; comme pour Coinbase, les deux dernières du cache sont relues. */
   async function kraken(key: DataKey, sym: string, old: Bar[]): Promise<Bar[]> {
     const step = 1000 * 3_600_000;
-    const from = Math.max(old.length ? (old.at(-1) as Bar).t + 3_600_000 : 0, now - days(key) * 86_400_000);
+    const from = Math.max(old.length ? (old.at(-1) as Bar).t - 3_600_000 : 0, now - days(key) * 86_400_000);
     const out: Bar[] = [];
     for (let a = from; a < now; a += step) {
       const b = Math.min(now, a + step);
@@ -129,7 +147,7 @@ export function createArenaData(opts: DataOptions) {
         if ([bar.o, bar.h, bar.l, bar.c].every((x) => Number.isFinite(x) && x > 0)) out.push(bar);
       }
     }
-    return merge(old, out);
+    return merge(old, finishedBars(out, 3_600_000, now));
   }
 
   /**
@@ -183,19 +201,29 @@ export function createArenaData(opts: DataOptions) {
     },
     async load(key: DataKey, symbols: string[]): Promise<Map<string, Bar[]>> {
       const s = SPEC[key];
+      const crypto = s.source === 'coinbase' || s.source === 'kraken';
       const res = new Map<string, Bar[]>();
       for (const sym of symbols) {
         const f = file(key, sym);
         const cached: Cached | null = existsSync(f) ? (JSON.parse(readFileSync(f, 'utf8')) as Cached) : null;
         let bars = cached?.bars ?? [];
+        // Coinbase et Kraken : un fichier sans `asOf` date d'avant ce contrôle ; il peut garder la bougie lue en cours à
+        // chacune de ses lectures, toutes faites depuis la création du cache (10 novembre 2026). Il est relu une fois sur
+        // toute la période demandée, qui couvre ces lectures : les bougies relues remplacent les anciennes, les autres sont
+        // gardées (historique d'avant la période).
+        const legacy = crypto && cached !== null && cached.asOf === undefined;
         // Cache trop court vers le passé (on demande plus d'historique qu'il n'en contient) : on le complète.
         const tooShort = s.source !== 'yahoo' && bars.length > 0 && (bars[0] as Bar).t > now - days(key) * 86_400_000 + 2 * 86_400_000;
-        if (!cached || tooShort || now - cached.fetchedAt > opts.maxAgeMs) {
+        if (!cached || tooShort || legacy || now - cached.fetchedAt > opts.maxAgeMs) {
           try {
-            bars =
-              s.source === 'yahoo' ? await yahoo(key, sym, bars) : s.source === 'yahoo1m' ? await yahoo1m(key, sym, bars) : s.source === 'kraken' ? await kraken(key, sym, bars) : await coinbase(key, sym, bars);
-            writeJsonAtomic(f, { fetchedAt: now, bars } satisfies Cached);
-            log(`${key} ${sym} : ${bars.length} barres`);
+            const old = legacy ? [] : bars;
+            const got =
+              s.source === 'yahoo' ? await yahoo(key, sym, old) : s.source === 'yahoo1m' ? await yahoo1m(key, sym, old) : s.source === 'kraken' ? await kraken(key, sym, old) : await coinbase(key, sym, old);
+            // Rien de relu : l'ancien fichier reste tel quel (non marqué), il sera relu au passage suivant.
+            if (legacy && !got.length) throw new Error('aucune bougie reçue');
+            bars = legacy ? merge(bars, got) : got;
+            writeJsonAtomic(f, { fetchedAt: now, asOf: crypto ? now : undefined, bars } satisfies Cached);
+            log(`${key} ${sym} : ${bars.length} barres${legacy ? ' (ancien cache relu sur la période demandée)' : ''}`);
           } catch (e) {
             log(`${key} ${sym} : indisponible (${e instanceof Error ? e.message : String(e)}), cache conservé`);
           }
