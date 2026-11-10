@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { createHttp } from '../lib/http.ts';
 import type { Http } from '../lib/http.ts';
 import { writeJsonAtomic } from '../lib/store.ts';
-import { localTime, parseYahooChart } from '../desk/market.ts';
+import { createYahoo, localTime, parseYahooChart } from '../desk/market.ts';
 import type { Bar } from '../desk/types.ts';
 import type { DataKey } from './portfolios.ts';
 import { NY, zonedToUtc } from './strategies.ts';
@@ -33,7 +33,8 @@ export interface DataOptions {
 }
 
 /** Spécification des séries par jeu de données. */
-const SPEC: Record<DataKey, { source: 'yahoo' | 'coinbase'; interval: string; barMs: number; days: number }> = {
+const SPEC: Record<DataKey, { source: 'yahoo' | 'yahoo1m' | 'coinbase'; interval: string; barMs: number; days: number }> = {
+  us1m: { source: 'yahoo1m', interval: '1m', barMs: 60_000, days: 29 },
   us5m: { source: 'yahoo', interval: '5m', barMs: 5 * 60_000, days: 60 },
   spy5m: { source: 'yahoo', interval: '5m', barMs: 5 * 60_000, days: 60 },
   gold5m: { source: 'yahoo', interval: '5m', barMs: 5 * 60_000, days: 60 },
@@ -76,6 +77,12 @@ export function createArenaData(opts: DataOptions) {
     return merge(old, bars);
   }
 
+  /** Yahoo 1 min : 30 jours d'historique au plus, par tranches de 7 jours ; seules les barres manquantes sont demandées. */
+  async function yahoo1m(key: DataKey, sym: string, old: Bar[]): Promise<Bar[]> {
+    const from = Math.max(old.length ? (old.at(-1) as Bar).t + 60_000 : 0, now - SPEC[key].days * 86_400_000);
+    return merge(old, await createYahoo(http).bars(sym, from, now));
+  }
+
   async function coinbase(key: DataKey, sym: string, old: Bar[]): Promise<Bar[]> {
     const s = SPEC[key];
     const g = Number(s.interval);
@@ -106,7 +113,7 @@ export function createArenaData(opts: DataOptions) {
         let bars = cached?.bars ?? [];
         if (!cached || now - cached.fetchedAt > opts.maxAgeMs) {
           try {
-            bars = s.source === 'yahoo' ? await yahoo(key, sym, bars) : await coinbase(key, sym, bars);
+            bars = s.source === 'yahoo' ? await yahoo(key, sym, bars) : s.source === 'yahoo1m' ? await yahoo1m(key, sym, bars) : await coinbase(key, sym, bars);
             writeJsonAtomic(f, { fetchedAt: now, bars } satisfies Cached);
             log(`${key} ${sym} : ${bars.length} barres`);
           } catch (e) {

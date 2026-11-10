@@ -87,32 +87,37 @@ async function main(): Promise<void> {
   }
   const data = createArenaData({ dir: resolve('data/arena-cache'), maxAgeMs: cmd === 'avance' ? 30 * 60_000 : 6 * 3_600_000, now, log });
   const cache = new Map<DataKey, Map<string, Bar[]>>();
-  const seriesFor = async (p: ArenaPortfolio): Promise<Map<string, Bar[]>> => {
-    let m = cache.get(p.data);
-    if (!m) cache.set(p.data, (m = new Map()));
-    const missing = p.symbols.filter((s) => !m.has(s));
-    if (missing.length) for (const [s, b] of await data.load(p.data, missing)) m.set(s, b);
-    return new Map(p.symbols.map((s) => [s, m.get(s) ?? []]));
+  const load = async (key: DataKey, symbols: string[]): Promise<Map<string, Bar[]>> => {
+    let m = cache.get(key);
+    if (!m) cache.set(key, (m = new Map()));
+    const missing = symbols.filter((s) => !m.has(s));
+    if (missing.length) for (const [s, b] of await data.load(key, missing)) m.set(s, b);
+    return new Map(symbols.map((s) => [s, m.get(s) ?? []]));
   };
+  const seriesFor = (p: ArenaPortfolio): Promise<Map<string, Bar[]>> => load(p.data, p.symbols);
+  const auxFor = (p: ArenaPortfolio): Promise<Map<string, Bar[]> | undefined> => (p.auxData ? load(p.auxData, p.symbols) : Promise.resolve(undefined));
 
   if (cmd === 'rejeu') {
-    // Période commune : les données de 5 min couvrent ~60 jours ; 3 semaines servent d'historique aux indicateurs.
-    const spy = (await seriesFor(PORTFOLIOS.find((p) => p.id === 'bruit-x1') as ArenaPortfolio)).get('SPY') ?? [];
-    if (spy.length < 100) throw new Error('données SPY 5 min indisponibles');
-    const commonFrom = zonedToUtc(paris((spy[0] as Bar).t + 21 * 86_400_000).date, 0, PARIS);
+    // Période commune : celle des barres de 1 min (~29 jours), nécessaires à l'ORB ; les autres ont plus d'historique.
+    const orb = PORTFOLIOS.find((p) => p.data === 'us1m') as ArenaPortfolio;
+    const firsts = [...(await seriesFor(orb)).values()].map((b) => b[0]?.t).filter((t): t is number => t !== undefined).sort((a, b) => a - b);
+    if (firsts.length < 10) throw new Error('données 1 min indisponibles');
+    const commonFrom = zonedToUtc(paris((firsts[Math.floor(firsts.length / 2)] as number) + 86_400_000).date, 0, PARIS);
     const runs: RunSummary[] = [];
     const longRuns: RunSummary[] = [];
     for (const p of PORTFOLIOS) {
       const series = await seriesFor(p);
-      const r = runPortfolio(p, series, commonFrom, now);
+      const aux = await auxFor(p);
+      const r = runPortfolio(p, series, commonFrom, now, aux);
       runs.push(summarize(r, 30));
       const s = runs.at(-1)?.stats as Stats;
       log(`${p.id.padEnd(20)} ${s.returnPct >= 0 ? '+' : ''}${s.returnPct.toFixed(2)} % · ${s.trades} trades · réussite ${s.winRatePct.toFixed(0)} % · baisse max ${s.maxDrawdownPct.toFixed(2)} %${r.liquidatedAt ? ' · LIQUIDÉ' : ''}`);
       // Historique long là où les données le permettent.
       const first = Math.min(...[...series.values()].map((b) => b[0]?.t ?? Infinity));
-      const longFrom = p.data === 'daily' ? zonedToUtc('2010-01-04', 0, PARIS) : p.data === 'crypto1h' || p.data === 'crypto15m' ? first + 10 * 86_400_000 : NaN;
-      if (Number.isFinite(longFrom) && longFrom < commonFrom) {
-        const rl = runPortfolio(p, series, longFrom, now);
+      const warm: Partial<Record<DataKey, number>> = { crypto1h: 10, crypto15m: 10, us5m: 21, spy5m: 21, gold5m: 21, btc1m: 1 };
+      const longFrom = p.data === 'daily' ? zonedToUtc('2010-01-04', 0, PARIS) : warm[p.data] !== undefined ? zonedToUtc(paris(first + (warm[p.data] as number) * 86_400_000).date, 0, PARIS) : NaN;
+      if (Number.isFinite(longFrom) && longFrom < commonFrom - 3 * 86_400_000) {
+        const rl = runPortfolio(p, series, longFrom, now, aux);
         longRuns.push(summarize(rl, 0));
         const sl = longRuns.at(-1)?.stats as Stats;
         log(`  historique depuis ${dayOf(longFrom)} : ${sl.returnPct >= 0 ? '+' : ''}${sl.returnPct.toFixed(1)} % · ${sl.trades} trades · baisse max ${sl.maxDrawdownPct.toFixed(1)} %`);
@@ -123,7 +128,7 @@ async function main(): Promise<void> {
       commit: commit(),
       windows: {
         commun: { label: `Rejeu sur la même période pour tous (${dayOf(commonFrom)} → ${dayOf(now)})`, from: commonFrom, to: now, runs },
-        long: { label: 'Historique long (là où les données le permettent)', from: Math.min(...longRuns.map((r) => r.from)), to: now, runs: longRuns },
+        long: { label: 'Historique plus long (autant que les données le permettent)', from: Math.min(...longRuns.map((r) => r.from)), to: now, runs: longRuns },
       },
     };
     writeJsonAtomic(join(dir, 'rejeu.json'), out);
@@ -131,7 +136,7 @@ async function main(): Promise<void> {
   } else if (cmd === 'avance') {
     const runs: RunSummary[] = [];
     for (const p of PORTFOLIOS) {
-      const r = runPortfolio(p, await seriesFor(p), SUIVI_START, now);
+      const r = runPortfolio(p, await seriesFor(p), SUIVI_START, now, await auxFor(p));
       runs.push(summarize(r, 400));
       const s = runs.at(-1)?.stats as Stats;
       log(`${p.id.padEnd(20)} ${r.equity.toFixed(2)} $ (${s.returnPct >= 0 ? '+' : ''}${s.returnPct.toFixed(2)} %) · ${s.trades} trades${r.open.length ? ` · ${r.open.length} ouverte(s)` : ''}`);

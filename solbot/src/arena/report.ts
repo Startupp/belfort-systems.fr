@@ -175,7 +175,7 @@ footer{font-size:12px;color:var(--muted)}
 <header class="top">
 <h1>Arène des stratégies</h1>
 <p class="muted">Mis à jour le ${esc(new Date(updated).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', dateStyle: 'long', timeStyle: 'short' }))} (heure de Paris) · code des stratégies : ${esc(suivi?.commit ?? rejeu?.commit ?? '?')}</p>
-<p class="banner"><b>Papier</b> : ${PORTFOLIOS.length} portefeuilles fictifs en parallèle, une stratégie chacun, 500 $ de départ (1 000 $ pour l’or, à cause du lot minimal). Avec ou sans levier selon le portefeuille, aux plafonds autorisés aux particuliers en Europe, sauf le témoin « façon Telegram ». Aucun ordre réel, aucune clé.</p>
+<p class="banner"><b>Papier</b> : ${PORTFOLIOS.length} portefeuilles fictifs en parallèle, une stratégie chacun, 500 $ de départ chacun. Avec ou sans levier selon le portefeuille, aux plafonds autorisés aux particuliers en Europe, sauf le témoin « façon Telegram ». Aucun ordre réel, aucune clé.</p>
 </header>
 ${commun ? `<section class="kpis" aria-label="Chiffres clés">
 ${best ? kpi('Meilleur sur la période commune', `${sgn(best.stats.returnPct)} %`, esc(byId.get(best.id)?.name ?? best.id), best.stats.returnPct >= 0 ? 'good' : 'bad') : ''}
@@ -188,14 +188,14 @@ ${liveStarted && live ? `<p class="muted">${esc(live.label)} : tout est rejoué 
 </section>
 ${deskRows(join(dir, '..'))}
 ${commun ? `<section class="card"><h2>${esc(commun.label)}</h2><p class="muted">Mêmes données, mêmes coûts, mêmes règles d’exécution prudentes pour tous. Quelques semaines ne prouvent rien : c’est une première indication.</p>${board(commun.runs, { sparkline: true })}</section>` : ''}
-${long && long.runs.length ? `<section class="card"><h2>${esc(long.label)}</h2><p class="muted">Stratégies journalières depuis 2010, crypto sur 1 à 2 ans : un échantillon plus solide que la période commune.</p>${board(long.runs, { sparkline: false })}</section>` : ''}
+${long && long.runs.length ? `<section class="card"><h2>${esc(long.label)}</h2><p class="muted">Chaque portefeuille sur toute la durée de ses données : stratégies journalières depuis 2010, crypto sur 1 à 2 ans, stratégies de 5 min sur ~7 semaines. Périodes différentes : à comparer avec prudence.</p>${board(long.runs, { sparkline: false })}</section>` : ''}
 <section class="card"><h2>Fiches des stratégies</h2>${PORTFOLIOS.map((p) => fiche(p, commun?.runs.find((r) => r.id === p.id))).join('')}</section>
 <section class="card"><h2>Méthode et limites</h2><ul class="plain note">
 <li><b>Exécution prudente</b> : ordres au marché à la clôture de la barre du signal (ou à l’ouverture suivante), stops au prix du stop ou à l’ouverture si le cours a sauté par-dessus, ordres limites seulement si le cours passe au travers ; stop et objectif dans la même barre : le stop compte.</li>
 <li><b>Levier</b> : la somme des positions ne dépasse jamais capital × levier ; clôture de toutes les positions sous 50 % de la marge (règle européenne) ; jamais de solde négatif. Plafonds pour un particulier en Europe : 5:1 sur actions, 20:1 sur indices et or, 2:1 sur cryptos.</li>
 <li><b>Durée</b> : rien ne reste ouvert plus de 3 jours.</li>
 <li><b>Données</b> : Yahoo Finance (5 min sur 60 jours, journalier sur 20 ans) ; Coinbase pour BTC et ETH. Les cours de Revolut X demandent une clé signée : les frais simulés sont ceux de Revolut X (0 % en ordre limite, 0,09 % au marché).</li>
-<li><b>Limites</b> : l’ORB est testé sur 59 actions liquides, pas sur tout le marché US comme dans l’étude ; les 5 min de Yahoo arrondissent l’exécution ; quelques semaines de rejeu ne suffisent pas à conclure.</li>
+<li><b>Limites</b> : l’ORB est testé en barres de 1 min sur 59 actions liquides, pas sur tout le marché US comme dans l’étude ; les autres stratégies intraday en barres de 5 min ; quelques semaines de rejeu ne suffisent pas à conclure. Sur l’or, la taille n’est pas arrondie au lot de 0,01 (1 once) : en réel, il faudrait ~2 500 $ pour garder 1 % de risque par trade.</li>
 </ul></section>
 <footer>Simulation à but d’apprentissage. Rien ici n’est un conseil en investissement.</footer>
 </main>

@@ -149,7 +149,8 @@ export interface PortfolioSpec {
   maxHoldMs?: number;
   /** Clôture de marge (part de la marge utilisée) ; 0,5 = règle européenne. */
   closeOutLevel?: number;
-  strategy: () => Strategy;
+  /** Fabrique de la stratégie ; `aux` : séries d'appoint (ex. historique 5 min pour une stratégie en 1 min). */
+  strategy: (aux?: ReadonlyMap<string, Bar[]>) => Strategy;
 }
 
 export interface RunResult {
@@ -174,8 +175,8 @@ const DAY = 86_400_000;
 export const THREE_DAYS = 3 * DAY;
 
 /** Fait tourner un portefeuille de `from` à `to` (les barres antérieures servent d'historique aux indicateurs). */
-export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Bar[]>, from: number, to: number): RunResult {
-  const strategy = spec.strategy();
+export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Bar[]>, from: number, to: number, aux?: ReadonlyMap<string, Bar[]>): RunResult {
+  const strategy = spec.strategy(aux);
   const maxHold = spec.maxHoldMs ?? THREE_DAYS;
   const closeOut = spec.closeOutLevel ?? 0.5;
   const c = spec.costs;
@@ -377,6 +378,26 @@ export function runPortfolio(spec: PortfolioSpec, series: ReadonlyMap<string, Ba
           continue;
         }
         if (barEnd - p.openedAt >= maxHold) close(p, b.c, barEnd, 'durée maximale (3 jours)', 'market');
+      }
+      // Clôture de marge en cours de barre : au pire cours de la barre pour les positions sur cet instrument.
+      const mine = positions.filter((x) => x.symbol === s);
+      if (spec.maxLeverage > 1 && mine.length) {
+        const adverse = (p: Position): number => (p.side === 'long' ? b.l : b.h);
+        const worst = cash + positions.reduce((sum, p) => sum + unreal(p, p.symbol === s ? adverse(p) : (last.get(p.symbol) ?? p.entry)), 0);
+        const limit = (closeOut * usedNotional()) / spec.maxLeverage;
+        if (worst < limit) {
+          const why = 'clôture de marge (equity < 50 % de la marge)';
+          const only = positions.length === 1 ? positions[0] : undefined;
+          if (only) {
+            // Seule position : la plateforme la coupe au cours où l'equity touche le seuil (ou à l'ouverture si le cours a sauté).
+            const dir = only.side === 'long' ? 1 : -1;
+            const trigger = only.entry + (limit - cash) / (dir * only.qty);
+            const gapped = only.side === 'long' ? b.o <= trigger : b.o >= trigger;
+            close(only, gapped ? b.o : trigger, gapped ? t : barEnd, why, 'market');
+          } else {
+            for (const p of [...positions]) close(p, p.symbol === s ? adverse(p) : (last.get(p.symbol) ?? p.entry), barEnd, why, 'market');
+          }
+        }
       }
       last.set(s, b.c);
     }

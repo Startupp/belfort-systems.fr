@@ -153,6 +153,43 @@ test('ORB de l’étude : achat stop au plus haut de la 1re bougie haussière d�
   assert.ok((t?.notional ?? 0) <= 2000 + 1e-6, 'levier 4 au plus');
 });
 
+test('ORB en barres de 1 min : moyennes de 14 jours prises dans l’historique 5 min, entrée au plus haut des 5 premières minutes', () => {
+  const hist: Bar[] = [];
+  const days = ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06'];
+  for (const d of days) {
+    const open = zonedToUtc(d, 570, NY);
+    for (let i = 0; i < 78; i++) hist.push({ t: open + i * 5 * M, o: 100, h: 101, l: 99, c: 100, v: 200_000 });
+  }
+  // Séance du 9 novembre en barres de 1 min : 5 premières minutes en hausse avec 3 fois le volume habituel.
+  const open = zonedToUtc('2026-11-09', 570, NY);
+  const one: Bar[] = [];
+  for (let i = 0; i < 390; i++) {
+    let b: Bar = { t: open + i * M, o: 102, h: 102.3, l: 101.9, c: 102.1, v: 40_000 };
+    if (i < 5) b = { t: open + i * M, o: 100 + i * 0.2, h: 100.3 + i * 0.2, l: 99.9 + i * 0.2, c: 100.2 + i * 0.2, v: 120_000 };
+    if (i === 5) b = { t: open + i * M, o: 101, h: 101.5, l: 100.95, c: 101.4, v: 40_000 };
+    one.push(b);
+  }
+  const r = runPortfolio(
+    { id: 'orb1', name: 'orb1', capital: 500, maxLeverage: 4, allowShort: true, costs: FREE, barMs: M, symbols: ['TEST'], strategy: (aux) => orbStudy({ symbols: ['TEST'], history: aux }) },
+    new Map([['TEST', one]]),
+    open - 3_600_000,
+    open + 400 * M,
+    new Map([['TEST', hist]]),
+  );
+  assert.equal(r.trades.length, 1, JSON.stringify(r.trades));
+  assert.ok(Math.abs((r.trades[0]?.entry ?? 0) - 101.1) < 1e-9, 'plus haut des 5 premières minutes');
+  assert.equal(r.trades[0]?.exitReason, 'fin de séance');
+});
+
+test('clôture de marge en cours de barre : coupée au cours où l’equity touche 50 % de la marge', () => {
+  // 1 000 $, levier 20 : 200 unités à 100 $ ; marge 1 000 $ ; seuil 500 $ → coupure à 97,50 $.
+  const enter: Intent = { type: 'enter', symbol: 'X', side: 'long', order: 'close', size: { notional: 20 }, reason: 'test' };
+  const r = runPortfolio(spec({ maxLeverage: 20, strategy: scripted({ 0: () => [enter] }) }), new Map([['X', bars([[100, 100, 100, 100], [99.9, 100, 96, 98]])]]), T0, T0 + 10 * M);
+  assert.equal(r.trades[0]?.exitReason, 'clôture de marge (equity < 50 % de la marge)');
+  assert.ok(Math.abs((r.trades[0]?.exit ?? 0) - 97.5) < 1e-9);
+  assert.ok(Math.abs(r.equity - 500) < 1e-6, 'il reste 50 % de la marge');
+});
+
 test('témoin au hasard : même tirage à chaque rejeu (graine fixe)', () => {
   const b = bars(Array.from({ length: 600 }, () => [100, 100.1, 99.9, 100] as [number, number, number, number]), 5 * M, zonedToUtc('2026-11-10', 8 * 60, 'Europe/Paris'));
   const mk = (): PortfolioSpec => spec({ barMs: 5 * M, symbols: ['X'], strategy: () => randomSignals({ symbol: 'X', seed: 's', fromParis: 945, toParis: 1080, exitParis: 1140, stopPct: 0.3, targetPct: 0.6, size: { risk: 0.01 } }) });

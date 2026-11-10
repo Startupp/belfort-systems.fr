@@ -1,16 +1,17 @@
 /**
- * Les portefeuilles parallèles de l'arène : une stratégie chacun, 500 $ fictifs (1 000 $ quand le lot minimal
- * l'exige), avec ou sans levier. Les coûts suivent les plateformes accessibles à un particulier en France.
+ * Les portefeuilles parallèles de l'arène : une stratégie chacun, 500 $ fictifs chacun, avec ou sans levier. Les coûts suivent les plateformes accessibles à un particulier en France.
  */
 
 import type { Costs, PortfolioSpec } from './engine.ts';
 import { bollinger, donchian, goldNyOpen, grid, lastHalfHour, noiseArea, orbStudy, overnight, randomSignals, rsi2, turnOfMonth } from './strategies.ts';
 
-export type DataKey = 'us5m' | 'spy5m' | 'gold5m' | 'daily' | 'crypto1h' | 'crypto15m' | 'btc1m';
+export type DataKey = 'us1m' | 'us5m' | 'spy5m' | 'gold5m' | 'daily' | 'crypto1h' | 'crypto15m' | 'btc1m';
 
 export interface ArenaPortfolio extends PortfolioSpec {
   /** Données utilisées. */
   data: DataKey;
+  /** Données d'appoint passées à la stratégie (historique plus ancien). */
+  auxData?: DataKey;
   market: string;
   leverageLabel: string;
   source: string;
@@ -41,9 +42,9 @@ export const COSTS = {
   /** CFD sur l'indice S&P 500. */
   cfdIndice: { feeBps: 0, slipBps: 0.5, financingPct: 6.5, minNotional: 1 },
   /** CFD or : écart ~0,30–0,40 $ l'once ; lot minimal 0,01 (1 once). */
-  cfdOr: { feeBps: 0, slipBps: 1, financingPct: 6.5, minNotional: 1, qtyStep: 1 },
+  cfdOr: { feeBps: 0, slipBps: 1, financingPct: 6.5, minNotional: 1 },
   /** Or chez un courtier étranger à levier extrême (façon groupes Telegram) : écart plus large. */
-  orOffshore: { feeBps: 0, slipBps: 1.5, financingPct: 8, minNotional: 1, qtyStep: 1 },
+  orOffshore: { feeBps: 0, slipBps: 1.5, financingPct: 8, minNotional: 1 },
   /** Revolut X au comptant : 0 % maker, 0,09 % taker, plus le glissement des ordres au marché. */
   revolutX: { feeBps: 9, makerFeeBps: 0, slipBps: 2, financingPct: 0, minNotional: 1 },
   /** CFD crypto (levier 2:1 maximum pour un particulier en Europe) : écart plus large, financement élevé. */
@@ -54,36 +55,38 @@ export const PORTFOLIOS: ArenaPortfolio[] = [
   {
     id: 'orb-x4',
     name: 'ORB actions en jeu ×4 (version de l’étude)',
-    data: 'us5m',
+    data: 'us1m',
+    auxData: 'us5m',
     market: 'Actions US (CFD)',
     leverageLabel: '×4 max',
     capital: 500,
     maxLeverage: 4,
     allowShort: true,
     costs: COSTS.cfdActions,
-    barMs: MIN5,
+    barMs: 60_000,
     symbols: ORB_STOCKS,
     source: 'Zarattini, Barbon & Aziz (2024), « A Profitable Day Trading Strategy For The U.S. Equity Market », SSRN 4729284',
     rules: 'À 9 h 35 (New York) : les 20 actions au plus fort volume relatif d’ouverture (≥ 100 %, prix ≥ 5 $, volume ≥ 1 M, ATR ≥ 0,50 $). Achat stop au plus haut de la 1re bougie de 5 min si elle monte, vente stop au plus bas si elle baisse ; stop à 10 % de l’ATR ; sortie à la clôture (22 h Paris). Risque 1 % par trade.',
     role: 'publiée',
-    strategy: () => orbStudy({ symbols: ORB_STOCKS }),
+    strategy: (aux) => orbStudy({ symbols: ORB_STOCKS, history: aux }),
   },
   {
     id: 'orb-x1',
     name: 'ORB actions en jeu sans levier',
-    data: 'us5m',
+    data: 'us1m',
+    auxData: 'us5m',
     market: 'Actions US (CFD)',
     leverageLabel: 'sans levier',
     capital: 500,
     maxLeverage: 1,
     allowShort: true,
     costs: COSTS.cfdActions,
-    barMs: MIN5,
+    barMs: 60_000,
     symbols: ORB_STOCKS,
     source: 'Même étude, montant total plafonné au capital',
     rules: 'Mêmes règles que la version ×4, mais la somme des positions ne dépasse jamais le capital.',
     role: 'publiée',
-    strategy: () => orbStudy({ symbols: ORB_STOCKS }),
+    strategy: (aux) => orbStudy({ symbols: ORB_STOCKS, history: aux }),
   },
   {
     id: 'bruit-x4',
@@ -261,14 +264,14 @@ export const PORTFOLIOS: ArenaPortfolio[] = [
     data: 'gold5m',
     market: 'Or (CFD XAUUSD)',
     leverageLabel: '×20 max',
-    capital: 1000,
+    capital: 500,
     maxLeverage: 20,
     allowShort: true,
     costs: COSTS.cfdOr,
     barMs: MIN5,
     symbols: ['GC=F'],
     source: 'Cassure de range d’ouverture appliquée à l’or (pratique courante chez les traders de XAUUSD)',
-    rules: 'Range de 15 h 30 à 15 h 45 (Paris) ; achat stop au-dessus, vente stop en dessous jusqu’à 17 h 30 ; stop de l’autre côté, objectif 2 fois le range, sortie à 19 h. Risque 1 %, lot minimal 0,01 (d’où 1 000 $).',
+    rules: 'Range de 15 h 30 à 15 h 45 (Paris) ; achat stop au-dessus, vente stop en dessous jusqu’à 17 h 30 ; stop de l’autre côté, objectif 2 fois le range, sortie à 19 h. Risque 1 %. Taille non arrondie au lot de 0,01 (1 once) : avec ce lot, il faudrait ~2 500 $ pour garder 1 % de risque.',
     role: 'pratique courante',
     strategy: () => goldNyOpen({ symbol: 'GC=F' }),
   },
@@ -295,7 +298,7 @@ export const PORTFOLIOS: ArenaPortfolio[] = [
     data: 'gold5m',
     market: 'Or (CFD XAUUSD)',
     leverageLabel: '×20 max',
-    capital: 1000,
+    capital: 500,
     maxLeverage: 20,
     allowShort: true,
     costs: COSTS.cfdOr,

@@ -198,63 +198,83 @@ const bar = (v: StrategyView, sym: string): Bar | undefined => {
 
 /**
  * Chaque jour, à 9 h 35 (New York) : actions à prix ≥ 5 $, volume moyen ≥ 1 M, ATR(14 j) ≥ 0,50 $, volume relatif
- * des 5 premières minutes ≥ 100 % ; les `top` plus fortes. Première bougie haussière → ordre d'achat stop au plus haut
- * du range ; baissière → vente stop au plus bas. Stop à 10 % de l'ATR(14 j). Sortie à la clôture. Risque 1 %.
+ * des 5 premières minutes ≥ 100 % ; les `top` plus fortes. Première bougie de 5 min haussière → ordre d'achat stop au
+ * plus haut du range ; baissière → vente stop au plus bas. Stop à 10 % de l'ATR(14 j). Sortie à la clôture. Risque 1 %.
+ * Fonctionne en barres de 1 min (exécution précise) ou de 5 min ; `history` : barres plus anciennes (5 min) qui servent
+ * seulement aux moyennes de 14 jours.
  */
-export function orbStudy(opts: { symbols: string[]; top?: number; risk?: number }): Strategy {
+export function orbStudy(opts: { symbols: string[]; top?: number; risk?: number; history?: ReadonlyMap<string, Bar[]> }): Strategy {
   const top = opts.top ?? 20;
   const risk = opts.risk ?? 0.01;
-  type Pre = { days: UsDay[]; dayOf: Int32Array; atr14: number[]; vol14: number[]; orVol14: number[]; orVol: number[] };
-  let pre: Map<string, Pre> | undefined;
+  type DayStat = { date: string; high: number; low: number; close: number; volume: number; orVol: number };
+  type Prior = { atr: number; vol: number; orVol: number };
+  let pre: Map<string, { days: UsDay[]; dayOf: Int32Array; prior: Map<string, Prior> }> | undefined;
   const done = new Set<string>();
+  const statsOf = (bars: Bar[]): DayStat[] =>
+    usDays(bars).days.map((d) => {
+      let orVol = 0;
+      let seen = false;
+      for (let i = d.start; i < d.end; i++) {
+        const m = clocks(bars, NY)[i]?.min as number;
+        if (m >= 570 && m < 575) {
+          orVol += (bars[i] as Bar).v;
+          seen = true;
+        }
+      }
+      return { date: d.date, high: d.high, low: d.low, close: d.close, volume: d.volume, orVol: seen ? orVol : NaN };
+    });
   return {
     onBar(v) {
       if (!pre) {
         pre = new Map();
         for (const s of opts.symbols) {
           const bars = v.series.get(s) ?? [];
-          const { days, dayOf } = usDays(bars);
-          const orVol = days.map((d) => (clocks(bars, NY)[d.start]?.min === 570 ? (bars[d.start] as Bar).v : NaN));
-          const tr = days.map((d, k) => (k === 0 ? d.high - d.low : Math.max(d.high - d.low, Math.abs(d.high - (days[k - 1] as UsDay).close), Math.abs(d.low - (days[k - 1] as UsDay).close))));
-          const prior = (x: number[], k: number): number => {
+          const own = statsOf(bars);
+          const first = own[0]?.date ?? '9999';
+          const older = opts.history ? statsOf([...(opts.history.get(s) ?? [])]).filter((d) => d.date < first) : [];
+          const all = [...older, ...own];
+          const tr = all.map((d, k) => (k === 0 ? d.high - d.low : Math.max(d.high - d.low, Math.abs(d.high - (all[k - 1] as DayStat).close), Math.abs(d.low - (all[k - 1] as DayStat).close))));
+          const mean14 = (x: number[], k: number): number => {
             const w = x.slice(Math.max(0, k - 14), k).filter((y) => Number.isFinite(y));
             return w.length >= 14 ? w.reduce((a, b) => a + b, 0) / w.length : NaN;
           };
-          pre.set(s, {
-            days,
-            dayOf,
-            orVol,
-            atr14: days.map((_, k) => prior(tr, k)),
-            vol14: days.map((_, k) => prior(days.map((d) => d.volume), k)),
-            orVol14: days.map((_, k) => prior(orVol, k)),
-          });
+          const prior = new Map<string, Prior>();
+          all.forEach((d, k) => prior.set(d.date, { atr: mean14(tr, k), vol: mean14(all.map((x) => x.volume), k), orVol: mean14(all.map((x) => x.orVol), k) }));
+          pre.set(s, { ...usDays(bars), prior });
         }
       }
       const out: Intent[] = [];
-      const cands: Array<{ s: string; rv: number; d: UsDay; atr: number; b: Bar }> = [];
+      const cands: Array<{ s: string; rv: number; d: UsDay; atr: number; o: number; h: number; l: number; c: number }> = [];
       for (const s of v.fresh) {
         const p = pre.get(s);
         if (!p) continue;
+        const bars = v.series.get(s) as Bar[];
         const i = v.idx.get(s) as number;
         const k = p.dayOf[i] as number;
         if (k < 0) continue;
         const d = p.days[k] as UsDay;
-        if (i !== d.start || clocks(v.series.get(s) as Bar[], NY)[i]?.min !== 570) continue;
+        const ck = clocks(bars, NY);
+        const barMin = i + 1 < bars.length && ck[i + 1]?.date === d.date ? Math.round(((bars[i + 1] as Bar).t - (bars[i] as Bar).t) / 60_000) : i > d.start ? Math.round(((bars[i] as Bar).t - (bars[i - 1] as Bar).t) / 60_000) : 5;
+        if ((ck[i] as Clock).min + barMin !== 575) continue;
         const key = `${s}|${d.date}`;
         if (done.has(key)) continue;
         done.add(key);
-        const b = (v.series.get(s) as Bar[])[i] as Bar;
-        const a = p.atr14[k] as number;
-        const rv = (p.orVol[k] as number) / (p.orVol14[k] as number);
-        if (!(b.c >= 5) || !((p.vol14[k] as number) >= 1e6) || !(a >= 0.5) || !(rv >= 1)) continue;
-        cands.push({ s, rv, d, atr: a, b });
+        const orBars = bars.slice(d.start, i + 1).filter((_, j) => (ck[d.start + j] as Clock).min >= 570);
+        if (!orBars.length || (ck[d.start] as Clock).min !== 570) continue;
+        const pr = p.prior.get(d.date);
+        if (!pr) continue;
+        const orVol = orBars.reduce((a, b) => a + b.v, 0);
+        const rv = orVol / pr.orVol;
+        const c = (orBars.at(-1) as Bar).c;
+        if (!(c >= 5) || !(pr.vol >= 1e6) || !(pr.atr >= 0.5) || !(rv >= 1)) continue;
+        cands.push({ s, rv, d, atr: pr.atr, o: (orBars[0] as Bar).o, h: Math.max(...orBars.map((b) => b.h)), l: Math.min(...orBars.map((b) => b.l)), c });
       }
       cands.sort((x, y) => y.rv - x.rv);
       for (const c of cands.slice(0, top)) {
-        const bull = c.b.c > c.b.o;
-        const bear = c.b.c < c.b.o;
+        const bull = c.c > c.o;
+        const bear = c.c < c.o;
         if (!bull && !bear) continue;
-        const entry = bull ? c.b.h : c.b.l;
+        const entry = bull ? c.h : c.l;
         const stop = bull ? entry - 0.1 * c.atr : entry + 0.1 * c.atr;
         out.push({
           type: 'enter',
@@ -266,7 +286,7 @@ export function orbStudy(opts: { symbols: string[]; top?: number; risk?: number 
           stop,
           exitBy: c.d.closeT,
           size: { risk },
-          reason: `ORB : 1re bougie ${bull ? 'haussière' : 'baissière'}, volume relatif ${(c.rv * 100).toFixed(0)} %, stop à 10 % de l'ATR (${c.atr.toFixed(2)} $)`,
+          reason: `ORB : 5 premières minutes ${bull ? 'en hausse' : 'en baisse'}, volume relatif ${(c.rv * 100).toFixed(0)} %, stop à 10 % de l'ATR (${c.atr.toFixed(2)} $)`,
         });
       }
       return out;
