@@ -77,7 +77,7 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
 
 ## Arène des stratégies (ajoutée le mardi 10 novembre, à partir du mercredi 11)
 
-- **18 portefeuilles papier parallèles**, une stratégie chacun (500 $, 1 500 $ ou 2 500 $ pour deux versions réalistes ; avec ou sans levier). Code : `src/arena/`,
+- **18 portefeuilles papier parallèles et un portefeuille combiné de 5 000 $**, une stratégie chacun (500 $, 1 500 $ ou 2 500 $ pour deux versions réalistes ; avec ou sans levier). Code : `src/arena/`,
   résultats : `solbot/arene/`. Le suivi en direct part du mercredi 11 novembre à 0 h (Paris). Ce code et ces fichiers
   sont gérés par la session principale : ne jamais les modifier, ne jamais retoucher une règle.
 - **Chaque soir, après l'étape 4** : dans `solbot/`, lancer `NODE_USE_ENV_PROXY=1 node src/arena/main.ts avance`
@@ -85,7 +85,8 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
   `solbot/arene/` dans le même commit que le carnet.
 - **Page de l'arène** : https://claude.ai/artifact/WGJvJdfBEe53xHzj2Wsx7n. Artifact `read`, puis `publish` avec
   `file_path` = `solbot/arene/arene.html` et cette même `url`. Ne jamais créer une deuxième page.
-- **Message du soir** : une ligne pour l'arène : les 3 premiers depuis le 11 novembre, et le témoin au hasard sur SPY.
+- **Message du soir** : une ligne pour l'arène : le portefeuille 5 000 $ (ma sélection), les 3 premiers depuis le
+  11 novembre, et le témoin au hasard sur SPY.
 - **Si `avance` échoue** (données indisponibles, erreur) : ne rien corriger, le dire dans le message, et passer à la suite.
 
 ## Incidents
