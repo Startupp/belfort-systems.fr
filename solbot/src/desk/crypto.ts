@@ -89,7 +89,7 @@ export async function replayCrypto(opts: {
     summaries.push(summary);
   }
   files.saveState(state);
-  writeCarnet(opts.dir, cfg, { mode: 'rejeu', title: 'Rejeu crypto (papier)' });
+  writeCarnet(opts.dir, cfg, { mode: 'rejeu', title: 'Rejeu crypto (papier)', crypto: true });
   return summaries;
 }
 
@@ -129,7 +129,7 @@ async function main(): Promise<void> {
     print(`total : ${tot >= 0 ? '+' : ''}${tot.toFixed(2)} $, ${out.reduce((a, s) => a + s.trades.length, 0)} trades — carnet : ${dir}/carnet.html`);
   } else if (cmd === 'carnet') {
     const dir = dirOf('carnet-crypto');
-    print(`carnet : ${writeCarnet(dir, cfg, { mode: 'direct', title: TITLE })}`);
+    print(`carnet : ${writeCarnet(dir, cfg, { mode: 'direct', title: TITLE, crypto: true })}`);
   } else if (cmd === 'resume') {
     const dir = dirOf('carnet-crypto');
     const days = loadDays(dir);
@@ -142,7 +142,7 @@ async function main(): Promise<void> {
   } else if (cmd === 'live') {
     const dir = dirOf('carnet-crypto');
     const s = await live({ market, universe: CRYPTO_UNIVERSE, cfg, dir, now: () => Date.now(), sleep, print });
-    writeCarnet(dir, cfg, { mode: 'direct', title: TITLE });
+    writeCarnet(dir, cfg, { mode: 'direct', title: TITLE, crypto: true });
     if (s) print(`séance crypto terminée : ${s.trades.length} trades, ${s.pnlUsd >= 0 ? '+' : ''}${s.pnlUsd.toFixed(2)} $`);
   } else if (cmd === 'call') {
     const [symbolRaw, sideRaw, source, text] = args;

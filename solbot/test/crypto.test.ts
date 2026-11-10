@@ -1,7 +1,26 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { CRYPTO_CONFIG, CRYPTO_UNIVERSE, callMove } from '../src/desk/crypto.ts';
 import type { CryptoCall } from '../src/desk/crypto.ts';
+import { writeCarnet } from '../src/desk/report.ts';
+import { DEFAULT_DESK_CONFIG } from '../src/desk/types.ts';
+
+test('page crypto : la méthode ne décrit que la crypto ; la page du desk ne change pas', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'crypto-carnet-'));
+  const html = readFileSync(writeCarnet(dir, CRYPTO_CONFIG, { mode: 'direct', title: 'Carnet crypto (papier)', crypto: true }), 'utf8');
+  assert.match(html.slice(0, 400), /<title>Carnet crypto \(papier\)<\/title>/);
+  assert.match(html, /Cryptos seulement, achat seulement/);
+  assert.match(html, /Avis publics/);
+  assert.ok(!html.includes('ORB 5 min'), 'pas de description de l’ORB sur la page crypto');
+  assert.ok(!html.includes('au plus pour l'), 'pas de place ORB sur la page crypto');
+  const desk = readFileSync(writeCarnet(mkdtempSync(join(tmpdir(), 'desk-carnet-')), DEFAULT_DESK_CONFIG, { mode: 'direct' }), 'utf8');
+  assert.match(desk, /ORB 5 min sur actions « en jeu »/);
+  assert.match(desk, /4 positions max dont 2 au plus pour l'ORB/);
+  assert.match(desk, /<li><b>Retour à la VWAP<\/b>/);
+});
 
 test('portefeuille crypto : uniquement des cryptos, sans ORB, mêmes plafonds que le desk', () => {
   assert.ok(CRYPTO_UNIVERSE.length >= 10);
