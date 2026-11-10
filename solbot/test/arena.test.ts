@@ -160,13 +160,17 @@ test('ORB en barres de 1 min : moyennes de 14 jours prises dans l’historique 5
     const open = zonedToUtc(d, 570, NY);
     for (let i = 0; i < 78; i++) hist.push({ t: open + i * 5 * M, o: 100, h: 101, l: 99, c: 100, v: 200_000 });
   }
-  // Séance du 9 novembre en barres de 1 min : 5 premières minutes en hausse avec 3 fois le volume habituel.
+  // Séance du 9 novembre : en 5 min (volumes, range d'ouverture) et en 1 min (exécution). 1re bougie de 5 min en
+  // hausse avec 3 fois le volume habituel ; une minute aberrante (volume énorme) dans la série 1 min est ignorée.
   const open = zonedToUtc('2026-11-09', 570, NY);
+  hist.push({ t: open, o: 100, h: 101.1, l: 99.9, c: 101, v: 600_000 });
+  for (let i = 1; i < 78; i++) hist.push({ t: open + i * 5 * M, o: 102, h: 102.3, l: 101.9, c: 102.1, v: 200_000 });
   const one: Bar[] = [];
   for (let i = 0; i < 390; i++) {
     let b: Bar = { t: open + i * M, o: 102, h: 102.3, l: 101.9, c: 102.1, v: 40_000 };
     if (i < 5) b = { t: open + i * M, o: 100 + i * 0.2, h: 100.3 + i * 0.2, l: 99.9 + i * 0.2, c: 100.2 + i * 0.2, v: 120_000 };
     if (i === 5) b = { t: open + i * M, o: 101, h: 101.5, l: 100.95, c: 101.4, v: 40_000 };
+    if (i === 200) b = { ...b, v: 90_000_000 };
     one.push(b);
   }
   const r = runPortfolio(
