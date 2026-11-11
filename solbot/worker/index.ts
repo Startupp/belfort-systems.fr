@@ -682,8 +682,13 @@ export default {
     // Envoi de l'opérateur du desk : POST /desk?portefeuille=desk|crypto, jeton dans l'en-tête Authorization (ajouté par
     // le proxy de son environnement cloud, jamais écrit dans le dépôt).
     if (request.method === 'POST' && url.pathname === '/desk') {
-      const auth = (request.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-      if (!sameToken(auth, env.TOKEN ?? '')) return new Response('refusé', { status: 401 });
+      const header = request.headers.get('authorization');
+      const auth = (header ?? '').replace(/^Bearer\s+/i, '').trim();
+      if (!sameToken(auth, env.TOKEN ?? '')) {
+        // Diagnostic sans rien révéler : présence de l'en-tête et longueur reçue, jamais la valeur.
+        const why = header ? `jeton différent (${auth.length} caractères reçus${/^Bearer\s+/i.test(header) ? '' : ', sans « Bearer »'})` : 'en-tête Authorization absent';
+        return new Response(`refusé : ${why}`, { status: 401 });
+      }
       const id = url.searchParams.get('portefeuille');
       if (id !== 'desk' && id !== 'crypto') return new Response('portefeuille inconnu', { status: 400 });
       const html = await request.text();
