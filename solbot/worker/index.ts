@@ -38,7 +38,7 @@ export interface D1Database {
 export interface Env {
   DB: D1Database;
   TOKEN: string;
-  /** Départ du suivi (ms) ; par défaut celui de l'arène (jeudi 12 novembre 2026, 0 h à Paris). */
+  /** Départ du suivi (ms) ; par défaut celui de l'arène (mercredi 11 novembre 2026, 15 h 25 à Paris). */
   START_MS?: string;
 }
 
@@ -306,7 +306,12 @@ interface Book {
   trades: Trade[];
   tradeCount: number;
   wins: number;
+  /** Comptes journaliers : départ immédiat, cours pris au départ et heure de ce départ (ms). */
+  startPrices?: Record<string, number>;
+  startAt?: number;
 }
+/** Compte qui ne décide que sur des barres d'un jour (ETF, crypto journalier). */
+const isDaily = (l: Live): boolean => [...l.feeds.values()].every((f) => f.tf === '1d');
 interface Meta {
   /** Séries encore trop courtes, dans l'ordre où elles seront complétées. */
   short: string[];
@@ -444,11 +449,14 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
   ]);
   const ran: string[] = [];
   const books = new Map<string, Book>();
+  const ranBefore = (id: string): boolean => (prev?.accounts.find((a) => a.id === id)?.ranAt ?? 0) > 0;
   for (const l of movers) {
     const id = l.account.id;
     const saved = more.get(`book|${id}`) as Book | undefined;
     const book: Book = saved ? structuredClone(saved) : { trades: [], tradeCount: 0, wins: 0 };
     if (now < start) continue;
+    // Compte journalier pas encore parti : son départ immédiat (plus bas) passe d'abord.
+    if (isDaily(l) && !book.state && !ranBefore(id)) continue;
     const data = new Map<string, Bar[]>();
     for (const [s, f] of l.feeds) {
       const all = series.get(keyOf(f)) ?? (more.get(`bars|${keyOf(f)}`) as Bar[] | undefined) ?? [];
@@ -476,6 +484,49 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
       ran.push(id);
     } catch (e) {
       notes.push(`${l.account.name} : ${String(e)}`);
+    }
+  }
+
+  // 3 bis. Départ immédiat des comptes journaliers : au départ du suivi, ils n'attendent pas la prochaine clôture d'un
+  // jour. Ils décident tout de suite sur leurs barres terminées, comme si une barre se fermait au départ au dernier cours
+  // (leurs ordres « à la clôture » sont remplis à ce cours), puis continuent sur les vraies clôtures. Deux par passage.
+  if (now >= start) {
+    const starters = LIVE.filter((l) => isDaily(l) && !ran.includes(l.account.id) && !ranBefore(l.account.id)).slice(0, 2);
+    if (starters.length) {
+      const got2 = await load(db, [
+        ...starters.map((l) => `book|${l.account.id}`),
+        ...starters.flatMap((l) => [...l.feeds.values()].map((f) => `bars|${keyOf(f)}`)).filter((k) => !series.has(k.slice(5))),
+      ]);
+      const ySyms = [...new Set(starters.flatMap((l) => [...l.feeds.values()].filter((f) => f.src === 'yahoo').map((f) => f.sym)))];
+      try {
+        if (ySyms.length && spend()) Object.assign(prices, await feed.yahooLast(ySyms));
+        if (starters.some((l) => [...l.feeds.values()].some((f) => f.src !== 'yahoo')) && spend()) Object.assign(prices, await feed.krakenSpot());
+      } catch (e) {
+        notes.push(`départ immédiat (cours) : ${String(e)}`);
+      }
+      for (const l of starters) {
+        const id = l.account.id;
+        if (got2.has(`book|${id}`)) continue;
+        const startPrices: Record<string, number> = {};
+        const data = new Map<string, Bar[]>();
+        for (const [s, f] of l.feeds) {
+          const px = prices[s];
+          if (!(typeof px === 'number' && px > 0)) break;
+          startPrices[s] = px;
+          const all = series.get(keyOf(f)) ?? (got2.get(`bars|${keyOf(f)}`) as Bar[] | undefined) ?? [];
+          data.set(s, [...all.filter((b) => b.t < start && barEnd(f, b) <= now), { t: start, o: px, h: px, l: px, c: px, v: 0 }]);
+        }
+        if (data.size < l.feeds.size) continue;
+        try {
+          const r = runPortfolio(l.variant.spec, data, start, start + 1);
+          const book: Book = { state: r.state, trades: r.trades, tradeCount: r.trades.length, wins: r.trades.filter((t) => t.pnl > 0).length, startPrices, startAt: now };
+          books.set(id, book);
+          writes.set(`book|${id}`, book);
+          ran.push(id);
+        } catch (e) {
+          notes.push(`${l.account.name} : ${String(e)}`);
+        }
+      }
     }
   }
 

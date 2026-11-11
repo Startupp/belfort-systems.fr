@@ -29,8 +29,8 @@ import type { ArenaPortfolio, DataKey } from './portfolios.ts';
 import { writeArenaPage } from './report.ts';
 import { PARIS, zonedToUtc } from './strategies.ts';
 
-/** Départ du suivi en direct des 12 comptes de 5 000 $ : jeudi 12 novembre 2026, 0 h (Paris). */
-export const SUIVI_START = zonedToUtc('2026-11-12', 0, PARIS);
+/** Départ du suivi en direct des 12 comptes de 5 000 $ : mercredi 11 novembre 2026, 15 h 25 (Paris). */
+export const SUIVI_START = zonedToUtc('2026-11-11', 925, PARIS);
 
 export interface RunSummary {
   id: string;

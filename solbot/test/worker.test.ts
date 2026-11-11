@@ -18,7 +18,7 @@ test('worker : réglages figés identiques à ceux du suivi de l’arène (covid
     const expected = covid.accounts.find((a) => a.id === id)?.final?.index ?? comptes.results.find((r) => r.id === id)?.chosen ?? 0;
     assert.equal(CHOICES[id], expected, id);
   }
-  assert.equal(START_MS, zonedToUtc('2026-11-12', 0, PARIS));
+  assert.equal(START_MS, zonedToUtc('2026-11-11', 925, PARIS));
 });
 
 test('worker : plages des barres de 5 min = variantes choisies (or : NY 9 h 30 – 13 h ; EUR/USD : Londres)', () => {
@@ -212,10 +212,19 @@ test(`worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes bar
   for (const s of ['PF_XBTUSD', 'PF_ETHUSD']) FUNDING.set(s, new Map(JSON.parse(db.rows.get(`funding|${s}`)?.v as string) as Array<[number, number]>));
   let ranSomewhere = 0;
   for (const l of roster()) {
-    const book = JSON.parse(db.rows.get(`book|${l.account.id}`)?.v ?? 'null') as { state?: { cash: number; lastT: number; positions: Array<{ symbol: string; qty: number }> }; tradeCount: number } | null;
+    const book = JSON.parse(db.rows.get(`book|${l.account.id}`)?.v ?? 'null') as { state?: { cash: number; lastT: number; positions: Array<{ symbol: string; qty: number }> }; tradeCount: number; startPrices?: Record<string, number>; startAt?: number } | null;
     if (!book?.state) continue;
     ranSomewhere++;
-    const data = new Map([...l.feeds].map(([s, f]) => [s, decodeBars(db.rows.get(`bars|${f.tf}|${f.sym}`)?.v as string)]));
+    // Comptes journaliers : même départ immédiat (barre au départ, au cours relevé, avec les barres finies à ce moment-là).
+    const data = new Map(
+      [...l.feeds].map(([s, f]) => {
+        const bars = decodeBars(db.rows.get(`bars|${f.tf}|${f.sym}`)?.v as string);
+        const px = book.startPrices?.[s];
+        if (px === undefined) return [s, bars];
+        const end = (b: { t: number }): number => b.t + (f.src === 'yahoo' ? 390 * 60_000 : 86_400_000);
+        return [s, [...bars.filter((b) => b.t < start && end(b) <= (book.startAt as number)), { t: start, o: px, h: px, l: px, c: px, v: 0 }, ...bars.filter((b) => b.t > start)]];
+      }),
+    );
     const one = runPortfolio(l.variant.spec, data, start, book.state.lastT + 1);
     assert.ok(Math.abs(one.state.cash - book.state.cash) < 1e-6, `${l.account.id} : argent ${book.state.cash} ≠ ${one.state.cash}`);
     assert.deepEqual(book.state.positions.map((p) => [p.symbol, p.qty]), one.state.positions.map((p) => [p.symbol, p.qty]), l.account.id);
@@ -224,5 +233,12 @@ test(`worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes bar
   assert.ok(ranSomewhere >= 8, `comptes repris : ${ranSomewhere}`);
   assert.ok(summary.accounts.length === 12);
   if (coinbaseDown) assert.ok(['b2-crypto-tendance', 'b3-portage', 'c3-btc-eth-200j'].every((id) => db.rows.has(`book|${id}`)), 'comptes crypto repris malgré Coinbase');
+  // Départ immédiat : les comptes journaliers sont partis dans les premières minutes, et l'achat-conservation est investi.
+  for (const id of ['b2-crypto-tendance', 'b4-swing-etf', 'c1-sp500', 'c2-faber', 'c3-btc-eth-200j', 'c4-permanent']) {
+    const b = JSON.parse(db.rows.get(`book|${id}`)?.v as string) as { startAt?: number };
+    assert.ok((b.startAt as number) - start < 5 * 60_000, `${id} parti tout de suite`);
+  }
+  const c1 = JSON.parse(db.rows.get('book|c1-sp500')?.v as string) as { state: { positions: unknown[] } };
+  assert.equal(c1.state.positions.length, 1, 'achat-conservation investi dès le départ');
 });
 }

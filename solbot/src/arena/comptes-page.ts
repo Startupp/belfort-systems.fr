@@ -56,7 +56,7 @@ function ranking(results: AccountResult[]): string {
 function live(suivi: ArenaFile | null): string {
   const w = suivi?.windows.suivi;
   const started = w && w.runs.some((r) => r.daily.length > 0);
-  if (!w || !started) return '<p>Le suivi des 12 comptes démarre le <b>jeudi 12 novembre à 0 h</b> (Paris) : chaque compte part de 5 000 $ et avance sur les cours réels avec le réglage figé ci-dessous.</p>';
+  if (!w || !started) return '<p>Le suivi des 12 comptes démarre le <b>mercredi 11 novembre à 15 h 25</b> (Paris) : chaque compte part de 5 000 $ et avance sur les cours réels avec le réglage figé ci-dessous.</p>';
   const rows = [...w.runs].sort((x, y) => y.equity - x.equity);
   const total = rows.reduce((s, r) => s + r.equity, 0);
   return `<p class="muted">${esc(w.label)} · total des 12 comptes : <b class="num">${fr(total)} $</b> (${sgn(((total - 60_000) / 60_000) * 100)} %)</p><div class="scroll"><table class="board"><thead><tr><th>#</th><th>Compte</th><th>PnL</th><th>Equity</th><th>Trades</th><th>Ouvertes</th><th>Courbe</th></tr></thead><tbody>${rows

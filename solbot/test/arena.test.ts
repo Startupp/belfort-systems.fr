@@ -327,7 +327,7 @@ test('page des 12 comptes : sans squelette, classement par rendement mensuel, d�
   assert.ok(!/<!doctype|<(html|head|body)[\s>]/i.test(html));
   assert.match(html, /:root\[data-theme="dark"\]/);
   assert.ok(html.indexOf('Sniper ORB Nasdaq (QQQ)') < html.indexOf('Achat-conservation S&amp;P 500'), 'le meilleur en premier');
-  assert.match(html, /jeudi 12 novembre/);
+  assert.match(html, /mercredi 11 novembre/);
 });
 
 test('page de l’arène : fragment sans squelette, thèmes clair et sombre, classement trié', () => {

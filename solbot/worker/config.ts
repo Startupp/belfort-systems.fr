@@ -22,8 +22,8 @@ export const CHOICES: Record<string, number> = {
   'c4-permanent': 0,
 };
 
-/** Départ du suivi : jeudi 12 novembre 2026, 0 h (Paris), comme SUIVI_START dans src/arena/main.ts. */
-export const START_MS = zonedToUtc('2026-11-12', 0, PARIS);
+/** Départ du suivi : mercredi 11 novembre 2026, 15 h 25 (Paris), comme SUIVI_START dans src/arena/main.ts. */
+export const START_MS = zonedToUtc('2026-11-11', 925, PARIS);
 
 /**
  * Barres de 5 min : lues seulement pendant la plage où le compte qui les utilise peut agir (jours ouvrés, heure locale
