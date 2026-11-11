@@ -1,19 +1,19 @@
 {
   "version": 1,
   "startEquity": 500,
-  "cash": 493.2885951334009,
-  "day": "2026-11-10",
-  "dayStartEquity": 500,
-  "tradesToday": 3,
+  "cash": 490.98436881816247,
+  "day": "2026-11-11",
+  "dayStartEquity": 493.2885951334009,
+  "tradesToday": 4,
   "stockCashUsedToday": 0,
   "weights": {
     "orb": 1,
-    "noise": 0.4473611630812977,
+    "noise": 0.25,
     "vwap": 1
   },
   "lossStreak": {
     "orb": 0,
-    "noise": 3,
+    "noise": 4,
     "vwap": 0
   },
   "weekId": "2026-S46",
@@ -22,8 +22,11 @@
   "cooldown": {
     "NEAR-USD": 1794323160000,
     "PEPE24478-USD": 1794324240000,
-    "LINK-USD": 1794324420000
+    "LINK-USD": 1794324420000,
+    "DOGE-USD": 1794418560000,
+    "AVAX-USD": 1794419220000,
+    "ETH-USD": 1794419220000
   },
   "orbDone": {},
-  "closedCount": 3
+  "closedCount": 7
 }

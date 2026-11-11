@@ -1,16 +1,16 @@
 {
-  "generatedAt": 1794339494941,
-  "commit": "7e3867b (2026-11-10)",
+  "generatedAt": 1794420120572,
+  "commit": "33be825 (2026-11-11)",
   "windows": {
     "suivi": {
-      "label": "Suivi en direct depuis le 12 novembre 2026",
-      "from": 1794438000000,
-      "to": 1794339494941,
+      "label": "Suivi en direct depuis le 11 novembre 2026",
+      "from": 1794407100000,
+      "to": 1794420120572,
       "runs": [
         {
           "id": "a1-perps",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -23,44 +23,73 @@
             "bestDayPct": 0,
             "worstDayPct": 0,
             "daysUp": 0,
-            "days": 0,
+            "days": 1,
             "exposurePct": 0
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
+          "daily": [
+            [
+              "2026-11-11",
+              5000
+            ]
+          ],
           "trades": [],
           "open": []
         },
         {
           "id": "a2-orb-qqq",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
-          "equity": 5000,
+          "equity": 4949.071084770655,
           "stats": {
-            "returnPct": 0,
-            "maxDrawdownPct": 0,
-            "trades": 0,
+            "returnPct": -1.0185783045868992,
+            "maxDrawdownPct": 2.3433843085096275,
+            "trades": 1,
             "winRatePct": 0,
             "profitFactor": 0,
-            "avgTradePct": 0,
-            "bestDayPct": 0,
-            "worstDayPct": 0,
+            "avgTradePct": -1.0185783045869017,
+            "bestDayPct": -1.0185783045868992,
+            "worstDayPct": -1.0185783045868992,
             "daysUp": 0,
-            "days": 0,
-            "exposurePct": 0
+            "days": 1,
+            "exposurePct": 29.95260116068634
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
-          "trades": [],
+          "daily": [
+            [
+              "2026-11-11",
+              4949.07
+            ]
+          ],
+          "trades": [
+            {
+              "id": "a2-orb-qqq-2",
+              "symbol": "QQQ",
+              "side": "short",
+              "qty": 26.963374154906074,
+              "entry": 687.1656522064209,
+              "exit": 689.0544705322267,
+              "openedAt": 1794407700000,
+              "closedAt": 1794411900000,
+              "notional": 18528.304586841783,
+              "pnl": -50.92891522934509,
+              "pnlPct": -1.0185783045869017,
+              "r": -1.0185783045869017,
+              "fees": 0,
+              "financing": 0,
+              "reason": "ORB QQQ : 1re bougie baissière (687.28 → 687.19), stop 689.02, objectif 10 R",
+              "exitReason": "stop"
+            }
+          ],
           "open": []
         },
         {
           "id": "a3-or",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -73,19 +102,24 @@
             "bestDayPct": 0,
             "worstDayPct": 0,
             "daysUp": 0,
-            "days": 0,
+            "days": 1,
             "exposurePct": 0
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
+          "daily": [
+            [
+              "2026-11-11",
+              5000
+            ]
+          ],
           "trades": [],
           "open": []
         },
         {
           "id": "a4-forex",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -98,19 +132,24 @@
             "bestDayPct": 0,
             "worstDayPct": 0,
             "daysUp": 0,
-            "days": 0,
+            "days": 1,
             "exposurePct": 0
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
+          "daily": [
+            [
+              "2026-11-11",
+              5000
+            ]
+          ],
           "trades": [],
           "open": []
         },
         {
           "id": "b1-momentum-spx",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -123,19 +162,24 @@
             "bestDayPct": 0,
             "worstDayPct": 0,
             "daysUp": 0,
-            "days": 0,
+            "days": 1,
             "exposurePct": 0
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
+          "daily": [
+            [
+              "2026-11-11",
+              5000
+            ]
+          ],
           "trades": [],
           "open": []
         },
         {
           "id": "b2-crypto-tendance",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -159,33 +203,67 @@
         },
         {
           "id": "b3-portage",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
-          "equity": 5000,
+          "equity": 4995.38278016341,
           "stats": {
-            "returnPct": 0,
-            "maxDrawdownPct": 0,
+            "returnPct": -0.09234439673180532,
+            "maxDrawdownPct": 0.09872076044792266,
             "trades": 0,
             "winRatePct": 0,
             "profitFactor": 0,
             "avgTradePct": 0,
-            "bestDayPct": 0,
-            "worstDayPct": 0,
+            "bestDayPct": -0.09234439673180532,
+            "worstDayPct": -0.09234439673180532,
             "daysUp": 0,
-            "days": 0,
-            "exposurePct": 0
+            "days": 1,
+            "exposurePct": 55.29710983511323
           },
-          "fees": 0,
-          "financing": 0,
-          "daily": [],
+          "fees": 3.498425069986003,
+          "financing": -0.060599280293851594,
+          "daily": [
+            [
+              "2026-11-11",
+              4995.38
+            ]
+          ],
           "trades": [],
-          "open": []
+          "open": [
+            {
+              "id": "b3-portage-1",
+              "symbol": "BTC-USD",
+              "side": "long",
+              "qty": 0.033814987986919974,
+              "entry": 73931.71338599999,
+              "openedAt": 1794412800000,
+              "enteredBarT": 1794409200000,
+              "reason": "portage : financement moyen 72 h à 11.7 %/an (jambe au comptant)",
+              "tag": "carry",
+              "fees": 1.7500000000000004,
+              "financing": 0,
+              "equityAtEntry": 5000
+            },
+            {
+              "id": "b3-portage-2",
+              "symbol": "PF_XBTUSD",
+              "side": "short",
+              "qty": 0.033800326738959705,
+              "entry": 73897.2176,
+              "openedAt": 1794412800000,
+              "enteredBarT": 1794409200000,
+              "reason": "portage : financement moyen 72 h à 11.7 %/an (jambe perpétuel vendue)",
+              "tag": "carry",
+              "fees": 1.7484250699860027,
+              "financing": -0.060599280293851594,
+              "equityAtEntry": 4997.750099980004
+            }
+          ]
         },
         {
           "id": "b4-swing-etf",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -209,8 +287,8 @@
         },
         {
           "id": "c1-sp500",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -234,8 +312,8 @@
         },
         {
           "id": "c2-faber",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -259,8 +337,8 @@
         },
         {
           "id": "c3-btc-eth-200j",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -284,8 +362,8 @@
         },
         {
           "id": "c4-permanent",
-          "from": 1794438000000,
-          "to": 1794339494941,
+          "from": 1794407100000,
+          "to": 1794420120572,
           "capital": 5000,
           "equity": 5000,
           "stats": {

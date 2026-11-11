@@ -1,0 +1,23 @@
+--- lancement 2026-11-11 14:51:36 (Paris)
+2026-11-11 14:59 [PAPIER] DAY_START séance du 2026-11-11 — equity 501.44 $, poids ORB 1.26 / momentum 1.00 / VWAP 0.77
+2026-11-11 15:00 [PAPIER] ANALYSIS  analyse 15:00 : 3 en tendance, 0 en range, 0 mixtes
+2026-11-11 15:30 [PAPIER] ANALYSIS  analyse 15:30 : 16 en tendance, 2 en range, 1 mixtes
+2026-11-11 15:34 [PAPIER] ANALYSIS  actions en jeu à l'ouverture : NVDA 2.86×↑, AVGO 1.72×↑, MU 1.03×↓, AMD 0.97×↓, PLTR 0.93×↑
+actions « en jeu » ajoutées depuis les listes Yahoo : ROKU, CRWV, NBIS, FLY, IREN, AXTI, SNDK, LITE, AAOI, BE, MRVL, SPCX
+2026-11-11 15:35 [PAPIER] ANALYSIS  actions en jeu à l'ouverture : CRWV 4.68×↓, NVDA 2.86×↑, NBIS 2.71×↓, FLY 2.39×↑, AVGO 1.72×↑
+2026-11-11 15:38 [PAPIER] OPEN      ACHAT NVDA 206.15 $ — ORB 5 min (stop 172.500)
+2026-11-11 15:43 [PAPIER] CLOSE     VENTE NVDA -3.21 $ (-1.02 R) — stop
+2026-11-11 16:00 [PAPIER] ANALYSIS  analyse 16:00 : 1 en tendance, 29 en range, 2 mixtes
+2026-11-11 16:27 [PAPIER] OPEN      ACHAT LITE 88.29 $ — ORB 5 min (stop 640.020)
+2026-11-11 16:30 [PAPIER] ANALYSIS  analyse 16:30 : 5 en tendance, 22 en range, 5 mixtes
+2026-11-11 16:35 [PAPIER] OPEN      ACHAT ETH-USD 249.65 $ — momentum zone de bruit (stop 2072.28)
+2026-11-11 16:36 [PAPIER] CLOSE     VENTE ETH-USD -2.02 $ (-1.09 R) — retour dans la zone de bruit / sous la VWAP
+2026-11-11 17:00 [PAPIER] ANALYSIS  analyse 17:00 : 4 en tendance, 14 en range, 14 mixtes
+2026-11-11 17:00 [PAPIER] OPEN      ACHAT AMZN 207.00 $ — retour VWAP (stop 266.128)
+2026-11-11 17:10 [PAPIER] CLOSE     VENTE AMZN -0.76 $ (-1.09 R) — stop
+2026-11-11 17:30 [PAPIER] ANALYSIS  analyse 17:30 : 0 en tendance, 31 en range, 1 mixtes
+2026-11-11 18:00 [PAPIER] ANALYSIS  analyse 18:00 : 2 en tendance, 27 en range, 3 mixtes
+2026-11-11 18:30 [PAPIER] ANALYSIS  analyse 18:30 : 2 en tendance, 29 en range, 1 mixtes
+2026-11-11 18:55 [PAPIER] CLOSE     VENTE LITE +1.99 $ (+0.82 R) — clôture de fin de fenêtre (18:55)
+2026-11-11 18:59 [PAPIER] DAY_END   fin de séance : 4 trades, -4.01 $ (-0.80 %)
+séance terminée : 4 trades, -4.01 $ — carnet : /home/user/belfort-systems.fr/solbot/carnet/carnet.html
