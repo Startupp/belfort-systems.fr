@@ -18,6 +18,9 @@ const PAGE_HEAD = String.raw`<!doctype html>
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line);font-size:14px}
+.tabs a{padding:6px 12px;border-radius:99px;text-decoration:none;font-weight:600;color:var(--muted)}
+.tabs a[aria-current]{background:var(--m);color:var(--panel)}
 .wrap{max-width:1080px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
 header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px;margin-bottom:16px}
@@ -77,6 +80,7 @@ footer .notes{color:var(--s)}
 </style>
 </head>
 <body>
+<nav aria-label="Pages" class="tabs"><a href="./" aria-current="page">12 comptes</a><a href="desk">Desk 500 $</a><a href="crypto">Crypto 500 $</a></nav>
 <div class="wrap">
 <header>
   <div><p class="kicker">Arène papier · aucun ordre réel</p><h1>12 comptes de 5 000 $, en direct</h1></div>

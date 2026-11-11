@@ -33,6 +33,10 @@ Elle est relue à chaque séance après `git pull` : la modifier ici suffit pour
    l'utilisateur puisse suivre la séance depuis cette session.
    Lancé après 15 h, le moteur rattrape les sorties mais n'entre jamais « dans le passé ». Après 19 h, il n'y a plus
    de séance ce jour-là : passer directement au message du soir pour le signaler.
+   `demarrer` lance aussi l'**envoi de la page en direct** (desk et crypto) vers les onglets « Desk 500 $ » et « Crypto 500 $ »
+   de la page des 12 comptes (Worker `arene-papier`), chaque minute jusqu'à 19 h 05. Le jeton est ajouté par le proxy de
+   l'environnement : ne jamais le chercher, l'écrire ou le demander. Si le journal `carnet/logs/AAAA-MM-JJ-envoi.log` montre
+   des refus (401), le signaler dans le message du soir sans rien changer d'autre.
 3. **Attente** : lancer `solbot/scripts/desk-operateur.sh attendre 110` **en arrière-plan**
    (outil Bash, `run_in_background`, délai 7 200 000 ms), puis terminer le tour. À chaque réveil :
    « EN COURS » → relancer la même commande ; « TERMINÉE » → étape 4.

@@ -4,6 +4,8 @@
 #   scripts/desk-operateur.sh demarrer          lance la séance en arrière-plan détaché (si pas déjà lancée),
 #                                               le portefeuille crypto papier (carnet-crypto) et l'aperçu en direct
 #                                               du carnet (http://localhost:8080/)
+#   scripts/desk-operateur.sh envoyer           (re)lance seul l'envoi de la page en direct vers les onglets Desk et
+#                                               Crypto du Worker « arene-papier » (déjà lancé par « demarrer »)
 #   scripts/desk-operateur.sh attendre [min]    attend la fin de la séance, au plus [min] minutes (110 par défaut)
 #   scripts/desk-operateur.sh etat              séance en cours ou non, dernières lignes du journal
 #   scripts/desk-operateur.sh cloturer          régénère carnet.html et carnet.csv, affiche le résumé du jour, indexe carnet/
@@ -32,6 +34,14 @@ main() {
       echo "portefeuille crypto lancé — journal : carnet-crypto/logs/$day.log"
     fi
   }
+  # Page en direct envoyée chaque minute aux onglets Desk et Crypto de la page des 12 comptes (Worker arene-papier).
+  # Le jeton est ajouté par le proxy de l'environnement cloud : rien à configurer ici.
+  envoi() {
+    if ! pgrep -f "[s]rc/desk/pousser.ts" >/dev/null; then
+      setsid nohup node src/desk/pousser.ts >>"$DESK_DATA_DIR/logs/$day-envoi.log" 2>&1 </dev/null &
+      echo "page en direct envoyée aux onglets Desk et Crypto — journal : $DESK_DATA_DIR/logs/$day-envoi.log"
+    fi
+  }
   apercu() {
     if ! pgrep -f "[s]rc/desk/apercu.ts" >/dev/null; then
       setsid nohup node src/desk/apercu.ts 8080 >>"${TMPDIR:-/tmp}/desk-apercu.log" 2>&1 </dev/null &
@@ -42,6 +52,7 @@ main() {
   case "${1:-etat}" in
     demarrer)
       apercu
+      envoi
       crypto
       if en_cours; then
         echo "séance déjà en cours (PID $(pgrep -f '[s]rc/desk/main.ts live' | tr '\n' ' '))"
@@ -58,6 +69,9 @@ main() {
         tail -20 "$log"
         return 1
       fi
+      ;;
+    envoyer)
+      envoi
       ;;
     attendre)
       local max=$(( ${2:-110} * 60 )) t=0
@@ -90,7 +104,7 @@ main() {
       git status --short -- "$DESK_DATA_DIR" | head -20
       ;;
     *)
-      echo "usage : $0 demarrer | attendre [minutes] | etat | cloturer" >&2
+      echo "usage : $0 demarrer | envoyer | attendre [minutes] | etat | cloturer" >&2
       return 2
       ;;
   esac

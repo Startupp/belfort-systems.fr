@@ -242,3 +242,24 @@ test(`worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes bar
   assert.equal(c1.state.positions.length, 1, 'achat-conservation investi dès le départ');
 });
 }
+
+test('worker : pages Desk et Crypto reçues de l’opérateur (jeton dans l’en-tête), servies derrière le lien secret', async () => {
+  const env = { DB: new MemoryD1(), TOKEN: 'jeton-de-test-assez-long' };
+  const post = (auth: string | null, id = 'desk', body = '<main><h1>Carnet de trades</h1><p>Equity 501,23 $</p></main>') =>
+    worker.fetch(new Request(`https://x.dev/desk?portefeuille=${id}`, { method: 'POST', body, headers: auth ? { authorization: auth } : {} }), env);
+  assert.equal((await post(null)).status, 401, 'sans jeton');
+  assert.equal((await post('Bearer mauvais-jeton-de-test-xx')).status, 401, 'mauvais jeton');
+  assert.equal((await post('Bearer jeton-de-test-assez-long', 'autre')).status, 400);
+  assert.equal((await post('Bearer jeton-de-test-assez-long')).status, 204);
+  // Avant tout envoi pour la crypto : page d'attente, avec les onglets.
+  const vide = await (await worker.fetch(new Request('https://x.dev/jeton-de-test-assez-long/crypto'), env)).text();
+  assert.match(vide, /Pas encore de page reçue/);
+  assert.match(vide, /12 comptes/);
+  const res = await worker.fetch(new Request('https://x.dev/jeton-de-test-assez-long/desk'), env);
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /Equity 501,23 \$/);
+  assert.match(html, /aria-current="page"[^>]*>|>Desk 500 \$<\/a>/);
+  assert.match(res.headers.get('content-security-policy') ?? '', /fonts\.googleapis\.com/);
+  assert.equal((await worker.fetch(new Request('https://x.dev/autre-jeton-de-test-xxxxx/desk'), env)).status, 404, 'lien secret exigé');
+});

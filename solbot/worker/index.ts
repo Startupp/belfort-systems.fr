@@ -635,6 +635,37 @@ async function summaryText(db: D1Database): Promise<string> {
   return row?.v ?? JSON.stringify({ generatedAt: 0, startMs: START_MS, mode: 'papier', accounts: [], notes: ['pas encore de passage'], filling: FEEDS.size } satisfies Summary);
 }
 
+/** Pages en direct envoyées par l'opérateur du desk (src/desk/pousser.ts) : desk 500 $ et portefeuille crypto. */
+const DESKS = { desk: 'Desk 500 $', crypto: 'Crypto 500 $' } as const;
+type DeskId = keyof typeof DESKS;
+/** La page du carnet charge ses polices chez Google ; le reste est dans la page. */
+const DESK_HEADERS = {
+  ...PAGE_HEADERS,
+  'content-security-policy': "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+};
+const escapeHtml = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
+
+/** Barre d'onglets commune aux trois pages (liens relatifs au lien secret). */
+export function tabBar(current: 'comptes' | DeskId, status = ''): string {
+  const tab = (id: string, href: string, label: string): string =>
+    `<a href="${href}" style="padding:6px 12px;border-radius:99px;text-decoration:none;font-weight:600;${id === current ? 'background:#1f5ea8;color:#fff' : 'color:inherit;opacity:.75'}"${id === current ? ' aria-current="page"' : ''}>${label}</a>`;
+  return `<nav aria-label="Pages" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;font:14px/1.3 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;padding:10px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid rgba(127,127,127,.25)">${tab('comptes', './', '12 comptes')}${tab('desk', 'desk', DESKS.desk)}${tab('crypto', 'crypto', DESKS.crypto)}${status ? `<span style="margin-left:auto;opacity:.7;font-size:12.5px">${status}</span>` : ''}</nav>`;
+}
+
+/** Page d'un carnet en direct : barre d'onglets, état de l'envoi, puis la page du carnet telle que l'opérateur la voit. */
+export function deskPage(id: DeskId, saved: { html: string; at: number } | null, now = Date.now()): string {
+  const hhmm = (ms: number): string => {
+    const m = localTime(ms, 'Europe/Paris').minutes;
+    return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  };
+  const age = saved ? Math.max(0, Math.round((now - saved.at) / 60_000)) : 0;
+  const status = saved ? `mis à jour à ${hhmm(saved.at)} (Paris)${age > 2 ? `, il y a ${age} min — l'envoi reprend pendant la séance (15 h – 19 h)` : ''}` : '';
+  const body = saved
+    ? saved.html
+    : `<main style="max-width:720px;margin:0 auto;padding:32px max(16px,env(safe-area-inset-left,0px));font:15px/1.5 system-ui,sans-serif"><h1 style="font-size:22px">${escapeHtml(DESKS[id])}</h1><p>Pas encore de page reçue. L'opérateur du desk l'envoie chaque minute pendant la séance (15 h – 19 h, heure de Paris), avec les positions ouvertes au dernier cours.</p></main>`;
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><meta http-equiv="refresh" content="60"><title>${escapeHtml(DESKS[id])} en direct</title></head><body style="margin:0">${tabBar(id, status)}${body}</body></html>`;
+}
+
 export default {
   async scheduled(controller: { scheduledTime: number }, env: Env, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<void> {
     ctx.waitUntil(
@@ -648,11 +679,32 @@ export default {
   },
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    // Envoi de l'opérateur du desk : POST /desk?portefeuille=desk|crypto, jeton dans l'en-tête Authorization (ajouté par
+    // le proxy de son environnement cloud, jamais écrit dans le dépôt).
+    if (request.method === 'POST' && url.pathname === '/desk') {
+      const auth = (request.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+      if (!sameToken(auth, env.TOKEN ?? '')) return new Response('refusé', { status: 401 });
+      const id = url.searchParams.get('portefeuille');
+      if (id !== 'desk' && id !== 'crypto') return new Response('portefeuille inconnu', { status: 400 });
+      const html = await request.text();
+      if (!html || html.length > 1_500_000) return new Response('page vide ou trop grande', { status: 413 });
+      if (!schemaReady) {
+        await env.DB.prepare(SCHEMA).run();
+        schemaReady = true;
+      }
+      const now = Date.now();
+      await env.DB.prepare('INSERT INTO kv (k, v, updated) VALUES (?, ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated = excluded.updated').bind(`page|${id}`, JSON.stringify({ html, at: now }), now).run();
+      return new Response(null, { status: 204 });
+    }
     const [token, action, ...rest] = url.pathname.split('/').filter(Boolean);
     if (!sameToken(token ?? '', env.TOKEN ?? '') || rest.length) return new Response('introuvable', { status: 404 });
     if (!action && !url.pathname.endsWith('/')) return Response.redirect(`${url.origin}/${token}/`, 301);
     if (action === 'api') return new Response(await summaryText(env.DB), { headers: JSON_HEADERS });
     if (action === 'run') return new Response(JSON.stringify(await cycle(env, { force: url.searchParams.has('tout') })), { headers: JSON_HEADERS });
+    if (action === 'desk' || action === 'crypto') {
+      const row = await env.DB.prepare('SELECT v FROM kv WHERE k = ?').bind(`page|${action}`).first<{ v: string }>();
+      return new Response(deskPage(action, row ? (JSON.parse(row.v) as { html: string; at: number }) : null), { headers: DESK_HEADERS });
+    }
     if (action) return new Response('introuvable', { status: 404 });
     return new Response(pageHtml(await summaryText(env.DB)), { headers: PAGE_HEADERS });
   },
