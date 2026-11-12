@@ -1,60 +1,80 @@
 {
-  "generatedAt": 1794420120572,
+  "generatedAt": 1794506481527,
   "commit": "33be825 (2026-11-11)",
   "windows": {
     "suivi": {
       "label": "Suivi en direct depuis le 11 novembre 2026",
       "from": 1794407100000,
-      "to": 1794420120572,
+      "to": 1794506481527,
       "runs": [
         {
           "id": "a1-perps",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
-          "equity": 5000,
+          "equity": 4992.043803571383,
           "stats": {
-            "returnPct": 0,
-            "maxDrawdownPct": 0,
+            "returnPct": -0.15912392857233498,
+            "maxDrawdownPct": 0.15912392857233498,
             "trades": 0,
             "winRatePct": 0,
             "profitFactor": 0,
             "avgTradePct": 0,
             "bestDayPct": 0,
-            "worstDayPct": 0,
+            "worstDayPct": -0.15912392857233498,
             "daysUp": 0,
-            "days": 1,
-            "exposurePct": 0
+            "days": 2,
+            "exposurePct": 7.2448071762874005
           },
-          "fees": 0,
-          "financing": 0,
+          "fees": 1.246192355146116,
+          "financing": -0.0795968961754993,
           "daily": [
             [
               "2026-11-11",
               5000
+            ],
+            [
+              "2026-11-12",
+              4992.04
             ]
           ],
           "trades": [],
-          "open": []
+          "open": [
+            {
+              "id": "a1-perps-1",
+              "symbol": "PF_XBTUSD",
+              "side": "short",
+              "qty": 0.034789029639771124,
+              "entry": 71642.835,
+              "stop": 74517.3043667937,
+              "initialStop": 74517.3043667937,
+              "openedAt": 1794499200000,
+              "enteredBarT": 1794495600000,
+              "reason": "tendance 4 h : cassure du plus bas de 20 barres, sous la MME 50",
+              "fees": 1.246192355146116,
+              "financing": -0.0795968961754993,
+              "equityAtEntry": 5000
+            }
+          ]
         },
         {
           "id": "a2-orb-qqq",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
-          "equity": 4949.071084770655,
+          "equity": 5042.826212370327,
           "stats": {
-            "returnPct": -1.0185783045868992,
+            "returnPct": 0.8565242474065417,
             "maxDrawdownPct": 2.3433843085096275,
             "trades": 1,
             "winRatePct": 0,
             "profitFactor": 0,
             "avgTradePct": -1.0185783045869017,
-            "bestDayPct": -1.0185783045868992,
+            "bestDayPct": 1.8943984839534138,
             "worstDayPct": -1.0185783045868992,
-            "daysUp": 0,
-            "days": 1,
-            "exposurePct": 29.95260116068634
+            "daysUp": 1,
+            "days": 2,
+            "exposurePct": 15.998949180968008
           },
           "fees": 0,
           "financing": 0,
@@ -62,6 +82,10 @@
             [
               "2026-11-11",
               4949.07
+            ],
+            [
+              "2026-11-12",
+              5042.83
             ]
           ],
           "trades": [
@@ -84,12 +108,30 @@
               "exitReason": "stop"
             }
           ],
-          "open": []
+          "open": [
+            {
+              "id": "a2-orb-qqq-4",
+              "symbol": "QQQ",
+              "side": "long",
+              "qty": 12.516077824172358,
+              "entry": 683.7941977661134,
+              "stop": 679.8400268554688,
+              "initialStop": 679.8400268554688,
+              "target": 722.2998657226562,
+              "exitBy": 1794517200000,
+              "openedAt": 1794494100000,
+              "enteredBarT": 1794494100000,
+              "reason": "ORB QQQ : 1re bougie haussière (680.21 → 683.70), stop 679.84, objectif 10 R",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 4949.071084770655
+            }
+          ]
         },
         {
           "id": "a3-or",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -102,7 +144,7 @@
             "bestDayPct": 0,
             "worstDayPct": 0,
             "daysUp": 0,
-            "days": 1,
+            "days": 2,
             "exposurePct": 0
           },
           "fees": 0,
@@ -110,6 +152,10 @@
           "daily": [
             [
               "2026-11-11",
+              5000
+            ],
+            [
+              "2026-11-12",
               5000
             ]
           ],
@@ -119,21 +165,21 @@
         {
           "id": "a4-forex",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
-          "equity": 5000,
+          "equity": 4918.799017293408,
           "stats": {
-            "returnPct": 0,
-            "maxDrawdownPct": 0,
-            "trades": 0,
+            "returnPct": -1.6240196541318437,
+            "maxDrawdownPct": 3.6290838555646605,
+            "trades": 1,
             "winRatePct": 0,
             "profitFactor": 0,
-            "avgTradePct": 0,
+            "avgTradePct": -1.6240196541318517,
             "bestDayPct": 0,
-            "worstDayPct": 0,
+            "worstDayPct": -1.6240196541318437,
             "daysUp": 0,
-            "days": 1,
-            "exposurePct": 0
+            "days": 2,
+            "exposurePct": 14.187747386896158
           },
           "fees": 0,
           "financing": 0,
@@ -141,45 +187,90 @@
             [
               "2026-11-11",
               5000
+            ],
+            [
+              "2026-11-12",
+              4918.8
             ]
           ],
-          "trades": [],
+          "trades": [
+            {
+              "id": "a4-forex-3",
+              "symbol": "EURUSD=X",
+              "side": "long",
+              "qty": 111840.91703544071,
+              "entry": 1.1095639898300171,
+              "exit": 1.1088379498004914,
+              "openedAt": 1794472200000,
+              "closedAt": 1794486600000,
+              "notional": 124094.65413209153,
+              "pnl": -81.20098270659258,
+              "pnlPct": -1.6240196541318517,
+              "r": -1.0826797694212345,
+              "fees": 0,
+              "financing": 0,
+              "reason": "EUR/USD Londres : cassure du haut du range (1.1095085144042969, largeur 0.00062)",
+              "exitReason": "stop"
+            }
+          ],
           "open": []
         },
         {
           "id": "b1-momentum-spx",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
-          "equity": 5000,
+          "equity": 4998.926773331334,
           "stats": {
-            "returnPct": 0,
-            "maxDrawdownPct": 0,
-            "trades": 0,
+            "returnPct": -0.02146453337332787,
+            "maxDrawdownPct": 0.06088681505822695,
+            "trades": 1,
             "winRatePct": 0,
             "profitFactor": 0,
-            "avgTradePct": 0,
+            "avgTradePct": -0.021464533373320008,
             "bestDayPct": 0,
-            "worstDayPct": 0,
+            "worstDayPct": -0.02146453337332787,
             "daysUp": 0,
-            "days": 1,
-            "exposurePct": 0
+            "days": 2,
+            "exposurePct": 1.8112017940718501
           },
           "fees": 0,
           "financing": 0,
           "daily": [
             [
               "2026-11-11",
-              5000
+              4998.93
+            ],
+            [
+              "2026-11-12",
+              4998.93
             ]
           ],
-          "trades": [],
+          "trades": [
+            {
+              "id": "b1-momentum-spx-1",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 8.504490611252688,
+              "entry": 762.1380805847169,
+              "exit": 762.0118852935791,
+              "openedAt": 1794421800000,
+              "closedAt": 1794423600000,
+              "notional": 6481.596150810869,
+              "pnl": -1.0732266686660004,
+              "pnlPct": -0.021464533373320008,
+              "fees": 0,
+              "financing": 0,
+              "reason": "zone de bruit : 762.10 au-dessus de 761.70 (bruit 0.65 %), levier 1.30",
+              "exitReason": "retour sous max(borne haute, VWAP)"
+            }
+          ],
           "open": []
         },
         {
           "id": "b2-crypto-tendance",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -204,28 +295,32 @@
         {
           "id": "b3-portage",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
-          "equity": 4995.38278016341,
+          "equity": 4995.668111484852,
           "stats": {
-            "returnPct": -0.09234439673180532,
-            "maxDrawdownPct": 0.09872076044792266,
+            "returnPct": -0.08663777030296842,
+            "maxDrawdownPct": 0.10340821619036432,
             "trades": 0,
             "winRatePct": 0,
             "profitFactor": 0,
             "avgTradePct": 0,
-            "bestDayPct": -0.09234439673180532,
-            "worstDayPct": -0.09234439673180532,
-            "daysUp": 0,
-            "days": 1,
-            "exposurePct": 55.29710983511323
+            "bestDayPct": 0.01328107603645888,
+            "worstDayPct": -0.09990557780367453,
+            "daysUp": 1,
+            "days": 2,
+            "exposurePct": 94.18249329173621
           },
           "fees": 3.498425069986003,
-          "financing": -0.060599280293851594,
+          "financing": -0.7415915594390248,
           "daily": [
             [
               "2026-11-11",
-              4995.38
+              4995
+            ],
+            [
+              "2026-11-12",
+              4995.67
             ]
           ],
           "trades": [],
@@ -255,7 +350,7 @@
               "reason": "portage : financement moyen 72 h à 11.7 %/an (jambe perpétuel vendue)",
               "tag": "carry",
               "fees": 1.7484250699860027,
-              "financing": -0.060599280293851594,
+              "financing": -0.7415915594390248,
               "equityAtEntry": 4997.750099980004
             }
           ]
@@ -263,7 +358,7 @@
         {
           "id": "b4-swing-etf",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -276,69 +371,151 @@
             "bestDayPct": 0,
             "worstDayPct": 0,
             "daysUp": 0,
-            "days": 0,
+            "days": 1,
             "exposurePct": 0
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
+          "daily": [
+            [
+              "2026-11-11",
+              5000
+            ]
+          ],
           "trades": [],
           "open": []
         },
         {
           "id": "c1-sp500",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
-          "equity": 5000,
+          "equity": 4999.500049995,
           "stats": {
-            "returnPct": 0,
-            "maxDrawdownPct": 0,
+            "returnPct": -0.00999900009999692,
+            "maxDrawdownPct": 0.00999900009999692,
             "trades": 0,
             "winRatePct": 0,
             "profitFactor": 0,
             "avgTradePct": 0,
-            "bestDayPct": 0,
-            "worstDayPct": 0,
+            "bestDayPct": -0.00999900009999692,
+            "worstDayPct": -0.00999900009999692,
             "daysUp": 0,
-            "days": 0,
+            "days": 1,
             "exposurePct": 0
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
+          "daily": [
+            [
+              "2026-11-11",
+              4999.5
+            ]
+          ],
           "trades": [],
-          "open": []
+          "open": [
+            {
+              "id": "c1-sp500-1",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 6.579934544240394,
+              "entry": 759.8859785583496,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "achat-conservation",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 5000
+            }
+          ]
         },
         {
           "id": "c2-faber",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
-          "equity": 5000,
+          "equity": 4999.6000519934405,
           "stats": {
-            "returnPct": 0,
-            "maxDrawdownPct": 0,
+            "returnPct": -0.00799896013118996,
+            "maxDrawdownPct": 0.00799896013118996,
             "trades": 0,
             "winRatePct": 0,
             "profitFactor": 0,
             "avgTradePct": 0,
-            "bestDayPct": 0,
-            "worstDayPct": 0,
+            "bestDayPct": -0.00799896013118996,
+            "worstDayPct": -0.00799896013118996,
             "daysUp": 0,
-            "days": 0,
+            "days": 1,
             "exposurePct": 0
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
+          "daily": [
+            [
+              "2026-11-11",
+              4999.6
+            ]
+          ],
           "trades": [],
-          "open": []
+          "open": [
+            {
+              "id": "c2-faber-1",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1.315986908848079,
+              "entry": 759.8859785583496,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "allocation de Faber : 20 % du compte",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 5000
+            },
+            {
+              "id": "c2-faber-2",
+              "symbol": "EFA",
+              "side": "long",
+              "qty": 9.553601939729266,
+              "entry": 104.67046966247558,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "allocation de Faber : 20 % du compte",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 4999.900009999
+            },
+            {
+              "id": "c2-faber-3",
+              "symbol": "VNQ",
+              "side": "long",
+              "qty": 10.305710709062739,
+              "entry": 97.02969864273071,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "allocation de Faber : 20 % du compte",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 4999.8000219976
+            },
+            {
+              "id": "c2-faber-4",
+              "symbol": "DBC",
+              "side": "long",
+              "qty": 32.42023405479563,
+              "entry": 30.84308415260315,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "allocation de Faber : 20 % du compte",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 4999.70003599576
+            }
+          ]
         },
         {
           "id": "c3-btc-eth-200j",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
           "equity": 5000,
           "stats": {
@@ -363,27 +540,85 @@
         {
           "id": "c4-permanent",
           "from": 1794407100000,
-          "to": 1794420120572,
+          "to": 1794506481527,
           "capital": 5000,
-          "equity": 5000,
+          "equity": 4999.500087486565,
           "stats": {
-            "returnPct": 0,
-            "maxDrawdownPct": 0,
+            "returnPct": -0.009998250268708944,
+            "maxDrawdownPct": 0.009998250268708944,
             "trades": 0,
             "winRatePct": 0,
             "profitFactor": 0,
             "avgTradePct": 0,
-            "bestDayPct": 0,
-            "worstDayPct": 0,
+            "bestDayPct": -0.009998250268708944,
+            "worstDayPct": -0.009998250268708944,
             "daysUp": 0,
-            "days": 0,
+            "days": 1,
             "exposurePct": 0
           },
           "fees": 0,
           "financing": 0,
-          "daily": [],
+          "daily": [
+            [
+              "2026-11-11",
+              4999.5
+            ]
+          ],
           "trades": [],
-          "open": []
+          "open": [
+            {
+              "id": "c4-permanent-1",
+              "symbol": "SPY",
+              "side": "long",
+              "qty": 1.6449836360600985,
+              "entry": 759.8859785583496,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "portefeuille permanent : 25 % du compte",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 5000
+            },
+            {
+              "id": "c4-permanent-2",
+              "symbol": "TLT",
+              "side": "long",
+              "qty": 15.445425074508535,
+              "entry": 80.92809016876221,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "portefeuille permanent : 25 % du compte",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 4999.87501249875
+            },
+            {
+              "id": "c4-permanent-3",
+              "symbol": "GLD",
+              "side": "long",
+              "qty": 3.4225497160796414,
+              "entry": 365.20653042907713,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "portefeuille permanent : 25 % du compte",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 4999.750028121875
+            },
+            {
+              "id": "c4-permanent-4",
+              "symbol": "BIL",
+              "side": "long",
+              "qty": 13.656763140233975,
+              "entry": 91.50915,
+              "openedAt": 1794430800000,
+              "enteredBarT": 1794407400000,
+              "reason": "portefeuille permanent : 25 % du compte",
+              "fees": 0,
+              "financing": 0,
+              "equityAtEntry": 4999.625046869298
+            }
+          ]
         }
       ]
     }

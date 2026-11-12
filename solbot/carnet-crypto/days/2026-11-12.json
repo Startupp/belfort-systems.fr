@@ -1,0 +1,751 @@
+{
+  "day": "2026-11-12",
+  "equityStart": 490.9844,
+  "equityEnd": 489.2016,
+  "pnlUsd": -1.7828,
+  "pnlPct": -0.363,
+  "trades": [
+    {
+      "id": "d-mwdnuthm-e4no2",
+      "symbol": "TON11419-USD",
+      "cls": "crypto",
+      "strategy": "noise",
+      "side": "long",
+      "qty": 66.18509799693666,
+      "entry": 1.253350657582283,
+      "stop": 1.2509978715783696,
+      "initialStop": 1.2440777173042297,
+      "openedAt": 1794494700000,
+      "riskUsd": 0.6137304610227031,
+      "notionalUsd": 82.9531360966084,
+      "costsUsd": 0.1654893001994546,
+      "best": 1.2625000476837158,
+      "regime": "mixte",
+      "reasons": [
+        "momentum « zone de bruit » : 1.2531 au-dessus de la borne haute 1.2499 (bruit moyen 1.01 % à cette heure sur 14 jours)",
+        "au-dessus de la VWAP 1.2312 ; régime mixte (efficacité 0.25)",
+        "stop suiveur sur max(borne, VWAP)",
+        "taille : risque 0.61 $ (0.5 % × poids 0.25), position 82.95 $"
+      ],
+      "closedAt": 1794495360000,
+      "exit": 1.2470505687952043,
+      "pnlUsd": -0.5825,
+      "r": -0.95,
+      "exitReason": "stop suiveur",
+      "holdMinutes": 11,
+      "equityAfter": 490.4019
+    },
+    {
+      "id": "d-mwdpzz9h-0uxls",
+      "symbol": "TON11419-USD",
+      "cls": "crypto",
+      "strategy": "noise",
+      "side": "long",
+      "qty": 65.63518047826565,
+      "entry": 1.2623524013042449,
+      "stop": 1.2587911822824989,
+      "initialStop": 1.253012861442566,
+      "openedAt": 1794498300000,
+      "riskUsd": 0.613002384405251,
+      "notionalUsd": 82.85472768677614,
+      "costsUsd": 0.16541383527519332,
+      "best": 1.284000039100647,
+      "regime": "mixte",
+      "reasons": [
+        "momentum « zone de bruit » : 1.2621 au-dessus de la borne haute 1.2556 (bruit moyen 1.47 % à cette heure sur 14 jours)",
+        "au-dessus de la VWAP 1.2420 ; régime mixte (efficacité 0.31)",
+        "stop suiveur sur max(borne, VWAP)",
+        "taille : risque 0.61 $ (0.5 % × poids 0.25), position 82.85 $"
+      ],
+      "closedAt": 1794500640000,
+      "exit": 1.2578484127998353,
+      "pnlUsd": -0.461,
+      "r": -0.75,
+      "exitReason": "stop suiveur",
+      "holdMinutes": 39,
+      "equityAfter": 489.5422
+    },
+    {
+      "id": "d-mwdqpp6q-o006w",
+      "symbol": "HYPE32196-USD",
+      "cls": "crypto",
+      "strategy": "noise",
+      "side": "long",
+      "qty": 0.9815767107795322,
+      "entry": 71.7743541366577,
+      "stop": 71.17838149346613,
+      "initialStop": 71.14829283812335,
+      "openedAt": 1794499500000,
+      "riskUsd": 0.6145271901617128,
+      "notionalUsd": 70.45203445178578,
+      "costsUsd": 0.140305102628436,
+      "best": 71.93000030517578,
+      "regime": "tendance",
+      "reasons": [
+        "momentum « zone de bruit » : 71.7600 au-dessus de la borne haute 71.1483 (bruit moyen 1.31 % à cette heure sur 14 jours)",
+        "au-dessus de la VWAP 70.5700 ; régime tendance (efficacité 0.49)",
+        "stop suiveur sur max(borne, VWAP)",
+        "taille : risque 0.61 $ (0.5 % × poids 0.25), position 70.45 $"
+      ],
+      "closedAt": 1794500760000,
+      "exit": 71.16414581716744,
+      "pnlUsd": -0.7393,
+      "r": -1.2,
+      "exitReason": "stop suiveur",
+      "holdMinutes": 21,
+      "equityAfter": 489.2016
+    }
+  ],
+  "winRatePct": 0,
+  "avgR": -0.97,
+  "byStrategy": {
+    "orb": {
+      "n": 0,
+      "pnlUsd": 0
+    },
+    "noise": {
+      "n": 3,
+      "pnlUsd": -1.7828
+    },
+    "vwap": {
+      "n": 0,
+      "pnlUsd": 0
+    }
+  },
+  "weightsStart": {
+    "orb": 1,
+    "noise": 0.25,
+    "vwap": 1
+  },
+  "weightsEnd": {
+    "orb": 1,
+    "noise": 0.25,
+    "vwap": 1
+  },
+  "analysis": {
+    "stocksInPlay": [],
+    "regimes": [
+      {
+        "time": "15:00",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 2.17
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.45
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.04
+          },
+          {
+            "symbol": "XRP-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.46
+          },
+          {
+            "symbol": "BNB-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.38
+          },
+          {
+            "symbol": "ADA-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.79
+          },
+          {
+            "symbol": "LINK-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.46
+          },
+          {
+            "symbol": "SUI20947-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.48
+          },
+          {
+            "symbol": "LTC-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.79
+          },
+          {
+            "symbol": "NEAR-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 2.4
+          },
+          {
+            "symbol": "HYPE32196-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 0.36
+          },
+          {
+            "symbol": "PEPE24478-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.44
+          }
+        ]
+      },
+      {
+        "time": "15:30",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "tendance",
+            "z": -0.68,
+            "band": -4.78
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "mixte",
+            "z": -0.68,
+            "band": -7.07
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "mixte",
+            "z": -0.15,
+            "band": -3.79
+          },
+          {
+            "symbol": "XRP-USD",
+            "regime": "mixte",
+            "z": 0.28,
+            "band": -2.6
+          },
+          {
+            "symbol": "DOGE-USD",
+            "regime": "mixte",
+            "z": -0.61,
+            "band": -4.62
+          },
+          {
+            "symbol": "ADA-USD",
+            "regime": "mixte",
+            "z": -0.97,
+            "band": -6.68
+          },
+          {
+            "symbol": "AVAX-USD",
+            "regime": "range",
+            "z": 0.96,
+            "band": -1.54
+          },
+          {
+            "symbol": "LINK-USD",
+            "regime": "range",
+            "z": 1.3,
+            "band": -2.51
+          },
+          {
+            "symbol": "SUI20947-USD",
+            "regime": "mixte",
+            "z": 0.27,
+            "band": -5.52
+          },
+          {
+            "symbol": "TON11419-USD",
+            "regime": "mixte",
+            "z": -1.12,
+            "band": -1.95
+          },
+          {
+            "symbol": "LTC-USD",
+            "regime": "range",
+            "z": 1.35,
+            "band": -0.94
+          },
+          {
+            "symbol": "DOT-USD",
+            "regime": "range",
+            "z": 0.17,
+            "band": -2.46
+          },
+          {
+            "symbol": "NEAR-USD",
+            "regime": "range",
+            "z": 0.84,
+            "band": -1.43
+          },
+          {
+            "symbol": "HYPE32196-USD",
+            "regime": "range",
+            "z": 1.91,
+            "band": -1
+          },
+          {
+            "symbol": "PEPE24478-USD",
+            "regime": "mixte",
+            "z": 3.22,
+            "band": 3
+          }
+        ]
+      },
+      {
+        "time": "16:00",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -1.93,
+            "band": -2.35
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.03,
+            "band": -0.81
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 0,
+            "band": -0.52
+          },
+          {
+            "symbol": "XRP-USD",
+            "regime": "range",
+            "z": -0.73,
+            "band": -1.24
+          },
+          {
+            "symbol": "BNB-USD",
+            "regime": "range",
+            "z": -0.5,
+            "band": -1.33
+          },
+          {
+            "symbol": "DOGE-USD",
+            "regime": "range",
+            "z": -0.84,
+            "band": -1.15
+          },
+          {
+            "symbol": "ADA-USD",
+            "regime": "range",
+            "z": 0.08,
+            "band": -0.77
+          },
+          {
+            "symbol": "AVAX-USD",
+            "regime": "range",
+            "z": -0.39,
+            "band": -0.35
+          },
+          {
+            "symbol": "LINK-USD",
+            "regime": "range",
+            "z": 0.44,
+            "band": -0.21
+          },
+          {
+            "symbol": "SUI20947-USD",
+            "regime": "range",
+            "z": 0.66,
+            "band": -0.42
+          },
+          {
+            "symbol": "TON11419-USD",
+            "regime": "mixte",
+            "z": 0.58,
+            "band": 0.43
+          },
+          {
+            "symbol": "LTC-USD",
+            "regime": "range",
+            "z": -0.55,
+            "band": -0.26
+          },
+          {
+            "symbol": "DOT-USD",
+            "regime": "range",
+            "z": -0.53,
+            "band": -0.63
+          },
+          {
+            "symbol": "NEAR-USD",
+            "regime": "range",
+            "z": 1.34,
+            "band": 0.38
+          },
+          {
+            "symbol": "HYPE32196-USD",
+            "regime": "range",
+            "z": 0.77,
+            "band": 0.72
+          },
+          {
+            "symbol": "PEPE24478-USD",
+            "regime": "range",
+            "z": -1.61,
+            "band": 0.28
+          }
+        ]
+      },
+      {
+        "time": "17:00",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -0.07,
+            "band": -1.1
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.98,
+            "band": -0.15
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 2.19,
+            "band": 0.15
+          },
+          {
+            "symbol": "XRP-USD",
+            "regime": "mixte",
+            "z": 0.49,
+            "band": -0.54
+          },
+          {
+            "symbol": "ADA-USD",
+            "regime": "tendance",
+            "z": 2.14,
+            "band": -0.02
+          },
+          {
+            "symbol": "AVAX-USD",
+            "regime": "mixte",
+            "z": 2.32,
+            "band": 0.31
+          },
+          {
+            "symbol": "LINK-USD",
+            "regime": "tendance",
+            "z": 2.51,
+            "band": 0.31
+          },
+          {
+            "symbol": "SUI20947-USD",
+            "regime": "mixte",
+            "z": 2.29,
+            "band": 0.03
+          },
+          {
+            "symbol": "TON11419-USD",
+            "regime": "mixte",
+            "z": 2.18,
+            "band": 1.43
+          },
+          {
+            "symbol": "LTC-USD",
+            "regime": "tendance",
+            "z": 1.75,
+            "band": 0.21
+          },
+          {
+            "symbol": "DOT-USD",
+            "regime": "tendance",
+            "z": 1.22,
+            "band": -0.01
+          },
+          {
+            "symbol": "NEAR-USD",
+            "regime": "range",
+            "z": 0.9,
+            "band": 0.16
+          },
+          {
+            "symbol": "HYPE32196-USD",
+            "regime": "mixte",
+            "z": 2.2,
+            "band": 0.98
+          }
+        ]
+      },
+      {
+        "time": "17:30",
+        "items": [
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 1.09,
+            "band": 0.04
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 1.4,
+            "band": 0.28
+          },
+          {
+            "symbol": "XRP-USD",
+            "regime": "range",
+            "z": 0.15,
+            "band": -0.6
+          },
+          {
+            "symbol": "BNB-USD",
+            "regime": "mixte",
+            "z": 1.75,
+            "band": 0.38
+          },
+          {
+            "symbol": "DOGE-USD",
+            "regime": "range",
+            "z": 1.71,
+            "band": 0.35
+          },
+          {
+            "symbol": "ADA-USD",
+            "regime": "range",
+            "z": 1.41,
+            "band": 0.19
+          },
+          {
+            "symbol": "LINK-USD",
+            "regime": "range",
+            "z": 2.13,
+            "band": 0.71
+          },
+          {
+            "symbol": "SUI20947-USD",
+            "regime": "range",
+            "z": 2.1,
+            "band": 0.49
+          },
+          {
+            "symbol": "LTC-USD",
+            "regime": "range",
+            "z": 1.4,
+            "band": 0.57
+          },
+          {
+            "symbol": "DOT-USD",
+            "regime": "range",
+            "z": 0.97,
+            "band": 0.47
+          },
+          {
+            "symbol": "NEAR-USD",
+            "regime": "mixte",
+            "z": 2.48,
+            "band": 0.91
+          },
+          {
+            "symbol": "HYPE32196-USD",
+            "regime": "range",
+            "z": 1.47,
+            "band": 1.46
+          },
+          {
+            "symbol": "PEPE24478-USD",
+            "regime": "range",
+            "z": -1.24,
+            "band": -0.12
+          }
+        ]
+      },
+      {
+        "time": "18:00",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 0.31,
+            "band": -0.94
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.47,
+            "band": -0.14
+          },
+          {
+            "symbol": "XRP-USD",
+            "regime": "range",
+            "z": 0.13,
+            "band": -0.64
+          },
+          {
+            "symbol": "DOGE-USD",
+            "regime": "range",
+            "z": 1.42,
+            "band": 0.21
+          },
+          {
+            "symbol": "ADA-USD",
+            "regime": "range",
+            "z": 1.29,
+            "band": 0.14
+          },
+          {
+            "symbol": "SUI20947-USD",
+            "regime": "range",
+            "z": 1.35,
+            "band": 0.3
+          },
+          {
+            "symbol": "TON11419-USD",
+            "regime": "range",
+            "z": 0.15,
+            "band": 0.75
+          },
+          {
+            "symbol": "LTC-USD",
+            "regime": "range",
+            "z": 1.2,
+            "band": 0.67
+          },
+          {
+            "symbol": "DOT-USD",
+            "regime": "range",
+            "z": 0.27,
+            "band": 0.04
+          },
+          {
+            "symbol": "NEAR-USD",
+            "regime": "range",
+            "z": 1.19,
+            "band": 0.45
+          },
+          {
+            "symbol": "HYPE32196-USD",
+            "regime": "range",
+            "z": 1,
+            "band": 0.92
+          },
+          {
+            "symbol": "PEPE24478-USD",
+            "regime": "mixte",
+            "z": -2.31,
+            "band": -0.55
+          }
+        ]
+      },
+      {
+        "time": "18:30",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 1.3,
+            "band": -0.6
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 1.09,
+            "band": 0.01
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 1.12,
+            "band": 0.12
+          },
+          {
+            "symbol": "XRP-USD",
+            "regime": "range",
+            "z": 0.65,
+            "band": -0.49
+          },
+          {
+            "symbol": "DOGE-USD",
+            "regime": "range",
+            "z": 1.75,
+            "band": 0.33
+          },
+          {
+            "symbol": "LTC-USD",
+            "regime": "mixte",
+            "z": 1.82,
+            "band": 0.99
+          },
+          {
+            "symbol": "DOT-USD",
+            "regime": "range",
+            "z": -0.03,
+            "band": -0.13
+          },
+          {
+            "symbol": "NEAR-USD",
+            "regime": "range",
+            "z": 0.01,
+            "band": 0.15
+          },
+          {
+            "symbol": "HYPE32196-USD",
+            "regime": "range",
+            "z": 0.29,
+            "band": 0.61
+          },
+          {
+            "symbol": "PEPE24478-USD",
+            "regime": "range",
+            "z": -1.58,
+            "band": -0.59
+          }
+        ]
+      }
+    ],
+    "signalsSeen": 3,
+    "signalsTaken": 3,
+    "skipped": {},
+    "notes": {
+      "PEPE24478-USD momentum : bruit habituel (# %) trop faible face aux frais (# %)": 2,
+      "HYPE32196-USD momentum : sortie de zone mais marché en range (efficacité #)": 1,
+      "HYPE32196-USD momentum : bruit habituel (# %) trop faible face aux frais (# %)": 1
+    }
+  },
+  "forecast": {
+    "watchlist": [
+      {
+        "symbol": "LTC-USD",
+        "why": "a fini la fenêtre à +0.9 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "HYPE32196-USD",
+        "why": "a fini la fenêtre à +0.8 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "BTC-USD",
+        "why": "a fini la fenêtre à -0.7 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "TON11419-USD",
+        "why": "a fini la fenêtre à -0.6 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      }
+    ],
+    "outlook": [
+      "poids pour la prochaine séance : ORB 1.00, momentum 0.25, VWAP 1.00 — priorité à « ORB 5 min »",
+      "risque par trade prévu : 2.45 $ × poids (entre 0.61 et 4.89 $)",
+      "fin de séance plutôt hésitante (16 en range vs 0 en tendance) : les retours à la VWAP devraient dominer",
+      "objectif hebdo +1 % : semaine à -2.16 %, il faut en moyenne 3.16 % par séance sur les 1 restantes"
+    ],
+    "week": {
+      "pnlPct": -2.16,
+      "targetPct": 1,
+      "tradingDaysLeft": 1,
+      "neededPerDayPct": 3.16
+    }
+  }
+}

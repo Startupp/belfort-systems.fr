@@ -1,0 +1,1546 @@
+{
+  "day": "2026-11-12",
+  "equityStart": 497.4363,
+  "equityEnd": 501.4986,
+  "pnlUsd": 4.0622,
+  "pnlPct": 0.817,
+  "trades": [
+    {
+      "id": "d-mwdnioex-20tg3",
+      "symbol": "NBIS",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 0.3263521280064652,
+      "entry": 127.918361252594,
+      "stop": 118.80999755859375,
+      "initialStop": 118.80999755859375,
+      "openedAt": 1794494100000,
+      "riskUsd": 2.9725338741938083,
+      "notionalUsd": 41.74642940588381,
+      "costsUsd": 0,
+      "best": 132.69000244140625,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 127.88 au-dessus du plus haut des 5 premières minutes (126.00 ; bas 118.81)",
+        "volume relatif 7.28× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 118.81 (7.09 % sous l'entrée)",
+        "taille : risque 2.97 $ (0.5 % × poids 1.20), position 41.75 $"
+      ],
+      "closedAt": 1794506100000,
+      "exit": 129.52112955932617,
+      "pnlUsd": 0.5231,
+      "r": 0.18,
+      "exitReason": "clôture de fin de fenêtre (18:55)",
+      "holdMinutes": 200,
+      "equityAfter": 501.5592
+    },
+    {
+      "id": "d-mwdnjgnd-6jwn0",
+      "symbol": "NVDA",
+      "cls": "stock",
+      "strategy": "orb",
+      "side": "long",
+      "qty": 0.320557420519242,
+      "entry": 158.55435746154785,
+      "stop": 149.27000427246094,
+      "initialStop": 149.27000427246094,
+      "openedAt": 1794494160000,
+      "riskUsd": 2.9761683094833,
+      "notionalUsd": 50.82577583995961,
+      "costsUsd": 0,
+      "best": 167.13999938964844,
+      "regime": "tendance",
+      "reasons": [
+        "ORB 5 min : clôture 158.51 au-dessus du plus haut des 5 premières minutes (156.33 ; bas 149.27)",
+        "volume relatif 5.09× la moyenne de 14 jours : action « en jeu »",
+        "stop sous le plus bas des 5 premières minutes : 149.27 (5.83 % sous l'entrée)",
+        "taille : risque 2.98 $ (0.5 % × poids 1.20), position 50.83 $"
+      ],
+      "closedAt": 1794506100000,
+      "exit": 165.07245742034914,
+      "pnlUsd": 2.0894,
+      "r": 0.7,
+      "exitReason": "clôture de fin de fenêtre (18:55)",
+      "holdMinutes": 199,
+      "equityAfter": 501.5433
+    },
+    {
+      "id": "d-mwdsksfv-lcfdk",
+      "symbol": "SMCI",
+      "cls": "stock",
+      "strategy": "vwap",
+      "side": "long",
+      "qty": 1.1560102230281104,
+      "entry": 26.187854305267333,
+      "stop": 25.557936737185397,
+      "initialStop": 25.557936737185397,
+      "target": 27.39004125673183,
+      "openedAt": 1794502620000,
+      "riskUsd": 0.7281911483677238,
+      "notionalUsd": 30.27342729605975,
+      "costsUsd": 0,
+      "best": 27.215200424194336,
+      "regime": "range",
+      "reasons": [
+        "retour à la VWAP : écart de -1.95 écarts-types sous la VWAP 27.3900",
+        "marché sans tendance (efficacité 0.18)",
+        "objectif la VWAP (4.62 %), stop à 1 écart-type (2.38 %)",
+        "taille : risque 0.73 $ (0.5 % × poids 0.58 × 0.5 mode chasse), position 30.27 $"
+      ],
+      "closedAt": 1794506100000,
+      "exit": 27.021891686439513,
+      "pnlUsd": 0.9642,
+      "r": 1.32,
+      "exitReason": "clôture de fin de fenêtre (18:55)",
+      "holdMinutes": 58,
+      "equityAfter": 501.5339
+    },
+    {
+      "id": "d-mwdtm31k-wnsur",
+      "symbol": "ONDS",
+      "cls": "stock",
+      "strategy": "vwap",
+      "side": "long",
+      "qty": 22.24598419177522,
+      "entry": 5.276582595396042,
+      "stop": 5.2111445928299185,
+      "initialStop": 5.2111445928299185,
+      "target": 5.418933809405265,
+      "openedAt": 1794504360000,
+      "riskUsd": 1.4557327706273329,
+      "notionalUsd": 117.38277300377662,
+      "costsUsd": 0,
+      "best": 5.320000171661377,
+      "regime": "range",
+      "reasons": [
+        "retour à la VWAP : écart de -2.25 écarts-types sous la VWAP 5.4189",
+        "marché sans tendance (efficacité 0.12)",
+        "objectif la VWAP (2.73 %), stop à 1 écart-type (1.21 %)",
+        "taille : risque 1.46 $ (0.5 % × poids 0.58), position 117.38 $"
+      ],
+      "closedAt": 1794506100000,
+      "exit": 5.298410190677643,
+      "pnlUsd": 0.4856,
+      "r": 0.33,
+      "exitReason": "clôture de fin de fenêtre (18:55)",
+      "holdMinutes": 29,
+      "equityAfter": 501.4986
+    }
+  ],
+  "winRatePct": 100,
+  "avgR": 0.63,
+  "byStrategy": {
+    "orb": {
+      "n": 2,
+      "pnlUsd": 2.6125
+    },
+    "noise": {
+      "n": 0,
+      "pnlUsd": 0
+    },
+    "vwap": {
+      "n": 2,
+      "pnlUsd": 1.4498
+    }
+  },
+  "weightsStart": {
+    "orb": 1.1951414160955443,
+    "noise": 0.7607445275048726,
+    "vwap": 0.5832464374741038
+  },
+  "weightsEnd": {
+    "orb": 1.4885004675645568,
+    "noise": 0.7607445275048726,
+    "vwap": 0.8827223324939789
+  },
+  "analysis": {
+    "stocksInPlay": [
+      {
+        "symbol": "TTEK",
+        "rv": 10.81,
+        "bullish": false
+      },
+      {
+        "symbol": "FIGR",
+        "rv": 10.05,
+        "bullish": false
+      },
+      {
+        "symbol": "LUNR",
+        "rv": 9.47,
+        "bullish": false
+      },
+      {
+        "symbol": "NBIS",
+        "rv": 7.28,
+        "bullish": true
+      },
+      {
+        "symbol": "NVDA",
+        "rv": 5.09,
+        "bullish": true
+      },
+      {
+        "symbol": "ONDS",
+        "rv": 4.57,
+        "bullish": true
+      },
+      {
+        "symbol": "CRWV",
+        "rv": 3.34,
+        "bullish": true
+      },
+      {
+        "symbol": "HUBS",
+        "rv": 2.98,
+        "bullish": true
+      },
+      {
+        "symbol": "AVGO",
+        "rv": 2.46,
+        "bullish": true
+      },
+      {
+        "symbol": "AMD",
+        "rv": 1.96,
+        "bullish": false
+      },
+      {
+        "symbol": "MSTR",
+        "rv": 1.63,
+        "bullish": false
+      },
+      {
+        "symbol": "SMCI",
+        "rv": 1.57,
+        "bullish": true
+      },
+      {
+        "symbol": "IREN",
+        "rv": 1.43,
+        "bullish": true
+      },
+      {
+        "symbol": "MU",
+        "rv": 0.97,
+        "bullish": true
+      },
+      {
+        "symbol": "SPY",
+        "rv": 0.95,
+        "bullish": true
+      },
+      {
+        "symbol": "IWM",
+        "rv": 0.94,
+        "bullish": false
+      },
+      {
+        "symbol": "SPCX",
+        "rv": 0.89,
+        "bullish": true
+      },
+      {
+        "symbol": "HOOD",
+        "rv": 0.83,
+        "bullish": true
+      },
+      {
+        "symbol": "QQQ",
+        "rv": 0.81,
+        "bullish": true
+      },
+      {
+        "symbol": "COIN",
+        "rv": 0.79,
+        "bullish": true
+      },
+      {
+        "symbol": "GOOGL",
+        "rv": 0.67,
+        "bullish": true
+      },
+      {
+        "symbol": "AAPL",
+        "rv": 0.65,
+        "bullish": false
+      },
+      {
+        "symbol": "TSLA",
+        "rv": 0.6,
+        "bullish": true
+      },
+      {
+        "symbol": "NFLX",
+        "rv": 0.58,
+        "bullish": false
+      },
+      {
+        "symbol": "AMZN",
+        "rv": 0.56,
+        "bullish": true
+      },
+      {
+        "symbol": "MSFT",
+        "rv": 0.51,
+        "bullish": true
+      },
+      {
+        "symbol": "META",
+        "rv": 0.47,
+        "bullish": false
+      },
+      {
+        "symbol": "PLTR",
+        "rv": 0.36,
+        "bullish": false
+      },
+      {
+        "symbol": "KT",
+        "rv": 0.22,
+        "bullish": true
+      }
+    ],
+    "regimes": [
+      {
+        "time": "15:00",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 2.17
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.45
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "tendance",
+            "z": 0,
+            "band": 1.04
+          }
+        ]
+      },
+      {
+        "time": "15:30",
+        "items": [
+          {
+            "symbol": "BTC-USD",
+            "regime": "tendance",
+            "z": -0.68,
+            "band": -4.78
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "mixte",
+            "z": -0.68,
+            "band": -7.07
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "mixte",
+            "z": -0.15,
+            "band": -3.79
+          }
+        ]
+      },
+      {
+        "time": "16:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": 1.02,
+            "band": 0.8
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "mixte",
+            "z": 1.76,
+            "band": 1.17
+          },
+          {
+            "symbol": "IWM",
+            "regime": "tendance",
+            "z": -4.22,
+            "band": -1.63
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "tendance",
+            "z": 1.15,
+            "band": 7.74
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": -1.09,
+            "band": 0.72
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -0.61,
+            "band": -0.35
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "mixte",
+            "z": 0.81,
+            "band": 0.23
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.16,
+            "band": 0.79
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": -0.16,
+            "band": 0
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": 1.84,
+            "band": 0.99
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": 2.54,
+            "band": 0.81
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": 0.49,
+            "band": 0.87
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "mixte",
+            "z": -1.26,
+            "band": -1.67
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 0.4,
+            "band": 0.14
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": 0.96,
+            "band": 0.33
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": 0,
+            "band": -0.2
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": -0.68,
+            "band": 0.3
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 0.94,
+            "band": 0.82
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -1.93,
+            "band": -2.35
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.03,
+            "band": -0.81
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 0,
+            "band": -0.52
+          },
+          {
+            "symbol": "NBIS",
+            "regime": "mixte",
+            "z": 1.96,
+            "band": 2.07
+          },
+          {
+            "symbol": "LUNR",
+            "regime": "range",
+            "z": -1.6,
+            "band": -1.38
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "tendance",
+            "z": 1.97,
+            "band": 3.03
+          },
+          {
+            "symbol": "FIGR",
+            "regime": "range",
+            "z": 0.96,
+            "band": 0.55
+          },
+          {
+            "symbol": "TTEK",
+            "regime": "tendance",
+            "z": -4.45,
+            "band": -13.88
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": 2.75,
+            "band": 1.76
+          },
+          {
+            "symbol": "ONDS",
+            "regime": "range",
+            "z": -1.42,
+            "band": 0.16
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 0.11,
+            "band": 0.92
+          },
+          {
+            "symbol": "KT",
+            "regime": "tendance",
+            "z": -1.33,
+            "band": -0.83
+          },
+          {
+            "symbol": "HUBS",
+            "regime": "range",
+            "z": 1.9,
+            "band": 0.78
+          },
+          {
+            "symbol": "SPCX",
+            "regime": "mixte",
+            "z": 0.52,
+            "band": 2.19
+          }
+        ]
+      },
+      {
+        "time": "16:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": 1.4,
+            "band": 0.79
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": 0.4,
+            "band": 0.95
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": -2.02,
+            "band": -1.14
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": 1.76,
+            "band": 6.4
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": -0.99,
+            "band": 0.43
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": -1.59,
+            "band": -0.75
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": 0.13,
+            "band": -0.02
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.54,
+            "band": 0.62
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": -1.26,
+            "band": -0.39
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": -0.88,
+            "band": 0.34
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": -0.12,
+            "band": 0.42
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": 0.03,
+            "band": 0.54
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": -1.44,
+            "band": -1.79
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": -1.25,
+            "band": -0.07
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": -0.61,
+            "band": 0.05
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": 2.1,
+            "band": 0.2
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": -0.16,
+            "band": 0.39
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 0.37,
+            "band": 0.61
+          },
+          {
+            "symbol": "NBIS",
+            "regime": "range",
+            "z": 0.63,
+            "band": 1.37
+          },
+          {
+            "symbol": "LUNR",
+            "regime": "range",
+            "z": -1.94,
+            "band": -1.31
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "range",
+            "z": 1.7,
+            "band": 2.15
+          },
+          {
+            "symbol": "FIGR",
+            "regime": "range",
+            "z": 2.45,
+            "band": 1.59
+          },
+          {
+            "symbol": "TTEK",
+            "regime": "range",
+            "z": -2.78,
+            "band": -8.23
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": 1.65,
+            "band": 1.31
+          },
+          {
+            "symbol": "ONDS",
+            "regime": "mixte",
+            "z": -3.75,
+            "band": -0.97
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": -0.54,
+            "band": 0.53
+          },
+          {
+            "symbol": "KT",
+            "regime": "range",
+            "z": -0.6,
+            "band": -0.52
+          },
+          {
+            "symbol": "SPCX",
+            "regime": "mixte",
+            "z": -1.06,
+            "band": 1.05
+          }
+        ]
+      },
+      {
+        "time": "17:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "tendance",
+            "z": 3.93,
+            "band": 1.34
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "tendance",
+            "z": 3.06,
+            "band": 1.8
+          },
+          {
+            "symbol": "IWM",
+            "regime": "tendance",
+            "z": 0.74,
+            "band": -0.25
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": 1.72,
+            "band": 5.87
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 0.37,
+            "band": 0.53
+          },
+          {
+            "symbol": "AMD",
+            "regime": "tendance",
+            "z": 2.64,
+            "band": 0.78
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": 0.98,
+            "band": 0.1
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 3.29,
+            "band": 0.81
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 0.57,
+            "band": -0.03
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": -0.63,
+            "band": 0.34
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "mixte",
+            "z": 2.94,
+            "band": 0.92
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": 1.27,
+            "band": 0.74
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": 0.14,
+            "band": -1.19
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 1.46,
+            "band": 0.21
+          },
+          {
+            "symbol": "COIN",
+            "regime": "mixte",
+            "z": 2.74,
+            "band": 0.42
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "tendance",
+            "z": 3.37,
+            "band": 1.03
+          },
+          {
+            "symbol": "MU",
+            "regime": "mixte",
+            "z": 1.21,
+            "band": 0.73
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "tendance",
+            "z": 3.27,
+            "band": 1.41
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": -0.07,
+            "band": -1.1
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.98,
+            "band": -0.15
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 2.19,
+            "band": 0.15
+          },
+          {
+            "symbol": "NBIS",
+            "regime": "range",
+            "z": 1.56,
+            "band": 1.7
+          },
+          {
+            "symbol": "LUNR",
+            "regime": "range",
+            "z": -0.5,
+            "band": -0.62
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "mixte",
+            "z": 1.49,
+            "band": 2.42
+          },
+          {
+            "symbol": "FIGR",
+            "regime": "range",
+            "z": 2.02,
+            "band": 1.58
+          },
+          {
+            "symbol": "TTEK",
+            "regime": "mixte",
+            "z": -0.77,
+            "band": -4.97
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "mixte",
+            "z": 4.31,
+            "band": 1.9
+          },
+          {
+            "symbol": "ONDS",
+            "regime": "range",
+            "z": -1.32,
+            "band": -0.18
+          },
+          {
+            "symbol": "IREN",
+            "regime": "tendance",
+            "z": 2.11,
+            "band": 1.29
+          },
+          {
+            "symbol": "KT",
+            "regime": "range",
+            "z": -0.34,
+            "band": -0.38
+          },
+          {
+            "symbol": "HUBS",
+            "regime": "range",
+            "z": 1.55,
+            "band": 1.07
+          },
+          {
+            "symbol": "SPCX",
+            "regime": "mixte",
+            "z": -0.03,
+            "band": 1.54
+          }
+        ]
+      },
+      {
+        "time": "17:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": 1.46,
+            "band": 1.63
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": 1.42,
+            "band": 2.4
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 0.44,
+            "band": -0.2
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": 0.74,
+            "band": 6.86
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 0.69,
+            "band": 0.72
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": 1.8,
+            "band": 1.3
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": 0.58,
+            "band": 0.08
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.91,
+            "band": 0.9
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 0.64,
+            "band": 0.03
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": -0.65,
+            "band": 0.4
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": 1.14,
+            "band": 1.52
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "mixte",
+            "z": 2.62,
+            "band": 1.68
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": 0.81,
+            "band": -1.04
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 1.87,
+            "band": 0.51
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": 2.11,
+            "band": 0.75
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": 1.97,
+            "band": 1.52
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": 1.34,
+            "band": 1.13
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 2.1,
+            "band": 2.08
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 0.63,
+            "band": -0.91
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 1.09,
+            "band": 0.04
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 1.4,
+            "band": 0.28
+          },
+          {
+            "symbol": "NBIS",
+            "regime": "range",
+            "z": 1.85,
+            "band": 2.4
+          },
+          {
+            "symbol": "LUNR",
+            "regime": "tendance",
+            "z": 1.73,
+            "band": 0.22
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "range",
+            "z": 2.69,
+            "band": 3.41
+          },
+          {
+            "symbol": "FIGR",
+            "regime": "range",
+            "z": 2.93,
+            "band": 2.38
+          },
+          {
+            "symbol": "TTEK",
+            "regime": "range",
+            "z": -0.23,
+            "band": -3.95
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "mixte",
+            "z": -1.37,
+            "band": 0.15
+          },
+          {
+            "symbol": "ONDS",
+            "regime": "range",
+            "z": -1.18,
+            "band": -0.23
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 1.67,
+            "band": 2.14
+          },
+          {
+            "symbol": "KT",
+            "regime": "range",
+            "z": -0.34,
+            "band": -0.48
+          },
+          {
+            "symbol": "SPCX",
+            "regime": "range",
+            "z": -0.22,
+            "band": 1.97
+          }
+        ]
+      },
+      {
+        "time": "18:00",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": 1.21,
+            "band": 1.27
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": 0.74,
+            "band": 1.74
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 0.42,
+            "band": -0.18
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": 0.47,
+            "band": 5.88
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": 0.3,
+            "band": 0.62
+          },
+          {
+            "symbol": "AMD",
+            "regime": "range",
+            "z": 1.38,
+            "band": 1.05
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "range",
+            "z": -0.79,
+            "band": -0.07
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 1.58,
+            "band": 0.85
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 0.92,
+            "band": 0.09
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": -0.39,
+            "band": 0.51
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "tendance",
+            "z": 3.02,
+            "band": 2.28
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": 1.2,
+            "band": 1.09
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "range",
+            "z": 0.69,
+            "band": -0.88
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 1.99,
+            "band": 0.5
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": 1.31,
+            "band": 0.98
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": 0.94,
+            "band": 0.86
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 1.6,
+            "band": 1.47
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 0.31,
+            "band": -0.94
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 0.47,
+            "band": -0.14
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 0.77,
+            "band": 0.03
+          },
+          {
+            "symbol": "NBIS",
+            "regime": "range",
+            "z": 1.19,
+            "band": 1.59
+          },
+          {
+            "symbol": "LUNR",
+            "regime": "mixte",
+            "z": 0.13,
+            "band": -0.32
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "mixte",
+            "z": 0.44,
+            "band": 2.33
+          },
+          {
+            "symbol": "FIGR",
+            "regime": "range",
+            "z": 2.39,
+            "band": 1.89
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": -1.17,
+            "band": -0.75
+          },
+          {
+            "symbol": "ONDS",
+            "regime": "range",
+            "z": -1.62,
+            "band": -0.32
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 0.51,
+            "band": 1.64
+          },
+          {
+            "symbol": "KT",
+            "regime": "mixte",
+            "z": -1.25,
+            "band": -0.56
+          },
+          {
+            "symbol": "SPCX",
+            "regime": "range",
+            "z": 0.28,
+            "band": 1.88
+          }
+        ]
+      },
+      {
+        "time": "18:30",
+        "items": [
+          {
+            "symbol": "SPY",
+            "regime": "range",
+            "z": 0.7,
+            "band": 1.17
+          },
+          {
+            "symbol": "QQQ",
+            "regime": "range",
+            "z": -0.11,
+            "band": 1.39
+          },
+          {
+            "symbol": "IWM",
+            "regime": "range",
+            "z": 0.22,
+            "band": -0.26
+          },
+          {
+            "symbol": "NVDA",
+            "regime": "range",
+            "z": -0.02,
+            "band": 4.97
+          },
+          {
+            "symbol": "TSLA",
+            "regime": "range",
+            "z": -0.1,
+            "band": 0.55
+          },
+          {
+            "symbol": "AMD",
+            "regime": "mixte",
+            "z": 0.4,
+            "band": 0.43
+          },
+          {
+            "symbol": "AAPL",
+            "regime": "mixte",
+            "z": -2.16,
+            "band": -0.24
+          },
+          {
+            "symbol": "MSFT",
+            "regime": "range",
+            "z": 2.17,
+            "band": 0.89
+          },
+          {
+            "symbol": "META",
+            "regime": "range",
+            "z": 0.06,
+            "band": -0.11
+          },
+          {
+            "symbol": "AMZN",
+            "regime": "range",
+            "z": -0.85,
+            "band": 0.38
+          },
+          {
+            "symbol": "GOOGL",
+            "regime": "range",
+            "z": 2.98,
+            "band": 2.78
+          },
+          {
+            "symbol": "AVGO",
+            "regime": "range",
+            "z": 0.32,
+            "band": 0.73
+          },
+          {
+            "symbol": "NFLX",
+            "regime": "mixte",
+            "z": 1.48,
+            "band": -0.5
+          },
+          {
+            "symbol": "PLTR",
+            "regime": "range",
+            "z": 1.72,
+            "band": 0.47
+          },
+          {
+            "symbol": "COIN",
+            "regime": "range",
+            "z": 1.5,
+            "band": 0.59
+          },
+          {
+            "symbol": "MSTR",
+            "regime": "range",
+            "z": 1.29,
+            "band": 1
+          },
+          {
+            "symbol": "MU",
+            "regime": "range",
+            "z": 0.53,
+            "band": 0.68
+          },
+          {
+            "symbol": "HOOD",
+            "regime": "range",
+            "z": 1.01,
+            "band": 1.3
+          },
+          {
+            "symbol": "BTC-USD",
+            "regime": "range",
+            "z": 1.3,
+            "band": -0.6
+          },
+          {
+            "symbol": "ETH-USD",
+            "regime": "range",
+            "z": 1.09,
+            "band": 0.01
+          },
+          {
+            "symbol": "SOL-USD",
+            "regime": "range",
+            "z": 1.12,
+            "band": 0.12
+          },
+          {
+            "symbol": "NBIS",
+            "regime": "range",
+            "z": 1.24,
+            "band": 1.59
+          },
+          {
+            "symbol": "LUNR",
+            "regime": "mixte",
+            "z": -1.58,
+            "band": -0.9
+          },
+          {
+            "symbol": "CRWV",
+            "regime": "range",
+            "z": 0.34,
+            "band": 2.43
+          },
+          {
+            "symbol": "FIGR",
+            "regime": "range",
+            "z": 2.9,
+            "band": 2.24
+          },
+          {
+            "symbol": "SMCI",
+            "regime": "range",
+            "z": -1.1,
+            "band": -0.83
+          },
+          {
+            "symbol": "ONDS",
+            "regime": "range",
+            "z": -2.7,
+            "band": -0.59
+          },
+          {
+            "symbol": "IREN",
+            "regime": "range",
+            "z": 0.1,
+            "band": 1.4
+          },
+          {
+            "symbol": "HUBS",
+            "regime": "range",
+            "z": 1.95,
+            "band": 0.87
+          },
+          {
+            "symbol": "SPCX",
+            "regime": "range",
+            "z": -0.31,
+            "band": 1.62
+          }
+        ]
+      }
+    ],
+    "signalsSeen": 7,
+    "signalsTaken": 4,
+    "skipped": {
+      "une seule entrée par minute": 3,
+      "ORB : déjà 2 positions ORB ouvertes (places gardées pour les trades rapides)": 1
+    },
+    "notes": {
+      "LUNR ORB : 1re bougie baissière, vente à découvert impossible en compte cash": 86,
+      "FIGR ORB : 1re bougie baissière, vente à découvert impossible en compte cash": 86,
+      "TTEK ORB : 1re bougie baissière, vente à découvert impossible en compte cash": 82,
+      "HUBS ORB : 1re bougie baissière, vente à découvert impossible en compte cash": 66,
+      "CRWV ORB : cassure mais le S&P 500 (SPY) sous sa VWAP (pas de vent porteur)": 2,
+      "SPY retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 27,
+      "QQQ retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 26,
+      "AMD retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 25,
+      "GOOGL retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 43,
+      "COIN retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 30,
+      "MSTR retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 27,
+      "HOOD retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 29,
+      "SMCI retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 40,
+      "IREN retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 23,
+      "CRWV retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 30,
+      "MSFT retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 19,
+      "PLTR retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 20,
+      "AVGO retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 21,
+      "MU retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 1,
+      "HUBS retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 7,
+      "LUNR retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 5,
+      "FIGR retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 4,
+      "ONDS retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 6,
+      "AAPL retour VWAP : écart # σ mais tendance trop nette (efficacité #)": 6
+    },
+    "huntAt": "17:30"
+  },
+  "forecast": {
+    "watchlist": [
+      {
+        "symbol": "NVDA",
+        "why": "a fini la fenêtre à +4.8 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "TTEK",
+        "why": "a fini la fenêtre à -3.8 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "GOOGL",
+        "why": "a fini la fenêtre à +2.5 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "CRWV",
+        "why": "a fini la fenêtre à +2.4 fois son bruit habituel (range) : suite ou retournement à surveiller dès l'ouverture"
+      },
+      {
+        "symbol": "FIGR",
+        "why": "action « en jeu » aujourd'hui (volume relatif 10.05×) : l'intérêt persiste souvent le lendemain"
+      }
+    ],
+    "outlook": [
+      "poids pour la prochaine séance : ORB 1.49, momentum 0.76, VWAP 0.88 — priorité à « ORB 5 min »",
+      "risque par trade prévu : 2.51 $ × poids (entre 0.63 et 5.01 $)",
+      "fin de séance plutôt hésitante (25 en range vs 2 en tendance) : les retours à la VWAP devraient dominer",
+      "objectif hebdo +1 % : semaine à +0.30 %, il faut en moyenne 0.70 % par séance sur les 1 restantes",
+      "mode chasse déclenché à 17:30 : peu de setups propres aujourd'hui, à surveiller"
+    ],
+    "week": {
+      "pnlPct": 0.3,
+      "targetPct": 1,
+      "tradingDaysLeft": 1,
+      "neededPerDayPct": 0.7
+    }
+  }
+}

@@ -1,20 +1,20 @@
 {
   "version": 1,
   "startEquity": 500,
-  "cash": 497.43634253842515,
-  "day": "2026-11-11",
-  "dayStartEquity": 501.4447251897188,
+  "cash": 501.49856677411003,
+  "day": "2026-11-12",
+  "dayStartEquity": 497.43634253842515,
   "tradesToday": 4,
-  "stockCashUsedToday": 501.4447251897188,
+  "stockCashUsedToday": 240.22840554567978,
   "weights": {
-    "orb": 1.1951414160955443,
+    "orb": 1.4885004675645568,
     "noise": 0.7607445275048726,
-    "vwap": 0.5832464374741038
+    "vwap": 0.8827223324939789
   },
   "lossStreak": {
     "orb": 0,
-    "noise": 1,
-    "vwap": 1
+    "noise": 0,
+    "vwap": 0
   },
   "weekId": "2026-S46",
   "weekStartEquity": 500,
@@ -27,14 +27,17 @@
     "EMBJ": 1794334200000,
     "AAON": 1794334200000,
     "AAPL": 1794334200000,
-    "NVDA": 1794409080000,
+    "NVDA": 1794507000000,
     "ETH-USD": 1794412260000,
     "AMZN": 1794414300000,
-    "LITE": 1794420600000
+    "LITE": 1794420600000,
+    "NBIS": 1794507000000,
+    "SMCI": 1794507000000,
+    "ONDS": 1794507000000
   },
   "orbDone": {
-    "NVDA": 1,
-    "LITE": 1
+    "NBIS": 1,
+    "NVDA": 1
   },
-  "closedCount": 11
+  "closedCount": 15
 }
