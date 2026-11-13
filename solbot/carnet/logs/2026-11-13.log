@@ -1,0 +1,19 @@
+--- lancement 2026-11-13 15:55:37 (Paris)
+2026-11-13 15:56 [PAPIER] DAY_START séance du 2026-11-13 — equity 501.50 $, poids ORB 1.49 / momentum 0.76 / VWAP 0.88
+actions « en jeu » ajoutées depuis les listes Yahoo : ROKU, KDP, MOD, CBRS, WSE, NBIS, CRWV, MP, IREN, NU, CLBT, AAON
+2026-11-13 15:00 [PAPIER] ANALYSIS  analyse 15:00 : 3 en tendance, 0 en range, 0 mixtes
+2026-11-13 15:30 [PAPIER] ANALYSIS  analyse 15:30 : 29 en tendance, 3 en range, 0 mixtes
+2026-11-13 15:34 [PAPIER] ANALYSIS  actions en jeu à l'ouverture : KDP 13.72×↑, WSE 10.41×↓, CBRS 7.76×↑, MOD 6.85×↑, NU 3.05×↓
+2026-11-13 16:00 [PAPIER] ANALYSIS  analyse 16:00 : 6 en tendance, 18 en range, 8 mixtes
+2026-11-13 16:30 [PAPIER] ANALYSIS  analyse 16:30 : 1 en tendance, 20 en range, 10 mixtes
+2026-11-13 17:00 [PAPIER] ANALYSIS  analyse 17:00 : 1 en tendance, 28 en range, 2 mixtes
+2026-11-13 17:00 [PAPIER] OPEN      ACHAT NVDA 250.75 $ — retour VWAP (stop 159.208)
+2026-11-13 17:01 [PAPIER] OPEN      ACHAT AVGO 250.36 $ — retour VWAP (stop 337.374)
+2026-11-13 17:03 [PAPIER] CLOSE     VENTE NVDA -1.27 $ (-1.06 R) — stop
+2026-11-13 17:30 [PAPIER] ANALYSIS  analyse 17:30 : 0 en tendance, 28 en range, 4 mixtes
+2026-11-13 17:30 [PAPIER] HUNT      mode chasse : 2 trade(s) à 17:30, seuils assouplis et risque divisé par 2
+2026-11-13 18:00 [PAPIER] ANALYSIS  analyse 18:00 : 0 en tendance, 28 en range, 3 mixtes
+2026-11-13 18:30 [PAPIER] ANALYSIS  analyse 18:30 : 0 en tendance, 24 en range, 6 mixtes
+2026-11-13 18:55 [PAPIER] CLOSE     VENTE AVGO +3.76 $ (+2.26 R) — clôture de fin de fenêtre (18:55)
+2026-11-13 18:59 [PAPIER] DAY_END   fin de séance : 2 trades, +2.49 $ (0.50 %)
+séance terminée : 2 trades, +2.49 $ — carnet : /home/user/belfort-systems.fr/solbot/carnet/carnet.html

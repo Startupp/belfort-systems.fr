@@ -2,9 +2,9 @@
   "version": 1,
   "startEquity": 500,
   "cash": 489.20160221280264,
-  "day": "2026-11-12",
-  "dayStartEquity": 490.98436881816247,
-  "tradesToday": 3,
+  "day": "2026-11-13",
+  "dayStartEquity": 489.20160221280264,
+  "tradesToday": 0,
   "stockCashUsedToday": 0,
   "weights": {
     "orb": 1,
@@ -13,7 +13,7 @@
   },
   "lossStreak": {
     "orb": 0,
-    "noise": 3,
+    "noise": 0,
     "vwap": 0
   },
   "weekId": "2026-S46",
