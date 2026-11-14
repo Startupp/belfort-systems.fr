@@ -5,7 +5,7 @@ import { NY, PARIS, zonedToUtc } from '../src/arena/strategies.ts';
 import { localTime } from '../src/desk/market.ts';
 import type { Bar } from '../src/desk/types.ts';
 import { CHOICES, SESSIONS, START_MS } from '../worker/config.ts';
-import { decodeBars, dueAt, encodeBars, feedOf, roster } from '../worker/index.ts';
+import { decodeBars, dueAt, encodeBars, feedOf, nextRead, retryAt, roster } from '../worker/index.ts';
 import worker from '../worker/index.ts';
 import { pageHtml } from '../worker/dash.ts';
 import { MemoryD1 } from '../worker/memory-d1.ts';
@@ -49,6 +49,20 @@ test('worker : créneaux (UTC) des lectures', () => {
   assert.ok(dueAt(btc1h, Date.parse('2026-11-12T10:03:00Z')));
   const dailyMinutes = [41, 42, 43, 44, 45].filter((m) => dueAt(spyD, Date.parse(`2026-11-12T22:${m}:00Z`)));
   assert.equal(dailyMinutes.length, 1, 'journalier : une minute entre 22 h 41 et 22 h 45');
+});
+
+test('worker : série crypto en retard (lecture refusée), nouvel essai toutes les 10 min hors des lectures prévues', () => {
+  const eth = feedOf('crypto1d', 'ETH-USD');
+  const btc1h = feedOf('crypto1h', 'BTC-USD');
+  // Barre du jeudi 12 gardée : celle du vendredi 13 se lit le samedi 14 vers 0 h 43 UTC.
+  const thu = Date.parse('2026-11-12T00:00:00Z');
+  assert.equal(nextRead(eth, thu), Date.parse('2026-11-14T00:46:00Z'));
+  assert.equal(nextRead(btc1h, Date.parse('2026-11-14T08:00:00Z')), Date.parse('2026-11-14T10:04:00Z'));
+  for (const f of [eth, btc1h, feedOf('crypto1d', 'BTC-USD'), feedOf('crypto1d', 'SOL-USD'), feedOf('kfut1h', 'PF_XBTUSD'), feedOf('kfut1h', 'PF_ETHUSD')]) {
+    const minutes = Array.from({ length: 60 }, (_, m) => m).filter((m) => retryAt(f, Date.parse(`2026-11-14T10:${String(m).padStart(2, '0')}:00Z`)));
+    assert.equal(minutes.length, 6, `${f.sym} : six essais par heure`);
+    assert.ok(minutes.every((m) => m % 10 >= 5 && !dueAt(f, Date.parse(`2026-11-14T00:${String(m).padStart(2, '0')}:00Z`)) && !dueAt(f, Date.parse(`2026-11-14T10:${String(m).padStart(2, '0')}:00Z`))), `${f.sym} : jamais à une minute de lecture prévue`);
+  }
 });
 
 test('worker : barres stockées en entiers, relues à l’identique (cours au pas du marché)', () => {
@@ -111,8 +125,10 @@ const usSession = (t: number): boolean => {
 /**
  * Faux réseau : Yahoo, Coinbase, Kraken, d'après l'horloge simulée (barre en cours et barre « fantôme » comprises).
  * `coinbaseDown` : Coinbase refuse tout (429), comme souvent depuis les adresses de Cloudflare.
+ * `krakenBusy` : en plus, Kraken refuse ses bougies de x0 à x4 de chaque dizaine de minutes (« Too many requests »),
+ * donc à chaque lecture prévue des bougies crypto, comme du 11 au 14 novembre 2026 pour l'ETH journalier.
  */
-function fakeFetch(clock: () => number, coinbaseDown = false): typeof fetch {
+function fakeFetch(clock: () => number, coinbaseDown = false, krakenBusy = false): typeof fetch {
   const json = (body: unknown): Response => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
   return (async (input: string | URL | Request) => {
     const url = new URL(String(input instanceof Request ? input.url : input));
@@ -171,6 +187,7 @@ function fakeFetch(clock: () => number, coinbaseDown = false): typeof fetch {
       return json({ ticker: { symbol: sym, markPrice: price(sym, now), relativeFundingRate: 1e-5 * (1 + Math.sin(now / 7_200_000)) } });
     }
     if (url.host === 'api.kraken.com' && url.pathname.endsWith('/OHLC')) {
+      if (krakenBusy && new Date(now).getUTCMinutes() % 10 < 5) return json({ error: ['EGeneral:Too many requests'] });
       const pair = url.searchParams.get('pair') as string;
       const sym = { XBTUSD: 'BTC-USD', ETHUSD: 'ETH-USD', SOLUSD: 'SOL-USD' }[pair] as string;
       const g = Number(url.searchParams.get('interval')) * 60_000;
@@ -187,12 +204,14 @@ function fakeFetch(clock: () => number, coinbaseDown = false): typeof fetch {
   }) as typeof fetch;
 }
 
-for (const coinbaseDown of [false, true]) {
-test(`worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes barres, pour les 12 comptes${coinbaseDown ? ' (Coinbase refuse tout : Kraken en secours)' : ''}`, async () => {
+for (const mode of ['normal', 'coinbase', 'kraken'] as const) {
+const coinbaseDown = mode !== 'normal';
+const label = { normal: '', coinbase: ' (Coinbase refuse tout : Kraken en secours)', kraken: ' (Kraken refuse aussi chaque lecture prévue : nouveaux essais)' }[mode];
+test(`worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes barres, pour les 12 comptes${label}`, async () => {
   const start = Date.parse('2026-11-11T23:00:00Z'); // jeudi 12 novembre, 0 h à Paris
   let clock = start - 2 * 3_600_000;
   const realFetch = globalThis.fetch;
-  globalThis.fetch = fakeFetch(() => clock, coinbaseDown);
+  globalThis.fetch = fakeFetch(() => clock, coinbaseDown, mode === 'kraken');
   resetMemory();
   FUNDING.clear();
   const db = new MemoryD1();
@@ -206,7 +225,7 @@ test(`worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes bar
   } finally {
     globalThis.fetch = realFetch;
   }
-  const summary = JSON.parse(db.rows.get('summary')?.v as string) as { filling: number; accounts: Array<{ id: string; trades: number }> };
+  const summary = JSON.parse(db.rows.get('summary')?.v as string) as { filling: number; notes: string[]; accounts: Array<{ id: string; trades: number }> };
   assert.equal(summary.filling, 0, 'historique complet');
   // Rejeu unique : mêmes barres (relues en base), même financement, jusqu'à la dernière barre traitée par le Worker.
   for (const s of ['PF_XBTUSD', 'PF_ETHUSD']) FUNDING.set(s, new Map(JSON.parse(db.rows.get(`funding|${s}`)?.v as string) as Array<[number, number]>));
@@ -233,6 +252,18 @@ test(`worker : passage chaque minute pendant 32 h = un seul rejeu des mêmes bar
   assert.ok(ranSomewhere >= 8, `comptes repris : ${ranSomewhere}`);
   assert.ok(summary.accounts.length === 12);
   if (coinbaseDown) assert.ok(['b2-crypto-tendance', 'b3-portage', 'c3-btc-eth-200j'].every((id) => db.rows.has(`book|${id}`)), 'comptes crypto repris malgré Coinbase');
+  // Aucune série crypto bloquée : chacune a sa dernière barre terminée lue (au plus tard au nouvel essai suivant).
+  const end = start + 30 * 3_600_000;
+  for (const [key, expected] of [['1d|ETH-USD', Date.parse('2026-11-12T00:00:00Z')], ['1d|SOL-USD', Date.parse('2026-11-12T00:00:00Z')], ['1d|BTC-USD', Date.parse('2026-11-12T00:00:00Z')], ['1h|BTC-USD', end - 2 * 3_600_000]] as const) {
+    assert.equal(decodeBars(db.rows.get(`bars|${key}`)?.v as string).at(-1)?.t, expected, `${key} à jour (${mode})`);
+  }
+  for (const id of ['b2-crypto-tendance', 'c3-btc-eth-200j']) {
+    const b = JSON.parse(db.rows.get(`book|${id}`)?.v as string) as { state: { lastT: number } };
+    assert.equal(b.state.lastT, Date.parse('2026-11-12T00:00:00Z'), `${id} a traité la clôture du jeudi 12 (${mode})`);
+  }
+  const meta = JSON.parse(db.rows.get('meta')?.v as string) as { err?: Record<string, string> };
+  assert.deepEqual(meta.err ?? {}, {}, 'plus d’erreur en attente une fois les séries relues');
+  assert.ok(!summary.notes.some((n) => n.includes('en retard')), `aucune série signalée en retard : ${summary.notes.join(' | ')}`);
   // Départ immédiat : les comptes journaliers sont partis dans les premières minutes, et l'achat-conservation est investi.
   for (const id of ['b2-crypto-tendance', 'b4-swing-etf', 'c1-sp500', 'c2-faber', 'c3-btc-eth-200j', 'c4-permanent']) {
     const b = JSON.parse(db.rows.get(`book|${id}`)?.v as string) as { startAt?: number };

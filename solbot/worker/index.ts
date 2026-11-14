@@ -127,6 +127,27 @@ export function dueAt(f: Feed, slot: number): boolean {
   return hour === 0 && min === 42 + (rank % 3);
 }
 
+/**
+ * Séries 24 h/24 (crypto) : heure à laquelle la barre qui suit la dernière barre gardée devrait être lue (sa fin, plus
+ * le délai de la lecture prévue : minute 2 ou 3 en horaire, 0 h 42 – 0 h 44 UTC en journalier).
+ */
+export function nextRead(f: Feed, lastT: number): number {
+  return lastT + 2 * MS[f.tf] + (f.tf === '1d' ? 46 : 4) * 60_000;
+}
+/** Rang des séries 24 h/24 pour leurs nouveaux essais. */
+const RETRY_RANK = new Map([...FEEDS.entries()].filter(([, f]) => f.src !== 'yahoo').map(([k]) => k).sort().map((k, i) => [k, i] as [string, number]));
+/**
+ * Nouvel essai d'une série 24 h/24 en retard (lecture refusée : Coinbase et Kraken limitent souvent les adresses de
+ * Cloudflare) : toutes les 10 minutes, une série par minute de x5 à x9, jamais aux minutes des lectures prévues.
+ */
+export function retryAt(f: Feed, slot: number): boolean {
+  return new Date(slot).getUTCMinutes() % 10 === 5 + ((RETRY_RANK.get(keyOf(f)) ?? 0) % 5);
+}
+const parisLabel = (ms: number): string => {
+  const l = localTime(ms, 'Europe/Paris');
+  return `${l.date.slice(8, 10)}/${l.date.slice(5, 7)} à ${Math.floor(l.minutes / 60)} h ${String(l.minutes % 60).padStart(2, '0')}`;
+};
+
 // ---------------------------------------------------------------------------- stockage (une table clé → texte)
 
 export const SCHEMA = 'CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated INTEGER NOT NULL)';
@@ -317,6 +338,10 @@ interface Meta {
   short: string[];
   /** Heure (ms) du dernier financement noté. */
   fundingHour?: number;
+  /** Séries 24 h/24 : début de la dernière barre gardée (pour voir un retard sans relire la série). */
+  last?: Record<string, number>;
+  /** Séries 24 h/24 : dernière erreur de lecture, tant que la série n'est pas relue. */
+  err?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------- un passage
@@ -350,11 +375,15 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
 
   const head = await load(db, ['meta', 'summary']);
   const stored = head.get('meta') as Meta | undefined;
-  const meta: Meta = stored ? { ...stored, short: [...stored.short] } : { short: [...FEEDS.keys()] };
+  const meta: Meta = stored ? { ...stored, short: [...stored.short], last: { ...stored.last }, err: { ...stored.err } } : { short: [...FEEDS.keys()], last: {}, err: {} };
+  const last = meta.last as Record<string, number>;
+  const errs = meta.err as Record<string, string>;
   const prev = (head.get('summary') as Summary | undefined) ?? null;
   const shortSet = new Set(meta.short.filter((k) => FEEDS.has(k)));
   const backfill = [...shortSet].slice(0, 1);
-  const wanted = [...FEEDS.entries()].filter(([k, f]) => backfill.includes(k) || (!shortSet.has(k) && (opts.force || dueAt(f, slot))));
+  // Lecture prévue, ou nouvel essai d'une série 24 h/24 dont la barre suivante aurait dû être lue (lecture refusée).
+  const late = (k: string, f: Feed): boolean => f.src !== 'yahoo' && now >= nextRead(f, last[k] ?? 0);
+  const wanted = [...FEEDS.entries()].filter(([k, f]) => backfill.includes(k) || (!shortSet.has(k) && (opts.force || dueAt(f, slot) || (retryAt(f, slot) && late(k, f)))));
 
   // 1. Séries à lire, financement des perpétuels si l'heure a changé.
   const hour = Math.floor(now / H) * H;
@@ -396,6 +425,7 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
     const filling = shortSet.has(key);
     const lastT = old.at(-1)?.t ?? 0;
     let fresh: Bar[] = [];
+    let failed = '';
     try {
       if (f.src === 'yahoo' && f.tf === '5m') {
         // Yahoo ajoute une barre « en cours » à l'heure de la dernière cotation : seules les barres alignées comptent,
@@ -419,7 +449,8 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
         } else if (spend()) fresh = await feed.krakenFutures1h(f.sym, from, now);
       }
     } catch (e) {
-      notes.push(`${f.sym} (${f.tf}) : ${String(e)}`);
+      failed = String(e).replace(/^Error: /, '').slice(0, 160);
+      notes.push(`${f.sym} (${f.tf}) : ${failed}`);
     }
     // Seulement des barres terminées : une barre gardée « en cours » passerait plus tard pour finie avec de faux cours.
     fresh = fresh.filter((b) => barEnd(f, b) <= now);
@@ -437,6 +468,19 @@ export async function cycle(env: Env, opts: CycleOptions = {}): Promise<{ notes:
       if (!(bars.length >= f.keep * 0.6 || (f.tf === '5m' && fresh.length > 0))) shortSet.add(key);
     }
     series.set(key, bars);
+    if (f.src !== 'yahoo') {
+      const t = bars.at(-1)?.t;
+      if (t !== undefined) last[key] = t;
+      if (failed) errs[key] = failed;
+      else delete errs[key];
+    }
+  }
+  // Retard visible sur la page : plus d'une heure d'essais sans succès après l'heure prévue de lecture.
+  for (const [key, f] of FEEDS) {
+    const t = last[key];
+    if (f.src === 'yahoo' || t === undefined || shortSet.has(key)) continue;
+    const due = nextRead(f, t);
+    if (now - due >= H) notes.push(`${f.sym} (${f.tf === '1d' ? 'journalier' : 'horaire'}) : barres en retard depuis le ${parisLabel(due)}, nouvel essai toutes les 10 min${errs[key] ? ` (${errs[key]})` : ''}`);
   }
   meta.short = [...shortSet];
   if (JSON.stringify(meta) !== JSON.stringify(stored ?? null)) writes.set('meta', meta);
